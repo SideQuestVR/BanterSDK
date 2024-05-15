@@ -30,7 +30,7 @@ public class LogLine{
 #elif LOGLINE
                 Debug.Log(string.Format(DateTime.Now.ToString("HH:mm:ss.fff") + ": " + tag + " {0}", line));
 #endif
-                //Console.WriteLine(string.Format(tag + " " + line));
+                Console.WriteLine(string.Format(tag + " " + line));
             }
         }
 }
