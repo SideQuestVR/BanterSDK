@@ -1,0 +1,42 @@
+.unity-toggle {
+    justify-content: space-between;
+    margin: 5px 12px;
+}
+
+.unity-toggle .unity-label {
+    font-size: 15px;
+    color: #8f8f8f;
+}
+.unity-toggle .unity-toggle__input {
+    transition: all 0.6s;
+    width: 40px;
+    height: 20px;
+    min-width: 40px;
+    max-width: 40px;
+    background-color: #2f2f2f;
+    border-radius: 10px;
+    padding: 0;
+    margin: 0;
+}
+ 
+.unity-toggle:checked .unity-toggle__input {
+    background-color: #B23BEF;
+}
+ 
+.unity-toggle .unity-toggle__checkmark {
+    transition: all 0.25s;
+    width: 16px;
+    max-width: 16px;
+    min-width: 16px;
+    height: 16px;
+    margin: 2px;
+    border-radius: 8px;
+    background-color: white;
+    background-image: none;
+    translate: 0 0;
+    transition-timing-function: ease-out;
+}
+ 
+.unity-toggle:checked .unity-toggle__checkmark {
+    translate: 20px 0;
+}

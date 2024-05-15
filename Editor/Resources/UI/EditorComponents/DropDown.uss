@@ -1,0 +1,29 @@
+.unity-popup-field, .unity-enum-field, .unity-mask-field, .unity-object-field, .unity-color-field{
+    margin: 5px 12px;
+}
+.unity-base-popup-field__input, .unity-enum-field__input, .unity-object-field__input{
+    background-color: white;
+    padding: 3px;
+    border-width: 0;
+    border-radius: 7px;
+}
+.unity-object-field__selector{
+    width: 16px;
+    height: 15px;
+}
+.unity-object-field__object{
+    -unity-slice-top: 0;
+    -unity-slice-bottom: 0;
+    height: 18px;
+
+}
+.unity-popup-field .unity-label , .unity-enum-field .unity-label, .unity-mask-field .unity-label, .unity-object-field>.unity-label, .unity-color-field>.unity-label{
+    color: white;
+}
+.unity-object-field-display__label{
+    color: black;
+    font-size: 12px;
+}
+.unity-base-popup-field__text, .unity-enum-field__text{
+    color: black;
+}

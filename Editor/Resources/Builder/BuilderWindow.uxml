@@ -1,0 +1,22 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/UI/EditorComponents.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#EditorComponents" />
+    <ui:VisualElement style="background-image: resource(&apos;UI/Images/Main content&apos;); height: 100%; background-color: rgb(0, 0, 0); -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); flex-direction: column; position: relative; left: 0; top: 0; right: 0; bottom: 0;">
+        <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_No_Background&apos;); width: auto; height: 200px; -unity-background-scale-mode: scale-and-crop;" />
+        <ui:ScrollView horizontal-scroller-visibility="Auto" vertical-scroller-visibility="Auto" style="height: 100%; background-image: none; background-color: rgba(0, 0, 0, 0); flex-grow: 1; flex-shrink: 0; flex-basis: 0;">
+            <ui:Label text="&lt;u&gt;BUILD OPTIONS&lt;/u&gt;" display-tooltip-when-elided="true" class="unity-label-margin" style="font-size: 18px; -unity-text-align: upper-center; margin-top: 20px;" />
+            <ui:Toggle label="Build For Windows" value="true" name="buildForWindows" />
+            <ui:Toggle label="Build For Android" value="true" name="buildForAndroid" />
+            <ui:VisualElement name="dropArea" style="background-image: resource(&apos;UI/Images/dashed-border&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 0; margin-left: 12px; margin-right: 12px; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 7; -unity-slice-top: 7; -unity-slice-right: 7; -unity-slice-bottom: 7;">
+                <ui:Label text="DROP SCENE/PREFAB FILES HERE" display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 20px; margin-top: 30px; margin-bottom: 30px;" />
+            </ui:VisualElement>
+            <ui:Label name="mainTitle" display-tooltip-when-elided="true" class="unity-label-margin" style="display: none; font-size: 18px; -unity-text-align: upper-center; margin-top: 20px;" />
+            <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" class="unity-label-margin" style="display: none; color: rgb(143, 143, 143);" />
+            <ui:ListView focusable="true" name="kitItemList" style="display: none;" />
+            <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" style="display: none; margin-bottom: 20px; max-width: none; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; flex-direction: column; flex-wrap: nowrap; margin-left: 48px; margin-right: 48px;" />
+            <ui:Button text="BUILD NOW" name="buildButton" display-tooltip-when-elided="true" style="padding-top: 10px; padding-bottom: 10px; font-size: 15px; -unity-font-style: bold;" />
+            <ui:Label text="&lt;u&gt;BUILD PROGRESS&lt;/u&gt;" display-tooltip-when-elided="true" class="unity-label-margin" style="margin-top: 20px; font-size: 18px; -unity-text-align: upper-center;" />
+            <ui:ProgressBar title="BUILDING..." name="buildProgressBar" style="display: none;" />
+            <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: 100%;" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

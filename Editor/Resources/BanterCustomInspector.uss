@@ -1,0 +1,60 @@
+:root {
+    padding-left: 25px;
+    padding-right: 25px;
+    padding-top: 16px;
+    padding-bottom: 16px;
+    background-image: url('project://database/Packages/com.sidequest.banter/Editor/Images/Main%20content.png?fileID=2800000&guid=40c599547cb1d0a4d94990b9692ca9f0&type=3#Main content');
+    -unity-background-scale-mode: scale-and-crop;
+    margin-bottom: -12px;
+}
+
+.toggle-container {
+    max-width: 300px;
+    justify-content: space-between;
+    align-items: center;
+    flex-direction: row;
+}
+
+.unity-toggle.switch {
+    justify-content: space-between;
+    margin: 5px 12px;
+}
+
+.unity-toggle.switch .unity-label {
+    font-size: 15px;
+    color: rgb(143, 143, 143);
+}
+
+.unity-toggle.switch .unity-toggle__input {
+    transition: all 0.6s;
+    width: 40px;
+    height: 20px;
+    min-width: 40px;
+    max-width: 40px;
+    background-color: rgb(47, 47, 47);
+    border-radius: 10px;
+    padding: 0;
+    margin: 0;
+}
+
+.unity-toggle.switch:checked .unity-toggle__input {
+    background-color: rgb(178, 59, 239);
+}
+
+.unity-toggle.switch .unity-toggle__checkmark {
+    transition: all 0.25s;
+    width: 16px;
+    max-width: 16px;
+    min-width: 16px;
+    height: 16px;
+    margin: 2px;
+    border-radius: 8px;
+    background-color: white;
+    background-image: none;
+    translate: 0 0;
+    transition-timing-function: ease-out;
+}
+
+.unity-toggle.switch:checked .unity-toggle__checkmark {
+    translate: 20px 0;
+}

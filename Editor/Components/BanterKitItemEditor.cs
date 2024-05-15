@@ -1,0 +1,50 @@
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace Banter{
+    [CustomEditor(typeof(BanterKitItem))]
+    public class BanterKitItemEditor : Editor{
+        void OnEnable() {
+            if(target is BanterKitItem){
+                var script = (BanterKitItem)target;
+                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
+                var path = AssetDatabase.GetAssetPath(script);
+            }
+        }
+        public override bool UseDefaultMargins() => false;
+        public override VisualElement CreateInspectorGUI()
+        {
+            var script = (BanterKitItem)target;
+            Editor editor = Editor.CreateEditor(script);
+            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
+            VisualElement myInspector = new VisualElement();
+
+            var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
+            myInspector.styleSheets.Add(_mainWindowStyleSheet);
+           
+            
+        var title = new Label("PROPERTIES SEEN BY JS");
+            title.style.fontSize = 14;
+            myInspector.Add(title);
+var seeFields = new Label("path, ");
+            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
+            seeFields.style.flexWrap = Wrap.Wrap;
+            seeFields.style.whiteSpace = WhiteSpace.Normal;
+            seeFields.style.marginBottom = 10;
+            seeFields.style.marginTop = 10;
+            seeFields.style.color = Color.gray;
+            myInspector.Add(seeFields);        
+            var foldout = new Foldout();
+            foldout.text = "Advanced Properties";
+            IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
+            foldout.value = false; 
+            foldout.Add(inspectorIMGUI);
+            myInspector.Add(foldout);
+            return myInspector;
+        }  
+            
+            
+            
+    }
+}

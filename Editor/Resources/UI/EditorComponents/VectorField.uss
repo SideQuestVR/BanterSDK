@@ -1,0 +1,25 @@
+.unity-vector2-field, .unity-vector3-field, .unity-vector4-field{
+    margin: 5px 12px;
+}
+.unity-vector2-field>.unity-label, .unity-vector3-field>.unity-label, .unity-vector4-field>.unity-label {
+    font-size: 15px;
+    margin: 0;
+    color: white;
+}
+ 
+.unity-vector2-field__input, .unity-vector3-field__input, .unity-vector4-field__input{
+   /* background-color: transparent;
+    padding: 3px;
+    color: #fff; */
+    border-width: 0;
+}
+.unity-vector2-field__input .unity-float-field__input, .unity-vector3-field__input .unity-float-field__input, .unity-vector4-field__input .unity-float-field__input{
+    background-color: #fff;
+    padding: 3px;
+    color: #000;
+    margin: 0;
+}
+.unity-composite-field__field .unity-label{
+    font-size: 12px;
+    margin-top: 2px;
+}

@@ -1,0 +1,27 @@
+namespace Banter{
+    public enum ComponentType{
+        BanterAssetBundle,
+        BanterAudioSource,
+        BanterBillboard,
+        BoxCollider,
+        BanterBrowser,
+        CapsuleCollider,
+        BanterColliderEvents,
+        ConfigurableJoint,
+        BanterGeometry,
+        BanterGLTF,
+        BanterInvertedMesh,
+        BanterKitItem,
+        BanterMaterial,
+        MeshCollider,
+        BanterMirror,
+        BanterPhysicMaterial,
+        BanterPortal,
+        BanterRigidbody,
+        SphereCollider,
+        BanterStreetView,
+        BanterText,
+        Transform,
+        BanterVideoPlayer,
+    }
+}

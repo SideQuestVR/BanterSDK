@@ -1,0 +1,18 @@
+{
+    "name": "InspectorFoldoutGroup",
+    "rootNamespace": "",
+    "references": [
+        "GUID:00a9e2367449a2e4d89a262276b0dac1"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

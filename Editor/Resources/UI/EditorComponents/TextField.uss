@@ -1,0 +1,25 @@
+.unity-text-field, .unity-integer-field, .unity-long-field{
+    margin: 5px 12px;
+}
+.unity-text-field .unity-label, .unity-float-field .unity-label, .unity-integer-field .unity-label, .unity-long-field .unity-label {
+    font-size: 15px;
+    color: white;
+}
+ 
+.unity-text-field__input, .unity-float-field__input, .unity-integer-field__input, .unity-long-field__input {
+    background-color: #fff;
+    padding: 3px;
+    color: #000;
+    border-width: 0;
+    border-radius: 8px;
+}
+.unity-base-field__input{
+    overflow: auto;
+}
+.unity-foldout__toggle .unity-text-element{
+    margin-left: 30px;
+}
+.unity-list-view__empty-label {
+    margin: 5px 12px;
+    color: #8f8f8f;
+}

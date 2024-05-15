@@ -1,0 +1,17 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/UI/EditorComponents.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#EditorComponents" />
+    <ui:VisualElement style="height: 100%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-background-scale-mode: scale-and-crop;">
+        <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_No_Background&apos;); width: auto; height: 50px; -unity-background-scale-mode: scale-to-fit;" />
+        <ui:ScrollView horizontal-scroller-visibility="Auto" vertical-scroller-visibility="Auto" style="height: 100%; background-image: none; background-color: rgba(0, 0, 0, 0); flex-grow: 1; flex-shrink: 0; flex-basis: 0;">
+            <ui:Button text="Compile All C + Injection" name="allAndInjection" display-tooltip-when-elided="true" />
+            <ui:Button text="Compile All C Only" name="allOnly" display-tooltip-when-elided="true" />
+            <ui:Button text="Clear All Components" name="clearAll" display-tooltip-when-elided="true" />
+            <ui:Button text="Compile Electron" name="compileElectron" display-tooltip-when-elided="true" />
+            <ui:Button text="Compile Injection" name="compileInjection" display-tooltip-when-elided="true" />
+            <ui:Button text="Compile All" name="kitchenSink" display-tooltip-when-elided="true" />
+            <ui:Button text="Setup Layers" name="setupLayers" display-tooltip-when-elided="true" />
+            <ui:Button text="Setup Visual Scripting" name="setupVisualScripting" display-tooltip-when-elided="true" />
+            <ui:Button text="Toggle Dev Tools" name="openDevTools" display-tooltip-when-elided="true" />
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

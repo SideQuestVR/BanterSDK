@@ -1,0 +1,44 @@
+.unity-base-slider--vertical{
+    width: 15px;
+    right: 2px;
+}
+.unity-base-slider .unity-label, .unity-min-max-slider .unity-label{
+    color: white;
+}
+.unity-scroller--vertical{
+    width: 15px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+}
+.unity-scroller--vertical .unity-scroller__low-button, .unity-scroller--vertical .unity-scroller__high-button{
+    width: 17px;
+    height: 17px;
+    right: 0px;
+    border-radius: 8px;
+}
+
+.unity-base-slider__dragger, .unity-min-max-slider__dragger{
+    width: 15px;
+    height: 15px;
+    border-radius: 8px;
+    border-width: 0;
+    bottom: 3px;
+    margin-left: -2px;
+}
+.unity-min-max-slider__dragger{
+    bottom: 4px;
+}
+.unity-scroller--vertical .unity-base-slider__dragger{
+    width: 15px;
+    height: 15px;
+    border-width: 0;
+    bottom: 0px;
+    margin-left: 0px;
+}
+.unity-min-max-slider{
+    margin: 5px 12px;
+}
+.unity-base-slider--horizontal .unity-base-slider__text-field{
+    margin: 0;
+    margin-left: 5px;
+}

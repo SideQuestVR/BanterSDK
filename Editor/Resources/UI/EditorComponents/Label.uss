@@ -1,0 +1,11 @@
+.unity-label{
+    font-size: 15px;
+    text-overflow: ellipsis; /* Possible values: clip | ellipsis */
+    -unity-text-overflow-position: end; /* Possible values: start | middle | end */
+    /* Conditions */
+    overflow: hidden;
+    white-space: nowrap;
+}
+.unity-label-margin {
+    margin: 5px 12px;
+}

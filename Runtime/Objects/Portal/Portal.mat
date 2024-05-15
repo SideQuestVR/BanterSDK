@@ -1,0 +1,194 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Portal
+  m_Shader: {fileID: 4800000, guid: 34e904102d4334c4f86f054a46e31d92, type: 3}
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _RECEIVESHADOWS_OFF
+  - _RECEIVE_SHADOWS_OFF
+  m_LightmapFlags: 0
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: 3000
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - _BumpMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _ComfyUI_20768__clipdropcleanup:
+        m_Texture: {fileID: 2800000, guid: 24530903478a81946a8821282769369c, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Distortion:
+        m_Texture: {fileID: 2800000, guid: c2c9b234d7873b14ba16c19badf81fd3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _FXTex:
+        m_Texture: {fileID: 2800000, guid: 7f465aa39ce6dc1419eb9a2f84681930, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _MainTex:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise01:
+        m_Texture: {fileID: 2800000, guid: dcd182bb711c80e40bcd28f558e8d8ff, type: 3}
+        m_Scale: {x: 2, y: 0.3}
+        m_Offset: {x: 0, y: 0}
+    - _Noise01Normal:
+        m_Texture: {fileID: 2800000, guid: 4742e5bae830b9c43932f13c1ed430ca, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise03:
+        m_Texture: {fileID: 2800000, guid: 4742e5bae830b9c43932f13c1ed430ca, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise03Normal:
+        m_Texture: {fileID: 2800000, guid: d8bc64c92226bf54a93bbb4990dca43e, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _Noise04Normal:
+        m_Texture: {fileID: 2800000, guid: c2c9b234d7873b14ba16c19badf81fd3, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _NoisePack:
+        m_Texture: {fileID: 2800000, guid: cbd0e5a99fa326a4f84eb168c5afb5e3, type: 3}
+        m_Scale: {x: 1, y: 0.5}
+        m_Offset: {x: 0, y: 0}
+    - _NoisePackRGBA:
+        m_Texture: {fileID: 2800000, guid: 46c5f003a8773cc4899579223c874d0b, type: 3}
+        m_Scale: {x: 1, y: 2}
+        m_Offset: {x: 0, y: 0}
+    - _Texture0:
+        m_Texture: {fileID: 2800000, guid: eb7d08846c54b794b80cedaae7fe62d7, type: 3}
+        m_Scale: {x: 0.5, y: 0.5}
+        m_Offset: {x: 0, y: 0}
+    - _TextureSample0:
+        m_Texture: {fileID: 2800000, guid: 4742e5bae830b9c43932f13c1ed430ca, type: 3}
+        m_Scale: {x: 2, y: 2}
+        m_Offset: {x: 0, y: 0}
+    - _Thumbnail:
+        m_Texture: {fileID: 2800000, guid: 325032e82e6dda94181685143a53d37a, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _texcoord2:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - _AlphaCutoff: 0.5
+    - _BlendOp: 0
+    - _BumpScale: 1
+    - _CameraFadingEnabled: 0
+    - _CameraFarFadeDistance: 2
+    - _CameraNearFadeDistance: 1
+    - _ColorMode: 0
+    - _Cull: 2
+    - _Cutoff: 0.5
+    - _Darken: 0
+    - _Depth: 4.06
+    - _DistanceMax: -0.25
+    - _DistanceMin: -1
+    - _Distortion: 2
+    - _DistortionBlend: 0.5
+    - _DistortionEnabled: 0
+    - _DistortionStrength: 0.02
+    - _DistortionStrengthScaled: 0
+    - _Divider: 0.6
+    - _DstBlend: 0
+    - _EmissionEnabled: 0
+    - _FlipbookMode: 0
+    - _Float0: 1
+    - _Float1: 8.31
+    - _Float2: -1
+    - _Float3: 0
+    - _Float4: 0.65
+    - _Float5: 0.163
+    - _InnerGlow: 0.158
+    - _InnerGlowBrightness: 0.5
+    - _InnerGlowThreshold: 0.212
+    - _InwardsSpeed: 0.1
+    - _InwardsSpeed1: 1
+    - _LightingEnabled: 0
+    - _MaskPower: 111.13
+    - _Mode: 0
+    - _Ofset: 0.34
+    - _PortalRadius: 2
+    - _QueueControl: 0
+    - _QueueOffset: 0
+    - _ReceiveShadows: 0
+    - _RotationSpeed: 0.05
+    - _RotationSpeed1: 1
+    - _Scale: 0.5
+    - _SoftParticlesEnabled: 0
+    - _SoftParticlesFarFadeDistance: 1
+    - _SoftParticlesNearFadeDistance: 0
+    - _Spawn: 0.25
+    - _SrcBlend: 1
+    - _TIle: 0.09
+    - _TessEdgeLength: 16
+    - _TessMax: 25
+    - _TessMaxDisp: 25
+    - _TessMin: 10
+    - _TessPhongStrength: 0.5
+    - _TessValue: 21.7
+    - _TimeScale: 1
+    - _ZWrite: 1
+    - __dirty: 0
+    - _m: 0.25
+    - _power: 1
+    - _size: 0.25
+    - _uv1VMax: 0.45
+    - _uv1VMin: 0.4
+    m_Colors:
+    - _CameraFadeParams: {r: 0, g: Infinity, b: 0, a: 0}
+    - _Color: {r: 0, g: 1, b: 0.22208595, a: 1}
+    - _Color0: {r: 0, g: 0.11489657, b: 0.6698113, a: 0}
+    - _Color1: {r: 0.5149856, g: 1.3379041, b: 2.322914, a: 0}
+    - _ColorAddSubDiff: {r: 0, g: 0, b: 0, a: 0}
+    - _DistortionSpeed: {r: 0, g: 0.3, b: 0, a: 0}
+    - _EdgeOffset: {r: 0, g: 0.25, b: 0, a: 0}
+    - _EmissionColor: {r: 1, g: 1, b: 1, a: 1}
+    - _InnerColor: {r: 11.44681, g: 14.02013, b: 16.94838, a: 0}
+    - _InnerGlowColor: {r: 1.3937484, g: 14.37722, b: 19.698313, a: 0}
+    - _Offset: {r: 0.15, g: 0, b: 0, a: 0}
+    - _OuterColor1: {r: 0, g: 0.1092456, b: 1.304119, a: 0}
+    - _OuterColor2: {r: 1.94603, g: 7.423744, b: 13.76636, a: 0}
+    - _PortalSpeed: {r: 349.47168, g: 271.80835, b: 0, a: 0}
+    - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
+    - _Speed: {r: 0.1, g: 0.1, b: 0, a: 0}
+    - _Tiling: {r: 0.65, g: 1, b: 0, a: 0}
+    - _Vector0: {r: 1, g: 2.06, b: 0, a: 0}
+  m_BuildTextureStacks: []

@@ -1,0 +1,18 @@
+.unity-radio-button, .unity-radio-button-group{
+    margin: 5px 12px;
+}
+
+.unity-radio-button> .unity-label, .unity-radio-button-group>.unity-label{
+    color: white;
+}
+.unity-radio-button__checkmark-background{
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+}
+.unity-radio-button__checkmark{
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background-color: #B23BEF;
+}

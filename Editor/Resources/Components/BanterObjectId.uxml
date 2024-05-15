@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/UI/Components.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#Components" />
+    <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/BanterCustomInspector.uss?fileID=7433441132597879392&amp;guid=4db95990bd60fa04f83a935fe0da3cae&amp;type=3#BanterCustomInspector" />
+    <ui:Label text="BANTER OBJECT ID" display-tooltip-when-elided="true" style="font-size: 14px;" />
+    <ui:TextField picking-mode="Ignore" label="ID" name="id" style="font-size: 8px;" />
+    <ui:Button text="Generate" display-tooltip-when-elided="true" name="generate" />
+</ui:UXML>

@@ -1,0 +1,20 @@
+.unity-progress-bar{
+    margin: 5px 12px;
+    border-radius: 10px;
+}
+.unity-progress-bar__background{
+    padding: 12px;
+    background-color: #2f2f2f;
+    padding-bottom: 14px;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.unity-progress-bar__progress{
+    background-color: #B23BEF;
+}
+.unity-progress-bar>.unity-label {
+    margin: 0;
+}
+.unity-progress-bar__title{
+    overflow: auto;
+}
