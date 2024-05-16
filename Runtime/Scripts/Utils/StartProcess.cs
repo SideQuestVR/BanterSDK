@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using UnityEngine;
 
 public class StartProcess{
@@ -28,6 +29,11 @@ public class StartProcess{
         }
         process.BeginOutputReadLine();
         process.BeginErrorReadLine();
+#if ENABLE_MONO
+        // Test to see if changing priority helps with steam startup - not available in KS.Diag
+        process.PriorityClass = ProcessPriorityClass.RealTime;
+        process.PriorityBoostEnabled = true;
+#endif
         return process.Id;
     }
 }
