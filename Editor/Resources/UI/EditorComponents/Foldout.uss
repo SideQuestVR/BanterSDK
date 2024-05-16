@@ -1,0 +1,3 @@
+.unity-foldout__text{
+    overflow: visible;
+}

@@ -14,6 +14,18 @@
             <ui:ListView focusable="true" name="kitItemList" style="display: none;" />
             <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" style="display: none; margin-bottom: 20px; max-width: none; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; flex-direction: column; flex-wrap: nowrap; margin-left: 48px; margin-right: 48px;" />
             <ui:Button text="BUILD NOW" name="buildButton" display-tooltip-when-elided="true" style="padding-top: 10px; padding-bottom: 10px; font-size: 15px; -unity-font-style: bold;" />
+            <ui:Foldout text="Show Tools" name="MyFoldout" value="false">
+            <!-- <ui:Fol horizontal-scroller-visibility="Auto" vertical-scroller-visibility="Auto" style="height: 100%; background-image: none; background-color: rgba(0, 0, 0, 0); flex-grow: 1; flex-shrink: 0; flex-basis: 0;"> -->
+                <ui:Button text="Compile All C + Injection" name="allAndInjection" display-tooltip-when-elided="true" />
+                <ui:Button text="Compile All C Only" name="allOnly" display-tooltip-when-elided="true" />
+                <ui:Button text="Clear All Components" name="clearAll" display-tooltip-when-elided="true" />
+                <ui:Button text="Compile Electron" name="compileElectron" display-tooltip-when-elided="true" />
+                <ui:Button text="Compile Injection" name="compileInjection" display-tooltip-when-elided="true" />
+                <ui:Button text="Compile All" name="kitchenSink" display-tooltip-when-elided="true" />
+                <ui:Button text="Setup Layers" name="setupLayers" display-tooltip-when-elided="true" />
+                <ui:Button text="Setup Visual Scripting" name="setupVisualScripting" display-tooltip-when-elided="true" />
+                <ui:Button text="Toggle Dev Tools" name="openDevTools" display-tooltip-when-elided="true" />
+            </ui:Foldout>
             <ui:Label text="&lt;u&gt;BUILD PROGRESS&lt;/u&gt;" display-tooltip-when-elided="true" class="unity-label-margin" style="margin-top: 20px; font-size: 18px; -unity-text-align: upper-center;" />
             <ui:ProgressBar title="BUILDING..." name="buildProgressBar" style="display: none;" />
             <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: 100%;" />
