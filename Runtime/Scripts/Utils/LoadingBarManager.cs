@@ -45,6 +45,8 @@ namespace Banter{
             scene = BanterScene.Instance();
             SetCanCancel(false);
             _ = CustomLoadSkybox();
+            Preload();
+            SetLoadProgress("Welcome to Banter", 0 ,"Getting things ready...", false);
         }
         async Task CustomLoadSkybox() {
             try{

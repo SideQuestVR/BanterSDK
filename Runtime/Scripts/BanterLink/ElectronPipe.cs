@@ -65,10 +65,10 @@ public class ElectronPipe : BanterPipe {
         bool done = false;
 
         var ctx = new CancellationTokenSource();
-        ctx.CancelAfter(30000);
+        ctx.CancelAfter(60000);
         _ = Task.Run(() =>
         {
-            // Keep retrying pipe connection once every one seconds for 30 seconds (token timeout)
+            // Keep retrying pipe connection once every one seconds for 60 seconds (token timeout)
             while (!done)
             {
                 rendererClient = new NamedPipeClientStream(".", PipeName);
@@ -81,7 +81,7 @@ public class ElectronPipe : BanterPipe {
                         done = true;
                     } else {
                         rendererClient.Dispose();
-                        Debug.LogError($"[Banter] Pipe not connected!");
+                        LogLine.Do($"[Banter] Pipe not connected!");
                     }
                 }
                 catch (Exception ex)
@@ -92,7 +92,7 @@ public class ElectronPipe : BanterPipe {
                 }
                 if (ctx.IsCancellationRequested)
                 {
-                    Debug.LogError("[Banter] Timeout on Pipe connection");
+                    LogLine.Do("[Banter] Timeout on Pipe connection");
                     completeCallback(false);
                     done = true;
                 }
