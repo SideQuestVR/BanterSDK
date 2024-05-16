@@ -24,13 +24,16 @@ namespace Banter{
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
            
             
-        
+ 
+#if BANTER_EDITOR        
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
             foldout.value = false; 
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
+#endif
+
             return myInspector;
         }  
             

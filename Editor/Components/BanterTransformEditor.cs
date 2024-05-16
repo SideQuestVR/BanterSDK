@@ -44,6 +44,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerposition.Add(labelposition);
             var toggleposition = new Toggle();  
             toggleposition.AddToClassList("switch");
+            toggleposition.value = script._position;
+            toggleposition.RegisterValueChangedCallback(evt => {
+                script._position = evt.newValue;
+            });
             containerposition.Add(toggleposition);
             myInspector.Add(containerposition);
         var containerlocalPosition = new VisualElement();
@@ -53,6 +57,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerlocalPosition.Add(labellocalPosition);
             var togglelocalPosition = new Toggle();  
             togglelocalPosition.AddToClassList("switch");
+            togglelocalPosition.value = script._localPosition;
+            togglelocalPosition.RegisterValueChangedCallback(evt => {
+                script._localPosition = evt.newValue;
+            });
             containerlocalPosition.Add(togglelocalPosition);
             myInspector.Add(containerlocalPosition);
         var containerrotation = new VisualElement();
@@ -62,6 +70,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerrotation.Add(labelrotation);
             var togglerotation = new Toggle();  
             togglerotation.AddToClassList("switch");
+            togglerotation.value = script._rotation;
+            togglerotation.RegisterValueChangedCallback(evt => {
+                script._rotation = evt.newValue;
+            });
             containerrotation.Add(togglerotation);
             myInspector.Add(containerrotation);
         var containerlocalRotation = new VisualElement();
@@ -71,6 +83,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerlocalRotation.Add(labellocalRotation);
             var togglelocalRotation = new Toggle();  
             togglelocalRotation.AddToClassList("switch");
+            togglelocalRotation.value = script._localRotation;
+            togglelocalRotation.RegisterValueChangedCallback(evt => {
+                script._localRotation = evt.newValue;
+            });
             containerlocalRotation.Add(togglelocalRotation);
             myInspector.Add(containerlocalRotation);
         var containerlocalScale = new VisualElement();
@@ -80,6 +96,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerlocalScale.Add(labellocalScale);
             var togglelocalScale = new Toggle();  
             togglelocalScale.AddToClassList("switch");
+            togglelocalScale.value = script._localScale;
+            togglelocalScale.RegisterValueChangedCallback(evt => {
+                script._localScale = evt.newValue;
+            });
             containerlocalScale.Add(togglelocalScale);
             myInspector.Add(containerlocalScale);
         var containereulerAngles = new VisualElement();
@@ -89,6 +109,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containereulerAngles.Add(labeleulerAngles);
             var toggleeulerAngles = new Toggle();  
             toggleeulerAngles.AddToClassList("switch");
+            toggleeulerAngles.value = script._eulerAngles;
+            toggleeulerAngles.RegisterValueChangedCallback(evt => {
+                script._eulerAngles = evt.newValue;
+            });
             containereulerAngles.Add(toggleeulerAngles);
             myInspector.Add(containereulerAngles);
         var containerlocalEulerAngles = new VisualElement();
@@ -98,6 +122,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerlocalEulerAngles.Add(labellocalEulerAngles);
             var togglelocalEulerAngles = new Toggle();  
             togglelocalEulerAngles.AddToClassList("switch");
+            togglelocalEulerAngles.value = script._localEulerAngles;
+            togglelocalEulerAngles.RegisterValueChangedCallback(evt => {
+                script._localEulerAngles = evt.newValue;
+            });
             containerlocalEulerAngles.Add(togglelocalEulerAngles);
             myInspector.Add(containerlocalEulerAngles);
         var containerup = new VisualElement();
@@ -107,6 +135,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerup.Add(labelup);
             var toggleup = new Toggle();  
             toggleup.AddToClassList("switch");
+            toggleup.value = script._up;
+            toggleup.RegisterValueChangedCallback(evt => {
+                script._up = evt.newValue;
+            });
             containerup.Add(toggleup);
             myInspector.Add(containerup);
         var containerforward = new VisualElement();
@@ -116,6 +148,10 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerforward.Add(labelforward);
             var toggleforward = new Toggle();  
             toggleforward.AddToClassList("switch");
+            toggleforward.value = script._forward;
+            toggleforward.RegisterValueChangedCallback(evt => {
+                script._forward = evt.newValue;
+            });
             containerforward.Add(toggleforward);
             myInspector.Add(containerforward);
         var containerright = new VisualElement();
@@ -125,15 +161,22 @@ var seeFields = new Label("lerpPosition, lerpRotation, ");
             containerright.Add(labelright);
             var toggleright = new Toggle();  
             toggleright.AddToClassList("switch");
+            toggleright.value = script._right;
+            toggleright.RegisterValueChangedCallback(evt => {
+                script._right = evt.newValue;
+            });
             containerright.Add(toggleright);
             myInspector.Add(containerright);
-        
+ 
+#if BANTER_EDITOR        
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
             foldout.value = false; 
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
+#endif
+
             return myInspector;
         }  
             

@@ -7,3 +7,4 @@
 @import url("EditorComponents/SwitchToggle.uss");
 @import url("EditorComponents/TextField.uss");
 @import url("EditorComponents/VectorField.uss");
+@import url("EditorComponents/Foldout.uss");

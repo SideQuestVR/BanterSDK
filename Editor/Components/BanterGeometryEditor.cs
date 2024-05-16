@@ -34,13 +34,16 @@ var seeFields = new Label("geometryType, parametricType, width, height, depth, w
             seeFields.style.marginBottom = 10;
             seeFields.style.marginTop = 10;
             seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields);        
+            myInspector.Add(seeFields); 
+#if BANTER_EDITOR        
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
             foldout.value = false; 
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
+#endif
+
             return myInspector;
         }  
             
