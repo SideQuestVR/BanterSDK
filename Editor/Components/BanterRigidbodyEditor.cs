@@ -45,6 +45,9 @@ var seeFields = new Label("mass, drag, angularDrag, isKinematic, useGravity, cen
             var togglevelocity = new Toggle();  
             togglevelocity.AddToClassList("switch");
             togglevelocity.value = script._velocity;
+            togglevelocity.RegisterValueChangedCallback(evt => {
+                script._velocity = evt.newValue;
+            });
             containervelocity.Add(togglevelocity);
             myInspector.Add(containervelocity);
         var containerangularVelocity = new VisualElement();
@@ -55,6 +58,9 @@ var seeFields = new Label("mass, drag, angularDrag, isKinematic, useGravity, cen
             var toggleangularVelocity = new Toggle();  
             toggleangularVelocity.AddToClassList("switch");
             toggleangularVelocity.value = script._angularVelocity;
+            toggleangularVelocity.RegisterValueChangedCallback(evt => {
+                script._angularVelocity = evt.newValue;
+            });
             containerangularVelocity.Add(toggleangularVelocity);
             myInspector.Add(containerangularVelocity);
  
