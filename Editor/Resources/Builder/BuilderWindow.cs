@@ -4,8 +4,10 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Banter;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.UIElements;
 
 public enum BanterBuilderBundleMode
@@ -29,6 +31,12 @@ public class BuilderWindow : EditorWindow
 {
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
     [SerializeField] private StyleSheet _mainWindowStyleSheet = default;
+
+    public static UnityEvent OnCompileAll = new UnityEvent();
+    public static UnityEvent OnClearAll = new UnityEvent();
+    public static UnityEvent OnCompileInjection = new UnityEvent();
+    public static UnityEvent OnCompileElectron = new UnityEvent();
+    public static UnityEvent OnCompileAllComponents = new UnityEvent();
     private BuildTarget[] buildTargets = new BuildTarget[] { BuildTarget.Android, BuildTarget.StandaloneWindows };
     private bool[] buildTargetFlags = new bool[] { true, true };
     BanterBuilderBundleMode mode = BanterBuilderBundleMode.None;
@@ -135,6 +143,33 @@ public class BuilderWindow : EditorWindow
             mode = BanterBuilderBundleMode.Scene;
             RefreshView();
         }
+
+        #if BANTER_EDITOR
+            rootVisualElement.Q<Button>("allAndInjection").clicked += () =>{
+                OnCompileAll.Invoke();
+                OnCompileInjection.Invoke();
+                // SDKCodeGen.CompileAllComponents();
+                // SDKCodeGen.CompileInjection();
+            };
+            rootVisualElement.Q<Button>("allOnly").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAllComponents();
+            rootVisualElement.Q<Button>("clearAll").clicked += () => OnClearAll.Invoke();// SDKCodeGen.ClearAllComponents();
+            rootVisualElement.Q<Button>("compileElectron").clicked += () => OnCompileElectron.Invoke();// SDKCodeGen.CompileElectron();
+            rootVisualElement.Q<Button>("compileInjection").clicked += () => OnCompileInjection.Invoke();// SDKCodeGen.CompileInjection();
+            rootVisualElement.Q<Button>("kitchenSink").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAll();
+            Remove(rootVisualElement.Q<Button>("setupVisualScripting"));
+            Remove(rootVisualElement.Q<Button>("setupLayers"));
+#else
+            Remove(rootVisualElement.Q<Button>("allAndInjection"));
+            Remove(rootVisualElement.Q<Button>("allOnly"));
+            Remove(rootVisualElement.Q<Button>("clearAll"));
+            Remove(rootVisualElement.Q<Button>("compileElectron"));
+            Remove(rootVisualElement.Q<Button>("compileInjection"));
+            Remove(rootVisualElement.Q<Button>("kitchenSink"));
+            rootVisualElement.Q<Button>("setupVisualScripting").clicked += () => _ = InitialiseOnLoad.InstallVisualScripting();
+            rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
+#endif
+            rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
+
     }
     void AddStatus(string text) {
         statusMessages.Add("<color=\"orange\">" + DateTime.Now.ToString("HH:mm:ss") + ": <color=\"white\">" + text);
@@ -143,6 +178,10 @@ public class BuilderWindow : EditorWindow
         }
         buildProgress.Rebuild();
     } 
+
+    public void Remove(VisualElement element){
+        element.parent.Remove(element);
+    }
     
     private void DropFile(bool isScene, string sceneFile, string[] paths) {
         if (isScene){
