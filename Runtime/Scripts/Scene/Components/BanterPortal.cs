@@ -4,23 +4,23 @@ using System.Threading.Tasks;
 using UnityEngine;
 namespace Banter
 {
-/* 
-#### Banter Portal
-This component will add a portal to the object and set the url and instance of the portal.
+    /* 
+    #### Banter Portal
+    This component will add a portal to the object and set the url and instance of the portal.
 
-**Properties**
- - `url` - The url of the space to link to.
- - `instance` - The instance of the space to link to.
+    **Properties**
+     - `url` - The url of the space to link to.
+     - `instance` - The instance of the space to link to.
 
-**Code Example**
-```js
-    const url = "https://banter.host/space/5f9b4";
-    const instance = "5f9b4";
-    const gameObject = new BS.GameObject("MyPortal");
-    const portal = await gameObject.AddComponent(new BS.BanterPortal(url, instance));
-```
+    **Code Example**
+    ```js
+        const url = "https://banter.host/space/5f9b4";
+        const instance = "5f9b4";
+        const gameObject = new BS.GameObject("MyPortal");
+        const portal = await gameObject.AddComponent(new BS.BanterPortal(url, instance));
+    ```
 
-*/
+    */
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterPortal : BanterComponentBase
@@ -45,21 +45,25 @@ This component will add a portal to the object and set the url and instance of t
         MaterialPropertyBlock block;
         GameObject portal;
         BanterSceneEvents sceneEvents;
-        public override void StartStuff() {
+        public override void StartStuff()
+        {
             sceneEvents = BanterScene.Instance().events;
             block = new MaterialPropertyBlock();
         }
 
-        public static async Task SetTexture(string texture, MeshRenderer rend) {
+        public static async Task SetTexture(string texture, MeshRenderer rend)
+        {
             var tex = await Get.Texture(texture);
-            if(tex != null && rend != null) {
+            if (tex != null && rend != null)
+            {
                 rend.material.SetTexture("_MainTex", MipMaps.Do(tex));
             }
         }
 
         private async Task SetupPortal()
         {
-            if(portal != null) {
+            if (portal != null)
+            {
                 Destroy(portal);
             }
             portal = Instantiate(Resources.Load<GameObject>("Prefabs/BanterPortal"), transform);
@@ -69,97 +73,119 @@ This component will add a portal to the object and set the url and instance of t
             var space = await Get.SpaceMeta(url);
             var defaultTex = defaultPortalLandscapes[UnityEngine.Random.Range(0, defaultPortalLandscapes.Length - 1)];
             SetLoadedIfNot();
-            if(space != null) {
-                try{
-                    if(!string.IsNullOrEmpty(space.icon)) {
+            if (space != null)
+            {
+                try
+                {
+                    if (!string.IsNullOrEmpty(space.icon))
+                    {
                         await SetTexture(space.icon + "?size=2048", rend);
-                    }else{
+                    }
+                    else
+                    {
                         await SetTexture(defaultTex + "?size=2048", rend);
                     }
-                }catch(Exception e) {
+                }
+                catch (Exception e)
+                {
                     Debug.Log(e);
                     await SetTexture(defaultTex, rend);
                 }
                 portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>().text = space.name;
-            }else{
+            }
+            else
+            {
                 portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>().text = "Unknown Space";
                 await SetTexture(defaultTex, rend);
             }
         }
 
         public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties) {
+        public void UpdateCallback(List<PropertyName> changedProperties)
+        {
             _ = SetupPortal();
         }
-// BANTER COMPILED CODE 
+        // BANTER COMPILED CODE 
         BanterScene scene;
-    
+
         bool alreadyStarted = false;
-    
-        void Start() { 
-            Init(); 
+
+        void Start()
+        {
+            Init();
             StartStuff();
         }
-        public override void ReSetup() {
-                   List<PropertyName> changedProperties = new List<PropertyName>(){PropertyName.url,PropertyName.instance,};
+        public override void ReSetup()
+        {
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.instance, };
             UpdateCallback(changedProperties);
         }
-        
-    
+
+
         public override void Init()
         {
             scene = BanterScene.Instance();
-            if(alreadyStarted) { return; }
+            if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterPortal);
-            
-            
+
+
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-            
-        
+
+
         }
-     
-        void Awake() {
+
+        void Awake()
+        {
             BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
-    
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-            
+
             DestroyStuff();
         }
-        public override object CallMethod(string methodName, List<object> parameters){
+        public override object CallMethod(string methodName, List<object> parameters)
+        {
             return null;
         }
-    
-        public override void Deserialise(List<object> values) {
+
+        public override void Deserialise(List<object> values)
+        {
             List<PropertyName> changedProperties = new List<PropertyName>();
-            for(int i = 0; i < values.Count; i++) {
-                if(values[i] is BanterString){
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] is BanterString)
+                {
                     var valurl = (BanterString)values[i];
-                    if(valurl.n == PropertyName.url) {
+                    if (valurl.n == PropertyName.url)
+                    {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var valinstance = (BanterString)values[i];
-                    if(valinstance.n == PropertyName.instance) {
+                    if (valinstance.n == PropertyName.instance)
+                    {
                         instance = valinstance.x;
                         changedProperties.Add(PropertyName.instance);
                     }
                 }
             }
-            if(values.Count > 0 ) { UpdateCallback(changedProperties);}
+            if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
         public override void SyncProperties(bool force = false, Action callback = null)
-            {
+        {
             var updates = new List<BanterComponentPropertyUpdate>();
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
@@ -168,8 +194,10 @@ This component will add a portal to the object and set the url and instance of t
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.instance,
                     type = PropertyType.String,
                     value = instance,
@@ -180,8 +208,9 @@ This component will add a portal to the object and set the url and instance of t
             }
             scene.SetFromUnityProperties(updates, callback);
         }
-        public override void WatchProperties(PropertyName[] properties) {
+        public override void WatchProperties(PropertyName[] properties)
+        {
         }
-// END BANTER COMPILED CODE 
+        // END BANTER COMPILED CODE 
     }
 }

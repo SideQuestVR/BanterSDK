@@ -6,58 +6,59 @@ using Banter;
 using UnityEngine;
 using PropertyName = Banter.PropertyName;
 
-namespace Banter{
-    
-/* 
-#### Banter Audio Source
-Load an audio file from a URL, or from a list of files in the editor.
+namespace Banter
+{
 
-**Properties**
-- `volume` - The volume of the audio source.
-- `pitch` - The pitch of the audio source.
-- `mute` - Is the audio source muted?
-- `loop` - Should the audio source loop?
-- `bypassEffects` - Bypass effects?
-- `bypassListenerEffects` - Bypass listener effects?
-- `bypassReverbZones` - Bypass reverb zones?
-- `playOnAwake` - Should the audio source play on awake?
+    /* 
+    #### Banter Audio Source
+    Load an audio file from a URL, or from a list of files in the editor.
 
-**Methods**
-```js
-// PlayOneShot - Play a clip from the list of clips.
-audioSource.PlayOneShot(index: number);
-```
-```js
-// PlayOneShotFromUrl - Play a clip from a URL.
-audioSource.PlayOneShotFromUrl(url: string);
-```
-```js
-// Play - Play the current audio clip.
-audioSource.Play();
-```
+    **Properties**
+    - `volume` - The volume of the audio source.
+    - `pitch` - The pitch of the audio source.
+    - `mute` - Is the audio source muted?
+    - `loop` - Should the audio source loop?
+    - `bypassEffects` - Bypass effects?
+    - `bypassListenerEffects` - Bypass listener effects?
+    - `bypassReverbZones` - Bypass reverb zones?
+    - `playOnAwake` - Should the audio source play on awake?
 
-**Code Example**
-```js
-    const volume = 1;
-    const pitch = 1;
-    const mute = false;
-    const loop = false;
-    const bypassEffects = false;
-    const bypassListenerEffects = false;
-    const bypassReverbZones = false;
-    const playOnAwake = false;
-
-    const gameObject = new BS.GameObject("MyAudioSource"); 
-    const audioSource = await gameObject.AddComponent(new BS.BanterAudioSource(volume, pitch, mute, loop, bypassEffects, bypassListenerEffects, bypassReverbZones, playOnAwake));
-    // ...
+    **Methods**
+    ```js
+    // PlayOneShot - Play a clip from the list of clips.
+    audioSource.PlayOneShot(index: number);
+    ```
+    ```js
+    // PlayOneShotFromUrl - Play a clip from a URL.
+    audioSource.PlayOneShotFromUrl(url: string);
+    ```
+    ```js
+    // Play - Play the current audio clip.
     audioSource.Play();
-    // ...
-    audioSource.PlayOneShot(0);
-    // ...
-    audioSource.PlayOneShotFromUrl("https://example.com/music.mp3");
-```
+    ```
 
-*/
+    **Code Example**
+    ```js
+        const volume = 1;
+        const pitch = 1;
+        const mute = false;
+        const loop = false;
+        const bypassEffects = false;
+        const bypassListenerEffects = false;
+        const bypassReverbZones = false;
+        const playOnAwake = false;
+
+        const gameObject = new BS.GameObject("MyAudioSource"); 
+        const audioSource = await gameObject.AddComponent(new BS.BanterAudioSource(volume, pitch, mute, loop, bypassEffects, bypassListenerEffects, bypassReverbZones, playOnAwake));
+        // ...
+        audioSource.Play();
+        // ...
+        audioSource.PlayOneShot(0);
+        // ...
+        audioSource.PlayOneShotFromUrl("https://example.com/music.mp3");
+    ```
+
+    */
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
 
@@ -74,173 +75,220 @@ audioSource.Play();
 
         public List<AudioClip> clips = new List<AudioClip>();
 
-        [Method] public void _PlayOneShot(int index) {
-            if(clips.Count > index) {
+        [Method]
+        public void _PlayOneShot(int index)
+        {
+            if (clips.Count > index)
+            {
                 _source.PlayOneShot(clips[index]);
             }
         }
-        [Method] public async Task _PlayOneShotFromUrl(string url) {
+        [Method]
+        public async Task _PlayOneShotFromUrl(string url)
+        {
             var audio = await Get.Audio(url);
             _source.PlayOneShot(audio);
         }
-        [Method] public void _Play() {
+        [Method]
+        public void _Play()
+        {
             _source.Play();
         }
         AudioSource _source;
 
-        public override void StartStuff() {
+        public override void StartStuff()
+        {
             SetupAudio();
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties) {
+        public void UpdateCallback(List<PropertyName> changedProperties)
+        {
             SetupAudio();
         }
-        void SetupAudio() {
+        void SetupAudio()
+        {
             _source = GetComponent<AudioSource>();
-            if(_source == null) {
+            if (_source == null)
+            {
                 _source = gameObject.AddComponent<AudioSource>();
             }
 
             SetLoadedIfNot();
         }
 
-        public override void DestroyStuff() {
-            if(_source != null) {
+        public override void DestroyStuff()
+        {
+            if (_source != null)
+            {
                 Destroy(_source);
             }
         }
-// BANTER COMPILED CODE 
+        // BANTER COMPILED CODE 
         BanterScene scene;
-    
+
         bool alreadyStarted = false;
-    
-        void Start() { 
-            Init(); 
+
+        void Start()
+        {
+            Init();
             StartStuff();
         }
-        public override void ReSetup() {
-                   List<PropertyName> changedProperties = new List<PropertyName>(){PropertyName.volume,PropertyName.pitch,PropertyName.mute,PropertyName.loop,PropertyName.bypassEffects,PropertyName.bypassListenerEffects,PropertyName.bypassReverbZones,PropertyName.playOnAwake,};
+        public override void ReSetup()
+        {
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.volume, PropertyName.pitch, PropertyName.mute, PropertyName.loop, PropertyName.bypassEffects, PropertyName.bypassListenerEffects, PropertyName.bypassReverbZones, PropertyName.playOnAwake, };
             UpdateCallback(changedProperties);
         }
-        
-    
+
+
         public override void Init()
         {
             scene = BanterScene.Instance();
-            if(alreadyStarted) { return; }
+            if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAudioSource);
-            
-            
+
+
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-            
-        
+
+
         }
-     
-        void Awake() {
+
+        void Awake()
+        {
             BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
-    
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-            
+
             DestroyStuff();
         }
-        void PlayOneShot(Int32 index) {
+        void PlayOneShot(Int32 index)
+        {
             _PlayOneShot(index);
         }
-        Task PlayOneShotFromUrl(String url) {
+        Task PlayOneShotFromUrl(String url)
+        {
             return _PlayOneShotFromUrl(url);
         }
-        void Play() {
+        void Play()
+        {
             _Play();
         }
-        public override object CallMethod(string methodName, List<object> parameters){
-            if(methodName == "PlayOneShot" && parameters.Count == 1 && parameters[0] is Int32){
+        public override object CallMethod(string methodName, List<object> parameters)
+        {
+            if (methodName == "PlayOneShot" && parameters.Count == 1 && parameters[0] is Int32)
+            {
                 var index = (Int32)parameters[0];
                 PlayOneShot(index);
                 return null;
-            }else if(methodName == "PlayOneShotFromUrl" && parameters.Count == 1 && parameters[0] is String){
+            }
+            else if (methodName == "PlayOneShotFromUrl" && parameters.Count == 1 && parameters[0] is String)
+            {
                 var url = (String)parameters[0];
                 return PlayOneShotFromUrl(url);
-            }else if(methodName == "Play" && parameters.Count == 0){
+            }
+            else if (methodName == "Play" && parameters.Count == 0)
+            {
                 Play();
                 return null;
-            }else{ 
-                return null; 
+            }
+            else
+            {
+                return null;
             }
         }
-    
-        public override void Deserialise(List<object> values) {
+
+        public override void Deserialise(List<object> values)
+        {
             List<PropertyName> changedProperties = new List<PropertyName>();
-            for(int i = 0; i < values.Count; i++) {
-                if(values[i] is BanterFloat){
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] is BanterFloat)
+                {
                     var valvolume = (BanterFloat)values[i];
-                    if(valvolume.n == PropertyName.volume) {
+                    if (valvolume.n == PropertyName.volume)
+                    {
                         volume = valvolume.x;
                         changedProperties.Add(PropertyName.volume);
                     }
                 }
-                if(values[i] is BanterFloat){
+                if (values[i] is BanterFloat)
+                {
                     var valpitch = (BanterFloat)values[i];
-                    if(valpitch.n == PropertyName.pitch) {
+                    if (valpitch.n == PropertyName.pitch)
+                    {
                         pitch = valpitch.x;
                         changedProperties.Add(PropertyName.pitch);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valmute = (BanterBool)values[i];
-                    if(valmute.n == PropertyName.mute) {
+                    if (valmute.n == PropertyName.mute)
+                    {
                         mute = valmute.x;
                         changedProperties.Add(PropertyName.mute);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valloop = (BanterBool)values[i];
-                    if(valloop.n == PropertyName.loop) {
+                    if (valloop.n == PropertyName.loop)
+                    {
                         loop = valloop.x;
                         changedProperties.Add(PropertyName.loop);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valbypassEffects = (BanterBool)values[i];
-                    if(valbypassEffects.n == PropertyName.bypassEffects) {
+                    if (valbypassEffects.n == PropertyName.bypassEffects)
+                    {
                         bypassEffects = valbypassEffects.x;
                         changedProperties.Add(PropertyName.bypassEffects);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valbypassListenerEffects = (BanterBool)values[i];
-                    if(valbypassListenerEffects.n == PropertyName.bypassListenerEffects) {
+                    if (valbypassListenerEffects.n == PropertyName.bypassListenerEffects)
+                    {
                         bypassListenerEffects = valbypassListenerEffects.x;
                         changedProperties.Add(PropertyName.bypassListenerEffects);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valbypassReverbZones = (BanterBool)values[i];
-                    if(valbypassReverbZones.n == PropertyName.bypassReverbZones) {
+                    if (valbypassReverbZones.n == PropertyName.bypassReverbZones)
+                    {
                         bypassReverbZones = valbypassReverbZones.x;
                         changedProperties.Add(PropertyName.bypassReverbZones);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valplayOnAwake = (BanterBool)values[i];
-                    if(valplayOnAwake.n == PropertyName.playOnAwake) {
+                    if (valplayOnAwake.n == PropertyName.playOnAwake)
+                    {
                         playOnAwake = valplayOnAwake.x;
                         changedProperties.Add(PropertyName.playOnAwake);
                     }
                 }
             }
-            if(values.Count > 0 ) { UpdateCallback(changedProperties);}
+            if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
         public override void SyncProperties(bool force = false, Action callback = null)
-            {
+        {
             var updates = new List<BanterComponentPropertyUpdate>();
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.volume,
                     type = PropertyType.Float,
                     value = volume,
@@ -249,8 +297,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.pitch,
                     type = PropertyType.Float,
                     value = pitch,
@@ -259,8 +309,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.mute,
                     type = PropertyType.Bool,
                     value = mute,
@@ -269,8 +321,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.loop,
                     type = PropertyType.Bool,
                     value = loop,
@@ -279,8 +333,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.bypassEffects,
                     type = PropertyType.Bool,
                     value = bypassEffects,
@@ -289,8 +345,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.bypassListenerEffects,
                     type = PropertyType.Bool,
                     value = bypassListenerEffects,
@@ -299,8 +357,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.bypassReverbZones,
                     type = PropertyType.Bool,
                     value = bypassReverbZones,
@@ -309,8 +369,10 @@ audioSource.Play();
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.playOnAwake,
                     type = PropertyType.Bool,
                     value = playOnAwake,
@@ -321,8 +383,9 @@ audioSource.Play();
             }
             scene.SetFromUnityProperties(updates, callback);
         }
-        public override void WatchProperties(PropertyName[] properties) {
+        public override void WatchProperties(PropertyName[] properties)
+        {
         }
-// END BANTER COMPILED CODE 
+        // END BANTER COMPILED CODE 
     }
 }

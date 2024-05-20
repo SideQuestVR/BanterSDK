@@ -1,4 +1,5 @@
-public enum HorizontalAlignment{
+public enum HorizontalAlignment
+{
     Left,
     Center,
     Right

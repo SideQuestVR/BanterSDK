@@ -7,7 +7,8 @@ using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using static UnityEngine.InputSystem.InputAction;
-namespace Banter {
+namespace Banter
+{
     [RequireComponent(typeof(Rigidbody))]
     public class HandGrabber : MonoBehaviour
     {
@@ -25,7 +26,8 @@ namespace Banter {
 
         InputAction grab;
 
-        void Awake() {
+        void Awake()
+        {
             scene = BanterScene.Instance();
             grab = (side == HandSide.LEFT ? scene.LeftHandActions : scene.RightHandActions).FindAction("Grip");
         }
@@ -62,10 +64,13 @@ namespace Banter {
                         }
                     }
 
-                    if (hit.attachedRigidbody) {
+                    if (hit.attachedRigidbody)
+                    {
                         Joint.connectedBody = hit.attachedRigidbody;
                         Joint.connectedAnchor = hit.attachedRigidbody.transform.InverseTransformPoint(Anchor.position);
-                    } else {
+                    }
+                    else
+                    {
                         Joint.connectedAnchor = Anchor.position;
                     }
 
@@ -75,12 +80,16 @@ namespace Banter {
                     Grabbing = true;
                     scene.Grab(hit.gameObject, Anchor.position, side);
                 }
-            } else if (grabValue < 0.2f  && Grabbing) {
+            }
+            else if (grabValue < 0.2f && Grabbing)
+            {
                 Grabbing = false;
-                if (Joint) {
+                if (Joint)
+                {
                     Destroy(Joint);
                 }
-                if(hit && hit.gameObject) {
+                if (hit && hit.gameObject)
+                {
                     scene.Release(hit.gameObject, side);
                 }
                 hit = null;
@@ -89,4 +98,4 @@ namespace Banter {
         }
     }
 }
-    
+

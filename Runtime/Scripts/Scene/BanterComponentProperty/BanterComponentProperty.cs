@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace Banter
 {
-     public class BanterComponentProperty : BanterComponentPropertyBase{
+    public class BanterComponentProperty : BanterComponentPropertyBase
+    {
         public BanterComponent banterComponent;
     }
 }

@@ -6,7 +6,8 @@ using UnityEngine;
 namespace Banter
 {
     [System.Serializable]
-    public class BanterComponentPropertyUpdate : BanterComponentPropertyBase{
+    public class BanterComponentPropertyUpdate : BanterComponentPropertyBase
+    {
         public int oid;
         public int cid;
         public string objName;

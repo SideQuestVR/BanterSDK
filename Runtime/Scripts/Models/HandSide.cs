@@ -1,4 +1,5 @@
-public enum HandSide{
+public enum HandSide
+{
     LEFT,
     RIGHT
 }

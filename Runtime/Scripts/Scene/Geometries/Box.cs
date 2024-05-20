@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Box : Geometry{
+public class Box : Geometry
+{
 
-    int numberOfVertices = 0; 
+    int numberOfVertices = 0;
 
     public Box(float width = 1, float height = 1, float depth = 1, int widthSegments = 1, int heightSegments = 1, int depthSegments = 1)
     {
@@ -27,7 +28,8 @@ public class Box : Geometry{
         BuildPlane("x", "y", "z", -1, -1, width, height, -depth, widthSegments, heightSegments, 5); // nz
 
     }
-    void BuildPlane(string u, string v, string w, int udir, int vdir, float width, float height, float depth, int gridX, int gridY, int side ) {
+    void BuildPlane(string u, string v, string w, int udir, int vdir, float width, float height, float depth, int gridX, int gridY, int side)
+    {
         float segmentWidth = width / gridX;
         float segmentHeight = height / gridY;
 
@@ -37,7 +39,7 @@ public class Box : Geometry{
 
         var gridX1 = gridX + 1;
         var gridY1 = gridY + 1;
-        int vertexCounter = 0; 
+        int vertexCounter = 0;
 
         for (int iy = 0; iy < gridY1; iy++)
         {
@@ -52,7 +54,7 @@ public class Box : Geometry{
                 vertices.Add(MakePlaneVector(u, v, w, (float)x * udir, (float)y * vdir, depthHalf));
 
                 normals.Add(MakePlaneVector(u, v, w, 0, 0, depth > 0 ? 1 : -1));
-                
+
                 uvs.Add(new Vector2(1 - (ix / gridX), 1 - (iy / gridY)));
 
                 vertexCounter++;
@@ -70,20 +72,21 @@ public class Box : Geometry{
                 var b = numberOfVertices + ix + gridX1 * (iy + 1);
                 var c = numberOfVertices + (ix + 1) + gridX1 * (iy + 1);
                 var d = numberOfVertices + (ix + 1) + gridX1 * iy;
-                
+
                 indices.Add(a);
                 indices.Add(b);
                 indices.Add(d);
                 indices.Add(b);
                 indices.Add(c);
                 indices.Add(d);
-                
+
             }
 
         }
         numberOfVertices += vertexCounter;
     }
-    Vector3 MakePlaneVector(string u, string v, string w, float x, float y, float z){
+    Vector3 MakePlaneVector(string u, string v, string w, float x, float y, float z)
+    {
         Vector3 vector = new Vector3();
 
         switch (u)

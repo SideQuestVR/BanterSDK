@@ -4,7 +4,8 @@ using UnityEngine;
 
 namespace Banter
 {
-    public struct UnityAndBanterObject {
+    public struct UnityAndBanterObject
+    {
         public GameObject gameObject;
         public BanterObject banterObject;
         public BanterObjectId id;

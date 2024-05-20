@@ -2,11 +2,15 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Banter{
+namespace Banter
+{
     [CustomEditor(typeof(BanterMirror))]
-    public class BanterMirrorEditor : Editor{
-        void OnEnable() {
-            if(target is BanterMirror){
+    public class BanterMirrorEditor : Editor
+    {
+        void OnEnable()
+        {
+            if (target is BanterMirror)
+            {
                 var script = (BanterMirror)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
@@ -22,10 +26,10 @@ namespace Banter{
 
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
-           
-            
- 
-#if BANTER_EDITOR        
+
+
+
+#if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
@@ -35,9 +39,9 @@ namespace Banter{
 #endif
 
             return myInspector;
-        }  
-            
-            
-            
+        }
+
+
+
     }
 }

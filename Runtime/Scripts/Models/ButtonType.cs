@@ -1,4 +1,5 @@
-public enum ButtonType{
+public enum ButtonType
+{
     TRIGGER,
     GRIP,
     PRIMARY,

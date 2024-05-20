@@ -4,219 +4,219 @@ using UnityEngine;
 
 public class Capsule : Geometry
 {
-   
-//     int index;
 
-// // radius = 1, length = 1, capSegments = 4, radialSegments = 8
-//     public Capsule(float radius = 1, float length = 1, int capSegments = 4, int radialSegments = 8)
-//     {
-//         indices = new List<int>();//[indexLength];
-//         vertices = new List<Vector3>();//[verticesLength];
-//         normals = new List<Vector3>();//[verticesLength];
-//         uvs = new List<Vector2>();//[verticesLength];
+    //     int index;
 
-//         index = 0;
+    // // radius = 1, length = 1, capSegments = 4, radialSegments = 8
+    //     public Capsule(float radius = 1, float length = 1, int capSegments = 4, int radialSegments = 8)
+    //     {
+    //         indices = new List<int>();//[indexLength];
+    //         vertices = new List<Vector3>();//[verticesLength];
+    //         normals = new List<Vector3>();//[verticesLength];
+    //         uvs = new List<Vector2>();//[verticesLength];
 
-//         GenerateTorso(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart, thetaLength);
+    //         index = 0;
 
-//         if (!openEnded){
-//            GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart, thetaLength, true);
-//            GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart, thetaLength, false);
-//         }
-//     }
-//     void GenerateTorso(float radiusTop, float radiusBottom, float height, int heightSegments, int radialSegments, float thetaStart, float thetaLength)
-//     {
-       
-//         var halfHeight = height / 2;
-//         // this will be used to calculate the normal
-//         var slope = (radiusBottom - radiusTop) / height;
+    //         GenerateTorso(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart, thetaLength);
 
-//         // generate vertices, normals and uvs
+    //         if (!openEnded){
+    //            GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart, thetaLength, true);
+    //            GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart, thetaLength, false);
+    //         }
+    //     }
+    //     void GenerateTorso(float radiusTop, float radiusBottom, float height, int heightSegments, int radialSegments, float thetaStart, float thetaLength)
+    //     {
 
-//         var indexArray = new List<int[]>();
+    //         var halfHeight = height / 2;
+    //         // this will be used to calculate the normal
+    //         var slope = (radiusBottom - radiusTop) / height;
 
-//         for (int y = 0; y <= heightSegments; y++)
-//         {
+    //         // generate vertices, normals and uvs
 
-//             var indexRow = new int[radialSegments + 1];
+    //         var indexArray = new List<int[]>();
 
-//             var v = y / (float)heightSegments;
+    //         for (int y = 0; y <= heightSegments; y++)
+    //         {
 
-//             // calculate the radius of the current row
+    //             var indexRow = new int[radialSegments + 1];
 
-//             var radius = v * (radiusBottom - radiusTop) + radiusTop;
+    //             var v = y / (float)heightSegments;
 
-//             for (int x = 0; x <= radialSegments; x++)
-//             {
+    //             // calculate the radius of the current row
 
-//                 var u = x / (float)radialSegments;
+    //             var radius = v * (radiusBottom - radiusTop) + radiusTop;
 
-//                 var theta = u * thetaLength + thetaStart;
+    //             for (int x = 0; x <= radialSegments; x++)
+    //             {
 
-//                 var sinTheta = Mathf.Sin(theta);
-//                 var cosTheta = Mathf.Cos(theta);
+    //                 var u = x / (float)radialSegments;
 
-//                 // vertex
-//                 var vertex = new Vector3();
+    //                 var theta = u * thetaLength + thetaStart;
 
-//                 vertex.x = radius * sinTheta;
-//                 vertex.y = -v * height + halfHeight;
-//                 vertex.z = radius * cosTheta;
-//                 vertices.Add(vertex);
+    //                 var sinTheta = Mathf.Sin(theta);
+    //                 var cosTheta = Mathf.Cos(theta);
 
-//                 // normal
+    //                 // vertex
+    //                 var vertex = new Vector3();
 
-//                 var normal = new Vector3();
-//                 normal.x = sinTheta;
-//                 normal.y = slope;
-//                 normal.z = cosTheta;
-//                 normal.Normalize();
-//                 normals.Add(normal);
+    //                 vertex.x = radius * sinTheta;
+    //                 vertex.y = -v * height + halfHeight;
+    //                 vertex.z = radius * cosTheta;
+    //                 vertices.Add(vertex);
 
-//                 // uv
+    //                 // normal
 
-//                 uvs.Add(new Vector2(u, 1 - v));
+    //                 var normal = new Vector3();
+    //                 normal.x = sinTheta;
+    //                 normal.y = slope;
+    //                 normal.z = cosTheta;
+    //                 normal.Normalize();
+    //                 normals.Add(normal);
 
-//                 // save index of vertex in respective row
+    //                 // uv
 
-//                 indexRow[x] = index++;
+    //                 uvs.Add(new Vector2(u, 1 - v));
 
-//             }
+    //                 // save index of vertex in respective row
 
-//             // now save vertices of the row in our index array
+    //                 indexRow[x] = index++;
 
-//             indexArray.Add(indexRow);
+    //             }
 
-//         }
+    //             // now save vertices of the row in our index array
 
-//         // generate indices
+    //             indexArray.Add(indexRow);
 
-//         for (int x = 0; x < radialSegments; x++)
-//         {
+    //         }
 
-//             for (int y = 0; y < heightSegments; y++)
-//             {
+    //         // generate indices
 
-//                 // we use the index array to access the correct indices
-               
-//                 var a = indexArray[y][x];
-//                 var b = indexArray[y + 1][x];
-//                 var c = indexArray[y + 1][x + 1];
-//                 var d = indexArray[y][x + 1];
+    //         for (int x = 0; x < radialSegments; x++)
+    //         {
 
-//                 // faces
+    //             for (int y = 0; y < heightSegments; y++)
+    //             {
 
-//                 indices.Add(a);
-//                 indices.Add(b);
-//                 indices.Add(d);
-//                 indices.Add(b);
-//                 indices.Add(c);
-//                 indices.Add(d);
-                
+    //                 // we use the index array to access the correct indices
 
-//             }
+    //                 var a = indexArray[y][x];
+    //                 var b = indexArray[y + 1][x];
+    //                 var c = indexArray[y + 1][x + 1];
+    //                 var d = indexArray[y][x + 1];
 
-//         }
+    //                 // faces
 
-//     }
+    //                 indices.Add(a);
+    //                 indices.Add(b);
+    //                 indices.Add(d);
+    //                 indices.Add(b);
+    //                 indices.Add(c);
+    //                 indices.Add(d);
 
-//     void GenerateCap(float radiusTop, float radiusBottom, float height, int heightSegments, int radialSegments, float thetaStart, float thetaLength, bool top)
-//     {        
-//         var halfHeight = height / 2;
 
-//         var radius = (top == true) ? radiusTop : radiusBottom;
-//         var sign = (top == true) ? 1 : -1;
+    //             }
 
-//         // save the index of the first center vertex
-//         int centerIndexStart = index;
+    //         }
 
-//         // first we generate the center vertex data of the cap.
-//         // because the geometry needs one set of uvs per face,
-//         // we must generate a center vertex per face/segment
+    //     }
 
-//         for (int x = 1; x <= radialSegments; x++)
-//         {
+    //     void GenerateCap(float radiusTop, float radiusBottom, float height, int heightSegments, int radialSegments, float thetaStart, float thetaLength, bool top)
+    //     {        
+    //         var halfHeight = height / 2;
 
-//             // vertex
+    //         var radius = (top == true) ? radiusTop : radiusBottom;
+    //         var sign = (top == true) ? 1 : -1;
 
-//             vertices.Add(new Vector3(0, halfHeight * sign, 0));
+    //         // save the index of the first center vertex
+    //         int centerIndexStart = index;
 
-//             // normal
+    //         // first we generate the center vertex data of the cap.
+    //         // because the geometry needs one set of uvs per face,
+    //         // we must generate a center vertex per face/segment
 
-//             normals.Add(new Vector3(0, sign, 0));
+    //         for (int x = 1; x <= radialSegments; x++)
+    //         {
 
-//             // uv
+    //             // vertex
 
-//             uvs.Add(new Vector2(0.5f, 0.5f));
+    //             vertices.Add(new Vector3(0, halfHeight * sign, 0));
 
-//             // increase index
+    //             // normal
 
-//             index++;
+    //             normals.Add(new Vector3(0, sign, 0));
 
-//         }
+    //             // uv
 
-//         // save the index of the last center vertex
+    //             uvs.Add(new Vector2(0.5f, 0.5f));
 
-//         int centerIndexEnd = index;
+    //             // increase index
 
-//         // now we generate the surrounding vertices, normals and uvs
+    //             index++;
 
-//         for (int x = 0; x <= radialSegments; x++)
-//         {
+    //         }
 
-//             var u = x / (float)radialSegments;
-//             var theta = u * thetaLength + thetaStart;
+    //         // save the index of the last center vertex
 
-//             var cosTheta = Mathf.Cos(theta);
-//             var sinTheta = Mathf.Sin(theta);
+    //         int centerIndexEnd = index;
 
-//             // vertex
+    //         // now we generate the surrounding vertices, normals and uvs
 
-//             var vertex = new Vector3();
-//             vertex.x = radius * sinTheta;
-//             vertex.y = halfHeight * sign;
-//             vertex.z = radius * cosTheta;
-//             vertices.Add(vertex);
+    //         for (int x = 0; x <= radialSegments; x++)
+    //         {
 
-//             // normal
+    //             var u = x / (float)radialSegments;
+    //             var theta = u * thetaLength + thetaStart;
 
-//             normals.Add(new Vector3(0, sign, 0));
+    //             var cosTheta = Mathf.Cos(theta);
+    //             var sinTheta = Mathf.Sin(theta);
 
-//             // uv
-            
-//             //uv.x = (cosTheta * 0.5) + 0.5;
-//             //uv.y = (sinTheta * 0.5 * sign) + 0.5;
-//             uvs.Add(new Vector2((cosTheta * 0.5f) + 0.5f, (sinTheta * 0.5f * sign) + 0.5f));
+    //             // vertex
 
-//             // increase index
+    //             var vertex = new Vector3();
+    //             vertex.x = radius * sinTheta;
+    //             vertex.y = halfHeight * sign;
+    //             vertex.z = radius * cosTheta;
+    //             vertices.Add(vertex);
 
-//             index++;
+    //             // normal
 
-//         }
+    //             normals.Add(new Vector3(0, sign, 0));
 
-//         // generate indices
+    //             // uv
 
-//         for (int x = 0; x < radialSegments; x++){
-//             var c = centerIndexStart + x;
-//             var i = centerIndexEnd + x;
+    //             //uv.x = (cosTheta * 0.5) + 0.5;
+    //             //uv.y = (sinTheta * 0.5 * sign) + 0.5;
+    //             uvs.Add(new Vector2((cosTheta * 0.5f) + 0.5f, (sinTheta * 0.5f * sign) + 0.5f));
 
-//             if (top == true)
-//             {
+    //             // increase index
 
-//                 // face top
-//                 indices.Add(i);
-//                 indices.Add(i + 1);
-//                 indices.Add(c);
+    //             index++;
 
-//             }else{
+    //         }
 
-//                 // face bottom
+    //         // generate indices
 
-//                 indices.Add(i + 1);
-//                 indices.Add(i);
-//                 indices.Add(c);
+    //         for (int x = 0; x < radialSegments; x++){
+    //             var c = centerIndexStart + x;
+    //             var i = centerIndexEnd + x;
 
-//             }
-//         }
-//     }
+    //             if (top == true)
+    //             {
+
+    //                 // face top
+    //                 indices.Add(i);
+    //                 indices.Add(i + 1);
+    //                 indices.Add(c);
+
+    //             }else{
+
+    //                 // face bottom
+
+    //                 indices.Add(i + 1);
+    //                 indices.Add(i);
+    //                 indices.Add(c);
+
+    //             }
+    //         }
+    //     }
 }

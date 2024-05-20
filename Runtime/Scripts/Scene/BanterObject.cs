@@ -7,29 +7,38 @@ using UnityEngine;
 
 namespace Banter
 {
-    public class BanterObject{
-        public BanterObject() {
+    public class BanterObject
+    {
+        public BanterObject()
+        {
             scene = BanterScene.Instance();
         }
         public int oid;
         public string name = "";
         public BanterScene scene;
         public UnityAndBanterObject unityAndBanterObject;
-        public ConcurrentDictionary<int,BanterComponent> banterComponents = new ConcurrentDictionary<int,BanterComponent>();
+        public ConcurrentDictionary<int, BanterComponent> banterComponents = new ConcurrentDictionary<int, BanterComponent>();
         public Transform previousParent;
-        public BanterComponent GetComponent(int id) {
+        public BanterComponent GetComponent(int id)
+        {
             return scene?.GetBanterComponent(id);
         }
-        public void AddComponent(int id, BanterComponent component) {
-            banterComponents.TryAdd(id,component);
+        public void AddComponent(int id, BanterComponent component)
+        {
+            banterComponents.TryAdd(id, component);
         }
-        public void RemoveComponent(int id) {
-            try{
+        public void RemoveComponent(int id)
+        {
+            try
+            {
                 banterComponents.TryRemove(id, out _);
-            }catch(Exception){}
+            }
+            catch (Exception) { }
         }
-        public void Destroy() {
-            foreach(var comp in banterComponents.ToArray()) {
+        public void Destroy()
+        {
+            foreach (var comp in banterComponents.ToArray())
+            {
                 scene?.DestroyBanterComponent(comp.Value.cid);
             }
             banterComponents.Clear();

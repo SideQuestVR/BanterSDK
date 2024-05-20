@@ -9,7 +9,8 @@ namespace Banter
     {
         public string methodName;
         public string overload;
-        public MethodAttribute([CallerMemberName] string methodName = "", string overload = "") {
+        public MethodAttribute([CallerMemberName] string methodName = "", string overload = "")
+        {
             this.methodName = methodName;
             this.overload = overload;
         }

@@ -57,11 +57,11 @@ public class Plane : Geometry
                 int d = (ix + 1) + gridX1 * iy;
                 //int index = (iy * widthSegments + ix) * 6;
                 // faces
-                
-                
-               
-                
-                
+
+
+
+
+
                 indices.Add(a);
                 indices.Add(b);
                 indices.Add(d);

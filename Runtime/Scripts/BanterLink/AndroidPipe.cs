@@ -2,21 +2,25 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
-namespace Banter{
-    public class AndroidPipe: BanterPipe{
+namespace Banter
+{
+    public class AndroidPipe : BanterPipe
+    {
         AndroidJavaObject activity;
 
         private CountingLogger incomingLogger = new CountingLogger("AndroidPipe: Web -> Unity");
         private CountingLogger outgoingLogger = new CountingLogger("AndroidPipe: Unity -> Web");
         private CountingLogger fromAndroid = new CountingLogger("AndroidPipe: from android -> unity");
         private BanterSocketClient socketClient;
-        public override void Start(Action connectedCallback, Action<string> msgCallback) {
+        public override void Start(Action connectedCallback, Action<string> msgCallback)
+        {
             // AndroidJNI.AttachCurrentThread();
             activity = new AndroidJavaObject("quest.side.wtf.MainActivity");
             var aframe = new AframeCallback();
-            aframe.SetCallback(str => {
+            aframe.SetCallback(str =>
+            {
                 // incomingLogger.Add();
-                
+
                 if (str == "A")
                 {
                     fromAndroid.Add();
@@ -28,11 +32,14 @@ namespace Banter{
 
                 }
             });
-           
+
             string jstxt = Resources.Load<TextAsset>("inject").text;
-            try {
+            try
+            {
                 activity.Call("setInjectionJs", jstxt);
-            } catch (Exception) {
+            }
+            catch (Exception)
+            {
                 UnityEngine.Debug.Log("No injection js found: " + jstxt);
             }
             //activity.Call("setCallBackListener", aframe);
@@ -77,29 +84,34 @@ namespace Banter{
                 throw;
             }
 
-//            connectedCallback();
+            //            connectedCallback();
         }
 
-        public override void Stop(){
-            if (activity != null) {
+        public override void Stop()
+        {
+            if (activity != null)
+            {
                 activity.Call("setCallBackListener", null);
             }
         }
 
-        public override void Send(string msg){
+        public override void Send(string msg)
+        {
             AndroidJNI.AttachCurrentThread();
-            if (activity != null) {
+            if (activity != null)
+            {
                 // outgoingLogger.Add();
                 activity.Call("sendMessage", msg);
             }
         }
-        
+
         public override bool GetIsConnected()
         {
             return socketClient.IsConnected;
         }
-        
-        public override object GetActivity() {
+
+        public override object GetActivity()
+        {
             return activity;
         }
     }

@@ -10,12 +10,14 @@ public class URPToBuiltIn : EditorWindow
     private int selectedIndex = 0;
 
     [MenuItem("Banter/Tools/URP/URPToBuiltIn")]
-    public static void OpenWindow() {
+    public static void OpenWindow()
+    {
         URPToBuiltIn window = GetWindow<URPToBuiltIn>();
         window.titleContent = new GUIContent("Convery URP materials to Built-In");
     }
 
-    public void OnEnable() {
+    public void OnEnable()
+    {
         rootVisualElement.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Editor/Builder/dnd.uss"));
         var container = new VisualElement();
         // var toggleContainer = new VisualElement();
@@ -39,7 +41,7 @@ public class URPToBuiltIn : EditorWindow
         // includeWindows.text = "Build for Windows";
         // includeWindows.AddToClassList("toggle-box");
         // includeWindows.value = buildTargetFlags[1];
-        
+
         // includeAndroid.RegisterCallback<MouseUpEvent>(IncludeAndroid);
         // includeWindows.RegisterCallback<MouseUpEvent>(IncludeWindows);
 
@@ -51,7 +53,8 @@ public class URPToBuiltIn : EditorWindow
         buildButton.AddToClassList("build-button");
         container.Add(buildButton);
         buildButton.text = "Convert Materials from\nURP to Built-In (Standard)";
-        buildButton.RegisterCallback<MouseUpEvent>((MouseUpEvent _) => {
+        buildButton.RegisterCallback<MouseUpEvent>((MouseUpEvent _) =>
+        {
             selectedIndex = 0;
             ConvertMaterials();
         });
@@ -60,15 +63,17 @@ public class URPToBuiltIn : EditorWindow
         buildButton2.AddToClassList("build-button");
         container.Add(buildButton2);
         buildButton2.text = "Convert Materials from\nURP to Built-In (Mobile/Diffuse)";
-        buildButton2.RegisterCallback<MouseUpEvent>((MouseUpEvent _) => {
+        buildButton2.RegisterCallback<MouseUpEvent>((MouseUpEvent _) =>
+        {
             selectedIndex = 1;
             ConvertMaterials();
         });
-        
+
 
         rootVisualElement.Add(container);
     }
-    private void ConvertShaders(MouseUpEvent _) {
+    private void ConvertShaders(MouseUpEvent _)
+    {
 
     }
     // private void OnGUI()

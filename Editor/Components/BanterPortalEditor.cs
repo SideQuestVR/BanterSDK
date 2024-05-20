@@ -2,11 +2,15 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Banter{
+namespace Banter
+{
     [CustomEditor(typeof(BanterPortal))]
-    public class BanterPortalEditor : Editor{
-        void OnEnable() {
-            if(target is BanterPortal){
+    public class BanterPortalEditor : Editor
+    {
+        void OnEnable()
+        {
+            if (target is BanterPortal)
+            {
                 var script = (BanterPortal)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
@@ -22,20 +26,20 @@ namespace Banter{
 
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
-           
-            
-        var title = new Label("PROPERTIES SEEN BY JS");
+
+
+            var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-var seeFields = new Label("url, instance, ");
+            var seeFields = new Label("url, instance, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
             seeFields.style.marginBottom = 10;
             seeFields.style.marginTop = 10;
             seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields); 
-#if BANTER_EDITOR        
+            myInspector.Add(seeFields);
+#if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
@@ -45,9 +49,9 @@ var seeFields = new Label("url, instance, ");
 #endif
 
             return myInspector;
-        }  
-            
-            
-            
+        }
+
+
+
     }
 }
