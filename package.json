@@ -1,31 +1,33 @@
 {
-    "name": "com.sidequest.banter",
-    "version": "0.0.10",
-    "displayName": "Banter SDK",
-    "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
-    "unity": "2021.3",
-    "unityRelease": "8f1",
-    "documentationUrl": "https://bantervr.com/documentation",
-    "changelogUrl": "https://bantervr.com/sdk-changelog",
-    "licensesUrl": "https://bantervr.com/sdk-license",
-    "dependencies": {
-      "com.unity.xr.management": "4.2.0",
-      "com.unity.cinemachine": "2.8.9"
-    },
-    "keywords": [
-      "world-building",
-      "metaverse"
-    ],
-    "author": {
-      "name": "SideQuest",
-      "email": "banter@sidequestvr.com",
-      "url": "https://bantervr.com"
-    },
-    "samples": [
-      {
-        "displayName": "QuickStart",
-        "description": "This quick start sample demonstrates how to make a basic world.",
-        "path": "Samples~/QuickStart"
-      }
-    ]
+  "name": "com.sidequest.banter",
+  "version": "0.0.10",
+  "displayName": "Banter SDK",
+  "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
+  "unity": "2021.3",
+  "unityRelease": "8f1",
+  "documentationUrl": "https://bantervr.com/documentation",
+  "changelogUrl": "https://bantervr.com/sdk-changelog",
+  "licensesUrl": "https://bantervr.com/sdk-license",
+  "dependencies": {
+    "com.unity.cinemachine": "2.8.9",
+    "com.unity.nuget.newtonsoft-json": "3.0.2",
+    "com.unity.textmeshpro": "3.0.9",
+    "com.unity.xr.management": "4.2.0"
+  },
+  "keywords": [
+    "world-building",
+    "metaverse"
+  ],
+  "author": {
+    "name": "SideQuest",
+    "email": "banter@sidequestvr.com",
+    "url": "https://bantervr.com"
+  },
+  "samples": [
+    {
+      "displayName": "QuickStart",
+      "description": "This quick start sample demonstrates how to make a basic world.",
+      "path": "Samples~/QuickStart"
+    }
+  ]
 }
