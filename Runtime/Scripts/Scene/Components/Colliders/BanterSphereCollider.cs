@@ -5,22 +5,22 @@ using UnityEngine;
 
 namespace Banter
 {
-/* 
-#### Sphere Collider
-Add a sphere shaped physics collider to the object.
+    /* 
+    #### Sphere Collider
+    Add a sphere shaped physics collider to the object.
 
-**Properties**
-- `isTrigger` - If the collider is a trigger.
-- `radius` - The radius of the sphere.
+    **Properties**
+    - `isTrigger` - If the collider is a trigger.
+    - `radius` - The radius of the sphere.
 
-**Code Example**
-```js
-    const isTrigger = false;
-    const radius = 0.5;
-    const gameObject = new BS.GameObject("MySphereCollider"); 
-    const sphereCollider = await gameObject.AddComponent(new BS.BanterSphereCollider(isTrigger, radius));
-```
-*/
+    **Code Example**
+    ```js
+        const isTrigger = false;
+        const radius = 0.5;
+        const gameObject = new BS.GameObject("MySphereCollider"); 
+        const sphereCollider = await gameObject.AddComponent(new BS.BanterSphereCollider(isTrigger, radius));
+    ```
+    */
     [WatchComponent(typeof(SphereCollider))]
     [RequireComponent(typeof(SphereCollider))]
     [RequireComponent(typeof(BanterObjectId))]
@@ -28,71 +28,84 @@ Add a sphere shaped physics collider to the object.
     {
         [See(initial = "false")] public bool isTrigger;
         [See(initial = "0.5")] public float radius;
-// BANTER COMPILED CODE 
+        // BANTER COMPILED CODE 
         public SphereCollider _componentType;
-        public SphereCollider componentType {
-            get{
-                if(_componentType == null) {
-                    _componentType = GetComponent<SphereCollider>();;
+        public SphereCollider componentType
+        {
+            get
+            {
+                if (_componentType == null)
+                {
+                    _componentType = GetComponent<SphereCollider>(); ;
                 }
                 return _componentType;
             }
         }
         BanterScene scene;
-    
+
         bool alreadyStarted = false;
-    
-        void Start() { 
-            Init(); 
+
+        void Start()
+        {
+            Init();
             StartStuff();
         }
-        public override void ReSetup() {
-            
+        public override void ReSetup()
+        {
+
         }
-        
-    
+
+
         public override void Init()
         {
             scene = BanterScene.Instance();
-            if(alreadyStarted) { return; }
+            if (alreadyStarted) { return; }
             alreadyStarted = true;
-            
-            
-            
+
+
+
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
             SetLoadedIfNot();
-        
+
         }
-     
-        void Awake() {
+
+        void Awake()
+        {
             BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
-    
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-            
+
             Destroy(componentType);
         }
-        public override object CallMethod(string methodName, List<object> parameters){
+        public override object CallMethod(string methodName, List<object> parameters)
+        {
             return null;
         }
-    
-        public override void Deserialise(List<object> values) {
+
+        public override void Deserialise(List<object> values)
+        {
             List<PropertyName> changedProperties = new List<PropertyName>();
-            for(int i = 0; i < values.Count; i++) {
-                if(values[i] is BanterBool){
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] is BanterBool)
+                {
                     var valisTrigger = (BanterBool)values[i];
-                    if(valisTrigger.n == PropertyName.isTrigger) {
+                    if (valisTrigger.n == PropertyName.isTrigger)
+                    {
                         componentType.isTrigger = valisTrigger.x;
                         changedProperties.Add(PropertyName.isTrigger);
                     }
                 }
-                if(values[i] is BanterFloat){
+                if (values[i] is BanterFloat)
+                {
                     var valradius = (BanterFloat)values[i];
-                    if(valradius.n == PropertyName.radius) {
+                    if (valradius.n == PropertyName.radius)
+                    {
                         componentType.radius = valradius.x;
                         changedProperties.Add(PropertyName.radius);
                     }
@@ -100,10 +113,12 @@ Add a sphere shaped physics collider to the object.
             }
         }
         public override void SyncProperties(bool force = false, Action callback = null)
-            {
+        {
             var updates = new List<BanterComponentPropertyUpdate>();
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.isTrigger,
                     type = PropertyType.Bool,
                     value = componentType.isTrigger,
@@ -112,8 +127,10 @@ Add a sphere shaped physics collider to the object.
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.radius,
                     type = PropertyType.Float,
                     value = componentType.radius,
@@ -124,8 +141,9 @@ Add a sphere shaped physics collider to the object.
             }
             scene.SetFromUnityProperties(updates, callback);
         }
-        public override void WatchProperties(PropertyName[] properties) {
+        public override void WatchProperties(PropertyName[] properties)
+        {
         }
-// END BANTER COMPILED CODE 
+        // END BANTER COMPILED CODE 
     }
 }

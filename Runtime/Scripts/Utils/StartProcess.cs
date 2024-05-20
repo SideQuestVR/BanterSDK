@@ -2,8 +2,10 @@ using System;
 using System.Diagnostics;
 using UnityEngine;
 
-public class StartProcess{
-    public static int Do(Color color, string workingDirectory, string filename, string arguments, string tag, Action callback = null) {
+public class StartProcess
+{
+    public static int Do(Color color, string workingDirectory, string filename, string arguments, string tag, Action callback = null)
+    {
 #if BANTER_EDITOR && !UNITY_EDITOR && !ENABLE_MONO
         LogLine.Do("Launching banter-link with KS.Diagnostics");
         var process = new KS.Diagnostics.Process();
@@ -24,7 +26,8 @@ public class StartProcess{
         process.Exited += new EventHandler((sender, e) => callback?.Invoke());
         bool started = process.Start();
         process.EnableRaisingEvents = true;
-        if (!started) {
+        if (!started)
+        {
             throw new InvalidOperationException("Could not start process: " + process);
         }
         process.BeginOutputReadLine();

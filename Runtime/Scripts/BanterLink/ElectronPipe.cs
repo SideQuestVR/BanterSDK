@@ -8,7 +8,8 @@ using System.Collections.Concurrent;
 using Lachee.IO;
 using Banter;
 
-public class ElectronPipe : BanterPipe {
+public class ElectronPipe : BanterPipe
+{
     private CountingLogger incomingLogger = new CountingLogger("ElectronPipe: Web -> Unity");
     private CountingLogger outgoingLogger = new CountingLogger("ElectronPipe: Unity -> Web");
     private Thread SenderThread;
@@ -19,14 +20,15 @@ public class ElectronPipe : BanterPipe {
     public int headerSize = 4;
     Thread readThread;
     private NamedPipeClientStream rendererClient;
-    
+
     public ElectronPipe(string pipeName)
     {
         PipeName = pipeName;
     }
 
 
-    public override void Start(Action connectedCallback, Action<string> msgCallback) {
+    public override void Start(Action connectedCallback, Action<string> msgCallback)
+    {
         _ = InitWait((success) =>
         {
             if (!success)
@@ -39,29 +41,35 @@ public class ElectronPipe : BanterPipe {
         });
     }
 
-    public override void Stop(){
+    public override void Stop()
+    {
         StopReadThread();
         StopSenderThread();
         Dispose();
     }
 
-    public void StartReadThread(Action<string> callback) {
+    public void StartReadThread(Action<string> callback)
+    {
         readThread = new Thread(() => ReadThread(callback));
         readThread.Start();
     }
-    public void StopReadThread() {
-        if(readThread != null) {
+    public void StopReadThread()
+    {
+        if (readThread != null)
+        {
             readThread?.Abort();
         }
     }
-    public void StopSenderThread() {
-        if(SenderThread != null) {
+    public void StopSenderThread()
+    {
+        if (SenderThread != null)
+        {
             SenderThread?.Abort();
         }
     }
 
     public async Task InitWait(Action<bool> completeCallback)
-    {        
+    {
         bool done = false;
 
         var ctx = new CancellationTokenSource();
@@ -76,10 +84,13 @@ public class ElectronPipe : BanterPipe {
                 try
                 {
                     var code = rendererClient.Connect();
-                    if (code == 0) {
+                    if (code == 0)
+                    {
                         completeCallback(true);
                         done = true;
-                    } else {
+                    }
+                    else
+                    {
                         rendererClient.Dispose();
                         LogLine.Do($"[Banter] Pipe not connected!");
                     }
@@ -106,7 +117,7 @@ public class ElectronPipe : BanterPipe {
         }
     }
 
-    
+
 
     public void PurgeSendQueue()
     {
@@ -117,17 +128,21 @@ public class ElectronPipe : BanterPipe {
         }
     }
 
-    public void ReadThread(Action<string> callback) {
+    public void ReadThread(Action<string> callback)
+    {
         byte[] result;
         if (rendererClient == null) return;
-        while (rendererClient != null && rendererClient.IsConnected){
+        while (rendererClient != null && rendererClient.IsConnected)
+        {
             if (rendererClient == null || !rendererClient.IsConnected)
             {
                 break;
             }
             result = new byte[4];
-            try{
-                if(rendererClient == null) {
+            try
+            {
+                if (rendererClient == null)
+                {
                     break;
                 }
 
@@ -145,11 +160,17 @@ public class ElectronPipe : BanterPipe {
                         callback(strResult);
                     }
                 }
-            }catch(ThreadAbortException){
+            }
+            catch (ThreadAbortException)
+            {
                 // ignore
-            }catch (ObjectDisposedException){
+            }
+            catch (ObjectDisposedException)
+            {
                 // ignore
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.LogError("[Banter] Exception in Pipe Read Thread");
                 Debug.LogException(e);
             }
@@ -183,16 +204,20 @@ public class ElectronPipe : BanterPipe {
                                 sendEvent.WaitOne(1);
                             }
                         }
-                    }catch(ThreadAbortException){
+                    }
+                    catch (ThreadAbortException)
+                    {
                         // ignore
-                    } catch (Exception ex)
+                    }
+                    catch (Exception ex)
                     {
                         Debug.LogError("[Banter] Exception in Pipe Sender Thread");
                         Debug.LogException(ex);
 
-                    } finally
+                    }
+                    finally
                     {
-                        lock(_SenderThreadLock)
+                        lock (_SenderThreadLock)
                         {
                             SenderThread = null;
                         }
@@ -240,7 +265,8 @@ public class ElectronPipe : BanterPipe {
 
     public void Dispose()
     {
-         if(rendererClient != null) {
+        if (rendererClient != null)
+        {
             rendererClient.Dispose();
             rendererClient = null;
         }

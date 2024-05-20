@@ -1,4 +1,5 @@
-public enum AttachmentType {
+public enum AttachmentType
+{
     Head,
     LeftHand,
     RightHand,

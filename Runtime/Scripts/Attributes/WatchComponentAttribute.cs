@@ -8,7 +8,8 @@ namespace Banter
 
         public WatchComponentAttribute() { }
 
-        public WatchComponentAttribute(Type requiredComponent) { 
+        public WatchComponentAttribute(Type requiredComponent)
+        {
             m_Type = requiredComponent;
         }
     }

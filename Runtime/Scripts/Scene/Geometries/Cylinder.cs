@@ -8,7 +8,7 @@ public class Cylinder : Geometry
     int index;
 
 
-    public Cylinder(float radiusTop = 1, float radiusBottom = 1, float height = 1, int radialSegments = 8, int heightSegments = 2, bool openEnded = false, float thetaStart = 0, float thetaLength = Mathf.PI*2)
+    public Cylinder(float radiusTop = 1, float radiusBottom = 1, float height = 1, int radialSegments = 8, int heightSegments = 2, bool openEnded = false, float thetaStart = 0, float thetaLength = Mathf.PI * 2)
     {
         indices = new List<int>();//[indexLength];
         vertices = new List<Vector3>();//[verticesLength];
@@ -16,16 +16,17 @@ public class Cylinder : Geometry
         uvs = new List<Vector2>();//[verticesLength];
         index = 0;
 
-        GenerateTorso(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart - Mathf.PI , thetaLength);
+        GenerateTorso(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart - Mathf.PI, thetaLength);
 
-        if (!openEnded){
-           GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart - Mathf.PI, thetaLength, true);
-           GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart - Mathf.PI, thetaLength, false);
+        if (!openEnded)
+        {
+            GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart - Mathf.PI, thetaLength, true);
+            GenerateCap(radiusTop, radiusBottom, height, heightSegments, radialSegments, thetaStart - Mathf.PI, thetaLength, false);
         }
     }
     void GenerateTorso(float radiusTop, float radiusBottom, float height, int heightSegments, int radialSegments, float thetaStart, float thetaLength)
     {
-       
+
         var halfHeight = height / 2;
         // this will be used to calculate the normal
         var slope = (radiusBottom - radiusTop) / height;
@@ -34,7 +35,7 @@ public class Cylinder : Geometry
 
         var indexArray = new List<int[]>();
 
-        for (int y = heightSegments; y >=0 ; y--)
+        for (int y = heightSegments; y >= 0; y--)
         {
 
             var indexRow = new int[radialSegments + 1];
@@ -45,7 +46,7 @@ public class Cylinder : Geometry
 
             var radius = v * (radiusBottom - radiusTop) + radiusTop;
 
-            for (int x = radialSegments; x >=0 ; x--)
+            for (int x = radialSegments; x >= 0; x--)
             {
 
                 var u = x / (float)radialSegments;
@@ -90,14 +91,14 @@ public class Cylinder : Geometry
 
         // generate indices
 
-        for (int x = radialSegments - 1; x >=0 ; x--)
+        for (int x = radialSegments - 1; x >= 0; x--)
         {
 
-            for (int y = heightSegments - 1; y >= 0 ; y--)
+            for (int y = heightSegments - 1; y >= 0; y--)
             {
 
                 // we use the index array to access the correct indices
-               
+
                 var a = indexArray[y][x];
                 var b = indexArray[y + 1][x];
                 var c = indexArray[y + 1][x + 1];
@@ -111,7 +112,7 @@ public class Cylinder : Geometry
                 indices.Add(b);
                 indices.Add(c);
                 indices.Add(d);
-                
+
             }
 
         }
@@ -119,7 +120,7 @@ public class Cylinder : Geometry
     }
 
     void GenerateCap(float radiusTop, float radiusBottom, float height, int heightSegments, int radialSegments, float thetaStart, float thetaLength, bool top)
-    {        
+    {
         var halfHeight = height / 2;
 
         var radius = (top == true) ? radiusTop : radiusBottom;
@@ -181,10 +182,10 @@ public class Cylinder : Geometry
             normals.Add(new Vector3(0, sign, 0));
 
             // uv
-            
+
             //uv.x = (cosTheta * 0.5) + 0.5;
             //uv.y = (sinTheta * 0.5 * sign) + 0.5;
-            uvs.Add(new Vector2( 1 - ((cosTheta * 0.5f) + 0.5f), ((sinTheta * 0.5f * sign) + 0.5f)));
+            uvs.Add(new Vector2(1 - ((cosTheta * 0.5f) + 0.5f), ((sinTheta * 0.5f * sign) + 0.5f)));
 
             // increase index
 
@@ -194,7 +195,8 @@ public class Cylinder : Geometry
 
         // generate indices
 
-        for (int x = radialSegments - 1; x >= 0; x--){
+        for (int x = radialSegments - 1; x >= 0; x--)
+        {
             var c = centerIndexStart + x;
             var i = centerIndexEnd + x;
 
@@ -206,7 +208,9 @@ public class Cylinder : Geometry
                 indices.Add(i + 1);
                 indices.Add(c);
 
-            }else{
+            }
+            else
+            {
 
                 // face bottom
 

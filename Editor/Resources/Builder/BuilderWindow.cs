@@ -14,7 +14,7 @@ public enum BanterBuilderBundleMode
 {
     None = 0,
     Scene = 1,
-    Kit = 2    
+    Kit = 2
 }
 public class KitObjectAndPath
 {
@@ -53,13 +53,15 @@ public class BuilderWindow : EditorWindow
     List<string> statusMessages = new List<string>();
 
     [MenuItem("Banter/Bundle Builder")]
-    public static void ShowMainWindow() {
+    public static void ShowMainWindow()
+    {
         BuilderWindow window = GetWindow<BuilderWindow>();
         window.minSize = new Vector2(450, 200);
         window.titleContent = new GUIContent("Banter Bundle Builder");
     }
 
-    public void OnEnable(){
+    public void OnEnable()
+    {
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
@@ -67,31 +69,36 @@ public class BuilderWindow : EditorWindow
         SetupUI();
     }
 
-    void SetupUI() {
+    void SetupUI()
+    {
         var buildButton = rootVisualElement.Q<Button>("buildButton");
 
         buildButton.clicked += () => BuildAssetBundles();
 
         var buildForAndroid = rootVisualElement.Q<Toggle>("buildForAndroid");
-        buildForAndroid.RegisterCallback<MouseUpEvent>((e) => {
+        buildForAndroid.RegisterCallback<MouseUpEvent>((e) =>
+        {
             EditorPrefs.SetBool("BanterBuilder_BuildTarget_Android", buildForAndroid.value);
             buildTargetFlags[0] = buildForAndroid.value;
         });
-        
+
         var buildForWindows = rootVisualElement.Q<Toggle>("buildForWindows");
-        buildForWindows.RegisterCallback<MouseUpEvent>((e) => {
+        buildForWindows.RegisterCallback<MouseUpEvent>((e) =>
+        {
             EditorPrefs.SetBool("BanterBuilder_BuildTarget_Windows", buildForWindows.value);
             buildTargetFlags[1] = buildForWindows.value;
         });
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
         buildProgress = rootVisualElement.Q<ListView>("buildProgress");
-        buildProgress.makeItem = () => {
+        buildProgress.makeItem = () =>
+        {
             var label = new Label();
             label.AddToClassList("unity-label-margin");
             return label;
         };
-        buildProgress.bindItem = (e, i) => {
+        buildProgress.bindItem = (e, i) =>
+        {
             (e as Label).text = statusMessages[i].ToLower();
         };
         buildProgress.itemsSource = statusMessages;
@@ -102,14 +109,17 @@ public class BuilderWindow : EditorWindow
         removeSelected.clicked += () => RemoveSelectedObjects();
         kitListView = rootVisualElement.Q<ListView>("kitItemList");
         kitListView.onSelectionChange += (e) => ShowRemoveSelected();
-        kitListView.makeItem = () => {
+        kitListView.makeItem = () =>
+        {
             var ele = new VisualElement();
             ele.style.flexDirection = FlexDirection.RowReverse;
             ele.style.justifyContent = Justify.SpaceBetween;
-            var label = new Label{
+            var label = new Label
+            {
                 name = "kitItemName"
             };
-            var button = new Button{
+            var button = new Button
+            {
                 name = "kitItemCopy"
             };
             label.style.color = new Color(0.560f, 0.560f, 0.560f);
@@ -124,12 +134,14 @@ public class BuilderWindow : EditorWindow
             ele.AddToClassList("unity-label-margin");
             return ele;
         };
-        kitListView.bindItem = (e, i) => {
+        kitListView.bindItem = (e, i) =>
+        {
             var name = kitObjectList[i].path.ToLower();
             e.Q<Label>("kitItemName").text = i + 1 + ". " + name;
             var button = e.Q<Button>("kitItemCopy");
             button.text = "copy";
-            button.clicked += () => {
+            button.clicked += () =>
+            {
                 AddStatus("Copied path to clipboard: " + name);
                 GUIUtility.systemCopyBuffer = name;
             };
@@ -139,12 +151,13 @@ public class BuilderWindow : EditorWindow
         kitListView.reorderMode = ListViewReorderMode.Simple;
         DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
-        if(!string.IsNullOrEmpty(scenePath)) {
+        if (!string.IsNullOrEmpty(scenePath))
+        {
             mode = BanterBuilderBundleMode.Scene;
             RefreshView();
         }
 
-        #if BANTER_EDITOR
+#if BANTER_EDITOR
             rootVisualElement.Q<Button>("allAndInjection").clicked += () =>{
                 OnCompileAll.Invoke();
                 OnCompileInjection.Invoke();
@@ -159,47 +172,57 @@ public class BuilderWindow : EditorWindow
             Remove(rootVisualElement.Q<Button>("setupVisualScripting"));
             Remove(rootVisualElement.Q<Button>("setupLayers"));
 #else
-            Remove(rootVisualElement.Q<Button>("allAndInjection"));
-            Remove(rootVisualElement.Q<Button>("allOnly"));
-            Remove(rootVisualElement.Q<Button>("clearAll"));
-            Remove(rootVisualElement.Q<Button>("compileElectron"));
-            Remove(rootVisualElement.Q<Button>("compileInjection"));
-            Remove(rootVisualElement.Q<Button>("kitchenSink"));
-            rootVisualElement.Q<Button>("setupVisualScripting").clicked += () => _ = InitialiseOnLoad.InstallVisualScripting();
-            rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
+        Remove(rootVisualElement.Q<Button>("allAndInjection"));
+        Remove(rootVisualElement.Q<Button>("allOnly"));
+        Remove(rootVisualElement.Q<Button>("clearAll"));
+        Remove(rootVisualElement.Q<Button>("compileElectron"));
+        Remove(rootVisualElement.Q<Button>("compileInjection"));
+        Remove(rootVisualElement.Q<Button>("kitchenSink"));
+        rootVisualElement.Q<Button>("setupVisualScripting").clicked += () => _ = InitialiseOnLoad.InstallVisualScripting();
+        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
 #endif
-            rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
+        rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
 
     }
-    void AddStatus(string text) {
+    void AddStatus(string text)
+    {
         statusMessages.Add("<color=\"orange\">" + DateTime.Now.ToString("HH:mm:ss") + ": <color=\"white\">" + text);
-        if(statusMessages.Count > 300) {
+        if (statusMessages.Count > 300)
+        {
             statusMessages = statusMessages.GetRange(0, 300);
         }
         buildProgress.Rebuild();
-    } 
+    }
 
-    public void Remove(VisualElement element){
+    public void Remove(VisualElement element)
+    {
         element.parent.Remove(element);
     }
-    
-    private void DropFile(bool isScene, string sceneFile, string[] paths) {
-        if (isScene){
+
+    private void DropFile(bool isScene, string sceneFile, string[] paths)
+    {
+        if (isScene)
+        {
             scenePathLabel.text = scenePath = sceneFile;
             mode = BanterBuilderBundleMode.Scene;
-        } else {
+        }
+        else
+        {
             scenePathLabel.text = scenePath = "";
-            foreach (var dropped in paths) {
+            foreach (var dropped in paths)
+            {
                 var obj = GetKitObject(dropped);
-                if (obj == null) {
+                if (obj == null)
+                {
                     continue;
                 }
-                if (!kitObjectList.Any(x=> x.path == dropped))
+                if (!kitObjectList.Any(x => x.path == dropped))
                 {
                     kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = dropped });
                 }
             }
-            if (kitObjectList.Count > 0) {
+            if (kitObjectList.Count > 0)
+            {
                 mode = BanterBuilderBundleMode.Kit;
             }
         }
@@ -208,7 +231,8 @@ public class BuilderWindow : EditorWindow
         RefreshView();
     }
 
-    private UnityEngine.Object GetKitObject(string path) {
+    private UnityEngine.Object GetKitObject(string path)
+    {
         var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
         if (obj == null)
         {
@@ -221,8 +245,9 @@ public class BuilderWindow : EditorWindow
             return null;
         }
         return obj;
-    } 
-    void RemoveSelectedObjects() {
+    }
+    void RemoveSelectedObjects()
+    {
         foreach (var sel in kitListView.selectedItems.Cast<KitObjectAndPath>())
         {
             kitObjectList.Remove(sel);
@@ -230,10 +255,12 @@ public class BuilderWindow : EditorWindow
         kitListView.ClearSelection();
         RefreshView();
     }
-    private void ShowRemoveSelected() {
+    private void ShowRemoveSelected()
+    {
         removeSelected.style.display = kitListView.selectedIndices.Count() > 0 ? DisplayStyle.Flex : DisplayStyle.None;
     }
-    private void RefreshView() {
+    private void RefreshView()
+    {
         scenePathLabel.style.display = DisplayStyle.None;
         kitListView.style.display = DisplayStyle.None;
         removeSelected.style.display = DisplayStyle.None;
@@ -243,22 +270,27 @@ public class BuilderWindow : EditorWindow
             mainTitle.text = "<u>BUILDING A KIT BUNDLE</u>";
             mainTitle.style.display = DisplayStyle.Flex;
             removeSelected.style.display = DisplayStyle.Flex;
-            kitListView.style.display= DisplayStyle.Flex;
-            
+            kitListView.style.display = DisplayStyle.Flex;
+
             kitListView.itemsSource = kitObjectList;
             kitListView.Rebuild();
-        } else if (mode == BanterBuilderBundleMode.Scene) {
+        }
+        else if (mode == BanterBuilderBundleMode.Scene)
+        {
             mainTitle.text = "<u>BUILDING A SCENE BUNDLE</u>";
             mainTitle.style.display = DisplayStyle.Flex;
             scenePathLabel.style.display = DisplayStyle.Flex;
             scenePathLabel.text = "SCENE PATH: " + scenePath;
-        } else{
+        }
+        else
+        {
             mainTitle.style.display = DisplayStyle.None;
             mainTitle.text = "";
         }
         ShowRemoveSelected();
     }
-    private void BuildAssetBundles() {
+    private void BuildAssetBundles()
+    {
         // statusMessages.Clear();
         // buildProgressBar.style.display = DisplayStyle.Flex;
         if (mode == BanterBuilderBundleMode.None)
@@ -266,7 +298,8 @@ public class BuilderWindow : EditorWindow
             AddStatus("Nothing to build...");
             return;
         }
-        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrEmpty(scenePath)) {
+        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrEmpty(scenePath))
+        {
             AddStatus("No scene selected...");
             return;
         }
@@ -277,79 +310,98 @@ public class BuilderWindow : EditorWindow
         }
         // if (EditorUtility.DisplayDialog("Are you sure?", "This will clear any files in the output folder.", "Continue", "Cancel")) {
 
-            AddStatus("Build started...");
+        AddStatus("Build started...");
 
-            if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory))) {
-                Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
-            }
-            
-            
-            if (mode == BanterBuilderBundleMode.None) {
-                throw new Exception("Nothing to build!");
-            } else if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath)) {
-                throw new Exception("No scene to build!");
-            } else if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count < 1) {
-                throw new Exception("No kit objects to build!");
-            }
-            buildProgressBar.value = 25;
-            List<string> names = new List<string>();
-            for (int i = 0; i < buildTargets.Length; i++) {
-                buildProgressBar.value += 25;
-                if (buildTargetFlags[i]) {
-                    string newAssetBundleName = "bundle";
-                    string platform = buildTargets[i].ToString().ToLower();
-                    AssetBundleBuild abb = new AssetBundleBuild();
+        if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
+        {
+            Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
+        }
 
-                    if (mode == BanterBuilderBundleMode.Scene) {
-                        string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
-                        newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
-                        AddStatus("Building: " + newAssetBundleName);
-                        
-                        AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
-                        abb.assetNames = new[] { scenePath }; 
-                    } else if (mode == BanterBuilderBundleMode.Kit) {
-                        newAssetBundleName = "kitbundle_" + platform + ".banter";
-                        AddStatus("Building: " + newAssetBundleName);
-                        abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
-                    } else
-                    {
-                        continue;
-                    }
-                    abb.assetBundleName = newAssetBundleName;
-                    CustomSceneProcessor.isBuildingAssetBundles = true;
-                    BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
-                    CustomSceneProcessor.isBuildingAssetBundles = false;
-                    names.Add(newAssetBundleName);
-                    if(File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest")){
-                        File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
-                    }
 
+        if (mode == BanterBuilderBundleMode.None)
+        {
+            throw new Exception("Nothing to build!");
+        }
+        else if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
+        {
+            throw new Exception("No scene to build!");
+        }
+        else if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count < 1)
+        {
+            throw new Exception("No kit objects to build!");
+        }
+        buildProgressBar.value = 25;
+        List<string> names = new List<string>();
+        for (int i = 0; i < buildTargets.Length; i++)
+        {
+            buildProgressBar.value += 25;
+            if (buildTargetFlags[i])
+            {
+                string newAssetBundleName = "bundle";
+                string platform = buildTargets[i].ToString().ToLower();
+                AssetBundleBuild abb = new AssetBundleBuild();
+
+                if (mode == BanterBuilderBundleMode.Scene)
+                {
+                    string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
+                    newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
+                    AddStatus("Building: " + newAssetBundleName);
+
+                    AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
+                    abb.assetNames = new[] { scenePath };
                 }
+                else if (mode == BanterBuilderBundleMode.Kit)
+                {
+                    newAssetBundleName = "kitbundle_" + platform + ".banter";
+                    AddStatus("Building: " + newAssetBundleName);
+                    abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
+                }
+                else
+                {
+                    continue;
+                }
+                abb.assetBundleName = newAssetBundleName;
+                CustomSceneProcessor.isBuildingAssetBundles = true;
+                BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
+                CustomSceneProcessor.isBuildingAssetBundles = false;
+                names.Add(newAssetBundleName);
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
+                }
+
             }
-            Debug.Log(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
-            if(File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest")){
-                File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
-            }
-            if(File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory )){
-                File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory );
-            }
-            if(names.Count > 0) {
-                EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
-            }
-            buildProgressBar.value = 100;
-            var task = new Task(async () => {
-                await Task.Delay(5000);
-                HideProgressBar();
-            });
-            task.Start();
-            if (mode == BanterBuilderBundleMode.Kit) {
-                AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
-                File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
-            }
-            AddStatus("Build finished.");
+        }
+        Debug.Log(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
+        {
+            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+        }
+        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
+        {
+            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
+        }
+        if (names.Count > 0)
+        {
+            EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
+        }
+        buildProgressBar.value = 100;
+        var task = new Task(async () =>
+        {
+            await Task.Delay(5000);
+            HideProgressBar();
+        });
+        task.Start();
+        if (mode == BanterBuilderBundleMode.Kit)
+        {
+            AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
+            File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
+        }
+        AddStatus("Build finished.");
         // }
     }
-    void HideProgressBar() {
+    void HideProgressBar()
+    {
         buildProgressBar.style.display = DisplayStyle.None;
     }
 

@@ -1,4 +1,5 @@
-public enum ParametricGeometryType{
+public enum ParametricGeometryType
+{
     Klein,
     Apple,
     Fermet,

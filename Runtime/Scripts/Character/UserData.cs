@@ -3,7 +3,8 @@ using Banter;
 using TMPro;
 using UnityEngine;
 
-public class UserData : MonoBehaviour {
+public class UserData : MonoBehaviour
+{
     public new string name;
     public string id;
     public string uid;
@@ -19,7 +20,8 @@ public class UserData : MonoBehaviour {
     public Transform Cockpit;
     Dictionary<string, string> props = new Dictionary<string, string>();
     BanterScene scene;
-    void Start(){
+    void Start()
+    {
         scene = BanterScene.Instance();
 #if !BANTER_EDITOR
         name = NameGenerator.Generate();
@@ -30,14 +32,19 @@ public class UserData : MonoBehaviour {
         scene.AddUser(this);
 #endif
     }
-    public void SetProps(string[] props){
-        foreach(var prop in props) {
-            
+    public void SetProps(string[] props)
+    {
+        foreach (var prop in props)
+        {
+
 #if !BANTER_EDITOR
             var parts = prop.Split(MessageDelimiters.TERTIARY);
-            if(parts.Length == 2){
+            if (parts.Length == 2)
+            {
                 this.props[parts[0]] = parts[1];
-            }else{
+            }
+            else
+            {
                 Debug.LogError("Invalid prop: " + prop);
             }
 #else
@@ -46,9 +53,11 @@ public class UserData : MonoBehaviour {
         }
     }
 
-    public void Attach(UnityAndBanterObject go, AttachmentType hand){
+    public void Attach(UnityAndBanterObject go, AttachmentType hand)
+    {
         go.banterObject.previousParent = go.gameObject.transform.parent;
-        switch(hand){
+        switch (hand)
+        {
             case AttachmentType.Head:
                 go.gameObject.transform.SetParent(Head, false);
                 break;
@@ -67,7 +76,8 @@ public class UserData : MonoBehaviour {
         }
     }
 
-    void OnDestroy() {
+    void OnDestroy()
+    {
         scene.RemoveUser(this);
     }
 }

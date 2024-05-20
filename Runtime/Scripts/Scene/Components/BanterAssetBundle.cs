@@ -8,35 +8,35 @@ using UnityEngine.SceneManagement;
 namespace Banter
 {
 
-/* 
-#### Banter Asset Bundle
-Load an asset bundle into Banter which contains a scene or a collection of prefabs.
+    /* 
+    #### Banter Asset Bundle
+    Load an asset bundle into Banter which contains a scene or a collection of prefabs.
 
-**Properties**
-- `windowsUrl` - The URL to the Windows asset bundle.
-- `osxUrl` - The URL to the OSX asset bundle.
-- `linuxUrl` - The URL to the Linux asset bundle.
-- `androidUrl` - The URL to the Android asset bundle.
-- `iosUrl` - The URL to the iOS asset bundle.
-- `vosUrl` - The URL to the Vision OS asset bundle.
-- `isScene` - If the asset bundle is a scene or a collection of prefabs.
-- `legacyShaderFix` - If the asset bundle requires a legacy shader/lighting fix like we had in the past with AFRAME.
+    **Properties**
+    - `windowsUrl` - The URL to the Windows asset bundle.
+    - `osxUrl` - The URL to the OSX asset bundle.
+    - `linuxUrl` - The URL to the Linux asset bundle.
+    - `androidUrl` - The URL to the Android asset bundle.
+    - `iosUrl` - The URL to the iOS asset bundle.
+    - `vosUrl` - The URL to the Vision OS asset bundle.
+    - `isScene` - If the asset bundle is a scene or a collection of prefabs.
+    - `legacyShaderFix` - If the asset bundle requires a legacy shader/lighting fix like we had in the past with AFRAME.
 
-**Code Example**
-```js
-    const windowsUrl = "https://example.bant.ing/windows.banter";
-    const osxUrl = null; // Not implemented yet...
-    const linuxUrl = null; // Not implemented yet...
-    const androidUrl = "https://example.bant.ing/android.banter";
-    const iosUrl = null; // Not implemented yet...
-    const vosUrl = null; // Not implemented yet...
-    const isScene = true;
-    const legacyShaderFix = false;
-    const gameObject = new BS.GameObject("MyAssetBundle"); 
-    const assetBundle = await gameObject.AddComponent(new BS.BanterAssetBundle(windowsUrl, osxUrl, linuxUrl, androidUrl, iosUrl, vosUrl, isScene, legacyShaderFix));
-```
+    **Code Example**
+    ```js
+        const windowsUrl = "https://example.bant.ing/windows.banter";
+        const osxUrl = null; // Not implemented yet...
+        const linuxUrl = null; // Not implemented yet...
+        const androidUrl = "https://example.bant.ing/android.banter";
+        const iosUrl = null; // Not implemented yet...
+        const vosUrl = null; // Not implemented yet...
+        const isScene = true;
+        const legacyShaderFix = false;
+        const gameObject = new BS.GameObject("MyAssetBundle"); 
+        const assetBundle = await gameObject.AddComponent(new BS.BanterAssetBundle(windowsUrl, osxUrl, linuxUrl, androidUrl, iosUrl, vosUrl, isScene, legacyShaderFix));
+    ```
 
-*/
+    */
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterAssetBundle : BanterComponentBase
@@ -52,53 +52,70 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
         public AssetBundle assetBundle;
         List<string> assetPaths;
         bool isLoading = false;
-        public override void StartStuff() {
+        public override void StartStuff()
+        {
             // _ = SetupBundle();
         }
         private async Task SetupBundle()
         {
-            if(isScene) {
+            if (isScene)
+            {
 
-                if(scene.settings.SceneAssetBundle) { 
+                if (scene.settings.SceneAssetBundle)
+                {
                     SetLoadedIfNot(false, "Scene bundle already registered!");
-                    return; 
+                    return;
                 }
                 scene.settings.SceneAssetBundle = this;
-            }else{
-                if(scene.settings.KitBundles.Count > 2) { 
+            }
+            else
+            {
+                if (scene.settings.KitBundles.Count > 2)
+                {
                     SetLoadedIfNot(false, "Three kit bundles already registered!");
-                    return; 
+                    return;
                 }
             }
 #if !BANTER_EDITOR
-            if(isScene) {
+            if (isScene)
+            {
                 SetLoadedIfNot();
                 return;
             }
 #endif
-            try{
+            try
+            {
                 await LoadBundle();
-                if(isScene) {
+                if (isScene)
+                {
                     await SetupSceneBundle();
-                }else{
+                }
+                else
+                {
                     assetPaths = assetBundle.GetAllAssetNames().ToList();
                     scene.settings.KitBundles.Add(this);
-                    foreach(var path in assetPaths) {
-                        if(path.EndsWith(".prefab")) {
+                    foreach (var path in assetPaths)
+                    {
+                        if (path.EndsWith(".prefab"))
+                        {
                             scene.settings.KitPaths.Add(path, this);
                         }
                     }
                 }
                 SetLoadedIfNot();
-            }catch(Exception e) {
+            }
+            catch (Exception e)
+            {
                 SetLoadedIfNot(false, e.Message);
                 LogLine.Do(Color.red, LogTag.Banter, e.Message);
             }
         }
 
-        public async Task LoadBundle() {
+        public async Task LoadBundle()
+        {
             isLoading = true;
-            try{
+            try
+            {
 #if UNITY_STANDALONE_WIN
             assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
 #elif UNITY_STANDALONE_OSX
@@ -112,7 +129,9 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
 #elif UNITY_IOS
             assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
 #endif      
-            }catch(Exception e) {
+            }
+            catch (Exception e)
+            {
                 SetLoadedIfNot(false, e.Message);
                 LogLine.Do(Color.red, LogTag.Banter, androidUrl + ": " + e.Message);
             }
@@ -120,12 +139,15 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
         }
 
 
-        private async Task SetupSceneBundle() {
+        private async Task SetupSceneBundle()
+        {
             var scenes = assetBundle.GetAllScenePaths();
-            if(scenes.Length > 0) {
+            if (scenes.Length > 0)
+            {
                 string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenes[0]);
                 await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-                if(legacyShaderFix) {
+                if (legacyShaderFix)
+                {
                     RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
                     RenderSettings.ambientSkyColor = Color.white;
                     RenderSettings.ambientEquatorColor = Color.white;
@@ -133,28 +155,35 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                 }
                 var reference = SceneManager.GetSceneByName(sceneName);
 
-                foreach(GameObject thisgo in reference.GetRootGameObjects()) {
-                    foreach(Transform transform in thisgo.GetComponentsInChildren<Transform>(true)) {
-                        if(legacyShaderFix) {
+                foreach (GameObject thisgo in reference.GetRootGameObjects())
+                {
+                    foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (legacyShaderFix)
+                        {
                             transform.gameObject.AddComponent<FixLegacyShaders>();
                         }
                         // if(shaders != null) {
                         //     applyShader.shaders = shaders;
                         // }
                         var inputModule = transform.gameObject.GetComponent<StandaloneInputModule>();
-                        if(inputModule != null) {
+                        if (inputModule != null)
+                        {
                             Destroy(inputModule);
                         }
                         var eventSystem = transform.gameObject.GetComponent<EventSystem>();
-                        if(eventSystem != null) {
+                        if (eventSystem != null)
+                        {
                             Destroy(eventSystem);
                         }
                         var starterUpper = transform.gameObject.GetComponent<BanterStarterUpper>();
-                        if(starterUpper != null) {
+                        if (starterUpper != null)
+                        {
                             Destroy(starterUpper);
                         }
                         var audioListener = transform.gameObject.GetComponent<AudioListener>();
-                        if(audioListener != null) {
+                        if (audioListener != null)
+                        {
                             Destroy(audioListener);
                         }
                         // if(!PlatformCompat.Instance.Is2DMode){
@@ -170,20 +199,28 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                 // item.isLoaded = true;
             }
         }
-        async Task _Unload() {
+        async Task _Unload()
+        {
             await assetBundle.UnloadAsync(true);
-            if(isScene) {
+            if (isScene)
+            {
                 scene.settings.SceneAssetBundle = null;
                 await SceneManager.LoadSceneAsync("Void", LoadSceneMode.Single);
-            }else{
+            }
+            else
+            {
                 scene.settings.KitBundles.Remove(this);
             }
         }
 
-        public async Task Unload() {
-            if(assetBundle != null) {
+        public async Task Unload()
+        {
+            if (assetBundle != null)
+            {
                 await _Unload();
-            }else if(isLoading) {
+            }
+            else if (isLoading)
+            {
                 LogLine.Do("Waiting for bundle to load before unloading:" + windowsUrl);
                 await new WaitUntil(() => !isLoading);
                 LogLine.Do("Bundle loaded, unloading:" + windowsUrl);
@@ -192,120 +229,145 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
         }
 
         public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties) {
+        public void UpdateCallback(List<PropertyName> changedProperties)
+        {
             _ = SetupBundle();
         }
-// BANTER COMPILED CODE 
+        // BANTER COMPILED CODE 
         BanterScene scene;
-    
+
         bool alreadyStarted = false;
-    
-        void Start() { 
-            Init(); 
+
+        void Start()
+        {
+            Init();
             StartStuff();
         }
-        public override void ReSetup() {
-                   List<PropertyName> changedProperties = new List<PropertyName>(){PropertyName.windowsUrl,PropertyName.osxUrl,PropertyName.linuxUrl,PropertyName.androidUrl,PropertyName.iosUrl,PropertyName.vosUrl,PropertyName.isScene,PropertyName.legacyShaderFix,};
+        public override void ReSetup()
+        {
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, PropertyName.legacyShaderFix, };
             UpdateCallback(changedProperties);
         }
-        
-    
+
+
         public override void Init()
         {
             scene = BanterScene.Instance();
-            if(alreadyStarted) { return; }
+            if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAssetBundle);
-            
-            
+
+
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-            
-        
+
+
         }
-     
-        void Awake() {
+
+        void Awake()
+        {
             BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
-    
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-            
+
             DestroyStuff();
         }
-        public override object CallMethod(string methodName, List<object> parameters){
+        public override object CallMethod(string methodName, List<object> parameters)
+        {
             return null;
         }
-    
-        public override void Deserialise(List<object> values) {
+
+        public override void Deserialise(List<object> values)
+        {
             List<PropertyName> changedProperties = new List<PropertyName>();
-            for(int i = 0; i < values.Count; i++) {
-                if(values[i] is BanterString){
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] is BanterString)
+                {
                     var valwindowsUrl = (BanterString)values[i];
-                    if(valwindowsUrl.n == PropertyName.windowsUrl) {
+                    if (valwindowsUrl.n == PropertyName.windowsUrl)
+                    {
                         windowsUrl = valwindowsUrl.x;
                         changedProperties.Add(PropertyName.windowsUrl);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var valosxUrl = (BanterString)values[i];
-                    if(valosxUrl.n == PropertyName.osxUrl) {
+                    if (valosxUrl.n == PropertyName.osxUrl)
+                    {
                         osxUrl = valosxUrl.x;
                         changedProperties.Add(PropertyName.osxUrl);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var vallinuxUrl = (BanterString)values[i];
-                    if(vallinuxUrl.n == PropertyName.linuxUrl) {
+                    if (vallinuxUrl.n == PropertyName.linuxUrl)
+                    {
                         linuxUrl = vallinuxUrl.x;
                         changedProperties.Add(PropertyName.linuxUrl);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var valandroidUrl = (BanterString)values[i];
-                    if(valandroidUrl.n == PropertyName.androidUrl) {
+                    if (valandroidUrl.n == PropertyName.androidUrl)
+                    {
                         androidUrl = valandroidUrl.x;
                         changedProperties.Add(PropertyName.androidUrl);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var valiosUrl = (BanterString)values[i];
-                    if(valiosUrl.n == PropertyName.iosUrl) {
+                    if (valiosUrl.n == PropertyName.iosUrl)
+                    {
                         iosUrl = valiosUrl.x;
                         changedProperties.Add(PropertyName.iosUrl);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var valvosUrl = (BanterString)values[i];
-                    if(valvosUrl.n == PropertyName.vosUrl) {
+                    if (valvosUrl.n == PropertyName.vosUrl)
+                    {
                         vosUrl = valvosUrl.x;
                         changedProperties.Add(PropertyName.vosUrl);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valisScene = (BanterBool)values[i];
-                    if(valisScene.n == PropertyName.isScene) {
+                    if (valisScene.n == PropertyName.isScene)
+                    {
                         isScene = valisScene.x;
                         changedProperties.Add(PropertyName.isScene);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var vallegacyShaderFix = (BanterBool)values[i];
-                    if(vallegacyShaderFix.n == PropertyName.legacyShaderFix) {
+                    if (vallegacyShaderFix.n == PropertyName.legacyShaderFix)
+                    {
                         legacyShaderFix = vallegacyShaderFix.x;
                         changedProperties.Add(PropertyName.legacyShaderFix);
                     }
                 }
             }
-            if(values.Count > 0 ) { UpdateCallback(changedProperties);}
+            if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
         public override void SyncProperties(bool force = false, Action callback = null)
-            {
+        {
             var updates = new List<BanterComponentPropertyUpdate>();
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.windowsUrl,
                     type = PropertyType.String,
                     value = windowsUrl,
@@ -314,8 +376,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.osxUrl,
                     type = PropertyType.String,
                     value = osxUrl,
@@ -324,8 +388,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.linuxUrl,
                     type = PropertyType.String,
                     value = linuxUrl,
@@ -334,8 +400,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.androidUrl,
                     type = PropertyType.String,
                     value = androidUrl,
@@ -344,8 +412,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.iosUrl,
                     type = PropertyType.String,
                     value = iosUrl,
@@ -354,8 +424,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.vosUrl,
                     type = PropertyType.String,
                     value = vosUrl,
@@ -364,8 +436,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.isScene,
                     type = PropertyType.Bool,
                     value = isScene,
@@ -374,8 +448,10 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.legacyShaderFix,
                     type = PropertyType.Bool,
                     value = legacyShaderFix,
@@ -386,8 +462,9 @@ Load an asset bundle into Banter which contains a scene or a collection of prefa
             }
             scene.SetFromUnityProperties(updates, callback);
         }
-        public override void WatchProperties(PropertyName[] properties) {
+        public override void WatchProperties(PropertyName[] properties)
+        {
         }
-// END BANTER COMPILED CODE 
+        // END BANTER COMPILED CODE 
     }
 }

@@ -1,5 +1,6 @@
 using System;
 
-public class APICommandsAttribute: Attribute{
+public class APICommandsAttribute : Attribute
+{
 
 }

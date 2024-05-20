@@ -5,9 +5,11 @@ using UnityEngine.UIElements;
 namespace Banter
 {
     [CustomEditor(typeof(BanterObjectId))]
-    public class BanterObjectIdEditor : Editor{
+    public class BanterObjectIdEditor : Editor
+    {
         public override bool UseDefaultMargins() => false;
-        public override VisualElement CreateInspectorGUI() {
+        public override VisualElement CreateInspectorGUI()
+        {
             var script = (BanterObjectId)target;
             Editor editor = Editor.CreateEditor(script);
             VisualElement myInspector = new VisualElement();
@@ -15,11 +17,12 @@ namespace Banter
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
             myInspector.Add(Resources.Load<VisualTreeAsset>("Components/BanterObjectId").CloneTree());
             myInspector.Q<TextField>("id").value = script.Id;
-            myInspector.Q<Button>("generate").RegisterCallback<ClickEvent>(ev => {
+            myInspector.Q<Button>("generate").RegisterCallback<ClickEvent>(ev =>
+            {
                 script.ForceGenerateId();
                 myInspector.Q<TextField>("id").value = script.Id;
             });
             return myInspector;
-        } 
+        }
     }
 }

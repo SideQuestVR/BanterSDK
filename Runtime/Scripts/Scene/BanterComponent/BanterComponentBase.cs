@@ -24,10 +24,13 @@ namespace Banter
         [HideInInspector] public int oid;
         [HideInInspector] public int cid;
 
-        public void SetLoadedIfNot(bool success = true, string message = "Loaded ok.") {
-            if(!_loaded) {
+        public void SetLoadedIfNot(bool success = true, string message = "Loaded ok.")
+        {
+            if (!_loaded)
+            {
                 _loaded = true;
-                if(!success){
+                if (!success)
+                {
                     LogLine.Do(Color.red, LogTag.Banter, "Failed to load: " + message);
                 }
                 loaded.Invoke(success, message);

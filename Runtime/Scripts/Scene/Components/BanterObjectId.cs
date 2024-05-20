@@ -16,26 +16,34 @@ namespace Banter
         public string Id;
 
         [HideInInspector]
-        public Dictionary<int,BanterComponentBase> mainThreadComponentMap = new Dictionary<int, BanterComponentBase>();
+        public Dictionary<int, BanterComponentBase> mainThreadComponentMap = new Dictionary<int, BanterComponentBase>();
         [HideInInspector] public UnityEvent loaded = new UnityEvent();
-        void Start() {
-            try{
+        void Start()
+        {
+            try
+            {
                 GenerateId();
                 BanterScene.Instance().AddBanterObject(gameObject, this);
-            }catch(Exception){
+            }
+            catch (Exception)
+            {
                 // Debug.LogError("BanterObjectId: " + e.Message);
             }
         }
-        public void GenerateId(bool force = false) {
-            if(string.IsNullOrEmpty(Id) || force) {
+        public void GenerateId(bool force = false)
+        {
+            if (string.IsNullOrEmpty(Id) || force)
+            {
                 Id = gameObject.GetInstanceID().ToString();
             }
         }
-        public void ForceGenerateId() {
+        public void ForceGenerateId()
+        {
             Id = Convert.ToBase64String(Guid.NewGuid().ToByteArray()).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
 
-        void OnDestroy(){
+        void OnDestroy()
+        {
             mainThreadComponentMap.Clear();
             BanterScene.Instance().DestroyBanterObject(gameObject.GetInstanceID());
         }

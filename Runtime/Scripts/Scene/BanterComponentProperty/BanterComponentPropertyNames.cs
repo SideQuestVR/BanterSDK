@@ -1,5 +1,7 @@
-namespace Banter{
-    public enum PropertyName{
+namespace Banter
+{
+    public enum PropertyName
+    {
         hasUnity,
         windowsUrl,
         osxUrl,

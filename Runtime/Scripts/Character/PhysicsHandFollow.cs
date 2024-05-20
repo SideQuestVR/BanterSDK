@@ -3,7 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Banter{
+namespace Banter
+{
     [RequireComponent(typeof(Rigidbody))]
     public class PhysicsHandFollow : MonoBehaviour
     {
@@ -18,7 +19,8 @@ namespace Banter{
         Quaternion previousRotation;
         ConfigurableJoint joint;
         Quaternion jointOffset;
-        void Start() {
+        void Start()
+        {
             body = GetComponent<Rigidbody>();
             SetupJoint();
             body.solverIterations = 12;
@@ -28,16 +30,20 @@ namespace Banter{
             body.inertiaTensor = new Vector3(0.018f, 0.018f, 0.018f);
         }
 
-        private void Update() {
+        private void Update()
+        {
             var localTarget = parent.transform.InverseTransformPoint(trackedHand.position);
 
-            if (shoulder != null) {
+            if (shoulder != null)
+            {
                 var localAnchor = parent.transform.InverseTransformPoint(shoulder.position);
                 var direction = localTarget - localAnchor;
                 direction = Vector3.ClampMagnitude(direction, lengthOfArm);
                 var point = localAnchor + direction;
                 joint.targetPosition = point;
-            } else {
+            }
+            else
+            {
                 joint.targetPosition = localTarget;
             }
 
@@ -45,7 +51,7 @@ namespace Banter{
             var headVelocity = parent.transform.InverseTransformDirection(headSpeed);
             var localPosition = parent.transform.InverseTransformPoint(trackedHand.position);
 
-            var realPosition =  Quaternion.AngleAxis(turningSpeed, Vector3.up) * localPosition;
+            var realPosition = Quaternion.AngleAxis(turningSpeed, Vector3.up) * localPosition;
             var tangentVelocity = (realPosition - localPosition) / Time.fixedDeltaTime;
 
             var velocity = (localPosition - previousPosition) / Time.fixedDeltaTime;
@@ -57,15 +63,18 @@ namespace Banter{
 
             previousRotation = trackedHand.rotation;
         }
-        protected virtual void SetupJoint() {
+        protected virtual void SetupJoint()
+        {
             joint = parent.transform.gameObject.AddComponent<ConfigurableJoint>();
-            var drive = new JointDrive {
+            var drive = new JointDrive
+            {
                 positionSpring = 50000,
                 positionDamper = 500,
                 maximumForce = 3000
             };
 
-            var slerpDrive = new JointDrive {
+            var slerpDrive = new JointDrive
+            {
                 positionSpring = 3200,
                 positionDamper = 250,
                 maximumForce = 85
@@ -87,13 +96,16 @@ namespace Banter{
             joint.linearLimit = new SoftJointLimit { limit = lengthOfArm };
         }
 
-        protected virtual void OnEnable() {
+        protected virtual void OnEnable()
+        {
             jointOffset = Quaternion.Inverse(transform.rotation * Quaternion.Inverse(parent.rotation));
         }
 
-        public static Vector3 GetAngularVelocity(Quaternion currentQ, Quaternion previousQ) {
+        public static Vector3 GetAngularVelocity(Quaternion currentQ, Quaternion previousQ)
+        {
             var delta = currentQ * Quaternion.Inverse(previousQ);
-            if (delta.w < 0) {
+            if (delta.w < 0)
+            {
                 delta.x = -delta.x;
                 delta.y = -delta.y;
                 delta.z = -delta.z;

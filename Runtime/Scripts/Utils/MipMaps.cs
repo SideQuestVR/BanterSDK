@@ -2,10 +2,13 @@ using Unity.Collections;
 using UnityEditor;
 using UnityEngine;
 
-public class MipMaps{
-    public static Texture2D Do(Texture2D texture) {
+public class MipMaps
+{
+    public static Texture2D Do(Texture2D texture)
+    {
         Texture2D texture2 = null;
-        try{
+        try
+        {
             texture2 = new Texture2D(texture.width, texture.height, texture.format, true, false);
             var src = texture.GetRawTextureData<byte>();
             var dest = texture2.GetRawTextureData<byte>();
@@ -13,7 +16,9 @@ public class MipMaps{
             texture2.LoadRawTextureData(dest);
             texture2.Apply(true, true);
             GameObject.Destroy(texture);
-        }catch{
+        }
+        catch
+        {
             Debug.Log("RuntimeMipMaps failed");
             texture2 = texture;
         }

@@ -4,7 +4,8 @@ using System.Collections.Generic;
 namespace Banter
 {
     [Serializable]
-    class ObjectUpdate{
+    class ObjectUpdate
+    {
         public int reqId;
         public string name;
         public string linkId;
@@ -13,15 +14,18 @@ namespace Banter
         public bool active;
     }
     [Serializable]
-    class ObjectDeleted{
+    class ObjectDeleted
+    {
         public int reqId;
     }
     [Serializable]
-    class ObjectReturn{
+    class ObjectReturn
+    {
         public ObjectUpdate _object;
     }
     [Serializable]
-    class ComponentUpdate{
+    class ComponentUpdate
+    {
         public int reqId;
         public int type;
         public string linkId;
@@ -31,7 +35,8 @@ namespace Banter
         public bool active;
     }
     [Serializable]
-    class ComponentReturn{
+    class ComponentReturn
+    {
         public ComponentUpdate _component;
     }
 }
