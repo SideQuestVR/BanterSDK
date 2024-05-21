@@ -1,4 +1,4 @@
-namespace Banter
+namespace Banter.SDK
 {
     public enum PropertyName
     {

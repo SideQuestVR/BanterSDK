@@ -1,12 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter;
+using Banter.SDK;
 using UnityEngine;
 using UnityEngine.Video;
-using PropertyName = Banter.PropertyName;
+using PropertyName = Banter.SDK.PropertyName;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Video Player

@@ -4,7 +4,7 @@ using DigitalRuby.Tween;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter
+namespace Banter.SDK
 {
 
     enum LoadingState

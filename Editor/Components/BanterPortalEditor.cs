@@ -1,8 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Banter.SDK;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     [CustomEditor(typeof(BanterPortal))]
     public class BanterPortalEditor : Editor

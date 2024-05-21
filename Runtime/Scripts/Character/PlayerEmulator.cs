@@ -1,6 +1,6 @@
-using Banter;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using Banter.SDK;
+
 public class PlayerEmulator : MonoBehaviour
 {
     [SerializeField] float navigationSpeed = 0.2f;

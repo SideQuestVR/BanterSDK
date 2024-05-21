@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Banter;
+using Banter.SDK;
 using TMPro;
 using UnityEngine;
 

@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Inverted Mesh

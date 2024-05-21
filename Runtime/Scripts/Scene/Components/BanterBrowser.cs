@@ -8,7 +8,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
-namespace Banter
+namespace Banter.SDK
 {
     [Serializable]
     public class BrowserObject

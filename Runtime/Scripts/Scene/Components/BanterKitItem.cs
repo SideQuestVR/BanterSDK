@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Kit Item

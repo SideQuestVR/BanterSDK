@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 
-namespace Banter
+namespace Banter.SDK
 {
     public class SpawnPointData
     {

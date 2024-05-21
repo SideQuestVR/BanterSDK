@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.SpatialTracking;
 
 
-namespace Banter
+namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1001)]
     public class BanterStarterUpper : MonoBehaviour

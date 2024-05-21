@@ -1,6 +1,6 @@
 
 using System;
-using Banter;
+using Banter.SDK;
 
 [Serializable]
 public class SpaceStateItem

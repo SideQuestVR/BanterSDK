@@ -2,11 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Banter;
+using Banter.SDK;
 using UnityEngine;
-using PropertyName = Banter.PropertyName;
+using PropertyName = Banter.SDK.PropertyName;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Rigidbody

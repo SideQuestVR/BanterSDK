@@ -1,8 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Banter.SDK;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     [CustomEditor(typeof(BanterRigidbody))]
     public class BanterRigidbodyEditor : Editor

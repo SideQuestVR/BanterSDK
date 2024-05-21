@@ -8,9 +8,9 @@ using TMPro;
 using Siccity.GLTFUtility;
 using Unity.VisualScripting;
 using UnityEngine;
-using PropertyName = Banter.PropertyName;
+using PropertyName = Banter.SDK.PropertyName;
 
-namespace Banter
+namespace Banter.SDK
 {
 
     /* 

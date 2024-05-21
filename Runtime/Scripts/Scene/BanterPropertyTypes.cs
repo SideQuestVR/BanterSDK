@@ -1,8 +1,7 @@
 using System;
-using System.Diagnostics;
-using Banter;
 using UnityEngine;
-using PropertyName = Banter.PropertyName;
+using Banter.SDK;
+using PropertyName = Banter.SDK.PropertyName;
 
 [Serializable]
 public struct BanterVector4

@@ -3,9 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using PropertyName = Banter.PropertyName;
+using PropertyName = Banter.SDK.PropertyName;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Text

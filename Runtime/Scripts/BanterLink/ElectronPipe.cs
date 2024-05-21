@@ -6,7 +6,7 @@ using System.Threading;
 using System.Text;
 using System.Collections.Concurrent;
 using Lachee.IO;
-using Banter;
+using Banter.SDK;
 
 public class ElectronPipe : BanterPipe
 {

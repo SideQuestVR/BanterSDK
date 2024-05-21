@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Configurable Joint

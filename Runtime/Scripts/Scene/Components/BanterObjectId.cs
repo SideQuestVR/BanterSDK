@@ -7,7 +7,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter
+namespace Banter.SDK
 {
     [ExecuteInEditMode]
     [DisallowMultipleComponent]

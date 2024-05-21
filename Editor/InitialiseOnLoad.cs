@@ -7,7 +7,7 @@ using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     public class InitialiseOnLoad
     {
