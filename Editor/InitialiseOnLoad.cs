@@ -46,26 +46,7 @@ namespace Banter.SDKEditor
         {
             // _ = InstallVisualScripting();
             // "com.atteneder.gltfast": "https://github.com/atteneder/glTFast.git#v5.0.0",
-            CopyGizmos();
             // SetupLayers();
-        }
-
-        static void CopyGizmos()
-        {
-            if (!Directory.Exists(Path.Join(Application.dataPath, "Gizmos", "Banter")))
-            {
-                Directory.CreateDirectory(Path.Join(Application.dataPath, "Gizmos", "Banter"));
-            }
-            string sourceDir = Path.Join(Path.Join(Path.Join(Application.dataPath, "..", "Packages"), "com.sidequest.banter", "Gizmos"), "Banter");
-            string destinationDir = Path.Join(Application.dataPath, "Gizmos", "Banter");
-            foreach (string srcFile in Directory.GetFiles(sourceDir))
-            {
-                string dstFile = Path.Combine(destinationDir, Path.GetFileName(srcFile));
-                if (!File.Exists(dstFile) || (File.GetLastWriteTime(dstFile) < File.GetLastWriteTime(srcFile)) && !srcFile.EndsWith(".meta"))
-                {
-                    File.Copy(srcFile, dstFile, true);
-                }
-            }
         }
 
         public static async Task InstallVisualScripting()
