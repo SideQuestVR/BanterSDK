@@ -1,8 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Banter.SDK;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     [CustomEditor(typeof(BanterGeometry))]
     public class BanterGeometryEditor : Editor
@@ -27,7 +28,6 @@ namespace Banter
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
-
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
@@ -39,6 +39,7 @@ namespace Banter
             seeFields.style.marginTop = 10;
             seeFields.style.color = Color.gray;
             myInspector.Add(seeFields);
+
 #if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
@@ -50,8 +51,5 @@ namespace Banter
 
             return myInspector;
         }
-
-
-
     }
 }

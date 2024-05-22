@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-namespace Banter
+namespace Banter.SDK
 {
 
     /* 
@@ -47,20 +47,18 @@ namespace Banter
         }
         // BANTER COMPILED CODE 
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.panoId, };
             UpdateCallback(changedProperties);
         }
-
 
         public override void Init()
         {
@@ -73,7 +71,6 @@ namespace Banter
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-
 
         }
 
@@ -88,6 +85,7 @@ namespace Banter
 
             DestroyStuff();
         }
+
         public override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -110,6 +108,7 @@ namespace Banter
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -127,6 +126,7 @@ namespace Banter
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         public override void WatchProperties(PropertyName[] properties)
         {
         }

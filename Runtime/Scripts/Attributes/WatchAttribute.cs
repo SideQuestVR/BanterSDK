@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.CompilerServices;
 
-namespace Banter
+namespace Banter.SDK
 {
     [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
     public class WatchAttribute : Attribute

@@ -1,12 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter;
+using Banter.SDK;
 using UnityEngine;
 using UnityEngine.Video;
-using PropertyName = Banter.PropertyName;
+using PropertyName = Banter.SDK.PropertyName;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Video Player
@@ -94,20 +94,18 @@ namespace Banter
         }
         // BANTER COMPILED CODE 
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, };
             UpdateCallback(changedProperties);
         }
-
 
         public override void Init()
         {
@@ -120,7 +118,6 @@ namespace Banter
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-
 
         }
 
@@ -135,6 +132,7 @@ namespace Banter
 
             DestroyStuff();
         }
+
         public override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -202,6 +200,7 @@ namespace Banter
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -279,6 +278,7 @@ namespace Banter
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         public override void WatchProperties(PropertyName[] properties)
         {
         }

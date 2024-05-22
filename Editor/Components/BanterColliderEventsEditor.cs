@@ -1,8 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Banter.SDK;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     [CustomEditor(typeof(BanterColliderEvents))]
     public class BanterColliderEventsEditor : Editor
@@ -28,7 +29,6 @@ namespace Banter
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
 
-
 #if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
@@ -40,8 +40,5 @@ namespace Banter
 
             return myInspector;
         }
-
-
-
     }
 }

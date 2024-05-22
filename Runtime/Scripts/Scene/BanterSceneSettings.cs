@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
     public class BanterSceneSettings
     {

@@ -1,8 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Banter.SDK;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     [CustomEditor(typeof(BanterTransform))]
     public class BanterTransformEditor : Editor
@@ -27,7 +28,6 @@ namespace Banter
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
-
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
@@ -38,7 +38,8 @@ namespace Banter
             seeFields.style.marginBottom = 10;
             seeFields.style.marginTop = 10;
             seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields); var titleSynced = new Label("SYNC TRANSFORM TO JS");
+            myInspector.Add(seeFields);
+            var titleSynced = new Label("SYNC TRANSFORM TO JS");
             titleSynced.style.fontSize = 14;
             myInspector.Add(titleSynced);
             var containerposition = new VisualElement();
@@ -193,8 +194,5 @@ namespace Banter
 
             return myInspector;
         }
-
-
-
     }
 }

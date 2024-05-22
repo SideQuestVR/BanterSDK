@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
 
     [System.Serializable]
@@ -267,20 +267,18 @@ namespace Banter
         }
         // BANTER COMPILED CODE 
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.geometryType, PropertyName.parametricType, PropertyName.width, PropertyName.height, PropertyName.depth, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.depthSegments, PropertyName.radius, PropertyName.segments, PropertyName.thetaStart, PropertyName.thetaLength, PropertyName.phiStart, PropertyName.phiLength, PropertyName.radialSegments, PropertyName.openEnded, PropertyName.radiusTop, PropertyName.radiusBottom, PropertyName.innerRadius, PropertyName.outerRadius, PropertyName.thetaSegments, PropertyName.phiSegments, PropertyName.tube, PropertyName.tubularSegments, PropertyName.arc, PropertyName.p, PropertyName.q, PropertyName.stacks, PropertyName.slices, PropertyName.detail, PropertyName.parametricPoints, };
             UpdateCallback(changedProperties);
         }
-
 
         public override void Init()
         {
@@ -293,7 +291,6 @@ namespace Banter
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-
 
         }
 
@@ -308,6 +305,7 @@ namespace Banter
 
             DestroyStuff();
         }
+
         public override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -600,6 +598,7 @@ namespace Banter
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -977,6 +976,7 @@ namespace Banter
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         public override void WatchProperties(PropertyName[] properties)
         {
         }

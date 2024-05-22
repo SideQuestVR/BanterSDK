@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
-namespace Banter
+namespace Banter.SDK
 {
     public class AndroidPipe : BanterPipe
     {

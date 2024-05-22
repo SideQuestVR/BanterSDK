@@ -1,8 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Timers;
-using Banter;
+using Banter.SDK;
 
 public class BatchUpdater
 {

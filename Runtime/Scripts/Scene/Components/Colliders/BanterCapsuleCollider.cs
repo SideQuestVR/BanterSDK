@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Capsule Collider
@@ -39,25 +39,23 @@ namespace Banter
             {
                 if (_componentType == null)
                 {
-                    _componentType = GetComponent<CapsuleCollider>(); ;
+                    _componentType = GetComponent<CapsuleCollider>();
                 }
                 return _componentType;
             }
         }
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
 
         }
-
 
         public override void Init()
         {
@@ -71,7 +69,6 @@ namespace Banter
             cid = GetInstanceID();
             SyncProperties(true);
             SetLoadedIfNot();
-
         }
 
         void Awake()
@@ -85,6 +82,7 @@ namespace Banter
 
             Destroy(componentType);
         }
+
         public override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -124,6 +122,7 @@ namespace Banter
                 }
             }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -165,6 +164,7 @@ namespace Banter
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         public override void WatchProperties(PropertyName[] properties)
         {
         }

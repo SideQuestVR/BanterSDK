@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Banter
+namespace Banter.SDK
 {
     [Serializable]
     public class Community

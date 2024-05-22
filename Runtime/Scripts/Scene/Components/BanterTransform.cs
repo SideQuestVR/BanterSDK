@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Transform
@@ -75,7 +75,6 @@ namespace Banter
         public bool _up;
         public bool _forward;
         public bool _right;
-
         public Transform _componentType;
         public Transform componentType
         {
@@ -89,19 +88,17 @@ namespace Banter
             }
         }
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
 
         }
-
 
         public override void Init()
         {
@@ -115,7 +112,6 @@ namespace Banter
             cid = GetInstanceID();
             SyncProperties(true);
             SetLoadedIfNot();
-
         }
 
         void Awake()
@@ -129,6 +125,7 @@ namespace Banter
             scene.Tick -= Tick;
 
         }
+
         public override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -263,6 +260,7 @@ namespace Banter
                 }
             }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -413,7 +411,9 @@ namespace Banter
             transform.hasChanged = false;
             scene.SetFromUnityProperties(updates, callback);
         }
+
         void Tick(object sender, EventArgs e) { SyncProperties(); }
+
         public override void WatchProperties(PropertyName[] properties)
         {
             _position = false;

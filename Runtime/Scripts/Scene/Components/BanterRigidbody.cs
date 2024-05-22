@@ -2,11 +2,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Banter;
+using Banter.SDK;
 using UnityEngine;
-using PropertyName = Banter.PropertyName;
+using PropertyName = Banter.SDK.PropertyName;
 
-namespace Banter
+namespace Banter.SDK
 {
     /* 
     #### Banter Rigidbody
@@ -234,20 +234,18 @@ namespace Banter
         public bool _angularVelocity;
 
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.velocity, PropertyName.angularVelocity, PropertyName.mass, PropertyName.drag, PropertyName.angularDrag, PropertyName.isKinematic, PropertyName.useGravity, PropertyName.centerOfMass, PropertyName.collisionDetectionMode, PropertyName.freezePositionX, PropertyName.freezePositionY, PropertyName.freezePositionZ, PropertyName.freezeRotationX, PropertyName.freezeRotationY, PropertyName.freezeRotationZ, };
             UpdateCallback(changedProperties);
         }
-
 
         public override void Init()
         {
@@ -260,7 +258,6 @@ namespace Banter
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-
 
         }
 
@@ -275,6 +272,7 @@ namespace Banter
             scene.Tick -= Tick;
             DestroyStuff();
         }
+
         void AddForce(Vector3 force, ForceMode mode)
         {
             _AddForce(force, mode);
@@ -301,6 +299,7 @@ namespace Banter
         }
         public override object CallMethod(string methodName, List<object> parameters)
         {
+
             if (methodName == "AddForce" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
             {
                 var force = (Vector3)parameters[0];
@@ -493,6 +492,7 @@ namespace Banter
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -678,7 +678,9 @@ namespace Banter
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         void Tick(object sender, EventArgs e) { SyncProperties(); }
+
         public override void WatchProperties(PropertyName[] properties)
         {
             _velocity = false;

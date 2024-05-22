@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Banter
+namespace Banter.SDK
 {
     [Serializable]
     class ObjectUpdate

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
     public class KeyedCountingLogger
     {

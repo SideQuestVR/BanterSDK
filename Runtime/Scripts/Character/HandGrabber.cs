@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter;
+using Banter.SDK;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.XR;
 using static UnityEngine.InputSystem.InputAction;
-namespace Banter
+namespace Banter.SDK
 {
     [RequireComponent(typeof(Rigidbody))]
     public class HandGrabber : MonoBehaviour

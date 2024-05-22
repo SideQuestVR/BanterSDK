@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter
+namespace Banter.SDK
 {
     [RequireComponent(typeof(BanterObjectId))]
     public abstract class BanterComponentBase : MonoBehaviour

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
     public class Portal : MonoBehaviour
     {

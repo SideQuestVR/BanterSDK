@@ -8,7 +8,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
-namespace Banter
+namespace Banter.SDK
 {
     [Serializable]
     public class BrowserObject
@@ -140,20 +140,18 @@ namespace Banter
         }
         // BANTER COMPILED CODE 
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.actions, };
             UpdateCallback(changedProperties);
         }
-
 
         public override void Init()
         {
@@ -166,7 +164,6 @@ namespace Banter
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-
 
         }
 
@@ -181,6 +178,7 @@ namespace Banter
 
             DestroyStuff();
         }
+
         void ToggleInteraction(Boolean enabled)
         {
             _ToggleInteraction(enabled);
@@ -191,6 +189,7 @@ namespace Banter
         }
         public override object CallMethod(string methodName, List<object> parameters)
         {
+
             if (methodName == "ToggleInteraction" && parameters.Count == 1 && parameters[0] is Boolean)
             {
                 var enabled = (Boolean)parameters[0];
@@ -253,6 +252,7 @@ namespace Banter
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -306,6 +306,7 @@ namespace Banter
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         public override void WatchProperties(PropertyName[] properties)
         {
         }
