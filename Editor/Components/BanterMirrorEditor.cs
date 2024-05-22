@@ -29,7 +29,6 @@ namespace Banter.SDKEditor
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
 
-
 #if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Advanced Properties";
@@ -41,8 +40,5 @@ namespace Banter.SDKEditor
 
             return myInspector;
         }
-
-
-
     }
 }

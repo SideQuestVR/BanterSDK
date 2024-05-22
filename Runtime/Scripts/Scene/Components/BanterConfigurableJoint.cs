@@ -46,25 +46,23 @@ namespace Banter.SDK
             {
                 if (_componentType == null)
                 {
-                    _componentType = GetComponent<ConfigurableJoint>(); ;
+                    _componentType = GetComponent<ConfigurableJoint>();
                 }
                 return _componentType;
             }
         }
         BanterScene scene;
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
             StartStuff();
         }
+
         public override void ReSetup()
         {
 
         }
-
 
         public override void Init()
         {
@@ -78,7 +76,6 @@ namespace Banter.SDK
             cid = GetInstanceID();
             SyncProperties(true);
             SetLoadedIfNot();
-
         }
 
         void Awake()
@@ -92,6 +89,7 @@ namespace Banter.SDK
 
             Destroy(componentType);
         }
+
         public override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -149,6 +147,7 @@ namespace Banter.SDK
                 }
             }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
@@ -214,6 +213,7 @@ namespace Banter.SDK
             }
             scene.SetFromUnityProperties(updates, callback);
         }
+
         public override void WatchProperties(PropertyName[] properties)
         {
         }
