@@ -75,7 +75,7 @@ namespace Banter.SDK
         const freezeRotationZ = false;
         const gameObject = new BS.GameObject("MyRigidbody");
         const rigidBody = await gameObject.AddComponent(new BS.BanterRigidbody(mass, drag, angularDrag, isKinematic, useGravity, centerOfMass, collisionDetectionMode, velocity, angularVelocity, freezePositionX, freezePositionY, freezePositionZ, freezeRotationX, freezeRotationY, freezeRotationZ));
-
+    ```
     */
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
