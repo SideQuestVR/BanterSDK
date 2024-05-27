@@ -18,9 +18,9 @@ public class BanterSocketClient
 
     public bool IsConnected
     {
-        get => client?.Connected??false;
+        get => client?.Connected ?? false;
     }
-    
+
     public BanterSocketClient()
     {
     }
@@ -61,7 +61,7 @@ public class BanterSocketClient
                     MessageReceived?.Invoke(message);
                 }
             }
-            
+
             LogLine.Do("BanterSocketClient no longer listening for messages");
         }
         catch (Exception ex)
@@ -145,7 +145,7 @@ public class BanterSocketClient
         while (true)
         {
             await reader.BaseStream.ReadAsync(buffer, 0, 1);
-            count =(int)( ((count << 8) & 0xFFFFFF00) | (buffer[0] & 0xFF));
+            count = (int)(((count << 8) & 0xFFFFFF00) | (buffer[0] & 0xFF));
 
             if (count == MagicNumber)
             {

@@ -1,0 +1,22 @@
+---
+# yamllint disable rule:line-length
+name: pre-commit
+
+on:  # yamllint disable-line rule:truthy
+  pull_request:
+  push:
+    branches:
+      - master
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5.1.0
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-dotnet@v4.0.0
+        with:
+          dotnet-version: '8.0.x'
+      - uses: pre-commit/action@v3.0.1

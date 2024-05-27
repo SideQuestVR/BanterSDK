@@ -1,5 +1,7 @@
-namespace Banter{
-    public enum ComponentType{
+namespace Banter.SDK
+{
+    public enum ComponentType
+    {
         BanterAssetBundle,
         BanterAudioSource,
         BanterBillboard,

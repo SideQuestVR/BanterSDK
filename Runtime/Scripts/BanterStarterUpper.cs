@@ -7,22 +7,24 @@ using UnityEngine;
 using UnityEngine.SpatialTracking;
 
 
-namespace Banter
-{ 
+namespace Banter.SDK
+{
     [DefaultExecutionOrder(-1001)]
-    public class BanterStarterUpper : MonoBehaviour{
+    public class BanterStarterUpper : MonoBehaviour
+    {
         [SerializeField] int numberOfRemotePlayers = 1;
-        [SerializeField] Vector3 spawnPoint; 
+        [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
         [SerializeField] bool startWebServer = true;
-        public static float voiceVolume = 0; 
+        public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
         public BanterScene scene;
         public static string WEB_ROOT = "WebRoot";
         private int processId;
-        
-        void Awake() {
+
+        void Awake()
+        {
             scene = BanterScene.Instance();
             scene.StartThreads();
             gameObject.AddComponent<DontDestroyOnLoad>();
@@ -41,25 +43,29 @@ namespace Banter
 #endif
             SetupBrowserLink();
             scene.ResetLoadingProgress();
-// #if BANTER_EDITOR
-//         scene.link.Connected += (arg0, arg1) => {
-//             _ = scene.LoadUrl(BanterScene.CUSTOM_HOME_SPACE);
-//         };
-// #endif
+            // #if BANTER_EDITOR
+            //         scene.link.Connected += (arg0, arg1) => {
+            //             _ = scene.LoadUrl(BanterScene.CUSTOM_HOME_SPACE);
+            //         };
+            // #endif
         }
-      
-        Vector3 RandomSpawnPoint() {
+
+        Vector3 RandomSpawnPoint()
+        {
             return new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 0, UnityEngine.Random.Range(-0.5f, 0.5f)) + spawnPoint;
         }
-        void SpawnPlayers() {
+        void SpawnPlayers()
+        {
             var spawn = Resources.Load<GameObject>("Prefabs/BanterSpawnPoint");
-            if(spawn != null) {
+            if (spawn != null)
+            {
                 var spawnGo = Instantiate(spawn).transform;
                 spawnGo.name = "SpawnPoint";
                 spawnGo.position = spawnPoint;
                 spawnGo.eulerAngles = new Vector3(0, spawnRotation, 0);
             }
-            for(int i = 0; i < numberOfRemotePlayers; i++) {
+            for (int i = 0; i < numberOfRemotePlayers; i++)
+            {
                 var player = Instantiate(localPlayerPrefab).transform;
                 player.name = "RemotePlayer" + i;
                 player.tag = "__BA_RemotePlayerHead";
@@ -79,7 +85,8 @@ namespace Banter
                 GameObject.Destroy(player.Find("LeftHand").GetComponent<PhysicsHandFollow>());
             }
         }
-        void SetupCamera() {
+        void SetupCamera()
+        {
             var player = Instantiate(localPlayerPrefab).transform;
             player.name = "LocalPlayer";
             player.tag = "LocalPlayer";
@@ -100,18 +107,24 @@ namespace Banter
             Kill(true);
         }
 
-        void OnDestroy() {
+        void OnDestroy()
+        {
             scene.state = SceneState.NONE;
-        } 
-        private void SetupBrowserLink() {
-            scene.link = gameObject.AddComponent<BanterLink>();
-            scene.link.Connected += (arg0, arg1) => scene.mainThread?.Enqueue(()=>scene.LoadSpaceState());
         }
-        public void CancelLoading() {
-            if(scene.HasLoadFailed()) {
+        private void SetupBrowserLink()
+        {
+            scene.link = gameObject.AddComponent<BanterLink>();
+            scene.link.Connected += (arg0, arg1) => scene.mainThread?.Enqueue(() => scene.LoadSpaceState());
+        }
+        public void CancelLoading()
+        {
+            if (scene.HasLoadFailed())
+            {
                 scene.LoadingStatus = "Couldn't load home space, loading fallback...";
                 UnityMainThreadDispatcher.Instance().Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
-            }else{
+            }
+            else
+            {
                 // Allow cancelling and going back to lobby, only if loading
                 if (scene.loading)
                 {
@@ -120,7 +133,7 @@ namespace Banter
                     scene.Cancel("User cancelled loading", true);
                     UnityMainThreadDispatcher.Instance().Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
                 }
-                
+
                 // The below allows canceling from outside loading screen
                 // if (!(scene.loading && scene.CurrentUrl == BanterScene.CUSTOM_HOME_SPACE))
                 // {
@@ -131,10 +144,12 @@ namespace Banter
                 // }
             }
         }
-        public static void ToggleDevTools()  {
+        public static void ToggleDevTools()
+        {
             BanterScene.Instance().link.ToggleDevTools();
         }
-        private void StartBrowser() {
+        private void StartBrowser()
+        {
 #if !BANTER_EDITOR
             var isProd = false;
 #else
@@ -147,8 +162,8 @@ namespace Banter
                 (isProd ? "--prod true " : "") + "--bebug --devtools --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + Path.Join(Application.dataPath, WEB_ROOT),
                 LogTag.BanterBrowser);
 #else
-            var injectFile =  "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") +"\"";
-            processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link", 
+            var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
+            processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
                 "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile,
                 LogTag.BanterBrowser);
@@ -180,31 +195,39 @@ namespace Banter
                 }
             }
 
-            if(force) {
+            if (force)
+            {
                 //_ = KillBanterLink();
             }
         }
-        async Task KillBanterLink() {
+        async Task KillBanterLink()
+        {
             await Task.Delay(100);
             var processes = Process.GetProcessesByName("banter-link");
             var killedLogs = "";
             var failedLogs = "";
-            if(processes.Length > 0) {
+            if (processes.Length > 0)
+            {
                 killedLogs += "Killed banter-link processes: ";
                 failedLogs += "Failed to kill: ";
             }
-            foreach(var p in processes) {
-                try{
+            foreach (var p in processes)
+            {
+                try
+                {
                     p.Kill();
                     killedLogs += p.Id + ", ";
-                }catch(InvalidOperationException) {
+                }
+                catch (InvalidOperationException)
+                {
                     failedLogs += p.Id + ", ";
                 }
             }
             LogLine.Do(LogLine.browserColor, LogTag.Banter, killedLogs + (failedLogs == "Failed to kill: " ? failedLogs + "none." : failedLogs));
         }
 
-        void CreateWebRoot() {
+        void CreateWebRoot()
+        {
             // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
 #if !BANTER_EDITOR
             var webRoot = Application.dataPath + "/WebRoot";
@@ -215,8 +238,9 @@ namespace Banter
 #endif
         }
 
-        void FixedUpdate() {
-			scene.FixedUpdate();
-		}
+        void FixedUpdate()
+        {
+            scene.FixedUpdate();
+        }
     }
 }

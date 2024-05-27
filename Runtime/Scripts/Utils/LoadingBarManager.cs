@@ -4,9 +4,11 @@ using DigitalRuby.Tween;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter{
+namespace Banter.SDK
+{
 
-    enum LoadingState {
+    enum LoadingState
+    {
         Loading,
         Loaded,
         Unloaded
@@ -35,77 +37,104 @@ namespace Banter{
         private float lastLoadingPercent = 0f;
         private string currentUrl = "";
         private LoadingState state = LoadingState.Unloaded;
-        void Update() {
-            if(!spinner) {
+        void Update()
+        {
+            if (!spinner)
+            {
                 return;
             }
             spinner.Rotate(0, 0, -3 * speed);
         }
-        void Awake() {
+        void Awake()
+        {
             scene = BanterScene.Instance();
             SetCanCancel(false);
             _ = CustomLoadSkybox();
             Preload();
-            SetLoadProgress("Welcome to Banter", 0 ,"Getting things ready...", false);
+            SetLoadProgress("Welcome to Banter", 0, "Getting things ready...", false);
         }
-        async Task CustomLoadSkybox() {
-            try{
+        async Task CustomLoadSkybox()
+        {
+            try
+            {
                 var filepath = Path.Combine(Application.persistentDataPath, "custom-skybox.png");
-                if(File.Exists(filepath)) {
+                if (File.Exists(filepath))
+                {
                     var tex = await Get.Texture("file://" + filepath);
                     loadingProgress.sharedMaterial.SetTexture("_Pano", tex);
-                }else{
+                }
+                else
+                {
                     loadingProgress.sharedMaterial.SetTexture("_Pano", defaultLoadingImage);
                 }
-            }catch{}
+            }
+            catch { }
         }
-        public void ResetLoadingProgress() {
-            loadingBarInner.localScale = new Vector3(0, 1, 1); 
+        public void ResetLoadingProgress()
+        {
+            loadingBarInner.localScale = new Vector3(0, 1, 1);
             loadingProgress.sharedMaterial.SetFloat("_DissolveAmount", 0);
         }
-        public void SetCanCancel(bool canCancel) {
+        public void SetCanCancel(bool canCancel)
+        {
             CanCancel = canCancel;
             UpdateCancelText();
         }
-        public void SetLoadProgress(string loadingTitle, float percentage, string detailMessage, bool canCancel, Texture2D spaceImage = null) {
-            if(!UnityMainThreadDispatcher.Exists()) {
+        public void SetLoadProgress(string loadingTitle, float percentage, string detailMessage, bool canCancel, Texture2D spaceImage = null)
+        {
+            if (!UnityMainThreadDispatcher.Exists())
+            {
                 return;
             }
-            UnityMainThreadDispatcher.Instance().Enqueue(() => {
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            {
                 SetCanCancel(canCancel);
-                if(spaceImage != null) {
+                if (spaceImage != null)
+                {
                     spaceImage = MipMaps.Do(spaceImage);
                     spaceImage.wrapMode = TextureWrapMode.Clamp;
                     loadingProgress.sharedMaterial.SetTexture("_Thumb", spaceImage);
-                    TweenFactory.Tween("loadingImage", 0, 1, 6f, TweenScaleFunctions.CubicEaseOut, (f) => {
+                    TweenFactory.Tween("loadingImage", 0, 1, 6f, TweenScaleFunctions.CubicEaseOut, (f) =>
+                    {
                         loadingProgress.sharedMaterial.SetFloat("_DissolveLoadAmount", f.CurrentValue);
                     });
-                }else{  
+                }
+                else
+                {
                     loadingpercentage = percentage;
-                    if (loadingpercentage < lastLoadingPercent) {
+                    if (loadingpercentage < lastLoadingPercent)
+                    {
                         TweenFactory.RemoveTweenKey("loadingBar", TweenStopBehavior.DoNotModify);
-                        if(loadingBarInner != null) {
-                            loadingBarInner.localScale = new Vector3(loadingpercentage, 1, 1); 
+                        if (loadingBarInner != null)
+                        {
+                            loadingBarInner.localScale = new Vector3(loadingpercentage, 1, 1);
                         }
-                    } else {
-                        TweenFactory.Tween("loadingBar", lastLoadingPercent, loadingpercentage, 0.1f, TweenScaleFunctions.CubicEaseOut, (f) => {
-                            if(loadingBarInner != null) {
-                                loadingBarInner.localScale = new Vector3(Mathf.Clamp(f.CurrentValue, 0f, 1f), 1, 1); 
+                    }
+                    else
+                    {
+                        TweenFactory.Tween("loadingBar", lastLoadingPercent, loadingpercentage, 0.1f, TweenScaleFunctions.CubicEaseOut, (f) =>
+                        {
+                            if (loadingBarInner != null)
+                            {
+                                loadingBarInner.localScale = new Vector3(Mathf.Clamp(f.CurrentValue, 0f, 1f), 1, 1);
                             }
                         });
                     }
                     lastLoadingPercent = loadingpercentage;
-                    if (loadingText != null) {
+                    if (loadingText != null)
+                    {
                         loadingText.text = detailMessage ?? "";
                     }
-                    if (titleText != null) {
+                    if (titleText != null)
+                    {
                         titleText.text = loadingTitle ?? "Loading...";
                     }
                 }
             });
-        }        
+        }
 
-        public string GetCancelButtonText() {
+        public string GetCancelButtonText()
+        {
 #if UNITY_STANDALONE_OSX
             return "Press X";
 #elif UNITY_ANDROID
@@ -144,27 +173,31 @@ namespace Banter{
             }
         }
 
-        public void MoveToUser(Vector3 offset = default) {
+        public void MoveToUser(Vector3 offset = default)
+        {
             var y = Camera.main.transform.position.y;
             var pos = Camera.main.transform.position + offset;
             pos.y = y;
             transform.position = pos;
         }
 
-        public void Preload() {
+        public void Preload()
+        {
             MoveToUser();
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();
             loadingSphere.transform.parent.GetComponent<RotateLoading>().MoveInFront();
-            var mask = maskTextures[UnityEngine.Random.Range(0, maskTextures.Length-1)];
-            loadingProgress.sharedMaterial.SetTexture("_DisolveGuide", mask); 
-            loadingProgress.sharedMaterial.SetTexture("_ThumbDisolveGuide", mask); 
+            var mask = maskTextures[UnityEngine.Random.Range(0, maskTextures.Length - 1)];
+            loadingProgress.sharedMaterial.SetTexture("_DisolveGuide", mask);
+            loadingProgress.sharedMaterial.SetTexture("_ThumbDisolveGuide", mask);
             loadingProgress.sharedMaterial.SetFloat("_DissolveLoadAmount", 0);
             SetLoadProgress("Loading", 0, scene.LoadingStatus, true);
         }
-        public async Task LoadIn(string url) {
-            if(state == LoadingState.Loaded) {
+        public async Task LoadIn(string url)
+        {
+            if (state == LoadingState.Loaded)
+            {
                 return;
             }
             state = LoadingState.Loading;
@@ -179,8 +212,9 @@ namespace Banter{
 
         public async Task LoadOut()
         {
-            LogLine.Do($"[LOADING] LoadOut state={state} scene.state={scene.state}"); 
-            if (state == LoadingState.Loading){
+            LogLine.Do($"[LOADING] LoadOut state={state} scene.state={scene.state}");
+            if (state == LoadingState.Loading)
+            {
                 return;
             }
             state = LoadingState.Loading;
@@ -197,7 +231,8 @@ namespace Banter{
             state = LoadingState.Unloaded;
         }
 
-        async Task HideCollider() {
+        async Task HideCollider()
+        {
             await new WaitForSeconds(1.5f);
             loadingProgress.gameObject.GetComponent<Collider>().enabled = false;
         }

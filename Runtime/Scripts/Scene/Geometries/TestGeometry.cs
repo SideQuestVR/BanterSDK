@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 [ExecuteInEditMode]
-public class TestGeometry : MonoBehaviour {
+public class TestGeometry : MonoBehaviour
+{
 
-    void Start() {
+    void Start()
+    {
         var circle = new TorusKnot();
         Mesh mesh = new Mesh();
         mesh.vertices = circle.vertices.ToArray();
@@ -16,7 +18,8 @@ public class TestGeometry : MonoBehaviour {
         //GetComponent<MeshCollider>().sharedMesh = mesh;
     }
 
-    void Update() {
+    void Update()
+    {
 
     }
 }

@@ -10,8 +10,9 @@ public class Geometry
     public List<Vector3> normals;
     public List<Vector2> uvs;
 
-    
-    public Mesh generate() {
+
+    public Mesh generate()
+    {
         Mesh mesh = new Mesh();
         mesh.vertices = vertices.ToArray();
         mesh.normals = normals.ToArray();

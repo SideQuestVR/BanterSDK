@@ -1,4 +1,5 @@
-public enum SceneState{
+public enum SceneState
+{
     NONE,
     DOM_READY,
     NOTHING_20S,

@@ -6,17 +6,19 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Networking;
 
-namespace Banter
+namespace Banter.SDK
 {
     [Serializable]
-    public class Community{
+    public class Community
+    {
         public string communities_id;
         public string name;
         public string icon;
     }
 
     [Serializable]
-    public class MetaData{
+    public class MetaData
+    {
         public string author;
         public string date;
         public string description;
@@ -27,24 +29,29 @@ namespace Banter
         public string title;
         public string url;
     }
-    public enum EnvType{
+    public enum EnvType
+    {
         PROD,
         TEST,
         WIP,
         LOCAL
     }
-    public enum UrlType{
+    public enum UrlType
+    {
         API,
         CDN,
         WS
     }
     public class Get : MonoBehaviour
     {
-        public static string GetUrl(EnvType envType, UrlType urlType) {
+        public static string GetUrl(EnvType envType, UrlType urlType)
+        {
 
-            switch(envType) {
+            switch (envType)
+            {
                 case EnvType.PROD:
-                    switch(urlType) {
+                    switch (urlType)
+                    {
                         case UrlType.API:
                             return "https://api.sidequestvr.com";
                         case UrlType.CDN:
@@ -54,7 +61,8 @@ namespace Banter
                     }
                     break;
                 case EnvType.TEST:
-                    switch(urlType) {
+                    switch (urlType)
+                    {
                         case UrlType.API:
                             return "https://api.sidetestvr.com";
                         case UrlType.CDN:
@@ -64,7 +72,8 @@ namespace Banter
                     }
                     break;
                 case EnvType.WIP:
-                    switch(urlType) {
+                    switch (urlType)
+                    {
                         case UrlType.API:
                             return "https://api.friedquest.com";
                         case UrlType.CDN:
@@ -74,7 +83,8 @@ namespace Banter
                     }
                     break;
                 case EnvType.LOCAL:
-                    switch(urlType) {
+                    switch (urlType)
+                    {
                         case UrlType.API:
                             return "http://localhost:3000";
                         case UrlType.CDN:
@@ -87,64 +97,87 @@ namespace Banter
             return null;
         }
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
-        public static async Task<Texture2D> Texture(string url) {
-            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url)) {
+        public static async Task<Texture2D> Texture(string url)
+        {
+            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
+            {
                 await uwr.SendWebRequest();
-                if (uwr.result != UnityWebRequest.Result.Success) {
+                if (uwr.result != UnityWebRequest.Result.Success)
+                {
                     throw new System.Exception(uwr.error);
-                }else{
+                }
+                else
+                {
                     return DownloadHandlerTexture.GetContent(uwr);
                 }
             }
         }
-        public static async Task<Community> SpaceMeta(string url) {
-            try{
+        public static async Task<Community> SpaceMeta(string url)
+        {
+            try
+            {
                 var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/communities/space-info?space_url=" + UnityWebRequest.EscapeURL(url));
                 // TODO: Grab Event if Event is live?
                 // This cant really work as the events can have any url now? So the space may not be the same as the event destination? 
                 // https://api.sidetestvr.com/v2/communities/557/events
                 return JsonUtility.FromJson<Community>(text);
-            }catch(Exception) {
-                try{
+            }
+            catch (Exception)
+            {
+                try
+                {
                     var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/urlmetadata?url=" + UnityWebRequest.EscapeURL(url));
                     var space = JsonUtility.FromJson<MetaData>(text);
-                    return new Community{name = space.title, icon = space.image};
-                }catch(Exception) {
+                    return new Community { name = space.title, icon = space.image };
+                }
+                catch (Exception)
+                {
                     return null;
                 }
             }
         }
-        public static async Task<byte[]> Bytes(string url) {
+        public static async Task<byte[]> Bytes(string url)
+        {
             UnityWebRequest uwr = UnityWebRequest.Get(url);
             await uwr.SendWebRequest();
-            if (uwr.result != UnityWebRequest.Result.Success) {
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
                 throw new System.Exception(uwr.error);
-            } else {
+            }
+            else
+            {
                 return uwr.downloadHandler.data;
             }
         }
-        public static async Task<string> Text(string url) {
+        public static async Task<string> Text(string url)
+        {
             UnityWebRequest uwr = UnityWebRequest.Get(url);
             await uwr.SendWebRequest();
-    
-            if (uwr.result != UnityWebRequest.Result.Success) {
+
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
                 throw new System.Exception(uwr.error);
-            } else {
+            }
+            else
+            {
                 return uwr.downloadHandler.text;
             }
         }
 
-        public static async Task<AssetBundle> AssetBundle(string url, Action<float> progress = null) {
+        public static async Task<AssetBundle> AssetBundle(string url, Action<float> progress = null)
+        {
             var hash = new Hash128();
             hash.Append(url);
             using (UnityWebRequest head = UnityWebRequest.Head(url))
             {
                 await head.SendWebRequest();
                 var headers = head.GetResponseHeaders();
-                if(headers.ContainsKey("Last-Modified")) {
+                if (headers.ContainsKey("Last-Modified"))
+                {
                     hash.Append(headers["Last-Modified"]);
                 }
-                if(headers.ContainsKey("ETag")) {
+                if (headers.ContainsKey("ETag"))
+                {
                     hash.Append(headers["ETag"]);
                 }
             }
@@ -153,18 +186,25 @@ namespace Banter
                 progress?.Invoke(0f);
                 _ = web.SendWebRequest();
 
-                while (!web.isDone) {
+                while (!web.isDone)
+                {
                     progress?.Invoke(web.downloadProgress);
                     await new WaitForSeconds(.1f);
                 }
                 progress?.Invoke(1f);
-                if (web.result != UnityWebRequest.Result.Success) {
+                if (web.result != UnityWebRequest.Result.Success)
+                {
                     throw new Exception(web.error);
-                }else{
+                }
+                else
+                {
                     var bundle = DownloadHandlerAssetBundle.GetContent(web);
-                    if (bundle != null) {
+                    if (bundle != null)
+                    {
                         return bundle;
-                    } else {
+                    }
+                    else
+                    {
                         throw new Exception("Unable to download asset bundle from " + url);
                     }
                 }
@@ -174,7 +214,8 @@ namespace Banter
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)
         {
             var m = ExtExtractor.Match(url);
-            if (!m.Success || m.Groups.Count < 2) {
+            if (!m.Success || m.Groups.Count < 2)
+            {
                 throw new System.Exception("Couldn't determine audio type from extension in url");
             }
             var cap = m.Groups[1];
@@ -196,24 +237,29 @@ namespace Banter
             using (UnityWebRequest web = UnityWebRequestMultimedia.GetAudioClip(url, aType))
             {
                 _ = web.SendWebRequest();
-                while (!web.isDone) {
+                while (!web.isDone)
+                {
                     progress?.Invoke(web.downloadProgress);
                     await new WaitForSeconds(.05f);
                 }
-                if (web.result != UnityWebRequest.Result.Success){
+                if (web.result != UnityWebRequest.Result.Success)
+                {
                     throw new System.Exception(web.error);
-                }else{
+                }
+                else
+                {
                     var clip = DownloadHandlerAudioClip.GetContent(web);
                     if (clip != null)
                     {
                         return clip;
-                    } else
+                    }
+                    else
                     {
                         throw new System.Exception("Unable to download audio clip from " + url);
                     }
                 }
-                    
-                
+
+
             }
 
         }

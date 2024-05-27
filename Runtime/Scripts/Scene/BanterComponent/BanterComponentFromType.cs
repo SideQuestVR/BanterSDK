@@ -1,55 +1,59 @@
 using UnityEngine;
-namespace Banter{
-    public class BanterComponentFromType{
-        public static BanterComponentBase CreateComponent(GameObject gameObject, ComponentType componentType){
-          switch(componentType) {
-              case ComponentType.BanterAssetBundle:
+namespace Banter.SDK
+{
+    public class BanterComponentFromType
+    {
+        public static BanterComponentBase CreateComponent(GameObject gameObject, ComponentType componentType)
+        {
+            switch (componentType)
+            {
+                case ComponentType.BanterAssetBundle:
                     return gameObject.AddComponent<BanterAssetBundle>();
-              case ComponentType.BanterAudioSource:
+                case ComponentType.BanterAudioSource:
                     return gameObject.AddComponent<BanterAudioSource>();
-              case ComponentType.BanterBillboard:
+                case ComponentType.BanterBillboard:
                     return gameObject.AddComponent<BanterBillboard>();
-              case ComponentType.BoxCollider:
+                case ComponentType.BoxCollider:
                     return gameObject.AddComponent<BanterBoxCollider>();
-              case ComponentType.BanterBrowser:
+                case ComponentType.BanterBrowser:
                     return gameObject.AddComponent<BanterBrowser>();
-              case ComponentType.CapsuleCollider:
+                case ComponentType.CapsuleCollider:
                     return gameObject.AddComponent<BanterCapsuleCollider>();
-              case ComponentType.BanterColliderEvents:
+                case ComponentType.BanterColliderEvents:
                     return gameObject.AddComponent<BanterColliderEvents>();
-              case ComponentType.ConfigurableJoint:
+                case ComponentType.ConfigurableJoint:
                     return gameObject.AddComponent<BanterConfigurableJoint>();
-              case ComponentType.BanterGeometry:
+                case ComponentType.BanterGeometry:
                     return gameObject.AddComponent<BanterGeometry>();
-              case ComponentType.BanterGLTF:
+                case ComponentType.BanterGLTF:
                     return gameObject.AddComponent<BanterGLTF>();
-              case ComponentType.BanterInvertedMesh:
+                case ComponentType.BanterInvertedMesh:
                     return gameObject.AddComponent<BanterInvertedMesh>();
-              case ComponentType.BanterKitItem:
+                case ComponentType.BanterKitItem:
                     return gameObject.AddComponent<BanterKitItem>();
-              case ComponentType.BanterMaterial:
+                case ComponentType.BanterMaterial:
                     return gameObject.AddComponent<BanterMaterial>();
-              case ComponentType.MeshCollider:
+                case ComponentType.MeshCollider:
                     return gameObject.AddComponent<BanterMeshCollider>();
-              case ComponentType.BanterMirror:
+                case ComponentType.BanterMirror:
                     return gameObject.AddComponent<BanterMirror>();
-              case ComponentType.BanterPhysicMaterial:
+                case ComponentType.BanterPhysicMaterial:
                     return gameObject.AddComponent<BanterPhysicMaterial>();
-              case ComponentType.BanterPortal:
+                case ComponentType.BanterPortal:
                     return gameObject.AddComponent<BanterPortal>();
-              case ComponentType.BanterRigidbody:
+                case ComponentType.BanterRigidbody:
                     return gameObject.AddComponent<BanterRigidbody>();
-              case ComponentType.SphereCollider:
+                case ComponentType.SphereCollider:
                     return gameObject.AddComponent<BanterSphereCollider>();
-              case ComponentType.BanterStreetView:
+                case ComponentType.BanterStreetView:
                     return gameObject.AddComponent<BanterStreetView>();
-              case ComponentType.BanterText:
+                case ComponentType.BanterText:
                     return gameObject.AddComponent<BanterText>();
-              case ComponentType.Transform:
+                case ComponentType.Transform:
                     return gameObject.AddComponent<BanterTransform>();
-              case ComponentType.BanterVideoPlayer:
+                case ComponentType.BanterVideoPlayer:
                     return gameObject.AddComponent<BanterVideoPlayer>();
-          default:
+                default:
                     return null;
             }
         }

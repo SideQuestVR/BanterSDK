@@ -4,33 +4,35 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Banter{
-    public class BanterSceneSettings {
+namespace Banter.SDK
+{
+    public class BanterSceneSettings
+    {
         private bool _EnableDevTools = true;
-        public bool EnableDevTools {get{return _EnableDevTools;} set{_EnableDevTools = value;scene.events.OnEnableDevToolsChanged.Invoke(value);}}
+        public bool EnableDevTools { get { return _EnableDevTools; } set { _EnableDevTools = value; scene.events.OnEnableDevToolsChanged.Invoke(value); } }
         public bool EnableDefaultTextures = true;
         private bool _EnableTeleport = true;
-        public bool EnableTeleport {get{return _EnableTeleport;} set{_EnableTeleport = value;scene.events.OnEnableTeleportChanged.Invoke(value);}}
+        public bool EnableTeleport { get { return _EnableTeleport; } set { _EnableTeleport = value; scene.events.OnEnableTeleportChanged.Invoke(value); } }
         private bool _EnableForceGrab = false;
-        public bool EnableForceGrab {get{return _EnableForceGrab;} set{_EnableForceGrab = value;scene.events.OnEnableForceGrabChanged.Invoke(value);}}
+        public bool EnableForceGrab { get { return _EnableForceGrab; } set { _EnableForceGrab = value; scene.events.OnEnableForceGrabChanged.Invoke(value); } }
         private bool _EnableSpiderMan = false;
-        public bool EnableSpiderMan {get{return _EnableSpiderMan;} set{_EnableSpiderMan = value;scene.events.OnEnableSpiderManChanged.Invoke(value);}}
+        public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
         private bool _EnablePortals = true;
-        public bool EnablePortals {get{return _EnablePortals;} set{_EnablePortals = value;scene.events.OnEnablePortalsChanged.Invoke(value);}}
+        public bool EnablePortals { get { return _EnablePortals; } set { _EnablePortals = value; scene.events.OnEnablePortalsChanged.Invoke(value); } }
         private bool _EnableGuests = true;
-        public bool EnableGuests {get{return _EnableGuests;} set{_EnableGuests = value;scene.events.OnEnableGuestsChanged.Invoke(value);}}
+        public bool EnableGuests { get { return _EnableGuests; } set { _EnableGuests = value; scene.events.OnEnableGuestsChanged.Invoke(value); } }
         private bool _EnableFriendPositionJoin = true;
-        public bool EnableFriendPositionJoin {get{return _EnableFriendPositionJoin;} set{_EnableFriendPositionJoin = value;scene.events.OnEnableFriendPositionJoinChanged.Invoke(value);}}
+        public bool EnableFriendPositionJoin { get { return _EnableFriendPositionJoin; } set { _EnableFriendPositionJoin = value; scene.events.OnEnableFriendPositionJoinChanged.Invoke(value); } }
         private bool _EnableAvatars = true;
-        public bool EnableAvatars {get{return _EnableAvatars;} set{_EnableAvatars = value;scene.events.OnEnableAvatarsChanged.Invoke(value);}}
+        public bool EnableAvatars { get { return _EnableAvatars; } set { _EnableAvatars = value; scene.events.OnEnableAvatarsChanged.Invoke(value); } }
         private int _MaxOccupancy = 20;
-        public int MaxOccupancy {get{return _MaxOccupancy;} set{_MaxOccupancy = value;scene.events.OnMaxOccupancyChanged.Invoke(value);}}
+        public int MaxOccupancy { get { return _MaxOccupancy; } set { _MaxOccupancy = value; scene.events.OnMaxOccupancyChanged.Invoke(value); } }
         private float _RefreshRate = 72.0f;
-        public float RefreshRate {get{return _RefreshRate;} set{_RefreshRate = value;scene.events.OnRefreshRateChanged.Invoke(value);}}
+        public float RefreshRate { get { return _RefreshRate; } set { _RefreshRate = value; scene.events.OnRefreshRateChanged.Invoke(value); } }
         private Vector2 _ClippingPlane = new Vector2(0.02f, 1500.0f);
-        public Vector2 ClippingPlane {get{return _ClippingPlane;} set{_ClippingPlane = value;scene.events.OnClippingPlaneChanged.Invoke(value);}}
+        public Vector2 ClippingPlane { get { return _ClippingPlane; } set { _ClippingPlane = value; scene.events.OnClippingPlaneChanged.Invoke(value); } }
         private Vector4 _SpawnPoint = Vector4.zero;
-        public Vector4 SpawnPoint {get{return _SpawnPoint;} set{_SpawnPoint = value;scene.events.OnSpawnPointChanged.Invoke(value);}}
+        public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
         public Transform LeftHand = null;
         public Transform RightHand = null;
         public Transform Head = null;
@@ -54,34 +56,42 @@ namespace Banter{
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Creating instance: " + instanceId);
         }
         public string instanceId { get; private set; }
-        public void Destroy() {
+        public void Destroy()
+        {
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Destroying instance: " + instanceId);
-            if(parentTransform == null) {
+            if (parentTransform == null)
+            {
                 return;
             }
             parentTransform.gameObject.name = "[Destroying] " + parentTransform.gameObject.name;
             GameObject.Destroy(parentTransform.gameObject);
-            if(LeftHand != null) {
+            if (LeftHand != null)
+            {
                 GameObject.Destroy(LeftHand.gameObject);
             }
-            if(RightHand != null) {
+            if (RightHand != null)
+            {
                 GameObject.Destroy(RightHand.gameObject);
             }
-            if(Head != null) {
+            if (Head != null)
+            {
                 GameObject.Destroy(Head.gameObject);
             }
-            if(Body != null) {
+            if (Body != null)
+            {
                 GameObject.Destroy(Body.gameObject);
             }
-            if(Cockpit != null) {
+            if (Cockpit != null)
+            {
                 GameObject.Destroy(Cockpit.gameObject);
             }
 
         }
-        public async Task Reset() {
+        public async Task Reset()
+        {
             isDestroying = true;
             destroyedAt = DateTime.Now;
-           
+
             EnableDevTools = true;
             EnableDefaultTextures = true;
             EnableTeleport = true;
@@ -95,71 +105,73 @@ namespace Banter{
             RefreshRate = 72.0f;
             ClippingPlane = new Vector2(0.02f, 1500.0f);
             SpawnPoint = Vector4.zero;
-            if(SceneAssetBundle != null) {
+            if (SceneAssetBundle != null)
+            {
                 await SceneAssetBundle.Unload();
                 SceneAssetBundle = null;
             }
-            foreach(var bundle in KitBundles.ToArray()) {
+            foreach (var bundle in KitBundles.ToArray())
+            {
                 await bundle.Unload();
             }
             KitBundles.Clear();
             KitPaths.Clear();
-            
+
             isDestroying = false;
         }
         // public void Destroy()
         // {
-            // isDestroying = true;
-            // destroyedAt = DateTime.Now;
-            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Destroying instance: " + instanceId);
-            // if(parentTransform == null) {
-            //     return;
-            // }
-            // parentTransform.gameObject.name = "[Destroying] " + parentTransform.gameObject.name;
-            // GameObject.Destroy(parentTransform.gameObject);
-            // if(LeftHand != null) {
-            //     GameObject.Destroy(LeftHand);
-            // }
-            // if(RightHand != null) {
-            //     GameObject.Destroy(RightHand);
-            // }
-            // if(Head != null) {
-            //     GameObject.Destroy(Head);
-            // }
-            // if(Body != null) {
-            //     GameObject.Destroy(Body);
-            // }
-            // if(Cockpit != null) {
-            //     GameObject.Destroy(Cockpit);
-            // }
-            // KitPaths.Clear();
-            // allMats.Clear();
-            // allShaders.Clear();
+        // isDestroying = true;
+        // destroyedAt = DateTime.Now;
+        // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Destroying instance: " + instanceId);
+        // if(parentTransform == null) {
+        //     return;
+        // }
+        // parentTransform.gameObject.name = "[Destroying] " + parentTransform.gameObject.name;
+        // GameObject.Destroy(parentTransform.gameObject);
+        // if(LeftHand != null) {
+        //     GameObject.Destroy(LeftHand);
+        // }
+        // if(RightHand != null) {
+        //     GameObject.Destroy(RightHand);
+        // }
+        // if(Head != null) {
+        //     GameObject.Destroy(Head);
+        // }
+        // if(Body != null) {
+        //     GameObject.Destroy(Body);
+        // }
+        // if(Cockpit != null) {
+        //     GameObject.Destroy(Cockpit);
+        // }
+        // KitPaths.Clear();
+        // allMats.Clear();
+        // allShaders.Clear();
 
-            // if (createdShaderMaterials.Count > 0)
-            // {
-            //     try
-            //     {
-            //         foreach (var mat in createdShaderMaterials)
-            //         {
-            //             try
-            //             {
-            //                 GameObject.Destroy(mat.Value);
-            //             }
-            //             catch (Exception ex)
-            //             {
-            //                 Debug.LogError("Error destroying created material, may leak!");
-            //                 Debug.LogException(ex);
-            //             }
-            //         }
-            //         createdShaderMaterials.Clear();
-            //     } catch (Exception ex)
-            //     {
-            //         Debug.LogError("Error cleaning up created materials!");
-            //         Debug.LogException(ex);
-            //     }
-            // }
-            
+        // if (createdShaderMaterials.Count > 0)
+        // {
+        //     try
+        //     {
+        //         foreach (var mat in createdShaderMaterials)
+        //         {
+        //             try
+        //             {
+        //                 GameObject.Destroy(mat.Value);
+        //             }
+        //             catch (Exception ex)
+        //             {
+        //                 Debug.LogError("Error destroying created material, may leak!");
+        //                 Debug.LogException(ex);
+        //             }
+        //         }
+        //         createdShaderMaterials.Clear();
+        //     } catch (Exception ex)
+        //     {
+        //         Debug.LogError("Error cleaning up created materials!");
+        //         Debug.LogException(ex);
+        //     }
+        // }
+
         // }
 
         // public Dictionary<string, Material> allMats { get; } = new Dictionary<string, Material>();

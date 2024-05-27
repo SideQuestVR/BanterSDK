@@ -1,4 +1,5 @@
-public enum LegacyAttachmentPosition {
+public enum LegacyAttachmentPosition
+{
     HEAD,
     BODY,
     LEFT_HAND,

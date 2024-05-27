@@ -8,10 +8,11 @@ using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Networking;
-namespace Banter
+namespace Banter.SDK
 {
     [Serializable]
-    public class BrowserObject{
+    public class BrowserObject
+    {
         public bool enabled;
         public string url;
         public string instanceId;
@@ -30,7 +31,7 @@ namespace Banter
         public const string scroll = "scroll";
         public const string delayseconds = "delayseconds";
         public const string runscript = "runscript";
-        public const string goback= "goback";
+        public const string goback = "goback";
         public const string goforward = "goforward";
         public const string postmessage = "postmessage";
     }
@@ -48,60 +49,67 @@ namespace Banter
         public string strParam3;
         public string strParam4;
     }
-/* 
-#### Banter Browser
-A browser component that can be added to a GameObject to display a webpage.
+    /* 
+    #### Banter Browser
+    A browser component that can be added to a GameObject to display a webpage.
 
-**Properties**
-- `url` - The URL of the webpage to display.
-- `mipMaps` - The number of mipmaps to use.
-- `pixelsPerUnit` - The number of pixels per unit.
-- `actions` - A list of actions to run after the page has loaded.
+    **Properties**
+    - `url` - The URL of the webpage to display.
+    - `mipMaps` - The number of mipmaps to use.
+    - `pixelsPerUnit` - The number of pixels per unit.
+    - `actions` - A list of actions to run after the page has loaded.
 
-**Methods**
-- `ToggleInteraction(enabled: boolean)` - Toggles the interaction of the browser.
-- `RunActions(actions: string)` - Runs a list of actions on the browser.
+    **Methods**
+    - `ToggleInteraction(enabled: boolean)` - Toggles the interaction of the browser.
+    - `RunActions(actions: string)` - Runs a list of actions on the browser.
 
-**Code Example**
-```js
-    const url = "https://www.google.com";
-    const mipMaps = 4;
-    const pixelsPerUnit = 1200;
-    const actions = "click2d,0.5,0.5";
-    const gameObject = new BS.GameObject("MyBrowser"); 
-    const browser = await gameObject.AddComponent(new BS.BanterBrowser(url, mipMaps, pixelsPerUnit, actions));
-    // ...
-    browser.ToggleInteraction(true);
-    // ...
-    browser.RunActions("click2d,0.5,0.5");
-```
+    **Code Example**
+    ```js
+        const url = "https://www.google.com";
+        const mipMaps = 4;
+        const pixelsPerUnit = 1200;
+        const actions = "click2d,0.5,0.5";
+        const gameObject = new BS.GameObject("MyBrowser"); 
+        const browser = await gameObject.AddComponent(new BS.BanterBrowser(url, mipMaps, pixelsPerUnit, actions));
+        // ...
+        browser.ToggleInteraction(true);
+        // ...
+        browser.RunActions("click2d,0.5,0.5");
+    ```
 
-*/
+    */
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
-    public class BanterBrowser : BanterComponentBase {
+    public class BanterBrowser : BanterComponentBase
+    {
         [See(initial = "")] public string url;
         [See(initial = "4")] public int mipMaps;
         [See(initial = "1200")] public float pixelsPerUnit;
         [See(initial = "")] public string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
-        [Method] public void _ToggleInteraction(bool enabled) {
+        [Method]
+        public void _ToggleInteraction(bool enabled)
+        {
             Debug.Log("_ToggleInteraction: " + enabled);
             browser.SendMessage("ToggleInteraction", enabled);
         }
-        [Method] public void _RunActions(string actions) {
+        [Method]
+        public void _RunActions(string actions)
+        {
             browser.SendMessage("RunActions", actions);
         }
         GameObject browser;
 
-        public override void StartStuff() {
+        public override void StartStuff()
+        {
             SetupBrowser();
             OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
         }
 
         private void SetupBrowser(List<PropertyName> changedProperties = null)
         {
-            if(browser == null) {
+            if (browser == null)
+            {
 #if BANTER_EDITOR
                 browser = Instantiate(Resources.Load<GameObject>("Prefabs/BanterBrowserBuild"), transform);
 #else
@@ -110,121 +118,148 @@ A browser component that can be added to a GameObject to display a webpage.
                 browser.name = "BanterBrowser";
                 browser.SendMessage("RunActions", actions);
             }
-            if(changedProperties?.Contains(PropertyName.url) ?? false) {
+            if (changedProperties?.Contains(PropertyName.url) ?? false)
+            {
                 browser.SendMessage("LoadUrl", url);
             }
-            if(changedProperties?.Contains(PropertyName.mipMaps) ?? false) {
+            if (changedProperties?.Contains(PropertyName.mipMaps) ?? false)
+            {
                 browser.SendMessage("SetMipMaps", mipMaps);
             }
-            if(changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? false) {
+            if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? false)
+            {
                 browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
             }
             SetLoadedIfNot();
         }
 
-        public override void DestroyStuff() {}
-        public void UpdateCallback(List<PropertyName> changedProperties) {
+        public override void DestroyStuff() { }
+        public void UpdateCallback(List<PropertyName> changedProperties)
+        {
             SetupBrowser(changedProperties);
         }
-// BANTER COMPILED CODE 
+        // BANTER COMPILED CODE 
         BanterScene scene;
-    
         bool alreadyStarted = false;
-    
-        void Start() { 
-            Init(); 
+        void Start()
+        {
+            Init();
             StartStuff();
         }
-        public override void ReSetup() {
-                   List<PropertyName> changedProperties = new List<PropertyName>(){PropertyName.url,PropertyName.mipMaps,PropertyName.pixelsPerUnit,PropertyName.actions,};
+
+        public override void ReSetup()
+        {
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.actions, };
             UpdateCallback(changedProperties);
         }
-        
-    
+
         public override void Init()
         {
             scene = BanterScene.Instance();
-            if(alreadyStarted) { return; }
+            if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterBrowser);
-            
-            
+
+
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
-            
-        
+
         }
-     
-        void Awake() {
+
+        void Awake()
+        {
             BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
-    
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-            
+
             DestroyStuff();
         }
-        void ToggleInteraction(Boolean enabled) {
+
+        void ToggleInteraction(Boolean enabled)
+        {
             _ToggleInteraction(enabled);
         }
-        void RunActions(String actions) {
+        void RunActions(String actions)
+        {
             _RunActions(actions);
         }
-        public override object CallMethod(string methodName, List<object> parameters){
-            if(methodName == "ToggleInteraction" && parameters.Count == 1 && parameters[0] is Boolean){
+        public override object CallMethod(string methodName, List<object> parameters)
+        {
+
+            if (methodName == "ToggleInteraction" && parameters.Count == 1 && parameters[0] is Boolean)
+            {
                 var enabled = (Boolean)parameters[0];
                 ToggleInteraction(enabled);
                 return null;
-            }else if(methodName == "RunActions" && parameters.Count == 1 && parameters[0] is String){
+            }
+            else if (methodName == "RunActions" && parameters.Count == 1 && parameters[0] is String)
+            {
                 var actions = (String)parameters[0];
                 RunActions(actions);
                 return null;
-            }else{ 
-                return null; 
+            }
+            else
+            {
+                return null;
             }
         }
-    
-        public override void Deserialise(List<object> values) {
+
+        public override void Deserialise(List<object> values)
+        {
             List<PropertyName> changedProperties = new List<PropertyName>();
-            for(int i = 0; i < values.Count; i++) {
-                if(values[i] is BanterString){
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] is BanterString)
+                {
                     var valurl = (BanterString)values[i];
-                    if(valurl.n == PropertyName.url) {
+                    if (valurl.n == PropertyName.url)
+                    {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if(values[i] is BanterInt){
+                if (values[i] is BanterInt)
+                {
                     var valmipMaps = (BanterInt)values[i];
-                    if(valmipMaps.n == PropertyName.mipMaps) {
+                    if (valmipMaps.n == PropertyName.mipMaps)
+                    {
                         mipMaps = valmipMaps.x;
                         changedProperties.Add(PropertyName.mipMaps);
                     }
                 }
-                if(values[i] is BanterFloat){
+                if (values[i] is BanterFloat)
+                {
                     var valpixelsPerUnit = (BanterFloat)values[i];
-                    if(valpixelsPerUnit.n == PropertyName.pixelsPerUnit) {
+                    if (valpixelsPerUnit.n == PropertyName.pixelsPerUnit)
+                    {
                         pixelsPerUnit = valpixelsPerUnit.x;
                         changedProperties.Add(PropertyName.pixelsPerUnit);
                     }
                 }
-                if(values[i] is BanterString){
+                if (values[i] is BanterString)
+                {
                     var valactions = (BanterString)values[i];
-                    if(valactions.n == PropertyName.actions) {
+                    if (valactions.n == PropertyName.actions)
+                    {
                         actions = valactions.x;
                         changedProperties.Add(PropertyName.actions);
                     }
                 }
             }
-            if(values.Count > 0 ) { UpdateCallback(changedProperties);}
+            if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
-            {
+        {
             var updates = new List<BanterComponentPropertyUpdate>();
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
@@ -233,8 +268,10 @@ A browser component that can be added to a GameObject to display a webpage.
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.mipMaps,
                     type = PropertyType.Int,
                     value = mipMaps,
@@ -243,8 +280,10 @@ A browser component that can be added to a GameObject to display a webpage.
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.pixelsPerUnit,
                     type = PropertyType.Float,
                     value = pixelsPerUnit,
@@ -253,8 +292,10 @@ A browser component that can be added to a GameObject to display a webpage.
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.actions,
                     type = PropertyType.String,
                     value = actions,
@@ -265,8 +306,10 @@ A browser component that can be added to a GameObject to display a webpage.
             }
             scene.SetFromUnityProperties(updates, callback);
         }
-        public override void WatchProperties(PropertyName[] properties) {
+
+        public override void WatchProperties(PropertyName[] properties)
+        {
         }
-// END BANTER COMPILED CODE 
+        // END BANTER COMPILED CODE 
     }
 }

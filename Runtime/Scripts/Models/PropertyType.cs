@@ -1,4 +1,5 @@
-public enum PropertyType {
+public enum PropertyType
+{
     Bool,
     Int,
     Float,

@@ -1,0 +1,14 @@
+---
+repos:
+  - repo: local
+    hooks:
+      # Use dotnet format already installed on your machine
+      - id: dotnet-format
+        name: dotnet-format
+        language: system
+        entry: dotnet format whitespace
+        types_or: [c#, vb]
+        exclude: ^(Runtime/Scripts/3rdParty) # ^(FolderPath1)|(FolderPath2/)
+        args:
+          - --folder
+          - --include

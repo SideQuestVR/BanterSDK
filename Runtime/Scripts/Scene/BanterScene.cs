@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 
-namespace Banter
+namespace Banter.SDK
 {
     public class SpawnPointData
     {
@@ -321,13 +321,15 @@ namespace Banter
                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
             });
 #else
-                var user = users.FirstOrDefault(x => x.id == parts[5]);
-                if(user != null) {
-                    mainThread?.Enqueue(() => {
-                        user.transform.position = point;
-                        user.transform.eulerAngles = rotation;
-                    });
-                }
+            var user = users.FirstOrDefault(x => x.id == parts[5]);
+            if (user != null)
+            {
+                mainThread?.Enqueue(() =>
+                {
+                    user.transform.position = point;
+                    user.transform.eulerAngles = rotation;
+                });
+            }
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
@@ -485,7 +487,8 @@ namespace Banter
                 uBanterObject.banterObject.AddComponent(componetId, component);
                 banterComponents.TryAdd(componetId, component);
                 // Components added inside unity asset bundels load at weird times.
-                mainThread?.Enqueue(() => {
+                mainThread?.Enqueue(() =>
+                {
                     var banterComponent = uBanterObject.id.mainThreadComponentMap.FirstOrDefault(x => x.Key == componetId).Value;
                     if (banterComponent != null && banterComponent._loaded)
                     {
@@ -568,7 +571,8 @@ namespace Banter
             var combinedPercentage = 0f;
             var banterArray = banterComponents.ToArray();
             bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY) && banterArray.Where(x => x.Value.type == ComponentType.BanterAssetBundle && !x.Value.loaded).Count() == 0;
-            var loadedComponents = banterArray.Where(x => {
+            var loadedComponents = banterArray.Where(x =>
+            {
                 if (!x.Value.loaded)
                 {
                     combinedPercentage += x.Value.progress;
@@ -600,7 +604,8 @@ namespace Banter
             if (obj != null)
             {
                 obj.mainThreadComponentMap.Add(cid, comp);
-                comp.loaded.AddListener((success, message) => {
+                comp.loaded.AddListener((success, message) =>
+                {
                     if (banterComp == null)
                     {
                         banterComp = GetBanterComponent(cid);
@@ -621,7 +626,8 @@ namespace Banter
                     }
                     link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
-                comp.progress.AddListener((progress) => {
+                comp.progress.AddListener((progress) =>
+                {
                     if (banterComp == null)
                     {
                         banterComp = GetBanterComponent(cid);
@@ -693,7 +699,8 @@ namespace Banter
                     Debug.LogError("[Banter] Error updating component offthread: " + e.Message + ": " + (gameObject.id == null) + ", " + msg);
                 }
             }
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 for (int i = 0; i < sheetFerMainThread.Count; i++)
                 {
                     var s = sheetFerMainThread[i];
@@ -828,7 +835,8 @@ namespace Banter
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                mainThread?.Enqueue(() => {
+                mainThread?.Enqueue(() =>
+                {
                     banterObject.SetActive(int.Parse(msgParts[1]) == 1);
                     SendObjectUpdate(banterObject, reqId);
                 });
@@ -845,7 +853,8 @@ namespace Banter
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                mainThread?.Enqueue(() => {
+                mainThread?.Enqueue(() =>
+                {
                     banterObject.layer = int.Parse(msgParts[1]);
                     SendObjectUpdate(banterObject, reqId);
                 });
@@ -889,7 +898,8 @@ namespace Banter
             var gameObject = GetGameObject(int.Parse(msg));
             if (gameObject != null)
             {
-                mainThread?.Enqueue(async () => {
+                mainThread?.Enqueue(async () =>
+                {
                     var newObject = GameObject.Instantiate(gameObject);
                     var objectId = newObject.GetComponent<BanterObjectId>();
                     objectId.GenerateId(true);
@@ -941,7 +951,8 @@ namespace Banter
             }
             var linkId = parts[1];
             var componentType = (ComponentType)int.Parse(parts[2]);
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 if (!isReady)
                 {
                     return;
@@ -1051,7 +1062,8 @@ namespace Banter
             var banterObject = GetGameObject(int.Parse(msgParts[1]));
             if (banterObject != null && parentObject != null)
             {
-                mainThread?.Enqueue(() => {
+                mainThread?.Enqueue(() =>
+                {
                     banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
                     SendObjectUpdate(banterObject, reqId);
                 });
@@ -1088,7 +1100,8 @@ namespace Banter
 
         public void DestroyJsObject(int oid, int reqId)
         {
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 var gameObject = GetGameObject(oid);
                 if (gameObject != null)
                 {
@@ -1110,7 +1123,8 @@ namespace Banter
         {
             if (banterComponents.TryGetValue(cid, out var comp))
             {
-                mainThread?.Enqueue(() => {
+                mainThread?.Enqueue(() =>
+                {
                     var gameObject = GetObject(comp.banterObject.oid);
                     if (gameObject.id != null)
                     {
@@ -1150,7 +1164,8 @@ namespace Banter
                 Debug.LogError("[Banter] Add Object message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(async () => {
+            mainThread?.Enqueue(async () =>
+            {
                 var go = new GameObject(parts[1]);
                 go.transform.parent = settings.parentTransform;
 
@@ -1193,7 +1208,8 @@ namespace Banter
         }
         void ResetSceneAbilitySettings()
         {
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 _ = settings.Reset();
             });
         }
@@ -1207,7 +1223,8 @@ namespace Banter
                 ResetSceneAbilitySettings();
                 ResetLoadingProgress();
                 bundlesLoaded = false;
-                mainThread?.Enqueue(() => {
+                mainThread?.Enqueue(() =>
+                {
                     events.OnSceneReset.Invoke();
                 });
                 await Resources.UnloadUnusedAssets();
@@ -1235,7 +1252,8 @@ namespace Banter
             ResetLoadingProgress();
             if (UnityMainThreadDispatcher.Exists())
             {
-                mainThread?.Enqueue(async () => {
+                mainThread?.Enqueue(async () =>
+                {
                     if (!isLoadingOpen)
                     {
                         await this.OpenLoadingScreen(url);
@@ -1269,7 +1287,8 @@ namespace Banter
                     // link.OnUnitySceneLoaded();
                     // state = SceneState.UNITY_READY;
                     loadUrlTaskCompletionSource.SetResult(true);
-                    mainThread?.Enqueue(() => {
+                    mainThread?.Enqueue(() =>
+                    {
                         events.OnUnitySceneLoad.Invoke(url);
                     });
                     await Task.Delay(500);
@@ -1284,7 +1303,8 @@ namespace Banter
             // This is fired when the page loads or realods from the browser end, so it can be fired becuase 
             // we have explicitly naviagted the page, but also becuase someone hut f5 in the debugger. 
             state = SceneState.NONE;
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 if (settings != null)
                 {
                     _ = settings.Reset();
@@ -1597,7 +1617,8 @@ namespace Banter
         public void SetSettings(string msg, int reqId)
         {
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 foreach (var part in settingsParts)
                 {
                     var setting = part.Split(MessageDelimiters.SECONDARY);
@@ -1694,7 +1715,8 @@ namespace Banter
                 Debug.LogError("[Banter] LegacySetAttachment message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 var obj = GetGameObject(int.Parse(msgParts[0]));
                 var whoToShow = msgParts[1];
                 var part = msgParts[2];
@@ -1712,7 +1734,8 @@ namespace Banter
                 Debug.LogError("[Banter] LegacySetChildColor message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 var obj = GetGameObject(int.Parse(msgParts[0]));
                 var color = new Color(Germany.DeGermaniser(msgParts[1]), Germany.DeGermaniser(msgParts[2]), Germany.DeGermaniser(msgParts[3]));
                 var path = msgParts[4];
@@ -1734,7 +1757,8 @@ namespace Banter
         }
         public void LegacySetVideoUrl(GameObject gameObject, string url, string id)
         {
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 var video = gameObject.GetComponentInChildren<VideoPlayer>();
                 if (video != null)
                 {
@@ -1742,7 +1766,8 @@ namespace Banter
                     video.url = url;
                     video.Play();
                     VideoPlayer.EventHandler callback = null;
-                    callback = (VideoPlayer vp) => {
+                    callback = (VideoPlayer vp) =>
+                    {
                         events.OnVideoPrepareCompleted.Invoke(id);
                         video.prepareCompleted -= callback;
                     };

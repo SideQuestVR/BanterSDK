@@ -1,76 +1,60 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Codice.CM.SEIDInfo;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDKEditor
 {
     public class InitialiseOnLoad
     {
-        public static Dictionary<int, string> layersToAdd = new Dictionary<int, string> { 
-            { 3, "UserLayer1" }, 
-            { 6, "UserLayer2" }, 
-            { 7, "UserLayer3" }, 
-            { 8, "UserLayer4" }, 
-            { 9, "UserLayer5" }, 
-            { 10, "UserLayer6" }, 
-            { 11, "UserLayer7" }, 
-            { 12, "UserLayer8" }, 
-            { 13, "UserLayer9" }, 
-            { 14, "UserLayer10" }, 
+        public static Dictionary<int, string> layersToAdd = new Dictionary<int, string> {
+            { 3, "UserLayer1" },
+            { 6, "UserLayer2" },
+            { 7, "UserLayer3" },
+            { 8, "UserLayer4" },
+            { 9, "UserLayer5" },
+            { 10, "UserLayer6" },
+            { 11, "UserLayer7" },
+            { 12, "UserLayer8" },
+            { 13, "UserLayer9" },
+            { 14, "UserLayer10" },
             { 15, "UserLayer11" },
             { 16, "UserLayer12" },
-            { 17, "NetworkPlayer" }, 
-            { 18, "RPMAvatarHead" }, 
-            { 19, "RPMAvatarBody" }, 
-            { 20, "Grabbable" }, 
-            { 21, "HandColliders" }, 
-            { 22, "WalkingLegs" }, 
-            { 23, "PhysicsPlayer" }, 
-            { 24, "BanterInternal1_DONTUSE" }, 
-            { 25, "BanterInternal2_DONTUSE" }, 
-            { 26, "BanterInternal3_DONTUSE" }, 
-            { 27, "BanterInternal4_DONTUSE" }, 
-            { 28, "BanterInternal5_DONTUSE" }, 
-            { 29, "BanterInternal6_DONTUSE" }, 
-            { 30, "BanterInternal7_DONTUSE" }, 
-            { 31, "BanterInternal8_DONTUSE" }      
+            { 17, "NetworkPlayer" },
+            { 18, "RPMAvatarHead" },
+            { 19, "RPMAvatarBody" },
+            { 20, "Grabbable" },
+            { 21, "HandColliders" },
+            { 22, "WalkingLegs" },
+            { 23, "PhysicsPlayer" },
+            { 24, "BanterInternal1_DONTUSE" },
+            { 25, "BanterInternal2_DONTUSE" },
+            { 26, "BanterInternal3_DONTUSE" },
+            { 27, "BanterInternal4_DONTUSE" },
+            { 28, "BanterInternal5_DONTUSE" },
+            { 29, "BanterInternal6_DONTUSE" },
+            { 30, "BanterInternal7_DONTUSE" },
+            { 31, "BanterInternal8_DONTUSE" }
         };
         static AddRequest Request;
         [InitializeOnLoadMethod()]
         static void Go()
-        { 
+        {
             // _ = InstallVisualScripting();
             // "com.atteneder.gltfast": "https://github.com/atteneder/glTFast.git#v5.0.0",
-            CopyGizmos();
             // SetupLayers();
         }
 
-        static void CopyGizmos() {
-            if(!Directory.Exists(Path.Join(Application.dataPath, "Gizmos", "Banter"))) {
-                Directory.CreateDirectory(Path.Join(Application.dataPath, "Gizmos", "Banter")); 
-            }
-            string sourceDir = Path.Join(Path.Join(Path.Join(Application.dataPath, "..", "Packages"), "com.sidequest.banter", "Gizmos"), "Banter");
-            string destinationDir = Path.Join(Application.dataPath, "Gizmos", "Banter");
-            foreach (string srcFile in Directory.GetFiles(sourceDir)){
-                string dstFile = Path.Combine(destinationDir, Path.GetFileName(srcFile));
-                if(!File.Exists(dstFile) || (File.GetLastWriteTime(dstFile) < File.GetLastWriteTime(srcFile)) && !srcFile.EndsWith(".meta")){
-                    File.Copy(srcFile, dstFile, true);
-                }                
-            }
-        }
-
-        public static async Task InstallVisualScripting() {
+        public static async Task InstallVisualScripting()
+        {
             var listRequest = Client.List();
             while (!listRequest.IsCompleted)
                 Thread.Sleep(100);
-    
+
             if (listRequest.Error != null)
             {
                 Debug.Log("Error: " + listRequest.Error.message);
@@ -79,35 +63,43 @@ namespace Banter
             var hasVisual = false;
             var packages = listRequest.Result;
             foreach (var package in packages)
-            {   
-                if(package.name == "com.unity.visualscripting" && package.version == "1.9.1" && package.source == PackageSource.Git) {
+            {
+                if (package.name == "com.unity.visualscripting" && package.version == "1.9.1" && package.source == PackageSource.Git)
+                {
                     hasVisual = true;
                 }
             }
-            if(!hasVisual ) {
+            if (!hasVisual)
+            {
                 await Task.Delay(1000);
-                var request = Client.AddAndRemove(new string[]{"https://github.com/SideQuestVR/SideQuest.Banter.VisualScripting.git"});
+                var request = Client.AddAndRemove(new string[] { "https://github.com/SideQuestVR/SideQuest.Banter.VisualScripting.git" });
                 while (!request.IsCompleted)
                     Thread.Sleep(100);
-        
+
                 if (request.Error != null)
                 {
                     Debug.Log("Error: " + request.Error.message);
                     return;
-                }else{
+                }
+                else
+                {
                     Debug.Log("Visual Scripting installed.");
                     PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "BANTER_VS_INSTALLED");
                     PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "BANTER_VS_INSTALLED");
                 }
-            }else{
+            }
+            else
+            {
                 Debug.Log("Visual Scripting already installed.");
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "BANTER_VS_INSTALLED");
                 PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "BANTER_VS_INSTALLED");
             }
         }
-        public static void SetupLayers() {
-            Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");    
-            if (asset != null && asset.Length > 0) {
+        public static void SetupLayers()
+        {
+            Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
+            if (asset != null && asset.Length > 0)
+            {
                 SerializedObject serializedObject = new SerializedObject(asset[0]);
                 SerializedProperty layers = serializedObject.FindProperty("layers");
                 bool isMissing = false;
@@ -122,7 +114,8 @@ namespace Banter
                     }
                 }
 
-                if(isMissing && EditorUtility.DisplayDialog("Layer setup needed...","Do you want to setup Banter layers automatically? - " + string.Join(", \n", missingLayers), "Yes", "No")) {
+                if (isMissing && EditorUtility.DisplayDialog("Layer setup needed...", "Do you want to setup Banter layers automatically? - " + string.Join(", \n", missingLayers), "Yes", "No"))
+                {
                     foreach (var layer in layersToAdd)
                     {
                         var ulayer = layers.GetArrayElementAtIndex(layer.Key);
@@ -134,9 +127,9 @@ namespace Banter
                     serializedObject.ApplyModifiedProperties();
                     serializedObject.Update();
                 }
-             }
+            }
         }
-    
+
         static void AddLayerAt(SerializedProperty layers, int index, string layerName, bool tryOtherIndex = false)
         {
             // Skip if a layer with the name already exists.
@@ -148,11 +141,11 @@ namespace Banter
                     return;
                 }
             }
-        
+
             // Extend layers if necessary
             if (index >= layers.arraySize)
                 layers.arraySize = index + 1;
-        
+
             // set layer name at index
             var element = layers.GetArrayElementAtIndex(index);
             // if (string.IsNullOrEmpty(element.stringValue))
@@ -163,7 +156,7 @@ namespace Banter
             // else
             // {
             //     Debug.LogWarning("Could not add layer at index " + index + " because there already is another layer '" + element.stringValue + "'." );
-        
+
             //     if (tryOtherIndex)
             //     {
             //         // Go up in layer indices and try to find an empty spot.
@@ -172,7 +165,7 @@ namespace Banter
             //             // Extend layers if necessary
             //             if (i >= layers.arraySize)
             //                 layers.arraySize = i + 1;
-        
+
             //             element = layers.GetArrayElementAtIndex(i);
             //             if (string.IsNullOrEmpty(element.stringValue))
             //             {
@@ -181,7 +174,7 @@ namespace Banter
             //                 return;
             //             }
             //         }
-        
+
             //         Debug.LogError("Could not add layer " + layerName + " because there is no space left in the layers array.");
             //     }
             // }

@@ -2,16 +2,17 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-namespace Banter{
+namespace Banter.SDK
+{
     public class LookAt : MonoBehaviour
     {
         [Tooltip("Manually set the target GameObject. If left null, the script will search for the GameObject tagged 'PlayerHead'.")]
         public GameObject targetObject;
-        
+
         [Header("Smoothing Settings")]
         [Tooltip("0 for hard look at, larger values for more smoothing")]
         public float smoothing = 0.0f;
-        
+
         [Header("Axis Constraints")]
         [Tooltip("Enable or disable rotation around the X axis")]
         public bool enableXAxis = true;
@@ -19,26 +20,28 @@ namespace Banter{
         public bool enableYAxis = true;
         [Tooltip("Enable or disable rotation around the Z axis")]
         public bool enableZAxis = true;
-        
-        [Header("Billboarding")] 
+
+        [Header("Billboarding")]
         [Tooltip("Follow the forward direction of the head")]
         public bool isBillboard = false;
-        
+
         // [Header("Sync Options")]
         // public UniqueObjectId uniqueObjectId;
 
         private Transform playerTransform; // The Transform component of the player
         // public TriggerEvent triggerEvent;
 
-        public void SetTarget(){
+        public void SetTarget()
+        {
             // targetObject = triggerEvent == null ? uniqueObjectId.lastObject.gameObject : triggerEvent.uniqueObjectId.lastObject.gameObject;
             playerTransform = targetObject.transform;
         }
 
-        public void ResetTarget(){
+        public void ResetTarget()
+        {
             targetObject = null;
         }
-        
+
         public void SetSmoothing(float newSmoothing)
         {
             smoothing = newSmoothing;
@@ -76,7 +79,9 @@ namespace Banter{
                 if (playerObject != null)
                 {
                     playerTransform = playerObject.transform; // Set the player's transform if the target GameObject was not manually set
-                }else{
+                }
+                else
+                {
                     Debug.LogError("No GameObject with tag 'PlayerHead' found in the scene.");
                 }
             }
@@ -84,26 +89,26 @@ namespace Banter{
 
         void Update()
         {
-        if (playerTransform != null)
-        {
-            // Calculate the rotation needed to look at the player
-            Quaternion targetRotation = isBillboard ? Quaternion.LookRotation(transform.position - playerTransform.position) : Quaternion.LookRotation(playerTransform.position - transform.position);
-
-            if (smoothing == 0.0f)
+            if (playerTransform != null)
             {
-                // Apply immediate rotation without smoothing
-                ApplyRotation(targetRotation);
-            }
-            else
-            {
-                // Calculate the smooth factor (inverted logic)
-                float smoothFactor = 1 / smoothing;
+                // Calculate the rotation needed to look at the player
+                Quaternion targetRotation = isBillboard ? Quaternion.LookRotation(transform.position - playerTransform.position) : Quaternion.LookRotation(playerTransform.position - transform.position);
 
-                // Interpolate smoothly towards the target rotation
-                Quaternion interpolatedRotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * smoothFactor);
-                ApplyRotation(interpolatedRotation);
+                if (smoothing == 0.0f)
+                {
+                    // Apply immediate rotation without smoothing
+                    ApplyRotation(targetRotation);
+                }
+                else
+                {
+                    // Calculate the smooth factor (inverted logic)
+                    float smoothFactor = 1 / smoothing;
+
+                    // Interpolate smoothly towards the target rotation
+                    Quaternion interpolatedRotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * smoothFactor);
+                    ApplyRotation(interpolatedRotation);
+                }
             }
-        }
         }
 
 

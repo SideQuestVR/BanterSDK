@@ -1,4 +1,5 @@
-public enum VerticalAlignment{
+public enum VerticalAlignment
+{
     Top,
     Center,
     Bottom

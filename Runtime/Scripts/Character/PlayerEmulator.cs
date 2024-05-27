@@ -1,6 +1,6 @@
-using Banter;
 using UnityEngine;
-using UnityEngine.InputSystem;
+using Banter.SDK;
+
 public class PlayerEmulator : MonoBehaviour
 {
     [SerializeField] float navigationSpeed = 0.2f;
@@ -30,34 +30,40 @@ public class PlayerEmulator : MonoBehaviour
     private bool ctrlPressed = false;
     public float SmoothTurnSpeed = 90f;
     public static float TurnSpeed = 0f;
-    void Awake() {
+    void Awake()
+    {
         scene = BanterScene.Instance();
     }
 
-    void Start() {
+    void Start()
+    {
         FlyControls();
         VRInputControls();
     }
 
-    public void FlyControls() {
+    public void FlyControls()
+    {
         var leftHandJoystick = scene.LeftHandActions.FindAction("Primary2DAxis");
         var rightHandJoystick = scene.RightHandActions.FindAction("Primary2DAxis");
 
-        leftHandJoystick.performed += ctx => {
+        leftHandJoystick.performed += ctx =>
+        {
             var value = ctx.ReadValue<Vector2>();
             var direction = head.transform.forward * value.y + head.transform.right * value.x;
             // transform.position = Vector3.MoveTowards(transform.position, transform.position + direction, Time.deltaTime * 5);
             transform.Translate(direction * Time.deltaTime * 5, Space.World);
         };
 
-        rightHandJoystick.performed += ctx => {
+        rightHandJoystick.performed += ctx =>
+        {
             var value = ctx.ReadValue<Vector2>();
             TurnSpeed = SmoothTurnSpeed * value.x * Time.deltaTime;
             transform.RotateAround(head.transform.position, Vector3.up, TurnSpeed);
         };
     }
 
-    public void VRInputControls() {
+    public void VRInputControls()
+    {
         scene.LeftHandActions.FindAction("TriggerPress").started += ctx => scene.link.OnButtonPressed(ButtonType.TRIGGER, HandSide.LEFT);
         scene.LeftHandActions.FindAction("TriggerPress").canceled += ctx => scene.link.OnButtonReleased(ButtonType.TRIGGER, HandSide.LEFT);
         scene.LeftHandActions.FindAction("GripPress").started += ctx => scene.link.OnButtonPressed(ButtonType.GRIP, HandSide.LEFT);
@@ -75,42 +81,63 @@ public class PlayerEmulator : MonoBehaviour
         scene.RightHandActions.FindAction("SecondaryButton").started += ctx => scene.link.OnButtonPressed(ButtonType.SECONDARY, HandSide.RIGHT);
         scene.RightHandActions.FindAction("SecondaryButton").canceled += ctx => scene.link.OnButtonReleased(ButtonType.SECONDARY, HandSide.RIGHT);
     }
-    bool Raycast(out RaycastHit hit, bool isClickable = false) {
-        return Physics.Raycast(head.ScreenPointToRay (Input.mousePosition), out hit, 1000f, isClickable ? clickableLayer : grabbableLayer);
+    bool Raycast(out RaycastHit hit, bool isClickable = false)
+    {
+        return Physics.Raycast(head.ScreenPointToRay(Input.mousePosition), out hit, 1000f, isClickable ? clickableLayer : grabbableLayer);
     }
-    void Update() {
+    void Update()
+    {
         var side = leftHandActive ? HandSide.LEFT : HandSide.RIGHT;
         MousePanning();
         if (isPanning) { return; }
 
-        if(Input.GetKeyDown(KeyCode.LeftShift)){
+        if (Input.GetKeyDown(KeyCode.LeftShift))
+        {
             ctrlPressed = true;
         }
-        if(Input.GetKeyDown(triggerKey)) {
+        if (Input.GetKeyDown(triggerKey))
+        {
             scene.link.OnButtonPressed(ButtonType.TRIGGER, side);
-        }else if(Input.GetKeyDown(gripKey)) {
+        }
+        else if (Input.GetKeyDown(gripKey))
+        {
             scene.link.OnButtonPressed(ButtonType.GRIP, side);
-        }else if(Input.GetKeyDown(primaryKey)) {
+        }
+        else if (Input.GetKeyDown(primaryKey))
+        {
             scene.link.OnButtonPressed(ButtonType.PRIMARY, side);
-        }else if(Input.GetKeyDown(secondaryKey)) {
+        }
+        else if (Input.GetKeyDown(secondaryKey))
+        {
             scene.link.OnButtonPressed(ButtonType.SECONDARY, side);
         }
-        if(Input.GetKeyUp(triggerKey)) {
+        if (Input.GetKeyUp(triggerKey))
+        {
             scene.link.OnButtonReleased(ButtonType.TRIGGER, side);
-        }else if(Input.GetKeyUp(gripKey)) {
+        }
+        else if (Input.GetKeyUp(gripKey))
+        {
             scene.link.OnButtonReleased(ButtonType.GRIP, side);
-        }else if(Input.GetKeyUp(primaryKey)) {
+        }
+        else if (Input.GetKeyUp(primaryKey))
+        {
             scene.link.OnButtonReleased(ButtonType.PRIMARY, side);
-        }else if(Input.GetKeyUp(secondaryKey)) {
+        }
+        else if (Input.GetKeyUp(secondaryKey))
+        {
             scene.link.OnButtonReleased(ButtonType.SECONDARY, side);
         }
-        if(Input.GetMouseButtonDown(0)){
-            if(!isGrabbing && Raycast(out RaycastHit hit, true)) {
+        if (Input.GetMouseButtonDown(0))
+        {
+            if (!isGrabbing && Raycast(out RaycastHit hit, true))
+            {
                 scene.Click(hit.transform.gameObject, hit.point, hit.normal);
             }
         }
-        if(Input.GetMouseButton(0) && ctrlPressed) {
-            if(!isGrabbing && Raycast(out RaycastHit hit)) {
+        if (Input.GetMouseButton(0) && ctrlPressed)
+        {
+            if (!isGrabbing && Raycast(out RaycastHit hit))
+            {
                 grabbleObject = hit.transform;
                 grabbleObjectParent = grabbleObject.parent;
                 grabbleObject.SetParent(transform);
@@ -119,12 +146,16 @@ public class PlayerEmulator : MonoBehaviour
                 isGrabbing = true;
                 scene.Grab(grabbleObject.gameObject, hit.point, side);
 
-            }else if(isGrabbing) {
+            }
+            else if (isGrabbing)
+            {
                 Vector3 curScreenPoint = new Vector3(Input.mousePosition.x, Input.mousePosition.y, screenPoint.z);
                 Vector3 curPosition = head.ScreenToWorldPoint(curScreenPoint) + offset;
                 grabbleObject.position = curPosition;
             }
-        }else if(isGrabbing && grabbleObject != null){
+        }
+        else if (isGrabbing && grabbleObject != null)
+        {
             scene.Release(grabbleObject.gameObject, side);
             grabbleObject.SetParent(grabbleObjectParent);
             grabbleObject = null;
@@ -132,7 +163,8 @@ public class PlayerEmulator : MonoBehaviour
             ctrlPressed = false;
         }
 
-        if (Input.GetMouseButton(1)){
+        if (Input.GetMouseButton(1))
+        {
             Vector3 move = Vector3.zero;
             float speed = navigationSpeed * (Input.GetKey(KeyCode.LeftShift) ? shiftMultiplier : 1f) * Time.deltaTime * 9.1f;
             if (Input.GetKey(KeyCode.W))
@@ -149,13 +181,14 @@ public class PlayerEmulator : MonoBehaviour
                 move -= head.transform.up * speed;
             transform.Translate(move, Space.World);
         }
-        if ( Input.GetMouseButton (1)){ 
+        if (Input.GetMouseButton(1))
+        {
             head.transform.Rotate(new Vector3(-Input.GetAxis("Mouse Y") * sensitivity, 0, 0));
             transform.Rotate(new Vector3(0, Input.GetAxis("Mouse X") * sensitivity, 0));
         }
 
         MouseWheeling();
-        
+
     }
 
     void MouseWheeling()
@@ -180,7 +213,8 @@ public class PlayerEmulator : MonoBehaviour
     private float pan_y;
     private Vector3 panComplete;
 
-    void MousePanning() {
+    void MousePanning()
+    {
         pan_x = -Input.GetAxis("Mouse X") * panSensitivity;
         pan_y = -Input.GetAxis("Mouse Y") * panSensitivity;
         panComplete = new Vector3(pan_x, pan_y, 0);

@@ -3,17 +3,22 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ParametricGeometry: Geometry {
+public class ParametricGeometry : Geometry
+{
 
-    public static Func<float, float, Vector3> Klein = (v, u) => {
+    public static Func<float, float, Vector3> Klein = (v, u) =>
+    {
         u *= Mathf.PI;
         v *= Mathf.PI * 2;
         u = u * 2;
         float x, y, z;
-        if (u < Mathf.PI) {
+        if (u < Mathf.PI)
+        {
             x = 3f * Mathf.Cos(u) * (1f + Mathf.Sin(u)) + (2f * (1f - Mathf.Cos(u) / 2f)) * Mathf.Cos(u) * Mathf.Cos(v);
             z = -8f * Mathf.Sin(u) - 2f * (1f - Mathf.Cos(u) / 2f) * Mathf.Sin(u) * Mathf.Cos(v);
-        } else {
+        }
+        else
+        {
             x = 3f * Mathf.Cos(u) * (1f + Mathf.Sin(u)) + (2f * (1f - Mathf.Cos(u) / 2f)) * Mathf.Cos(v + Mathf.PI);
             z = -8f * Mathf.Sin(u);
         }
@@ -25,11 +30,13 @@ public class ParametricGeometry: Geometry {
         return vector;
     };
 
-    public static Func<float, float, Vector3> InvertedKlein = (v, u) => {
+    public static Func<float, float, Vector3> InvertedKlein = (v, u) =>
+    {
         return Klein(u, v);
     };
 
-    public static Func<float, float, Vector3> Mobius = (u, t) => {
+    public static Func<float, float, Vector3> Mobius = (u, t) =>
+    {
         // flat mobius strip
         // http://www.wolframalpha.com/input/?i=M%C3%B6bius+strip+parametric+equations&lk=1&a=ClashPrefs_*Surface.MoebiusStrip.SurfaceProperty.ParametricEquations-
         u = u - 0.5f;
@@ -41,7 +48,8 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, z);
     };
 
-    public static Func<float, float, Vector3> Mobius3d = (u, t) => {
+    public static Func<float, float, Vector3> Mobius3d = (u, t) =>
+    {
         // volumetric mobius strip
         u *= Mathf.PI;
         t *= Mathf.PI * 2;
@@ -55,12 +63,14 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, z);
     };
 
-    public static Func<float, float, Vector3> InvertedMobius3d = (v, u) => {
+    public static Func<float, float, Vector3> InvertedMobius3d = (v, u) =>
+    {
         return Mobius3d(u, v);
     };
 
 
-    public static Func<float, float, Vector3> Apple = (u, v) => {
+    public static Func<float, float, Vector3> Apple = (u, v) =>
+    {
         u = u * 2 * Mathf.PI;
         v = (v * 2 * Mathf.PI) - Mathf.PI;
         var x = Mathf.Cos(u) * (4 + 3.8 * Mathf.Cos(v));
@@ -69,11 +79,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3((float)x, (float)y, (float)z);
     };
 
-    public static Func<float, float, Vector3> InvertedApple = (v, u) => {
+    public static Func<float, float, Vector3> InvertedApple = (v, u) =>
+    {
         return Apple(u, v);
     };
 
-    public static Func<float, float, Vector3> Snail = (u, v) => {
+    public static Func<float, float, Vector3> Snail = (u, v) =>
+    {
         u = u * 2 * Mathf.PI;
         v = (v * 4 * Mathf.PI) - Mathf.PI * 2;
         float x = u * Mathf.Cos(v) * Mathf.Sin(u);
@@ -82,11 +94,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, z);
     };
 
-    public static Func<float, float, Vector3> InvertedSnail = (v, u) => {
+    public static Func<float, float, Vector3> InvertedSnail = (v, u) =>
+    {
         return Snail(u, v);
     };
 
-    public static Func<float, float, Vector3> Spiral = (u, v) => {
+    public static Func<float, float, Vector3> Spiral = (u, v) =>
+    {
         u = u * 2 * -Mathf.PI;
         v = v * 2 * -Mathf.PI;
         var n = 4;
@@ -99,11 +113,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3((float)x, (float)y, (float)z);
     };
 
-    public static Func<float, float, Vector3> InvertedSpiral = (v, u) => {
+    public static Func<float, float, Vector3> InvertedSpiral = (v, u) =>
+    {
         return Spiral(u, v);
     };
 
-    public static Func<float, float, Vector3> Fermet = (u, v) => {
+    public static Func<float, float, Vector3> Fermet = (u, v) =>
+    {
         u = u * 16 - 8;
         var abs_u = (u < 0) ? -u : u;
         v *= 1;
@@ -115,7 +131,8 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, (float)z);
     };
 
-    public static Func<float, float, Vector3> Helicoid = (u, v) => {
+    public static Func<float, float, Vector3> Helicoid = (u, v) =>
+    {
         u = u * 6 * -Mathf.PI;
         v = (v * 2 * Mathf.PI) - Mathf.PI;
         var c = 2;
@@ -125,7 +142,8 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, z);
     };
 
-    public static Func<float, float, Vector3> Horn = (u, v) => {
+    public static Func<float, float, Vector3> Horn = (u, v) =>
+    {
         v = v * 2 * Mathf.PI;
         var x = (2 + u * Mathf.Cos(v)) * Mathf.Cos(2 * Mathf.PI * u) + 2 * u;
         var y = (2 + u * Mathf.Cos(v)) * Mathf.Sin(2 * Mathf.PI * u);
@@ -133,11 +151,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, z);
     };
 
-    public static Func<float, float, Vector3> InvertedHorn = (v, u) => {
+    public static Func<float, float, Vector3> InvertedHorn = (v, u) =>
+    {
         return Horn(u, v);
     };
 
-    public static Func<float, float, Vector3> Pillow = (u, v) => {
+    public static Func<float, float, Vector3> Pillow = (u, v) =>
+    {
         u = (u * Mathf.PI) - Mathf.PI;
         v = (v * 2 * Mathf.PI) - Mathf.PI;
         var x = Mathf.Cos(u);
@@ -146,11 +166,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, (float)z);
     };
 
-    public static Func<float, float, Vector3> InvertedPillow = (v, u) => {
+    public static Func<float, float, Vector3> InvertedPillow = (v, u) =>
+    {
         return Pillow(u, v);
     };
 
-    public static Func<float, float, Vector3> Spring = (u, v) => {
+    public static Func<float, float, Vector3> Spring = (u, v) =>
+    {
         u = u * 6 * -Mathf.PI;
         v = (v * 2 * Mathf.PI) - Mathf.PI;
         var r1 = 0.3;
@@ -164,11 +186,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3((float)x, (float)y, (float)z);
     };
 
-    public static Func<float, float, Vector3> InvertedSpring = (v, u) => {
+    public static Func<float, float, Vector3> InvertedSpring = (v, u) =>
+    {
         return Spring(u, v);
     };
 
-    public static Func<float, float, Vector3> Scherk = (u, v) => {
+    public static Func<float, float, Vector3> Scherk = (u, v) =>
+    {
         v = (v * Mathf.PI) - Mathf.PI / 2;
         u = (u * Mathf.PI) - Mathf.PI / 2;
         var c = 0.9;
@@ -178,7 +202,8 @@ public class ParametricGeometry: Geometry {
         return new Vector3(x, y, (float)z);
     };
 
-    public static Func<float, float, Vector3> Catenoid = (u, v) => {
+    public static Func<float, float, Vector3> Catenoid = (u, v) =>
+    {
         u = u * 2 * Mathf.PI;
         v = (v * 2 * Mathf.PI) - Mathf.PI;
         var c = 2;
@@ -188,7 +213,8 @@ public class ParametricGeometry: Geometry {
         return new Vector3((float)x, (float)y, z);
     };
 
-    public static Func<float, float, Vector3> Natica = (u, v) => {
+    public static Func<float, float, Vector3> Natica = (u, v) =>
+    {
         u = u * 21 - 20;
         v *= (float)Math.PI * 2;
         var a = 2.6;
@@ -209,11 +235,13 @@ public class ParametricGeometry: Geometry {
         return new Vector3((float)x, (float)y, (float)z);
     };
 
-    public static Func<float, float, Vector3> InvertedNatica = (v, u) => {
+    public static Func<float, float, Vector3> InvertedNatica = (v, u) =>
+    {
         return Natica(u, v);
     };
 
-    public ParametricGeometry(int slices, int stacks, Func<float, float, Vector3> func = null, Vector3[] points = null) {
+    public ParametricGeometry(int slices, int stacks, Func<float, float, Vector3> func = null, Vector3[] points = null)
+    {
         indices = new List<int>();
         vertices = new List<Vector3>();
         normals = new List<Vector3>();
@@ -222,13 +250,16 @@ public class ParametricGeometry: Geometry {
         var stackCount = stacks + 1;
         var sliceCount = slices + 1;
 
-        if(points != null && points.Length != stackCount * sliceCount) {
+        if (points != null && points.Length != stackCount * sliceCount)
+        {
             throw new Exception("Not enough points, the points does not equal the number of slices/stacks.");
         }
 
-        for (var i = 0f; i <= stacks; i++) {
+        for (var i = 0f; i <= stacks; i++)
+        {
             var v = i / stacks;
-            for (var j = 0f; j <= slices; j++) {
+            for (var j = 0f; j <= slices; j++)
+            {
                 var u = j / slices;
                 int _i = (int)i * (stacks + 1) + (int)j;
                 var p = points == null ? func(u, v) : points[_i];
@@ -238,8 +269,10 @@ public class ParametricGeometry: Geometry {
             }
         }
 
-        for (var i = 0; i < stacks; i++) {
-            for (var j = 0; j < slices; j++) {
+        for (var i = 0; i < stacks; i++)
+        {
+            for (var j = 0; j < slices; j++)
+            {
                 var a = i * sliceCount + j;
                 var b = i * sliceCount + j + 1;
                 var c = (i + 1) * sliceCount + j + 1;

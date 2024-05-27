@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TorusKnot : Geometry {
+public class TorusKnot : Geometry
+{
 
-    public TorusKnot(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, int p = 2, int q = 3) {
+    public TorusKnot(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, int p = 2, int q = 3)
+    {
 
         indices = new List<int>();//[indexLength];
         vertices = new List<Vector3>();//[verticesLength];
@@ -21,7 +23,8 @@ public class TorusKnot : Geometry {
 
         // generate vertices, normals and uvs
 
-        for (int i = 0; i <= tubularSegments; ++i) {
+        for (int i = 0; i <= tubularSegments; ++i)
+        {
 
             // the radian "u" is used to calculate the position on the torus curve of the current tubular segement
 
@@ -48,7 +51,8 @@ public class TorusKnot : Geometry {
             B.Normalize();
             N.Normalize();
 
-            for (int j = 0; j <= radialSegments; ++j) {
+            for (int j = 0; j <= radialSegments; ++j)
+            {
 
                 // now calculate the vertices. they are nothing more than an extrusion of the torus curve.
                 // because we extrude a shape in the xy-plane, there is no need to calculate a z-value.
@@ -60,7 +64,7 @@ public class TorusKnot : Geometry {
                 // now calculate the final vertex position.
                 // first we orient the extrusion with our basis vectos, then we add it to the current position on the curve
 
-                var vertex = new Vector3(P1.x + (cx * N.x + cy * B.x),P1.y + (cx * N.y + cy * B.y),P1.z + (cx * N.z + cy * B.z));
+                var vertex = new Vector3(P1.x + (cx * N.x + cy * B.x), P1.y + (cx * N.y + cy * B.y), P1.z + (cx * N.z + cy * B.z));
 
                 vertices.Add(vertex);
 
@@ -82,9 +86,11 @@ public class TorusKnot : Geometry {
 
         // generate indices
 
-        for (int j = 1; j <= tubularSegments; j++) {
+        for (int j = 1; j <= tubularSegments; j++)
+        {
 
-            for (int i = 1; i <= radialSegments; i++) {
+            for (int i = 1; i <= radialSegments; i++)
+            {
 
                 // indices
 
@@ -109,7 +115,8 @@ public class TorusKnot : Geometry {
 
     }
 
-    void calculatePositionOnCurve(float u, int p, int q, float radius, Vector3 position ) {
+    void calculatePositionOnCurve(float u, int p, int q, float radius, Vector3 position)
+    {
 
         var cu = Mathf.Cos(u);
         var su = Mathf.Sin(u);

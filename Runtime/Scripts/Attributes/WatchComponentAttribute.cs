@@ -1,6 +1,6 @@
 using System;
 
-namespace Banter
+namespace Banter.SDK
 {
     public class WatchComponentAttribute : Attribute
     {
@@ -8,7 +8,8 @@ namespace Banter
 
         public WatchComponentAttribute() { }
 
-        public WatchComponentAttribute(Type requiredComponent) { 
+        public WatchComponentAttribute(Type requiredComponent)
+        {
             m_Type = requiredComponent;
         }
     }

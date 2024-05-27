@@ -4,95 +4,125 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
-   public class BanterComponent{
+    public class BanterComponent
+    {
         public int cid;
         public ComponentType type;
-        public ConcurrentDictionary<PropertyName, BanterComponentProperty> componentProperties = new ConcurrentDictionary<PropertyName,BanterComponentProperty>();
+        public ConcurrentDictionary<PropertyName, BanterComponentProperty> componentProperties = new ConcurrentDictionary<PropertyName, BanterComponentProperty>();
         public BanterObject banterObject;
         public float progress;
         public bool loaded;
         UnityMainThreadDispatcher mainThread;
-        public void SetProperty(PropertyName name, PropertyType type, object value, Action callback = null) {
+        public void SetProperty(PropertyName name, PropertyType type, object value, Action callback = null)
+        {
             BanterComponentProperty prop;
-            try{
-                if(componentProperties.TryGetValue(name, out prop)) {                
-                    if(prop != null && value != null && (prop.value == null || !prop.value.Equals(value))) {
+            try
+            {
+                if (componentProperties.TryGetValue(name, out prop))
+                {
+                    if (prop != null && value != null && (prop.value == null || !prop.value.Equals(value)))
+                    {
                         prop.value = value;
                         // banterObject.scene.dirty = true;
                         string change = banterObject.scene.Serialise(prop, this);
-                        if(change != null) {
+                        if (change != null)
+                        {
                             banterObject.scene.EnqueueChange(change);
                         }
-                    }else if(prop == null){
-                        Debug.Log(this.type + ":" + name + " Is prop null?: " + (prop == null) + " " + (prop == null ? "" : prop.type)) ;
                     }
-                }else{
-                    prop = new BanterComponentProperty(){
-                        banterComponent = this, 
-                        name = name, 
-                        type = type, 
+                    else if (prop == null)
+                    {
+                        Debug.Log(this.type + ":" + name + " Is prop null?: " + (prop == null) + " " + (prop == null ? "" : prop.type));
+                    }
+                }
+                else
+                {
+                    prop = new BanterComponentProperty()
+                    {
+                        banterComponent = this,
+                        name = name,
+                        type = type,
                         value = value
                     };
                     componentProperties.TryAdd(name, prop);
                     string change = banterObject.scene.Serialise(prop, this);
-                    if(change != null) {
+                    if (change != null)
+                    {
                         banterObject.scene.EnqueueChange(change);
                     }
                 }
                 callback?.Invoke();
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.Log("Error setting property: " + cid + " : " + banterObject.oid);
                 Debug.LogError("Error setting property: " + e);
             }
         }
 
-        public void UpdateProperty(PropertyName name, object value) {
+        public void UpdateProperty(PropertyName name, object value)
+        {
             BanterComponentProperty prop;
-            try{
-                if(componentProperties.TryGetValue(name, out prop)) { 
-                    if(prop != null && value != null) {
+            try
+            {
+                if (componentProperties.TryGetValue(name, out prop))
+                {
+                    if (prop != null && value != null)
+                    {
                         prop.value = value;
                     }
                 }
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.Log("Error setting property: " + cid + " : " + banterObject.oid);
                 Debug.LogError("Error setting property: " + e);
-            }  
+            }
         }
 
-        public async Task WatchProperties(PropertyName[] names) {
+        public async Task WatchProperties(PropertyName[] names)
+        {
             await ObjectOnMainThread(component => component.WatchProperties(names));
         }
 
-        public async Task GetProperties() {
+        public async Task GetProperties()
+        {
             var done = false;
-            _ = ObjectOnMainThread(component => {
+            _ = ObjectOnMainThread(component =>
+            {
                 Debug.Log(component.name + " GetProperties: " + component.cid);
                 component.SyncProperties(true, () => done = true);
             });
             await new WaitUntil(() => done);
         }
-        public async Task CallMethod(string methodName, List<object> parameters, Action<object> callback) {
+        public async Task CallMethod(string methodName, List<object> parameters, Action<object> callback)
+        {
             await ObjectOnMainThread(component => callback(component.CallMethod(methodName, parameters)));
         }
 
-        public Task ObjectOnMainThread(Action<BanterComponentBase> callback) {
-            if(!mainThread) {
+        public Task ObjectOnMainThread(Action<BanterComponentBase> callback)
+        {
+            if (!mainThread)
+            {
                 mainThread = UnityMainThreadDispatcher.Instance();
             }
-            return mainThread.EnqueueAsync(() => {
+            return mainThread.EnqueueAsync(() =>
+            {
                 var ObjectId = banterObject.unityAndBanterObject.id;
-                if(ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component)) {
+                if (ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component))
+                {
                     callback(component);
                 }
             });
         }
 
-        public void Dispose() {
+        public void Dispose()
+        {
             banterObject.RemoveComponent(cid);
-            if(componentProperties != null) {
+            if (componentProperties != null)
+            {
                 componentProperties.Clear();
             }
             componentProperties = null;

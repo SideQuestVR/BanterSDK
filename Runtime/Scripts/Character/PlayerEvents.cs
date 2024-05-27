@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using Banter;
+using Banter.SDK;
 using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;

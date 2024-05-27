@@ -3,24 +3,24 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter
+namespace Banter.SDK
 {
-/* 
-#### Mesh Collider
-Add a mesh shaped physics collider to the object. This requires a mesh to be supplied, or used from a MeshFilter component.
+    /* 
+    #### Mesh Collider
+    Add a mesh shaped physics collider to the object. This requires a mesh to be supplied, or used from a MeshFilter component.
 
-**Properties**
-- `isTrigger` - If the collider is a trigger.
-- `convex` - If the collider is convex i.e. has no holes or concave parts.
+    **Properties**
+    - `isTrigger` - If the collider is a trigger.
+    - `convex` - If the collider is convex i.e. has no holes or concave parts.
 
-**Code Example**
-```js
-    const isTrigger = false;
-    const convex = true;
-    const gameObject = new BS.GameObject("MyMeshCollider"); 
-    const meshCollider = await gameObject.AddComponent(new BS.BanterMeshCollider(isTrigger, convex));
-```
-*/
+    **Code Example**
+    ```js
+        const isTrigger = false;
+        const convex = true;
+        const gameObject = new BS.GameObject("MyMeshCollider"); 
+        const meshCollider = await gameObject.AddComponent(new BS.BanterMeshCollider(isTrigger, convex));
+    ```
+    */
     [WatchComponent(typeof(MeshCollider))]
     [RequireComponent(typeof(MeshCollider))]
     [RequireComponent(typeof(BanterObjectId))]
@@ -28,75 +28,88 @@ Add a mesh shaped physics collider to the object. This requires a mesh to be sup
     {
         [See(initial = "false")] public bool convex;
         [See(initial = "false")] public bool isTrigger;
-// BANTER COMPILED CODE 
+        // BANTER COMPILED CODE 
         public MeshCollider _componentType;
-        public MeshCollider componentType {
-            get{
-                if(_componentType == null) {
-                    _componentType = GetComponent<MeshCollider>();;
+        public MeshCollider componentType
+        {
+            get
+            {
+                if (_componentType == null)
+                {
+                    _componentType = GetComponent<MeshCollider>();
                 }
                 return _componentType;
             }
         }
         BanterScene scene;
-    
         bool alreadyStarted = false;
-    
-        void Start() { 
-            Init(); 
+        void Start()
+        {
+            Init();
             StartStuff();
         }
-        public override void ReSetup() {
-            
+
+        public override void ReSetup()
+        {
+
         }
-        
-    
+
         public override void Init()
         {
             scene = BanterScene.Instance();
-            if(alreadyStarted) { return; }
+            if (alreadyStarted) { return; }
             alreadyStarted = true;
-            
+
             var mf = GetComponent<MeshFilter>();
-            if(mf != null) {
+            if (mf != null)
+            {
                 componentType.sharedMesh = GetComponent<MeshFilter>().sharedMesh;
             }
-            
+
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
             SyncProperties(true);
             SetLoadedIfNot();
-        
         }
-     
-        void Awake() {
+
+        void Awake()
+        {
             BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
-    
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-            
+
             Destroy(componentType);
         }
-        public override object CallMethod(string methodName, List<object> parameters){
+
+        public override object CallMethod(string methodName, List<object> parameters)
+        {
             return null;
         }
-    
-        public override void Deserialise(List<object> values) {
+
+        public override void Deserialise(List<object> values)
+        {
             List<PropertyName> changedProperties = new List<PropertyName>();
-            for(int i = 0; i < values.Count; i++) {
-                if(values[i] is BanterBool){
+            for (int i = 0; i < values.Count; i++)
+            {
+                if (values[i] is BanterBool)
+                {
                     var valconvex = (BanterBool)values[i];
-                    if(valconvex.n == PropertyName.convex) {
+                    if (valconvex.n == PropertyName.convex)
+                    {
                         componentType.convex = valconvex.x;
                         changedProperties.Add(PropertyName.convex);
                     }
                 }
-                if(values[i] is BanterBool){
+                if (values[i] is BanterBool)
+                {
                     var valisTrigger = (BanterBool)values[i];
-                    if(valisTrigger.n == PropertyName.isTrigger) {
-                        if(valisTrigger.x && !componentType.convex) {
+                    if (valisTrigger.n == PropertyName.isTrigger)
+                    {
+                        if (valisTrigger.x && !componentType.convex)
+                        {
                             LogLine.Do("Setting isTrigger to true but convex is false, setting convex to true");
                             componentType.convex = true;
                         }
@@ -106,11 +119,14 @@ Add a mesh shaped physics collider to the object. This requires a mesh to be sup
                 }
             }
         }
+
         public override void SyncProperties(bool force = false, Action callback = null)
-            {
+        {
             var updates = new List<BanterComponentPropertyUpdate>();
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.convex,
                     type = PropertyType.Bool,
                     value = componentType.convex,
@@ -119,8 +135,10 @@ Add a mesh shaped physics collider to the object. This requires a mesh to be sup
                     cid = cid
                 });
             }
-           if(force) { 
-                updates.Add(new BanterComponentPropertyUpdate(){
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.isTrigger,
                     type = PropertyType.Bool,
                     value = componentType.isTrigger,
@@ -131,8 +149,10 @@ Add a mesh shaped physics collider to the object. This requires a mesh to be sup
             }
             scene.SetFromUnityProperties(updates, callback);
         }
-        public override void WatchProperties(PropertyName[] properties) {
+
+        public override void WatchProperties(PropertyName[] properties)
+        {
         }
-// END BANTER COMPILED CODE 
+        // END BANTER COMPILED CODE 
     }
 }

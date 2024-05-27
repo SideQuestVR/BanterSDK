@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Ring : Geometry {
+public class Ring : Geometry
+{
 
-    public Ring(float innerRadius = 0.3f, float outerRadius = 1f, int thetaSegments = 24, int phiSegments = 8, float thetaStart = 0, float thetaLength = Mathf.PI * 2) {
+    public Ring(float innerRadius = 0.3f, float outerRadius = 1f, int thetaSegments = 24, int phiSegments = 8, float thetaStart = 0, float thetaLength = Mathf.PI * 2)
+    {
 
         indices = new List<int>();//[indexLength];
         vertices = new List<Vector3>();//[verticesLength];
@@ -16,9 +18,11 @@ public class Ring : Geometry {
         float radius = innerRadius;
         float radiusStep = ((outerRadius - innerRadius) / phiSegments);
 
-        for (int j = 0; j <= phiSegments; j++) {
+        for (int j = 0; j <= phiSegments; j++)
+        {
 
-            for (int i = 0; i <= thetaSegments; i++) {
+            for (int i = 0; i <= thetaSegments; i++)
+            {
 
                 // values are generate from the inside of the ring to the outside
 
@@ -47,11 +51,13 @@ public class Ring : Geometry {
 
         // indices
 
-        for (int j = 0; j < phiSegments; j++) {
+        for (int j = 0; j < phiSegments; j++)
+        {
 
             int thetaSegmentLevel = j * (thetaSegments + 1);
 
-            for (int i = 0; i < thetaSegments; i++) {
+            for (int i = 0; i < thetaSegments; i++)
+            {
 
                 segmentIndex = i + thetaSegmentLevel;
 

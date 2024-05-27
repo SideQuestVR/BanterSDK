@@ -2,10 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Torus : Geometry {
+public class Torus : Geometry
+{
 
 
-    public Torus(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, float arc = Mathf.PI * 2) {
+    public Torus(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, float arc = Mathf.PI * 2)
+    {
         indices = new List<int>();//[indexLength];
         vertices = new List<Vector3>();//[verticesLength];
         normals = new List<Vector3>();//[verticesLength];
@@ -13,16 +15,18 @@ public class Torus : Geometry {
         var center = new Vector3();
         // generate vertices, normals and uvs
 
-        for (int j = 0; j <= radialSegments; j++) {
+        for (int j = 0; j <= radialSegments; j++)
+        {
 
-            for (int i = 0; i <= tubularSegments; i++) {
+            for (int i = 0; i <= tubularSegments; i++)
+            {
 
                 var u = i / (float)tubularSegments * arc;
                 var v = j / (float)radialSegments * Mathf.PI * 2;
 
                 // vertex
 
-                var vertex = new Vector3((radius + tube * Mathf.Cos(v)) * Mathf.Cos(u), (radius + tube * Mathf.Cos(v)) * Mathf.Sin(u),tube * Mathf.Sin(v));
+                var vertex = new Vector3((radius + tube * Mathf.Cos(v)) * Mathf.Cos(u), (radius + tube * Mathf.Cos(v)) * Mathf.Sin(u), tube * Mathf.Sin(v));
 
                 vertices.Add(vertex);
 
@@ -43,9 +47,11 @@ public class Torus : Geometry {
 
         // generate indices
 
-        for (int j = 1; j <= radialSegments; j++) {
+        for (int j = 1; j <= radialSegments; j++)
+        {
 
-            for (int i = 1; i <= tubularSegments; i++) {
+            for (int i = 1; i <= tubularSegments; i++)
+            {
 
                 // indices
 

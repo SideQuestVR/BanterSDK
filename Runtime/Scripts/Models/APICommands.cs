@@ -1,5 +1,6 @@
 [APICommands]
-public class APICommands {
+public class APICommands
+{
     public const string REQUEST_ID = "!i!";
     public const string UPDATE = "!u!";
     public const string DOM_READY = "!dr!";
@@ -47,55 +48,55 @@ public class APICommands {
     public const string SEND_MENU_BROWSER_MESSAGE = "!smbm!";
 
     #region Events
-        public const string EVENT = "!e!";
-        public const string LOADED = "l!";
-        public const string UNITY_LOADED = "ulo!";
-        public const string CLICKED = "c!";
-        public const string GRABBED = "g!";
-        public const string RELEASED = "r!";
-        public const string BUTTON_PRESSED = "bp!";
-        public const string BUTTON_RELEASED = "br!";
-        public const string KEY = "k!";
-        public const string ONE_SHOT_RECIEVED = "on!";
-        public const string COLLISION_ENTER = "ce!";
-        public const string COLLISION_EXIT = "cx!";
-        public const string COLLISION_STAY = "cs!";
-        public const string TRIGGER_ENTER = "te!";
-        public const string TRIGGER_EXIT = "tx!";
-        public const string TRIGGER_STAY = "ts!";
-        public const string USER_JOINED = "uj!";
-        public const string USER_LEFT = "ul!";
-        public const string USER_STATE_CHANGED = "upc!";
-        public const string SPACE_STATE_CHANGED = "spc!";
-        public const string AFRAME_TRIGGER = "at!";
-        public const string MENU_BROWSER_MESSAGE = "mbm!";
-        public const string BROWSER_MESSAGE = "bm!";
-        public const string SEND_TRANSCRIPTION = "st!";
-        public const string BANTER_VERSION = "bv!";
-        public const string SEND_USER = "su!";
-        public const string FULL_SPACE_STATE = "fss!";
-        public const string VOICE_STARTED = "vs!";
+    public const string EVENT = "!e!";
+    public const string LOADED = "l!";
+    public const string UNITY_LOADED = "ulo!";
+    public const string CLICKED = "c!";
+    public const string GRABBED = "g!";
+    public const string RELEASED = "r!";
+    public const string BUTTON_PRESSED = "bp!";
+    public const string BUTTON_RELEASED = "br!";
+    public const string KEY = "k!";
+    public const string ONE_SHOT_RECIEVED = "on!";
+    public const string COLLISION_ENTER = "ce!";
+    public const string COLLISION_EXIT = "cx!";
+    public const string COLLISION_STAY = "cs!";
+    public const string TRIGGER_ENTER = "te!";
+    public const string TRIGGER_EXIT = "tx!";
+    public const string TRIGGER_STAY = "ts!";
+    public const string USER_JOINED = "uj!";
+    public const string USER_LEFT = "ul!";
+    public const string USER_STATE_CHANGED = "upc!";
+    public const string SPACE_STATE_CHANGED = "spc!";
+    public const string AFRAME_TRIGGER = "at!";
+    public const string MENU_BROWSER_MESSAGE = "mbm!";
+    public const string BROWSER_MESSAGE = "bm!";
+    public const string SEND_TRANSCRIPTION = "st!";
+    public const string BANTER_VERSION = "bv!";
+    public const string SEND_USER = "su!";
+    public const string FULL_SPACE_STATE = "fss!";
+    public const string VOICE_STARTED = "vs!";
     #endregion
     #region Legacy stuff
-        public const string LEGACY = "!le";
-        public const string LEGACY_SEND_TO_AFRAME = "sta!";
-        public const string LEGACY_SET_CHILD_COLOR = "scc!";
-        public const string LEGACY_LOCK_PLAYER = "lp!";
-        public const string LEGACY_UNLOCK_PLAYER = "up!";
-        public const string LEGACY_SIT_PLAYER = "sp!";
-        public const string LEGACY_UNSIT_PLAYER = "usp!";
-        public const string LEGACY_GORILLA_PLAYER = "gp!";
-        public const string LEGACY_UNGORILLA_PLAYER = "ugp!";
-        public const string LEGACY_ENABLE_CONTROLLER_EXTRAS = "ece!";
-        public const string LEGACY_ENABLE_QUATERNION_POSE = "eqp!";
-        public const string LEGACY_SET_VIDEO_URL = "svu!";
-        public const string LEGACY_SET_REFRESH_RATE = "srr!";
-        public const string LEGACY_SEND_AFRAME_EVENT = "sae!";
-        public const string LEGACY_PLAY_AVATAR = "pa!";
-        public const string LEGACY_REQUEST_OWNERSHIP = "ro!";
-        public const string LEGACY_RESET_NETWORK_OBJECT = "rno!";
-        public const string LEGACY_DO_I_OWN = "dio!";
-        public const string LEGACY_ATTACH_OBJECT = "ao!";
+    public const string LEGACY = "!le";
+    public const string LEGACY_SEND_TO_AFRAME = "sta!";
+    public const string LEGACY_SET_CHILD_COLOR = "scc!";
+    public const string LEGACY_LOCK_PLAYER = "lp!";
+    public const string LEGACY_UNLOCK_PLAYER = "up!";
+    public const string LEGACY_SIT_PLAYER = "sp!";
+    public const string LEGACY_UNSIT_PLAYER = "usp!";
+    public const string LEGACY_GORILLA_PLAYER = "gp!";
+    public const string LEGACY_UNGORILLA_PLAYER = "ugp!";
+    public const string LEGACY_ENABLE_CONTROLLER_EXTRAS = "ece!";
+    public const string LEGACY_ENABLE_QUATERNION_POSE = "eqp!";
+    public const string LEGACY_SET_VIDEO_URL = "svu!";
+    public const string LEGACY_SET_REFRESH_RATE = "srr!";
+    public const string LEGACY_SEND_AFRAME_EVENT = "sae!";
+    public const string LEGACY_PLAY_AVATAR = "pa!";
+    public const string LEGACY_REQUEST_OWNERSHIP = "ro!";
+    public const string LEGACY_RESET_NETWORK_OBJECT = "rno!";
+    public const string LEGACY_DO_I_OWN = "dio!";
+    public const string LEGACY_ATTACH_OBJECT = "ao!";
     #endregion
-   
+
 }
