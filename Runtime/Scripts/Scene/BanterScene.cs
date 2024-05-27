@@ -1150,7 +1150,8 @@ namespace Banter.SDK
             }
             mainThread?.Enqueue(async () =>
             {
-                try{
+                try
+                {
                     var go = new GameObject(parts[1]);
                     go.transform.parent = settings.parentTransform;
 
@@ -1162,8 +1163,10 @@ namespace Banter.SDK
                         Debug.Log("Creating object that is not active: " + go.name);
                         go.SetActive(false);
                     }
-                }catch(Exception e){
-                        Debug.LogError("[Banter] Add Object after act: " + msg);
+                }
+                catch (Exception)
+                {
+                    Debug.LogError("[Banter] Add Object after act: " + msg);
                 }
             });
         }
