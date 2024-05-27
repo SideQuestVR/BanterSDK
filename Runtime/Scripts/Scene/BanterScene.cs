@@ -1414,7 +1414,7 @@ namespace Banter.SDK
         private List<BanterComponentPropertyUpdate> _tickBuffer = null;
         public void SetFromUnityProperties(List<BanterComponentPropertyUpdate> properties, Action callback = null, string name = "")
         {
-            Debug.Log($"SetFromUnityProperties, only {properties.Count}!");
+            // Debug.Log($"SetFromUnityProperties, only {properties.Count}!");
             if (properties.Count > 0)
             {
                 properties[properties.Count - 1].callback = callback;
@@ -1425,7 +1425,7 @@ namespace Banter.SDK
             }
             if (_tickBuffer != null)
             {
-                Debug.Log("buffered enqueue on SetFromUnityProperties!");
+                // Debug.Log("buffered enqueue on SetFromUnityProperties!");
                 int ct = properties.Count;
                 for (int i = 0; i < ct; i++)
                 {
@@ -1434,7 +1434,7 @@ namespace Banter.SDK
             }
             else
             {
-                Debug.Log($"NON-buffered enqueue on SetFromUnityProperties, only {properties.Count}!");
+                // Debug.Log($"NON-buffered enqueue on SetFromUnityProperties, only {properties.Count}!");
                 EnqueuePropertyUpdates(properties);
             }
         }
