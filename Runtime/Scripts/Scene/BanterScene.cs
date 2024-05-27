@@ -83,7 +83,7 @@ namespace Banter.SDK
         {
             get
             {
-                return state == SceneState.DOM_READY || state == SceneState.SCENE_READY || state == SceneState.UNITY_READY;
+                return state == SceneState.DOM_READY || state == SceneState.SCENE_READY || state == SceneState.UNITY_READY || state == SceneState.SCENE_START;
             }
         }
         public UnityMainThreadDispatcher mainThread;
@@ -1150,16 +1150,20 @@ namespace Banter.SDK
             }
             mainThread?.Enqueue(async () =>
             {
-                var go = new GameObject(parts[1]);
-                go.transform.parent = settings.parentTransform;
+                try{
+                    var go = new GameObject(parts[1]);
+                    go.transform.parent = settings.parentTransform;
 
-                AddBanterObject(go, go.AddComponent<BanterObjectId>());
-                link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
-                await new WaitForSeconds(2);
-                if (parts[2] == "0")
-                {
-                    Debug.Log("Creating object that is not active: " + go.name);
-                    go.SetActive(false);
+                    AddBanterObject(go, go.AddComponent<BanterObjectId>());
+                    link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
+                    await new WaitForSeconds(2);
+                    if (parts[2] == "0")
+                    {
+                        Debug.Log("Creating object that is not active: " + go.name);
+                        go.SetActive(false);
+                    }
+                }catch(Exception e){
+                        Debug.LogError("[Banter] Add Object after act: " + msg);
                 }
             });
         }

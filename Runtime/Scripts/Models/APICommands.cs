@@ -8,6 +8,7 @@ public class APICommands
     public const string ONLOAD = "!ol!";
     public const string RELOAD = "!r!";
     public const string SCENE_READY = "!sr!";
+    public const string SCENE_START = "!sst!";
     public const string SCENE_SETTINGS = "!ss!";
     public const string NOTHING_20S = "!no20s!";
     public const string NOTHING = "!no!";
