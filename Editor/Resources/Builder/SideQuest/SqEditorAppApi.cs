@@ -409,12 +409,12 @@ namespace Banter.SDKEditor {
                 req.method = "PUT";
                 req.uploadHandler = new UploadHandlerRaw(data);
                 yield return req.SendWebRequest();
-                if (req.isNetworkError)
+                if (req.result == UnityWebRequest.Result.ConnectionError)
                 {
                     OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
                     yield break;
                 }
-                else if (req.isHttpError)
+                else if (req.result == UnityWebRequest.Result.ProtocolError)
                 {
                     if (req.responseCode == 401 || req.responseCode == 403)
                     {
@@ -543,12 +543,12 @@ namespace Banter.SDKEditor {
 
                 yield return req.SendWebRequest();
 
-                if (req.isNetworkError)
+                if (req.result == UnityWebRequest.Result.ConnectionError)
                 {
                     OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
                     yield break;
                 }
-                else if (req.isHttpError)
+                else if (req.result == UnityWebRequest.Result.ProtocolError)
                 {
                     if (req.responseCode == 401 || req.responseCode == 403)
                     {
@@ -604,12 +604,12 @@ namespace Banter.SDKEditor {
                 }
 
                 yield return req.SendWebRequest();
-                if (req.isNetworkError)
+                if (req.result == UnityWebRequest.Result.ConnectionError)
                 {
                     OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
                     yield break;
                 }
-                else if (req.isHttpError)
+                else if (req.result == UnityWebRequest.Result.ProtocolError)
                 {
                     if (req.responseCode == 401 || req.responseCode == 403)
                     {
@@ -666,12 +666,12 @@ namespace Banter.SDKEditor {
                 }
 
                 yield return req.SendWebRequest();
-                if (req.isNetworkError)
+                if (req.result == UnityWebRequest.Result.ConnectionError)
                 {
                     OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
                     yield break;
                 }
-                else if (req.isHttpError)
+                else if (req.result == UnityWebRequest.Result.ProtocolError)
                 {
                     if (req.responseCode == 401 || req.responseCode == 403)
                     {
