@@ -8,8 +8,13 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
 using Banter.SDK;
+using System.Threading;
 using Banter.SDKEditor;
-
+using Unity.EditorCoroutines.Editor;
+using System.Collections;
+using UnityEngine.Networking;
+using Newtonsoft.Json;
+using Unity.VisualScripting;
 public enum BanterBuilderBundleMode
 {
     None = 0,
@@ -32,6 +37,15 @@ public class BuilderWindow : EditorWindow
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
     [SerializeField] private StyleSheet _mainWindowStyleSheet = default;
 
+    private const string SQ_API_CLIENT_ID = "client_85b087d9975cb8ca5bb575a2";
+// #if TEST_ENV
+//     "client_85b087d9975cb8ca5bb575a2";
+// #elif LOCAL_ENV
+//     "client_8678b908a915804cd72438f9";
+// #else
+//     "client_0e4c67f9a6bbe12143870312";        //prod env
+// #endif
+
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
     public static UnityEvent OnCompileInjection = new UnityEvent();
@@ -48,6 +62,20 @@ public class BuilderWindow : EditorWindow
     ListView buildProgress;
     ProgressBar buildProgressBar;
     Button removeSelected;
+    Label statusBar;
+    
+    Label codeText;
+    TextField spaceSlug;
+    Label statusText;
+    Button signOut;
+    Button uploadWebOnly;
+    Button uploadEverything;
+
+    Toggle autoUpload;
+
+    VisualElement loggedInView;
+
+
     string assetBundleRoot = "Assets";
     string assetBundleDirectory = "WebRoot";
     List<string> statusMessages = new List<string>();
@@ -60,34 +88,343 @@ public class BuilderWindow : EditorWindow
         window.titleContent = new GUIContent("Banter Bundle Builder");
     }
 
+    private SqEditorAppApi sq;
+
+    private int codeCheckCount;
+
+    public void OnDisable() {
+        StopPolling();
+        codeCheckCount = 0;
+    }
+
     public void OnEnable()
     {
+        codeCheckCount = 0;
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
         rootVisualElement.Add(content);
+        SqEditorAppApiConfig config = new SqEditorAppApiConfig(SQ_API_CLIENT_ID, Application.persistentDataPath, true);
+        sq = new SqEditorAppApi(config);
         SetupUI();
+        SetLoginState();
+        if (sq.User != null)
+        {
+            AddStatus("User is logged in at startup, refreshing the user's profile");
+            RefreshUser();
+        }else{
+            GetCode();
+        }
+
+    }
+    private void SetLoginState()
+    {
+        if (sq.User != null)
+        {
+            LoginCompleted();
+        } else
+        {
+            autoUpload.style.display = DisplayStyle.None;
+            codeText.style.display = DisplayStyle.Flex;
+            loggedInView.style.display = DisplayStyle.None;
+            buildButton.text = "BUILD NOW";
+        }
     }
 
-    void SetupUI()
+    private void GetCode()
     {
-        var buildButton = rootVisualElement.Q<Button>("buildButton");
+        //TODO LoggedOutVisibleContainer.SetActive(false);
+        //call GetLoginCode from the api to retrieve the short code a user should enter
+        EditorCoroutineUtility.StartCoroutine(sq.GetLoginCode((code) =>
+        {
+            AddStatus("Successfully got login short code from API");
+            //When a code has been retrieved, the Code and the VerificationUrl returned from the API should
+            //  be shown to the user
+            codeText.text = $"Go to {code.VerificationUrl}\nput in {code.Code}";
+            //begin polling for completion of the short code login using the interval returned from the API
+            StartPolling(code.PollIntervalSeconds);
+        }, (error) => {
+            //if something goes wrong, details of what should be in the exception
+            Debug.LogError("Failed to get code from API!");
+            Debug.LogException(error);
+            // LoggedOutVisibleContainer.SetActive(true);
+        }), this);
+    }
+    EditorCoroutine waitCoroutine;
+    
+    private void StopPolling()
+    {
+        AddStatus("Stopping polling for completion of short code login");
+        if (waitCoroutine != null)
+        {
+            EditorCoroutineUtility.StopCoroutine(waitCoroutine);
+            waitCoroutine = null;
+        }
+    }
+
+    private void StartPolling(int delaySec)
+    {
+        AddStatus("Beginning polling for completion of short code login");
+        waitCoroutine = EditorCoroutineUtility.StartCoroutine(Poller(delaySec), this);
+    }
+
+    private IEnumerator Poller(int delaySec)
+    {
+        //this coroutine loops until the short code login request either fails or succeeds, waiting delaySec between checks
+        while (true)
+        {
+            yield return new WaitForSecondsRealtime(delaySec);
+            SqEditorUser user = null;
+            bool isDone = false;
+            Exception ex = null;
+
+            //Call to check if the short code has been completed 
+            yield return sq.CheckLoginCodeComplete((done, usr) =>
+            {
+                //The function is invoked with two parameters:
+                // the first (done) is a boolean indicating if the short code request has been completed by the user
+                // the second (usr) is the user profile object, and will be null until (done) is true
+                isDone = done;
+                user = usr;
+            }, (e) =>
+            {
+                ex = e;
+            });
+            if (ex != null)
+            {
+                //failures mean the call failed, timed out or something else went wrong.
+                //when this happens, stop polling because the situation won't improve.
+                Debug.LogError("Exception while checking for login code completion");
+                Debug.LogException(ex);
+                statusText.text = $"Failed: {ex.Message}";
+                // LoggedOutVisibleContainer.SetActive(true);
+                StopPolling();
+                yield break;
+            }
+            if (isDone)
+            {
+                AddStatus("Login with short code has completed");
+                //if the user logged in with the short code, stop the polling coroutine and continue on
+                LoginCompleted();
+                StopPolling();                
+                yield break;
+            } else
+            {
+                if(codeCheckCount++ < 10) {
+                    AddStatus($"Login with short code is not yet complete.  Will check again in {delaySec} seconds");
+                }else{
+                    AddStatus($"Nothing after 10 attempts, stopping polling.");
+                    StopPolling();                
+                    yield break;
+                }
+            }
+        }
+    }
+
+    private void LogOut()
+    {
+        sq.Logout();
+        SetLoginState();
+        GetCode();
+    }
+
+    private void LoginCompleted()
+    {
+        loggedInView.style.display = DisplayStyle.Flex;
+        codeText.style.display = DisplayStyle.None;
+        statusText.text = $"Logged in as: {sq.User.Name}";
+        autoUpload.style.display = DisplayStyle.Flex;
+        //TODO LoggedOutVisibleContainer.SetActive(false);
+        //TODO StatusText.text = $"Logged in as: {sq.User.Name}";
+        //TODO LoggedInVisibleContainer.SetActive(true);
+    }
+
+    [MenuItem("Banter/Tools/Clear All Asset Bundles")]
+    public static void ClearAllAssetBundles()
+    {
+        // Fetch all asset paths in the project
+        string[] allAssetPaths = AssetDatabase.GetAllAssetPaths();
+
+        // Iterate through all asset paths and clear asset bundle names
+        foreach (string path in allAssetPaths)
+        {
+            AssetImporter assetImporter = AssetImporter.GetAtPath(path);
+            if (assetImporter != null && !string.IsNullOrEmpty(assetImporter.assetBundleName))
+            {
+                assetImporter.assetBundleName = string.Empty;
+            }
+        }
+
+        // Clear the AssetBundle cache
+        if (!Caching.ClearCache())
+        {
+            Debug.LogError("Failed to clear the AssetBundle cache.");
+        }
+
+        // Refresh and update the asset database
+        AssetDatabase.Refresh();
+
+        // Remove unused asset bundle names
+        AssetDatabase.RemoveUnusedAssetBundleNames();
+        AssetDatabase.Refresh();
+        
+        Debug.Log("Cleared all asset bundles.");
+    }
+
+     public void RefreshUser()
+    {
+        if (sq.User != null)
+        {
+            //refreshes a user's data from the API.
+            //This should be called periodically (e.g. on app start) to update the user's profile information.
+            EditorCoroutineUtility.StartCoroutine(sq.RefreshUserProfile((u) =>
+            {
+                AddStatus("User profile information has been refreshed from the API successfully");
+                statusText.text = $"Logged in as: {sq.User.Name}";
+            }, (e) =>
+            {
+                Debug.LogError("Failed to refresh user");
+                Debug.LogException(e);
+            }), this);
+
+        }
+    }
+
+    private void SetupTabs() {
+
+        var buildTab = rootVisualElement.Q<Label>("BuildTab");
+        var uploadTab = rootVisualElement.Q<Label>("UploadTab");
+        var toolsTab = rootVisualElement.Q<Label>("ToolsTab");
+        var logsTab = rootVisualElement.Q<Label>("LogsTab");
+
+        var buildTabSection = rootVisualElement.Q<VisualElement>("BuildSection");
+        var uploadSection = rootVisualElement.Q<VisualElement>("UploadSection");
+        var toolsSection = rootVisualElement.Q<VisualElement>("ToolsSection");
+        var logsSection = rootVisualElement.Q<VisualElement>("LogsSection");
+
+        var HideSections = new Action(() => {
+            buildTabSection.style.display = DisplayStyle.None;
+            buildTab.text = "BUILD";
+            uploadSection.style.display = DisplayStyle.None;
+            uploadTab.text = "UPLOAD";
+            toolsSection.style.display = DisplayStyle.None;
+            toolsTab.text = "TOOLS";
+            logsSection.style.display = DisplayStyle.None;
+            logsTab.text = "LOGS";
+        });
+
+        buildTab.RegisterCallback<MouseUpEvent>((e) => {
+            HideSections();
+            buildTabSection.style.display = DisplayStyle.Flex;
+            buildTab.text = "<u>BUILD</u>";
+        });
+
+        uploadTab.RegisterCallback<MouseUpEvent>((e) => {
+            HideSections();
+            uploadSection.style.display = DisplayStyle.Flex;
+            uploadTab.text = "<u>UPLOAD</u>";
+        });
+
+        toolsTab.RegisterCallback<MouseUpEvent>((e) => {
+            HideSections();
+            toolsSection.style.display = DisplayStyle.Flex;
+            toolsTab.text = "<u>TOOLS</u>";
+        });
+
+        logsTab.RegisterCallback<MouseUpEvent>((e) => {
+            HideSections();
+            logsSection.style.display = DisplayStyle.Flex;
+            logsTab.text = "<u>LOGS</u>";
+        });
+
+    }
+
+    void ShowHideBuildButton(){
+        if(!buildTargetFlags[0] && !buildTargetFlags[1]) {
+            buildButton.SetEnabled(false);
+        }else{
+            buildButton.SetEnabled(true);
+        }
+    }
+    Button buildButton;
+    private void SetupUI()
+    {
+        statusBar = rootVisualElement.Q<Label>("StatusBar");
+        SetupTabs();
+        buildButton = rootVisualElement.Q<Button>("buildButton");
 
         buildButton.clicked += () => BuildAssetBundles();
 
+        var clearLogs = rootVisualElement.Q<Button>("clearLogs");
+
+        clearLogs.clicked += () => ClearLogs();
+
         var buildForAndroid = rootVisualElement.Q<Toggle>("buildForAndroid");
+        buildTargetFlags[0] = buildForAndroid.value = EditorPrefs.GetBool("BanterBuilder_BuildTarget_Android", true);
         buildForAndroid.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_BuildTarget_Android", buildForAndroid.value);
             buildTargetFlags[0] = buildForAndroid.value;
+            ShowHideBuildButton();
         });
 
         var buildForWindows = rootVisualElement.Q<Toggle>("buildForWindows");
+        buildTargetFlags[1] = buildForWindows.value = EditorPrefs.GetBool("BanterBuilder_BuildTarget_Windows", true);
         buildForWindows.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_BuildTarget_Windows", buildForWindows.value);
             buildTargetFlags[1] = buildForWindows.value;
+            ShowHideBuildButton();
         });
+        
+        ShowHideBuildButton();
+
+        autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
+        autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false) && sq.User != null;
+        buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+        autoUpload.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
+            buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+        });
+
+        codeText = rootVisualElement.Q<Label>("LoginCode");
+        spaceSlug = rootVisualElement.Q<TextField>("SpaceSlug");
+        statusText = rootVisualElement.Q<Label>("SignedInStatus");
+        signOut = rootVisualElement.Q<Button>("SignOut");
+        uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
+        uploadEverything = rootVisualElement.Q<Button>("UploadEverything");
+        loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
+        signOut.clicked += LogOut;
+
+        
+        spaceSlug.value = EditorPrefs.GetString("BanterBuilder_spaceSlug", "");
+
+        spaceSlug.RegisterValueChangedCallback((e) => {
+            EditorPrefs.SetString("BanterBuilder_spaceSlug", e.newValue);
+        });
+
+        uploadWebOnly.clicked += () => {
+            uploadWebOnly.SetEnabled(false);
+            uploadEverything.SetEnabled(false);
+            EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() => {
+                AddStatus("Upload complete.");
+                uploadWebOnly.SetEnabled(true);
+                uploadEverything.SetEnabled(true);
+            }),this);
+        };
+
+        uploadEverything.clicked += () => {
+            uploadWebOnly.SetEnabled(false);
+            uploadEverything.SetEnabled(false);
+            EditorCoroutineUtility.StartCoroutine(UploadEverything(() => {
+                AddStatus("Upload complete.");
+                uploadWebOnly.SetEnabled(true);
+                uploadEverything.SetEnabled(true);
+            }), this);
+        };
+
+
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
         buildProgress = rootVisualElement.Q<ListView>("buildProgress");
@@ -161,8 +498,6 @@ public class BuilderWindow : EditorWindow
             rootVisualElement.Q<Button>("allAndInjection").clicked += () =>{
                 OnCompileAll.Invoke();
                 OnCompileInjection.Invoke();
-                // SDKCodeGen.CompileAllComponents();
-                // SDKCodeGen.CompileInjection();
             };
             rootVisualElement.Q<Button>("allOnly").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAllComponents();
             rootVisualElement.Q<Button>("clearAll").clicked += () => OnClearAll.Invoke();// SDKCodeGen.ClearAllComponents();
@@ -184,14 +519,69 @@ public class BuilderWindow : EditorWindow
         rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
 
     }
+
+    private IEnumerator UploadWebOnly(Action callback)
+    {
+        yield return UploadFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
+        yield return UploadFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        yield return UploadFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        callback();
+    }
+    private IEnumerator UploadEverything(Action callback)
+    {
+        yield return UploadFile("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows);
+        yield return UploadFile("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android);
+        yield return UploadFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
+        yield return UploadFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        yield return UploadFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        callback();
+    }
+
+    private IEnumerator UploadFile(string name, UploadAssetType type, UploadAssetTypePlatform platform)
+    {
+        var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
+        if(File.Exists(file)){
+            AddStatus("Upload started: " + file + "...");
+        }else{
+            AddStatus("File not found, skipping: " + file);
+            yield break;
+        }
+        var data = File.ReadAllBytes(file);
+        yield return sq.UploadFile(name, data, spaceSlug.text, (text) => {
+            AddStatus("Uploaded " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
+        }, e => {
+            AddStatus("FAILED UPLOADING " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
+            Debug.LogException(e);
+        }, type, platform);
+    }
+    CancellationTokenSource resetDebounce;
+    private async Task ResetStatus(CancellationTokenSource cts) {
+        await Task.Delay(3000);
+        if(cts.Token.IsCancellationRequested){
+            return;
+        }
+        statusBar.text = "STATUS: Idle";
+    }
+    void ClearLogs() {
+        statusMessages.Clear();
+        buildProgress.Rebuild();
+    }
     void AddStatus(string text)
     {
-        statusMessages.Add("<color=\"orange\">" + DateTime.Now.ToString("HH:mm:ss") + ": <color=\"white\">" + text);
+        var val = "<color=\"orange\">" + DateTime.Now.ToString("HH:mm:ss") + ": <color=\"white\">" + text;
+        statusMessages.Insert(0, val);
+        statusBar.text = "STATUS: " + val;
         if (statusMessages.Count > 300)
         {
             statusMessages = statusMessages.GetRange(0, 300);
         }
+
         buildProgress.Rebuild();
+        if(resetDebounce != null && !resetDebounce.Token.IsCancellationRequested){
+            resetDebounce.Cancel();
+        }
+        resetDebounce = new CancellationTokenSource();
+        _ = ResetStatus(resetDebounce);
     }
 
     public void Remove(VisualElement element)
@@ -267,7 +657,7 @@ public class BuilderWindow : EditorWindow
         mainTitle.style.display = DisplayStyle.None;
         if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count > 0)
         {
-            mainTitle.text = "<u>BUILDING A KIT BUNDLE</u>";
+            mainTitle.text = "BUILD MODE: <color=\"white\">Prefab Asset Bundle (Kit)";
             mainTitle.style.display = DisplayStyle.Flex;
             removeSelected.style.display = DisplayStyle.Flex;
             kitListView.style.display = DisplayStyle.Flex;
@@ -277,10 +667,11 @@ public class BuilderWindow : EditorWindow
         }
         else if (mode == BanterBuilderBundleMode.Scene)
         {
-            mainTitle.text = "<u>BUILDING A SCENE BUNDLE</u>";
+            mainTitle.text = "BUILD MODE: <color=\"white\">Scene Asset Bundle";
             mainTitle.style.display = DisplayStyle.Flex;
             scenePathLabel.style.display = DisplayStyle.Flex;
-            scenePathLabel.text = "SCENE PATH: " + scenePath;
+            scenePathLabel.text = "SCENE PATH: <color=\"white\">" + scenePath;
+            // button to open the webroot folder - highlight in unity.
         }
         else
         {
@@ -291,8 +682,6 @@ public class BuilderWindow : EditorWindow
     }
     private void BuildAssetBundles()
     {
-        // statusMessages.Clear();
-        // buildProgressBar.style.display = DisplayStyle.Flex;
         if (mode == BanterBuilderBundleMode.None)
         {
             AddStatus("Nothing to build...");
@@ -308,8 +697,6 @@ public class BuilderWindow : EditorWindow
             AddStatus("No objects selected...");
             return;
         }
-        // if (EditorUtility.DisplayDialog("Are you sure?", "This will clear any files in the output folder.", "Continue", "Cancel")) {
-
         AddStatus("Build started...");
 
         if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
@@ -372,7 +759,7 @@ public class BuilderWindow : EditorWindow
 
             }
         }
-        Debug.Log(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+
         if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
         {
             File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
@@ -398,7 +785,19 @@ public class BuilderWindow : EditorWindow
             File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
         }
         AddStatus("Build finished.");
-        // }
+        if(autoUpload.value) {
+            if(string.IsNullOrEmpty(spaceSlug.text)){
+                AddStatus("No space subdomain specified, skipping upload.");
+                return;
+            }
+            uploadWebOnly.SetEnabled(false);
+            uploadEverything.SetEnabled(false);
+            EditorCoroutineUtility.StartCoroutine(UploadEverything(() => {
+                AddStatus("Upload complete.");
+                uploadWebOnly.SetEnabled(true);
+                uploadEverything.SetEnabled(true);
+            }), this);
+        }
     }
     void HideProgressBar()
     {

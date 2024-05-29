@@ -12,7 +12,8 @@
     "com.unity.cinemachine": "2.8.9",
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.textmeshpro": "3.0.9",
-    "com.unity.xr.management": "4.2.0"
+    "com.unity.xr.management": "4.2.0",
+    "com.unity.editorcoroutines": "1.0.0"
   },
   "keywords": [
     "world-building",
