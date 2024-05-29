@@ -380,11 +380,11 @@ public class BuilderWindow : EditorWindow
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
         autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
-        buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "BUILD & UPLOAD NOW" : "BUILD NOW";
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
-            buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+            buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "BUILD & UPLOAD NOW" : "BUILD NOW";
         });
 
         codeText = rootVisualElement.Q<Label>("LoginCode");
@@ -487,11 +487,15 @@ public class BuilderWindow : EditorWindow
         kitListView.reorderMode = ListViewReorderMode.Simple;
         DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
-        if (!string.IsNullOrEmpty(scenePath))
-        {
+        LoadKitList();
+        if (!string.IsNullOrEmpty(scenePath)){
             mode = BanterBuilderBundleMode.Scene;
-            RefreshView();
+        }else{
+            if(kitObjectList.Count > 0){
+                mode = BanterBuilderBundleMode.Kit;
+            }
         }
+        RefreshView();
 
 #if BANTER_EDITOR
             rootVisualElement.Q<Button>("allAndInjection").clicked += () =>{
@@ -588,6 +592,29 @@ public class BuilderWindow : EditorWindow
         element.parent.Remove(element);
     }
 
+    private void SaveKitList() {
+        EditorPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
+    }
+
+    private void LoadKitList() {
+        var paths = EditorPrefs.GetString("BanterBuilder_SelectedKitObjects", "").Split(',');
+        foreach (var path in paths)
+        {
+            if(string.IsNullOrEmpty(path)){
+                continue;
+            }
+            var obj = GetKitObject(path);
+            if (obj == null)
+            {
+                continue;
+            }
+            if (!kitObjectList.Any(x => x.path == path))
+            {
+                kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = path });
+            }
+        }
+    }
+
     private void DropFile(bool isScene, string sceneFile, string[] paths)
     {
         if (isScene)
@@ -608,6 +635,7 @@ public class BuilderWindow : EditorWindow
                 if (!kitObjectList.Any(x => x.path == dropped))
                 {
                     kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = dropped });
+                    SaveKitList();
                 }
             }
             if (kitObjectList.Count > 0)
@@ -640,6 +668,7 @@ public class BuilderWindow : EditorWindow
         foreach (var sel in kitListView.selectedItems.Cast<KitObjectAndPath>())
         {
             kitObjectList.Remove(sel);
+            SaveKitList();
         }
         kitListView.ClearSelection();
         RefreshView();
