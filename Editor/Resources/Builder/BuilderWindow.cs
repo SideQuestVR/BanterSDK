@@ -111,7 +111,7 @@ public class BuilderWindow : EditorWindow
 
     }
     private void ShowUploadToggle() {
-        if (sq.User != null && mode != BanterBuilderBundleMode.Kit)
+        if (sq.User != null && mode == BanterBuilderBundleMode.Scene)
         {
             autoUpload.style.display = DisplayStyle.Flex;
         } else
@@ -678,6 +678,7 @@ public class BuilderWindow : EditorWindow
             mainTitle.text = "";
         }
         ShowRemoveSelected();
+        ShowUploadToggle();
     }
     private void BuildAssetBundles()
     {
@@ -784,7 +785,7 @@ public class BuilderWindow : EditorWindow
             File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
         }
         AddStatus("Build finished.");
-        if(autoUpload.value && sq.User != null && mode != BanterBuilderBundleMode.Kit) {
+        if(autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene) {
             if(string.IsNullOrEmpty(spaceSlug.text)){
                 AddStatus("No space subdomain specified, skipping upload.");
                 return;
