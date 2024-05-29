@@ -2,6 +2,7 @@
     "name": "BanterSDKEditor",
     "rootNamespace": "Banter.SDKEditor",
     "references": [
+        "GUID:478a2357cc57436488a56e564b08d223",
         "GUID:00a9e2367449a2e4d89a262276b0dac1",
         "GUID:21b0c8d1703a94250bfac916590cea4f",
         "GUID:ea715009a4efd4c6cbc85be3ae097dd3",

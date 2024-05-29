@@ -1,7 +1,7 @@
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
-using Banter;
+using Banter.SDK;
 
 class CustomSceneProcessor : IProcessSceneWithReport
 {
