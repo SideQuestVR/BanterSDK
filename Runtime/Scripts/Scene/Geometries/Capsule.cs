@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Capsule : Geometry
-{
+// public class Capsule : Geometry
+// {
 
     //     int index;
 
@@ -219,4 +219,4 @@ public class Capsule : Geometry
     //             }
     //         }
     //     }
-}
+// }

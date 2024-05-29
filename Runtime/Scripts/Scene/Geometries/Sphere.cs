@@ -2,84 +2,86 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Sphere : Geometry
-{
-
-
-    public Sphere(float radius = 1, int widthSegments = 16, int heightSegments = 16, float phiStart = 0, float phiLength = Mathf.PI * 2f, float thetaStart = 0, float thetaLength = Mathf.PI)
+namespace Banter.SDK{
+    public class Sphere : Geometry
     {
 
-        indices = new List<int>();//[indexLength];
-        vertices = new List<Vector3>();//[verticesLength];
-        normals = new List<Vector3>();//[verticesLength];
-        uvs = new List<Vector2>();//[verticesLength];
-        int index = 0;
-        var grid = new List<int[]>();
 
-        var thetaEnd = thetaStart + thetaLength;
-
-        for (int iy = 0; iy <= heightSegments; iy++)
+        public Sphere(float radius = 1, int widthSegments = 16, int heightSegments = 16, float phiStart = 0, float phiLength = Mathf.PI * 2f, float thetaStart = 0, float thetaLength = Mathf.PI)
         {
 
-            var verticesRow = new int[widthSegments + 1];
+            indices = new List<int>();//[indexLength];
+            vertices = new List<Vector3>();//[verticesLength];
+            normals = new List<Vector3>();//[verticesLength];
+            uvs = new List<Vector2>();//[verticesLength];
+            int index = 0;
+            var grid = new List<int[]>();
 
-            var v = iy / (float)heightSegments;
+            var thetaEnd = thetaStart + thetaLength;
 
-            for (int ix = 0; ix <= widthSegments; ix++)
+            for (int iy = 0; iy <= heightSegments; iy++)
             {
 
-                var u = ix / (float)widthSegments;
-                // vertex
-                Vector3 vertex = new Vector3();
-                vertex.x = -radius * Mathf.Cos(phiStart + u * phiLength) * Mathf.Sin(thetaStart + v * thetaLength);
-                vertex.y = radius * Mathf.Cos(thetaStart + v * thetaLength);
-                vertex.z = -(radius * Mathf.Sin(phiStart + u * phiLength) * Mathf.Sin(thetaStart + v * thetaLength));
+                var verticesRow = new int[widthSegments + 1];
 
-                vertices.Add(vertex);
+                var v = iy / (float)heightSegments;
 
-                normals.Add(vertex.normalized);
+                for (int ix = 0; ix <= widthSegments; ix++)
+                {
 
-                // uv
+                    var u = ix / (float)widthSegments;
+                    // vertex
+                    Vector3 vertex = new Vector3();
+                    vertex.x = -radius * Mathf.Cos(phiStart + u * phiLength) * Mathf.Sin(thetaStart + v * thetaLength);
+                    vertex.y = radius * Mathf.Cos(thetaStart + v * thetaLength);
+                    vertex.z = -(radius * Mathf.Sin(phiStart + u * phiLength) * Mathf.Sin(thetaStart + v * thetaLength));
 
-                uvs.Add(new Vector2(u, 1 - v));
+                    vertices.Add(vertex);
 
-                verticesRow[ix] = index++;
+                    normals.Add(vertex.normalized);
+
+                    // uv
+
+                    uvs.Add(new Vector2(u, 1 - v));
+
+                    verticesRow[ix] = index++;
+
+                }
+
+                grid.Add(verticesRow);
 
             }
+            // indices
 
-            grid.Add(verticesRow);
-
-        }
-        // indices
-
-        for (int iy = 0; iy < heightSegments; iy++)
-        {
-
-            for (int ix = 0; ix < widthSegments; ix++)
+            for (int iy = 0; iy < heightSegments; iy++)
             {
 
-
-                var a = grid[iy][ix + 1];
-                var b = grid[iy][ix];
-                var c = grid[iy + 1][ix];
-                var d = grid[iy + 1][ix + 1];
-
-                if (iy != 0 || thetaStart > 0)
+                for (int ix = 0; ix < widthSegments; ix++)
                 {
-                    indices.Add(d);
-                    indices.Add(b);
-                    indices.Add(a);
-                }
 
-                if (iy != heightSegments - 1 || thetaEnd < Mathf.PI)
-                {
-                    indices.Add(d);
-                    indices.Add(c);
-                    indices.Add(b);
+
+                    var a = grid[iy][ix + 1];
+                    var b = grid[iy][ix];
+                    var c = grid[iy + 1][ix];
+                    var d = grid[iy + 1][ix + 1];
+
+                    if (iy != 0 || thetaStart > 0)
+                    {
+                        indices.Add(d);
+                        indices.Add(b);
+                        indices.Add(a);
+                    }
+
+                    if (iy != heightSegments - 1 || thetaEnd < Mathf.PI)
+                    {
+                        indices.Add(d);
+                        indices.Add(c);
+                        indices.Add(b);
+                    }
+
                 }
 
             }
-
         }
     }
 }

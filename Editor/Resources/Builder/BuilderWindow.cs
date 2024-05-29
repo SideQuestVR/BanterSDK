@@ -110,6 +110,15 @@ public class BuilderWindow : EditorWindow
         }
 
     }
+    private void ShowUploadToggle() {
+        if (sq.User != null && mode == BanterBuilderBundleMode.Scene)
+        {
+            autoUpload.style.display = DisplayStyle.Flex;
+        } else
+        {
+            autoUpload.style.display = DisplayStyle.None;
+        }
+    }
     private void SetLoginState()
     {
         if (sq.User != null)
@@ -117,11 +126,11 @@ public class BuilderWindow : EditorWindow
             LoginCompleted();
         } else
         {
-            autoUpload.style.display = DisplayStyle.None;
             codeText.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
             buildButton.text = "BUILD NOW";
         }
+        ShowUploadToggle();
     }
 
     private void GetCode()
@@ -227,9 +236,6 @@ public class BuilderWindow : EditorWindow
         codeText.style.display = DisplayStyle.None;
         statusText.text = $"Logged in as: {sq.User.Name}";
         autoUpload.style.display = DisplayStyle.Flex;
-        //TODO LoggedOutVisibleContainer.SetActive(false);
-        //TODO StatusText.text = $"Logged in as: {sq.User.Name}";
-        //TODO LoggedInVisibleContainer.SetActive(true);
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -373,12 +379,12 @@ public class BuilderWindow : EditorWindow
         ShowHideBuildButton();
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
-        autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false) && sq.User != null;
-        buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+        autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
+        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "BUILD & UPLOAD NOW" : "BUILD NOW";
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
-            buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+            buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "BUILD & UPLOAD NOW" : "BUILD NOW";
         });
 
         codeText = rootVisualElement.Q<Label>("LoginCode");
@@ -481,11 +487,15 @@ public class BuilderWindow : EditorWindow
         kitListView.reorderMode = ListViewReorderMode.Simple;
         DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
-        if (!string.IsNullOrEmpty(scenePath))
-        {
+        LoadKitList();
+        if (!string.IsNullOrEmpty(scenePath)){
             mode = BanterBuilderBundleMode.Scene;
-            RefreshView();
+        }else{
+            if(kitObjectList.Count > 0){
+                mode = BanterBuilderBundleMode.Kit;
+            }
         }
+        RefreshView();
 
 #if BANTER_EDITOR
             rootVisualElement.Q<Button>("allAndInjection").clicked += () =>{
@@ -582,6 +592,29 @@ public class BuilderWindow : EditorWindow
         element.parent.Remove(element);
     }
 
+    private void SaveKitList() {
+        EditorPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
+    }
+
+    private void LoadKitList() {
+        var paths = EditorPrefs.GetString("BanterBuilder_SelectedKitObjects", "").Split(',');
+        foreach (var path in paths)
+        {
+            if(string.IsNullOrEmpty(path)){
+                continue;
+            }
+            var obj = GetKitObject(path);
+            if (obj == null)
+            {
+                continue;
+            }
+            if (!kitObjectList.Any(x => x.path == path))
+            {
+                kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = path });
+            }
+        }
+    }
+
     private void DropFile(bool isScene, string sceneFile, string[] paths)
     {
         if (isScene)
@@ -602,6 +635,7 @@ public class BuilderWindow : EditorWindow
                 if (!kitObjectList.Any(x => x.path == dropped))
                 {
                     kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = dropped });
+                    SaveKitList();
                 }
             }
             if (kitObjectList.Count > 0)
@@ -634,6 +668,7 @@ public class BuilderWindow : EditorWindow
         foreach (var sel in kitListView.selectedItems.Cast<KitObjectAndPath>())
         {
             kitObjectList.Remove(sel);
+            SaveKitList();
         }
         kitListView.ClearSelection();
         RefreshView();
@@ -672,6 +707,7 @@ public class BuilderWindow : EditorWindow
             mainTitle.text = "";
         }
         ShowRemoveSelected();
+        ShowUploadToggle();
     }
     private void BuildAssetBundles()
     {
@@ -778,7 +814,7 @@ public class BuilderWindow : EditorWindow
             File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
         }
         AddStatus("Build finished.");
-        if(autoUpload.value) {
+        if(autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene) {
             if(string.IsNullOrEmpty(spaceSlug.text)){
                 AddStatus("No space subdomain specified, skipping upload.");
                 return;
