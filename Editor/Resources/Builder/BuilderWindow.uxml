@@ -35,7 +35,7 @@
                                 <ui:Button text="Sign Out" display-tooltip-when-elided="true" name="SignOut" />
                             </ui:VisualElement>
                             <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between;">
-                                <ui:TextField picking-mode="Ignore" label="Space Subdomain" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 1; margin-left: 15px;" />
+                                <ui:TextField picking-mode="Ignore" label="SPACE SUBDOMAIN:" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 1; margin-left: 15px; margin-right: 0; -unity-text-align: upper-right;" />
                                 <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: bold; flex-shrink: 0; flex-grow: 0; margin-right: 15px;" />
                             </ui:VisualElement>
                             <ui:Button text="UPLOAD WEB FILES ONLY" display-tooltip-when-elided="true" name="UploadWebOnly" style="padding-top: 10px; padding-bottom: 10px; margin-top: 10px; margin-bottom: 10px;" />
