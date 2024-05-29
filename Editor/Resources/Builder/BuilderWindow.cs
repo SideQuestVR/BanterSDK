@@ -110,6 +110,15 @@ public class BuilderWindow : EditorWindow
         }
 
     }
+    private void ShowUploadToggle() {
+        if (sq.User != null && mode != BanterBuilderBundleMode.Kit)
+        {
+            autoUpload.style.display = DisplayStyle.Flex;
+        } else
+        {
+            autoUpload.style.display = DisplayStyle.None;
+        }
+    }
     private void SetLoginState()
     {
         if (sq.User != null)
@@ -117,11 +126,11 @@ public class BuilderWindow : EditorWindow
             LoginCompleted();
         } else
         {
-            autoUpload.style.display = DisplayStyle.None;
             codeText.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
             buildButton.text = "BUILD NOW";
         }
+        ShowUploadToggle();
     }
 
     private void GetCode()
@@ -227,9 +236,6 @@ public class BuilderWindow : EditorWindow
         codeText.style.display = DisplayStyle.None;
         statusText.text = $"Logged in as: {sq.User.Name}";
         autoUpload.style.display = DisplayStyle.Flex;
-        //TODO LoggedOutVisibleContainer.SetActive(false);
-        //TODO StatusText.text = $"Logged in as: {sq.User.Name}";
-        //TODO LoggedInVisibleContainer.SetActive(true);
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -373,7 +379,7 @@ public class BuilderWindow : EditorWindow
         ShowHideBuildButton();
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
-        autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false) && sq.User != null;
+        autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
         buildButton.text = autoUpload.value ? "BUILD & UPLOAD NOW" : "BUILD NOW";
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
@@ -778,7 +784,7 @@ public class BuilderWindow : EditorWindow
             File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
         }
         AddStatus("Build finished.");
-        if(autoUpload.value) {
+        if(autoUpload.value && sq.User != null && mode != BanterBuilderBundleMode.Kit) {
             if(string.IsNullOrEmpty(spaceSlug.text)){
                 AddStatus("No space subdomain specified, skipping upload.");
                 return;
