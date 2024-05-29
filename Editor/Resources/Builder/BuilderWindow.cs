@@ -37,14 +37,7 @@ public class BuilderWindow : EditorWindow
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
     [SerializeField] private StyleSheet _mainWindowStyleSheet = default;
 
-    private const string SQ_API_CLIENT_ID = "client_85b087d9975cb8ca5bb575a2";
-// #if TEST_ENV
-//     "client_85b087d9975cb8ca5bb575a2";
-// #elif LOCAL_ENV
-//     "client_8678b908a915804cd72438f9";
-// #else
-//     "client_0e4c67f9a6bbe12143870312";        //prod env
-// #endif
+    private const string SQ_API_CLIENT_ID = "client_0e4c67f9a6bbe12143870312";
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
@@ -104,7 +97,7 @@ public class BuilderWindow : EditorWindow
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
         rootVisualElement.Add(content);
-        SqEditorAppApiConfig config = new SqEditorAppApiConfig(SQ_API_CLIENT_ID, Application.persistentDataPath, true);
+        SqEditorAppApiConfig config = new SqEditorAppApiConfig(SQ_API_CLIENT_ID, Application.persistentDataPath, false);
         sq = new SqEditorAppApi(config);
         SetupUI();
         SetLoginState();
