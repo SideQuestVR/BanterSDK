@@ -4,39 +4,52 @@
 }
 
 .unity-toggle .unity-label {
-    font-size: 15px;
-    color: #8f8f8f;
+    font-size: 14px;
+    color: #ffffff;
+    cursor: link;
 }
 .unity-toggle .unity-toggle__input {
     transition: all 0.6s;
-    width: 40px;
+    width: 50px;
     height: 20px;
-    min-width: 40px;
-    max-width: 40px;
-    background-color: #2f2f2f;
+    min-width: 50px;
+    max-width: 50px;
+    background-color: #838383;
     border-radius: 10px;
     padding: 0;
     margin: 0;
+    cursor: link;
 }
  
 .unity-toggle:checked .unity-toggle__input {
-    background-color: #B23BEF;
+    background-color: #4E943A;
 }
  
 .unity-toggle .unity-toggle__checkmark {
     transition: all 0.25s;
-    width: 16px;
-    max-width: 16px;
-    min-width: 16px;
-    height: 16px;
-    margin: 2px;
-    border-radius: 8px;
-    background-color: white;
+    height: 10px;
+    width: 10px;
+    border-radius: 10px;
+    max-width: 10px;
+    min-width: 10px;
+    margin: 1px;
+    margin-left: 5px;
+    background-color: transparent;
+    border-width: 0.5px;
+    border-color: #ffffff;
     background-image: none;
     translate: 0 0;
     transition-timing-function: ease-out;
 }
- 
 .unity-toggle:checked .unity-toggle__checkmark {
-    translate: 20px 0;
+    width: 17px;
+    height: 17px;
+    max-width: 17px;
+    min-width: 17px;
+    margin-left: 1px;
+    border-radius: 17px;
+    translate: 30px 0;
+    border-width: 0.5px;
+    background-image: resource('UI/Images/tick');
+    -unity-background-scale-mode: scale-to-fit;
 }

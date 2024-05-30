@@ -128,7 +128,7 @@ public class BuilderWindow : EditorWindow
         {
             codeText.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
-            buildButton.text = "BUILD NOW";
+            buildButton.text = "Build it Now!";
         }
         ShowUploadToggle();
     }
@@ -236,6 +236,8 @@ public class BuilderWindow : EditorWindow
         codeText.style.display = DisplayStyle.None;
         statusText.text = $"Logged in as: {sq.User.Name}";
         autoUpload.style.display = DisplayStyle.Flex;
+        
+        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -288,8 +290,21 @@ public class BuilderWindow : EditorWindow
 
         }
     }
+    enum ActiveTab
+    {
+        Build,
+        Upload,
+        Tools,
+        Logs
+    }
 
+    ActiveTab activeTabName = ActiveTab.Build;
+    float activeTabPosition = 0;
     private void SetupTabs() {
+
+        var activeTab = rootVisualElement.Q<VisualElement>("ActiveTab");
+
+        var tabSections = rootVisualElement.Q<VisualElement>("TabSections");
 
         var buildTab = rootVisualElement.Q<Label>("BuildTab");
         var uploadTab = rootVisualElement.Q<Label>("UploadTab");
@@ -300,42 +315,75 @@ public class BuilderWindow : EditorWindow
         var uploadSection = rootVisualElement.Q<VisualElement>("UploadSection");
         var toolsSection = rootVisualElement.Q<VisualElement>("ToolsSection");
         var logsSection = rootVisualElement.Q<VisualElement>("LogsSection");
-
-        var HideSections = new Action(() => {
-            buildTabSection.style.display = DisplayStyle.None;
-            buildTab.text = "BUILD";
-            uploadSection.style.display = DisplayStyle.None;
-            uploadTab.text = "UPLOAD";
-            toolsSection.style.display = DisplayStyle.None;
-            toolsTab.text = "TOOLS";
-            logsSection.style.display = DisplayStyle.None;
-            logsTab.text = "LOGS";
-        });
-
+        
         buildTab.RegisterCallback<MouseUpEvent>((e) => {
-            HideSections();
-            buildTabSection.style.display = DisplayStyle.Flex;
-            buildTab.text = "<u>BUILD</u>";
+            activeTabName = ActiveTab.Build;
+            SetActivePosition();
+            activeTab.style.left = activeTabPosition;
+            MoveTabSections(tabSections);
         });
 
         uploadTab.RegisterCallback<MouseUpEvent>((e) => {
-            HideSections();
-            uploadSection.style.display = DisplayStyle.Flex;
-            uploadTab.text = "<u>UPLOAD</u>";
+            activeTabName = ActiveTab.Upload;
+            SetActivePosition();
+            activeTab.style.left = activeTabPosition;
+            MoveTabSections(tabSections);
         });
 
         toolsTab.RegisterCallback<MouseUpEvent>((e) => {
-            HideSections();
-            toolsSection.style.display = DisplayStyle.Flex;
-            toolsTab.text = "<u>TOOLS</u>";
+            activeTabName = ActiveTab.Tools;
+            SetActivePosition();
+            activeTab.style.left = activeTabPosition;
+            MoveTabSections(tabSections);
         });
 
         logsTab.RegisterCallback<MouseUpEvent>((e) => {
-            HideSections();
-            logsSection.style.display = DisplayStyle.Flex;
-            logsTab.text = "<u>LOGS</u>";
+            activeTabName = ActiveTab.Logs;
+            SetActivePosition();
+            activeTab.style.left = activeTabPosition;
+            MoveTabSections(tabSections);
         });
 
+        rootVisualElement.RegisterCallback<GeometryChangedEvent>((e) => {
+            SetActivePosition();
+            activeTab.style.left = activeTabPosition;
+            MoveTabSections(tabSections);
+        });
+    }
+
+    void MoveTabSections(VisualElement tabSections) {
+        
+        switch(activeTabName) {
+            case ActiveTab.Build:
+                tabSections.style.left = 0;
+                break;
+            case ActiveTab.Upload:
+                tabSections.style.left = -rootVisualElement.resolvedStyle.width;
+                break;
+            case ActiveTab.Tools:
+                tabSections.style.left = -rootVisualElement.resolvedStyle.width * 2;
+                break;
+            case ActiveTab.Logs:
+                tabSections.style.left = -rootVisualElement.resolvedStyle.width * 3;
+                break;
+        }
+    }
+
+    void SetActivePosition() {
+        switch(activeTabName) {
+            case ActiveTab.Build:
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - (rootVisualElement.resolvedStyle.width * 0.3375f) - 45;
+                break;
+            case ActiveTab.Upload:
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - (rootVisualElement.resolvedStyle.width * 0.1125f) - 45;
+                break;
+            case ActiveTab.Tools:
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 + (rootVisualElement.resolvedStyle.width * 0.1125f) - 45;
+                break;
+            case ActiveTab.Logs:
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 + (rootVisualElement.resolvedStyle.width * 0.3375f) - 45;
+                break;
+        }
     }
 
     void ShowHideBuildButton(){
@@ -345,14 +393,14 @@ public class BuilderWindow : EditorWindow
             buildButton.SetEnabled(true);
         }
     }
-    Button buildButton;
+    Label buildButton;
     private void SetupUI()
     {
         statusBar = rootVisualElement.Q<Label>("StatusBar");
         SetupTabs();
-        buildButton = rootVisualElement.Q<Button>("buildButton");
+        buildButton = rootVisualElement.Q<Label>("buildButton");
 
-        buildButton.clicked += () => BuildAssetBundles();
+        buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
 
         var clearLogs = rootVisualElement.Q<Button>("clearLogs");
 
@@ -380,11 +428,11 @@ public class BuilderWindow : EditorWindow
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
         autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
-        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
-            buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "BUILD & UPLOAD NOW" : "BUILD NOW";
+            buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
         });
 
         codeText = rootVisualElement.Q<Label>("LoginCode");
@@ -685,7 +733,7 @@ public class BuilderWindow : EditorWindow
         mainTitle.style.display = DisplayStyle.None;
         if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count > 0)
         {
-            mainTitle.text = "BUILD MODE: <color=\"white\">Prefab Asset Bundle (Kit)";
+            mainTitle.text = "<color=\"white\">Build Mode:</color> Prefab Asset Bundle (Kit)";
             mainTitle.style.display = DisplayStyle.Flex;
             removeSelected.style.display = DisplayStyle.Flex;
             kitListView.style.display = DisplayStyle.Flex;
@@ -695,10 +743,10 @@ public class BuilderWindow : EditorWindow
         }
         else if (mode == BanterBuilderBundleMode.Scene)
         {
-            mainTitle.text = "BUILD MODE: <color=\"white\">Scene Asset Bundle";
+            mainTitle.text = "<color=\"white\">Build Mode:</color> Scene Asset Bundle";
             mainTitle.style.display = DisplayStyle.Flex;
             scenePathLabel.style.display = DisplayStyle.Flex;
-            scenePathLabel.text = "SCENE PATH: <color=\"white\">" + scenePath;
+            scenePathLabel.text = "<color=\"white\">Scene Path:</color> " + scenePath;
             // button to open the webroot folder - highlight in unity.
         }
         else
