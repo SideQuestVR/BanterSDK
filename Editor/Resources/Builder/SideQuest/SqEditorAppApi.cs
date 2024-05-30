@@ -531,7 +531,6 @@ namespace Banter.SDKEditor {
 
         private IEnumerator PostFormEncodedStringNoAuth<T>(string urlPath, string data, Action<T> OnCompleted, Action<Exception> OnError)
         {
-            UnityEngine.Debug.Log(new Uri(Config.RootApiUri, urlPath));
             using (UnityWebRequest req = new UnityWebRequest(new Uri(Config.RootApiUri, urlPath)))
             {
                 req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(data))
