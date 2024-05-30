@@ -60,9 +60,9 @@ public class BuilderWindow : EditorWindow
     Label codeText;
     TextField spaceSlug;
     Label statusText;
-    Button signOut;
+    Label signOut;
     Button uploadWebOnly;
-    Button uploadEverything;
+    Label uploadEverything;
 
     Toggle autoUpload;
 
@@ -118,6 +118,7 @@ public class BuilderWindow : EditorWindow
         {
             autoUpload.style.display = DisplayStyle.None;
         }
+        SetBuildButtonText();
     }
     private void SetLoginState()
     {
@@ -128,7 +129,7 @@ public class BuilderWindow : EditorWindow
         {
             codeText.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
-            buildButton.text = "Build it Now!";
+            SetBuildButtonText();
         }
         ShowUploadToggle();
     }
@@ -236,8 +237,7 @@ public class BuilderWindow : EditorWindow
         codeText.style.display = DisplayStyle.None;
         statusText.text = $"Logged in as: {sq.User.Name}";
         autoUpload.style.display = DisplayStyle.Flex;
-        
-        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+        SetBuildButtonText();
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -393,6 +393,10 @@ public class BuilderWindow : EditorWindow
             buildButton.SetEnabled(true);
         }
     }
+
+    void SetBuildButtonText() {
+        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+    }
     Label buildButton;
     private void SetupUI()
     {
@@ -428,29 +432,29 @@ public class BuilderWindow : EditorWindow
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
         autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
-        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+        SetBuildButtonText();
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
-            buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+            SetBuildButtonText();
         });
-
+        var spaceSlugPlaceholder = rootVisualElement.Q<Label>("SpaceSlugPlaceholder");
         codeText = rootVisualElement.Q<Label>("LoginCode");
         spaceSlug = rootVisualElement.Q<TextField>("SpaceSlug");
         statusText = rootVisualElement.Q<Label>("SignedInStatus");
-        signOut = rootVisualElement.Q<Button>("SignOut");
+        signOut = rootVisualElement.Q<Label>("SignOut");
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
-        uploadEverything = rootVisualElement.Q<Button>("UploadEverything");
+        uploadEverything = rootVisualElement.Q<Label>("UploadEverything");
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
-        signOut.clicked += LogOut;
-
-        
-        spaceSlug.value = EditorPrefs.GetString("BanterBuilder_spaceSlug", "");
+        signOut.RegisterCallback<MouseUpEvent>((e) => LogOut());
 
         spaceSlug.RegisterValueChangedCallback((e) => {
+            ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, e.newValue);
             EditorPrefs.SetString("BanterBuilder_spaceSlug", e.newValue);
         });
 
+        spaceSlug.value = EditorPrefs.GetString("BanterBuilder_spaceSlug", "");
+        ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, spaceSlug.value);
         uploadWebOnly.clicked += () => {
             uploadWebOnly.SetEnabled(false);
             uploadEverything.SetEnabled(false);
@@ -461,7 +465,7 @@ public class BuilderWindow : EditorWindow
             }),this);
         };
 
-        uploadEverything.clicked += () => {
+        uploadEverything.RegisterCallback<MouseUpEvent>((e) => {
             uploadWebOnly.SetEnabled(false);
             uploadEverything.SetEnabled(false);
             EditorCoroutineUtility.StartCoroutine(UploadEverything(() => {
@@ -469,7 +473,7 @@ public class BuilderWindow : EditorWindow
                 uploadWebOnly.SetEnabled(true);
                 uploadEverything.SetEnabled(true);
             }), this);
-        };
+        });
 
 
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
@@ -569,6 +573,14 @@ public class BuilderWindow : EditorWindow
 #endif
         rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
 
+    }
+
+    private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue) {
+        if(!string.IsNullOrEmpty(newValue)) {
+            spaceSlugPlaceholder.style.display = DisplayStyle.None;
+        }else{
+            spaceSlugPlaceholder.style.display = DisplayStyle.Flex;
+        }
     }
 
     private IEnumerator UploadWebOnly(Action callback)
