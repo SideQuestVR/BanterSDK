@@ -118,6 +118,7 @@ public class BuilderWindow : EditorWindow
         {
             autoUpload.style.display = DisplayStyle.None;
         }
+        SetBuildButtonText();
     }
     private void SetLoginState()
     {
@@ -128,7 +129,7 @@ public class BuilderWindow : EditorWindow
         {
             codeText.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
-            buildButton.text = "Build it Now!";
+            SetBuildButtonText();
         }
         ShowUploadToggle();
     }
@@ -236,8 +237,7 @@ public class BuilderWindow : EditorWindow
         codeText.style.display = DisplayStyle.None;
         statusText.text = $"Logged in as: {sq.User.Name}";
         autoUpload.style.display = DisplayStyle.Flex;
-        
-        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+        SetBuildButtonText();
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -393,6 +393,10 @@ public class BuilderWindow : EditorWindow
             buildButton.SetEnabled(true);
         }
     }
+
+    void SetBuildButtonText() {
+        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+    }
     Label buildButton;
     private void SetupUI()
     {
@@ -428,11 +432,11 @@ public class BuilderWindow : EditorWindow
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
         autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
-        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+        SetBuildButtonText();
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
-            buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+            SetBuildButtonText();
         });
         var spaceSlugPlaceholder = rootVisualElement.Q<Label>("SpaceSlugPlaceholder");
         codeText = rootVisualElement.Q<Label>("LoginCode");
