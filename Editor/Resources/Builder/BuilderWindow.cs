@@ -90,6 +90,18 @@ public class BuilderWindow : EditorWindow
         codeCheckCount = 0;
     }
 
+    void ShowWebRoot() {
+        Debug.Log("SelectPath");
+ 
+        string path =  Path.Join(assetBundleRoot, assetBundleDirectory);
+ 
+        UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath(path, typeof(UnityEngine.Object));
+ 
+        Selection.activeObject = obj;
+ 
+        EditorGUIUtility.PingObject(obj);
+    }
+
     public void OnEnable()
     {
         codeCheckCount = 0;
@@ -405,6 +417,10 @@ public class BuilderWindow : EditorWindow
         buildButton = rootVisualElement.Q<Label>("buildButton");
 
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
+
+        var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
+        
+        openWebRoot.clicked += () => ShowWebRoot();
 
         var clearLogs = rootVisualElement.Q<Button>("clearLogs");
 
