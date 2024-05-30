@@ -7,9 +7,9 @@
 }
  
 .unity-text-field__input, .unity-float-field__input, .unity-integer-field__input, .unity-long-field__input {
-    background-color: #fff;
+    background-color: transparent;
     padding: 3px;
-    color: #000;
+    color: #fff;
     border-width: 0;
     border-radius: 8px;
 }

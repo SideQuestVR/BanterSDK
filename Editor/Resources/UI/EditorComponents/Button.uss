@@ -12,6 +12,9 @@
     -unity-font-style: bold;
 }
 
+.unity-button-primary {
+    border-color: #E93392;
+}
 .unity-button:hover {
     background-color: rgba(255,255,255,0.1);
 }
