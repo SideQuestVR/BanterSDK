@@ -94,11 +94,13 @@ namespace Banter.SDK
         [Method]
         public void _ToggleInteraction(bool enabled)
         {
+            // Debug.Log("ToggleInteraction: " + enabled);
             browser.SendMessage("ToggleInteraction", enabled);
         }
         [Method]
         public void _ToggleKeyboard(bool enabled)
         {
+            // Debug.Log("ToggleKeyboard: " + enabled);
             browser.SendMessage("ToggleKeyboard", enabled);
         }
         [Method]
