@@ -84,23 +84,23 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBrowser : BanterComponentBase
     {
+        public float width;
+        public float height;
         [See(initial = "")] public string url;
         [See(initial = "4")] public int mipMaps;
         [See(initial = "1200")] public float pixelsPerUnit;
-        [See(initial = "1024")] public float width;
-        [See(initial = "576")] public float height;
+        [See(initial = "1024")] public float pageWidth;
+        [See(initial = "576")] public float pageHeight;
         [See(initial = "")] public string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         [Method]
         public void _ToggleInteraction(bool enabled)
         {
-            // Debug.Log("ToggleInteraction: " + enabled);
             browser.SendMessage("ToggleInteraction", enabled);
         }
         [Method]
         public void _ToggleKeyboard(bool enabled)
         {
-            // Debug.Log("ToggleKeyboard: " + enabled);
             browser.SendMessage("ToggleKeyboard", enabled);
         }
         [Method]
@@ -164,7 +164,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.width, PropertyName.height, PropertyName.actions, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
             UpdateCallback(changedProperties);
         }
 
@@ -267,20 +267,20 @@ namespace Banter.SDK
                 }
                 if (values[i] is BanterFloat)
                 {
-                    var valwidth = (BanterFloat)values[i];
-                    if (valwidth.n == PropertyName.width)
+                    var valpageWidth = (BanterFloat)values[i];
+                    if (valpageWidth.n == PropertyName.pageWidth)
                     {
-                        width = valwidth.x;
-                        changedProperties.Add(PropertyName.width);
+                        pageWidth = valpageWidth.x;
+                        changedProperties.Add(PropertyName.pageWidth);
                     }
                 }
                 if (values[i] is BanterFloat)
                 {
-                    var valheight = (BanterFloat)values[i];
-                    if (valheight.n == PropertyName.height)
+                    var valpageHeight = (BanterFloat)values[i];
+                    if (valpageHeight.n == PropertyName.pageHeight)
                     {
-                        height = valheight.x;
-                        changedProperties.Add(PropertyName.height);
+                        pageHeight = valpageHeight.x;
+                        changedProperties.Add(PropertyName.pageHeight);
                     }
                 }
                 if (values[i] is BanterString)
@@ -339,9 +339,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.width,
+                    name = PropertyName.pageWidth,
                     type = PropertyType.Float,
-                    value = width,
+                    value = pageWidth,
                     componentType = ComponentType.BanterBrowser,
                     oid = oid,
                     cid = cid
@@ -351,9 +351,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.height,
+                    name = PropertyName.pageHeight,
                     type = PropertyType.Float,
-                    value = height,
+                    value = pageHeight,
                     componentType = ComponentType.BanterBrowser,
                     oid = oid,
                     cid = cid
