@@ -1,23 +1,24 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[System.Serializable]
-public class Geometry
+namespace Banter.SDK
 {
-    public List<int> indices;
-    public List<Vector3> vertices;
-    public List<Vector3> normals;
-    public List<Vector2> uvs;
-
-
-    public Mesh generate()
+    [System.Serializable]
+    public class Geometry
     {
-        Mesh mesh = new Mesh();
-        mesh.vertices = vertices.ToArray();
-        mesh.normals = normals.ToArray();
-        mesh.triangles = indices.ToArray();
-        mesh.uv = uvs.ToArray();
-        return mesh;
+        public List<int> indices;
+        public List<Vector3> vertices;
+        public List<Vector3> normals;
+        public List<Vector2> uvs;
+
+        public Mesh Generate()
+        {
+            Mesh mesh = new Mesh();
+            mesh.vertices = vertices.ToArray();
+            mesh.normals = normals.ToArray();
+            mesh.triangles = indices.ToArray();
+            mesh.uv = uvs.ToArray();
+            return mesh;
+        }
     }
 }

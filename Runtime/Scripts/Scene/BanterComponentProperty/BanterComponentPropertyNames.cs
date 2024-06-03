@@ -29,6 +29,8 @@ namespace Banter.SDK
         url,
         mipMaps,
         pixelsPerUnit,
+        pageWidth,
+        pageHeight,
         actions,
         radius,
         height,

@@ -81,6 +81,10 @@ namespace Banter.SDK
                     scene.SetProps(APICommands.SET_USER_PROPS, restOfMessage);
                 }
             }
+            else if (msg.StartsWith(APICommands.SCENE_START))
+            {
+                scene.state = SceneState.SCENE_START;
+            }
             else if (msg.StartsWith(APICommands.DOM_READY))
             {
                 scene.state = SceneState.DOM_READY;
@@ -98,31 +102,11 @@ namespace Banter.SDK
                     return scene.loaded;
                 });
                 OnUnitySceneLoaded();
-                // #if BANTER_EDITOR
-                // // TODO This is somehow not working inside external projects. It is not needed for those projects anyway, so im just ignoring the problem for now.
-                //                 scene.SetLoaded();
-                // #endif
-                //                 bool forceUnityLoaded = false;
-                // #if !BANTER_EDITOR
-                //                 forceUnityLoaded = true;
-                // #endif
-                // if(setUnityLoadedOnReload || forceUnityLoaded) {
-                //     setUnityLoadedOnReload = false;
-                //     foreach(var user in scene.users) {
-                //         OnUserJoined(user);
-                //     }
-                //     await new WaitUntil(() => {
-                //         scene.SetLoaded();
-                //         return scene.loaded;
-                //     });
-                //     OnUnitySceneLoaded();
-                //     scene.state = SceneState.UNITY_READY;
-                // }
-                // await Task.Delay(25000);
-                // scene.SetLoaded();
-                // if(scene.state != SceneState.UNITY_READY) {
-                //     scene.LogMissing();
-                // }
+                await Task.Delay(25000);
+                if (scene.state != SceneState.UNITY_READY)
+                {
+                    scene.LogMissing();
+                }
             }
             else
             {

@@ -10,31 +10,33 @@ using UnityEngine.Events;
 using UnityEngine.Networking;
 namespace Banter.SDK
 {
-    [Serializable]
-    public class BrowserObject
-    {
-        public bool enabled;
-        public string url;
-        public string instanceId;
-        public bool remote;
-        public float pixelsPerUnit;
-        public int mipMaps;
-        public BrowserAction[] afterLoadActions;
-    }
+    // [Serializable]
+    // public class BrowserObject
+    // {
+    //     public bool enabled;
+    //     public string url;
+    //     public string instanceId;
+    //     public bool remote;
+    //     public float pixelsPerUnit;
+    //     public float width;
+    //     public float height;
+    //     public int mipMaps;
+    //     public BrowserAction[] afterLoadActions;
+    // }
 
-    [Serializable]
-    public static class BrowserActionType
-    {
-        public const string click2d = "click2d";
-        public const string click = "click";
-        public const string keypress = "keypress";
-        public const string scroll = "scroll";
-        public const string delayseconds = "delayseconds";
-        public const string runscript = "runscript";
-        public const string goback = "goback";
-        public const string goforward = "goforward";
-        public const string postmessage = "postmessage";
-    }
+    // [Serializable]
+    // public static class BrowserActionType
+    // {
+    //     public const string click2d = "click2d";
+    //     public const string click = "click";
+    //     public const string keypress = "keypress";
+    //     public const string scroll = "scroll";
+    //     public const string delayseconds = "delayseconds";
+    //     public const string runscript = "runscript";
+    //     public const string goback = "goback";
+    //     public const string goforward = "goforward";
+    //     public const string postmessage = "postmessage";
+    // }
 
     [Serializable]
     public class BrowserAction
@@ -85,13 +87,19 @@ namespace Banter.SDK
         [See(initial = "")] public string url;
         [See(initial = "4")] public int mipMaps;
         [See(initial = "1200")] public float pixelsPerUnit;
+        [See(initial = "1024")] public float pageWidth;
+        [See(initial = "576")] public float pageHeight;
         [See(initial = "")] public string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         [Method]
         public void _ToggleInteraction(bool enabled)
         {
-            Debug.Log("_ToggleInteraction: " + enabled);
             browser.SendMessage("ToggleInteraction", enabled);
+        }
+        [Method]
+        public void _ToggleKeyboard(bool enabled)
+        {
+            browser.SendMessage("ToggleKeyboard", enabled);
         }
         [Method]
         public void _RunActions(string actions)
@@ -130,6 +138,11 @@ namespace Banter.SDK
             {
                 browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
             }
+            if ((changedProperties?.Contains(PropertyName.pageWidth) ?? false) || (changedProperties?.Contains(PropertyName.pageHeight) ?? false))
+            {
+                RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
+                rt.sizeDelta = new Vector2(pageWidth, pageHeight);
+            }
             SetLoadedIfNot();
         }
 
@@ -149,7 +162,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.actions, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
             UpdateCallback(changedProperties);
         }
 
@@ -183,6 +196,10 @@ namespace Banter.SDK
         {
             _ToggleInteraction(enabled);
         }
+        void ToggleKeyboard(Boolean enabled)
+        {
+            _ToggleKeyboard(enabled);
+        }
         void RunActions(String actions)
         {
             _RunActions(actions);
@@ -194,6 +211,12 @@ namespace Banter.SDK
             {
                 var enabled = (Boolean)parameters[0];
                 ToggleInteraction(enabled);
+                return null;
+            }
+            else if (methodName == "ToggleKeyboard" && parameters.Count == 1 && parameters[0] is Boolean)
+            {
+                var enabled = (Boolean)parameters[0];
+                ToggleKeyboard(enabled);
                 return null;
             }
             else if (methodName == "RunActions" && parameters.Count == 1 && parameters[0] is String)
@@ -238,6 +261,24 @@ namespace Banter.SDK
                     {
                         pixelsPerUnit = valpixelsPerUnit.x;
                         changedProperties.Add(PropertyName.pixelsPerUnit);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valpageWidth = (BanterFloat)values[i];
+                    if (valpageWidth.n == PropertyName.pageWidth)
+                    {
+                        pageWidth = valpageWidth.x;
+                        changedProperties.Add(PropertyName.pageWidth);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valpageHeight = (BanterFloat)values[i];
+                    if (valpageHeight.n == PropertyName.pageHeight)
+                    {
+                        pageHeight = valpageHeight.x;
+                        changedProperties.Add(PropertyName.pageHeight);
                     }
                 }
                 if (values[i] is BanterString)
@@ -287,6 +328,30 @@ namespace Banter.SDK
                     name = PropertyName.pixelsPerUnit,
                     type = PropertyType.Float,
                     value = pixelsPerUnit,
+                    componentType = ComponentType.BanterBrowser,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.pageWidth,
+                    type = PropertyType.Float,
+                    value = pageWidth,
+                    componentType = ComponentType.BanterBrowser,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.pageHeight,
+                    type = PropertyType.Float,
+                    value = pageHeight,
                     componentType = ComponentType.BanterBrowser,
                     oid = oid,
                     cid = cid

@@ -92,7 +92,6 @@ namespace Banter.SDK
             var done = false;
             _ = ObjectOnMainThread(component =>
             {
-                Debug.Log(component.name + " GetProperties: " + component.cid);
                 component.SyncProperties(true, () => done = true);
             });
             await new WaitUntil(() => done);
