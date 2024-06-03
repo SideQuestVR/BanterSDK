@@ -1,13 +1,11 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class ParametricGeometry : Geometry
     {
-
         public static Func<float, float, Vector3> Klein = (v, u) =>
         {
             u *= Mathf.PI;

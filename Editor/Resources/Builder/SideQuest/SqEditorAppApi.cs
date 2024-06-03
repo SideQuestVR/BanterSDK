@@ -17,16 +17,19 @@ using Unity.EditorCoroutines.Editor;
 /// </summary>
 /// 
 
-namespace Banter.SDKEditor {
+namespace Banter.SDKEditor
+{
 
-    
-    public enum UploadAssetType {
+
+    public enum UploadAssetType
+    {
         AssetBundle = 1,
         Index = 2,
         Js = 3
     }
 
-    public  enum UploadAssetTypePlatform{
+    public enum UploadAssetTypePlatform
+    {
         Any = 0,
         Windows = 1,
         Mac = 2,
@@ -121,8 +124,8 @@ namespace Banter.SDKEditor {
         /// <param name="OnCompleted">Function invoked with the resulting short code login when the call is successful</param>
         /// <param name="OnError">Function invoked with the exception when the call fails</param>
         public IEnumerator GetLoginCode(Action<SqEditorLoginCode> OnCompleted, Action<Exception> OnError)
-    {
-        yield return GetLoginCode(new string[] { SqEditorAuthScopes.ReadBasicProfile, SqEditorAuthScopes.ReadAppAchievements, SqEditorAuthScopes.WriteAppAchievements,
+        {
+            yield return GetLoginCode(new string[] { SqEditorAuthScopes.ReadBasicProfile, SqEditorAuthScopes.ReadAppAchievements, SqEditorAuthScopes.WriteAppAchievements,
             SqEditorAuthScopes.User_Friends_Read,
             SqEditorAuthScopes.User_Friends_Write,
             SqEditorAuthScopes.User_RichPresence_Write,
@@ -133,7 +136,7 @@ namespace Banter.SDKEditor {
             SqEditorAuthScopes.User_Message_History,
             SqEditorAuthScopes.User_Avatar_Write
 }, OnCompleted, OnError);
-    }
+        }
 
         /// <summary>
         /// Gets login code information and begins the shortcode login process for requesting specific scopes
@@ -158,7 +161,7 @@ namespace Banter.SDKEditor {
                 OnError?.Invoke(e);
             }, false);
         }
-        
+
         /// <summary>
         /// Checks whether a shortcode login (started with GetLoginCode) has been completed by the user
         /// </summary>
@@ -185,10 +188,12 @@ namespace Banter.SDKEditor {
             SqEditorTokenInfo tok = null;
             Exception ex = null;
             yield return JsonPost<SqEditorTokenInfo>("/v2/oauth/checkshortcode", new { code = Data.LoginCode.Code, device_id = Data.LoginCode.DeviceId },
-                (t) => {
+                (t) =>
+                {
                     tok = t;
                 },
-                (e) => {
+                (e) =>
+                {
                     ex = e;
                 }, false);
             if (ex == null)
@@ -213,10 +218,11 @@ namespace Banter.SDKEditor {
                 if (ex != null)
                 {
                     OnError?.Invoke(ex);
-                } else
+                }
+                else
                 {
                     Data.LoginCode = null;
-                
+
                     if (Data?.Token?.GrantedScopes?.Contains(SqEditorAuthScopes.ReadAppAchievements) ?? false)
                     {
                         yield return RefreshUserAchievements(c => { }, e => ex = e);
@@ -251,7 +257,7 @@ namespace Banter.SDKEditor {
                 OnError(ex);
                 yield break;
             }
-            
+
             if (user?.UserId != Data.Token?.UserId)
             {
                 OnError?.Invoke(new SqEditorApiException("User refreshed data does not match user token ID!"));
@@ -259,7 +265,7 @@ namespace Banter.SDKEditor {
             }
             Data.User = user;
             SaveData();
-            if (Data?.Token?.GrantedScopes?.Contains(SqEditorAuthScopes.ReadAppAchievements)??false)
+            if (Data?.Token?.GrantedScopes?.Contains(SqEditorAuthScopes.ReadAppAchievements) ?? false)
             {
                 yield return RefreshUserAchievements(c => { }, e => ex = e);
                 if (ex != null)
@@ -268,7 +274,7 @@ namespace Banter.SDKEditor {
                     yield break;
                 }
             }
-            OnCompleted?.Invoke(user);        
+            OnCompleted?.Invoke(user);
         }
 
         /// <summary>
@@ -288,7 +294,8 @@ namespace Banter.SDKEditor {
             {
                 OnError?.Invoke(ex);
                 yield break;
-            } else
+            }
+            else
             {
                 Data.UserAchievements = achievements;
                 SaveData();
@@ -387,23 +394,25 @@ namespace Banter.SDKEditor {
             }
         }
 
-        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform) {
+        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        {
             SqEditorCreateUpload _uploadRequest = null;
             yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
-            
+
             if (_uploadRequest == null)
             {
                 OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => {}, OnError);
+            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => { }, OnError);
 
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
 
 
-        private IEnumerator UploadFileInternal(string url, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError) {
+        private IEnumerator UploadFileInternal(string url, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
+        {
             using (UnityWebRequest req = new UnityWebRequest(new Uri(url)))
             {
                 req.method = "PUT";
@@ -427,7 +436,8 @@ namespace Banter.SDKEditor {
                         yield break;
                     }
                 }
-                try{
+                try
+                {
                     OnCompleted?.Invoke(req.responseCode);
                     yield break;
                 }
@@ -447,7 +457,7 @@ namespace Banter.SDKEditor {
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorCreateUpload>($"/v2/communities/{CommunitiesId}/assets/type/{(int)assetType}" + ( assetType == UploadAssetType.AssetBundle ? $"/platform/{(int)assetPlatform}" : "") , new SqEditorCreateUploadDone(){FileId = fileId, Name = name}, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/v2/communities/{CommunitiesId}/assets/type/{(int)assetType}" + (assetType == UploadAssetType.AssetBundle ? $"/platform/{(int)assetPlatform}" : ""), new SqEditorCreateUploadDone() { FileId = fileId, Name = name }, (u) =>
             {
                 if (u == null)
                 {
@@ -466,7 +476,7 @@ namespace Banter.SDKEditor {
                 yield break;
             }
 
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest(){Size = numOfBytes, SpaceSlug = spaceSlug, Type = "banter", Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = "banter", Name = name }, (u) =>
             {
                 if (u == null)
                 {
@@ -514,7 +524,7 @@ namespace Banter.SDKEditor {
                 OnError?.Invoke(new SqEditorApiAuthException("User refresh token is missing, logging user out"));
                 yield break;
             }
-            yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token", $"grant_type=refresh_token&refresh_token={UnityWebRequest.EscapeURL(Data.Token?.RefreshToken)}&client_id={Data.Token?.ClientId}", 
+            yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token", $"grant_type=refresh_token&refresh_token={UnityWebRequest.EscapeURL(Data.Token?.RefreshToken)}&client_id={Data.Token?.ClientId}",
                 (a) =>
                 {
                     if (a == null || a.AccessToken == null)
@@ -711,10 +721,10 @@ namespace Banter.SDKEditor {
             }
         }
 
-        
+
 
         private DateTime _lastLoginPoll = DateTime.MinValue;
-        
+
 
         private void LoadData()
         {

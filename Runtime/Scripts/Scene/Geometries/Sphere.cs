@@ -1,12 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Sphere : Geometry
     {
-
-
         public Sphere(float radius = 1, int widthSegments = 16, int heightSegments = 16, float phiStart = 0, float phiLength = Mathf.PI * 2f, float thetaStart = 0, float thetaLength = Mathf.PI)
         {
 

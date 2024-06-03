@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class TorusKnot : Geometry
     {
-
         public TorusKnot(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, int p = 2, int q = 3)
         {
 

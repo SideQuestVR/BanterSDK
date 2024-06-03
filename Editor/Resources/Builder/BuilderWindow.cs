@@ -56,7 +56,7 @@ public class BuilderWindow : EditorWindow
     ProgressBar buildProgressBar;
     Button removeSelected;
     Label statusBar;
-    
+
     Label codeText;
     TextField spaceSlug;
     Label statusText;
@@ -85,20 +85,22 @@ public class BuilderWindow : EditorWindow
 
     private int codeCheckCount;
 
-    public void OnDisable() {
+    public void OnDisable()
+    {
         StopPolling();
         codeCheckCount = 0;
     }
 
-    void ShowWebRoot() {
+    void ShowWebRoot()
+    {
         Debug.Log("SelectPath");
- 
-        string path =  Path.Join(assetBundleRoot, assetBundleDirectory);
- 
+
+        string path = Path.Join(assetBundleRoot, assetBundleDirectory);
+
         UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath(path, typeof(UnityEngine.Object));
- 
+
         Selection.activeObject = obj;
- 
+
         EditorGUIUtility.PingObject(obj);
     }
 
@@ -117,16 +119,20 @@ public class BuilderWindow : EditorWindow
         {
             AddStatus("User is logged in at startup, refreshing the user's profile");
             RefreshUser();
-        }else{
+        }
+        else
+        {
             GetCode();
         }
 
     }
-    private void ShowUploadToggle() {
+    private void ShowUploadToggle()
+    {
         if (sq.User != null && mode == BanterBuilderBundleMode.Scene)
         {
             autoUpload.style.display = DisplayStyle.Flex;
-        } else
+        }
+        else
         {
             autoUpload.style.display = DisplayStyle.None;
         }
@@ -137,7 +143,8 @@ public class BuilderWindow : EditorWindow
         if (sq.User != null)
         {
             LoginCompleted();
-        } else
+        }
+        else
         {
             codeText.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
@@ -158,7 +165,8 @@ public class BuilderWindow : EditorWindow
             codeText.text = $"Go to {code.VerificationUrl}\nput in {code.Code}";
             //begin polling for completion of the short code login using the interval returned from the API
             StartPolling(code.PollIntervalSeconds);
-        }, (error) => {
+        }, (error) =>
+        {
             //if something goes wrong, details of what should be in the exception
             Debug.LogError("Failed to get code from API!");
             Debug.LogException(error);
@@ -166,7 +174,7 @@ public class BuilderWindow : EditorWindow
         }), this);
     }
     EditorCoroutine waitCoroutine;
-    
+
     private void StopPolling()
     {
         AddStatus("Stopping polling for completion of short code login");
@@ -221,15 +229,19 @@ public class BuilderWindow : EditorWindow
                 AddStatus("Login with short code has completed");
                 //if the user logged in with the short code, stop the polling coroutine and continue on
                 LoginCompleted();
-                StopPolling();                
+                StopPolling();
                 yield break;
-            } else
+            }
+            else
             {
-                if(codeCheckCount++ < 10) {
+                if (codeCheckCount++ < 10)
+                {
                     AddStatus($"Login with short code is not yet complete.  Will check again in {delaySec} seconds");
-                }else{
+                }
+                else
+                {
                     AddStatus($"Nothing after 10 attempts, stopping polling.");
-                    StopPolling();                
+                    StopPolling();
                     yield break;
                 }
             }
@@ -280,11 +292,11 @@ public class BuilderWindow : EditorWindow
         // Remove unused asset bundle names
         AssetDatabase.RemoveUnusedAssetBundleNames();
         AssetDatabase.Refresh();
-        
+
         Debug.Log("Cleared all asset bundles.");
     }
 
-     public void RefreshUser()
+    public void RefreshUser()
     {
         if (sq.User != null)
         {
@@ -312,7 +324,8 @@ public class BuilderWindow : EditorWindow
 
     ActiveTab activeTabName = ActiveTab.Build;
     float activeTabPosition = 0;
-    private void SetupTabs() {
+    private void SetupTabs()
+    {
 
         var activeTab = rootVisualElement.Q<VisualElement>("ActiveTab");
 
@@ -327,45 +340,52 @@ public class BuilderWindow : EditorWindow
         var uploadSection = rootVisualElement.Q<VisualElement>("UploadSection");
         var toolsSection = rootVisualElement.Q<VisualElement>("ToolsSection");
         var logsSection = rootVisualElement.Q<VisualElement>("LogsSection");
-        
-        buildTab.RegisterCallback<MouseUpEvent>((e) => {
+
+        buildTab.RegisterCallback<MouseUpEvent>((e) =>
+        {
             activeTabName = ActiveTab.Build;
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
         });
 
-        uploadTab.RegisterCallback<MouseUpEvent>((e) => {
+        uploadTab.RegisterCallback<MouseUpEvent>((e) =>
+        {
             activeTabName = ActiveTab.Upload;
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
         });
 
-        toolsTab.RegisterCallback<MouseUpEvent>((e) => {
+        toolsTab.RegisterCallback<MouseUpEvent>((e) =>
+        {
             activeTabName = ActiveTab.Tools;
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
         });
 
-        logsTab.RegisterCallback<MouseUpEvent>((e) => {
+        logsTab.RegisterCallback<MouseUpEvent>((e) =>
+        {
             activeTabName = ActiveTab.Logs;
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
         });
 
-        rootVisualElement.RegisterCallback<GeometryChangedEvent>((e) => {
+        rootVisualElement.RegisterCallback<GeometryChangedEvent>((e) =>
+        {
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
         });
     }
 
-    void MoveTabSections(VisualElement tabSections) {
-        
-        switch(activeTabName) {
+    void MoveTabSections(VisualElement tabSections)
+    {
+
+        switch (activeTabName)
+        {
             case ActiveTab.Build:
                 tabSections.style.left = 0;
                 break;
@@ -381,8 +401,10 @@ public class BuilderWindow : EditorWindow
         }
     }
 
-    void SetActivePosition() {
-        switch(activeTabName) {
+    void SetActivePosition()
+    {
+        switch (activeTabName)
+        {
             case ActiveTab.Build:
                 activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - (rootVisualElement.resolvedStyle.width * 0.3375f) - 45;
                 break;
@@ -398,15 +420,20 @@ public class BuilderWindow : EditorWindow
         }
     }
 
-    void ShowHideBuildButton(){
-        if(!buildTargetFlags[0] && !buildTargetFlags[1]) {
+    void ShowHideBuildButton()
+    {
+        if (!buildTargetFlags[0] && !buildTargetFlags[1])
+        {
             buildButton.SetEnabled(false);
-        }else{
+        }
+        else
+        {
             buildButton.SetEnabled(true);
         }
     }
 
-    void SetBuildButtonText() {
+    void SetBuildButtonText()
+    {
         buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
     }
     Label buildButton;
@@ -419,7 +446,7 @@ public class BuilderWindow : EditorWindow
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
 
         var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
-        
+
         openWebRoot.clicked += () => ShowWebRoot();
 
         var clearLogs = rootVisualElement.Q<Button>("clearLogs");
@@ -443,7 +470,7 @@ public class BuilderWindow : EditorWindow
             buildTargetFlags[1] = buildForWindows.value;
             ShowHideBuildButton();
         });
-        
+
         ShowHideBuildButton();
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
@@ -464,27 +491,32 @@ public class BuilderWindow : EditorWindow
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
         signOut.RegisterCallback<MouseUpEvent>((e) => LogOut());
 
-        spaceSlug.RegisterValueChangedCallback((e) => {
+        spaceSlug.RegisterValueChangedCallback((e) =>
+        {
             ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, e.newValue);
             EditorPrefs.SetString("BanterBuilder_spaceSlug", e.newValue);
         });
 
         spaceSlug.value = EditorPrefs.GetString("BanterBuilder_spaceSlug", "");
         ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, spaceSlug.value);
-        uploadWebOnly.clicked += () => {
+        uploadWebOnly.clicked += () =>
+        {
             uploadWebOnly.SetEnabled(false);
             uploadEverything.SetEnabled(false);
-            EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() => {
+            EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() =>
+            {
                 AddStatus("Upload complete.");
                 uploadWebOnly.SetEnabled(true);
                 uploadEverything.SetEnabled(true);
-            }),this);
+            }), this);
         };
 
-        uploadEverything.RegisterCallback<MouseUpEvent>((e) => {
+        uploadEverything.RegisterCallback<MouseUpEvent>((e) =>
+        {
             uploadWebOnly.SetEnabled(false);
             uploadEverything.SetEnabled(false);
-            EditorCoroutineUtility.StartCoroutine(UploadEverything(() => {
+            EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+            {
                 AddStatus("Upload complete.");
                 uploadWebOnly.SetEnabled(true);
                 uploadEverything.SetEnabled(true);
@@ -556,10 +588,14 @@ public class BuilderWindow : EditorWindow
         DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
         LoadKitList();
-        if (!string.IsNullOrEmpty(scenePath)){
+        if (!string.IsNullOrEmpty(scenePath))
+        {
             mode = BanterBuilderBundleMode.Scene;
-        }else{
-            if(kitObjectList.Count > 0){
+        }
+        else
+        {
+            if (kitObjectList.Count > 0)
+            {
                 mode = BanterBuilderBundleMode.Kit;
             }
         }
@@ -591,10 +627,14 @@ public class BuilderWindow : EditorWindow
 
     }
 
-    private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue) {
-        if(!string.IsNullOrEmpty(newValue)) {
+    private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue)
+    {
+        if (!string.IsNullOrEmpty(newValue))
+        {
             spaceSlugPlaceholder.style.display = DisplayStyle.None;
-        }else{
+        }
+        else
+        {
             spaceSlugPlaceholder.style.display = DisplayStyle.Flex;
         }
     }
@@ -619,29 +659,37 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadFile(string name, UploadAssetType type, UploadAssetTypePlatform platform)
     {
         var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
-        if(File.Exists(file)){
+        if (File.Exists(file))
+        {
             AddStatus("Upload started: " + file + "...");
-        }else{
+        }
+        else
+        {
             AddStatus("File not found, skipping: " + file);
             yield break;
         }
         var data = File.ReadAllBytes(file);
-        yield return sq.UploadFile(name, data, spaceSlug.text, (text) => {
+        yield return sq.UploadFile(name, data, spaceSlug.text, (text) =>
+        {
             AddStatus("Uploaded " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
-        }, e => {
+        }, e =>
+        {
             AddStatus("FAILED UPLOADING " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
             Debug.LogException(e);
         }, type, platform);
     }
     CancellationTokenSource resetDebounce;
-    private async Task ResetStatus(CancellationTokenSource cts) {
+    private async Task ResetStatus(CancellationTokenSource cts)
+    {
         await Task.Delay(3000);
-        if(cts.Token.IsCancellationRequested){
+        if (cts.Token.IsCancellationRequested)
+        {
             return;
         }
         statusBar.text = "STATUS: Idle";
     }
-    void ClearLogs() {
+    void ClearLogs()
+    {
         statusMessages.Clear();
         buildProgress.Rebuild();
     }
@@ -656,7 +704,8 @@ public class BuilderWindow : EditorWindow
         }
 
         buildProgress.Rebuild();
-        if(resetDebounce != null && !resetDebounce.Token.IsCancellationRequested){
+        if (resetDebounce != null && !resetDebounce.Token.IsCancellationRequested)
+        {
             resetDebounce.Cancel();
         }
         resetDebounce = new CancellationTokenSource();
@@ -668,15 +717,18 @@ public class BuilderWindow : EditorWindow
         element.parent.Remove(element);
     }
 
-    private void SaveKitList() {
+    private void SaveKitList()
+    {
         EditorPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
     }
 
-    private void LoadKitList() {
+    private void LoadKitList()
+    {
         var paths = EditorPrefs.GetString("BanterBuilder_SelectedKitObjects", "").Split(',');
         foreach (var path in paths)
         {
-            if(string.IsNullOrEmpty(path)){
+            if (string.IsNullOrEmpty(path))
+            {
                 continue;
             }
             var obj = GetKitObject(path);
@@ -890,14 +942,17 @@ public class BuilderWindow : EditorWindow
             File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
         }
         AddStatus("Build finished.");
-        if(autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene) {
-            if(string.IsNullOrEmpty(spaceSlug.text)){
+        if (autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene)
+        {
+            if (string.IsNullOrEmpty(spaceSlug.text))
+            {
                 AddStatus("No space subdomain specified, skipping upload.");
                 return;
             }
             uploadWebOnly.SetEnabled(false);
             uploadEverything.SetEnabled(false);
-            EditorCoroutineUtility.StartCoroutine(UploadEverything(() => {
+            EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+            {
                 AddStatus("Upload complete.");
                 uploadWebOnly.SetEnabled(true);
                 uploadEverything.SetEnabled(true);

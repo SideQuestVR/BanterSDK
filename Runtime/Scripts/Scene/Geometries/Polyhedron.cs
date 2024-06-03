@@ -1,9 +1,9 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Polyhedron : Geometry
     {
 

@@ -1,11 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Plane : Geometry
     {
-
         public Plane(float width = 1, float height = 1, int widthSegments = 1, int heightSegments = 1)
         {
 
@@ -75,5 +74,5 @@ namespace Banter.SDK{
             }
         }
     }
-    
+
 }

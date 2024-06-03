@@ -1,11 +1,8 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using Banter.SDK;
+﻿using Banter.SDK;
 using UnityEngine;
 [ExecuteInEditMode]
 public class TestGeometry : MonoBehaviour
 {
-
     void Start()
     {
         var circle = new TorusKnot();

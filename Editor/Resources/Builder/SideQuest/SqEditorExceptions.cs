@@ -9,7 +9,8 @@ using System.Threading.Tasks;
 /// </summary>
 
 
-namespace Banter.SDKEditor {
+namespace Banter.SDKEditor
+{
     public class SqEditorApiException : Exception
     {
         public SqEditorApiException(int httpCode) : base("Api Exception")

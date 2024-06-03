@@ -2,10 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Box : Geometry
     {
-
         int numberOfVertices = 0;
 
         public Box(float width = 1, float height = 1, float depth = 1, int widthSegments = 1, int heightSegments = 1, int depthSegments = 1)

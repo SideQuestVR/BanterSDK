@@ -103,7 +103,8 @@ namespace Banter.SDK
                 });
                 OnUnitySceneLoaded();
                 await Task.Delay(25000);
-                if(scene.state != SceneState.UNITY_READY) {
+                if (scene.state != SceneState.UNITY_READY)
+                {
                     scene.LogMissing();
                 }
             }
