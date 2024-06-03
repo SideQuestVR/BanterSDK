@@ -84,8 +84,6 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBrowser : BanterComponentBase
     {
-        public float width;
-        public float height;
         [See(initial = "")] public string url;
         [See(initial = "4")] public int mipMaps;
         [See(initial = "1200")] public float pixelsPerUnit;
@@ -143,7 +141,7 @@ namespace Banter.SDK
             if ((changedProperties?.Contains(PropertyName.width) ?? false) || (changedProperties?.Contains(PropertyName.height) ?? false))
             {
                 RectTransform rt = browser.GetComponent (typeof (RectTransform)) as RectTransform;
-                rt.sizeDelta = new Vector2 (width, height);
+                rt.sizeDelta = new Vector2 (pageWidth, pageHeight);
             }
             SetLoadedIfNot();
         }
