@@ -1,15 +1,15 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Dodecahedron
     {
         Vector3[] vertices;
         int[] indices;
         float radius;
         float detail;
+
         public Dodecahedron(float radius = 1, float detail = 0)
         {
             var t = (1 + Mathf.Sqrt(5)) / 2;
@@ -76,7 +76,7 @@ namespace Banter.SDK{
 
         public Mesh generate()
         {
-            return new Polyhedron(new List<Vector3>(vertices), new List<int>(indices), radius, detail).generate();
+            return new Polyhedron(new List<Vector3>(vertices), new List<int>(indices), radius, detail).Generate();
         }
 
     }

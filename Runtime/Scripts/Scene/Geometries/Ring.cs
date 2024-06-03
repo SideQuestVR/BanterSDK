@@ -1,14 +1,12 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Ring : Geometry
     {
-
         public Ring(float innerRadius = 0.3f, float outerRadius = 1f, int thetaSegments = 24, int phiSegments = 8, float thetaStart = 0, float thetaLength = Mathf.PI * 2)
         {
-
             indices = new List<int>();//[indexLength];
             vertices = new List<Vector3>();//[verticesLength];
             normals = new List<Vector3>();//[verticesLength];

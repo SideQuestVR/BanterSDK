@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 /// Object containing any information that's persisted by the SqEditor api classes
 /// </summary>
 
-namespace Banter.SDKEditor {
+namespace Banter.SDKEditor
+{
     public class SqEditorPersistentData
     {
         /// <summary>
@@ -108,36 +109,36 @@ namespace Banter.SDKEditor {
     /// A list of scopes that can be requested for a user
     /// </summary>
     public static class SqEditorAuthScopes
-{
-    /// <summary>
-    /// Basic user profile information excluding email address
-    /// </summary>
-    public static readonly string ReadBasicProfile = "user.basic_profile.read";
+    {
+        /// <summary>
+        /// Basic user profile information excluding email address
+        /// </summary>
+        public static readonly string ReadBasicProfile = "user.basic_profile.read";
 
-    /// <summary>
-    /// Allows reading of a user's achievements for the app
-    /// </summary>
-    public static readonly string ReadAppAchievements = "user.app_achievements.read";
+        /// <summary>
+        /// Allows reading of a user's achievements for the app
+        /// </summary>
+        public static readonly string ReadAppAchievements = "user.app_achievements.read";
 
-    /// <summary>
-    /// Allows setting of a user's achievements for the app
-    /// </summary>
-    public static readonly string WriteAppAchievements = "user.app_achievements.write";
+        /// <summary>
+        /// Allows setting of a user's achievements for the app
+        /// </summary>
+        public static readonly string WriteAppAchievements = "user.app_achievements.write";
 
 
-    /// <summary>
-    /// TODO: banter only stuff.  Will need documentation before any 3rd party access
-    /// </summary>
-    public static readonly string User_Friends_Read = "user.friends.read";
-    public static readonly string User_Friends_Write = "user.friends.write";
-    public static readonly string User_RichPresence_Write = "user.rich_presence.write";
-    public static readonly string User_Communities_Read = "user.communities.read";
-    public static readonly string User_Communities_Write = "user.communities.write";
-    public static readonly string User_Messages_Receive = "user.messages.read";
-    public static readonly string User_Messages_Send = "user.messages.write";
-    public static readonly string User_Message_History = "user.messagehistory.read";
-    public static readonly string User_Avatar_Write = "user.avatars.write";
-}
+        /// <summary>
+        /// TODO: banter only stuff.  Will need documentation before any 3rd party access
+        /// </summary>
+        public static readonly string User_Friends_Read = "user.friends.read";
+        public static readonly string User_Friends_Write = "user.friends.write";
+        public static readonly string User_RichPresence_Write = "user.rich_presence.write";
+        public static readonly string User_Communities_Read = "user.communities.read";
+        public static readonly string User_Communities_Write = "user.communities.write";
+        public static readonly string User_Messages_Receive = "user.messages.read";
+        public static readonly string User_Messages_Send = "user.messages.write";
+        public static readonly string User_Message_History = "user.messagehistory.read";
+        public static readonly string User_Avatar_Write = "user.avatars.write";
+    }
 
     /// <summary>
     /// Holds information relating to a login short code that was generated

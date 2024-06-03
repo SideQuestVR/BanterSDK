@@ -140,8 +140,8 @@ namespace Banter.SDK
             }
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? false) || (changedProperties?.Contains(PropertyName.pageHeight) ?? false))
             {
-                RectTransform rt = browser.GetComponent (typeof (RectTransform)) as RectTransform;
-                rt.sizeDelta = new Vector2 (pageWidth, pageHeight);
+                RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
+                rt.sizeDelta = new Vector2(pageWidth, pageHeight);
             }
             SetLoadedIfNot();
         }

@@ -1,9 +1,8 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     [System.Serializable]
     public class Geometry
     {
@@ -12,8 +11,7 @@ namespace Banter.SDK{
         public List<Vector3> normals;
         public List<Vector2> uvs;
 
-
-        public Mesh generate()
+        public Mesh Generate()
         {
             Mesh mesh = new Mesh();
             mesh.vertices = vertices.ToArray();

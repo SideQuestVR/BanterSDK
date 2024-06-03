@@ -1,13 +1,16 @@
-public enum GeometryType
+namespace Banter.SDK
 {
-    BoxGeometry,
-    CircleGeometry,
-    ConeGeometry,
-    CylinderGeometry,
-    PlaneGeometry,
-    RingGeometry,
-    SphereGeometry,
-    TorusGeometry,
-    TorusKnotGeometry,
-    ParametricGeometry
+    public enum GeometryType
+    {
+        BoxGeometry,
+        CircleGeometry,
+        ConeGeometry,
+        CylinderGeometry,
+        PlaneGeometry,
+        RingGeometry,
+        SphereGeometry,
+        TorusGeometry,
+        TorusKnotGeometry,
+        ParametricGeometry
+    }
 }

@@ -1,13 +1,10 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
-
-namespace Banter.SDK{
+namespace Banter.SDK
+{
     public class Circle : Geometry
     {
-
-
         public Circle(float radius = 1, int segments = 24, float thetaStart = 0, float thetaLength = Mathf.PI * 2)
         {
 
