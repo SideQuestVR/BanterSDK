@@ -611,7 +611,6 @@ public class BuilderWindow : EditorWindow
             rootVisualElement.Q<Button>("compileElectron").clicked += () => OnCompileElectron.Invoke();// SDKCodeGen.CompileElectron();
             rootVisualElement.Q<Button>("compileInjection").clicked += () => OnCompileInjection.Invoke();// SDKCodeGen.CompileInjection();
             rootVisualElement.Q<Button>("kitchenSink").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAll();
-            Remove(rootVisualElement.Q<Button>("setupVisualScripting"));
             Remove(rootVisualElement.Q<Button>("setupLayers"));
 #else
         Remove(rootVisualElement.Q<Button>("allAndInjection"));
@@ -620,7 +619,6 @@ public class BuilderWindow : EditorWindow
         Remove(rootVisualElement.Q<Button>("compileElectron"));
         Remove(rootVisualElement.Q<Button>("compileInjection"));
         Remove(rootVisualElement.Q<Button>("kitchenSink"));
-        rootVisualElement.Q<Button>("setupVisualScripting").clicked += () => _ = InitialiseOnLoad.InstallVisualScripting();
         rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
 #endif
         rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
