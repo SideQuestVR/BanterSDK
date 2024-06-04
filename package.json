@@ -5,6 +5,7 @@
   "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
   "unity": "2021.3",
   "unityRelease": "8f1",
+  "hideInEditor": false,
   "documentationUrl": "https://bantervr.com/documentation",
   "changelogUrl": "https://bantervr.com/sdk-changelog",
   "licensesUrl": "https://bantervr.com/sdk-license",

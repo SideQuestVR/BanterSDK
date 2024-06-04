@@ -1,67 +1,83 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/UI/EditorComponents.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#EditorComponents" />
-    <ui:VisualElement style="background-image: resource(&apos;UI/Images/Main content&apos;); height: 100%; background-color: rgb(0, 0, 0); -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(255, 255, 255); flex-direction: column; position: relative; left: 0; top: 0; right: 0; bottom: 0;">
-        <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_No_Background&apos;); width: auto; height: 200px; -unity-background-scale-mode: scale-and-crop; min-height: 200px;" />
-        <ui:VisualElement name="Tabs" style="flex-direction: row; margin-bottom: 0; background-color: rgba(60, 60, 60, 0.13); padding-bottom: 10px; padding-top: 10px; margin-top: 10px; min-height: 45px;">
-            <ui:Label text="&lt;u&gt;BUILD&lt;/u&gt;" display-tooltip-when-elided="true" name="BuildTab" style="font-size: 18px; -unity-text-align: upper-center; margin-left: 7.5px; margin-right: 0; padding-left: 10px; padding-right: 10px;" />
-            <ui:Label text="UPLOAD" display-tooltip-when-elided="true" name="UploadTab" style="font-size: 18px; -unity-text-align: upper-center; margin-left: 0; margin-right: 0; padding-left: 10px; padding-right: 10px;" />
-            <ui:Label text="TOOLS" display-tooltip-when-elided="true" name="ToolsTab" style="font-size: 18px; -unity-text-align: upper-center; margin-left: 0; margin-right: 7.5px; padding-left: 10px; padding-right: 10px;" />
-            <ui:Label text="LOGS" display-tooltip-when-elided="true" name="LogsTab" style="font-size: 18px; -unity-text-align: upper-center; margin-left: 0; margin-right: 0; padding-left: 10px; padding-right: 10px;" />
-        </ui:VisualElement>
-        <ui:Label text="STATUS: Idle" display-tooltip-when-elided="true" name="StatusBar" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 10px; background-color: rgba(60, 60, 60, 0.06); padding-left: 12px; padding-right: 12px; padding-top: 5px; padding-bottom: 5px; font-size: 12px;" />
-        <ui:VisualElement name="TabSections">
-            <ui:VisualElement name="BuildSection" style="min-width: auto; min-height: auto; display: flex;">
-                <ui:ScrollView>
-                    <ui:VisualElement name="dropArea" style="background-image: resource(&apos;UI/Images/dashed-border&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 0; margin-left: 12px; margin-right: 12px; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 7; -unity-slice-top: 7; -unity-slice-right: 7; -unity-slice-bottom: 7; background-color: rgba(34, 34, 34, 0.57);">
-                        <ui:Label text="DROP SCENE/PREFAB FILES HERE\nDrop a file to select a build mode" display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 20px; margin-top: 45px; margin-bottom: 45px;" />
-                    </ui:VisualElement>
-                    <ui:Label name="mainTitle" display-tooltip-when-elided="true" text="BUILD MODE: something" class="unity-label-margin" style="display: none; font-size: 15px; -unity-text-align: upper-left; margin-top: 20px; -unity-text-outline-color: rgb(143, 143, 143); color: rgb(143, 143, 143);" />
-                    <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin" style="display: none; color: rgb(143, 143, 143); margin-bottom: 5px;" />
-                    <ui:ListView focusable="true" name="kitItemList" style="display: none;" />
-                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" style="display: none; margin-bottom: 20px; max-width: none; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; flex-direction: column; flex-wrap: nowrap; margin-left: 48px; margin-right: 48px;" />
-                    <ui:Toggle label="AUTO UPLOAD:" value="false" name="autoUpload" style="margin-top: 5px; justify-content: flex-start; display: none;" />
-                    <ui:Toggle label="ANDROID BUILD:" value="true" name="buildForAndroid" style="margin-top: 5px; justify-content: flex-start;" />
-                    <ui:Toggle label="WINDOWS BUILD:" value="true" name="buildForWindows" style="margin-bottom: 20px; justify-content: flex-start;" />
-                </ui:ScrollView>
-                <ui:Button text="BUILD NOW" name="buildButton" display-tooltip-when-elided="true" style="padding-top: 10px; padding-bottom: 10px; font-size: 15px; -unity-font-style: bold;" />
+    <ui:VisualElement style="background-image: resource(&apos;UI/Images/Slate_BG 1&apos;); height: 100%; background-color: rgb(0, 0, 0); -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(168, 168, 168); flex-direction: column; position: relative; left: 0; top: 0; right: 0; bottom: 0;">
+        <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_Logo_No_BG_V2copy 1&apos;); height: 47px; -unity-background-scale-mode: scale-to-fit; width: 100%; margin-left: 0; margin-top: 20px; margin-bottom: 0; min-height: 47px;" />
+        <ui:VisualElement name="Nav" style="height: 80px; min-height: 80px;">
+            <ui:VisualElement name="Tabs" style="flex-direction: row; justify-content: space-around; margin-left: 5%; margin-right: 5%; margin-top: 0; margin-bottom: 0; border-bottom-width: 1px; border-bottom-color: rgba(217, 217, 217, 0.1);">
+                <ui:Label text="Build" display-tooltip-when-elided="true" name="BuildTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
+                <ui:Label text="Upload" display-tooltip-when-elided="true" name="UploadTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
+                <ui:Label text="Tools" display-tooltip-when-elided="true" name="ToolsTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
+                <ui:Label text="Logs" display-tooltip-when-elided="true" name="LogsTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
             </ui:VisualElement>
-            <ui:VisualElement name="UploadSection" style="display: none;">
+            <ui:VisualElement name="ActiveTab" style="background-image: resource(&apos;UI/Images/Rectangle 2&apos;); height: 20px; width: 90px; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; left: auto; position: relative; margin-top: 0; top: -10.5px;" />
+        </ui:VisualElement>
+        <ui:VisualElement name="TabSections" style="width: 400%; flex-direction: row; min-width: 400%; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; border-bottom-color: rgb(197, 197, 197); margin-bottom: 33px; left: -100%;">
+            <ui:VisualElement name="BuildSection" style="min-width: auto; min-height: auto; display: flex; width: 25%;">
+                <ui:ScrollView style="margin-bottom: 0;">
+                    <ui:VisualElement style="position: absolute; background-image: resource(&apos;UI/Images/uploadcube 1&apos;); width: 93px; height: 93px; left: 50%; margin-left: -46.5px;" />
+                    <ui:VisualElement name="dropArea" style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; margin-bottom: 20px; -unity-background-image-tint-color: rgb(255, 255, 255);">
+                        <ui:Label text="Drop Scene/Prefab files here\nto select a build mode" display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
+                    </ui:VisualElement>
+                    <ui:Label name="mainTitle" display-tooltip-when-elided="true" text="Build Mode:  something" class="unity-label-margin" style="display: none; font-size: 14px; -unity-text-align: upper-left; margin-top: 20px; -unity-text-outline-color: rgb(143, 143, 143); color: rgb(143, 143, 143); margin-left: 5%; margin-right: 5%;" />
+                    <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin" style="display: none; color: rgb(143, 143, 143); margin-bottom: 30px; margin-left: 5%; margin-right: 5%; font-size: 14px;" />
+                    <ui:ListView focusable="true" name="kitItemList" style="display: none; margin-left: 5%; margin-right: 5%;" />
+                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" style="display: none; margin-bottom: 20px; max-width: none; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; flex-direction: column; flex-wrap: nowrap; margin-left: 48px; margin-right: 48px;" />
+                    <ui:Toggle label="Auto Upload:" value="false" name="autoUpload" style="margin-top: 5px; justify-content: flex-start; display: none; margin-left: 5%; margin-right: 5%;" />
+                    <ui:Toggle label="Android:" value="true" name="buildForAndroid" style="margin-top: 5px; justify-content: flex-start; margin-left: 5%; margin-right: 5%;" />
+                    <ui:Toggle label="Windows:" value="true" name="buildForWindows" style="margin-bottom: 5px; justify-content: flex-start; margin-left: 5%; margin-right: 5%;" />
+                    <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonPrimary&apos;); width: 206px; height: 63px; margin-left: 5%; cursor: initial; margin-top: 25px;">
+                        <ui:Label text="Build it Now!" display-tooltip-when-elided="true" name="buildButton" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                    </ui:VisualElement>
+                </ui:ScrollView>
+            </ui:VisualElement>
+            <ui:VisualElement name="UploadSection" style="display: flex; width: 25%;">
                 <ui:ScrollView>
                     <ui:VisualElement name="LoginToUpload">
-                        <ui:Label text="678 654\nGo to sdq.st/link\nto Sign In" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 10px; padding-bottom: 10px; font-size: 30px; display: flex; background-color: rgb(34, 34, 34);" />
+                        <ui:Label text="678 654\nGo to sdq.st/link\nto Sign In" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 10px; padding-bottom: 10px; font-size: 30px; display: flex;" />
                         <ui:VisualElement name="LoggedInView" style="display: flex;">
-                            <ui:VisualElement style="flex-direction: row; justify-content: center; margin-top: 10px; margin-bottom: 10px; background-color: rgb(34, 34, 34);">
+                            <ui:VisualElement style="flex-direction: row; justify-content: space-between; margin-top: 10px; margin-bottom: 10px; padding-left: 5%; padding-right: 5%;">
                                 <ui:Label text="Signed In As: Shane Harris" display-tooltip-when-elided="true" name="SignedInStatus" style="padding-top: 10px; padding-bottom: 10px; -unity-text-align: upper-center;" />
-                                <ui:Button text="Sign Out" display-tooltip-when-elided="true" name="SignOut" />
+                                <ui:Label text="Sign out?" display-tooltip-when-elided="true" name="SignOut" style="padding-top: 10px; padding-bottom: 10px; cursor: resource(&apos;pointer&apos;);" />
                             </ui:VisualElement>
-                            <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between;">
-                                <ui:TextField picking-mode="Ignore" label="SPACE SUBDOMAIN:" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 1; margin-left: 15px; margin-right: 0; -unity-text-align: upper-right;" />
-                                <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: bold; flex-shrink: 0; flex-grow: 0; margin-right: 15px;" />
+                            <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 20px; margin-top: 20px;">
+                                <ui:VisualElement name="spaceSlugPlaceholder" style="width: 100%;">
+                                    <ui:Label text="space-subdomain" display-tooltip-when-elided="true" name="SpaceSlugPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px;" />
+                                    <ui:TextField picking-mode="Ignore" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
+                                </ui:VisualElement>
+                                <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; border-left-width: 0.5px; border-left-color: rgba(168, 168, 168, 0.1); padding-left: 10px; font-size: 12px; color: rgb(255, 255, 255);" />
                             </ui:VisualElement>
-                            <ui:Button text="UPLOAD WEB FILES ONLY" display-tooltip-when-elided="true" name="UploadWebOnly" style="padding-top: 10px; padding-bottom: 10px; margin-top: 10px; margin-bottom: 10px;" />
-                            <ui:Button text="UPLOAD EVERYTHING" display-tooltip-when-elided="true" name="UploadEverything" style="padding-top: 10px; padding-bottom: 10px;" />
+                            <ui:VisualElement style="flex-direction: row; width: 100%; align-items: center; justify-content: center;">
+                                <ui:Button text="Upload HTML+JS Only" display-tooltip-when-elided="true" name="UploadWebOnly" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
+                                    <ui:Label text="Upload All" display-tooltip-when-elided="true" name="UploadEverything" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
+                            <ui:Button text="Open Web Folder" display-tooltip-when-elided="true" name="OpenWebRoot" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; margin-left: 25%; margin-right: 25%;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:ScrollView>
             </ui:VisualElement>
-            <ui:VisualElement name="ToolsSection" style="display: none;">
+            <ui:VisualElement name="ToolsSection" style="display: flex; width: 25%;">
                 <ui:ScrollView>
-                    <ui:Button text="Compile All C Only" name="allOnly" display-tooltip-when-elided="true" />
-                    <ui:Button text="Clear All Components" name="clearAll" display-tooltip-when-elided="true" />
-                    <ui:Button text="Compile Electron" name="compileElectron" display-tooltip-when-elided="true" />
-                    <ui:Button text="Compile Injection" name="compileInjection" display-tooltip-when-elided="true" />
-                    <ui:Button text="Compile All" name="kitchenSink" display-tooltip-when-elided="true" />
-                    <ui:Button text="Setup Layers" name="setupLayers" display-tooltip-when-elided="true" />
-                    <ui:Button text="Setup Visual Scripting" name="setupVisualScripting" display-tooltip-when-elided="true" />
-                    <ui:Button text="Toggle Dev Tools" name="openDevTools" display-tooltip-when-elided="true" />
-                    <ui:Button text="Compile All C + Injection" name="allAndInjection" display-tooltip-when-elided="true" />
+                    <ui:Button text="Compile All C Only" name="allOnly" display-tooltip-when-elided="true" style="margin-right: 5%; margin-left: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Clear All Components" name="clearAll" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Compile Electron" name="compileElectron" display-tooltip-when-elided="true" style="margin-right: 5%; margin-left: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Compile Injection" name="compileInjection" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Compile All" name="kitchenSink" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Setup Layers" name="setupLayers" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Setup Visual Scripting" name="setupVisualScripting" display-tooltip-when-elided="true" style="margin-right: 5%; margin-left: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Toggle Dev Tools" name="openDevTools" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:Button text="Compile All C + Injection" name="allAndInjection" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
                 </ui:ScrollView>
             </ui:VisualElement>
-            <ui:VisualElement name="LogsSection" style="display: none;">
-                <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: 100%; min-height: auto; max-height: none;" />
-                <ui:Button text="Clear Logs" display-tooltip-when-elided="true" name="clearLogs" />
-                <ui:ProgressBar title="BUILDING..." name="buildProgressBar" style="display: none;" />
+            <ui:VisualElement name="LogsSection" style="display: flex; width: 25%;">
+                <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: auto; min-height: auto; max-height: none; margin-left: 5%; margin-right: 5%; background-color: rgba(0, 0, 0, 0.49); border-top-left-radius: 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; margin-bottom: 50px; padding-top: 10px;" />
+                <ui:VisualElement style="flex-direction: row; justify-content: center; margin-left: 5%; margin-right: 5%;">
+                    <ui:Button text="Clear Logs" display-tooltip-when-elided="true" name="clearLogs" style="flex-direction: row; width: 152px; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; margin-left: 0; margin-right: 0; font-size: 15px; -unity-font-style: normal; height: 30px;" />
+                </ui:VisualElement>
+                <ui:ProgressBar title="BUILDING..." name="buildProgressBar" style="display: none; padding-top: 5px;" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:Label text="STATUS: Idle" display-tooltip-when-elided="true" name="StatusBar" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 5px; padding-left: 5%; padding-right: 5%; padding-top: 5px; padding-bottom: 5px; font-size: 14px; justify-content: flex-start; position: absolute; bottom: 0; width: 100%;" />
     </ui:VisualElement>
 </ui:UXML>

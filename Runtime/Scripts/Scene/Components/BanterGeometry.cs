@@ -176,76 +176,76 @@ namespace Banter.SDK
             switch (geometryType)
             {
                 case GeometryType.BoxGeometry:
-                    _filter.sharedMesh = new Box(width, height, depth, widthSegments, heightSegments, depthSegments).generate();
+                    _filter.sharedMesh = new Box(width, height, depth, widthSegments, heightSegments, depthSegments).Generate();
                     break;
                 case GeometryType.CircleGeometry:
-                    _filter.sharedMesh = new Circle(radius, segments, thetaStart, thetaLength).generate();
+                    _filter.sharedMesh = new Circle(radius, segments, thetaStart, thetaLength).Generate();
                     break;
                 case GeometryType.ConeGeometry:
-                    _filter.sharedMesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).generate();
+                    _filter.sharedMesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
                     break;
                 case GeometryType.CylinderGeometry:
-                    _filter.sharedMesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).generate();
+                    _filter.sharedMesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
                     break;
                 case GeometryType.PlaneGeometry:
-                    _filter.sharedMesh = new Plane(width, height, widthSegments, heightSegments).generate();
+                    _filter.sharedMesh = new Plane(width, height, widthSegments, heightSegments).Generate();
                     break;
                 case GeometryType.RingGeometry:
-                    _filter.sharedMesh = new Ring(innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength).generate();
+                    _filter.sharedMesh = new Ring(innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength).Generate();
                     break;
                 case GeometryType.SphereGeometry:
-                    _filter.sharedMesh = new Sphere(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength).generate();
+                    _filter.sharedMesh = new Sphere(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength).Generate();
                     break;
                 case GeometryType.TorusGeometry:
-                    _filter.sharedMesh = new Torus(radius, tube, radialSegments, tubularSegments, arc).generate();
+                    _filter.sharedMesh = new Torus(radius, tube, radialSegments, tubularSegments, arc).Generate();
                     break;
                 case GeometryType.TorusKnotGeometry:
-                    _filter.sharedMesh = new TorusKnot(radius, tube, radialSegments, tubularSegments, p, q).generate();
+                    _filter.sharedMesh = new TorusKnot(radius, tube, radialSegments, tubularSegments, p, q).Generate();
                     break;
                 case GeometryType.ParametricGeometry:
                     switch (parametricType)
                     {
                         case ParametricGeometryType.Klein:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Klein).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Klein).Generate();
                             break;
                         case ParametricGeometryType.Apple:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Apple).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Apple).Generate();
                             break;
                         case ParametricGeometryType.Fermet:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Fermet).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Fermet).Generate();
                             break;
                         case ParametricGeometryType.Catenoid:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Catenoid).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Catenoid).Generate();
                             break;
                         case ParametricGeometryType.Helicoid:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Helicoid).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Helicoid).Generate();
                             break;
                         case ParametricGeometryType.Horn:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Horn).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Horn).Generate();
                             break;
                         case ParametricGeometryType.Mobius:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius).Generate();
                             break;
                         case ParametricGeometryType.Mobius3d:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius3d).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius3d).Generate();
                             break;
                         case ParametricGeometryType.Natica:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Natica).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Natica).Generate();
                             break;
                         case ParametricGeometryType.Pillow:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Pillow).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Pillow).Generate();
                             break;
                         case ParametricGeometryType.Scherk:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Scherk).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Scherk).Generate();
                             break;
                         case ParametricGeometryType.Snail:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Snail).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Snail).Generate();
                             break;
                         case ParametricGeometryType.Spiral:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spiral).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spiral).Generate();
                             break;
                         case ParametricGeometryType.Spring:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spring).generate();
+                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spring).Generate();
                             break;
                     }
                     break;
@@ -254,7 +254,7 @@ namespace Banter.SDK
             && geometryType == GeometryType.ParametricGeometry && parametricType == ParametricGeometryType.Custom)
             {
                 var pointsData = JsonUtility.FromJson<ParametricPoints>(parametricPoints);
-                _filter.sharedMesh = new ParametricGeometry(stacks, slices, null, pointsData.points).generate();
+                _filter.sharedMesh = new ParametricGeometry(stacks, slices, null, pointsData.points).Generate();
             }
         }
 

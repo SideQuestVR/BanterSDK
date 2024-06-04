@@ -234,7 +234,7 @@ namespace Banter.SDK
             if (Directory.Exists(webRoot))
                 return;
             Directory.CreateDirectory(webRoot);
-            File.WriteAllText(webRoot + "/index.html", "<html><head></head><body></body></html>");
+            File.WriteAllText(webRoot + "/index.html", "<html android-bundle windows-bundle><head>");
 #endif
         }
 

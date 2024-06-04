@@ -47,6 +47,19 @@ namespace Banter.SDKEditor
             // _ = InstallVisualScripting();
             // "com.atteneder.gltfast": "https://github.com/atteneder/glTFast.git#v5.0.0",
             // SetupLayers();
+            CreateWebRoot();
+        }
+
+        static void CreateWebRoot()
+        {
+            // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
+#if !BANTER_EDITOR
+            var webRoot = Application.dataPath + "/WebRoot";
+            if (Directory.Exists(webRoot))
+                return;
+            Directory.CreateDirectory(webRoot);
+            File.WriteAllText(webRoot + "/index.html", "<html android-bundle windows-bundle><head>");
+#endif
         }
 
         public static async Task InstallVisualScripting()
