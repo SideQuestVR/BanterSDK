@@ -16,12 +16,6 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [
-        {
-            "name": "com.unity.visualscripting",
-            "expression": "1.0.0",
-            "define": "BANTER_VISUAL_SCRIPTING"
-        }
-    ],
+    "versionDefines": [],
     "noEngineReferences": false
 }

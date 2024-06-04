@@ -1,3 +1,8 @@
+// Portions of this code are from https://github.com/spatialsys/spatial-unity-sdk
+// Retrieved on 2024-06-04
+// SPDX-License-Identifier: MIT
+
+#if BANTER_VISUAL_SCRIPTING
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -97,3 +102,4 @@ namespace Banter.SDKEditor
 #endif
     }
 }
+#endif

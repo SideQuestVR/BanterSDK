@@ -19,6 +19,7 @@ public enum BanterBuilderBundleMode
     Scene = 1,
     Kit = 2
 }
+
 public class KitObjectAndPath
 {
     public UnityEngine.Object obj;
@@ -30,6 +31,7 @@ public class KitObjectAndPath
         typeof(Shader)
     };
 }
+
 public class BuilderWindow : EditorWindow
 {
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
@@ -617,7 +619,14 @@ public class BuilderWindow : EditorWindow
         Remove(rootVisualElement.Q<Button>("compileElectron"));
         Remove(rootVisualElement.Q<Button>("compileInjection"));
         Remove(rootVisualElement.Q<Button>("kitchenSink"));
+
         rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
+#endif
+
+#if BANTER_VISUAL_SCRIPTING
+        rootVisualElement.Q<Button>("regenVisualScripting").clicked += () => NodeGeneration.SetTypesAndAssemblies();
+#else
+        Remove(rootVisualElement.Q<Button>("regenVisualScripting"));
 #endif
         rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
 

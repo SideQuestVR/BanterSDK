@@ -1,3 +1,7 @@
+// Portions of this code are from https://github.com/spatialsys/spatial-unity-sdk
+// Retrieved on 2024-06-04
+// SPDX-License-Identifier: MIT
+
 using UnityEditor;
 using UnityEditor.PackageManager;
 
