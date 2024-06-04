@@ -44,9 +44,7 @@ namespace Banter.SDKEditor
         [InitializeOnLoadMethod()]
         static void Go()
         {
-            // _ = InstallVisualScripting();
-            // "com.atteneder.gltfast": "https://github.com/atteneder/glTFast.git#v5.0.0",
-            // SetupLayers();
+            SetupLayers();
             CreateWebRoot();
         }
 
@@ -81,7 +79,7 @@ namespace Banter.SDKEditor
                     }
                 }
 
-                if (isMissing && EditorUtility.DisplayDialog("Layer setup needed...", "Do you want to setup Banter layers automatically? - " + string.Join(", \n", missingLayers), "Yes", "No"))
+                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers", "Do you want to setup Banter layers automatically?\nThese are required when using Banter specific features:\n" + string.Join(", \n", missingLayers), "Yes", "No"))
                 {
                     foreach (var layer in layersToAdd)
                     {
