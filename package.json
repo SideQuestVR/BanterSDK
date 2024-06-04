@@ -10,7 +10,6 @@
   "changelogUrl": "https://bantervr.com/sdk-changelog",
   "licensesUrl": "https://bantervr.com/sdk-license",
   "dependencies": {
-    "com.unity.cinemachine": "2.8.9",
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.textmeshpro": "3.0.9",
     "com.unity.xr.management": "4.2.0",
