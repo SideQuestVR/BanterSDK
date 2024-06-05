@@ -54,6 +54,7 @@ namespace Banter.SDK
         {
             return new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 0, UnityEngine.Random.Range(-0.5f, 0.5f)) + spawnPoint;
         }
+
         void SpawnPlayers()
         {
             var spawn = Resources.Load<GameObject>("Prefabs/BanterSpawnPoint");
@@ -68,7 +69,6 @@ namespace Banter.SDK
             {
                 var player = Instantiate(localPlayerPrefab).transform;
                 player.name = "RemotePlayer" + i;
-                player.tag = "__BA_RemotePlayerHead";
                 player.position = RandomSpawnPoint();
                 player.eulerAngles = new Vector3(0, spawnRotation, 0);
                 GameObject.Destroy(player.Find("TrackedLeftHand").gameObject);
@@ -85,11 +85,11 @@ namespace Banter.SDK
                 GameObject.Destroy(player.Find("LeftHand").GetComponent<PhysicsHandFollow>());
             }
         }
+
         void SetupCamera()
         {
             var player = Instantiate(localPlayerPrefab).transform;
             player.name = "LocalPlayer";
-            player.tag = "LocalPlayer";
             player.Find("RightHand").transform.SetParent(null);
             player.Find("LeftHand").transform.SetParent(null);
 
