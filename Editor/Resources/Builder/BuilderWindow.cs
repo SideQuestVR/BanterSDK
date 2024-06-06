@@ -443,6 +443,8 @@ public class BuilderWindow : EditorWindow
 
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
 
+        var createSpace = rootVisualElement.Q<Label>("CreateSpace");
+        createSpace.RegisterCallback<MouseUpEvent>((e) => OpenSpaceCreation());
         var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
 
         openWebRoot.clicked += () => ShowWebRoot();
@@ -834,6 +836,10 @@ public class BuilderWindow : EditorWindow
         }
         ShowRemoveSelected();
         ShowUploadToggle();
+    }
+
+    public void OpenSpaceCreation() {
+        Application.OpenURL("https://sidequestvr.com/account/create-space");
     }
     private void BuildAssetBundles()
     {
