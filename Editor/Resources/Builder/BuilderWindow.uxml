@@ -13,7 +13,7 @@
         </ui:VisualElement>
         <ui:VisualElement name="TabSections" style="width: 400%; flex-direction: row; min-width: 400%; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; border-bottom-color: rgb(197, 197, 197); margin-bottom: 33px; left: -100%;">
             <ui:VisualElement name="BuildSection" style="min-width: auto; min-height: auto; display: flex; width: 25%;">
-                <ui:ScrollView style="margin-bottom: 0;">
+                <ui:ScrollView horizontal-scroller-visibility="Hidden" style="margin-bottom: 0;">
                     <ui:VisualElement style="position: absolute; background-image: resource(&apos;UI/Images/uploadcube 1&apos;); width: 93px; height: 93px; left: 50%; margin-left: -46.5px;" />
                     <ui:VisualElement name="dropArea" style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; margin-bottom: 20px; -unity-background-image-tint-color: rgb(255, 255, 255);">
                         <ui:Label text="Drop Scene/Prefab files here\nto select a build mode" display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
@@ -31,7 +31,7 @@
                 </ui:ScrollView>
             </ui:VisualElement>
             <ui:VisualElement name="UploadSection" style="display: flex; width: 25%;">
-                <ui:ScrollView>
+                <ui:ScrollView horizontal-scroller-visibility="Hidden">
                     <ui:VisualElement name="LoginToUpload">
                         <ui:Label text="678 654\nGo to sdq.st/link\nto Sign In" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 10px; padding-bottom: 10px; font-size: 30px; display: flex;" />
                         <ui:VisualElement name="LoggedInView" style="display: flex;">
@@ -58,7 +58,7 @@
                 </ui:ScrollView>
             </ui:VisualElement>
             <ui:VisualElement name="ToolsSection" style="display: flex; width: 25%;">
-                <ui:ScrollView>
+                <ui:ScrollView horizontal-scroller-visibility="Hidden">
                     <ui:Button text="Compile All C Only" name="allOnly" display-tooltip-when-elided="true" style="margin-right: 5%; margin-left: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
                     <ui:Button text="Clear All Components" name="clearAll" display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
                     <ui:Button text="Compile Electron" name="compileElectron" display-tooltip-when-elided="true" style="margin-right: 5%; margin-left: 5%; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px;" />
