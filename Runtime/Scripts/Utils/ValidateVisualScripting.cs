@@ -8,8 +8,9 @@ using Unity.VisualScripting;
 using UnityEditor;
 #endif
 using UnityEngine;
+using UnityEngine.SceneManagement;
 public class ValidateVisualScriptng{
-    private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph, string assetPath)
+    private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph)
     {
             var output = new List<string>();
 #if UNITY_EDITOR && !BANTER_EDITOR
@@ -25,7 +26,7 @@ public class ValidateVisualScriptng{
 #endif
         return output;
     }
-    private static List<string> GetElementsFromStateGraph(GraphReference reference, StateGraph graph, string assetPath)
+    private static List<string> GetElementsFromStateGraph(GraphReference reference, StateGraph graph)
     {
         var output = new List<string>();
 #if UNITY_EDITOR && !BANTER_EDITOR
@@ -33,7 +34,7 @@ public class ValidateVisualScriptng{
             return output;
         }
         // get this layer's elements
-        output = GetElementsFromIGraph(reference, graph, assetPath);
+        output = GetElementsFromIGraph(reference, graph);
         // get each states' elements
         if (graph.states.Count() > 0)
         {
@@ -49,11 +50,11 @@ public class ValidateVisualScriptng{
                             var stateName = !String.IsNullOrEmpty(childGraph.title) ? childGraph.title : "Script State";
                             if (childGraph is StateGraph)
                             {
-                                output = (List<string>)output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterStateTransition)transition, false), (StateGraph)childGraph, assetPath));
+                                output = (List<string>)output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterStateTransition)transition, false), (StateGraph)childGraph));
                             }
                             else
                             {
-                                output = (List<string>)output.Concat(GrabElements(e, stateName, null, reference.ChildReference((INesterStateTransition)transition, false), childGraph, assetPath));
+                                output = (List<string>)output.Concat(GrabElements(e, reference.ChildReference((INesterStateTransition)transition, false)));
                             }
                         }
                     }
@@ -72,10 +73,10 @@ public class ValidateVisualScriptng{
                             var stateName = !String.IsNullOrEmpty(childGraph.title) ? childGraph.title : "Script State";
                             if (childGraph is StateGraph)
                             {
-                                output = (List<string>)output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterState)state, false), (StateGraph)childGraph, assetPath));
+                                output = (List<string>)output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterState)state, false), (StateGraph)childGraph));
                             } else
                             {
-                                output = (List<string>)output.Concat(GrabElements(e, stateName, null, reference.ChildReference((INesterState)state, false), childGraph, assetPath));
+                                output = (List<string>)output.Concat(GrabElements(e, reference.ChildReference((INesterState)state, false)));
                             }
                         }
                     }
@@ -86,7 +87,7 @@ public class ValidateVisualScriptng{
 #endif
         return output;
     }
-    private static List<string> GrabElements(IGraphElement e, string stateName, GameObject gameObject, GraphReference reference, IGraph graph, string assetPath)
+    private static List<string> GrabElements(IGraphElement e,GraphReference reference)
     {
         var output = new List<string>();
 #if UNITY_EDITOR && !BANTER_EDITOR
@@ -111,11 +112,11 @@ public class ValidateVisualScriptng{
                 output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
             } catch (Exception ex)
             {
-                Debug.Log($"Could not add element {e?.guid} {assetPath} {reference?.graph?.title} because of {ex}");
+                Debug.Log($"Could not add element {e?.guid} {reference?.graph?.title} because of {ex}");
             }
         }
 #endif
-        return (List<string>)output.Distinct();
+        return output;
     }
 
     private static bool IsIgnoredElement(IGraphElement graphElement)
@@ -150,7 +151,7 @@ public class ValidateVisualScriptng{
             }
         }
 #endif
-        return (List<string>)output.Distinct();
+        return output;
     }
 
     private static List<string> FindNodesFromStateGraphAssetGuid(string guid)
@@ -163,17 +164,16 @@ public class ValidateVisualScriptng{
         if (sga?.graph?.elements.Count() > 0)
         {
             //Debug.Log($"stategraphasset {sga.name} has {sga.graph?.elements.Count()} elements");
-            output = (List<string>)output.Concat(GetElementsFromStateGraph(sga.GetReference().AsReference(), sga.graph, assetPath));
+            output = output.Concat(GetElementsFromStateGraph(sga.GetReference().AsReference(), sga.graph)).ToList();
         }
         
 #endif
-        return (List<string>)output.Distinct();
+        return output;
     }
 
-     private static List<string> GetElementsFromScriptMachine(ScriptMachine scriptMachine, string assetPath)
+     private static List<string> GetElementsFromScriptMachine(ScriptMachine scriptMachine)
         {
              var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR 
             if (scriptMachine == null || (scriptMachine.graph.elements.Count() == 0 && scriptMachine.nest?.embed?.elements.Count == 0))
             {
                 return output;
@@ -182,31 +182,29 @@ public class ValidateVisualScriptng{
             var reference = scriptMachine.GetReference().AsReference();
             foreach (var e in scriptMachine.graph.elements)
             {
-                output = (List<string>)output.Concat(GrabElements(e, "", scriptMachine.gameObject, reference, scriptMachine.graph, assetPath));
+                output = output.Concat(GrabElements(e, reference)).ToList();
             }
             foreach (var e in scriptMachine.nest?.embed?.elements)
             {
-                output = (List<string>)output.Concat(GrabElements(e, "", scriptMachine.gameObject, reference, scriptMachine.graph, assetPath));
+                output = output.Concat(GrabElements(e, reference)).ToList();
             }
-
-#endif 
             return output;
         }
 
         
        
     public static void CheckVsNodes() {
-#if UNITY_EDITOR && !BANTER_EDITOR
+#if !BANTER_EDITOR
         var everything = new List<string>();
         try {
             string[] guids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
             foreach (string guid in guids)
             {
-                everything = (List<string>)everything.Concat(FindNodesFromScriptGraphAssetGuid(guid));
+                everything = everything.Concat(FindNodesFromScriptGraphAssetGuid(guid)).ToList();
             }            
             foreach (string guid in guids)
             {
-                everything = (List<string>)everything.Concat(FindNodesFromStateGraphAssetGuid(guid));
+                everything = everything.Concat(FindNodesFromStateGraphAssetGuid(guid)).ToList();
             }
             var paths = AssetDatabase.GetAllAssetPaths().Select(path => path).Where(File.Exists).Where(f => Path.GetExtension(f) == ".prefab");
             foreach (var p in paths)
@@ -219,34 +217,43 @@ public class ValidateVisualScriptng{
                     {
                         GameObject go = (GameObject)o;
                         var scriptMachine = go.GetComponent<ScriptMachine>();
-                        if (scriptMachine?.nest?.source == Unity.VisualScripting.GraphSource.Embed)
-                            everything = (List<string>)everything.Concat(GetElementsFromScriptMachine(scriptMachine, assetPath));
+                        if (scriptMachine?.nest?.source == GraphSource.Embed)
+                            everything = everything.Concat(GetElementsFromScriptMachine(scriptMachine)).ToList();
 
                         var stateMachine = go.GetComponent<StateMachine>();
-                        if (stateMachine?.nest?.source == Unity.VisualScripting.GraphSource.Embed)
-                            everything = (List<string>)everything.Concat(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph, assetPath));
+                        if (stateMachine?.nest?.source == GraphSource.Embed)
+                            everything = everything.Concat(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph)).ToList();
                     } catch (Exception e)
                     {
                         Debug.Log($"Error while loading prefabs to search from them in path {assetPath} {e.Message} {e.StackTrace}");
                     }
                 }
             }
-            var notAllowedElements = everything.Where( e => {
+            SceneManager.GetActiveScene().GetRootGameObjects().ToList().ForEach(go => {
+                var scriptMachine = go.GetComponent<ScriptMachine>();
+                if (scriptMachine?.nest?.source == GraphSource.Embed)
+                    everything = everything.Concat(GetElementsFromScriptMachine(scriptMachine)).ToList();
+
+                var stateMachine = go.GetComponent<StateMachine>();
+                if (stateMachine?.nest?.source == GraphSource.Embed)
+                    everything = everything.Concat(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph)).ToList();
+            });
+            var notAllowedElements = everything.Distinct().ToList().Where( e => {
                 var id = e;
                 var isVs = id?.StartsWith("Unity.VisualScripting.")??false;
                 if(isVs) {
-                    Debug.LogWarning("VS node: " + id + " is allowed, skipping");
+                    Debug.LogWarning("[VisualScripting] VS node: " + id + " is allowed, skipping");
                 }
                 return !(id == null || isVs || AotStubsAllowed.members.Contains(id));
             });
-            foreach(var element in notAllowedElements) {
-                Debug.LogError("Element not allowed: " + element);
+            foreach(var element in notAllowedElements.Distinct().ToList()) {
+                Debug.LogError("[VisualScripting] Element not allowed in Banter: " + element);
             }
             if(notAllowedElements.Count() > 0) {
-                Debug.LogError("Found elements that are not allowed for Visual Scripting");
+                Debug.LogError("[VisualScripting] Found elements that are not allowed for Visual Scripting");
             }
         } catch(Exception e){
-            Debug.LogError($"Encountered an error while searching in all scripts {e.Message} {e.StackTrace}");
+            Debug.LogError($"[VisualScripting] Encountered an error while searching in all scripts {e.Message} {e.StackTrace}");
         }
 #endif        
     }
