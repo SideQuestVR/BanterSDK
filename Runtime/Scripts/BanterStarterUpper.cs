@@ -15,7 +15,6 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
-        [SerializeField] bool startWebServer = true;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;

@@ -12,7 +12,6 @@ namespace Banter.SDK
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
-        bool setUnityLoadedOnReload = false;
         UnityMainThreadDispatcher mainThread;
         BatchUpdater batchUpdater;
         public static string LOCAL_USER_ID;
@@ -31,10 +30,6 @@ namespace Banter.SDK
         {
             if (msg.StartsWith(APICommands.ONLOAD))
             {
-                // // Fake the unity loaded event for when the page has been reloaded with f5 from the browser end.
-                // if(scene.state == SceneState.UNITY_READY) {
-                //     setUnityLoadedOnReload = true;
-                // }
                 _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
                 scene.SetLoaded();
             }
