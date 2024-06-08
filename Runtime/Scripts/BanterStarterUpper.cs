@@ -33,7 +33,9 @@ namespace Banter.SDK
             SetupCamera();
             SpawnPlayers();
 #endif
+#if UNITY_EDITOR && !BANTER_EDITOR
             ValidateVisualScriptng.CheckVsNodes();
+#endif
 #if UNITY_EDITOR
             CreateWebRoot();
 #endif

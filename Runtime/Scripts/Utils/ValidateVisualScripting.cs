@@ -3,17 +3,17 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using Unity.VisualScripting;
 #if UNITY_EDITOR && !BANTER_EDITOR 
+using Unity.VisualScripting;
 using UnityEditor;
 #endif
 using UnityEngine;
 using UnityEngine.SceneManagement;
 public class ValidateVisualScriptng{
+#if UNITY_EDITOR && !BANTER_EDITOR 
     private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph)
     {
             var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR
         if (graph == null || graph.elements.Count == 0)
         {
             return output;
@@ -23,13 +23,11 @@ public class ValidateVisualScriptng{
         {
             output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
         }
-#endif
         return output;
     }
     private static List<string> GetElementsFromStateGraph(GraphReference reference, StateGraph graph)
     {
         var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR
         if (graph == null) {
             return output;
         }
@@ -84,13 +82,11 @@ public class ValidateVisualScriptng{
             }
             
         }
-#endif
         return output;
     }
     private static List<string> GrabElements(IGraphElement e,GraphReference reference)
     {
         var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR 
         if (e is StateUnit)
         {
             if ((((StateUnit)e).nest?.source == GraphSource.Embed && ((StateUnit)e).nest?.graph?.elements.Count() > 0) || ((StateUnit)e).nest?.source == GraphSource.Macro)
@@ -115,7 +111,6 @@ public class ValidateVisualScriptng{
                 Debug.Log($"Could not add element {e?.guid} {reference?.graph?.title} because of {ex}");
             }
         }
-#endif
         return output;
     }
 
@@ -140,7 +135,6 @@ public class ValidateVisualScriptng{
     private static List<string> FindNodesFromScriptGraphAssetGuid(string guid)
     {
         var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR
         var assetPath = AssetDatabase.GUIDToAssetPath(guid);
         var sga = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
         if (sga?.graph?.elements.Count() > 0)
@@ -150,14 +144,12 @@ public class ValidateVisualScriptng{
                 output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
             }
         }
-#endif
         return output;
     }
 
     private static List<string> FindNodesFromStateGraphAssetGuid(string guid)
     {
         var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR
         var assetPath = AssetDatabase.GUIDToAssetPath(guid);
         var sga = AssetDatabase.LoadAssetAtPath<StateGraphAsset>(assetPath);
         // pick up the first layer's elements
@@ -167,7 +159,6 @@ public class ValidateVisualScriptng{
             output = output.Concat(GetElementsFromStateGraph(sga.GetReference().AsReference(), sga.graph)).ToList();
         }
         
-#endif
         return output;
     }
 
@@ -194,7 +185,6 @@ public class ValidateVisualScriptng{
         
        
     public static void CheckVsNodes() {
-#if !BANTER_EDITOR
         var everything = new List<string>();
         try {
             string[] guids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
@@ -254,7 +244,7 @@ public class ValidateVisualScriptng{
             }
         } catch(Exception e){
             Debug.LogError($"[VisualScripting] Encountered an error while searching in all scripts {e.Message} {e.StackTrace}");
-        }
-#endif        
+        }  
     }
+#endif
 }
