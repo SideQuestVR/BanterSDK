@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Unity.VisualScripting;
-#if UNITY_EDITOR
+#if UNITY_EDITOR && !BANTER_EDITOR 
 using UnityEditor;
 #endif
 using UnityEngine;
@@ -50,11 +50,11 @@ public class ValidateVisualScriptng{
                             var stateName = !String.IsNullOrEmpty(childGraph.title) ? childGraph.title : "Script State";
                             if (childGraph is StateGraph)
                             {
-                                output = (List<string>)output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterStateTransition)transition, false), (StateGraph)childGraph));
+                                output = output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterStateTransition)transition, false), (StateGraph)childGraph)).ToList();
                             }
                             else
                             {
-                                output = (List<string>)output.Concat(GrabElements(e, reference.ChildReference((INesterStateTransition)transition, false)));
+                                output = output.Concat(GrabElements(e, reference.ChildReference((INesterStateTransition)transition, false))).ToList();
                             }
                         }
                     }
@@ -73,10 +73,10 @@ public class ValidateVisualScriptng{
                             var stateName = !String.IsNullOrEmpty(childGraph.title) ? childGraph.title : "Script State";
                             if (childGraph is StateGraph)
                             {
-                                output = (List<string>)output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterState)state, false), (StateGraph)childGraph));
+                                output = output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterState)state, false), (StateGraph)childGraph)).ToList();
                             } else
                             {
-                                output = (List<string>)output.Concat(GrabElements(e, reference.ChildReference((INesterState)state, false)));
+                                output = output.Concat(GrabElements(e, reference.ChildReference((INesterState)state, false))).ToList();
                             }
                         }
                     }
@@ -90,7 +90,7 @@ public class ValidateVisualScriptng{
     private static List<string> GrabElements(IGraphElement e,GraphReference reference)
     {
         var output = new List<string>();
-#if UNITY_EDITOR && !BANTER_EDITOR
+#if UNITY_EDITOR && !BANTER_EDITOR 
         if (e is StateUnit)
         {
             if ((((StateUnit)e).nest?.source == GraphSource.Embed && ((StateUnit)e).nest?.graph?.elements.Count() > 0) || ((StateUnit)e).nest?.source == GraphSource.Macro)
