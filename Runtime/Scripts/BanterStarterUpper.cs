@@ -34,6 +34,7 @@ namespace Banter.SDK
             SetupCamera();
             SpawnPlayers();
 #endif
+            ValidateVisualScriptng.CheckVsNodes();
 #if UNITY_EDITOR
             CreateWebRoot();
 #endif
@@ -43,17 +44,13 @@ namespace Banter.SDK
 #endif
             SetupBrowserLink();
             scene.ResetLoadingProgress();
-            // #if BANTER_EDITOR
-            //         scene.link.Connected += (arg0, arg1) => {
-            //             _ = scene.LoadUrl(BanterScene.CUSTOM_HOME_SPACE);
-            //         };
-            // #endif
         }
 
         Vector3 RandomSpawnPoint()
         {
             return new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 0, UnityEngine.Random.Range(-0.5f, 0.5f)) + spawnPoint;
         }
+
         void SpawnPlayers()
         {
             var spawn = Resources.Load<GameObject>("Prefabs/BanterSpawnPoint");
