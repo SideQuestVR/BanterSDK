@@ -39,6 +39,7 @@ public class BuilderWindow : EditorWindow
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
+    public static UnityEvent OnVisualScript = new UnityEvent();
     public static UnityEvent OnCompileInjection = new UnityEvent();
     public static UnityEvent OnCompileElectron = new UnityEvent();
     public static UnityEvent OnCompileAllComponents = new UnityEvent();
@@ -443,6 +444,8 @@ public class BuilderWindow : EditorWindow
 
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
 
+        var createSpace = rootVisualElement.Q<Label>("CreateSpace");
+        createSpace.RegisterCallback<MouseUpEvent>((e) => OpenSpaceCreation());
         var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
 
         openWebRoot.clicked += () => ShowWebRoot();
@@ -604,6 +607,7 @@ public class BuilderWindow : EditorWindow
                 OnCompileAll.Invoke();
                 OnCompileInjection.Invoke();
             };
+            rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
             rootVisualElement.Q<Button>("allOnly").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAllComponents();
             rootVisualElement.Q<Button>("clearAll").clicked += () => OnClearAll.Invoke();// SDKCodeGen.ClearAllComponents();
             rootVisualElement.Q<Button>("compileElectron").clicked += () => OnCompileElectron.Invoke();// SDKCodeGen.CompileElectron();
@@ -612,6 +616,7 @@ public class BuilderWindow : EditorWindow
             Remove(rootVisualElement.Q<Button>("setupVisualScripting"));
             Remove(rootVisualElement.Q<Button>("setupLayers"));
 #else
+        Remove(rootVisualElement.Q<Button>("visualScript"));
         Remove(rootVisualElement.Q<Button>("allAndInjection"));
         Remove(rootVisualElement.Q<Button>("allOnly"));
         Remove(rootVisualElement.Q<Button>("clearAll"));
@@ -834,6 +839,10 @@ public class BuilderWindow : EditorWindow
         }
         ShowRemoveSelected();
         ShowUploadToggle();
+    }
+
+    public void OpenSpaceCreation() {
+        Application.OpenURL("https://sidequestvr.com/account/create-space");
     }
     private void BuildAssetBundles()
     {
