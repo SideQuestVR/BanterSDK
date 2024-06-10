@@ -34,7 +34,7 @@ namespace Banter.SDK
             SpawnPlayers();
 #endif
 #if UNITY_EDITOR && !BANTER_EDITOR
-            ValidateVisualScriptng.CheckVsNodes();
+            ValidateVisualScripting.CheckVsNodes();
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();

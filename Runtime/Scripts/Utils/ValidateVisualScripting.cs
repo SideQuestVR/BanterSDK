@@ -9,7 +9,9 @@ using UnityEditor;
 #endif
 using UnityEngine;
 using UnityEngine.SceneManagement;
-public class ValidateVisualScriptng{
+
+public class ValidateVisualScripting
+{
 #if UNITY_EDITOR && !BANTER_EDITOR 
     private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph)
     {
