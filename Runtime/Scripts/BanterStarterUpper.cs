@@ -15,7 +15,6 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
-        [SerializeField] bool startWebServer = true;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
@@ -34,6 +33,9 @@ namespace Banter.SDK
             SetupCamera();
             SpawnPlayers();
 #endif
+#if UNITY_EDITOR && !BANTER_EDITOR
+            ValidateVisualScriptng.CheckVsNodes();
+#endif
 #if UNITY_EDITOR
             CreateWebRoot();
 #endif
@@ -43,11 +45,6 @@ namespace Banter.SDK
 #endif
             SetupBrowserLink();
             scene.ResetLoadingProgress();
-            // #if BANTER_EDITOR
-            //         scene.link.Connected += (arg0, arg1) => {
-            //             _ = scene.LoadUrl(BanterScene.CUSTOM_HOME_SPACE);
-            //         };
-            // #endif
         }
 
         Vector3 RandomSpawnPoint()
