@@ -47,11 +47,11 @@ namespace Banter.SDKEditor
             "System.Collections",
             "System.Collections.Specialized",
             "TMPro",
-            "Banter.SDK"
+            //"Banter.SDK"
         };
 
         public static readonly HashSet<string> assemblyAllowList = new HashSet<string>() {
-            "BanterSDK",
+            //"BanterSDK",
 
             "UnityEngine.CoreModule",
             "UnityEngine.AIModule",
@@ -174,31 +174,32 @@ namespace Banter.SDKEditor
             typeof(ObstacleAvoidanceType),
             typeof(OffMeshLinkType),
 
-            typeof(Banter.SDK.BanterAssetBundle),
-            typeof(Banter.SDK.BanterAudioSource),
-            typeof(Banter.SDK.BanterBillboard),
-            typeof(Banter.SDK.BanterBrowser),
-            typeof(Banter.SDK.BanterConfigurableJoint),
-            typeof(Banter.SDK.BanterGeometry),
-            typeof(Banter.SDK.BanterGLTF),
-            typeof(Banter.SDK.BanterKitItem),
-            typeof(Banter.SDK.BanterMaterial),
-            typeof(Banter.SDK.BanterMirror),
-            typeof(Banter.SDK.BanterObjectId),
-            typeof(Banter.SDK.BanterPhysicMaterial),
-            typeof(Banter.SDK.BanterPortal),
-            typeof(Banter.SDK.BanterRigidbody),
-            typeof(Banter.SDK.BanterStreetView),
-            typeof(Banter.SDK.BanterText),
-            typeof(Banter.SDK.BanterTransform),
-            typeof(Banter.SDK.BanterVideoPlayer),
+            // Banter
+            // typeof(Banter.SDK.BanterAssetBundle),
+            // typeof(Banter.SDK.BanterAudioSource),
+            // typeof(Banter.SDK.BanterBillboard),
+            // typeof(Banter.SDK.BanterBrowser),
+            // typeof(Banter.SDK.BanterConfigurableJoint),
+            // typeof(Banter.SDK.BanterGeometry),
+            // typeof(Banter.SDK.BanterGLTF),
+            // typeof(Banter.SDK.BanterKitItem),
+            // typeof(Banter.SDK.BanterMaterial),
+            // typeof(Banter.SDK.BanterMirror),
+            // typeof(Banter.SDK.BanterObjectId),
+            // typeof(Banter.SDK.BanterPhysicMaterial),
+            // typeof(Banter.SDK.BanterPortal),
+            // typeof(Banter.SDK.BanterRigidbody),
+            // typeof(Banter.SDK.BanterStreetView),
+            // typeof(Banter.SDK.BanterText),
+            // typeof(Banter.SDK.BanterTransform),
+            // typeof(Banter.SDK.BanterVideoPlayer),
 
-            typeof(Banter.SDK.BanterBoxCollider),
-            typeof(Banter.SDK.BanterCapsuleCollider),
-            typeof(Banter.SDK.BanterColliderEvents),
-            typeof(Banter.SDK.BanterInvertedMesh),
-            typeof(Banter.SDK.BanterMeshCollider),
-            typeof(Banter.SDK.BanterSphereCollider),
+            // typeof(Banter.SDK.BanterBoxCollider),
+            // typeof(Banter.SDK.BanterCapsuleCollider),
+            // typeof(Banter.SDK.BanterColliderEvents),
+            // typeof(Banter.SDK.BanterInvertedMesh),
+            // typeof(Banter.SDK.BanterMeshCollider),
+            // typeof(Banter.SDK.BanterSphereCollider),
         };
 
         //Block types from instantiating in the AOT graph, but also stops them from generating in the editor. So you won't see them in the fuzzy finder.
