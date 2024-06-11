@@ -90,16 +90,16 @@ namespace Banter.SDKEditor
             return reg.Replace(target, $"$1{jsonArrayContents}$3");
         }
 
-#if !BANTER_EDITOR
-        [InitializeOnLoadMethod]
-        private static void OnScriptsReloaded()
-        {
-            if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) == PackageManagerUtility.currentVersion)
-            {
-                UnitBase.Rebuild();
-            }
-        }
-#endif
+// #if !BANTER_EDITOR
+//         [InitializeOnLoadMethod]
+//         private static void OnScriptsReloaded()
+//         {
+//             if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) == PackageManagerUtility.currentVersion)
+//             {
+//                 UnitBase.Rebuild();
+//             }
+//         }
+// #endif
     }
 }
 #endif

@@ -6,9 +6,7 @@
         "GUID:ba171b3dd2a51234ab864770f99741a5",
         "GUID:75469ad4d38634e559750d17036d5f7c",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:21b0c8d1703a94250bfac916590cea4f",
-        "GUID:ea715009a4efd4c6cbc85be3ae097dd3",
-        "GUID:315d634a9ac6d460a9515f5a56be6311"
+        "GUID:21b0c8d1703a94250bfac916590cea4f"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -17,6 +15,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.visualscripting",
+            "expression": "1.7.8",
+            "define": "BANTER_VISUAL_SCRIPTING"
+        }
+    ],
     "noEngineReferences": false
 }

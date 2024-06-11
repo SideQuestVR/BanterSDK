@@ -609,15 +609,14 @@ public class BuilderWindow : EditorWindow
                 OnCompileAll.Invoke();
                 OnCompileInjection.Invoke();
             };
-            rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
             rootVisualElement.Q<Button>("allOnly").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAllComponents();
             rootVisualElement.Q<Button>("clearAll").clicked += () => OnClearAll.Invoke();// SDKCodeGen.ClearAllComponents();
             rootVisualElement.Q<Button>("compileElectron").clicked += () => OnCompileElectron.Invoke();// SDKCodeGen.CompileElectron();
             rootVisualElement.Q<Button>("compileInjection").clicked += () => OnCompileInjection.Invoke();// SDKCodeGen.CompileInjection();
             rootVisualElement.Q<Button>("kitchenSink").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAll();
             Remove(rootVisualElement.Q<Button>("setupLayers"));
+
 #else
-        Remove(rootVisualElement.Q<Button>("visualScript"));
         Remove(rootVisualElement.Q<Button>("allAndInjection"));
         Remove(rootVisualElement.Q<Button>("allOnly"));
         Remove(rootVisualElement.Q<Button>("clearAll"));
@@ -629,12 +628,17 @@ public class BuilderWindow : EditorWindow
 #endif
 
 #if BANTER_VISUAL_SCRIPTING
-        rootVisualElement.Q<Button>("regenVisualScripting").clicked += () => NodeGeneration.SetTypesAndAssemblies();
-#else
-        Remove(rootVisualElement.Q<Button>("regenVisualScripting"));
-#endif
-        rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
 
+#if BANTER_EDITOR
+        rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
+#else
+        Remove(rootVisualElement.Q<Button>("visualScript"));
+#endif // BANTER_EDITOR
+        // TODO: codegen for client side visual scripting helpers.
+#else // BANTER_VISUAL_SCRIPTING
+
+#endif // BANTER_VISUAL_SCRIPTING
+        rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
     }
 
     private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue)
@@ -848,7 +852,8 @@ public class BuilderWindow : EditorWindow
         ShowUploadToggle();
     }
 
-    public void OpenSpaceCreation() {
+    public void OpenSpaceCreation()
+    {
         Application.OpenURL("https://sidequestvr.com/account/create-space");
     }
     private void BuildAssetBundles()
