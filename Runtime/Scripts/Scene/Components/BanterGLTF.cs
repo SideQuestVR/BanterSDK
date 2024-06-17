@@ -1,14 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-// using GLTFast;
-using TMPro;
-using Siccity.GLTFUtility;
-using Unity.VisualScripting;
 using UnityEngine;
-using PropertyName = Banter.SDK.PropertyName;
+using Siccity.GLTFUtility;
 
 namespace Banter.SDK
 {
@@ -131,7 +125,7 @@ namespace Banter.SDK
                                 {
                                     continue;
                                 }
-                                var collider = mf.AddComponent<MeshCollider>();
+                                var collider = mf.gameObject.AddComponent<MeshCollider>();
                                 collider.convex = !nonConvexColliders;
                                 collider.sharedMesh = mf.sharedMesh;
                                 if (climbable)
