@@ -30,10 +30,6 @@ namespace Banter.SDK
             {
                 var id = e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
                 var isVs = id?.StartsWith("Unity.VisualScripting.")??false;
-                if(!isVs)
-                {
-                    Debug.Log(id);
-                }
                 return !(id == null || isVs || members.Contains(id));
             });
             foreach(var element in notAllowedElements)
