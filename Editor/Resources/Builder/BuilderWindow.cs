@@ -631,12 +631,12 @@ public class BuilderWindow : EditorWindow
 
 #if BANTER_EDITOR
         rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
-#else
-        Remove(rootVisualElement.Q<Button>("visualScript"));
+#else // BANTER_EDITOR
+        rootVisualElement.Q<Button>("visualScript").clicked += () => NodeGeneration.SetVSTypesAndAssemblies();
 #endif // BANTER_EDITOR
-        // TODO: codegen for client side visual scripting helpers.
-#else // BANTER_VISUAL_SCRIPTING
 
+#else // BANTER_VISUAL_SCRIPTING
+        Remove(rootVisualElement.Q<Button>("visualScript"));
 #endif // BANTER_VISUAL_SCRIPTING
         rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
     }
