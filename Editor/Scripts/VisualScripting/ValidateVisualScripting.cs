@@ -242,10 +242,7 @@ namespace Banter.SDKEditor
                 var notAllowedElements = everything.Distinct().ToList().Where( e => {
                     var id = e;
                     var isVs = id?.StartsWith("Unity.VisualScripting.")??false;
-                    if(isVs) {
-                        Debug.LogWarning("[VisualScripting] VS node: " + id + " is allowed, skipping");
-                    }
-                    return !(id == null || isVs || AotStubsAllowed.members.Contains(id));
+                    return !(id == null || isVs || VsStubsAllowed.members.Contains(id));
                 });
                 foreach(var element in notAllowedElements.Distinct().ToList()) {
                     Debug.LogError("[VisualScripting] Element not allowed in Banter: " + element);
