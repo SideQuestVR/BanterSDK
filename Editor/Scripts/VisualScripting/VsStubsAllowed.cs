@@ -1,4 +1,5 @@
-#if BANTER_VISUALSCRIPTING
+#if BANTER_VISUAL_SCRIPTING
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Banter.SDKEditor
