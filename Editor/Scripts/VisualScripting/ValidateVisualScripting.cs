@@ -1,4 +1,3 @@
-
 #if BANTER_VISUAL_SCRIPTING
 using System;
 using System.Collections.Generic;
