@@ -153,7 +153,7 @@ namespace Banter.SDK
             var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt")+"\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"), 
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                (isProd ? "--prod true " : "") + "--bebug --devtools --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + Path.Join(Application.dataPath, WEB_ROOT),
+                (isProd ? "--prod true " : "") + "--bebug --devtools --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
                 LogTag.BanterBrowser);
 #else
             var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
