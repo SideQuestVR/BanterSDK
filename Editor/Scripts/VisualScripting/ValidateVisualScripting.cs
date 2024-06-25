@@ -197,12 +197,16 @@ namespace Banter.SDKEditor
         public static void CheckVsNodes() {
             var everything = new List<string>();
             try {
-                string[] guids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
-                foreach (string guid in guids)
+                AssetDatabase.Refresh();
+                string[] scriptguids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
+
+                string[] stateguids = AssetDatabase.FindAssets("t:StateGraphAsset");
+
+                foreach (string guid in scriptguids)
                 {
                     everything = everything.Concat(FindNodesFromScriptGraphAssetGuid(guid)).ToList();
                 }            
-                foreach (string guid in guids)
+                foreach (string guid in stateguids)
                 {
                     everything = everything.Concat(FindNodesFromStateGraphAssetGuid(guid)).ToList();
                 }
