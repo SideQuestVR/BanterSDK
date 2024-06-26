@@ -19,7 +19,7 @@ namespace Banter.SDK
             if (other.CompareTag("__BA_HexaCollider") && CanActivate)
             {
                 CanActivate = false;
-                GetComponent<LookAt>().enabled = false;
+                GetComponent<FaceTarget>().enabled = false;
                 sceneEvents.OnPortalEnter.Invoke(url);
                 // _ = scene.LoadUrl(url); //url  "https://google.com"
             }
