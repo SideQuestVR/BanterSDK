@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace Banter.SDK
 {
-    public class LookAt : MonoBehaviour
+    public class FaceTarget : MonoBehaviour
     {
         [Tooltip("Manually set the target GameObject. If left null, the script will search for the GameObject tagged 'PlayerHead'.")]
         public GameObject targetObject;

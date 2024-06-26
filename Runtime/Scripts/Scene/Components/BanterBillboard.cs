@@ -42,12 +42,12 @@ namespace Banter.SDK
         }
 
         public override void DestroyStuff() { }
-        LookAt lookAt;
+        FaceTarget lookAt;
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (lookAt == null)
             {
-                lookAt = gameObject.AddComponent<LookAt>();
+                lookAt = gameObject.AddComponent<FaceTarget>();
             }
             lookAt.smoothing = smoothing;
             lookAt.enableXAxis = enableXAxis;
