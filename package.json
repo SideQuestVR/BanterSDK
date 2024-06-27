@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.banter",
-  "version": "0.0.11",
+  "version": "2.0.0",
   "displayName": "Banter SDK",
   "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
   "unity": "2021.3",
