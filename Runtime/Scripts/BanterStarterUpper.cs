@@ -22,6 +22,8 @@ namespace Banter.SDK
         public static string WEB_ROOT = "WebRoot";
         private int processId;
 
+        private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
+
         void Awake()
         {
             scene = BanterScene.Instance();
@@ -138,10 +140,22 @@ namespace Banter.SDK
                 // }
             }
         }
+
         public static void ToggleDevTools()
         {
-            BanterScene.Instance().link.ToggleDevTools();
+#if UNITY_EDITOR
+            var devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
+            devToolsEnabled = !devToolsEnabled;
+            UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
+
+            LogLine.Do($"Banter DevTools " + (devToolsEnabled?"enabled.":"disabled.") );
+#endif
+            if (Application.isPlaying)
+            {
+                BanterScene.Instance().link.ToggleDevTools();
+            }
         }
+
         private void StartBrowser()
         {
 #if !BANTER_EDITOR
@@ -153,7 +167,7 @@ namespace Banter.SDK
             var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt")+"\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"), 
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                (isProd ? "--prod true " : "") + "--bebug --devtools --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
+                (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
                 LogTag.BanterBrowser);
 #else
             var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
