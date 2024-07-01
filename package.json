@@ -10,12 +10,13 @@
   "changelogUrl": "https://bantervr.com/sdk-changelog",
   "licensesUrl": "https://bantervr.com/sdk-license",
   "dependencies": {
-    "com.unity.xr.management": "4.2.0",
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.textmeshpro": "3.0.9",
     "com.unity.editorcoroutines": "1.0.0",
     "com.unity.inputsystem": "1.4.4",
-    "com.unity.xr.legacyinputhelpers": "1.4.4"
+    "com.unity.xr.legacyinputhelpers": "1.4.4",
+    "com.unity.xr.management": "4.2.0",
+    "com.unity.xr.oculus": "3.0.2"
   },
   "keywords": [
     "world-building",
