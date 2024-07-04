@@ -740,7 +740,7 @@ namespace Banter.SDK
             //         paramsList += MessageDelimiters.PRIMARY;
             //     }
             // }
-            var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY);
+            var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries);
             var paramList = new List<object>();
             foreach (var param in parameters)
             {
