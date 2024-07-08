@@ -80,8 +80,6 @@ namespace Banter.SDKEditor
         }
 
         public static readonly HashSet<string> assemblyAllowList = new HashSet<string>() {
-            //"BanterSDK",
-
             "mscorlib",
             "Assembly-CSharp-firstpass",
             "Assembly-CSharp",
@@ -116,6 +114,9 @@ namespace Banter.SDKEditor
             
             "Unity.VisualScripting.Flow",//contains all the if, for, while, etc nodes
             "Unity.VisualScripting.State",//state graph nodes (enter, exit)
+
+            // Banter
+            "Banter.VisualScripting",
         };
 
         public static readonly List<Type> typeAllowList = new List<Type>() {
