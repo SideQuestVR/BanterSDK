@@ -244,8 +244,9 @@ namespace Banter.SDKEditor
                 });
                 var notAllowedElements = everything.Distinct().ToList().Where( e => {
                     var id = e;
-                    var isVs = id?.StartsWith("Unity.VisualScripting.")??false;
-                    return !(id == null || isVs || VsStubsAllowed.members.Contains(id));
+                    var isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
+                    var isBanterVs = id?.StartsWith("Banter.VisualScripting.") ?? false;
+                    return !(id == null || isVs || isBanterVs || VsStubsAllowed.members.Contains(id));
                 });
                 foreach(var element in notAllowedElements.Distinct().ToList()) {
                     Debug.LogError("[VisualScripting] Element not allowed in Banter: " + element);

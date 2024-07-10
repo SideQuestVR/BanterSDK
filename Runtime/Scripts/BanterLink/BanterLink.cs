@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+#endif
 
 namespace Banter.SDK
 {
@@ -19,9 +22,14 @@ namespace Banter.SDK
         void Start()
         {
             scene = BanterScene.Instance();
+            scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
+            {
+                EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
+            });
             mainThread = UnityMainThreadDispatcher.Instance();
             SetupPipe();
         }
+
         string GetMsgData(string msg, string command)
         {
             return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
@@ -102,6 +110,11 @@ namespace Banter.SDK
                 {
                     scene.LogMissing();
                 }
+            }
+            else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+            {
+                var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                scene.events.OnJsCallbackRecieved?.Invoke(data[0], data[1]);
             }
             else
             {

@@ -47,7 +47,8 @@ public class APICommands
     public const string DEEP_LINK = "!dl!";
     public const string ONE_SHOT = "!ons!";
     public const string SEND_MENU_BROWSER_MESSAGE = "!smbm!";
-    public const string INJECT_BS = "!ibs!";
+    public const string INJECT_JS = "!ijs!";
+    public const string INJECT_JS_CALLBACK = "!ijc!";
 
     #region Events
     public const string EVENT = "!e!";

@@ -37,6 +37,7 @@ public class BanterSceneEvents : MonoBehaviour
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
+    public UnityEvent<string, string> OnJsCallbackRecieved = new UnityEvent<string, string>();
 
     #region Legacy stuff
 
