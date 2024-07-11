@@ -24,7 +24,10 @@ namespace Banter.SDK
             scene = BanterScene.Instance();
             scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
             {
-                EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
+                mainThread.Enqueue(() =>
+                {
+                    EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
+                });
             });
             mainThread = UnityMainThreadDispatcher.Instance();
             SetupPipe();
