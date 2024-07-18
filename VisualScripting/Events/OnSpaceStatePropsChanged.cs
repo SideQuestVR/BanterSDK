@@ -40,6 +40,11 @@ namespace Banter.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
+            var compare = flow.GetValue<string>(propName)?.Trim();
+            if (string.IsNullOrEmpty(compare))
+            {
+                return true;
+            }
             return data.name == flow.GetValue<string>(propName)?.Trim();
         }
 
