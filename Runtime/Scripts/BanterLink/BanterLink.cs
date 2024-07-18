@@ -22,14 +22,34 @@ namespace Banter.SDK
         void Start()
         {
             scene = BanterScene.Instance();
+            mainThread = UnityMainThreadDispatcher.Instance();
             scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
             {
                 mainThread.Enqueue(() =>
                 {
+#if BANTER_VISUAL_SCRIPTING
                     EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
+#endif
                 });
             });
-            mainThread = UnityMainThreadDispatcher.Instance();
+            scene.events.OnPublicSpaceStateChanged.AddListener((prop, data) =>
+            {
+                mainThread.Enqueue(() =>
+                {
+#if BANTER_VISUAL_SCRIPTING
+                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(prop, new object[] { data, false }));
+#endif
+                });
+            });
+            scene.events.OnProtectedSpaceStateChanged.AddListener((prop, data) =>
+            {
+                mainThread.Enqueue(() =>
+                {
+#if BANTER_VISUAL_SCRIPTING
+                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(prop, new object[] { data, true }));
+#endif
+                });
+            });
             SetupPipe();
         }
 
@@ -117,7 +137,7 @@ namespace Banter.SDK
             else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
             {
                 var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
-                scene.events.OnJsCallbackRecieved?.Invoke(data[0], data[1]);
+                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1]);
             }
             else
             {
