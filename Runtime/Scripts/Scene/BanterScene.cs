@@ -8,6 +8,9 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+#endif
 
 namespace Banter.SDK
 {
@@ -254,6 +257,12 @@ namespace Banter.SDK
                 users.Add(user);
             }
             link?.OnUserJoined(user);
+#if BANTER_VISUAL_SCRIPTING
+            mainThread.Enqueue(() =>
+            {
+                EventBus.Trigger("OnUserJoined", new CustomEventArgs("OnUserJoined", new object[] { user.name, user.id, user.uid, user.color, user.isLocal }));
+            });
+#endif
         }
         public void RemoveUser(UserData user)
         {
@@ -262,6 +271,12 @@ namespace Banter.SDK
                 users.Remove(user);
             }
             link.OnUserLeft(user);
+#if BANTER_VISUAL_SCRIPTING
+            mainThread.Enqueue(() =>
+            {
+                EventBus.Trigger("OnUserLeft", new CustomEventArgs("OnUserLeft", new object[] { user.name, user.id, user.uid, user.color, user.isLocal }));
+            });
+#endif
         }
         public void OpenPage(string msg, int reqId)
         {

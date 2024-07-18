@@ -29,7 +29,6 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => { 
-                Debug.Log("Loading JS");
                 fileContents = flow.GetValue<TextAsset>(textAsset).text;
                 return outputTrigger;
             });
