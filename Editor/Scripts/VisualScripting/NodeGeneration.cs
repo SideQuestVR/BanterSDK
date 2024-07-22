@@ -26,25 +26,38 @@ namespace Banter.SDKEditor
         private const string SETTINGS_ASSET_PATH = "ProjectSettings/VisualScriptingSettings.asset";
         private const string GENERATED_VS_NODES_VERSION_PREFS_KEY = "Banter_GeneratedVSNodesVersion";
 
-        static NodeGeneration()
-        {
-            // if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
-            // {
-            //     EditorApplication.update += CheckForNodeRegen;
-            // }
-        }
+        // static NodeGeneration()
+        // {
+        //     if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
+        //     {
+        //         EditorApplication.update += CheckForNodeRegen;
+        //     }
+        // }
 
-        private static void CheckForNodeRegen()
+#if !BANTER_EDITOR
+        [InitializeOnLoadMethod]
+        private static void OnScriptsReloaded()
         {
-            //in order to do a proper unit rebuild, we need to wait until we know VS has been initialized.
-            //waiting until a VS window is opened is the best way I have found to do this
-            if (EditorWindow.HasOpenInstances<GraphWindow>())
+            if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
             {
-                //EditorApplication.update -= CheckForNodeRegen;
-                UnityEditor.EditorUtility.DisplayDialog("Banter Scripting Initialization", "Hold tight while we make sure your visual scripting settings are just right", "OK");
+                VSUsageUtility.isVisualScriptingUsed = true;
                 SetVSTypesAndAssemblies();
             }
         }
+#endif
+
+        // private static void CheckForNodeRegen()
+        // {
+        //     //in order to do a proper unit rebuild, we need to wait until we know VS has been initialized.
+        //     //waiting until a VS window is opened is the best way I have found to do this
+        //     if (EditorWindow.HasOpenInstances<GraphWindow>())
+        //     {
+        //         EditorApplication.update -= CheckForNodeRegen;
+        //         UnityEditor.EditorUtility.DisplayDialog("Banter Scripting Initialization", "Hold tight while we make sure your visual scripting settings are just right", "OK");
+                
+        //         SetVSTypesAndAssemblies();
+        //     }
+        // }
 
         /// <summary>
         /// We need to set the supported types and assemblies in ProjectSettings/VisualScripting
@@ -77,6 +90,20 @@ namespace Banter.SDKEditor
 
             AssetDatabase.Refresh();
             CompilationPipeline.RequestScriptCompilation();
+
+            UnitBase.Rebuild();
+
+            PlayerPrefs.SetString(GENERATED_VS_NODES_VERSION_PREFS_KEY, PackageManagerUtility.currentVersion);
+            PlayerPrefs.Save();
+        }
+
+        private static string SetJSONArrayValueHelper(this string target, string arrayContainerName, IEnumerable<string> arrayContents)
+        {
+            // Match pattern of "<arrayContainerName>":{"$content":[<any # of characters>]
+            Regex reg = new Regex($"(\"{arrayContainerName}\":{{\"\\$content\":\\[)(.*)(\\])");
+            string jsonArrayContents = string.Join(',', arrayContents.Select(s => $"\"{s}\""));
+            // Only replace the second capture group, since that contains current array contents.
+            return reg.Replace(target, $"$1{jsonArrayContents}$3");
         }
 
         public static readonly HashSet<string> assemblyAllowList = new HashSet<string>() {
@@ -233,26 +260,6 @@ namespace Banter.SDKEditor
             // typeof(Banter.SDK.BanterMeshCollider),
             // typeof(Banter.SDK.BanterSphereCollider),
         };
-
-        private static string SetJSONArrayValueHelper(this string target, string arrayContainerName, IEnumerable<string> arrayContents)
-        {
-            // Match pattern of "<arrayContainerName>":{"$content":[<any # of characters>]
-            Regex reg = new Regex($"(\"{arrayContainerName}\":{{\"\\$content\":\\[)(.*)(\\])");
-            string jsonArrayContents = string.Join(',', arrayContents.Select(s => $"\"{s}\""));
-            // Only replace the second capture group, since that contains current array contents.
-            return reg.Replace(target, $"$1{jsonArrayContents}$3");
-        }
-
-// #if !BANTER_EDITOR
-//         [InitializeOnLoadMethod]
-//         private static void OnScriptsReloaded()
-//         {
-//             if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) == PackageManagerUtility.currentVersion)
-//             {
-//                 UnitBase.Rebuild();
-//             }
-//         }
-// #endif
     }
 }
 #endif
