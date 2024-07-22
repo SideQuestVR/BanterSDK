@@ -17,7 +17,6 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Specialized;
 using UnityEngine.AI;
-using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
