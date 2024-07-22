@@ -863,7 +863,7 @@ public class BuilderWindow : EditorWindow
             AddStatus("Nothing to build...");
             return;
         }
-        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrEmpty(scenePath))
+        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
         {
             AddStatus("No scene selected...");
             return;
@@ -873,6 +873,19 @@ public class BuilderWindow : EditorWindow
             AddStatus("No objects selected...");
             return;
         }
+
+#if BANTER_VISUAL_SCRIPTING
+        if (!ValidateVisualScripting.CheckVsNodes())
+        {
+            AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
+            return;
+        }
+        else
+        {
+            AddStatus("Visual Scripting check passed!");
+        }
+#endif
+
         AddStatus("Build started...");
 
         if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
@@ -880,21 +893,10 @@ public class BuilderWindow : EditorWindow
             Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
         }
 
-
-        if (mode == BanterBuilderBundleMode.None)
-        {
-            throw new Exception("Nothing to build!");
-        }
-        else if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
-        {
-            throw new Exception("No scene to build!");
-        }
-        else if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count < 1)
-        {
-            throw new Exception("No kit objects to build!");
-        }
         buildProgressBar.value = 25;
         List<string> names = new List<string>();
+
+
         for (int i = 0; i < buildTargets.Length; i++)
         {
             buildProgressBar.value += 25;

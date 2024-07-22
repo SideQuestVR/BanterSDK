@@ -7,7 +7,6 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.VisualScripting;
-using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
@@ -20,7 +19,8 @@ namespace Banter.SDKEditor
         {
             CheckVsNodes();
         }
-        
+#endif
+
         private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph)
         {
                 var output = new List<string>();
@@ -35,6 +35,7 @@ namespace Banter.SDKEditor
             }
             return output;
         }
+        
         private static List<string> GetElementsFromStateGraph(GraphReference reference, StateGraph graph)
         {
             var output = new List<string>();
@@ -142,6 +143,7 @@ namespace Banter.SDKEditor
         {
             return keyword.ToLowerInvariant().Replace(" ", "").Replace(".", "");
         }
+
         private static List<string> FindNodesFromScriptGraphAssetGuid(string guid)
         {
             var output = new List<string>();
@@ -173,28 +175,26 @@ namespace Banter.SDKEditor
         }
 
         private static List<string> GetElementsFromScriptMachine(ScriptMachine scriptMachine)
+        {
+            var output = new List<string>();
+            if (scriptMachine == null || (scriptMachine.graph.elements.Count() == 0 && scriptMachine.nest?.embed?.elements.Count == 0))
             {
-                var output = new List<string>();
-                if (scriptMachine == null || (scriptMachine.graph.elements.Count() == 0 && scriptMachine.nest?.embed?.elements.Count == 0))
-                {
-                    return output;
-                }
-
-                var reference = scriptMachine.GetReference().AsReference();
-                foreach (var e in scriptMachine.graph.elements)
-                {
-                    output = output.Concat(GrabElements(e, reference)).ToList();
-                }
-                foreach (var e in scriptMachine.nest?.embed?.elements)
-                {
-                    output = output.Concat(GrabElements(e, reference)).ToList();
-                }
                 return output;
             }
 
-            
-        
-        public static void CheckVsNodes() {
+            var reference = scriptMachine.GetReference().AsReference();
+            foreach (var e in scriptMachine.graph.elements)
+            {
+                output = output.Concat(GrabElements(e, reference)).ToList();
+            }
+            foreach (var e in scriptMachine.nest?.embed?.elements)
+            {
+                output = output.Concat(GrabElements(e, reference)).ToList();
+            }
+            return output;
+        }
+       
+        public static bool CheckVsNodes() {
             var everything = new List<string>();
             try {
                 AssetDatabase.Refresh();
@@ -230,6 +230,7 @@ namespace Banter.SDKEditor
                         } catch (Exception e)
                         {
                             Debug.Log($"Error while loading prefabs to search from them in path {assetPath} {e.Message} {e.StackTrace}");
+                            return false;
                         }
                     }
                 }
@@ -253,12 +254,14 @@ namespace Banter.SDKEditor
                 }
                 if(notAllowedElements.Count() > 0) {
                     Debug.LogError("[VisualScripting] Found elements that are not allowed for Visual Scripting");
+                    return false;
                 }
             } catch(Exception e){
                 Debug.LogError($"[VisualScripting] Encountered an error while searching in all scripts {e.Message} {e.StackTrace}");
-            }  
+                return false;
+            }
+            return true;
         }
-#endif
     }
 }
 #endif
