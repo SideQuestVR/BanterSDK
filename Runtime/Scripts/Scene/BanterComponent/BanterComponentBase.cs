@@ -12,7 +12,7 @@ namespace Banter.SDK
         public abstract void Deserialise(List<object> values);
         public abstract void SyncProperties(bool force, Action callback = null);
         public abstract void WatchProperties(PropertyName[] properties);
-        public abstract void Init();
+        public abstract void Init(List<object> constructorProperties = null);
         public abstract void ReSetup();
         public abstract void StartStuff();
         public abstract void DestroyStuff();
