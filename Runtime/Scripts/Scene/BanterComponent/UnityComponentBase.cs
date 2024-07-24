@@ -28,7 +28,7 @@ namespace Banter.SDK
             // throw new NotImplementedException();
         }
 
-        public override void Init()
+        public override void Init(List<object> constructorProperties = null)
         {
             throw new System.NotImplementedException();
         }

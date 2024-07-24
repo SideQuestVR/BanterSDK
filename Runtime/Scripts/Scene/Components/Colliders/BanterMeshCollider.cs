@@ -54,7 +54,7 @@ namespace Banter.SDK
 
         }
 
-        public override void Init()
+        public override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -68,6 +68,12 @@ namespace Banter.SDK
 
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
+
+            if (constructorProperties != null)
+            {
+                Deserialise(constructorProperties);
+            }
+
             SyncProperties(true);
             SetLoadedIfNot();
         }

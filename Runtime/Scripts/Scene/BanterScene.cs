@@ -969,11 +969,9 @@ namespace Banter.SDK
                     APICommands.COMPONENT_ADDED + MessageDelimiters.PRIMARY + banterComp.banterObject.oid + MessageDelimiters.PRIMARY + banterComp.cid +
                     MessageDelimiters.PRIMARY + (int)banterComp.type + MessageDelimiters.PRIMARY + linkId);
                 }
-                comp.Init();
-                var updates = SetComponentProperties(3, parts, banterComp, msg);
 
-                comp.Deserialise(updates);
-
+                var constructorProps = SetComponentProperties(3, parts, banterComp, msg);
+                comp.Init(constructorProps);
             });
         }
         private List<object> SetComponentProperties(int startIndex, string[] parts, BanterComponent banterComp, string msg = null)
