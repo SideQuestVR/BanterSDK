@@ -452,7 +452,7 @@ namespace Banter.SDK
         #endregion
 
         #region Manage Banter Objects
-        public void AddBanterObject(GameObject gameObject, BanterObjectId banterObjectId)
+        public void AddBanterObject(GameObject gameObject, BanterObjectId banterObjectId, bool skipChangeFlush = false)
         {
             var oid = gameObject.GetInstanceID();
             if (!objects.ContainsKey(oid))
@@ -466,8 +466,10 @@ namespace Banter.SDK
                 };
                 banterObject.unityAndBanterObject = unityAndBanterObject;
                 objects.TryAdd(oid, unityAndBanterObject);
-                FlushObjectToChanges(oid, 0, 0);
-                //dirty = true;
+                if (!skipChangeFlush)
+                {
+                    FlushObjectToChanges(oid, 0, 0);
+                }
             }
         }
         public BanterObject GetBanterObject(int objectId)
@@ -1165,13 +1167,13 @@ namespace Banter.SDK
             {
                 try
                 {
-                    var go = new GameObject(parts[1]);
+                    var go = new GameObject(parts[2]);
                     go.transform.parent = settings.parentTransform;
-
-                    AddBanterObject(go, go.AddComponent<BanterObjectId>());
+                    go.AddComponent<BanterObjectId>();
+                    AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                     await new WaitForSeconds(2);
-                    if (parts[2] == "0")
+                    if (parts[1] == "0")
                     {
                         Debug.Log("Creating object that is not active: " + go.name);
                         go.SetActive(false);
