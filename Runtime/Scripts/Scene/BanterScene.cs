@@ -466,7 +466,8 @@ namespace Banter.SDK
                 };
                 banterObject.unityAndBanterObject = unityAndBanterObject;
                 objects.TryAdd(oid, unityAndBanterObject);
-                if(!skipChangeFlush) {
+                if (!skipChangeFlush)
+                {
                     FlushObjectToChanges(oid, 0, 0);
                 }
             }
