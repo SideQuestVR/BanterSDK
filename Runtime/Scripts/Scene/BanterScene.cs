@@ -48,6 +48,7 @@ namespace Banter.SDK
         public static string ORIGINAL_HOME_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
+        public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
         public bool externalLoadFailed;
         public BanterLink link;
         public BanterSceneEvents events;
