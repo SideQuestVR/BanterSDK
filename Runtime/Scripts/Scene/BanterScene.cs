@@ -51,6 +51,10 @@ namespace Banter.SDK
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
+
+        
+        String mainFunction = "";
+        String subFunction = "";
         public bool externalLoadFailed;
         public BanterLink link;
         public BanterSceneEvents events;
@@ -351,12 +355,9 @@ namespace Banter.SDK
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
-
-        public async void YtInfo(string youtubeId, int reqId) {
+        private async Task YtCipher(string youtubeId) {
             var embedHtml = await Get.Text("https://www.youtube.com/embed/" + youtubeId);
             var regex = new Regex("src=\"(.*?)/www-embed-player\\.vflset/www-embed-player\\.js\"");
-            var mainFunction = "";
-            var subFunction = "";
             var match = regex.Match(embedHtml);
             if (match.Success){
                 var playerBaseUrl = "https://youtube.com" + match.Groups[1].Captures[0].Value + "/player_ias.vflset/en_US/base.js";
@@ -373,6 +374,11 @@ namespace Banter.SDK
                         subFunction = match.Groups[0].Captures[0].Value;
                     }
                 }
+            }
+        }
+        public async void YtInfo(string youtubeId, int reqId) {
+            if(string.IsNullOrEmpty(mainFunction) || string.IsNullOrEmpty(subFunction)) {
+                await YtCipher(youtubeId);
             }
             var headers = new Dictionary<string, string>
             {
