@@ -365,7 +365,7 @@ namespace Banter.SDK
                 );
                 var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
                 var cleanJson = JsonUtility.ToJson(responseContext);
-                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT + MessageDelimiters.TERTIARY + cleanJson ); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson ); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
             });
         }
         #endregion
