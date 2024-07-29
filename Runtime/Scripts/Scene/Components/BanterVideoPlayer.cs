@@ -42,6 +42,7 @@ namespace Banter.SDK
         [See(initial = "false")] public bool loop;
         [See(initial = "true")] public bool playOnAwake;
         [See(initial = "true")] public bool skipOnDrop;
+        [See(initial = "0")] public float time;
         [See(initial = "true")] public bool waitForFirstFrame;
         VideoPlayer _source;
 
@@ -69,6 +70,10 @@ namespace Banter.SDK
             if (changedProperties.Contains(PropertyName.loop))
             {
                 _source.isLooping = loop;
+            }
+            if (changedProperties.Contains(PropertyName.time))
+            {
+                _source.time = time;
             }
             if (changedProperties.Contains(PropertyName.playOnAwake))
             {
@@ -103,7 +108,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.time, PropertyName.waitForFirstFrame, };
             UpdateCallback(changedProperties);
         }
 
@@ -194,6 +199,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.skipOnDrop);
                     }
                 }
+                if (values[i] is BanterFloat)
+                {
+                    var valtime = (BanterFloat)values[i];
+                    if (valtime.n == PropertyName.time)
+                    {
+                        time = valtime.x;
+                        changedProperties.Add(PropertyName.time);
+                    }
+                }
                 if (values[i] is BanterBool)
                 {
                     var valwaitForFirstFrame = (BanterBool)values[i];
@@ -265,6 +279,18 @@ namespace Banter.SDK
                     name = PropertyName.skipOnDrop,
                     type = PropertyType.Bool,
                     value = skipOnDrop,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.time,
+                    type = PropertyType.Float,
+                    value = time,
                     componentType = ComponentType.BanterVideoPlayer,
                     oid = oid,
                     cid = cid
