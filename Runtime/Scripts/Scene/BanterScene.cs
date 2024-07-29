@@ -352,15 +352,17 @@ namespace Banter.SDK
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
-        public void YtInfo(string youtubeId, int reqId) {
+        public void YtInfo(string youtubeId, int reqId)
+        {
             var headers = new Dictionary<string, string>
             {
                 { "Content-Type", "application/json" },
             };
-            mainThread?.Enqueue(async() => {
+            mainThread?.Enqueue(async () =>
+            {
                 var videoInfo = await Post.Text(
-                    "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", 
-                    "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" +youtubeId +"\"}", 
+                    "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+                    "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" + youtubeId + "\"}",
                     headers
                 );
                 var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
