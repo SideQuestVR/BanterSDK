@@ -52,9 +52,6 @@ namespace Banter.SDK
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
 
-        
-        String mainFunction = "";
-        String subFunction = "";
         public bool externalLoadFailed;
         public BanterLink link;
         public BanterSceneEvents events;
@@ -355,48 +352,21 @@ namespace Banter.SDK
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
-        private async Task YtCipher(string youtubeId) {
-            var embedHtml = await Get.Text("https://www.youtube.com/embed/" + youtubeId);
-            var regex = new Regex("src=\"(.*?)/www-embed-player\\.vflset/www-embed-player\\.js\"");
-            var match = regex.Match(embedHtml);
-            if (match.Success){
-                var playerBaseUrl = "https://youtube.com" + match.Groups[1].Captures[0].Value + "/player_ias.vflset/en_US/base.js";
-                var playerBase = await Get.Text(playerBaseUrl);
-                regex = new Regex("function\\(a\\){a=a\\.split(.*?)return a\\.join");
-                match = regex.Match(playerBase);
-                if (match.Success){
-                    var value = match.Groups[0].Captures[0].Value;
-                    mainFunction = value + "(\"\")};";
-                    var varName = value.Split(";")[1].Split(".")[0];
-                    regex = new Regex("var\\ " + varName + "=\\{(.*?)}};");
-                    match = regex.Match(Regex.Replace(playerBase, @"\t|\n|\r", ""));
-                    if (match.Success){
-                        subFunction = match.Groups[0].Captures[0].Value;
-                    }
-                }
-            }
-        }
-        public async void YtInfo(string youtubeId, int reqId) {
-            if(string.IsNullOrEmpty(mainFunction) || string.IsNullOrEmpty(subFunction)) {
-                await YtCipher(youtubeId);
-            }
+        public void YtInfo(string youtubeId, int reqId) {
             var headers = new Dictionary<string, string>
             {
-                { "X-YouTube-Client-Name", "1" },
                 { "Content-Type", "application/json" },
-                { "Accept", "*/*"},
-                { "Accept-Encoding", "gzip, deflate"},
-                { "X-YouTube-Client-Version", "2.20220801.00.00" },
-                { "User-Agent", "com.google.android.youtube/18.11.34 (Linux; U; Android 11) gzip" },
             };
-            var videoInfo = await Post.Text(
-                "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", 
-                "{\"context\": {\"client\": {\"clientName\": \"WEB\",\"clientVersion\": \"2.20220801.00.00\",\"hl\": \"en\"}},\"videoId\": \"" +youtubeId +"\"}", 
-                headers
-            );
-            var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
-            var cleanJson = JsonUtility.ToJson(responseContext);
-            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT + MessageDelimiters.TERTIARY + cleanJson + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction );
+            mainThread?.Enqueue(async() => {
+                var videoInfo = await Post.Text(
+                    "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8", 
+                    "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" +youtubeId +"\"}", 
+                    headers
+                );
+                var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
+                var cleanJson = JsonUtility.ToJson(responseContext);
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT + MessageDelimiters.TERTIARY + cleanJson ); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
+            });
         }
         #endregion
 
