@@ -1,7 +1,8 @@
 using System;
 
 [Serializable]
-public class YtFormats{
+public class YtFormats
+{
     public int itag;
     public int bitrate;
     public int width;
