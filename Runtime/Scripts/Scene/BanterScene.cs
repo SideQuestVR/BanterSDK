@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
+using System.Text.RegularExpressions;
+
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
@@ -49,6 +51,7 @@ namespace Banter.SDK
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
+
         public bool externalLoadFailed;
         public BanterLink link;
         public BanterSceneEvents events;
@@ -348,6 +351,24 @@ namespace Banter.SDK
             }
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
+        }
+        public void YtInfo(string youtubeId, int reqId)
+        {
+            var headers = new Dictionary<string, string>
+            {
+                { "Content-Type", "application/json" },
+            };
+            mainThread?.Enqueue(async () =>
+            {
+                var videoInfo = await Post.Text(
+                    "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+                    "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" + youtubeId + "\"}",
+                    headers
+                );
+                var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
+                var cleanJson = JsonUtility.ToJson(responseContext);
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
+            });
         }
         #endregion
 
