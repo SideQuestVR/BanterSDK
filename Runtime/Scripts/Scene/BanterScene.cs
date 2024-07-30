@@ -366,7 +366,6 @@ namespace Banter.SDK
             }
             else if (propType == APICommands.SET_PROTECTED_SPACE_PROPS || propType == APICommands.SET_PUBLIC_SPACE_PROPS)
             {
-                // Debug.Log(data);
                 foreach (var prop in props)
                 {
                     var parts = prop.Split(MessageDelimiters.TERTIARY);

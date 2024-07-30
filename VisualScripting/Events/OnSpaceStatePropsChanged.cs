@@ -19,7 +19,7 @@ namespace Banter.VisualScripting
         public ValueOutput newValue;
 
         [DoNotSerialize]
-        public ValueOutput protectedProperty;
+        public ValueOutput isPublic;
 
 
         protected override bool register => true;
@@ -33,9 +33,9 @@ namespace Banter.VisualScripting
         {
             base.Definition();
 
-            propName = ValueInput("Property name", string.Empty);
+            propName = ValueInput("Property Name", string.Empty);
             newValue = ValueOutput<string>("New Value");
-            protectedProperty = ValueOutput<bool>("Protected Property");
+            isPublic = ValueOutput<bool>("is Public Property?");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -52,7 +52,7 @@ namespace Banter.VisualScripting
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
             flow.SetValue(newValue, data.arguments[0]);
-            flow.SetValue(protectedProperty, data.arguments[1]);
+            flow.SetValue(isPublic, data.arguments[1]);
         }
     }
 }
