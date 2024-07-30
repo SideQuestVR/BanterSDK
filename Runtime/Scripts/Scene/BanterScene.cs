@@ -264,7 +264,7 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             mainThread.Enqueue(() =>
             {
-                EventBus.Trigger("OnUserJoined", new CustomEventArgs("OnUserJoined", new object[] { user.name, user.id, user.uid, user.color, user.isLocal }));
+                EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
             });
 #endif
         }
@@ -278,7 +278,7 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             mainThread.Enqueue(() =>
             {
-                EventBus.Trigger("OnUserLeft", new CustomEventArgs("OnUserLeft", new object[] { user.name, user.id, user.uid, user.color, user.isLocal }));
+                EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
             });
 #endif
         }
@@ -367,7 +367,7 @@ namespace Banter.SDK
                 );
                 var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
                 var cleanJson = JsonUtility.ToJson(responseContext);
-                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson ); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
             });
         }
         #endregion
@@ -387,7 +387,6 @@ namespace Banter.SDK
             }
             else if (propType == APICommands.SET_PROTECTED_SPACE_PROPS || propType == APICommands.SET_PUBLIC_SPACE_PROPS)
             {
-                // Debug.Log(data);
                 foreach (var prop in props)
                 {
                     var parts = prop.Split(MessageDelimiters.TERTIARY);

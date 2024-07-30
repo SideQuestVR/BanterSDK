@@ -13,12 +13,6 @@ namespace Banter.VisualScripting
     public class ReadJsFromFile : Unit
     {
         [DoNotSerialize]
-        public ControlInput inputTrigger;
-
-        [DoNotSerialize]
-        public ControlOutput outputTrigger;
-
-        [DoNotSerialize]
         public ValueInput textAsset;
 
         [DoNotSerialize]
@@ -28,15 +22,18 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => { 
-                fileContents = flow.GetValue<TextAsset>(textAsset).text;
-                return outputTrigger;
+            textAsset = ValueInput<TextAsset>("File");
+            jsCode = ValueOutput("BullSchript", (flow) => 
+            {
+                var asset = flow.GetValue<TextAsset>(textAsset);
+                if (asset == null)
+                {
+                    return string.Empty;
+                }
+
+                fileContents = asset.text;
+                return fileContents;
             });
-            outputTrigger = ControlOutput("");
-
-            textAsset = ValueInput<TextAsset>("BS file", null);
-
-            jsCode = ValueOutput("BullSchript", (flow) => fileContents);
         }
     }
 }

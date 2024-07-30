@@ -32,21 +32,21 @@ namespace Banter.SDK
 #endif
                 });
             });
-            scene.events.OnPublicSpaceStateChanged.AddListener((prop, data) =>
+            scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
             {
                 mainThread.Enqueue(() =>
                 {
 #if BANTER_VISUAL_SCRIPTING
-                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(prop, new object[] { data, false }));
+                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
 #endif
                 });
             });
-            scene.events.OnProtectedSpaceStateChanged.AddListener((prop, data) =>
+            scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
             {
                 mainThread.Enqueue(() =>
                 {
 #if BANTER_VISUAL_SCRIPTING
-                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(prop, new object[] { data, true }));
+                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
 #endif
                 });
             });

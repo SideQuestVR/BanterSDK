@@ -9,22 +9,10 @@ namespace Banter.VisualScripting
     [UnitShortTitle("User Left")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnUserLeft : EventUnit<CustomEventArgs>
+    public class OnUserLeft : EventUnit<BanterUser>
     {
         [DoNotSerialize]
-        public ValueOutput name;
-
-        [DoNotSerialize]
-        public ValueOutput id;
-
-        [DoNotSerialize]
-        public ValueOutput uid;
-
-        [DoNotSerialize]
-        public ValueOutput color;
-
-        [DoNotSerialize]
-        public ValueOutput isLocal;
+        public ValueOutput info;
 
         protected override bool register => true;
 
@@ -37,38 +25,19 @@ namespace Banter.VisualScripting
         {
             base.Definition();
 
-            name = ValueOutput<string>("name");
-            id = ValueOutput<string>("id");
-            uid = ValueOutput<string>("uid");
-            color = ValueOutput<Color>("color");
-            isLocal = ValueOutput<bool>("isLocal");
+            info = ValueOutput<BanterUser>("User Info");
         }
 
-        protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
+        protected override bool ShouldTrigger(Flow flow, BanterUser data)
         {
             return true;
         }
 
         // Setting the value on our port.
-        protected override void AssignArguments(Flow flow, CustomEventArgs data)
+        protected override void AssignArguments(Flow flow, BanterUser data)
         {
             // name
-            flow.SetValue(name, data.arguments[0]);
-            // id
-            flow.SetValue(id, data.arguments[1]);
-            // uid
-            flow.SetValue(uid, data.arguments[2]);
-            // Color is string, convert
-            if (ColorUtility.TryParseHtmlString((string)data.arguments[3], out Color converted))
-            {
-                flow.SetValue(color, converted);
-            }
-            else
-            {
-                flow.SetValue(color, Color.white);
-            }
-            // isLocal
-            flow.SetValue(isLocal, data.arguments[4]);
+            flow.SetValue(info, data);
         }
     }
 }

@@ -142,6 +142,7 @@ namespace Banter.SDKEditor
             "Unity.VisualScripting.State",//state graph nodes (enter, exit)
 
             // Banter
+            "Banter.SDK",
             "Banter.VisualScripting",
         };
 
@@ -233,6 +234,7 @@ namespace Banter.SDKEditor
             typeof(OffMeshLinkType),
 
             // Banter
+            typeof(Banter.SDK.BanterUser),
             // typeof(Banter.SDK.BanterAssetBundle),
             // typeof(Banter.SDK.BanterAudioSource),
             // typeof(Banter.SDK.BanterBillboard),
