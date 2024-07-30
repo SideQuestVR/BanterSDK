@@ -49,6 +49,7 @@ public class APICommands
     public const string SEND_MENU_BROWSER_MESSAGE = "!smbm!";
     public const string INJECT_JS = "!ijs!";
     public const string INJECT_JS_CALLBACK = "!ijc!";
+    public const string YT_INFO = "!yti!";
 
     #region Events
     public const string EVENT = "!e!";

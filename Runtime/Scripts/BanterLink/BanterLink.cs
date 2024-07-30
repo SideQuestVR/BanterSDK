@@ -194,6 +194,10 @@ namespace Banter.SDK
                 var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
                 scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
             }
+            else if (msg.StartsWith(APICommands.YT_INFO))
+            {
+                scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
+            }
             else if (msg.StartsWith(APICommands.OPEN_PAGE))
             {
                 scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
