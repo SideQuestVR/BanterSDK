@@ -3,6 +3,7 @@ using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
+using System.Data.Common;
 
 namespace Banter.VisualScripting
 {
@@ -16,42 +17,14 @@ namespace Banter.VisualScripting
         public ValueInput idOrName;
 
         [DoNotSerialize]
-        public ValueOutput name;
-
-        [DoNotSerialize]
-        public ValueOutput id;
-
-        [DoNotSerialize]
-        public ValueOutput uid;
-
-        [DoNotSerialize]
-        public ValueOutput color;
-
-        [DoNotSerialize]
-        public ValueOutput isLocal;
+        public ValueOutput info;
 
         protected override void Definition()
         {
             idOrName = ValueInput("id, uid, or name", string.Empty);
 
-            name = ValueOutput("Name", (f) => GetUserData(f)?.name);
-            id = ValueOutput("Id", (f) => GetUserData(f)?.id);
-            uid = ValueOutput("Uid", (f) => GetUserData(f)?.uid);
-            color = ValueOutput<Color>("Color", (f) =>
-            {
-                var returncol = GetUserData(f)?.color;
-                if (ColorUtility.TryParseHtmlString(returncol, out Color converted))
-                {
-                    return converted;
-                }
-                return Color.black;
-            });
-            isLocal = ValueOutput("Is Local", (f) => GetUserData(f)?.isLocal);
-        }
-
-        private UserData GetUserData(Flow f)
-        {
-            return BanterScene.Instance().users.First(user => 
+            info = ValueOutput("Name", (f) => {
+                var data = BanterScene.Instance().users.First(user => 
                 {
                     var value = f.GetValue<string>(idOrName);
 
@@ -61,6 +34,15 @@ namespace Banter.VisualScripting
                     }
                     return false;
                 });
+                return new BanterUser()
+                {
+                    name = data.name,
+                    id = data.id,
+                    uid = data.uid,
+                    color = data.color,
+                    isLocal = data.isLocal
+                };
+            });
         }
     }
 
@@ -71,40 +53,22 @@ namespace Banter.VisualScripting
     public class GetLocalUserInfo : Unit
     {
         [DoNotSerialize]
-        public ValueOutput name;
-
-        [DoNotSerialize]
-        public ValueOutput id;
-
-        [DoNotSerialize]
-        public ValueOutput uid;
-
-        [DoNotSerialize]
-        public ValueOutput color;
-
-        [DoNotSerialize]
-        public ValueOutput isLocal;
+        public ValueOutput info;
 
         protected override void Definition()
         {
-            name = ValueOutput("Name", (f) => GetUserData(f)?.name);
-            id = ValueOutput("Id", (f) => GetUserData(f)?.id);
-            uid = ValueOutput("Uid", (f) => GetUserData(f)?.uid);
-            color = ValueOutput<Color>("Color", (f) =>
+            info = ValueOutput("User Info", (f) =>
             {
-                var returncol = GetUserData(f)?.color;
-                if (ColorUtility.TryParseHtmlString(returncol, out Color converted))
+                var data = BanterScene.Instance().users.First(user => user.isLocal);
+                return new BanterUser()
                 {
-                    return converted;
-                }
-                return Color.black;
+                    name = data.name,
+                    id = data.id,
+                    uid = data.uid,
+                    color = data.color,
+                    isLocal = data.isLocal
+                };
             });
-            isLocal = ValueOutput("Is Local", (f) => GetUserData(f)?.isLocal);
-        }
-
-        private UserData GetUserData(Flow f)
-        {
-            return BanterScene.Instance().users.First(user => user.isLocal);
         }
     }
 }
