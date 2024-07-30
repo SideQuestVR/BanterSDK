@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class BanterSceneEvents : MonoBehaviour
+public class BanterSceneEvents
 {
     public UnityEvent OnLoad = new UnityEvent();
     public UnityEvent OnDomReady = new UnityEvent();
