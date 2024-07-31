@@ -30,17 +30,15 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var propKey = flow.GetValue<string>(key);
                 var propValue = flow.GetValue<string>(value);
-                var protectedProperty = flow.GetValue<bool>(isPublic);
+                var propIsPublic = flow.GetValue<bool>(isPublic);
 
-                if (protectedProperty)
+                if (propIsPublic)
                 {
-                    BanterScene.Instance().events.OnProtectedSpaceStateChanged.Invoke(propKey, propValue);
-                    //BanterScene.Instance().SetProps(APICommands.SET_PROTECTED_SPACE_PROPS, $"{propKey}{MessageDelimiters.TERTIARY}{propValue}");
+                    BanterScene.Instance().events.OnPublicSpaceStateChanged.Invoke(propKey, propValue);
                 }
                 else
                 {
-                    BanterScene.Instance().events.OnPublicSpaceStateChanged.Invoke(propKey, propValue);
-                    //BanterScene.Instance().SetProps(APICommands.SET_PUBLIC_SPACE_PROPS, $"{propKey}{MessageDelimiters.TERTIARY}{propValue}");
+                    BanterScene.Instance().events.OnProtectedSpaceStateChanged.Invoke(propKey, propValue);
                 }
 
                 return outputTrigger;
