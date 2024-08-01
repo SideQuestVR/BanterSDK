@@ -339,16 +339,6 @@ namespace Banter.SDK
             mainThread?.Enqueue(() => {
                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
             });
-#else
-            var user = users.FirstOrDefault(x => x.id == parts[5]);
-            if (user != null)
-            {
-                mainThread?.Enqueue(() =>
-                {
-                    user.transform.position = point;
-                    user.transform.eulerAngles = rotation;
-                });
-            }
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
