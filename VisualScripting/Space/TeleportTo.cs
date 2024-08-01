@@ -36,10 +36,10 @@ namespace Banter.VisualScripting
                 var rotation = flow.GetValue<float>(targetRotation);
                 var stop = flow.GetValue<bool>(stopVelocity);
                 var spawn = flow.GetValue<bool>(isSpawn);
-
-                BanterScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, rotation, 0f), stop, spawn);
-
-#if !BANTER_EDITOR // Local Teleport
+                BanterScene.Instance().mainThread?.Enqueue(() => {
+                    BanterScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, rotation, 0f), stop, spawn);
+                });
+#if !BANTER_EDITOR // Teleport for SDK only
                 var localPlayer = BanterScene.Instance().users.First(user => user.isLocal);
                 localPlayer.gameObject.transform.position = position;
                 localPlayer.gameObject.transform.eulerAngles = new Vector3(0f, rotation, 0f);
