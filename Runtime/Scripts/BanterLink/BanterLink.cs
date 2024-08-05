@@ -23,6 +23,8 @@ namespace Banter.SDK
         {
             scene = BanterScene.Instance();
             mainThread = UnityMainThreadDispatcher.Instance();
+            SetupPipe();
+
             scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
             {
                 mainThread.Enqueue(() =>
@@ -32,6 +34,7 @@ namespace Banter.SDK
 #endif
                 });
             });
+#if !BANTER_EDITOR
             scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
             {
                 mainThread.Enqueue(() =>
@@ -50,7 +53,7 @@ namespace Banter.SDK
 #endif
                 });
             });
-            SetupPipe();
+#endif
         }
 
         string GetMsgData(string msg, string command)
