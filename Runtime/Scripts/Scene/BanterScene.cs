@@ -908,13 +908,13 @@ namespace Banter.SDK
             }
             var position = new Vector3(Germany.DeGermaniser(msgParts[0]), Germany.DeGermaniser(msgParts[1]), Germany.DeGermaniser(msgParts[2]));
             var direction = new Vector3(Germany.DeGermaniser(msgParts[3]), Germany.DeGermaniser(msgParts[4]), Germany.DeGermaniser(msgParts[5]));
-            var maxDistance = msgParts.Length>6? Germany.DeGermaniser(msgParts[6]):-1;
-            var layerMask = msgParts.Length>6? int.Parse(msgParts[7]):-1;
+            var maxDistance = msgParts.Length > 6 ? Germany.DeGermaniser(msgParts[6]) : -1;
+            var layerMask = msgParts.Length > 6 ? int.Parse(msgParts[7]) : -1;
             mainThread.Enqueue(() =>
             {
                 RaycastHit hit;
                 bool didHit = false;
-                if(msgParts.Length==6)
+                if (msgParts.Length == 6)
                 {
                     didHit = Physics.Raycast(position, direction, out hit);
                 }
@@ -926,8 +926,8 @@ namespace Banter.SDK
                 {
                     didHit = Physics.Raycast(position, direction, out hit, maxDistance, layerMask);
                 }
-                
-                if(didHit)
+
+                if (didHit)
                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
             });
         }
