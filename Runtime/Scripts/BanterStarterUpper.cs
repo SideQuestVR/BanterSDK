@@ -106,6 +106,7 @@ namespace Banter.SDK
         void OnDestroy()
         {
             scene.state = SceneState.NONE;
+            scene.Destroy();
         }
         private void SetupBrowserLink()
         {

@@ -213,6 +213,57 @@ namespace Banter.SDK
         public void Destroy()
         {
             StopThreads();
+
+            // Stop Event Listeners
+            events.OnLoad.RemoveAllListeners();
+            events.OnDomReady.RemoveAllListeners();
+            events.OnSceneReady.RemoveAllListeners();
+            events.OnUnitySceneLoad.RemoveAllListeners();
+            events.OnLoadFailed.RemoveAllListeners();
+            events.OnTeleport.RemoveAllListeners();
+            events.OnPortalEnter.RemoveAllListeners();
+            events.OnLegacyEnabled.RemoveAllListeners();
+            events.OnEnableDevToolsChanged.RemoveAllListeners();
+            events.OnEnableTeleportChanged.RemoveAllListeners();
+            events.OnEnableForceGrabChanged.RemoveAllListeners();
+            events.OnEnableSpiderManChanged.RemoveAllListeners();
+            events.OnEnablePortalsChanged.RemoveAllListeners();
+            events.OnEnableGuestsChanged.RemoveAllListeners();
+            events.OnEnableFriendPositionJoinChanged.RemoveAllListeners();
+            events.OnEnableAvatarsChanged.RemoveAllListeners();
+            events.OnMaxOccupancyChanged.RemoveAllListeners();
+            events.OnSpawnPointChanged.RemoveAllListeners();
+            events.OnRefreshRateChanged.RemoveAllListeners();
+            events.OnClippingPlaneChanged.RemoveAllListeners();
+            events.OnPageOpened.RemoveAllListeners();
+            events.OnOneShot.RemoveAllListeners();
+            events.OnAttachObject.RemoveAllListeners();
+            events.OnPublicSpaceStateChanged.RemoveAllListeners();
+            events.OnProtectedSpaceStateChanged.RemoveAllListeners();
+            events.OnDeepLink.RemoveAllListeners();
+            events.OnTTsStarted.RemoveAllListeners();
+            events.OnTTsStoped.RemoveAllListeners();
+            events.OnGravityChanged.RemoveAllListeners();
+            events.OnTimeScaleChanged.RemoveAllListeners();
+            events.OnPlayerSpeedChanged.RemoveAllListeners();
+            events.OnMenuBrowserMessage.RemoveAllListeners();
+            events.OnSceneReset.RemoveAllListeners();
+            events.OnLoadUrl.RemoveAllListeners();
+            events.OnJsCallbackRecieved.RemoveAllListeners();
+
+            // Legacy stuff
+            events.OnLegacyPlayerLockChanged.RemoveAllListeners();
+            events.OnLegacyPlayerSitChanged.RemoveAllListeners();
+            events.OnLegacyPlayerGorillaChanged.RemoveAllListeners();
+            events.OnLegacyControllerExtrasChanged.RemoveAllListeners();
+            events.OnLegacyQuaternionPoseChanged.RemoveAllListeners();
+            events.OnVideoPrepareCompleted.RemoveAllListeners();
+            events.OnSendAframeEvent.RemoveAllListeners();
+            events.OnRequestOwnership.RemoveAllListeners();
+            events.OnResetNetworkObject.RemoveAllListeners();
+            events.OnDoIOwn.RemoveAllListeners();
+            events.OnPlayAvatar.RemoveAllListeners();
+
             _instance = null;
         }
 
