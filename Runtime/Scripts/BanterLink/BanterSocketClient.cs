@@ -41,7 +41,7 @@ public class BanterSocketClient
                 MessageReceived += onMessageReceived;
             }
 
-            Task.Run(() => ListenForMessages());
+            _ = Task.Run(() => ListenForMessages());
         }
         catch (Exception ex)
         {
@@ -70,7 +70,7 @@ public class BanterSocketClient
         }
     }
 
-    public async Task SendMessageAsync(string message)
+    public void SendMessageAsync(string message)
     {
         if (client == null || !client.Connected)
         {
@@ -145,7 +145,9 @@ public class BanterSocketClient
         while (true)
         {
             await reader.BaseStream.ReadAsync(buffer, 0, 1);
+#pragma warning disable CS0675 // Bitwise-or operator used on a sign-extended operand
             count = (int)(((count << 8) & 0xFFFFFF00) | (buffer[0] & 0xFF));
+#pragma warning restore CS0675 // Bitwise-or operator used on a sign-extended operand
 
             if (count == MagicNumber)
             {

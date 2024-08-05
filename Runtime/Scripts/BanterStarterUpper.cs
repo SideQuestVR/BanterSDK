@@ -15,13 +15,14 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
-        [SerializeField] bool startWebServer = true;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
         public BanterScene scene;
         public static string WEB_ROOT = "WebRoot";
         private int processId;
+
+        private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
 
         void Awake()
         {
@@ -43,17 +44,13 @@ namespace Banter.SDK
 #endif
             SetupBrowserLink();
             scene.ResetLoadingProgress();
-            // #if BANTER_EDITOR
-            //         scene.link.Connected += (arg0, arg1) => {
-            //             _ = scene.LoadUrl(BanterScene.CUSTOM_HOME_SPACE);
-            //         };
-            // #endif
         }
 
         Vector3 RandomSpawnPoint()
         {
             return new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 0, UnityEngine.Random.Range(-0.5f, 0.5f)) + spawnPoint;
         }
+
         void SpawnPlayers()
         {
             var spawn = Resources.Load<GameObject>("Prefabs/BanterSpawnPoint");
@@ -68,7 +65,6 @@ namespace Banter.SDK
             {
                 var player = Instantiate(localPlayerPrefab).transform;
                 player.name = "RemotePlayer" + i;
-                player.tag = "__BA_RemotePlayerHead";
                 player.position = RandomSpawnPoint();
                 player.eulerAngles = new Vector3(0, spawnRotation, 0);
                 GameObject.Destroy(player.Find("TrackedLeftHand").gameObject);
@@ -85,11 +81,11 @@ namespace Banter.SDK
                 GameObject.Destroy(player.Find("LeftHand").GetComponent<PhysicsHandFollow>());
             }
         }
+
         void SetupCamera()
         {
             var player = Instantiate(localPlayerPrefab).transform;
             player.name = "LocalPlayer";
-            player.tag = "LocalPlayer";
             player.Find("RightHand").transform.SetParent(null);
             player.Find("LeftHand").transform.SetParent(null);
 
@@ -144,10 +140,22 @@ namespace Banter.SDK
                 // }
             }
         }
+
         public static void ToggleDevTools()
         {
-            BanterScene.Instance().link.ToggleDevTools();
+#if UNITY_EDITOR
+            var devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
+            devToolsEnabled = !devToolsEnabled;
+            UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
+
+            LogLine.Do($"Banter DevTools " + (devToolsEnabled?"enabled.":"disabled.") );
+#endif
+            if (Application.isPlaying)
+            {
+                BanterScene.Instance().link.ToggleDevTools();
+            }
         }
+
         private void StartBrowser()
         {
 #if !BANTER_EDITOR
@@ -159,7 +167,7 @@ namespace Banter.SDK
             var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt")+"\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"), 
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                (isProd ? "--prod true " : "") + "--bebug --devtools --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + Path.Join(Application.dataPath, WEB_ROOT),
+                (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
                 LogTag.BanterBrowser);
 #else
             var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";

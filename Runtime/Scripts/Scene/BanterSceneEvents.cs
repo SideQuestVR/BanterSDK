@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class BanterSceneEvents : MonoBehaviour
+public class BanterSceneEvents
 {
     public UnityEvent OnLoad = new UnityEvent();
     public UnityEvent OnDomReady = new UnityEvent();
@@ -37,6 +37,7 @@ public class BanterSceneEvents : MonoBehaviour
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
+    public UnityEvent<string, string> OnJsCallbackRecieved = new UnityEvent<string, string>();
 
     #region Legacy stuff
 

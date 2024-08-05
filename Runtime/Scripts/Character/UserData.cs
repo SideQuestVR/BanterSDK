@@ -10,9 +10,7 @@ public class UserData : MonoBehaviour
     public string uid;
     public string color;
     public bool isLocal;
-#if !BANTER_EDITOR
     public TextMeshPro nameTag;
-#endif
     public Transform Head;
     public Transform LeftHand;
     public Transform RightHand;

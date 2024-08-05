@@ -44,8 +44,6 @@ namespace Banter.SDKEditor
         [InitializeOnLoadMethod()]
         static void Go()
         {
-            // _ = InstallVisualScripting();
-            // "com.atteneder.gltfast": "https://github.com/atteneder/glTFast.git#v5.0.0",
             // SetupLayers();
             CreateWebRoot();
         }
@@ -62,52 +60,6 @@ namespace Banter.SDKEditor
 #endif
         }
 
-        public static async Task InstallVisualScripting()
-        {
-            var listRequest = Client.List();
-            while (!listRequest.IsCompleted)
-                Thread.Sleep(100);
-
-            if (listRequest.Error != null)
-            {
-                Debug.Log("Error: " + listRequest.Error.message);
-                return;
-            }
-            var hasVisual = false;
-            var packages = listRequest.Result;
-            foreach (var package in packages)
-            {
-                if (package.name == "com.unity.visualscripting" && package.version == "1.9.1" && package.source == PackageSource.Git)
-                {
-                    hasVisual = true;
-                }
-            }
-            if (!hasVisual)
-            {
-                await Task.Delay(1000);
-                var request = Client.AddAndRemove(new string[] { "https://github.com/SideQuestVR/SideQuest.Banter.VisualScripting.git" });
-                while (!request.IsCompleted)
-                    Thread.Sleep(100);
-
-                if (request.Error != null)
-                {
-                    Debug.Log("Error: " + request.Error.message);
-                    return;
-                }
-                else
-                {
-                    Debug.Log("Visual Scripting installed.");
-                    PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "BANTER_VS_INSTALLED");
-                    PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "BANTER_VS_INSTALLED");
-                }
-            }
-            else
-            {
-                Debug.Log("Visual Scripting already installed.");
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Android, "BANTER_VS_INSTALLED");
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone, "BANTER_VS_INSTALLED");
-            }
-        }
         public static void SetupLayers()
         {
             Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
@@ -127,7 +79,7 @@ namespace Banter.SDKEditor
                     }
                 }
 
-                if (isMissing && EditorUtility.DisplayDialog("Layer setup needed...", "Do you want to setup Banter layers automatically? - " + string.Join(", \n", missingLayers), "Yes", "No"))
+                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers", "Do you want to setup Banter layers automatically?\nThese are required when using Banter specific features:\n" + string.Join(", \n", missingLayers), "Yes", "No"))
                 {
                     foreach (var layer in layersToAdd)
                     {

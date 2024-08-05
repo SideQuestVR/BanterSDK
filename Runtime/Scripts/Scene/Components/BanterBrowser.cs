@@ -1,13 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Networking;
+
 namespace Banter.SDK
 {
     // [Serializable]
@@ -166,7 +161,7 @@ namespace Banter.SDK
             UpdateCallback(changedProperties);
         }
 
-        public override void Init()
+        public override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -176,6 +171,12 @@ namespace Banter.SDK
 
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
+
+            if (constructorProperties != null)
+            {
+                Deserialise(constructorProperties);
+            }
+
             SyncProperties(true);
 
         }

@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.banter",
-  "version": "0.0.10",
+  "version": "2.1.0",
   "displayName": "Banter SDK",
   "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
   "unity": "2021.3",
@@ -10,11 +10,13 @@
   "changelogUrl": "https://bantervr.com/sdk-changelog",
   "licensesUrl": "https://bantervr.com/sdk-license",
   "dependencies": {
-    "com.unity.cinemachine": "2.8.9",
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.textmeshpro": "3.0.9",
+    "com.unity.editorcoroutines": "1.0.0",
+    "com.unity.inputsystem": "1.4.4",
+    "com.unity.xr.legacyinputhelpers": "1.4.4",
     "com.unity.xr.management": "4.2.0",
-    "com.unity.editorcoroutines": "1.0.0"
+    "com.unity.xr.openxr": "1.8.2"
   },
   "keywords": [
     "world-building",

@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+#endif
 
 namespace Banter.SDK
 {
@@ -12,7 +15,6 @@ namespace Banter.SDK
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
-        bool setUnityLoadedOnReload = false;
         UnityMainThreadDispatcher mainThread;
         BatchUpdater batchUpdater;
         public static string LOCAL_USER_ID;
@@ -21,8 +23,36 @@ namespace Banter.SDK
         {
             scene = BanterScene.Instance();
             mainThread = UnityMainThreadDispatcher.Instance();
+            scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
+            {
+                mainThread.Enqueue(() =>
+                {
+#if BANTER_VISUAL_SCRIPTING
+                    EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
+#endif
+                });
+            });
+            scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
+            {
+                mainThread.Enqueue(() =>
+                {
+#if BANTER_VISUAL_SCRIPTING
+                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
+#endif
+                });
+            });
+            scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
+            {
+                mainThread.Enqueue(() =>
+                {
+#if BANTER_VISUAL_SCRIPTING
+                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
+#endif
+                });
+            });
             SetupPipe();
         }
+
         string GetMsgData(string msg, string command)
         {
             return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
@@ -31,10 +61,6 @@ namespace Banter.SDK
         {
             if (msg.StartsWith(APICommands.ONLOAD))
             {
-                // // Fake the unity loaded event for when the page has been reloaded with f5 from the browser end.
-                // if(scene.state == SceneState.UNITY_READY) {
-                //     setUnityLoadedOnReload = true;
-                // }
                 _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
                 scene.SetLoaded();
             }
@@ -108,6 +134,11 @@ namespace Banter.SDK
                     scene.LogMissing();
                 }
             }
+            else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+            {
+                var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1]);
+            }
             else
             {
                 LogLine.Do(Color.red, LogTag.Banter, "Unknown parse message: " + msg);
@@ -162,6 +193,10 @@ namespace Banter.SDK
             {
                 var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
                 scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
+            }
+            else if (msg.StartsWith(APICommands.YT_INFO))
+            {
+                scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
             }
             else if (msg.StartsWith(APICommands.OPEN_PAGE))
             {

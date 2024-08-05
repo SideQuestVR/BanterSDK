@@ -12,15 +12,14 @@ using System.Threading;
 using Banter.SDKEditor;
 using Unity.EditorCoroutines.Editor;
 using System.Collections;
-using UnityEngine.Networking;
-using Newtonsoft.Json;
-using Unity.VisualScripting;
+
 public enum BanterBuilderBundleMode
 {
     None = 0,
     Scene = 1,
     Kit = 2
 }
+
 public class KitObjectAndPath
 {
     public UnityEngine.Object obj;
@@ -32,6 +31,7 @@ public class KitObjectAndPath
         typeof(Shader)
     };
 }
+
 public class BuilderWindow : EditorWindow
 {
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
@@ -41,6 +41,7 @@ public class BuilderWindow : EditorWindow
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
+    public static UnityEvent OnVisualScript = new UnityEvent();
     public static UnityEvent OnCompileInjection = new UnityEvent();
     public static UnityEvent OnCompileElectron = new UnityEvent();
     public static UnityEvent OnCompileAllComponents = new UnityEvent();
@@ -445,6 +446,8 @@ public class BuilderWindow : EditorWindow
 
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
 
+        var createSpace = rootVisualElement.Q<Label>("CreateSpace");
+        createSpace.RegisterCallback<MouseUpEvent>((e) => OpenSpaceCreation());
         var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
 
         openWebRoot.clicked += () => ShowWebRoot();
@@ -611,8 +614,8 @@ public class BuilderWindow : EditorWindow
             rootVisualElement.Q<Button>("compileElectron").clicked += () => OnCompileElectron.Invoke();// SDKCodeGen.CompileElectron();
             rootVisualElement.Q<Button>("compileInjection").clicked += () => OnCompileInjection.Invoke();// SDKCodeGen.CompileInjection();
             rootVisualElement.Q<Button>("kitchenSink").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAll();
-            Remove(rootVisualElement.Q<Button>("setupVisualScripting"));
             Remove(rootVisualElement.Q<Button>("setupLayers"));
+
 #else
         Remove(rootVisualElement.Q<Button>("allAndInjection"));
         Remove(rootVisualElement.Q<Button>("allOnly"));
@@ -620,11 +623,22 @@ public class BuilderWindow : EditorWindow
         Remove(rootVisualElement.Q<Button>("compileElectron"));
         Remove(rootVisualElement.Q<Button>("compileInjection"));
         Remove(rootVisualElement.Q<Button>("kitchenSink"));
-        rootVisualElement.Q<Button>("setupVisualScripting").clicked += () => _ = InitialiseOnLoad.InstallVisualScripting();
+
         rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
 #endif
-        rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
 
+#if BANTER_VISUAL_SCRIPTING
+
+#if BANTER_EDITOR
+        rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
+#else // BANTER_EDITOR
+        rootVisualElement.Q<Button>("visualScript").clicked += () => NodeGeneration.SetVSTypesAndAssemblies();
+#endif // BANTER_EDITOR
+
+#else // BANTER_VISUAL_SCRIPTING
+        Remove(rootVisualElement.Q<Button>("visualScript"));
+#endif // BANTER_VISUAL_SCRIPTING
+        rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
     }
 
     private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue)
@@ -837,6 +851,11 @@ public class BuilderWindow : EditorWindow
         ShowRemoveSelected();
         ShowUploadToggle();
     }
+
+    public void OpenSpaceCreation()
+    {
+        Application.OpenURL("https://sidequestvr.com/account/create-space");
+    }
     private void BuildAssetBundles()
     {
         if (mode == BanterBuilderBundleMode.None)
@@ -844,7 +863,7 @@ public class BuilderWindow : EditorWindow
             AddStatus("Nothing to build...");
             return;
         }
-        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrEmpty(scenePath))
+        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
         {
             AddStatus("No scene selected...");
             return;
@@ -854,6 +873,19 @@ public class BuilderWindow : EditorWindow
             AddStatus("No objects selected...");
             return;
         }
+
+#if BANTER_VISUAL_SCRIPTING
+        if (!ValidateVisualScripting.CheckVsNodes())
+        {
+            AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
+            return;
+        }
+        else
+        {
+            AddStatus("Visual Scripting check passed!");
+        }
+#endif
+
         AddStatus("Build started...");
 
         if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
@@ -861,21 +893,10 @@ public class BuilderWindow : EditorWindow
             Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
         }
 
-
-        if (mode == BanterBuilderBundleMode.None)
-        {
-            throw new Exception("Nothing to build!");
-        }
-        else if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
-        {
-            throw new Exception("No scene to build!");
-        }
-        else if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count < 1)
-        {
-            throw new Exception("No kit objects to build!");
-        }
         buildProgressBar.value = 25;
         List<string> names = new List<string>();
+
+
         for (int i = 0; i < buildTargets.Length; i++)
         {
             buildProgressBar.value += 25;

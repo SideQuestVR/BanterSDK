@@ -8,6 +8,11 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
+using System.Text.RegularExpressions;
+
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+#endif
 
 namespace Banter.SDK
 {
@@ -45,6 +50,8 @@ namespace Banter.SDK
         public static string ORIGINAL_HOME_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
+        public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
+
         public bool externalLoadFailed;
         public BanterLink link;
         public BanterSceneEvents events;
@@ -254,6 +261,12 @@ namespace Banter.SDK
                 users.Add(user);
             }
             link?.OnUserJoined(user);
+#if BANTER_VISUAL_SCRIPTING
+            mainThread.Enqueue(() =>
+            {
+                EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
+            });
+#endif
         }
         public void RemoveUser(UserData user)
         {
@@ -262,6 +275,12 @@ namespace Banter.SDK
                 users.Remove(user);
             }
             link.OnUserLeft(user);
+#if BANTER_VISUAL_SCRIPTING
+            mainThread.Enqueue(() =>
+            {
+                EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
+            });
+#endif
         }
         public void OpenPage(string msg, int reqId)
         {
@@ -333,6 +352,24 @@ namespace Banter.SDK
 #endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
+        public void YtInfo(string youtubeId, int reqId)
+        {
+            var headers = new Dictionary<string, string>
+            {
+                { "Content-Type", "application/json" },
+            };
+            mainThread?.Enqueue(async () =>
+            {
+                var videoInfo = await Post.Text(
+                    "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+                    "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" + youtubeId + "\"}",
+                    headers
+                );
+                var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
+                var cleanJson = JsonUtility.ToJson(responseContext);
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
+            });
+        }
         #endregion
 
         #region User/Space properties
@@ -350,7 +387,6 @@ namespace Banter.SDK
             }
             else if (propType == APICommands.SET_PROTECTED_SPACE_PROPS || propType == APICommands.SET_PUBLIC_SPACE_PROPS)
             {
-                // Debug.Log(data);
                 foreach (var prop in props)
                 {
                     var parts = prop.Split(MessageDelimiters.TERTIARY);
@@ -437,7 +473,7 @@ namespace Banter.SDK
         #endregion
 
         #region Manage Banter Objects
-        public void AddBanterObject(GameObject gameObject, BanterObjectId banterObjectId)
+        public void AddBanterObject(GameObject gameObject, BanterObjectId banterObjectId, bool skipChangeFlush = false)
         {
             var oid = gameObject.GetInstanceID();
             if (!objects.ContainsKey(oid))
@@ -451,8 +487,10 @@ namespace Banter.SDK
                 };
                 banterObject.unityAndBanterObject = unityAndBanterObject;
                 objects.TryAdd(oid, unityAndBanterObject);
-                FlushObjectToChanges(oid, 0, 0);
-                //dirty = true;
+                if (!skipChangeFlush)
+                {
+                    FlushObjectToChanges(oid, 0, 0);
+                }
             }
         }
         public BanterObject GetBanterObject(int objectId)
@@ -740,7 +778,7 @@ namespace Banter.SDK
             //         paramsList += MessageDelimiters.PRIMARY;
             //     }
             // }
-            var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY);
+            var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries);
             var paramList = new List<object>();
             foreach (var param in parameters)
             {
@@ -970,11 +1008,9 @@ namespace Banter.SDK
                     APICommands.COMPONENT_ADDED + MessageDelimiters.PRIMARY + banterComp.banterObject.oid + MessageDelimiters.PRIMARY + banterComp.cid +
                     MessageDelimiters.PRIMARY + (int)banterComp.type + MessageDelimiters.PRIMARY + linkId);
                 }
-                comp.Init();
-                var updates = SetComponentProperties(3, parts, banterComp, msg);
 
-                comp.Deserialise(updates);
-
+                var constructorProps = SetComponentProperties(3, parts, banterComp, msg);
+                comp.Init(constructorProps);
             });
         }
         private List<object> SetComponentProperties(int startIndex, string[] parts, BanterComponent banterComp, string msg = null)
@@ -1168,13 +1204,12 @@ namespace Banter.SDK
             {
                 try
                 {
-                    var go = new GameObject(parts[1]);
+                    var go = new GameObject(parts[2]);
                     go.transform.parent = settings.parentTransform;
-
-                    AddBanterObject(go, go.AddComponent<BanterObjectId>());
+                    AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                     await new WaitForSeconds(2);
-                    if (parts[2] == "0")
+                    if (parts[1] == "0")
                     {
                         Debug.Log("Creating object that is not active: " + go.name);
                         go.SetActive(false);
