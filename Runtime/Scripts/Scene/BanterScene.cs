@@ -909,7 +909,7 @@ namespace Banter.SDK
             var position = new Vector3(Germany.DeGermaniser(msgParts[0]), Germany.DeGermaniser(msgParts[1]), Germany.DeGermaniser(msgParts[2]));
             var direction = new Vector3(Germany.DeGermaniser(msgParts[3]), Germany.DeGermaniser(msgParts[4]), Germany.DeGermaniser(msgParts[5]));
             var maxDistance = msgParts.Length > 6 ? Germany.DeGermaniser(msgParts[6]) : -1;
-            var layerMask = msgParts.Length > 6 ? int.Parse(msgParts[7]) : -1;
+            var layerMask = msgParts.Length > 7 ? int.Parse(msgParts[7]) : -1;
             mainThread.Enqueue(() =>
             {
                 RaycastHit hit;
