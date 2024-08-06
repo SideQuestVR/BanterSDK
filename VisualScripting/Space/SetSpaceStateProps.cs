@@ -8,7 +8,8 @@ namespace Banter.VisualScripting
     [UnitShortTitle("Set Space Prop")]
     [UnitCategory("Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class SetSpaceStateProp : Unit
+    [RenamedFrom("SetSpaceStateProp")]
+    public class SetSpaceStateProps : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
