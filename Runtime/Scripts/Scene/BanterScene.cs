@@ -314,13 +314,13 @@ namespace Banter.SDK
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = Germany.DeGermaniser(msg);
-            mainThread?.Enqueue(() => Time.timeScale = timeScale);
+            events.OnTimeScaleChanged?.Invoke(timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
         public void PlayerSpeed(string msg, int reqId)
         {
             var speed = msg == "1";
-            events.OnPlayerSpeedChanged.Invoke(speed);
+            events.OnPlayerSpeedChanged?.Invoke(speed);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
         }
 
