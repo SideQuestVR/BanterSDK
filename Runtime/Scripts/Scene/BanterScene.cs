@@ -307,7 +307,7 @@ namespace Banter.SDK
                 return;
             }
             var gravity = new Vector3(Germany.DeGermaniser(parts[0]), Germany.DeGermaniser(parts[1]), Germany.DeGermaniser(parts[2]));
-            mainThread?.Enqueue(() => Physics.gravity = gravity);
+            events.OnGravityChanged?.Invoke(gravity);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 

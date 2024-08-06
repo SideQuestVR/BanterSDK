@@ -25,9 +25,10 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var valGravity = flow.GetValue<Vector3>(gravity);
-
-                BanterScene.Instance().mainThread?.Enqueue(() => Physics.gravity = valGravity);
-
+                BanterScene.Instance().mainThread?.Enqueue(() =>
+                {
+                    BanterScene.Instance().events.OnGravityChanged?.Invoke(valGravity);
+                });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
