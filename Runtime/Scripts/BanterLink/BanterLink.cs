@@ -34,6 +34,10 @@ namespace Banter.SDK
 #endif
                 });
             });
+            scene.events.OnGravityChanged.AddListener((gravity) =>
+            {
+                mainThread?.Enqueue(() => Physics.gravity = gravity);
+            });
         }
 
         string GetMsgData(string msg, string command)
