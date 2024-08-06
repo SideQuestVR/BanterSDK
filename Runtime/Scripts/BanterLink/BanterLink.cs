@@ -38,6 +38,10 @@ namespace Banter.SDK
             {
                 mainThread?.Enqueue(() => Physics.gravity = gravity);
             });
+            scene.events.OnTimeScaleChanged.AddListener((timeScale) =>
+            {
+                mainThread?.Enqueue(() => Time.timeScale = timeScale);
+            });
         }
 
         string GetMsgData(string msg, string command)
