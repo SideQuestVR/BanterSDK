@@ -103,6 +103,12 @@ namespace Banter.SDK
 
         void SetupExtraEvents()
         {
+            scene.events.OnTeleport.AddListener((position, rotation, _, _) =>
+            {
+                var player = BanterScene.Instance().users.First(user => user.isLocal);
+                player.transform.position = position;
+                player.transform.eulerAngles = rotation;
+            });
             scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
             {
 #if BANTER_VISUAL_SCRIPTING
