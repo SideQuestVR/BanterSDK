@@ -47,7 +47,7 @@ namespace Banter.VisualScripting
             outputTrigger = ControlOutput("");
             key = ValueInput("Property Name", string.Empty);
             value = ValueInput("Value", string.Empty);
-            isPublic = ValueInput("Is Public Property?", false);
+            isPublic = ValueInput("Is Public Property?", true);
         }
     }
 }
