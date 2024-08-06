@@ -336,11 +336,10 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
                 return;
             }
-#if BANTER_EDITOR
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
             });
-#endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
         public void YtInfo(string youtubeId, int reqId)
