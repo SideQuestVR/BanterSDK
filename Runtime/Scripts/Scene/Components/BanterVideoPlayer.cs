@@ -44,6 +44,9 @@ namespace Banter.SDK
         [See(initial = "true")] public bool skipOnDrop;
         [Watch(initial = "0")] public float time;
         [See(initial = "true")] public bool waitForFirstFrame;
+        [See(initial = "false")] public bool isPlaying;
+        [See(initial = "false")] public bool isLooping;
+        [See(initial = "false")] public bool isPrepared;
         [Method]
         public void _PlayToggle()
         {
@@ -53,6 +56,7 @@ namespace Banter.SDK
                 }else {
                     _source.Play();
                 }
+                UpdateVideoState();
             }
         }
         [Method]
@@ -66,6 +70,7 @@ namespace Banter.SDK
                     audio.mute = !audio.mute;
                 }
             }
+            UpdateVideoState();
         }
         [Method]
         public void _Stop()
@@ -73,12 +78,20 @@ namespace Banter.SDK
             if(_source) {
                 _source.Stop();
             }
+            UpdateVideoState();
         }
         VideoPlayer _source;
 
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupVideo(changedProperties);
+        }
+        void UpdateVideoState() {
+            if(_source) {
+                isPlaying = _source.isPlaying;
+                isPrepared = _source.isPrepared;
+                isLooping = _source.isLooping;
+            }
         }
         void SetVideoPlayer() {
             _source = GetComponent<VideoPlayer>();
@@ -125,10 +138,17 @@ namespace Banter.SDK
             {
                 _source.waitForFirstFrame = waitForFirstFrame;
             }
+            UpdateVideoState();
             SetLoadedIfNot();
         }
         public override void StartStuff() { 
             SetVideoPlayer();
+            if(_source) {
+                _source.prepareCompleted += VideoPrepared;
+            }
+        }
+        void VideoPrepared(VideoPlayer v) {
+            isPrepared = v.isPrepared;
         }
         void Update() {
             if(Time.frameCount % 60 == 0) {
@@ -141,6 +161,7 @@ namespace Banter.SDK
         {
             if (_source != null)
             {
+                _source.prepareCompleted -= VideoPrepared;
                 Destroy(_source);
             }
         }
@@ -158,7 +179,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, };
             UpdateCallback(changedProperties);
         }
 
@@ -298,6 +319,33 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.waitForFirstFrame);
                     }
                 }
+                if (values[i] is BanterBool)
+                {
+                    var valisPlaying = (BanterBool)values[i];
+                    if (valisPlaying.n == PropertyName.isPlaying)
+                    {
+                        isPlaying = valisPlaying.x;
+                        changedProperties.Add(PropertyName.isPlaying);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valisLooping = (BanterBool)values[i];
+                    if (valisLooping.n == PropertyName.isLooping)
+                    {
+                        isLooping = valisLooping.x;
+                        changedProperties.Add(PropertyName.isLooping);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valisPrepared = (BanterBool)values[i];
+                    if (valisPrepared.n == PropertyName.isPrepared)
+                    {
+                        isPrepared = valisPrepared.x;
+                        changedProperties.Add(PropertyName.isPrepared);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -384,6 +432,42 @@ namespace Banter.SDK
                     name = PropertyName.waitForFirstFrame,
                     type = PropertyType.Bool,
                     value = waitForFirstFrame,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.isPlaying,
+                    type = PropertyType.Bool,
+                    value = isPlaying,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.isLooping,
+                    type = PropertyType.Bool,
+                    value = isLooping,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.isPrepared,
+                    type = PropertyType.Bool,
+                    value = isPrepared,
                     componentType = ComponentType.BanterVideoPlayer,
                     oid = oid,
                     cid = cid

@@ -120,6 +120,9 @@ namespace Banter.SDK
         right,
         skipOnDrop,
         waitForFirstFrame,
+        isPlaying,
+        isLooping,
+        isPrepared,
         time,
     }
 }
