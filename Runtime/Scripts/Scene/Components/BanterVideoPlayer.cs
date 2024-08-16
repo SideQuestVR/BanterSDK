@@ -67,6 +67,13 @@ namespace Banter.SDK
                 }
             }
         }
+        [Method]
+        public void _Stop()
+        {
+            if(_source) {
+                _source.Stop();
+            }
+        }
         VideoPlayer _source;
 
         public void UpdateCallback(List<PropertyName> changedProperties)
@@ -195,6 +202,10 @@ namespace Banter.SDK
         {
             _MuteToggle();
         }
+        void Stop()
+        {
+            _Stop();
+        }
         public override object CallMethod(string methodName, List<object> parameters)
         {
 
@@ -206,6 +217,11 @@ namespace Banter.SDK
             else if (methodName == "MuteToggle" && parameters.Count == 0)
             {
                 MuteToggle();
+                return null;
+            }
+            else if (methodName == "Stop" && parameters.Count == 0)
+            {
+                Stop();
                 return null;
             }
             else
