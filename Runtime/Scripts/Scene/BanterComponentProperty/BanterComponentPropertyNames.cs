@@ -19,6 +19,7 @@ namespace Banter.SDK
         bypassListenerEffects,
         bypassReverbZones,
         playOnAwake,
+        spatialBlend,
         smoothing,
         enableXAxis,
         enableYAxis,

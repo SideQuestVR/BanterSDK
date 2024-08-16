@@ -72,6 +72,7 @@ namespace Banter.SDK
         [See(initial = "false")] public bool bypassListenerEffects;
         [See(initial = "false")] public bool bypassReverbZones;
         [See(initial = "true")] public bool playOnAwake;
+        [See(initial = "0")] public float spatialBlend;
 
         public List<AudioClip> clips = new List<AudioClip>();
 
@@ -98,21 +99,40 @@ namespace Banter.SDK
 
         public override void StartStuff()
         {
-            SetupAudio();
+            SetupAudio(null);
         }
 
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
-            SetupAudio();
+            SetupAudio(changedProperties);
         }
-        void SetupAudio()
+        void SetupAudio(List<PropertyName> changedProperties)
         {
             _source = GetComponent<AudioSource>();
             if (_source == null)
             {
                 _source = gameObject.AddComponent<AudioSource>();
             }
-
+            if (changedProperties.Contains(PropertyName.spatialBlend))
+            {
+                _source.spatialBlend = spatialBlend;
+            }
+            if (changedProperties.Contains(PropertyName.loop))
+            {
+                _source.loop = loop;
+            }
+            if (changedProperties.Contains(PropertyName.mute))
+            {
+                _source.mute = mute;
+            }
+            if (changedProperties.Contains(PropertyName.volume))
+            {
+                _source.volume = volume;
+            }
+            if (changedProperties.Contains(PropertyName.pitch))
+            {
+                _source.pitch = pitch;
+            }
             SetLoadedIfNot();
         }
 
@@ -134,7 +154,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.volume, PropertyName.pitch, PropertyName.mute, PropertyName.loop, PropertyName.bypassEffects, PropertyName.bypassListenerEffects, PropertyName.bypassReverbZones, PropertyName.playOnAwake, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.volume, PropertyName.pitch, PropertyName.mute, PropertyName.loop, PropertyName.bypassEffects, PropertyName.bypassListenerEffects, PropertyName.bypassReverbZones, PropertyName.playOnAwake, PropertyName.spatialBlend, };
             UpdateCallback(changedProperties);
         }
 
@@ -284,6 +304,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.playOnAwake);
                     }
                 }
+                if (values[i] is BanterFloat)
+                {
+                    var valspatialBlend = (BanterFloat)values[i];
+                    if (valspatialBlend.n == PropertyName.spatialBlend)
+                    {
+                        spatialBlend = valspatialBlend.x;
+                        changedProperties.Add(PropertyName.spatialBlend);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -382,6 +411,18 @@ namespace Banter.SDK
                     name = PropertyName.playOnAwake,
                     type = PropertyType.Bool,
                     value = playOnAwake,
+                    componentType = ComponentType.BanterAudioSource,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.spatialBlend,
+                    type = PropertyType.Float,
+                    value = spatialBlend,
                     componentType = ComponentType.BanterAudioSource,
                     oid = oid,
                     cid = cid
