@@ -42,21 +42,47 @@ namespace Banter.SDK
         [See(initial = "false")] public bool loop;
         [See(initial = "true")] public bool playOnAwake;
         [See(initial = "true")] public bool skipOnDrop;
-        [See(initial = "0")] public float time;
+        [Watch(initial = "0")] public float time;
         [See(initial = "true")] public bool waitForFirstFrame;
+        [Method]
+        public void _PlayToggle()
+        {
+            if(_source && _source.isPrepared) {
+                if(_source.isPlaying){
+                    _source.Pause();
+                }else {
+                    _source.Play();
+                }
+            }
+        }
+        [Method]
+        public void _MuteToggle()
+        {
+            if(_source && _source.isPrepared) {
+                if(_source.audioOutputMode == VideoAudioOutputMode.Direct) {
+                    _source.SetDirectAudioMute(0, !_source.GetDirectAudioMute(0));
+                }else if(_source.audioOutputMode == VideoAudioOutputMode.AudioSource) {
+                    var audio = _source.GetTargetAudioSource(0);
+                    audio.mute = !audio.mute;
+                }
+            }
+        }
         VideoPlayer _source;
 
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupVideo(changedProperties);
         }
-        void SetupVideo(List<PropertyName> changedProperties)
-        {
+        void SetVideoPlayer() {
             _source = GetComponent<VideoPlayer>();
             if (_source == null)
             {
                 _source = gameObject.AddComponent<VideoPlayer>();
             }
+        }
+        void SetupVideo(List<PropertyName> changedProperties)
+        {
+            SetVideoPlayer();
             if (changedProperties.Contains(PropertyName.url))
             {
                 _source.Stop();
@@ -65,7 +91,12 @@ namespace Banter.SDK
             }
             if (changedProperties.Contains(PropertyName.volume))
             {
-                _source.SetDirectAudioVolume(0, volume);
+                if(_source.audioOutputMode == VideoAudioOutputMode.Direct) {
+                    _source.SetDirectAudioVolume(0, volume);
+                }else if(_source.audioOutputMode == VideoAudioOutputMode.AudioSource) {
+                    var audio = _source.GetTargetAudioSource(0);
+                    audio.volume = volume;
+                }
             }
             if (changedProperties.Contains(PropertyName.loop))
             {
@@ -89,7 +120,16 @@ namespace Banter.SDK
             }
             SetLoadedIfNot();
         }
-        public override void StartStuff() { }
+        public override void StartStuff() { 
+            SetVideoPlayer();
+        }
+        void Update() {
+            if(Time.frameCount % 60 == 0) {
+                if(_source && _source.isPlaying) {
+                    time = (float)_source.time;
+                }
+            }
+        }
         public override void DestroyStuff()
         {
             if (_source != null)
