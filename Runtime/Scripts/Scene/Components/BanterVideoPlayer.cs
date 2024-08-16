@@ -138,6 +138,9 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        [Header("SYNC BANTERVIDEOPLAYER TO JS")]
+        public bool _time;
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -148,7 +151,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.time, PropertyName.waitForFirstFrame, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, };
             UpdateCallback(changedProperties);
         }
 
@@ -159,7 +162,7 @@ namespace Banter.SDK
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterVideoPlayer);
 
-
+            scene.Tick += Tick;
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
 
@@ -180,13 +183,35 @@ namespace Banter.SDK
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
-
+            scene.Tick -= Tick;
             DestroyStuff();
         }
 
+        void PlayToggle()
+        {
+            _PlayToggle();
+        }
+        void MuteToggle()
+        {
+            _MuteToggle();
+        }
         public override object CallMethod(string methodName, List<object> parameters)
         {
-            return null;
+
+            if (methodName == "PlayToggle" && parameters.Count == 0)
+            {
+                PlayToggle();
+                return null;
+            }
+            else if (methodName == "MuteToggle" && parameters.Count == 0)
+            {
+                MuteToggle();
+                return null;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public override void Deserialise(List<object> values)
@@ -194,6 +219,15 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
+                if (values[i] is BanterFloat)
+                {
+                    var valtime = (BanterFloat)values[i];
+                    if (valtime.n == PropertyName.time)
+                    {
+                        time = valtime.x;
+                        changedProperties.Add(PropertyName.time);
+                    }
+                }
                 if (values[i] is BanterString)
                 {
                     var valurl = (BanterString)values[i];
@@ -239,15 +273,6 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.skipOnDrop);
                     }
                 }
-                if (values[i] is BanterFloat)
-                {
-                    var valtime = (BanterFloat)values[i];
-                    if (valtime.n == PropertyName.time)
-                    {
-                        time = valtime.x;
-                        changedProperties.Add(PropertyName.time);
-                    }
-                }
                 if (values[i] is BanterBool)
                 {
                     var valwaitForFirstFrame = (BanterBool)values[i];
@@ -264,6 +289,18 @@ namespace Banter.SDK
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
+            if ((_time) || force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.time,
+                    type = PropertyType.Float,
+                    value = time,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
             if (force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
@@ -328,18 +365,6 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.time,
-                    type = PropertyType.Float,
-                    value = time,
-                    componentType = ComponentType.BanterVideoPlayer,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
                     name = PropertyName.waitForFirstFrame,
                     type = PropertyType.Bool,
                     value = waitForFirstFrame,
@@ -351,8 +376,18 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
+        void Tick(object sender, EventArgs e) { SyncProperties(); }
+
         public override void WatchProperties(PropertyName[] properties)
         {
+            _time = false;
+            for (int i = 0; i < properties.Length; i++)
+            {
+                if (properties[i] == PropertyName.time)
+                {
+                    _time = true;
+                }
+            }
         }
         // END BANTER COMPILED CODE 
     }

@@ -119,7 +119,7 @@ namespace Banter.SDK
         forward,
         right,
         skipOnDrop,
-        time,
         waitForFirstFrame,
+        time,
     }
 }

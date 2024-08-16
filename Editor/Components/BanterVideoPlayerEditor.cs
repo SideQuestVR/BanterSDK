@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("url, volume, loop, playOnAwake, skipOnDrop, time, waitForFirstFrame, ");
+            var seeFields = new Label("url, volume, loop, playOnAwake, skipOnDrop, waitForFirstFrame, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
@@ -39,6 +39,23 @@ namespace Banter.SDKEditor
             seeFields.style.marginTop = 10;
             seeFields.style.color = Color.gray;
             myInspector.Add(seeFields);
+            var titleSynced = new Label("SYNC BANTERVIDEOPLAYER TO JS");
+            titleSynced.style.fontSize = 14;
+            myInspector.Add(titleSynced);
+            var containertime = new VisualElement();
+            containertime.AddToClassList("toggle-container");
+            var labeltime = new Label("time");
+            labeltime.style.unityFontStyleAndWeight = FontStyle.Bold;
+            containertime.Add(labeltime);
+            var toggletime = new Toggle();
+            toggletime.AddToClassList("switch");
+            toggletime.value = script._time;
+            toggletime.RegisterValueChangedCallback(evt =>
+            {
+                script._time = evt.newValue;
+            });
+            containertime.Add(toggletime);
+            myInspector.Add(containertime);
 
 #if BANTER_EDITOR
             var foldout = new Foldout();
