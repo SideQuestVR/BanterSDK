@@ -47,6 +47,7 @@ namespace Banter.SDK
         [See(initial = "false")] public bool isPlaying;
         [See(initial = "false")] public bool isLooping;
         [See(initial = "false")] public bool isPrepared;
+        [See(initial = "0")] public float duration;
         [Method]
         public void _PlayToggle()
         {
@@ -91,6 +92,7 @@ namespace Banter.SDK
                 isPlaying = _source.isPlaying;
                 isPrepared = _source.isPrepared;
                 isLooping = _source.isLooping;
+                duration = (float)_source.length;
             }
         }
         void SetVideoPlayer() {
@@ -179,7 +181,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, PropertyName.duration, };
             UpdateCallback(changedProperties);
         }
 
@@ -346,6 +348,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.isPrepared);
                     }
                 }
+                if (values[i] is BanterFloat)
+                {
+                    var valduration = (BanterFloat)values[i];
+                    if (valduration.n == PropertyName.duration)
+                    {
+                        duration = valduration.x;
+                        changedProperties.Add(PropertyName.duration);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -468,6 +479,18 @@ namespace Banter.SDK
                     name = PropertyName.isPrepared,
                     type = PropertyType.Bool,
                     value = isPrepared,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.duration,
+                    type = PropertyType.Float,
+                    value = duration,
                     componentType = ComponentType.BanterVideoPlayer,
                     oid = oid,
                     cid = cid
