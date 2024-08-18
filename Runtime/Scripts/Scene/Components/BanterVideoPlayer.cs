@@ -57,7 +57,6 @@ namespace Banter.SDK
                 }else {
                     _source.Play();
                 }
-                UpdateVideoState();
             }
         }
         [Method]
@@ -71,7 +70,6 @@ namespace Banter.SDK
                     audio.mute = !audio.mute;
                 }
             }
-            UpdateVideoState();
         }
         [Method]
         public void _Stop()
@@ -79,21 +77,12 @@ namespace Banter.SDK
             if(_source) {
                 _source.Stop();
             }
-            UpdateVideoState();
         }
         VideoPlayer _source;
 
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupVideo(changedProperties);
-        }
-        void UpdateVideoState() {
-            if(_source) {
-                isPlaying = _source.isPlaying;
-                isPrepared = _source.isPrepared;
-                isLooping = _source.isLooping;
-                duration = (float)_source.length;
-            }
         }
         void SetVideoPlayer() {
             _source = GetComponent<VideoPlayer>();
@@ -140,31 +129,42 @@ namespace Banter.SDK
             {
                 _source.waitForFirstFrame = waitForFirstFrame;
             }
-            UpdateVideoState();
             SetLoadedIfNot();
         }
         public override void StartStuff() { 
             SetVideoPlayer();
-            if(_source) {
-                _source.prepareCompleted += VideoPrepared;
-            }
+            _source.loopPointReached += VideoEnded;
         }
-        void VideoPrepared(VideoPlayer v) {
-            isPrepared = v.isPrepared;
+        void VideoEnded(VideoPlayer v) {
+            // Triggering a time update once after the video ended.
+            time = time + 0.00001f;
         }
         float currentTime = 0;
+        bool currentPlaying = false;
+        bool currentPrepared = false;
+        bool currentLooping = false;
         void Update() {
             var _currentTime = Mathf.Floor((float)_source.time);
             if(_currentTime != currentTime) {
                 time = (float)_source.time;
+                duration = (float)_source.length; 
+                currentTime = _currentTime;
             }
-            currentTime = _currentTime;
+            if(currentPlaying != _source.isPlaying) {
+                currentPlaying = isPlaying = _source.isPlaying;
+            }
+            if(currentPrepared != _source.isPrepared) {
+                currentPrepared = isPrepared = _source.isPrepared;
+            }
+            if(currentLooping != _source.isLooping) {
+                currentLooping = isLooping = _source.isLooping;
+            }
         }
         public override void DestroyStuff()
         {
             if (_source != null)
             {
-                _source.prepareCompleted -= VideoPrepared;
+                _source.loopPointReached -= VideoEnded;
                 Destroy(_source);
             }
         }
