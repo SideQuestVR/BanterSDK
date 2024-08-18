@@ -152,12 +152,13 @@ namespace Banter.SDK
         void VideoPrepared(VideoPlayer v) {
             isPrepared = v.isPrepared;
         }
+        float currentTime = 0;
         void Update() {
-            if(Time.frameCount % 60 == 0) {
-                if(_source && _source.isPlaying) {
-                    time = (float)_source.time;
-                }
+            var _currentTime = Mathf.Floor((float)_source.time);
+            if(_currentTime != currentTime) {
+                time = (float)_source.time;
             }
+            currentTime = _currentTime;
         }
         public override void DestroyStuff()
         {
