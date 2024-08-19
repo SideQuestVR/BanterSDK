@@ -52,10 +52,14 @@ namespace Banter.SDK
         [Method]
         public void _PlayToggle()
         {
-            if(_source && _source.isPrepared) {
-                if(_source.isPlaying){
+            if (_source && _source.isPrepared)
+            {
+                if (_source.isPlaying)
+                {
                     _source.Pause();
-                }else {
+                }
+                else
+                {
                     _source.Play();
                 }
             }
@@ -63,10 +67,14 @@ namespace Banter.SDK
         [Method]
         public void _MuteToggle()
         {
-            if(_source && _source.isPrepared) {
-                if(_source.audioOutputMode == VideoAudioOutputMode.Direct) {
+            if (_source && _source.isPrepared)
+            {
+                if (_source.audioOutputMode == VideoAudioOutputMode.Direct)
+                {
                     _source.SetDirectAudioMute(0, !_source.GetDirectAudioMute(0));
-                }else if(_source.audioOutputMode == VideoAudioOutputMode.AudioSource) {
+                }
+                else if (_source.audioOutputMode == VideoAudioOutputMode.AudioSource)
+                {
                     var audio = _source.GetTargetAudioSource(0);
                     audio.mute = !audio.mute;
                 }
@@ -75,7 +83,8 @@ namespace Banter.SDK
         [Method]
         public void _Stop()
         {
-            if(_source) {
+            if (_source)
+            {
                 _source.Stop();
             }
         }
@@ -85,7 +94,8 @@ namespace Banter.SDK
         {
             SetupVideo(changedProperties);
         }
-        void SetVideoPlayer() {
+        void SetVideoPlayer()
+        {
             _source = GetComponent<VideoPlayer>();
             if (_source == null)
             {
@@ -103,9 +113,12 @@ namespace Banter.SDK
             }
             if (changedProperties.Contains(PropertyName.volume))
             {
-                if(_source.audioOutputMode == VideoAudioOutputMode.Direct) {
+                if (_source.audioOutputMode == VideoAudioOutputMode.Direct)
+                {
                     _source.SetDirectAudioVolume(0, volume);
-                }else if(_source.audioOutputMode == VideoAudioOutputMode.AudioSource) {
+                }
+                else if (_source.audioOutputMode == VideoAudioOutputMode.AudioSource)
+                {
                     var audio = _source.GetTargetAudioSource(0);
                     audio.volume = volume;
                 }
@@ -132,44 +145,58 @@ namespace Banter.SDK
             }
             SetLoadedIfNot();
         }
-        public override void StartStuff() { 
+        public override void StartStuff()
+        {
             SetVideoPlayer();
             _source.loopPointReached += VideoEnded;
         }
-        void VideoEnded(VideoPlayer v) {
+        void VideoEnded(VideoPlayer v)
+        {
             // Triggering a time update once after the video ended.
             time = time + 0.00001f;
         }
+
         float currentTime = -1;
         void Update() {
             var _currentTime = Mathf.Floor((float)_source.time);
-            if(_currentTime != currentTime) {
+            if (_currentTime != currentTime)
+            {
                 time = (float)_source.time;
-                duration = (float)_source.length; 
+                duration = (float)_source.length;
                 currentTime = _currentTime;
             }
-            if(isPlaying != _source.isPlaying) {
+            if (isPlaying != _source.isPlaying)
+            {
                 isPlaying = _source.isPlaying;
             }
-            if(isPrepared != _source.isPrepared) {
+            if (isPrepared != _source.isPrepared)
+            {
                 isPrepared = _source.isPrepared;
             }
-            if(isLooping != _source.isLooping) {
+            if (isLooping != _source.isLooping)
+            {
                 isLooping = _source.isLooping;
             }
-            if(_source.audioOutputMode == VideoAudioOutputMode.Direct) {
-                if(isMuted != _source.GetDirectAudioMute(0)) {
+            if (_source.audioOutputMode == VideoAudioOutputMode.Direct)
+            {
+                if (isMuted != _source.GetDirectAudioMute(0))
+                {
                     isMuted = _source.GetDirectAudioMute(0);
                 }
-                if(volume != _source.GetDirectAudioVolume(0)) {
+                if (volume != _source.GetDirectAudioVolume(0))
+                {
                     volume = _source.GetDirectAudioVolume(0);
                 }
-            }else if(_source.audioOutputMode == VideoAudioOutputMode.AudioSource) {
+            }
+            else if (_source.audioOutputMode == VideoAudioOutputMode.AudioSource)
+            {
                 var audioSource = _source.GetTargetAudioSource(0);
-                if(isMuted != audioSource.mute) {
+                if (isMuted != audioSource.mute)
+                {
                     isMuted = audioSource.mute;
                 }
-                if(volume != audioSource.volume) {
+                if (volume != audioSource.volume)
+                {
                     volume = audioSource.volume;
                 }
             }
