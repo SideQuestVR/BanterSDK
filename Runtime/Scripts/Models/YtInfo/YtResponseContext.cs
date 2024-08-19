@@ -5,4 +5,5 @@ using System.Collections.Generic;
 public class YtResponseContext
 {
     public YtStreamingData streamingData;
+    public YtPlayabilityStatus playabilityStatus;
 }
