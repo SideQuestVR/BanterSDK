@@ -124,6 +124,7 @@ namespace Banter.SDK
         isPlaying,
         isLooping,
         isPrepared,
+        isMuted,
         duration,
         time,
     }

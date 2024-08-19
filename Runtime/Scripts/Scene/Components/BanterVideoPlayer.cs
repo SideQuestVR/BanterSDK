@@ -47,6 +47,7 @@ namespace Banter.SDK
         [See(initial = "false")] public bool isPlaying;
         [See(initial = "false")] public bool isLooping;
         [See(initial = "false")] public bool isPrepared;
+        [See(initial = "false")] public bool isMuted;
         [See(initial = "0")] public float duration;
         [Method]
         public void _PlayToggle()
@@ -140,9 +141,6 @@ namespace Banter.SDK
             time = time + 0.00001f;
         }
         float currentTime = 0;
-        bool currentPlaying = false;
-        bool currentPrepared = false;
-        bool currentLooping = false;
         void Update() {
             var _currentTime = Mathf.Floor((float)_source.time);
             if(_currentTime != currentTime) {
@@ -150,14 +148,30 @@ namespace Banter.SDK
                 duration = (float)_source.length; 
                 currentTime = _currentTime;
             }
-            if(currentPlaying != _source.isPlaying) {
-                currentPlaying = isPlaying = _source.isPlaying;
+            if(isPlaying != _source.isPlaying) {
+                isPlaying = _source.isPlaying;
             }
-            if(currentPrepared != _source.isPrepared) {
-                currentPrepared = isPrepared = _source.isPrepared;
+            if(isPrepared != _source.isPrepared) {
+                isPrepared = _source.isPrepared;
             }
-            if(currentLooping != _source.isLooping) {
-                currentLooping = isLooping = _source.isLooping;
+            if(isLooping != _source.isLooping) {
+                isLooping = _source.isLooping;
+            }
+            if(_source.audioOutputMode == VideoAudioOutputMode.Direct) {
+                if(isMuted != _source.GetDirectAudioMute(0)) {
+                    isMuted = _source.GetDirectAudioMute(0);
+                }
+                if(volume != _source.GetDirectAudioVolume(0)) {
+                    volume = _source.GetDirectAudioVolume(0);
+                }
+            }else if(_source.audioOutputMode == VideoAudioOutputMode.AudioSource) {
+                var audioSource = _source.GetTargetAudioSource(0);
+                if(isMuted != audioSource.mute) {
+                    isMuted = audioSource.mute;
+                }
+                if(volume != audioSource.volume) {
+                    volume = audioSource.volume;
+                }
             }
         }
         public override void DestroyStuff()
@@ -182,7 +196,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, PropertyName.duration, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, PropertyName.isMuted, PropertyName.duration, };
             UpdateCallback(changedProperties);
         }
 
@@ -349,6 +363,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.isPrepared);
                     }
                 }
+                if (values[i] is BanterBool)
+                {
+                    var valisMuted = (BanterBool)values[i];
+                    if (valisMuted.n == PropertyName.isMuted)
+                    {
+                        isMuted = valisMuted.x;
+                        changedProperties.Add(PropertyName.isMuted);
+                    }
+                }
                 if (values[i] is BanterFloat)
                 {
                     var valduration = (BanterFloat)values[i];
@@ -480,6 +503,18 @@ namespace Banter.SDK
                     name = PropertyName.isPrepared,
                     type = PropertyType.Bool,
                     value = isPrepared,
+                    componentType = ComponentType.BanterVideoPlayer,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.isMuted,
+                    type = PropertyType.Bool,
+                    value = isMuted,
                     componentType = ComponentType.BanterVideoPlayer,
                     oid = oid,
                     cid = cid
