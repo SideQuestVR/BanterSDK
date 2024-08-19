@@ -140,7 +140,7 @@ namespace Banter.SDK
             // Triggering a time update once after the video ended.
             time = time + 0.00001f;
         }
-        float currentTime = 0;
+        float currentTime = -1;
         void Update() {
             var _currentTime = Mathf.Floor((float)_source.time);
             if(_currentTime != currentTime) {
