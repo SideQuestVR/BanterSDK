@@ -39,7 +39,6 @@ namespace Banter.SDK
     {
         [See(initial = "1")] public string url;
         [See(initial = "0.5")] public float volume;
-        [See(initial = "false")] public bool loop;
         [See(initial = "true")] public bool playOnAwake;
         [See(initial = "true")] public bool skipOnDrop;
         [Watch(initial = "0")] public float time;
@@ -123,9 +122,9 @@ namespace Banter.SDK
                     audio.volume = volume;
                 }
             }
-            if (changedProperties.Contains(PropertyName.loop))
+            if (changedProperties.Contains(PropertyName.isLooping))
             {
-                _source.isLooping = loop;
+                _source.isLooping = isLooping;
             }
             if (changedProperties.Contains(PropertyName.time))
             {
@@ -227,7 +226,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, PropertyName.isMuted, PropertyName.duration, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, PropertyName.isMuted, PropertyName.duration, };
             UpdateCallback(changedProperties);
         }
 
@@ -329,15 +328,6 @@ namespace Banter.SDK
                     {
                         volume = valvolume.x;
                         changedProperties.Add(PropertyName.volume);
-                    }
-                }
-                if (values[i] is BanterBool)
-                {
-                    var valloop = (BanterBool)values[i];
-                    if (valloop.n == PropertyName.loop)
-                    {
-                        loop = valloop.x;
-                        changedProperties.Add(PropertyName.loop);
                     }
                 }
                 if (values[i] is BanterBool)
@@ -450,18 +440,6 @@ namespace Banter.SDK
                     name = PropertyName.volume,
                     type = PropertyType.Float,
                     value = volume,
-                    componentType = ComponentType.BanterVideoPlayer,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
-                    name = PropertyName.loop,
-                    type = PropertyType.Bool,
-                    value = loop,
                     componentType = ComponentType.BanterVideoPlayer,
                     oid = oid,
                     cid = cid
