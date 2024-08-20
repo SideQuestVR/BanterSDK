@@ -165,6 +165,10 @@ namespace Banter.SDK
                 duration = (float)_source.length;
                 currentTime = _currentTime;
             }
+            if (duration != (float)_source.length)
+            {
+                duration = (float)_source.length;
+            }
             if (isPlaying != _source.isPlaying)
             {
                 isPlaying = _source.isPlaying;
