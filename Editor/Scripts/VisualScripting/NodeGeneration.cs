@@ -16,7 +16,6 @@ using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Specialized;
-using UnityEngine.AI;
 
 namespace Banter.SDKEditor
 {
@@ -214,24 +213,24 @@ namespace Banter.SDKEditor
 
             //AI Classes
             //Subset of AI features that seem the most useful from: https://docs.unity3d.com/ScriptReference/UnityEngine.AIModule.html
-            typeof(NavMesh),
-            typeof(NavMeshAgent),
-            typeof(NavMeshBuilder),
-            typeof(NavMeshData),
-            typeof(NavMeshObstacle),
-            typeof(NavMeshPath),
-            typeof(OffMeshLink),
+            typeof(UnityEngine.AI.NavMesh),
+            typeof(UnityEngine.AI.NavMeshAgent),
+            typeof(UnityEngine.AI.NavMeshBuilder),
+            typeof(UnityEngine.AI.NavMeshData),
+            typeof(UnityEngine.AI.NavMeshObstacle),
+            typeof(UnityEngine.AI.NavMeshPath),
+            typeof(UnityEngine.AI.OffMeshLink),
             //AI Structs
-            typeof(NavMeshHit),
-            typeof(NavMeshLinkData),
-            typeof(NavMeshLinkInstance),
-            typeof(NavMeshQueryFilter),
-            typeof(NavMeshTriangulation),
+            typeof(UnityEngine.AI.NavMeshHit),
+            typeof(UnityEngine.AI.NavMeshLinkData),
+            typeof(UnityEngine.AI.NavMeshLinkInstance),
+            typeof(UnityEngine.AI.NavMeshQueryFilter),
+            typeof(UnityEngine.AI.NavMeshTriangulation),
             //AI Enums
-            typeof(NavMeshObstacleShape),
-            typeof(NavMeshPathStatus),
-            typeof(ObstacleAvoidanceType),
-            typeof(OffMeshLinkType),
+            typeof(UnityEngine.AI.NavMeshObstacleShape),
+            typeof(UnityEngine.AI.NavMeshPathStatus),
+            typeof(UnityEngine.AI.ObstacleAvoidanceType),
+            typeof(UnityEngine.AI.OffMeshLinkType),
 
             // Banter
             typeof(Banter.SDK.BanterUser),
