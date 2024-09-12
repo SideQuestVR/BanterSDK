@@ -19,6 +19,7 @@ namespace Banter.SDK
         bypassListenerEffects,
         bypassReverbZones,
         playOnAwake,
+        spatialBlend,
         smoothing,
         enableXAxis,
         enableYAxis,
@@ -119,7 +120,12 @@ namespace Banter.SDK
         forward,
         right,
         skipOnDrop,
-        time,
         waitForFirstFrame,
+        isPlaying,
+        isLooping,
+        isPrepared,
+        isMuted,
+        duration,
+        time,
     }
 }
