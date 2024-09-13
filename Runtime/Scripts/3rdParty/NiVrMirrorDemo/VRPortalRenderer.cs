@@ -172,14 +172,14 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderCam.farClipPlane = srcCam.farClipPlane;
 		renderCam.fieldOfView = cameraFov;
 		renderCam.cullingMask = cameraViewMask;
-		renderCam.clearFlags = cameraClear;//CameraClearFlags.SolidColor;
+		renderCam.clearFlags = cameraClear;
 
 		viewMat = renderCam.worldToCameraMatrix;
 		Vector3 mirrorPos = Vector3.zero, mirrorNormal = Vector3.up;
 		bool useOblique = false;
 		if (portalEye && !mirrorMode){
 			Coord srcCoord = new(transform);
-			Coord dstCoord = new(portalEye);//srcCoord;
+			Coord dstCoord = new(portalEye);
 
 			var localEyePos = srcCoord.worldToLocalPos(eyePose.position);
 			var srcEyeUp = eyePose.rotation * Vector3.up;
