@@ -118,6 +118,10 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 
 	void OnDisable(){
 		DestroyRenderTextures();
+		Destroy(renderCamObj);
+		Destroy(eyeDebugObjL);
+		Destroy(eyeDebugObjR);
+
 	}
 
 	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
@@ -146,10 +150,13 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	}
 
 	void IsLookingAt() {
-		if(Vector3.Distance(transform.position, Camera.main.transform.position) < 2f && 
-		Vector3.Angle(transform.forward, Camera.main.transform.forward) < 30f) {
+		if(Vector3.Distance(transform.position, Camera.main.transform.position) < 3f && 
+		Vector3.Angle(transform.position - Camera.main.transform.position, Camera.main.transform.forward) < 90f) {
 			scene.LookedAtMirror();
 		}
+		// else{
+		// 	Debug.Log("Not looking at mirror" + Vector3.Angle(transform.position - Camera.main.transform.position, Camera.main.transform.forward) + " " + Vector3.Distance(transform.position, Camera.main.transform.position));
+		// }
 	}
 
 	void updateEyePos(){
