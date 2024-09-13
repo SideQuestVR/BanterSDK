@@ -123,10 +123,9 @@ MonoBehaviour:
   cameraViewMask:
     serializedVersion: 2
     m_Bits: 4294967263
-  renderTargetSize: 4096
+  renderTargetSize: 1024
   cameraFov: 120
-  portalEye: {fileID: 0}
-  mirrorMode: 1
+  cameraClear: 1
   eyeTexLParam: EyeTexL
   eyeTexRParam: EyeTexR
   eyeViewMatLParam: EyeViewMatrixL
