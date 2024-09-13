@@ -56,8 +56,12 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		cameraFov = fov;
 	}
 
-	public void SetCameraViewMask(LayerMask mask){
-		cameraViewMask = mask;
+	public void SetCullingLayer(int mask){
+		cameraViewMask = 1 << mask;
+	}
+
+	public void AddCullingLayer(int mask){
+		cameraViewMask |= 1 << mask;
 	}
 	
 	void CreateRenderTextures() {
