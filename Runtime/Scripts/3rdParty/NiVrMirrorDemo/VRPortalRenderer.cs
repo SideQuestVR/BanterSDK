@@ -8,6 +8,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] LayerMask cameraViewMask;
 	[SerializeField] public int renderTargetSize = 1024;
 	[SerializeField] float cameraFov = 120.0f;
+	[SerializeField] CameraClearFlags cameraClear = CameraClearFlags.Skybox;
 
 	[Header("Portals")]
 	[SerializeField] Transform portalEye;
@@ -49,6 +50,10 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderTargetSize = size;
 		DestroyRenderTextures();
 		CreateRenderTextures();
+	}
+
+	public void SetCameraClear(int clear){
+		cameraClear = (CameraClearFlags)clear;
 	}
 
 	public void SetCullingLayer(int mask){
@@ -167,6 +172,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderCam.farClipPlane = srcCam.farClipPlane;
 		renderCam.fieldOfView = cameraFov;
 		renderCam.cullingMask = cameraViewMask;
+		renderCam.clearFlags = cameraClear;//CameraClearFlags.SolidColor;
 
 		viewMat = renderCam.worldToCameraMatrix;
 		Vector3 mirrorPos = Vector3.zero, mirrorNormal = Vector3.up;
