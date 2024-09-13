@@ -55,6 +55,11 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	public void SetCameraClear(int clear){
 		cameraClear = (CameraClearFlags)clear;
 	}
+	public void SetCameraColor(string color){
+		if(renderCam) {
+			renderCam.backgroundColor = ColorUtility.TryParseHtmlString(color, out Color c) ? c : Color.black;
+		}
+	}
 
 	public void SetCullingLayer(int mask){
 		cameraViewMask = 1 << mask;
