@@ -1,3 +1,4 @@
+using Banter.SDK;
 using UnityEngine;
 // using UnityEngine.InputSystem;
 using UnityEngine.XR;
@@ -42,8 +43,15 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] Matrix4x4 eyeViewL = Matrix4x4.identity;
 	[SerializeField] Matrix4x4 eyeViewR = Matrix4x4.identity;
 
+	BanterScene scene;
+
 	Camera _srcCamera{
 		get => sourceCamOverride ? sourceCamOverride: Camera.main;
+	}
+
+	void Start() {
+		scene = BanterScene.Instance();
+		InvokeRepeating("IsLookingAt", 0, 5);
 	}
 
 	public void SetRenderTextureSize(int size){
@@ -135,6 +143,13 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		position = Vector3.zero;
 		rotation = Quaternion.identity;
 		return false;
+	}
+
+	void IsLookingAt() {
+		if(Vector3.Distance(transform.position, Camera.main.transform.position) < 2f && 
+		Vector3.Angle(transform.forward, Camera.main.transform.forward) < 30f) {
+			scene.LookedAtMirror();
+		}
 	}
 
 	void updateEyePos(){
