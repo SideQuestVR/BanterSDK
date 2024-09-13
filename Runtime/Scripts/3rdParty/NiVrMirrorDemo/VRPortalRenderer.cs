@@ -111,47 +111,46 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 
 	Eyes eyes;
 
-	// private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
-	// {
-	// 	InputFeatureUsage<Vector3> inputFeatureUsagePosition = CommonUsages.leftEyePosition;
-	// 	InputFeatureUsage<Quaternion> inputFeatureUsageRotation = CommonUsages.leftEyeRotation;
+	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
+	{
+		InputFeatureUsage<Vector3> inputFeatureUsagePosition = CommonUsages.leftEyePosition;
+		InputFeatureUsage<Quaternion> inputFeatureUsageRotation = CommonUsages.leftEyeRotation;
 
-	// 	if (eye == XRNode.RightEye) {
-	// 		inputFeatureUsagePosition = CommonUsages.rightEyePosition;
-	// 		inputFeatureUsageRotation = CommonUsages.rightEyeRotation;
-	// 	}
-	// 	Eyes.TryGetLeftEyePosition(out position);
+		if (eye == XRNode.RightEye) {
+			inputFeatureUsagePosition = CommonUsages.rightEyePosition;
+			inputFeatureUsageRotation = CommonUsages.rightEyeRotation;
+		}
 		
-
-	// 	if (device.isValid)
-	// 	{
-	// 		if (
-	// 			device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && 
-	// 			device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
-	// 				return true;
+		InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
+		if (device.isValid)
+		{
+			if (
+				device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && 
+				device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
+					return true;
 				
-	// 	}
-	// 	// This is the fail case
-	// 	position = Vector3.zero;
-	// 	rotation = Quaternion.identity;
-	// 	return false;
-	// }
+		}
+		// This is the fail case
+		position = Vector3.zero;
+		rotation = Quaternion.identity;
+		return false;
+	}
 
 	void updateEyePos(){
 		// if (eyePosInputL.action != null){
 		if( XRSettings.isDeviceActive) {
-			InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
-			if(device.TryGetFeatureValue(CommonUsages.eyesData, out eyes)) 
-			{
-				eyes.TryGetLeftEyePosition(out deviceEyePoseL.position);
-				eyes.TryGetLeftEyeRotation(out deviceEyePoseL.rotation);
-				eyes.TryGetRightEyePosition(out deviceEyePoseR.position);
-				eyes.TryGetRightEyeRotation(out deviceEyePoseR.rotation);
-			}
-			Debug.Log("Left Eye: " + deviceEyePoseL.position + " " + deviceEyePoseL.rotation + ", Right Eye: " + deviceEyePoseR.position + " " + deviceEyePoseR.rotation);
+			// InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
+			// if(device.TryGetFeatureValue(CommonUsages.eyesData, out eyes)) 
+			// {
+			// 	eyes.TryGetLeftEyePosition(out deviceEyePoseL.position);
+			// 	eyes.TryGetLeftEyeRotation(out deviceEyePoseL.rotation);
+			// 	eyes.TryGetRightEyePosition(out deviceEyePoseR.position);
+			// 	eyes.TryGetRightEyeRotation(out deviceEyePoseR.rotation);
+			// }
 			// Debug.Log("HERERERER vr");
-			// TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
-			// TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
+			TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
+			TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
+			Debug.Log("Left Eye: " + deviceEyePoseL.position + " " + deviceEyePoseL.rotation + ", Right Eye: " + deviceEyePoseR.position + " " + deviceEyePoseR.rotation);
 		}else{
 			Debug.Log("HERERERER 2d mode");
 			deviceEyePoseL.position = deviceEyePoseR.position = Camera.main.transform.position;
