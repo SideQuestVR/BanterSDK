@@ -148,7 +148,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 				eyes.TryGetRightEyePosition(out deviceEyePoseR.position);
 				eyes.TryGetRightEyeRotation(out deviceEyePoseR.rotation);
 			}
-			// Debug.Log("Left Eye: " + deviceEyePoseL.position + " " + deviceEyePoseL.rotation + ", Right Eye: " + deviceEyePoseR.position + " " + deviceEyePoseR.rotation);
+			Debug.Log("Left Eye: " + deviceEyePoseL.position + " " + deviceEyePoseL.rotation + ", Right Eye: " + deviceEyePoseR.position + " " + deviceEyePoseR.rotation);
 			// Debug.Log("HERERERER vr");
 			// TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
 			// TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
