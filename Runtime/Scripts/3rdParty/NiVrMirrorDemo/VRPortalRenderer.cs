@@ -6,13 +6,13 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[Header("Camera")]
 	[SerializeField] Camera sourceCamOverride = null;
 	[SerializeField] LayerMask cameraViewMask;
-	public bool onlyAvatars = false;
-	public int renderTargetSize = 1024;
+	// [SerializeField] public bool onlyAvatars = false;
+	[SerializeField] public int renderTargetSize = 1024;
 	[SerializeField] float cameraFov = 120.0f;
 
 	[Header("Portals")]
 	[SerializeField] Transform portalEye;
-	public bool mirrorMode = true;
+	[SerializeField] public bool mirrorMode = true;
 
 	[Header("Shader parameters")]
 	[SerializeField] string eyeTexLParam = "EyeTexL";
@@ -46,11 +46,29 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		get => sourceCamOverride ? sourceCamOverride: Camera.main;
 	}
 
-	void OnEnable(){
+	public void SetRenderTextureSize(int size){
+		renderTargetSize = size;
+		DestroyRenderTextures();
+		CreateRenderTextures();
+	}
+
+	public void SetCameraFov(float fov){
+		cameraFov = fov;
+	}
+
+	public void SetCameraViewMask(LayerMask mask){
+		cameraViewMask = mask;
+	}
+	
+	void CreateRenderTextures() {
 		renderTexL = new RenderTexture(renderTargetSize, renderTargetSize, 16);
 		renderTexR = new RenderTexture(renderTargetSize, renderTargetSize, 16);
 		renderTexL.Create();
 		renderTexR.Create();
+	}
+
+	void OnEnable(){
+		CreateRenderTextures();
 
 		renderCamObj = new GameObject("Render Camera");
 		renderCamObj.hideFlags = HideFlags.DontSave;
@@ -70,7 +88,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		eyeDebugObjR.transform.SetParent(transform);
 	}
 
-	void OnDisable(){
+	void DestroyRenderTextures() {
 		if (renderTexL){
 			renderTexL.Release();
 			renderTexL = null;
@@ -79,6 +97,10 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 			renderTexR.Release();
 			renderTexR = null;
 		}
+	}
+
+	void OnDisable(){
+		DestroyRenderTextures();
 	}
 
 	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
@@ -145,7 +167,8 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderCam.nearClipPlane = srcCam.nearClipPlane;
 		renderCam.farClipPlane = srcCam.farClipPlane;
 		renderCam.fieldOfView = cameraFov;
-		renderCam.cullingMask = onlyAvatars ? (1 << LayerMask.NameToLayer("RPMAvatarHead")) | (1 << LayerMask.NameToLayer("RPMAvatarBody")) : cameraViewMask;
+		// renderCam.cullingMask = onlyAvatars ? (1 << LayerMask.NameToLayer("RPMAvatarHead")) | (1 << LayerMask.NameToLayer("RPMAvatarBody")) : cameraViewMask;
+		renderCam.cullingMask = cameraViewMask;
 
 		viewMat = renderCam.worldToCameraMatrix;
 		Vector3 mirrorPos = Vector3.zero, mirrorNormal = Vector3.up;
