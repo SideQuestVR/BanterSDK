@@ -12,7 +12,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 
 	[Header("Portals")]
 	[SerializeField] Transform portalEye;
-	[SerializeField] bool mirrorMode = true;
+	[SerializeField] public bool mirrorMode = true;
 
 	[Header("Shader parameters")]
 	[SerializeField] string eyeTexLParam = "EyeTexL";
