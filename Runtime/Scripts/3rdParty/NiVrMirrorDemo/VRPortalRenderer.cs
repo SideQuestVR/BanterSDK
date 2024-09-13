@@ -10,9 +10,9 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] float cameraFov = 120.0f;
 	[SerializeField] CameraClearFlags cameraClear = CameraClearFlags.Skybox;
 
-	[Header("Portals")]
-	[SerializeField] Transform portalEye;
-	[SerializeField] public bool mirrorMode = true;
+	// [Header("Portals")]
+	Transform portalEye;
+	bool mirrorMode = true;
 
 	[Header("Shader parameters")]
 	[SerializeField] string eyeTexLParam = "EyeTexL";
