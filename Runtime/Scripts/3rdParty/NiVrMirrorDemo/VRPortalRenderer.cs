@@ -109,15 +109,8 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	// 	}
 	// }
 
-	Vector3 tempTrackingPos;
-	Quaternion tempTrackingRot;
-	Vector3 tempPos;
-	Quaternion tempRot;
 	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
 	{
-		InputFeatureUsage<Vector3> inputFeatureUsageDevicePosition = CommonUsages.devicePosition;
-		InputFeatureUsage<Quaternion> inputFeatureUsageDeviceRotation = CommonUsages.deviceRotation;
-
 		InputFeatureUsage<Vector3> inputFeatureUsagePosition = CommonUsages.leftEyePosition;
 		InputFeatureUsage<Quaternion> inputFeatureUsageRotation = CommonUsages.leftEyeRotation;
 
@@ -131,15 +124,10 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		if (device.isValid)
 		{
 			if (
-				device.TryGetFeatureValue(inputFeatureUsagePosition, out tempPos) && 
-				device.TryGetFeatureValue(inputFeatureUsageRotation, out tempRot) && 
-				device.TryGetFeatureValue(inputFeatureUsageDevicePosition, out tempTrackingPos) && 
-				device.TryGetFeatureValue(inputFeatureUsageDeviceRotation, out tempTrackingRot))
-				{
-					position = tempPos + tempTrackingPos;
-					rotation = tempRot * tempTrackingRot;
+				device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && 
+				device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
 					return true;
-				}
+				
 		}
 		// This is the fail case
 		position = Vector3.zero;
@@ -173,18 +161,18 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		// 	deviceEyePoseR.rotation = eyeRotInputR.action.ReadValue<Quaternion>();
 		// }
 		//Debug.Log($"{deviceEyePoseL} {deviceEyePoseR}");
-		// var cam = _srcCamera;
-		// var camParent = cam.transform.parent;
-		// if (!camParent){
+		var cam = _srcCamera;
+		var camParent = cam.transform.parent;
+		if (!camParent || !XRSettings.isDeviceActive){
 			worldEyePoseL = deviceEyePoseL;
 			worldEyePoseR = deviceEyePoseR;
-		// }
-		// else{
-		// 	worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
-		// 	worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;//deviceEyePoseL.rotation * camParent.rotation;
-		// 	worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
-		// 	worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;//deviceEyePoseR.rotation * camParent.rotation;
-		// }
+		}
+		else{
+			worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
+			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;//deviceEyePoseL.rotation * camParent.rotation;
+			worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
+			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;//deviceEyePoseR.rotation * camParent.rotation;
+		}
 		eyeDebugObjL.transform.position = worldEyePoseL.position;
 		eyeDebugObjL.transform.rotation = worldEyePoseL.rotation;
 		eyeDebugObjR.transform.position = worldEyePoseR.position;
