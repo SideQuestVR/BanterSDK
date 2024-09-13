@@ -132,8 +132,13 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 
 	void updateEyePos(){
 		// if (eyePosInputL.action != null){
+		if( XRSettings.isDeviceActive) {
 			TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
 			TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
+		}else{
+			deviceEyePoseL.position = deviceEyePoseR.position = Camera.main.transform.position;
+			deviceEyePoseL.rotation = deviceEyePoseR.rotation = Camera.main.transform.rotation;
+		}
 			// enableActionRef(eyePosInputL);
 			// deviceEyePoseL.position = eyePosInputL.action.ReadValue<Vector3>();
 		// }
@@ -151,18 +156,18 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		// 	deviceEyePoseR.rotation = eyeRotInputR.action.ReadValue<Quaternion>();
 		// }
 		//Debug.Log($"{deviceEyePoseL} {deviceEyePoseR}");
-		var cam = _srcCamera;
-		var camParent = cam.transform.parent;
-		if (!camParent){
+		// var cam = _srcCamera;
+		// var camParent = cam.transform.parent;
+		// if (!camParent){
 			worldEyePoseL = deviceEyePoseL;
 			worldEyePoseR = deviceEyePoseR;
-		}
-		else{
-			worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
-			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;//deviceEyePoseL.rotation * camParent.rotation;
-			worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
-			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;//deviceEyePoseR.rotation * camParent.rotation;
-		}
+		// }
+		// else{
+		// 	worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
+		// 	worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;//deviceEyePoseL.rotation * camParent.rotation;
+		// 	worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
+		// 	worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;//deviceEyePoseR.rotation * camParent.rotation;
+		// }
 		eyeDebugObjL.transform.position = worldEyePoseL.position;
 		eyeDebugObjL.transform.rotation = worldEyePoseL.rotation;
 		eyeDebugObjR.transform.position = worldEyePoseR.position;
