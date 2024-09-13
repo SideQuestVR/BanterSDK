@@ -7,7 +7,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] Camera sourceCamOverride = null;
 	[SerializeField] LayerMask cameraViewMask = 1;
 	[SerializeField] int renderTargetSize = 1024;
-	[SerializeField] float cameraFov = 120.0f;
+	[SerializeField] float cameraFov = 110.0f;
 
 	[Header("Portals")]
 	[SerializeField] Transform portalEye;
@@ -21,12 +21,6 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] string eyeProjMatLParam = "EyeProjMatrixL";
 	[SerializeField] string eyeProjMatRParam = "EyeProjMatrixR";
 	[SerializeField] Material targetMaterial;
-
-	// [Header("Inputs")]
-	// [SerializeField] InputActionReference eyePosInputL;
-	// [SerializeField] InputActionReference eyePosInputR;
-	// [SerializeField] InputActionReference eyeRotInputL;
-	// [SerializeField] InputActionReference eyeRotInputR;
 
 	[Header("Internals (do not touch)")]
 	[SerializeField] Pose deviceEyePoseL;
@@ -50,17 +44,6 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	Camera _srcCamera{
 		get => sourceCamOverride ? sourceCamOverride: Camera.main;
 	}
-
-	/*
-	public void onInputActivated(VRInputActions.VRControlsActions controlActions){
-		eyePosInputL = controlActions.HMDLEyePos;
-		eyePosInputR = controlActions.HMDREyePos;
-		eyeRotInputL = controlActions.HMDLEyeRot;
-		eyeRotInputR = controlActions.HMDREyeRot;
-	}
-	public void onInputDectivated(VRInputActions.VRControlsActions controlActions){
-	}
-	*/
 
 	void OnEnable(){
 		renderTexL = new RenderTexture(renderTargetSize, renderTargetSize, 16);
@@ -96,20 +79,6 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 			renderTexR = null;
 		}
 	}
-
-	// void enableActionRef(InputActionReference actRef){
-	// 	if (actRef.action != null){
-	// 		if (!actRef.action.enabled){
-	// 			Debug.Log($"Enabled action {actRef}");
-	// 			actRef.action.Enable();
-	// 		}
-	// 	}
-	// 	else{
-	// 		Debug.Log($"Action is null");
-	// 	}
-	// }
-
-	Eyes eyes;
 
 	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
 	{
@@ -152,9 +121,9 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		}
 		else{
 			worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
-			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;//deviceEyePoseL.rotation * camParent.rotation;
+			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;
 			worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
-			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;//deviceEyePoseR.rotation * camParent.rotation;
+			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;
 		}
 		eyeDebugObjL.transform.position = worldEyePoseL.position;
 		eyeDebugObjL.transform.rotation = worldEyePoseL.rotation;
