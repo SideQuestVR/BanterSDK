@@ -81,6 +81,9 @@ namespace Banter.SDK
             }
             set{
                 _lookAtMirror = value;
+                if(_lookAtMirror < 1) {
+                    _lookAtMirror = 1;
+                }
                 PlayerPrefs.SetFloat("lookedAtMirror", _lookAtMirror);
             }
         }
