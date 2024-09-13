@@ -7,7 +7,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] Camera sourceCamOverride = null;
 	[SerializeField] LayerMask cameraViewMask = 1;
 	[SerializeField] int renderTargetSize = 1024;
-	[SerializeField] float cameraFov = 90.0f;
+	[SerializeField] float cameraFov = 120.0f;
 
 	[Header("Portals")]
 	[SerializeField] Transform portalEye;
