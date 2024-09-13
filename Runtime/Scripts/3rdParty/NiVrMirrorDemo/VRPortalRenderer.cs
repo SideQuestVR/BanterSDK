@@ -5,9 +5,10 @@ using UnityEngine.XR;
 public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[Header("Camera")]
 	[SerializeField] Camera sourceCamOverride = null;
-	[SerializeField] LayerMask cameraViewMask = 1;
+	[SerializeField] LayerMask cameraViewMask;
+	[SerializeField] bool onlyAvatars = false;
 	[SerializeField] int renderTargetSize = 1024;
-	[SerializeField] float cameraFov = 110.0f;
+	[SerializeField] float cameraFov = 120.0f;
 
 	[Header("Portals")]
 	[SerializeField] Transform portalEye;
@@ -144,7 +145,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderCam.nearClipPlane = srcCam.nearClipPlane;
 		renderCam.farClipPlane = srcCam.farClipPlane;
 		renderCam.fieldOfView = cameraFov;
-		renderCam.cullingMask = cameraViewMask;
+		renderCam.cullingMask = onlyAvatars ? (1 << LayerMask.NameToLayer("RPMAvatarHead")) | (1 << LayerMask.NameToLayer("RPMAvatarBody")) : cameraViewMask;
 
 		viewMat = renderCam.worldToCameraMatrix;
 		Vector3 mirrorPos = Vector3.zero, mirrorNormal = Vector3.up;
