@@ -206,7 +206,7 @@ namespace Banter.SDK
             inputActionAsset.Enable();
             LeftHandActions = inputActionAsset.FindActionMap("LeftHand");
             RightHandActions = inputActionAsset.FindActionMap("RightHand");
-            
+            _lookAtMirror = PlayerPrefs.GetFloat("lookedAtMirror", 1);
             events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
 
@@ -283,7 +283,7 @@ namespace Banter.SDK
 #endif
         }
         public void LookedAtMirror() {
-            LookAtMirror += 0.001f;
+            LookAtMirror = LookAtMirror + 0.001f;
             events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
         public void OpenPage(string msg, int reqId)
