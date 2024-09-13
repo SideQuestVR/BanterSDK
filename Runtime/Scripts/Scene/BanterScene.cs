@@ -283,7 +283,7 @@ namespace Banter.SDK
 #endif
         }
         public void LookedAtMirror() {
-            LookAtMirror += 0.0001f;
+            LookAtMirror += 0.001f;
             events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
         public void OpenPage(string msg, int reqId)

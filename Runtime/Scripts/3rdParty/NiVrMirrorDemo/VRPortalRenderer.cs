@@ -51,7 +51,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 
 	void Start() {
 		scene = BanterScene.Instance();
-		InvokeRepeating("IsLookingAt", 0, 5);
+		InvokeRepeating("IsLookingAt", 0, 10);
 	}
 
 	public void SetRenderTextureSize(int size){
