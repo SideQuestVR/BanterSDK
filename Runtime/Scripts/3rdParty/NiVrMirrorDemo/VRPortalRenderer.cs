@@ -108,8 +108,16 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	// 		Debug.Log($"Action is null");
 	// 	}
 	// }
+
+	Vector3 tempTrackingPos;
+	Quaternion tempTrackingRot;
+	Vector3 tempPos;
+	Quaternion tempRot;
 	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
 	{
+		InputFeatureUsage<Vector3> inputFeatureUsageDevicePosition = CommonUsages.devicePosition;
+		InputFeatureUsage<Quaternion> inputFeatureUsageDeviceRotation = CommonUsages.deviceRotation;
+
 		InputFeatureUsage<Vector3> inputFeatureUsagePosition = CommonUsages.leftEyePosition;
 		InputFeatureUsage<Quaternion> inputFeatureUsageRotation = CommonUsages.leftEyeRotation;
 
@@ -118,11 +126,20 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 			inputFeatureUsageRotation = CommonUsages.rightEyeRotation;
 		}
 
-		InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
+		InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.TrackingReference);
+
 		if (device.isValid)
 		{
-			if (device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
-				return true;
+			if (
+				device.TryGetFeatureValue(inputFeatureUsagePosition, out tempPos) && 
+				device.TryGetFeatureValue(inputFeatureUsageRotation, out tempRot) && 
+				device.TryGetFeatureValue(inputFeatureUsageDevicePosition, out tempTrackingPos) && 
+				device.TryGetFeatureValue(inputFeatureUsageDeviceRotation, out tempTrackingRot))
+				{
+					position = tempPos + tempTrackingPos;
+					rotation = tempRot * tempTrackingRot;
+					return true;
+				}
 		}
 		// This is the fail case
 		position = Vector3.zero;
