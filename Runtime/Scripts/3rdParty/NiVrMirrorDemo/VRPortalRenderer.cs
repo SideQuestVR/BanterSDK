@@ -137,42 +137,13 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	}
 
 	void updateEyePos(){
-		// if (eyePosInputL.action != null){
 		if( XRSettings.isDeviceActive) {
-			// InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
-			// if(device.TryGetFeatureValue(CommonUsages.eyesData, out eyes)) 
-			// {
-			// 	eyes.TryGetLeftEyePosition(out deviceEyePoseL.position);
-			// 	eyes.TryGetLeftEyeRotation(out deviceEyePoseL.rotation);
-			// 	eyes.TryGetRightEyePosition(out deviceEyePoseR.position);
-			// 	eyes.TryGetRightEyeRotation(out deviceEyePoseR.rotation);
-			// }
-			// Debug.Log("HERERERER vr");
 			TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
 			TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
-			Debug.Log("Left Eye: " + deviceEyePoseL.position + " " + deviceEyePoseL.rotation + ", Right Eye: " + deviceEyePoseR.position + " " + deviceEyePoseR.rotation);
 		}else{
-			Debug.Log("HERERERER 2d mode");
 			deviceEyePoseL.position = deviceEyePoseR.position = Camera.main.transform.position;
 			deviceEyePoseL.rotation = deviceEyePoseR.rotation = Camera.main.transform.rotation;
 		}
-			// enableActionRef(eyePosInputL);
-			// deviceEyePoseL.position = eyePosInputL.action.ReadValue<Vector3>();
-		// }
-		// if (eyePosInputR.action != null){
-		// 	TryGetEyeFeature(out deviceEyePoseR.position, XRNode.RightEye);
-		// 	// enableActionRef(eyePosInputR);
-		// 	deviceEyePoseR.position = eyePosInputR.action.ReadValue<Vector3>();
-		// }
-		// if (eyeRotInputL.action != null){
-		// 	// enableActionRef(eyeRotInputL);
-		// 	deviceEyePoseL.rotation = eyeRotInputL.action.ReadValue<Quaternion>();
-		// }
-		// if (eyeRotInputR.action != null){
-		// 	// enableActionRef(eyeRotInputR);
-		// 	deviceEyePoseR.rotation = eyeRotInputR.action.ReadValue<Quaternion>();
-		// }
-		//Debug.Log($"{deviceEyePoseL} {deviceEyePoseR}");
 		var cam = _srcCamera;
 		var camParent = cam.transform.parent;
 		if (!camParent || !XRSettings.isDeviceActive){
