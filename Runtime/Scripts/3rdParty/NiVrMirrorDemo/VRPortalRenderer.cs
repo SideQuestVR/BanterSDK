@@ -6,7 +6,6 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[Header("Camera")]
 	[SerializeField] Camera sourceCamOverride = null;
 	[SerializeField] LayerMask cameraViewMask;
-	// [SerializeField] public bool onlyAvatars = false;
 	[SerializeField] public int renderTargetSize = 1024;
 	[SerializeField] float cameraFov = 120.0f;
 
@@ -167,7 +166,6 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderCam.nearClipPlane = srcCam.nearClipPlane;
 		renderCam.farClipPlane = srcCam.farClipPlane;
 		renderCam.fieldOfView = cameraFov;
-		// renderCam.cullingMask = onlyAvatars ? (1 << LayerMask.NameToLayer("RPMAvatarHead")) | (1 << LayerMask.NameToLayer("RPMAvatarBody")) : cameraViewMask;
 		renderCam.cullingMask = cameraViewMask;
 
 		viewMat = renderCam.worldToCameraMatrix;
