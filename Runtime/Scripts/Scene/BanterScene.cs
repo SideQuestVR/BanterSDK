@@ -213,6 +213,7 @@ namespace Banter.SDK
         public void Destroy()
         {
             StopThreads();
+            events.RemoveAllListeners();
             _instance = null;
         }
 
@@ -306,20 +307,20 @@ namespace Banter.SDK
                 return;
             }
             var gravity = new Vector3(Germany.DeGermaniser(parts[0]), Germany.DeGermaniser(parts[1]), Germany.DeGermaniser(parts[2]));
-            mainThread?.Enqueue(() => Physics.gravity = gravity);
+            events.OnGravityChanged?.Invoke(gravity);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = Germany.DeGermaniser(msg);
-            mainThread?.Enqueue(() => Time.timeScale = timeScale);
+            events.OnTimeScaleChanged?.Invoke(timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
         public void PlayerSpeed(string msg, int reqId)
         {
             var speed = msg == "1";
-            events.OnPlayerSpeedChanged.Invoke(speed);
+            events.OnPlayerSpeedChanged?.Invoke(speed);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
         }
 
@@ -335,21 +336,10 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
                 return;
             }
-#if BANTER_EDITOR
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
             });
-#else
-            var user = users.FirstOrDefault(x => x.id == parts[5]);
-            if (user != null)
-            {
-                mainThread?.Enqueue(() =>
-                {
-                    user.transform.position = point;
-                    user.transform.eulerAngles = rotation;
-                });
-            }
-#endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
         public void YtInfo(string youtubeId, int reqId)
