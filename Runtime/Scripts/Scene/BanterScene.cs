@@ -919,6 +919,8 @@ namespace Banter.SDK
 
                 if (didHit)
                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
+                else
+                    link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY);
             });
         }
         public void InstantiateJsObject(string msg, int reqId)
