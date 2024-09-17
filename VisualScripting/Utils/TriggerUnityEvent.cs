@@ -4,25 +4,29 @@ using Banter.SDK;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Trigger Custom Event")]
-    [UnitShortTitle("Trigger Event")]
+    [UnitTitle("Trigger VisualScriptingEvent")]
+    [UnitShortTitle("Trigger VisualScriptingEvent")]
     [UnitCategory("Banter")]
     [TypeIcon(typeof(BanterObjectId))]
     public class TriggerUnityEvent : Unit
     {
         [DoNotSerialize]
         [PortLabelHidden]
-        public ValueInput targetGameObject;
-        [DoNotSerialize]
+        [NullMeansSelf]
+        public ValueInput Target { get; private set; }
+        [PortLabelHidden]
         public ControlOutput triggered;
-        [DoNotSerialize]
+        [PortLabelHidden]
         public ControlInput trigger;
 
         protected override void Definition()
         {
-            targetGameObject = ValueInput<VisualScriptingEvent>("Target", null).NullMeansSelf();
+            Target = ValueInput(typeof(VisualScriptingEvent), nameof(Target));
+            Target.SetDefaultValue(null);
+            Target.NullMeansSelf();
+
             trigger = ControlInput("", (flow) => {
-                var target = flow.GetValue<VisualScriptingEvent>(targetGameObject);
+                var target = flow.GetValue<VisualScriptingEvent>(Target);
                 target.OnCustomEvent?.Invoke();
 
                 return triggered;
