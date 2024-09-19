@@ -1,3 +1,4 @@
+using Banter.SDK;
 using UnityEngine;
 // using UnityEngine.InputSystem;
 using UnityEngine.XR;
@@ -5,13 +6,14 @@ using UnityEngine.XR;
 public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[Header("Camera")]
 	[SerializeField] Camera sourceCamOverride = null;
-	[SerializeField] LayerMask cameraViewMask = 1;
-	[SerializeField] int renderTargetSize = 1024;
-	[SerializeField] float cameraFov = 90.0f;
+	[SerializeField] LayerMask cameraViewMask;
+	[SerializeField] public int renderTargetSize = 1024;
+	[SerializeField] float cameraFov = 120.0f;
+	[SerializeField] CameraClearFlags cameraClear = CameraClearFlags.Skybox;
 
-	[Header("Portals")]
-	[SerializeField] Transform portalEye;
-	[SerializeField] bool mirrorMode = true;
+	// [Header("Portals")]
+	Transform portalEye;
+	bool mirrorMode = true;
 
 	[Header("Shader parameters")]
 	[SerializeField] string eyeTexLParam = "EyeTexL";
@@ -21,12 +23,6 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] string eyeProjMatLParam = "EyeProjMatrixL";
 	[SerializeField] string eyeProjMatRParam = "EyeProjMatrixR";
 	[SerializeField] Material targetMaterial;
-
-	// [Header("Inputs")]
-	// [SerializeField] InputActionReference eyePosInputL;
-	// [SerializeField] InputActionReference eyePosInputR;
-	// [SerializeField] InputActionReference eyeRotInputL;
-	// [SerializeField] InputActionReference eyeRotInputR;
 
 	[Header("Internals (do not touch)")]
 	[SerializeField] Pose deviceEyePoseL;
@@ -47,26 +43,49 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 	[SerializeField] Matrix4x4 eyeViewL = Matrix4x4.identity;
 	[SerializeField] Matrix4x4 eyeViewR = Matrix4x4.identity;
 
+	BanterScene scene;
+
 	Camera _srcCamera{
 		get => sourceCamOverride ? sourceCamOverride: Camera.main;
 	}
 
-	/*
-	public void onInputActivated(VRInputActions.VRControlsActions controlActions){
-		eyePosInputL = controlActions.HMDLEyePos;
-		eyePosInputR = controlActions.HMDREyePos;
-		eyeRotInputL = controlActions.HMDLEyeRot;
-		eyeRotInputR = controlActions.HMDREyeRot;
+	void Start() {
+		scene = BanterScene.Instance();
+		InvokeRepeating("IsLookingAt", 0, 10f);
 	}
-	public void onInputDectivated(VRInputActions.VRControlsActions controlActions){
-	}
-	*/
 
-	void OnEnable(){
+	public void SetRenderTextureSize(int size){
+		renderTargetSize = size;
+		DestroyRenderTextures();
+		CreateRenderTextures();
+	}
+
+	public void SetCameraClear(int clear){
+		cameraClear = (CameraClearFlags)clear;
+	}
+	public void SetCameraColor(string color){
+		if(renderCam) {
+			renderCam.backgroundColor = ColorUtility.TryParseHtmlString(color, out Color c) ? c : Color.black;
+		}
+	}
+
+	public void SetCullingLayer(int mask){
+		cameraViewMask = 1 << mask;
+	}
+
+	public void AddCullingLayer(int mask){
+		cameraViewMask |= 1 << mask;
+	}
+	
+	void CreateRenderTextures() {
 		renderTexL = new RenderTexture(renderTargetSize, renderTargetSize, 16);
 		renderTexR = new RenderTexture(renderTargetSize, renderTargetSize, 16);
 		renderTexL.Create();
 		renderTexR.Create();
+	}
+
+	void OnEnable(){
+		CreateRenderTextures();
 
 		renderCamObj = new GameObject("Render Camera");
 		renderCamObj.hideFlags = HideFlags.DontSave;
@@ -86,7 +105,7 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		eyeDebugObjR.transform.SetParent(transform);
 	}
 
-	void OnDisable(){
+	void DestroyRenderTextures() {
 		if (renderTexL){
 			renderTexL.Release();
 			renderTexL = null;
@@ -97,17 +116,14 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		}
 	}
 
-	// void enableActionRef(InputActionReference actRef){
-	// 	if (actRef.action != null){
-	// 		if (!actRef.action.enabled){
-	// 			Debug.Log($"Enabled action {actRef}");
-	// 			actRef.action.Enable();
-	// 		}
-	// 	}
-	// 	else{
-	// 		Debug.Log($"Action is null");
-	// 	}
-	// }
+	void OnDisable(){
+		DestroyRenderTextures();
+		Destroy(renderCamObj);
+		Destroy(eyeDebugObjL);
+		Destroy(eyeDebugObjR);
+
+	}
+
 	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
 	{
 		InputFeatureUsage<Vector3> inputFeatureUsagePosition = CommonUsages.leftEyePosition;
@@ -117,12 +133,15 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 			inputFeatureUsagePosition = CommonUsages.rightEyePosition;
 			inputFeatureUsageRotation = CommonUsages.rightEyeRotation;
 		}
-
+		
 		InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
 		if (device.isValid)
 		{
-			if (device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
-				return true;
+			if (
+				device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && 
+				device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
+					return true;
+				
 		}
 		// This is the fail case
 		position = Vector3.zero;
@@ -130,38 +149,35 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		return false;
 	}
 
+	void IsLookingAt() {
+		if(Vector3.Distance(transform.position, Camera.main.transform.position) < 3f && 
+		Vector3.Angle(transform.position - Camera.main.transform.position, Camera.main.transform.forward) < 90f) {
+			scene.LookedAtMirror();
+		}
+		// else{
+		// 	Debug.Log("Not looking at mirror" + Vector3.Angle(transform.position - Camera.main.transform.position, Camera.main.transform.forward) + " " + Vector3.Distance(transform.position, Camera.main.transform.position));
+		// }
+	}
+
 	void updateEyePos(){
-		// if (eyePosInputL.action != null){
+		if( XRSettings.isDeviceActive) {
 			TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
 			TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
-			// enableActionRef(eyePosInputL);
-			// deviceEyePoseL.position = eyePosInputL.action.ReadValue<Vector3>();
-		// }
-		// if (eyePosInputR.action != null){
-		// 	TryGetEyeFeature(out deviceEyePoseR.position, XRNode.RightEye);
-		// 	// enableActionRef(eyePosInputR);
-		// 	deviceEyePoseR.position = eyePosInputR.action.ReadValue<Vector3>();
-		// }
-		// if (eyeRotInputL.action != null){
-		// 	// enableActionRef(eyeRotInputL);
-		// 	deviceEyePoseL.rotation = eyeRotInputL.action.ReadValue<Quaternion>();
-		// }
-		// if (eyeRotInputR.action != null){
-		// 	// enableActionRef(eyeRotInputR);
-		// 	deviceEyePoseR.rotation = eyeRotInputR.action.ReadValue<Quaternion>();
-		// }
-		//Debug.Log($"{deviceEyePoseL} {deviceEyePoseR}");
+		}else{
+			deviceEyePoseL.position = deviceEyePoseR.position = Camera.main.transform.position;
+			deviceEyePoseL.rotation = deviceEyePoseR.rotation = Camera.main.transform.rotation;
+		}
 		var cam = _srcCamera;
 		var camParent = cam.transform.parent;
-		if (!camParent){
+		if (!camParent || !XRSettings.isDeviceActive){
 			worldEyePoseL = deviceEyePoseL;
 			worldEyePoseR = deviceEyePoseR;
 		}
 		else{
 			worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
-			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;//deviceEyePoseL.rotation * camParent.rotation;
+			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;
 			worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
-			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;//deviceEyePoseR.rotation * camParent.rotation;
+			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;
 		}
 		eyeDebugObjL.transform.position = worldEyePoseL.position;
 		eyeDebugObjL.transform.rotation = worldEyePoseL.rotation;
@@ -183,13 +199,14 @@ public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
 		renderCam.farClipPlane = srcCam.farClipPlane;
 		renderCam.fieldOfView = cameraFov;
 		renderCam.cullingMask = cameraViewMask;
+		renderCam.clearFlags = cameraClear;
 
 		viewMat = renderCam.worldToCameraMatrix;
 		Vector3 mirrorPos = Vector3.zero, mirrorNormal = Vector3.up;
 		bool useOblique = false;
 		if (portalEye && !mirrorMode){
 			Coord srcCoord = new(transform);
-			Coord dstCoord = new(portalEye);//srcCoord;
+			Coord dstCoord = new(portalEye);
 
 			var localEyePos = srcCoord.worldToLocalPos(eyePose.position);
 			var srcEyeUp = eyePose.rotation * Vector3.up;

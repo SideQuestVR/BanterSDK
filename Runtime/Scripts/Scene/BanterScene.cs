@@ -71,6 +71,22 @@ namespace Banter.SDK
         public bool loading = false;
         public bool isHome = false;
         public bool isFallbackHome = false;
+        private float _lookAtMirror;
+        public float LookAtMirror {
+            get{
+                if(_lookAtMirror == -1) {
+                    _lookAtMirror = PlayerPrefs.GetFloat("lookedAtMirror", 1);
+                }
+                return _lookAtMirror;
+            }
+            set{
+                _lookAtMirror = value;
+                if(_lookAtMirror < 1) {
+                    _lookAtMirror = 1;
+                }
+                PlayerPrefs.SetFloat("lookedAtMirror", _lookAtMirror);
+            }
+        }
         public TaskCompletionSource<bool> loadUrlTaskCompletionSource;
         private LoadingBarManager _loadingManager;
         public LoadingBarManager loadingManager
@@ -97,36 +113,19 @@ namespace Banter.SDK
         public string CurrentUrl;
         public bool ClearCacheOnRejoin;
         public Guid InstanceID { get; private set; }
-        // AutoResetEvent areChangeEnqueued = new AutoResetEvent(false);
-        // AutoResetEvent arePropertyUpdateQueue = new AutoResetEvent(false);
+
         public string LoadingStatus = "Please wait, loading live space...";
-        public void EnqueueChange(string change)
-        {
-            //this is assuming link.send is always batched in some form and won't block for any significant amount of time
-            link.Send(APICommands.UPDATE + change);
-
-            //string msg =          msg = string.Join(MessageDelimiters.TERTIARY, _changes.ToArray());
-            //    _changes.Clear();
-            //}
-            //if (!string.IsNullOrEmpty(msg))
-            //{
-            //    link.Send(APICommands.UPDATE + msg);
-            //}
-
-            //lock (_changes) {
-            //    _changes.Add(change);
-            //}dd
-            //areChangeEnqueued.Set();
-        }
-
+        int pendingQLocked = 0;
+        int activeTaskLocked = 0;
 
         //only to be accessed in main thread!
         private Task activeTask = null;
         private List<BanterComponentPropertyUpdate> _pendingQueue;// = new List<BanterComponentPropertyUpdate>();
 
-
-        int pendingQLocked = 0;
-        int activeTaskLocked = 0;
+        public void EnqueueChange(string change)
+        {
+            link.Send(APICommands.UPDATE + change);
+        }
         private void StartQ(bool onlyIfNull = false)
         {
             SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref activeTaskLocked, 1, 0) == 0));
@@ -207,7 +206,8 @@ namespace Banter.SDK
             inputActionAsset.Enable();
             LeftHandActions = inputActionAsset.FindActionMap("LeftHand");
             RightHandActions = inputActionAsset.FindActionMap("RightHand");
-            ClearQueueOnStartup();
+            _lookAtMirror = PlayerPrefs.GetFloat("lookedAtMirror", 1);
+            events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
 
         public void Destroy()
@@ -282,6 +282,10 @@ namespace Banter.SDK
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
             });
 #endif
+        }
+        public void LookedAtMirror() {
+            LookAtMirror = LookAtMirror + 0.001f;
+            events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
         public void OpenPage(string msg, int reqId)
         {

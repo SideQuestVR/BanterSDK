@@ -27,13 +27,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4367445075663922001}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0.7071068, z: 0.7071068, w: 0}
   m_LocalPosition: {x: -0.000000030025245, y: 1.25, z: 0.00000022351742}
   m_LocalScale: {x: 0.25, y: 0.25, z: 0.25}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: -90, y: 0, z: 180}
 --- !u!33 &4367445075663922005
 MeshFilter:
@@ -93,9 +93,17 @@ MeshCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4367445075663922001}
   m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
   m_IsTrigger: 0
+  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 4
+  serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
@@ -114,11 +122,10 @@ MonoBehaviour:
   sourceCamOverride: {fileID: 0}
   cameraViewMask:
     serializedVersion: 2
-    m_Bits: 55
-  renderTargetSize: 4096
-  cameraFov: 90
-  portalEye: {fileID: 0}
-  mirrorMode: 1
+    m_Bits: 4294967263
+  renderTargetSize: 1024
+  cameraFov: 120
+  cameraClear: 1
   eyeTexLParam: EyeTexL
   eyeTexRParam: EyeTexR
   eyeViewMatLParam: EyeViewMatrixL

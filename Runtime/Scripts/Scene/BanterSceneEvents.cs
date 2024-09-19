@@ -6,6 +6,7 @@ public class BanterSceneEvents
     public UnityEvent OnLoad = new UnityEvent();
     public UnityEvent OnDomReady = new UnityEvent();
     public UnityEvent OnSceneReady = new UnityEvent();
+    public UnityEvent<float> OnLookedAtMirror = new UnityEvent<float>();
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
     public UnityEvent<string> OnLoadFailed = new UnityEvent<string>();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
