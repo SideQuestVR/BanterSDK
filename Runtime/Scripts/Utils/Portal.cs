@@ -16,7 +16,7 @@ namespace Banter.SDK
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("__BA_PlayerHeads") && CanActivate)
+            if (other.CompareTag("__BA_PlayerHead") && CanActivate)
             {
                 CanActivate = false;
                 GetComponent<FaceTarget>().enabled = false;
