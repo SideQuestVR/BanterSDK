@@ -35,7 +35,7 @@ namespace Banter.VisualScripting
                 BanterScene.Instance().settings.EnableGuests = spiderValue.enableAllowGuests;
                 BanterScene.Instance().settings.EnableFriendPositionJoin = spiderValue.enablePositionJoin;
                 BanterScene.Instance().settings.EnableAvatars = spiderValue.enableAllowAvatars;
-                BanterScene.Instance().settings.SpawnPoint = new UnityEngine.Vector4(1, 20, 1,0);
+                BanterScene.Instance().settings.SpawnPoint = spiderValue.spawnPoint;
 
 
 

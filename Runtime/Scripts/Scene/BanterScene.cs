@@ -898,17 +898,17 @@ namespace Banter.SDK
             }
             var position = new Vector3(Germany.DeGermaniser(msgParts[0]), Germany.DeGermaniser(msgParts[1]), Germany.DeGermaniser(msgParts[2]));
             var direction = new Vector3(Germany.DeGermaniser(msgParts[3]), Germany.DeGermaniser(msgParts[4]), Germany.DeGermaniser(msgParts[5]));
-            var maxDistance = msgParts.Length > 6 ? Germany.DeGermaniser(msgParts[6]) : -1;
-            var layerMask = msgParts.Length > 7 ? int.Parse(msgParts[7]) : -1;
+            var maxDistance = msgParts[6] != "" ? Germany.DeGermaniser(msgParts[6]) : -1;
+            var layerMask = msgParts[7] != ""? int.Parse(msgParts[7]) : -1;
             mainThread.Enqueue(() =>
             {
                 RaycastHit hit;
                 bool didHit = false;
-                if (msgParts.Length == 6)
+                if (maxDistance == -1)
                 {
                     didHit = Physics.Raycast(position, direction, out hit);
                 }
-                else if (msgParts.Length == 7)
+                else if (layerMask == -1)
                 {
                     didHit = Physics.Raycast(position, direction, out hit, maxDistance);
                 }

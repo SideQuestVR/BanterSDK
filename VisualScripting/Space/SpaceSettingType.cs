@@ -2,12 +2,12 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using System.Linq;
-
+using UnityEngine;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Space Setting")]
-    [UnitShortTitle("Space Setting")]
+    [UnitTitle("Scene Settings")]
+    [UnitShortTitle("Scene Setting")]
     [UnitCategory("Banter")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SpaceSettingType : Unit
@@ -38,7 +38,7 @@ namespace Banter.VisualScripting
         {
 
            
-            outputTrigger = ValueOutput("SettingsFlow", (flow) => {
+            outputTrigger = ValueOutput("", (flow) => {
                 var spiderValue = flow.GetValue<bool>(spiderman);
                 var teleportValue = flow.GetValue<bool>(teleport);
                 var forceGrabValue = flow.GetValue<bool>(forceGrab);
@@ -46,6 +46,7 @@ namespace Banter.VisualScripting
                 var allowGuestsValue = flow.GetValue<bool>(allowGuests);
                 var positionJoinValue = flow.GetValue<bool>(positionJoin);
                 var allowAvatarsValue = flow.GetValue<bool>(allowAvatars);
+                var spawnPointVal = flow.GetValue<Vector4>(spawnPoint);
                 return new SceneSettings()
                 {
                     //enableSpiderman = spiderValue;
@@ -56,6 +57,7 @@ namespace Banter.VisualScripting
                     enableAllowPortals = allowPortalsValue,
                     enableForceGrab = forceGrabValue,
                     enablePositionJoin = positionJoinValue,
+                    spawnPoint = spawnPointVal,
     };
             });
             spiderman = ValueInput("Enable Spiderman", false);
@@ -64,7 +66,7 @@ namespace Banter.VisualScripting
             allowPortals = ValueInput("Enable Portals", false);
             allowGuests = ValueInput("Enable Guests", false);
             positionJoin = ValueInput("Enable Friend Position Join", false);
-            allowAvatars = ValueInput("Enable Avatars", false);
+            allowAvatars = ValueInput("Spawn Point", new Vector4(0,0,0,0));
         }
     }
 }
