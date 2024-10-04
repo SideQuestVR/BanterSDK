@@ -309,14 +309,14 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Gravity message is malformed: " + msg);
                 return;
             }
-            var gravity = new Vector3(Germany.DeGermaniser(parts[0]), Germany.DeGermaniser(parts[1]), Germany.DeGermaniser(parts[2]));
+            var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
             mainThread?.Enqueue(() => Physics.gravity = gravity);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
         public void TimeScale(string msg, int reqId)
         {
-            var timeScale = Germany.DeGermaniser(msg);
+            var timeScale = NumberFormat.Parse(msg);
             mainThread?.Enqueue(() => Time.timeScale = timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
@@ -330,8 +330,8 @@ namespace Banter.SDK
         public void Teleport(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
-            var point = new Vector3(Germany.DeGermaniser(parts[0]), Germany.DeGermaniser(parts[1]), Germany.DeGermaniser(parts[2]));
-            var rotation = new Vector3(0, Germany.DeGermaniser(parts[3]), 0);
+            var point = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
+            var rotation = new Vector3(0, NumberFormat.Parse(parts[3]), 0);
             var stopVelocity = parts[4] == "1";
             var isSpawn = parts[5] == "1";
             if (parts.Length < 5)
@@ -802,19 +802,19 @@ namespace Banter.SDK
                         paramList.Add(paramParts[1] == "1");
                         break;
                     case PropertyType.Float:
-                        paramList.Add(Germany.DeGermaniser(paramParts[1]));
+                        paramList.Add(NumberFormat.Parse(paramParts[1]));
                         break;
                     case PropertyType.Int:
                         paramList.Add(int.Parse(paramParts[1]));
                         break;
                     case PropertyType.Vector2:
-                        paramList.Add(new Vector2(Germany.DeGermaniser(paramParts[1]), Germany.DeGermaniser(paramParts[2])));
+                        paramList.Add(new Vector2(NumberFormat.Parse(paramParts[1]), NumberFormat.Parse(paramParts[2])));
                         break;
                     case PropertyType.Vector3:
-                        paramList.Add(new Vector3(Germany.DeGermaniser(paramParts[1]), Germany.DeGermaniser(paramParts[2]), Germany.DeGermaniser(paramParts[3])));
+                        paramList.Add(new Vector3(NumberFormat.Parse(paramParts[1]), NumberFormat.Parse(paramParts[2]), NumberFormat.Parse(paramParts[3])));
                         break;
                     case PropertyType.Vector4:
-                        paramList.Add(new Vector4(Germany.DeGermaniser(paramParts[1]), Germany.DeGermaniser(paramParts[2]), Germany.DeGermaniser(paramParts[3]), Germany.DeGermaniser(paramParts[4])));
+                        paramList.Add(new Vector4(NumberFormat.Parse(paramParts[1]), NumberFormat.Parse(paramParts[2]), NumberFormat.Parse(paramParts[3]), NumberFormat.Parse(paramParts[4])));
                         break;
                 }
             }
@@ -910,9 +910,9 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Physics Raycast message is malformed: " + msg);
                 return;
             }
-            var position = new Vector3(Germany.DeGermaniser(msgParts[0]), Germany.DeGermaniser(msgParts[1]), Germany.DeGermaniser(msgParts[2]));
-            var direction = new Vector3(Germany.DeGermaniser(msgParts[3]), Germany.DeGermaniser(msgParts[4]), Germany.DeGermaniser(msgParts[5]));
-            var maxDistance = msgParts.Length > 6 ? Germany.DeGermaniser(msgParts[6]) : -1;
+            var position = new Vector3(NumberFormat.Parse(msgParts[0]), NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]));
+            var direction = new Vector3(NumberFormat.Parse(msgParts[3]), NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]));
+            var maxDistance = msgParts.Length > 6 ? NumberFormat.Parse(msgParts[6]) : -1;
             var layerMask = msgParts.Length > 7 ? int.Parse(msgParts[7]) : -1;
             mainThread.Enqueue(() =>
             {
@@ -1049,7 +1049,7 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, valBool);
                             break;
                         case PropertyType.Float:
-                            var valFloat = Germany.DeGermaniser(propParts[2]);
+                            var valFloat = NumberFormat.Parse(propParts[2]);
                             updates.Add(new BanterFloat() { n = name, x = valFloat });
                             banterComp.UpdateProperty(name, valFloat);
                             break;
@@ -1059,24 +1059,24 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, valInt);
                             break;
                         case PropertyType.Vector2:
-                            var valVector2X = Germany.DeGermaniser(propParts[2]);
-                            var valVector2Y = Germany.DeGermaniser(propParts[3]);
+                            var valVector2X = NumberFormat.Parse(propParts[2]);
+                            var valVector2Y = NumberFormat.Parse(propParts[3]);
                             updates.Add(new BanterVector2() { n = name, x = valVector2X, y = valVector2Y });
                             banterComp.UpdateProperty(name, new Vector2(valVector2X, valVector2Y));
                             break;
                         case PropertyType.Vector3:
-                            var valVector3X = Germany.DeGermaniser(propParts[2]);
-                            var valVector3Y = Germany.DeGermaniser(propParts[3]);
-                            var valVector3Z = Germany.DeGermaniser(propParts[4]);
+                            var valVector3X = NumberFormat.Parse(propParts[2]);
+                            var valVector3Y = NumberFormat.Parse(propParts[3]);
+                            var valVector3Z = NumberFormat.Parse(propParts[4]);
                             updates.Add(new BanterVector3() { n = name, x = valVector3X, y = valVector3Y, z = valVector3Z });
                             banterComp.UpdateProperty(name, new Vector3(valVector3X, valVector3Y, valVector3Z));
                             break;
                         case PropertyType.Vector4:
                         case PropertyType.Quaternion:
-                            var valVector4X = Germany.DeGermaniser(propParts[2]);
-                            var valVector4Y = Germany.DeGermaniser(propParts[3]);
-                            var valVector4Z = Germany.DeGermaniser(propParts[4]);
-                            var valVector4W = Germany.DeGermaniser(propParts[5]);
+                            var valVector4X = NumberFormat.Parse(propParts[2]);
+                            var valVector4Y = NumberFormat.Parse(propParts[3]);
+                            var valVector4Z = NumberFormat.Parse(propParts[4]);
+                            var valVector4W = NumberFormat.Parse(propParts[5]);
                             updates.Add(new BanterVector4() { n = name, x = valVector4X, y = valVector4Y, z = valVector4Z, w = valVector4W });
                             banterComp.UpdateProperty(name, new Vector4(valVector4X, valVector4Y, valVector4Z, valVector4W));
                             break;
@@ -1705,11 +1705,11 @@ namespace Banter.SDK
                             break;
                         case SettingsMap.ClippingPlane:
                             var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                            settings.ClippingPlane = new Vector2(Germany.DeGermaniser(clippingParts[1]), Germany.DeGermaniser(clippingParts[2]));
+                            settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]), NumberFormat.Parse(clippingParts[2]));
                             break;
                         case SettingsMap.SpawnPoint:
                             var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                            settings.SpawnPoint = new Vector4(Germany.DeGermaniser(spawnParts[1]), Germany.DeGermaniser(spawnParts[2]), Germany.DeGermaniser(spawnParts[3]), Germany.DeGermaniser(spawnParts[4]));
+                            settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
                             break;
                     }
                 }
@@ -1783,7 +1783,7 @@ namespace Banter.SDK
             mainThread?.Enqueue(() =>
             {
                 var obj = GetGameObject(int.Parse(msgParts[0]));
-                var color = new Color(Germany.DeGermaniser(msgParts[1]), Germany.DeGermaniser(msgParts[2]), Germany.DeGermaniser(msgParts[3]));
+                var color = new Color(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3]));
                 var path = msgParts[4];
                 if (obj != null)
                 {

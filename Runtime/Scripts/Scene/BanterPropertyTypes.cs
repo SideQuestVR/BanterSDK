@@ -24,10 +24,10 @@ public struct BanterVector4
         var parts = str.Split(MessageDelimiters.SECONDARY);
         if (parts.Length < 2) return;
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
-        y = Germany.DeGermaniser(parts[2]);
-        z = Germany.DeGermaniser(parts[3]);
-        w = Germany.DeGermaniser(parts[4]);
+        x = NumberFormat.Parse(parts[1]);
+        y = NumberFormat.Parse(parts[2]);
+        z = NumberFormat.Parse(parts[3]);
+        w = NumberFormat.Parse(parts[4]);
     }
 
     public static explicit operator BanterVector4(Vector4 v)
@@ -65,8 +65,8 @@ public struct BanterVector2
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
-        y = Germany.DeGermaniser(parts[2]);
+        x = NumberFormat.Parse(parts[1]);
+        y = NumberFormat.Parse(parts[2]);
     }
 
     public static explicit operator BanterVector2(Vector2 v)
@@ -104,9 +104,9 @@ public struct BanterVector3
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
-        y = Germany.DeGermaniser(parts[2]);
-        z = Germany.DeGermaniser(parts[3]);
+        x = NumberFormat.Parse(parts[1]);
+        y = NumberFormat.Parse(parts[2]);
+        z = NumberFormat.Parse(parts[3]);
     }
 
     public static explicit operator BanterVector3(Vector3 v)
@@ -137,7 +137,7 @@ public struct BanterFloat
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
+        x = NumberFormat.Parse(parts[1]);
     }
 
     public static explicit operator BanterFloat(float v)
