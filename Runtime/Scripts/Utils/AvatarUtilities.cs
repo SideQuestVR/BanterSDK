@@ -33,8 +33,7 @@ public class AvatarUtilities {
                 clip.SetCurve(container.path, typeof(Transform), container.propertyName, container.curve);
             }
         }
-        clip.EnsureQuaternionContinuity();   
-        // AssetDatabase.CreateAsset ( clip, "Assets/anim.anim" );     
+        clip.EnsureQuaternionContinuity();       
     }
 
     public static void ParseAnimationCurves(byte[] bytes) {

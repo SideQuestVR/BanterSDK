@@ -589,6 +589,7 @@ public class BuilderWindow : EditorWindow
         kitListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
         kitListView.reorderMode = ListViewReorderMode.Simple;
         DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
+        DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropRecordingArea"), DropRecordingFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
         LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
@@ -755,6 +756,25 @@ public class BuilderWindow : EditorWindow
                 kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = path });
             }
         }
+    }
+
+    private void DropRecordingFile(bool isScene, string sceneFile, string[] paths) {
+        string trackingData = null;
+        string prefab = null;
+        try{
+            trackingData = paths.First(x => x.EndsWith(".trackingdata"));
+            prefab = paths.First(x => x.EndsWith(".prefab"));
+        }catch(Exception e) {
+            AddStatus("Tracking or prefab files not found in dropped files.");
+            return;
+        }
+        var avatar = AssetDatabase.LoadAssetAtPath<GameObject>(prefab);
+        var bytes = File.ReadAllBytes(trackingData);
+        AvatarUtilities.ParseAnimationCurves(bytes);
+        AvatarUtilities.SetBonePaths(avatar, (t) => {});
+        AvatarUtilities.SetAnimationCurves();
+        AssetDatabase.CreateAsset ( AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim") ); 
+        AddStatus("Animation file generated at " + trackingData.Replace(".trackingdata", ".anim") + ".");
     }
 
     private void DropFile(bool isScene, string sceneFile, string[] paths)
