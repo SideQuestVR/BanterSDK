@@ -10,11 +10,14 @@ public class FollowConstraint : MonoBehaviour
     void OnEnable() {
         _rb = GetComponent<Rigidbody>();
         _hasRigidBody = _rb != null;
-        if(!followTransform)
-            enabled = false;
     }
 
     private void Update()  {
+        if(!followTransform) {
+            enabled = false;
+            return;
+        }
+
         if(_hasRigidBody)
             return;
         
@@ -35,8 +38,6 @@ public class FollowConstraint : MonoBehaviour
         if(!_hasRigidBody)
             return;
         
-        if(!followTransform)
-            enabled = false;
 
         Vector3 newPosition;
         if(positionLerpSpeed == 0) {
