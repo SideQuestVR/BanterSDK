@@ -212,6 +212,7 @@ namespace Banter.SDK
         public void Destroy()
         {
             StopThreads();
+            events.RemoveAllListeners();
             _instance = null;
         }
 
@@ -322,7 +323,7 @@ namespace Banter.SDK
         public void PlayerSpeed(string msg, int reqId)
         {
             var speed = msg == "1";
-            events.OnPlayerSpeedChanged.Invoke(speed);
+            events.OnPlayerSpeedChanged?.Invoke(speed);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
         }
 
@@ -338,21 +339,10 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
                 return;
             }
-#if BANTER_EDITOR
-            mainThread?.Enqueue(() => {
+            mainThread?.Enqueue(() =>
+            {
                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
             });
-#else
-            var user = users.FirstOrDefault(x => x.id == parts[5]);
-            if (user != null)
-            {
-                mainThread?.Enqueue(() =>
-                {
-                    user.transform.position = point;
-                    user.transform.eulerAngles = rotation;
-                });
-            }
-#endif
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
         public void YtInfo(string youtubeId, int reqId)

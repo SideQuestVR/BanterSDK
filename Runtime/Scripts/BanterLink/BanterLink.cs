@@ -23,6 +23,8 @@ namespace Banter.SDK
         {
             scene = BanterScene.Instance();
             mainThread = UnityMainThreadDispatcher.Instance();
+            SetupPipe();
+
             scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
             {
                 mainThread.Enqueue(() =>
@@ -32,25 +34,14 @@ namespace Banter.SDK
 #endif
                 });
             });
-            scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
+            scene.events.OnGravityChanged.AddListener((gravity) =>
             {
-                mainThread.Enqueue(() =>
-                {
-#if BANTER_VISUAL_SCRIPTING
-                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
-#endif
-                });
+                mainThread?.Enqueue(() => Physics.gravity = gravity);
             });
-            scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
+            scene.events.OnTimeScaleChanged.AddListener((timeScale) =>
             {
-                mainThread.Enqueue(() =>
-                {
-#if BANTER_VISUAL_SCRIPTING
-                    EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
-#endif
-                });
+                mainThread?.Enqueue(() => Time.timeScale = timeScale);
             });
-            SetupPipe();
         }
 
         string GetMsgData(string msg, string command)

@@ -5,7 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SpatialTracking;
-
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+#endif
 
 namespace Banter.SDK
 {
@@ -32,6 +34,7 @@ namespace Banter.SDK
             scene.mainThread = gameObject.AddComponent<UnityMainThreadDispatcher>();
 #if !BANTER_EDITOR
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
+            SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
 #endif
@@ -98,6 +101,28 @@ namespace Banter.SDK
             player.transform.eulerAngles = new Vector3(0, spawnRotation, 0);
         }
 
+        void SetupExtraEvents()
+        {
+            scene.events.OnTeleport.AddListener((position, rotation, _, _) =>
+            {
+                var player = BanterScene.Instance().users.First(user => user.isLocal);
+                player.transform.position = position;
+                player.transform.eulerAngles = rotation;
+            });
+            scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
+            {
+#if BANTER_VISUAL_SCRIPTING
+                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
+#endif
+            });
+            scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
+            {
+#if BANTER_VISUAL_SCRIPTING
+                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
+#endif
+            });
+        }
+
         private void OnDisable()
         {
             Kill(true);
@@ -106,6 +131,7 @@ namespace Banter.SDK
         void OnDestroy()
         {
             scene.state = SceneState.NONE;
+            scene.Destroy();
         }
         private void SetupBrowserLink()
         {

@@ -25,6 +25,7 @@ public class UserData : MonoBehaviour
         name = NameGenerator.Generate();
         id = System.Guid.NewGuid().ToString();
         uid = System.Guid.NewGuid().ToString();
+        color = ColorUtility.ToHtmlStringRGB(Random.ColorHSV());
         //instance = System.Guid.NewGuid().ToString();
         nameTag.text = name;
         scene.AddUser(this);
