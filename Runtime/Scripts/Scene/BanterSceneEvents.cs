@@ -52,7 +52,58 @@ public class BanterSceneEvents
     public UnityEvent<string> OnPlayAvatar = new UnityEvent<string>();
     public UnityEvent<string> OnLegacyPlayAvatar = new UnityEvent<string>();
 
-
-
     #endregion
+
+    public void RemoveAllListeners()
+    {
+        // Stop Event Listeners
+        OnLoad.RemoveAllListeners();
+        OnDomReady.RemoveAllListeners();
+        OnSceneReady.RemoveAllListeners();
+        OnUnitySceneLoad.RemoveAllListeners();
+        OnLoadFailed.RemoveAllListeners();
+        OnTeleport.RemoveAllListeners();
+        OnPortalEnter.RemoveAllListeners();
+        OnLegacyEnabled.RemoveAllListeners();
+        OnEnableDevToolsChanged.RemoveAllListeners();
+        OnEnableTeleportChanged.RemoveAllListeners();
+        OnEnableForceGrabChanged.RemoveAllListeners();
+        OnEnableSpiderManChanged.RemoveAllListeners();
+        OnEnablePortalsChanged.RemoveAllListeners();
+        OnEnableGuestsChanged.RemoveAllListeners();
+        OnEnableFriendPositionJoinChanged.RemoveAllListeners();
+        OnEnableAvatarsChanged.RemoveAllListeners();
+        OnMaxOccupancyChanged.RemoveAllListeners();
+        OnSpawnPointChanged.RemoveAllListeners();
+        OnRefreshRateChanged.RemoveAllListeners();
+        OnClippingPlaneChanged.RemoveAllListeners();
+        OnPageOpened.RemoveAllListeners();
+        OnOneShot.RemoveAllListeners();
+        OnAttachObject.RemoveAllListeners();
+        OnPublicSpaceStateChanged.RemoveAllListeners();
+        OnProtectedSpaceStateChanged.RemoveAllListeners();
+        OnDeepLink.RemoveAllListeners();
+        OnTTsStarted.RemoveAllListeners();
+        OnTTsStoped.RemoveAllListeners();
+        OnGravityChanged.RemoveAllListeners();
+        OnTimeScaleChanged.RemoveAllListeners();
+        OnPlayerSpeedChanged.RemoveAllListeners();
+        OnMenuBrowserMessage.RemoveAllListeners();
+        OnSceneReset.RemoveAllListeners();
+        OnLoadUrl.RemoveAllListeners();
+        OnJsCallbackRecieved.RemoveAllListeners();
+
+        // Legacy stuff
+        OnLegacyPlayerLockChanged.RemoveAllListeners();
+        OnLegacyPlayerSitChanged.RemoveAllListeners();
+        OnLegacyPlayerGorillaChanged.RemoveAllListeners();
+        OnLegacyControllerExtrasChanged.RemoveAllListeners();
+        OnLegacyQuaternionPoseChanged.RemoveAllListeners();
+        OnVideoPrepareCompleted.RemoveAllListeners();
+        OnSendAframeEvent.RemoveAllListeners();
+        OnRequestOwnership.RemoveAllListeners();
+        OnResetNetworkObject.RemoveAllListeners();
+        OnDoIOwn.RemoveAllListeners();
+        OnPlayAvatar.RemoveAllListeners();
+    }
 }
