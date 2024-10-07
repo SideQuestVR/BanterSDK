@@ -61,7 +61,6 @@ public class BanterSceneEvents
         OnDomReady.RemoveAllListeners();
         OnSceneReady.RemoveAllListeners();
         OnUnitySceneLoad.RemoveAllListeners();
-        OnLoadFailed.RemoveAllListeners();
         OnTeleport.RemoveAllListeners();
         OnPortalEnter.RemoveAllListeners();
         OnLegacyEnabled.RemoveAllListeners();
@@ -85,8 +84,6 @@ public class BanterSceneEvents
         OnDeepLink.RemoveAllListeners();
         OnTTsStarted.RemoveAllListeners();
         OnTTsStoped.RemoveAllListeners();
-        OnGravityChanged.RemoveAllListeners();
-        OnTimeScaleChanged.RemoveAllListeners();
         OnPlayerSpeedChanged.RemoveAllListeners();
         OnMenuBrowserMessage.RemoveAllListeners();
         OnSceneReset.RemoveAllListeners();
