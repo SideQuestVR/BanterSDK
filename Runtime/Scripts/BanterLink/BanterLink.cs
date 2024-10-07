@@ -314,7 +314,11 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_PLAY_AVATAR))
                 {
-                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                    scene.events.OnLegacyPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                }
+                else if (msg.StartsWith(APICommands.PLAY_AVATAR))
+                {
+                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.PLAY_AVATAR));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_SEND_AFRAME_EVENT))
                 {

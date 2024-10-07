@@ -80,6 +80,7 @@ public class APICommands
     public const string SEND_USER = "su!";
     public const string FULL_SPACE_STATE = "fss!";
     public const string VOICE_STARTED = "vs!";
+    public const string PLAY_AVATAR = "pa!";
     #endregion
     #region Legacy stuff
     public const string LEGACY = "!le";
@@ -96,7 +97,7 @@ public class APICommands
     public const string LEGACY_SET_VIDEO_URL = "svu!";
     public const string LEGACY_SET_REFRESH_RATE = "srr!";
     public const string LEGACY_SEND_AFRAME_EVENT = "sae!";
-    public const string LEGACY_PLAY_AVATAR = "pa!";
+    public const string LEGACY_PLAY_AVATAR = "lpa!";
     public const string LEGACY_REQUEST_OWNERSHIP = "ro!";
     public const string LEGACY_RESET_NETWORK_OBJECT = "rno!";
     public const string LEGACY_DO_I_OWN = "dio!";

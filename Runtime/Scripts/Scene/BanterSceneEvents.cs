@@ -53,6 +53,7 @@ public class BanterSceneEvents
     public UnityEvent<string> OnResetNetworkObject = new UnityEvent<string>();
     public UnityEvent<string> OnDoIOwn = new UnityEvent<string>();
     public UnityEvent<string> OnPlayAvatar = new UnityEvent<string>();
+    public UnityEvent<string> OnLegacyPlayAvatar = new UnityEvent<string>();
 
 
 
