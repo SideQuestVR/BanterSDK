@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
-using System.Text.RegularExpressions;
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -417,41 +416,7 @@ namespace Banter.SDK
                 // }
             }
         }
-        // public void Detach(string data, int reqId) {
-        //     var parts = data.Split(MessageDelimiters.PRIMARY);
-        //     if(parts.Length < 2) {
-        //         Debug.LogError("[Banter] Detach message is malformed: " + data);
-        //         return;
-        //     }
-        //     var obj = GetObject(int.Parse(parts[0]));
-        //     if(obj.gameObject != null && obj.banterObject  != null) {
-        //         mainThread?.Enqueue(() => {
-        //             if(obj.banterObject.previousParent != null) {
-        //                 obj.gameObject.transform.SetParent(obj.banterObject.previousParent, false);
-        //                 obj.banterObject.previousParent = null;
-        //             }
-        //         });
-        //     }
-        //     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.DETACH);
-        // }
-        // public void Attach(string data, int reqId) {
-        //     var parts = data.Split(MessageDelimiters.PRIMARY);
-        //     if(parts.Length < 3) {
-        //         Debug.LogError("[Banter] Attach message is malformed: " + data);
-        //         return;
-        //     }
-        //     var user = users.FirstOrDefault(x => x.id == parts[0]);
-        //     if(user != null) {
-        //         var obj = GetObject(int.Parse(parts[1]));
-        //         if(obj.gameObject != null && obj.banterObject  != null) {
-        //             var attachmentType = (AttachmentType)int.Parse(parts[2]);
-        //             mainThread?.Enqueue(() => {
-        //                 user.Attach(obj, attachmentType);
-        //             });
-        //         }
-        //     }
-        //     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.ATTACH);
-        // }
+        
         public void UserPropChanged(string[] props, string id)
         {
             link.OnUserStateChanged(id + MessageDelimiters.SECONDARY + string.Join(MessageDelimiters.SECONDARY, props));
