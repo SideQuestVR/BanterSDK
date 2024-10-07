@@ -8,7 +8,6 @@ public class BanterSceneEvents
     public UnityEvent OnSceneReady = new UnityEvent();
     public UnityEvent<float> OnLookedAtMirror = new UnityEvent<float>();
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
-    public UnityEvent<string> OnLoadFailed = new UnityEvent<string>();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
     public UnityEvent<string> OnPortalEnter = new UnityEvent<string>();
     public UnityEvent OnLegacyEnabled = new UnityEvent();
@@ -32,8 +31,6 @@ public class BanterSceneEvents
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();
     public UnityEvent<bool> OnTTsStarted = new UnityEvent<bool>();
     public UnityEvent<string> OnTTsStoped = new UnityEvent<string>();
-    public UnityEvent<Vector3> OnGravityChanged = new UnityEvent<Vector3>();
-    public UnityEvent<float> OnTimeScaleChanged = new UnityEvent<float>();
     public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
