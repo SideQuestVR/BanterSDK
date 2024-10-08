@@ -144,7 +144,7 @@ namespace Banter.SDKEditor
             "UnityEngine.UIModule",
             "UnityEngine.UIElementsModule",
             "UnityEngine.UIElements",
-            "UnityEngine.IMGUIModule",
+            //"UnityEngine.IMGUIModule",
 
             // Banter
             "Banter.SDK",
@@ -193,10 +193,7 @@ namespace Banter.SDKEditor
             typeof(Physics),
             typeof(Physics2D),
 
-            typeof(GUI),
-            typeof(GUILayout),
-            typeof(GUIUtility),
-
+            // UI
             typeof(UnityEngine.UI.CanvasScaler),
             typeof(UnityEngine.UI.CanvasScaler.ScaleMode),
             typeof(UnityEngine.UI.CanvasScaler.ScreenMatchMode),
@@ -231,8 +228,42 @@ namespace Banter.SDKEditor
             typeof(UnityEngine.UI.HorizontalLayoutGroup),
             typeof(UnityEngine.UI.GridLayoutGroup),
 
+            // UIElements
+            typeof(UnityEngine.UIElements.VisualElement),
+            typeof(UnityEngine.UIElements.VisualElementExtensions),
+            typeof(UnityEngine.UIElements.UQuery),
+            typeof(UnityEngine.UIElements.UQueryExtensions),
+            typeof(UnityEngine.UIElements.Label),
+            typeof(UnityEngine.UIElements.Button),
+            typeof(UnityEngine.UIElements.Slider),
+            typeof(UnityEngine.UIElements.RadioButton),
+            typeof(UnityEngine.UIElements.RadioButtonGroup),
+            typeof(UnityEngine.UIElements.Toggle),
+            typeof(UnityEngine.UIElements.TextField),
+            typeof(UnityEngine.UIElements.Image),
+            typeof(UnityEngine.UIElements.Scroller),
+            typeof(UnityEngine.UIElements.ScrollView),
+            typeof(UnityEngine.UIElements.ListView),
+
+            // Physics
+            typeof(Joint),
+            typeof(JointLimits),
+            typeof(JointMotor),
+            typeof(JointSpring),
+            typeof(JointDrive),
+            typeof(SoftJointLimit),
+            typeof(SoftJointLimitSpring),
+            typeof(ConfigurableJoint),
+            typeof(ConfigurableJointMotion),
+            typeof(FixedJoint),
+            typeof(HingeJoint),
+            typeof(SpringJoint),
+            typeof(CharacterJoint),
+            typeof(Collision),
+
             typeof(AudioMixerGroup),
             typeof(AnimatorStateInfo),
+            typeof(Keyframe),
             typeof(BaseEventData),
             typeof(PointerEventData),
             typeof(AxisEventData),
