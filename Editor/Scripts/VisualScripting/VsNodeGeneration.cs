@@ -19,7 +19,7 @@ using System.Collections.Specialized;
 
 namespace Banter.SDKEditor
 {
-    public static class NodeGeneration
+    public static class VsNodeGeneration
     {
         private const string SETTINGS_ASSET_PATH = "ProjectSettings/VisualScriptingSettings.asset";
         private const string GENERATED_VS_NODES_VERSION_PREFS_KEY = "Banter_GeneratedVSNodesVersion";
@@ -140,6 +140,12 @@ namespace Banter.SDKEditor
             "Unity.VisualScripting.Flow",//contains all the if, for, while, etc nodes
             "Unity.VisualScripting.State",//state graph nodes (enter, exit)
 
+            "UnityEngine.UI",
+            "UnityEngine.UIModule",
+            "UnityEngine.UIElementsModule",
+            "UnityEngine.UIElements",
+            "UnityEngine.IMGUIModule",
+
             // Banter
             "Banter.SDK",
             "Banter.VisualScripting",
@@ -186,9 +192,45 @@ namespace Banter.SDKEditor
             typeof(UnityEngine.Random),
             typeof(Physics),
             typeof(Physics2D),
+
             typeof(GUI),
             typeof(GUILayout),
             typeof(GUIUtility),
+
+            typeof(UnityEngine.UI.CanvasScaler),
+            typeof(UnityEngine.UI.CanvasScaler.ScaleMode),
+            typeof(UnityEngine.UI.CanvasScaler.ScreenMatchMode),
+            typeof(UnityEngine.UI.CanvasScaler.Unit),
+            typeof(UnityEngine.UI.Button),
+            typeof(UnityEngine.UI.Button.ButtonClickedEvent),
+            typeof(UnityEngine.UI.Dropdown),
+            typeof(UnityEngine.UI.Dropdown.OptionData),
+            typeof(UnityEngine.UI.Dropdown.OptionDataList),
+            typeof(UnityEngine.UI.Dropdown.DropdownEvent),
+            typeof(UnityEngine.UI.Image),
+            typeof(UnityEngine.UI.InputField),
+            typeof(UnityEngine.UI.InputField.SubmitEvent),
+            typeof(UnityEngine.UI.InputField.LineType),
+            typeof(UnityEngine.UI.InputField.CharacterValidation),
+            typeof(UnityEngine.UI.InputField.InputType),
+            typeof(UnityEngine.UI.InputField.ContentType),
+            typeof(UnityEngine.UI.Mask),
+            typeof(UnityEngine.UI.MaskableGraphic),
+            typeof(UnityEngine.UI.RawImage),
+            typeof(UnityEngine.UI.Scrollbar),
+            typeof(UnityEngine.UI.Scrollbar.ScrollEvent),
+            typeof(UnityEngine.UI.ScrollRect),
+            typeof(UnityEngine.UI.ScrollRect.ScrollRectEvent),
+            typeof(UnityEngine.UI.Selectable),
+            typeof(UnityEngine.UI.Slider),
+            typeof(UnityEngine.UI.Slider.SliderEvent),
+            typeof(UnityEngine.UI.Toggle),
+            typeof(UnityEngine.UI.Toggle.ToggleEvent),
+            typeof(UnityEngine.UI.ToggleGroup),
+            typeof(UnityEngine.UI.VerticalLayoutGroup),
+            typeof(UnityEngine.UI.HorizontalLayoutGroup),
+            typeof(UnityEngine.UI.GridLayoutGroup),
+
             typeof(AudioMixerGroup),
             typeof(AnimatorStateInfo),
             typeof(BaseEventData),
