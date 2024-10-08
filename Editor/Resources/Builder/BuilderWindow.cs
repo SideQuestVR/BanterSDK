@@ -633,7 +633,7 @@ public class BuilderWindow : EditorWindow
 #if BANTER_EDITOR
         rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
 #else // BANTER_EDITOR
-        rootVisualElement.Q<Button>("visualScript").clicked += () => NodeGeneration.SetVSTypesAndAssemblies();
+        rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
 #endif // BANTER_EDITOR
 
 #else // BANTER_VISUAL_SCRIPTING
