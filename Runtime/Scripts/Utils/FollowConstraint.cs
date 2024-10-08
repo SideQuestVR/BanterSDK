@@ -4,6 +4,9 @@ public class FollowConstraint : MonoBehaviour
 {
     public Transform followTransform; // Assign your Ghost object's Transform in the Inspector
     private Rigidbody _rb;
+
+    public Vector3 positionOffset;
+    public Quaternion rotationOffset;
     public float positionLerpSpeed = 0.0f; // Speed of movement
     public float rotationLerpSpeed = 0.0f; // Speed of rotation
     private bool _hasRigidBody;
@@ -22,14 +25,14 @@ public class FollowConstraint : MonoBehaviour
             return;
         
         if(positionLerpSpeed == 0) {
-            transform.position = followTransform.position;
+            transform.position = followTransform.position + positionOffset;
         }else{
-            transform.position = Vector3.Lerp(transform.position, followTransform.position, Time.deltaTime * positionLerpSpeed);
+            transform.position = Vector3.Lerp(transform.position, followTransform.position + positionOffset, Time.deltaTime * positionLerpSpeed);
         }
         if(rotationLerpSpeed == 0) {
-            transform.rotation = followTransform.rotation;
+            transform.rotation = followTransform.rotation * rotationOffset;
         }else{
-            transform.rotation = Quaternion.Lerp(transform.rotation, followTransform.rotation, Time.deltaTime * rotationLerpSpeed);
+            transform.rotation = Quaternion.Lerp(transform.rotation, followTransform.rotation * rotationOffset, Time.deltaTime * rotationLerpSpeed);
         }
     }
 
@@ -41,17 +44,17 @@ public class FollowConstraint : MonoBehaviour
 
         Vector3 newPosition;
         if(positionLerpSpeed == 0) {
-            newPosition = followTransform.position;
+            newPosition = followTransform.position + positionOffset;
         }else{
-            newPosition = Vector3.Lerp(_rb.position, followTransform.position, Time.deltaTime * positionLerpSpeed);
+            newPosition = Vector3.Lerp(_rb.position, followTransform.position + positionOffset, Time.deltaTime * positionLerpSpeed);
         }
 
         Quaternion newRotation;
 
         if(rotationLerpSpeed == 0) {
-            newRotation = followTransform.rotation;
+            newRotation = followTransform.rotation * rotationOffset;
         }else{
-            newRotation = Quaternion.Lerp(_rb.rotation, followTransform.rotation, Time.deltaTime * rotationLerpSpeed);
+            newRotation = Quaternion.Lerp(_rb.rotation, followTransform.rotation * rotationOffset, Time.deltaTime * rotationLerpSpeed);
         }
 
         _rb.MovePosition(newPosition);
