@@ -128,10 +128,6 @@ namespace Banter.SDKEditor
             "UnityEngine.StyleSheetsModule",
             "UnityEngine.JSONSerializeModule",
             "UnityEngine.UmbraModule",
-            "Unity.Timeline",
-            "Unity.Timeline.Editor",
-            "Cinemachine",
-            "com.unity.cinemachine.editor",
             "Unity.TextMeshPro",
 
             //Note! This assembly is actually forcebly included in the VS assembly list.
@@ -145,6 +141,10 @@ namespace Banter.SDKEditor
             "UnityEngine.UIElementsModule",
             "UnityEngine.UIElements",
             //"UnityEngine.IMGUIModule",
+
+            "Unity.Timeline",
+            "UnityEngine.DirectorModule",
+            "Cinemachine",
 
             // Banter
             "Banter.SDK",
@@ -260,6 +260,40 @@ namespace Banter.SDKEditor
             typeof(SpringJoint),
             typeof(CharacterJoint),
             typeof(Collision),
+
+            // Playables
+            typeof(UnityEngine.Playables.Playable),
+            typeof(UnityEngine.Playables.PlayableDirector),
+            typeof(UnityEngine.Playables.PlayableAsset),
+            typeof(UnityEngine.Playables.PlayableBinding),
+            typeof(UnityEngine.Playables.PlayableGraph),
+            typeof(UnityEngine.Playables.PlayableOutput),
+            typeof(UnityEngine.Playables.PlayableExtensions),
+            typeof(UnityEngine.Playables.PlayState),
+            typeof(UnityEngine.Playables.DirectorWrapMode),
+            typeof(UnityEngine.Playables.DirectorUpdateMode),
+            typeof(UnityEngine.Playables.FrameData),
+            typeof(UnityEngine.Playables.AnimationPlayableUtilities),
+            typeof(UnityEngine.Playables.ScriptPlayableOutput),
+#if BANTER_VS_TIMELINE
+            typeof(UnityEngine.Timeline.TimelineAsset),
+            typeof(UnityEngine.Timeline.TimelineAsset.DurationMode),
+            typeof(UnityEngine.Timeline.TimelinePlayable),
+            typeof(UnityEngine.Timeline.TimelineClip),
+            typeof(UnityEngine.Timeline.TimelineClipExtensions),
+            typeof(UnityEngine.Timeline.TrackAsset),
+            typeof(UnityEngine.Timeline.TrackAssetExtensions),
+            typeof(UnityEngine.Timeline.ActivationTrack),
+            typeof(UnityEngine.Timeline.AnimationTrack),
+            typeof(UnityEngine.Timeline.AudioTrack),
+            typeof(UnityEngine.Timeline.ControlTrack),
+            typeof(UnityEngine.Timeline.GroupTrack),
+            typeof(UnityEngine.Timeline.MarkerTrack),
+            typeof(UnityEngine.Timeline.SignalTrack),
+            typeof(UnityEngine.Timeline.SignalReceiver),
+            typeof(UnityEngine.Timeline.SignalAsset),
+            typeof(UnityEngine.Timeline.SignalEmitter),
+#endif
 
             typeof(AudioMixerGroup),
             typeof(AnimatorStateInfo),
