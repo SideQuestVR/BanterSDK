@@ -58,6 +58,6 @@ public class FollowConstraint : MonoBehaviour
         }
 
         _rb.MovePosition(newPosition);
-        _rb.MoveRotation(newRotation);
+        _rb.MoveRotation(newRotation.normalized);
     }
 }
