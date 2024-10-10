@@ -6707,6 +6707,7 @@ namespace Banter.SDKEditor
             "Banter.SDK.BanterUser.uid",
             "Banter.SDK.BanterUser.color",
             "Banter.SDK.BanterUser.isLocal",
+            "Banter.SDK.BanterUser.isSpaceAdmin",
             "TMPro.TextContainer.IsActive",
             "TMPro.TextContainer.IsDestroyed",
             "TMPro.TextContainer.IsInvoking",

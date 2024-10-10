@@ -40,7 +40,8 @@ namespace Banter.VisualScripting
                     id = data.id,
                     uid = data.uid,
                     color = data.color,
-                    isLocal = data.isLocal
+                    isLocal = data.isLocal,
+                    isSpaceAdmin = data.isSpaceAdmin,
                 };
             });
         }
@@ -66,7 +67,8 @@ namespace Banter.VisualScripting
                     id = data.id,
                     uid = data.uid,
                     color = data.color,
-                    isLocal = data.isLocal
+                    isLocal = data.isLocal,
+                    isSpaceAdmin = data.isSpaceAdmin,
                 };
             });
         }

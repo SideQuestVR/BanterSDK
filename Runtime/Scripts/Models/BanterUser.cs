@@ -7,5 +7,6 @@ namespace Banter.SDK
         public string uid;
         public string color;
         public bool isLocal;
+        public bool isSpaceAdmin;
     }
 }

@@ -10,6 +10,7 @@ public class UserData : MonoBehaviour
     public string uid;
     public string color;
     public bool isLocal;
+    public bool isSpaceAdmin;
     public TextMeshPro nameTag;
     public Transform Head;
     public Transform LeftHand;
