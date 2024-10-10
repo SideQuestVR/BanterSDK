@@ -34,14 +34,6 @@ namespace Banter.SDK
 #endif
                 });
             });
-            scene.events.OnGravityChanged.AddListener((gravity) =>
-            {
-                mainThread?.Enqueue(() => Physics.gravity = gravity);
-            });
-            scene.events.OnTimeScaleChanged.AddListener((timeScale) =>
-            {
-                mainThread?.Enqueue(() => Time.timeScale = timeScale);
-            });
         }
 
         string GetMsgData(string msg, string command)
@@ -305,7 +297,11 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_PLAY_AVATAR))
                 {
-                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                    scene.events.OnLegacyPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                }
+                else if (msg.StartsWith(APICommands.PLAY_AVATAR))
+                {
+                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.PLAY_AVATAR));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_SEND_AFRAME_EVENT))
                 {

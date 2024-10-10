@@ -159,12 +159,9 @@ namespace Banter.SDK
                 {
                     foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
                     {
-                        if (legacyShaderFix)
-                        {
-                            transform.gameObject.AddComponent<FixLegacyShaders>();
-                        }
-                        // if(shaders != null) {
-                        //     applyShader.shaders = shaders;
+                        // if (legacyShaderFix)
+                        // {
+                        //     transform.gameObject.AddComponent<FixLegacyShaders>();
                         // }
                         var inputModule = transform.gameObject.GetComponent<StandaloneInputModule>();
                         if (inputModule != null)
