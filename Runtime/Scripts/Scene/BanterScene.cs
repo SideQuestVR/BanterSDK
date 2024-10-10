@@ -270,7 +270,7 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             mainThread.Enqueue(() =>
             {
-                EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
+                EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
 #endif
         }
@@ -284,7 +284,7 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             mainThread.Enqueue(() =>
             {
-                EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal });
+                EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
 #endif
         }
