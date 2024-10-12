@@ -38,9 +38,15 @@ public class FollowConstraint : MonoBehaviour
 
     private void FixedUpdate()
     {
+
+        if(!followTransform) {
+            enabled = false;
+            return;
+        }
+
         if(!_hasRigidBody)
             return;
-        
+    
 
         Vector3 newPosition;
         if(positionLerpSpeed == 0) {
@@ -58,6 +64,6 @@ public class FollowConstraint : MonoBehaviour
         }
 
         _rb.MovePosition(newPosition);
-        _rb.MoveRotation(newRotation);
+        _rb.MoveRotation(newRotation.normalized);
     }
 }

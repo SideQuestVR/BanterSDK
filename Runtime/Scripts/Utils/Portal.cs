@@ -16,6 +16,7 @@ namespace Banter.SDK
 
         private void OnTriggerEnter(Collider other)
         {
+            Debug.Log("Portal Triggered: " + other.name + " " + other.tag + " " + CanActivate);
             if (other.CompareTag("__BA_PlayerHead") && CanActivate)
             {
                 CanActivate = false;
