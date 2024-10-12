@@ -66,32 +66,32 @@ public class AvatarBoneNames
     public static Dictionary<string, AvatarBoneName> AvatarBoneNamesMapping = new Dictionary<string, AvatarBoneName>()
     {
 		// Unity
-		{"Hips", AvatarBoneName.HIPS },
+		// {"Hips", AvatarBoneName.HIPS },
         {"Spine", AvatarBoneName.SPINE },
         {"Chest", AvatarBoneName.CHEST },
-		//{"UpperChest", UnityAvatarBoneNames.UPPER_CHEST},
+		// {"UpperChest", AvatarBoneName.S},
 
-		{"LeftShoulder", AvatarBoneName.LEFTARM_SHOULDER },
+		// {"LeftShoulder", AvatarBoneName.LEFTARM_SHOULDER },
         {"LeftUpperArm", AvatarBoneName.LEFTARM_UPPER },
         {"LeftLowerArm", AvatarBoneName.LEFTARM_LOWER },
-        {"LeftHand", AvatarBoneName.LEFTARM_HAND },
+        // {"LeftHand", AvatarBoneName.LEFTARM_HAND },
 
-        {"RightShoulder", AvatarBoneName.RIGHTARM_SHOULDER },
+        // {"RightShoulder", AvatarBoneName.RIGHTARM_SHOULDER },
         {"RightUpperArm", AvatarBoneName.RIGHTARM_UPPER },
         {"RightLowerArm", AvatarBoneName.RIGHTARM_LOWER },
-        {"RightHand", AvatarBoneName.RIGHTARM_HAND },
+        // {"RightHand", AvatarBoneName.RIGHTARM_HAND },
 
         {"LeftUpperLeg", AvatarBoneName.LEFTLEG_UPPER },
         {"LeftLowerLeg", AvatarBoneName.LEFTLEG_LOWER },
-        {"LeftFoot", AvatarBoneName.LEFTLEG_FOOT },
+        // {"LeftFoot", AvatarBoneName.LEFTLEG_FOOT },
         {"LeftToes", AvatarBoneName.LEFTLEG_TOES },
 
         {"RightUpperLeg", AvatarBoneName.RIGHTLEG_UPPER },
         {"RightLowerLeg", AvatarBoneName.RIGHTLEG_LOWER },
-        {"RightFoot", AvatarBoneName.RIGHTLEG_FOOT },
+        // {"RightFoot", AvatarBoneName.RIGHTLEG_FOOT },
         {"RightToes", AvatarBoneName.RIGHTLEG_TOES },
 
-        {"Neck", AvatarBoneName.NECK },
+        // {"Neck", AvatarBoneName.NECK },
         {"Head", AvatarBoneName.HEAD },
 		//{"LeftEye", AvatarBoneName.HEAD_LEFTEYE },
 		//{"RightEye", AvatarBoneName.HEAD_RIGHTEYE },
