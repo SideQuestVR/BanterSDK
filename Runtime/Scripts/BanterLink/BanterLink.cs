@@ -17,7 +17,7 @@ namespace Banter.SDK
         float timeoutDisplay = 0;
         UnityMainThreadDispatcher mainThread;
         BatchUpdater batchUpdater;
-        public static string LOCAL_USER_ID;
+        // public static string LOCAL_USER_ID;
 
         void Start()
         {
@@ -583,8 +583,8 @@ namespace Banter.SDK
         {
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
-            var userData = collision.gameObject.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + contact[0].point.x + MessageDelimiters.SECONDARY + contact[0].point.y + MessageDelimiters.SECONDARY + contact[0].point.z + MessageDelimiters.SECONDARY + contact[0].normal.x + MessageDelimiters.SECONDARY + contact[0].normal.y + MessageDelimiters.SECONDARY + contact[0].normal.z + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.isLocalFlexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collision.gameObject.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + contact[0].point.x + MessageDelimiters.SECONDARY + contact[0].point.y + MessageDelimiters.SECONDARY + contact[0].point.z + MessageDelimiters.SECONDARY + contact[0].normal.x + MessageDelimiters.SECONDARY + contact[0].normal.y + MessageDelimiters.SECONDARY + contact[0].normal.z + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnCollisionStay(GameObject obj, Collision collision)
@@ -596,14 +596,14 @@ namespace Banter.SDK
 
         public void _OnCollisionExit(GameObject obj, Collision collision)
         {
-            var userData = collision.gameObject.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.isLocalFlexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collision.gameObject.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerEnter(GameObject obj, Collider collider)
         {
-            var userData = collider.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.isLocalFlexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collider.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerStay(GameObject obj, Collider collider)
@@ -613,8 +613,8 @@ namespace Banter.SDK
 
         public void _OnTriggerExit(GameObject obj, Collider collider)
         {
-            var userData = collider.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.isLocalFlexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collider.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void CheckPipe()
