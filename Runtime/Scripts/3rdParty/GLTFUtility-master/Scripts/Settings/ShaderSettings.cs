@@ -39,7 +39,7 @@ namespace Siccity.GLTFUtility {
 			if (GraphicsSettings.renderPipelineAsset) return Shader.Find("GLTFUtility/URP/Standard Transparent (Metallic)");
 			else
 #endif
-				return Shader.Find("GLTFUtility/Standard Transparent (Metallic)");
+				return Shader.Find("GLTFUtility/Standard (Metallic)");
 		}
 
 		public Shader GetDefaultSpecular() {
@@ -47,7 +47,7 @@ namespace Siccity.GLTFUtility {
 			if (GraphicsSettings.renderPipelineAsset) return Shader.Find("GLTFUtility/URP/Standard (Specular)");
 			else
 #endif
-				return Shader.Find("GLTFUtility/Standard (Specular)");
+				return Shader.Find("GLTFUtility/Standard (Metallic)");
 		}
 
 		public Shader GetDefaultSpecularBlend() {
@@ -55,7 +55,7 @@ namespace Siccity.GLTFUtility {
 			if (GraphicsSettings.renderPipelineAsset) return Shader.Find("GLTFUtility/URP/Standard Transparent (Specular)");
 			else
 #endif
-				return Shader.Find("GLTFUtility/Standard Transparent (Specular)");
+				return Shader.Find("GLTFUtility/Standard (Metallic)");
 		}
 	}
 }
