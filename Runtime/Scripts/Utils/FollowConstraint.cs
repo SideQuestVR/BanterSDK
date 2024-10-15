@@ -6,7 +6,6 @@ public class FollowConstraint : MonoBehaviour
     private Rigidbody _rb;
 
     public Vector3 positionOffset;
-    public Quaternion rotationOffset;
     public float positionLerpSpeed = 0.0f; // Speed of movement
     public float rotationLerpSpeed = 0.0f; // Speed of rotation
     private bool _hasRigidBody;
@@ -30,9 +29,9 @@ public class FollowConstraint : MonoBehaviour
             transform.position = Vector3.Lerp(transform.position, followTransform.position + positionOffset, Time.deltaTime * positionLerpSpeed);
         }
         if(rotationLerpSpeed == 0) {
-            transform.rotation = followTransform.rotation * rotationOffset;
+            transform.rotation = followTransform.rotation;
         }else{
-            transform.rotation = Quaternion.Lerp(transform.rotation, followTransform.rotation * rotationOffset, Time.deltaTime * rotationLerpSpeed);
+            transform.rotation = Quaternion.Lerp(transform.rotation, followTransform.rotation, Time.deltaTime * rotationLerpSpeed);
         }
     }
 
@@ -58,12 +57,12 @@ public class FollowConstraint : MonoBehaviour
         Quaternion newRotation;
 
         if(rotationLerpSpeed == 0) {
-            newRotation = followTransform.rotation * rotationOffset;
+            newRotation = followTransform.rotation;
         }else{
-            newRotation = Quaternion.Lerp(_rb.rotation, followTransform.rotation * rotationOffset, Time.deltaTime * rotationLerpSpeed);
+            newRotation = Quaternion.Lerp(_rb.rotation, followTransform.rotation, Time.deltaTime * rotationLerpSpeed);
         }
 
         _rb.MovePosition(newPosition);
-        _rb.MoveRotation(newRotation.normalized);
+        _rb.MoveRotation(newRotation);
     }
 }
