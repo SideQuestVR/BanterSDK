@@ -50,6 +50,10 @@ public class APICommands
     public const string INJECT_JS = "!ijs!";
     public const string INJECT_JS_CALLBACK = "!ijc!";
     public const string YT_INFO = "!yti!";
+    public const string LOCK_TELEPORT = "!lt!";
+    public const string LOCK_SPIDERMAN = "!ls!";
+
+    
 
     #region Events
     public const string EVENT = "!e!";

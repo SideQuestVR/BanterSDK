@@ -185,6 +185,14 @@ namespace Banter.SDK
             {
                 scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
             }
+            else if (msg.StartsWith(APICommands.LOCK_SPIDERMAN))
+            {
+                scene.LockThing(id, scene.events.OnLockSpiderman, APICommands.LOCK_SPIDERMAN);
+            }
+            else if (msg.StartsWith(APICommands.LOCK_TELEPORT))
+            {
+                scene.LockThing(id, scene.events.OnLockTeleport, APICommands.LOCK_TELEPORT);
+            }
             else if (msg.StartsWith(APICommands.TELEPORT))
             {
                 scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);

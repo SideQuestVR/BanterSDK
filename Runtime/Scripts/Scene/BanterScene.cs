@@ -8,6 +8,8 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
+using UnityEngine.Events;
+
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -327,6 +329,13 @@ namespace Banter.SDK
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
         }
 
+        public void LockThing(int reqId, UnityEvent handler, string command) {
+            mainThread?.Enqueue(() =>
+            {
+                handler.Invoke();
+            });
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + command);
+        }
         public void Teleport(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);

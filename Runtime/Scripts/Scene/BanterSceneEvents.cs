@@ -13,6 +13,8 @@ public class BanterSceneEvents
     public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableTeleportChanged = new UnityEvent<bool>();
+    public UnityEvent OnLockTeleport = new UnityEvent();
+    public UnityEvent OnLockSpiderman = new UnityEvent();
     public UnityEvent<bool> OnEnableForceGrabChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableSpiderManChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnablePortalsChanged = new UnityEvent<bool>();
