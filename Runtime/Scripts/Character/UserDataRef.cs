@@ -7,6 +7,6 @@ namespace Banter.SDK
     public class UserDataRef : MonoBehaviour
     {
         public UserData userData;
-        public bool isLocalHexa;
+        public bool isLocalFlexa;
     }
 }
