@@ -74,18 +74,10 @@ namespace Banter.SDK
             }
             else
             {
-                GameObject playerObject = GameObject.FindGameObjectWithTag("__BA_PlayerHead"); // Find the object with the tag "PlayerHead"
-
-                if (playerObject != null)
-                {
-                    playerTransform = playerObject.transform; // Set the player's transform if the target GameObject was not manually set
-                }
-                else
-                {
-                    Debug.LogError("No GameObject with tag 'PlayerHead' found in the scene.");
-                }
+                playerTransform = Camera.main.transform;
             }
         }
+
 
         void Update()
         {
