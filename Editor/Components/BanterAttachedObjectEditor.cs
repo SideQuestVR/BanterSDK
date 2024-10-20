@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("attachmentType, avatarAttachmentType, avatarAttachmentPoint, attachmentPoint, ");
+            var seeFields = new Label("uid, attachmentPosition, attachmentRotation, attachmentType, avatarAttachmentType, avatarAttachmentPoint, attachmentPoint, autoSync, jointAvatar, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
@@ -40,14 +40,14 @@ namespace Banter.SDKEditor
             seeFields.style.color = Color.gray;
             myInspector.Add(seeFields);
 
-#if BANTER_EDITOR
+//#if BANTER_EDITOR
             var foldout = new Foldout();
-            foldout.text = "Advanced Properties";
+            foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
             foldout.value = false; 
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
-#endif
+//#endif
 
             return myInspector;
         }

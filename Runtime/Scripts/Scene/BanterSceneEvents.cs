@@ -49,7 +49,7 @@ public class BanterSceneEvents
     #region Legacy stuff
 
     public UnityEvent<bool> OnLegacyPlayerLockChanged = new UnityEvent<bool>();
-    public UnityEvent<bool, GameObject> OnLegacyPlayerSitChanged = new UnityEvent<bool, GameObject>();
+    public UnityEvent<bool, UnityAndBanterObject> OnLegacyPlayerSitChanged = new UnityEvent<bool, UnityAndBanterObject>();
     public UnityEvent<bool> OnLegacyPlayerGorillaChanged = new UnityEvent<bool>();
     public UnityEvent OnLegacyControllerExtrasChanged = new UnityEvent();
     public UnityEvent OnLegacyQuaternionPoseChanged = new UnityEvent();

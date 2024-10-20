@@ -213,7 +213,6 @@ namespace Banter.SDK
 
         public void Destroy()
         {
-            StopThreads();
             events.RemoveAllListeners();
             _instance = null;
         }
@@ -221,7 +220,7 @@ namespace Banter.SDK
         #region Player Events
         public void Release(GameObject obj, HandSide side = HandSide.LEFT)
         {
-            var interaction = obj.GetComponent<PlayerEvents>();
+            var interaction = obj.GetComponent<BanterPlayerEvents>();
             if (interaction != null)
             {
                 interaction.onRelease.Invoke(side);
@@ -230,7 +229,7 @@ namespace Banter.SDK
         }
         public void Grab(GameObject obj, Vector3 point, HandSide side = HandSide.LEFT)
         {
-            var interaction = obj.GetComponent<PlayerEvents>();
+            var interaction = obj.GetComponent<BanterPlayerEvents>();
             if (interaction != null)
             {
                 interaction.onGrab.Invoke(point, side);
@@ -239,7 +238,7 @@ namespace Banter.SDK
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
         {
-            var interaction = obj.GetComponent<PlayerEvents>();
+            var interaction = obj.GetComponent<BanterPlayerEvents>();
             if (interaction != null)
             {
                 interaction.onClick.Invoke(point, normal);
@@ -513,6 +512,18 @@ namespace Banter.SDK
                 return value;
             }
             return null;
+        }
+        public UnityAndBanterObject GetObjectByBid(string objectId)
+        {
+            UnityAndBanterObject value = new UnityAndBanterObject();
+            foreach(var obj in objects)
+            {
+                if(obj.Value.id.Id == objectId)
+                {
+                    return obj.Value;
+                }
+            }
+            return value;
         }
         public UnityAndBanterObject GetObject(int objectId)
         {
@@ -1411,27 +1422,7 @@ namespace Banter.SDK
         #endregion
 
         #region Set Banter Properties from the Unity thread and send to JS on another thread
-        public void StartThreads()
-        {
-            LogLine.Do("Starting Banter thread.");
-            // propertyUpdateThread = new Thread(PropertyUpdateThread);
-            // propertyUpdateThread.Start();
-            //propertySyncThread = new Thread(PropertySyncThread);
-            //propertySyncThread.Start();
-        }
-        public void StopThreads()
-        {
-            LogLine.Do("Stopping Banter threads.");
-            //
-            //  if(propertyUpdateThread != null) {
-            //     propertyUpdateThread.Abort();
-            //      propertyUpdateThread = null;
-            //  }
-            //if(propertySyncThread != null) {
-            //    propertySyncThread.Abort();
-            //    propertySyncThread = null;
-            //}
-        }
+        
 
         //when _tickBuffer is not null, the scene's Tick event is executing and all property updates will be buffered to this list
         //  then buffered updates will then be handled all at once.
@@ -1450,7 +1441,6 @@ namespace Banter.SDK
             }
             if (_tickBuffer != null)
             {
-                //Debug.Log("buffered enqueue on SetFromUnityProperties!");
                 int ct = properties.Count;
                 for (int i = 0; i < ct; i++)
                 {
@@ -1459,43 +1449,13 @@ namespace Banter.SDK
             }
             else
             {
-                //Debug.LogWarning($"NON-buffered enqueue on SetFromUnityProperties, only {properties.Count}!");
                 EnqueuePropertyUpdates(properties);
             }
         }
-        //public void PropertySyncThread()
-        //{
-        //    while (true)
-        //    {
-        //        if (dirty && _changes.Count > 0 && link != null)
-        //        {
-        //            string msg = "";
-        //            lock (_changes)
-        //            {
-        //                msg = string.Join(MessageDelimiters.TERTIARY, _changes.ToArray());
-        //                _changes.Clear();
-        //            }
-        //            if (!string.IsNullOrEmpty(msg))
-        //            {
-        //                link.Send(APICommands.UPDATE + msg);
-        //            }
-        //            dirty = false;
-        //        }
-        //    }
-        //}
 
 
         private void DoPropertyUpdateQueue(List<BanterComponentPropertyUpdate> toProcess)
         {
-            //List<BanterComponentPropertyUpdate> toProcess = _propertyUpdateBatchQueue.Take();
-            //lock (_propertyUpdateQueue)
-            //{
-            //    for (int i = 0; i < _propertyUpdateQueue.Count; i++)
-            //    {
-            //        toProcess.Add(_propertyUpdateQueue[i]);
-            //    }
-            //    _propertyUpdateQueue.Clear();
-            //}
             List<BanterComponentPropertyUpdate> toReenqueue = null;
             for (int i = 0; i < toProcess.Count; i++)
             {
@@ -1532,27 +1492,6 @@ namespace Banter.SDK
                 });
             }
         }
-
-        //public void PropertyUpdateThread()
-        //{
-        //    while (true)
-        //    {
-        //        try
-        //        {
-        //            DoPropertyUpdateQueue();
-        //        }
-        //        catch (ThreadAbortException)
-        //        {
-        //            Debug.Log("PropertyUpdateThread aborting");
-        //            return;
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            Debug.LogError("Error handling property update queue");
-        //            Debug.LogException(ex);
-        //        }
-        //    }
-        //}
 
         public string Serialise(BanterComponentProperty prop, BanterComponent comp)
         {
@@ -1719,22 +1658,34 @@ namespace Banter.SDK
         #region Legacy stuff
         public void LegacySetAttachment(string msg)
         {
-            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
-            if (msgParts.Length < 2)
-            {
-                Debug.LogError("[Banter] LegacySetAttachment message is malformed: " + msg);
-                return;
+            var parts = msg.Split(MessageDelimiters.PRIMARY, 3);
+            var oid = int.Parse(parts[0]);
+            var gameObject = GetObject(oid);
+            var whoToShow = parts[1];
+            var part = (LegacyAttachmentPosition)int.Parse(parts[2]);
+            var actualPart = AvatarBoneName.HEAD;
+            switch(part) {
+                case LegacyAttachmentPosition.HEAD:
+                    actualPart = AvatarBoneName.HEAD;
+                    break;
+                case LegacyAttachmentPosition.LEFT_HAND:
+                    actualPart = AvatarBoneName.LEFTARM_HAND;
+                    break;
+                case LegacyAttachmentPosition.RIGHT_HAND:
+                    actualPart = AvatarBoneName.RIGHTARM_HAND;
+                    break;
+                case LegacyAttachmentPosition.BODY:
+                    actualPart = AvatarBoneName.SPINE;
+                    break;
             }
-            mainThread?.Enqueue(() =>
-            {
-                var obj = GetGameObject(int.Parse(msgParts[0]));
-                var whoToShow = msgParts[1];
-                var part = msgParts[2];
-                if (obj != null)
-                {
-
-                }
-            });
+            var attachment = new BanterAttachment();
+            attachment.uid = whoToShow;
+            attachment.attachedObject = gameObject;
+            attachment.attachmentPosition = Vector3.zero;
+            attachment.attachmentRotation = Quaternion.identity;
+            attachment.attachmentType = AttachmentType.NonPhysics;
+            attachment.avatarAttachmentPoint = actualPart;
+            events.OnAttachObject.Invoke(attachment);
         }
         public void LegacySetChildColor(string msg)
         {

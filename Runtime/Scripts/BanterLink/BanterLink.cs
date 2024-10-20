@@ -271,6 +271,7 @@ namespace Banter.SDK
             // }else 
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
+                UnityAndBanterObject lastSitObject = new UnityAndBanterObject();
                 if (msg.StartsWith(APICommands.LEGACY_LOCK_PLAYER))
                 {
                     scene.events.OnLegacyPlayerLockChanged.Invoke(true);
@@ -281,19 +282,22 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_SIT_PLAYER))
                 {
-                    scene.events.OnLegacyPlayerSitChanged.Invoke(true, scene.GetGameObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_SIT_PLAYER))));
+                    lastSitObject = scene.GetObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_SIT_PLAYER)));
+                    scene.events.OnLegacyPlayerSitChanged.Invoke(true, lastSitObject);
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_UNSIT_PLAYER))
                 {
-                    scene.events.OnLegacyPlayerSitChanged.Invoke(false, null);
+                    if(lastSitObject.id) {
+                        scene.events.OnLegacyPlayerSitChanged.Invoke(false, lastSitObject);
+                    }
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_ATTACH_OBJECT))
                 {
-                    // FLEXTODO - Synced object
-                    // scene.events.OnAttachObject.Invoke(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
+                    scene.LegacySetAttachment(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_RESET_NETWORK_OBJECT))
                 {
+                    // var syncObject = scene.GetObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT)));
                     // FLEXTODO - Synced object
                     // scene.events.OnResetNetworkObject.Invoke(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT));
                 }
