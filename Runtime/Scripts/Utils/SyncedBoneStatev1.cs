@@ -16,6 +16,8 @@ using System;
         public Quat NECK;
         public Quat HIPS;
         public Vec3 HIPS_position;
+        public Quat HIPS_OFFSET;
+        public Vec3 HIPS_OFFSET_position;
         public Quat SPINE;
         public Quat CHEST;
 

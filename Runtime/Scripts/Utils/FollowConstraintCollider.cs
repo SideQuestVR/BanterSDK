@@ -6,7 +6,7 @@ public class FollowConstraintCollider : MonoBehaviour
     public Transform followTransform; 
     public Vector3 offset; 
     [SerializeField] Collider _collider;
-
+    public bool useTransformInstead;
     public bool isHeightToo;
     public Transform heightTopTransform; 
     public Transform heightBottomTransform; 
@@ -35,11 +35,20 @@ public class FollowConstraintCollider : MonoBehaviour
             var col = (CapsuleCollider)_collider;
             if(isHeightToo){
                 col.height = Vector3.Distance(heightTopTransform.position, heightBottomTransform.position);
-                var center = _collider.transform.InverseTransformPoint(followTransform.position);
-                center.y -= col.height / 2;
-                col.center = center + offset;
+                if(useTransformInstead) {
+                    transform.position = followTransform.position;
+                }else{
+                    var center = _collider.transform.InverseTransformPoint(followTransform.position);
+                    center.y -= col.height / 2;
+                    col.center = center + offset;
+                }
             }else{
-                col.center = _collider.transform.InverseTransformPoint(followTransform.position) + offset;
+                var center = _collider.transform.InverseTransformPoint(followTransform.position) + offset;
+                if(useTransformInstead) {
+                    transform.localPosition = center + offset;
+                }else{
+                    col.center = center;
+                }
             }
         }
     }

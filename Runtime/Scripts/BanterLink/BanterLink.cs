@@ -289,19 +289,23 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_ATTACH_OBJECT))
                 {
-                    scene.events.OnAttachObject.Invoke(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnAttachObject.Invoke(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_RESET_NETWORK_OBJECT))
                 {
-                    scene.events.OnResetNetworkObject.Invoke(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnResetNetworkObject.Invoke(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_DO_I_OWN))
                 {
-                    scene.events.OnDoIOwn.Invoke(GetMsgData(msg, APICommands.LEGACY_DO_I_OWN));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnDoIOwn.Invoke(GetMsgData(msg, APICommands.LEGACY_DO_I_OWN));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_REQUEST_OWNERSHIP))
                 {
-                    scene.events.OnRequestOwnership.Invoke(GetMsgData(msg, APICommands.LEGACY_REQUEST_OWNERSHIP));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnRequestOwnership.Invoke(GetMsgData(msg, APICommands.LEGACY_REQUEST_OWNERSHIP));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_PLAY_AVATAR))
                 {

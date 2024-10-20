@@ -1,3 +1,5 @@
+using System;
+using Banter.SDK;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -27,7 +29,12 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<string> OnAttachObject = new UnityEvent<string>();
+    public UnityEvent<BanterAttachment> OnAttachObject = new UnityEvent<BanterAttachment>();
+    public UnityEvent<BanterAttachment> OnDetachObject = new UnityEvent<BanterAttachment>();
+    public UnityEvent<BanterSynced> OnSyncedObject = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced> OnDoIOwn = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced> OnTakeOwnership = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced> OnResetNetworkObject = new UnityEvent<BanterSynced>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();
@@ -48,9 +55,6 @@ public class BanterSceneEvents
     public UnityEvent OnLegacyQuaternionPoseChanged = new UnityEvent();
     public UnityEvent<string> OnVideoPrepareCompleted = new UnityEvent<string>();
     public UnityEvent<string> OnSendAframeEvent = new UnityEvent<string>();
-    public UnityEvent<string> OnRequestOwnership = new UnityEvent<string>();
-    public UnityEvent<string> OnResetNetworkObject = new UnityEvent<string>();
-    public UnityEvent<string> OnDoIOwn = new UnityEvent<string>();
     public UnityEvent<string> OnPlayAvatar = new UnityEvent<string>();
     public UnityEvent<string> OnLegacyPlayAvatar = new UnityEvent<string>();
 
@@ -91,6 +95,10 @@ public class BanterSceneEvents
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
         OnJsCallbackRecieved.RemoveAllListeners();
+        OnDoIOwn.RemoveAllListeners();
+        OnTakeOwnership.RemoveAllListeners();
+        OnPlayAvatar.RemoveAllListeners();
+        OnSyncedObject.RemoveAllListeners();
 
         // Legacy stuff
         OnLegacyPlayerLockChanged.RemoveAllListeners();
@@ -100,9 +108,6 @@ public class BanterSceneEvents
         OnLegacyQuaternionPoseChanged.RemoveAllListeners();
         OnVideoPrepareCompleted.RemoveAllListeners();
         OnSendAframeEvent.RemoveAllListeners();
-        OnRequestOwnership.RemoveAllListeners();
-        OnResetNetworkObject.RemoveAllListeners();
-        OnDoIOwn.RemoveAllListeners();
-        OnPlayAvatar.RemoveAllListeners();
+        OnLegacyPlayAvatar.RemoveAllListeners();
     }
 }
