@@ -1681,8 +1681,8 @@ namespace Banter.SDK
             var attachment = new BanterAttachment();
             attachment.uid = whoToShow;
             attachment.attachedObject = gameObject;
-            attachment.attachmentPosition = Vector3.zero;
-            attachment.attachmentRotation = Quaternion.identity;
+            attachment.attachmentPosition = gameObject.gameObject.transform.localPosition;
+            attachment.attachmentRotation = gameObject.gameObject.transform.localRotation;
             attachment.attachmentType = AttachmentType.NonPhysics;
             attachment.avatarAttachmentPoint = actualPart;
             events.OnAttachObject.Invoke(attachment);
