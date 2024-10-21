@@ -1,3 +1,5 @@
+using System;
+using Banter.SDK;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,12 +10,13 @@ public class BanterSceneEvents
     public UnityEvent OnSceneReady = new UnityEvent();
     public UnityEvent<float> OnLookedAtMirror = new UnityEvent<float>();
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
-    public UnityEvent<string> OnLoadFailed = new UnityEvent<string>();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
     public UnityEvent<string> OnPortalEnter = new UnityEvent<string>();
     public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableTeleportChanged = new UnityEvent<bool>();
+    public UnityEvent OnLockTeleport = new UnityEvent();
+    public UnityEvent OnLockSpiderman = new UnityEvent();
     public UnityEvent<bool> OnEnableForceGrabChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableSpiderManChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnablePortalsChanged = new UnityEvent<bool>();
@@ -26,14 +29,17 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<string> OnAttachObject = new UnityEvent<string>();
+    public UnityEvent<BanterAttachment> OnAttachObject = new UnityEvent<BanterAttachment>();
+    public UnityEvent<BanterAttachment> OnDetachObject = new UnityEvent<BanterAttachment>();
+    public UnityEvent<BanterSynced> OnSyncedObject = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced> OnDoIOwn = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced> OnTakeOwnership = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced> OnResetNetworkObject = new UnityEvent<BanterSynced>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();
     public UnityEvent<bool> OnTTsStarted = new UnityEvent<bool>();
     public UnityEvent<string> OnTTsStoped = new UnityEvent<string>();
-    public UnityEvent<Vector3> OnGravityChanged = new UnityEvent<Vector3>();
-    public UnityEvent<float> OnTimeScaleChanged = new UnityEvent<float>();
     public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
@@ -43,16 +49,14 @@ public class BanterSceneEvents
     #region Legacy stuff
 
     public UnityEvent<bool> OnLegacyPlayerLockChanged = new UnityEvent<bool>();
-    public UnityEvent<bool, GameObject> OnLegacyPlayerSitChanged = new UnityEvent<bool, GameObject>();
+    public UnityEvent<bool, UnityAndBanterObject> OnLegacyPlayerSitChanged = new UnityEvent<bool, UnityAndBanterObject>();
     public UnityEvent<bool> OnLegacyPlayerGorillaChanged = new UnityEvent<bool>();
     public UnityEvent OnLegacyControllerExtrasChanged = new UnityEvent();
     public UnityEvent OnLegacyQuaternionPoseChanged = new UnityEvent();
     public UnityEvent<string> OnVideoPrepareCompleted = new UnityEvent<string>();
     public UnityEvent<string> OnSendAframeEvent = new UnityEvent<string>();
-    public UnityEvent<string> OnRequestOwnership = new UnityEvent<string>();
-    public UnityEvent<string> OnResetNetworkObject = new UnityEvent<string>();
-    public UnityEvent<string> OnDoIOwn = new UnityEvent<string>();
     public UnityEvent<string> OnPlayAvatar = new UnityEvent<string>();
+    public UnityEvent<string> OnLegacyPlayAvatar = new UnityEvent<string>();
 
     #endregion
 
@@ -63,7 +67,6 @@ public class BanterSceneEvents
         OnDomReady.RemoveAllListeners();
         OnSceneReady.RemoveAllListeners();
         OnUnitySceneLoad.RemoveAllListeners();
-        OnLoadFailed.RemoveAllListeners();
         OnTeleport.RemoveAllListeners();
         OnPortalEnter.RemoveAllListeners();
         OnLegacyEnabled.RemoveAllListeners();
@@ -87,13 +90,15 @@ public class BanterSceneEvents
         OnDeepLink.RemoveAllListeners();
         OnTTsStarted.RemoveAllListeners();
         OnTTsStoped.RemoveAllListeners();
-        OnGravityChanged.RemoveAllListeners();
-        OnTimeScaleChanged.RemoveAllListeners();
         OnPlayerSpeedChanged.RemoveAllListeners();
         OnMenuBrowserMessage.RemoveAllListeners();
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
         OnJsCallbackRecieved.RemoveAllListeners();
+        OnDoIOwn.RemoveAllListeners();
+        OnTakeOwnership.RemoveAllListeners();
+        OnPlayAvatar.RemoveAllListeners();
+        OnSyncedObject.RemoveAllListeners();
 
         // Legacy stuff
         OnLegacyPlayerLockChanged.RemoveAllListeners();
@@ -103,9 +108,6 @@ public class BanterSceneEvents
         OnLegacyQuaternionPoseChanged.RemoveAllListeners();
         OnVideoPrepareCompleted.RemoveAllListeners();
         OnSendAframeEvent.RemoveAllListeners();
-        OnRequestOwnership.RemoveAllListeners();
-        OnResetNetworkObject.RemoveAllListeners();
-        OnDoIOwn.RemoveAllListeners();
-        OnPlayAvatar.RemoveAllListeners();
+        OnLegacyPlayAvatar.RemoveAllListeners();
     }
 }

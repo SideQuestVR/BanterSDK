@@ -3,6 +3,7 @@ namespace Banter.SDK
     public enum ComponentType
     {
         BanterAssetBundle,
+        BanterAttachedObject,
         BanterAudioSource,
         BanterBillboard,
         BoxCollider,
@@ -22,6 +23,7 @@ namespace Banter.SDK
         BanterRigidbody,
         SphereCollider,
         BanterStreetView,
+        BanterSyncedObject,
         BanterText,
         Transform,
         BanterVideoPlayer,

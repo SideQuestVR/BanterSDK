@@ -17,7 +17,7 @@ namespace Banter.SDK
         float timeoutDisplay = 0;
         UnityMainThreadDispatcher mainThread;
         BatchUpdater batchUpdater;
-        public static string LOCAL_USER_ID;
+        // public static string LOCAL_USER_ID;
 
         void Start()
         {
@@ -33,14 +33,6 @@ namespace Banter.SDK
                     EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
 #endif
                 });
-            });
-            scene.events.OnGravityChanged.AddListener((gravity) =>
-            {
-                mainThread?.Enqueue(() => Physics.gravity = gravity);
-            });
-            scene.events.OnTimeScaleChanged.AddListener((timeScale) =>
-            {
-                mainThread?.Enqueue(() => Time.timeScale = timeScale);
             });
         }
 
@@ -193,6 +185,14 @@ namespace Banter.SDK
             {
                 scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
             }
+            else if (msg.StartsWith(APICommands.LOCK_SPIDERMAN))
+            {
+                scene.LockThing(id, scene.events.OnLockSpiderman, APICommands.LOCK_SPIDERMAN);
+            }
+            else if (msg.StartsWith(APICommands.LOCK_TELEPORT))
+            {
+                scene.LockThing(id, scene.events.OnLockTeleport, APICommands.LOCK_TELEPORT);
+            }
             else if (msg.StartsWith(APICommands.TELEPORT))
             {
                 scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);
@@ -271,6 +271,7 @@ namespace Banter.SDK
             // }else 
             UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
+                UnityAndBanterObject lastSitObject = new UnityAndBanterObject();
                 if (msg.StartsWith(APICommands.LEGACY_LOCK_PLAYER))
                 {
                     scene.events.OnLegacyPlayerLockChanged.Invoke(true);
@@ -281,31 +282,43 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_SIT_PLAYER))
                 {
-                    scene.events.OnLegacyPlayerSitChanged.Invoke(true, scene.GetGameObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_SIT_PLAYER))));
+                    lastSitObject = scene.GetObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_SIT_PLAYER)));
+                    scene.events.OnLegacyPlayerSitChanged.Invoke(true, lastSitObject);
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_UNSIT_PLAYER))
                 {
-                    scene.events.OnLegacyPlayerSitChanged.Invoke(false, null);
+                    if (lastSitObject.id)
+                    {
+                        scene.events.OnLegacyPlayerSitChanged.Invoke(false, lastSitObject);
+                    }
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_ATTACH_OBJECT))
                 {
-                    scene.events.OnAttachObject.Invoke(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
+                    scene.LegacySetAttachment(GetMsgData(msg, APICommands.LEGACY_ATTACH_OBJECT));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_RESET_NETWORK_OBJECT))
                 {
-                    scene.events.OnResetNetworkObject.Invoke(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT));
+                    // var syncObject = scene.GetObject(int.Parse(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT)));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnResetNetworkObject.Invoke(GetMsgData(msg, APICommands.LEGACY_RESET_NETWORK_OBJECT));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_DO_I_OWN))
                 {
-                    scene.events.OnDoIOwn.Invoke(GetMsgData(msg, APICommands.LEGACY_DO_I_OWN));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnDoIOwn.Invoke(GetMsgData(msg, APICommands.LEGACY_DO_I_OWN));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_REQUEST_OWNERSHIP))
                 {
-                    scene.events.OnRequestOwnership.Invoke(GetMsgData(msg, APICommands.LEGACY_REQUEST_OWNERSHIP));
+                    // FLEXTODO - Synced object
+                    // scene.events.OnRequestOwnership.Invoke(GetMsgData(msg, APICommands.LEGACY_REQUEST_OWNERSHIP));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_PLAY_AVATAR))
                 {
-                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                    scene.events.OnLegacyPlayAvatar.Invoke(GetMsgData(msg, APICommands.LEGACY_PLAY_AVATAR));
+                }
+                else if (msg.StartsWith(APICommands.PLAY_AVATAR))
+                {
+                    scene.events.OnPlayAvatar.Invoke(GetMsgData(msg, APICommands.PLAY_AVATAR));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_SEND_AFRAME_EVENT))
                 {
@@ -587,8 +600,8 @@ namespace Banter.SDK
         {
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
-            var userData = collision.gameObject.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + contact[0].point.x + MessageDelimiters.SECONDARY + contact[0].point.y + MessageDelimiters.SECONDARY + contact[0].point.z + MessageDelimiters.SECONDARY + contact[0].normal.x + MessageDelimiters.SECONDARY + contact[0].normal.y + MessageDelimiters.SECONDARY + contact[0].normal.z + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.isLocalHexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collision.gameObject.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + contact[0].point.x + MessageDelimiters.SECONDARY + contact[0].point.y + MessageDelimiters.SECONDARY + contact[0].point.z + MessageDelimiters.SECONDARY + contact[0].normal.x + MessageDelimiters.SECONDARY + contact[0].normal.y + MessageDelimiters.SECONDARY + contact[0].normal.z + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnCollisionStay(GameObject obj, Collision collision)
@@ -600,14 +613,14 @@ namespace Banter.SDK
 
         public void _OnCollisionExit(GameObject obj, Collision collision)
         {
-            var userData = collision.gameObject.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.isLocalHexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collision.gameObject.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerEnter(GameObject obj, Collider collider)
         {
-            var userData = collider.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.isLocalHexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collider.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerStay(GameObject obj, Collider collider)
@@ -617,8 +630,8 @@ namespace Banter.SDK
 
         public void _OnTriggerExit(GameObject obj, Collider collider)
         {
-            var userData = collider.GetComponentInParent<UserDataRef>();
-            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.isLocalHexa ?? false ? LOCAL_USER_ID : (userData?.userData?.id ?? "-1")));
+            var userData = collider.GetComponentInParent<UserData>();
+            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void CheckPipe()

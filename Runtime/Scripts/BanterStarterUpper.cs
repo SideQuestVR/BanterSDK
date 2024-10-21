@@ -29,7 +29,6 @@ namespace Banter.SDK
         void Awake()
         {
             scene = BanterScene.Instance();
-            scene.StartThreads();
             gameObject.AddComponent<DontDestroyOnLoad>();
             scene.mainThread = gameObject.AddComponent<UnityMainThreadDispatcher>();
 #if !BANTER_EDITOR

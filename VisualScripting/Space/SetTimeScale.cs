@@ -27,7 +27,7 @@ namespace Banter.VisualScripting
                 var valScale = flow.GetValue<float>(scale);
                 BanterScene.Instance().mainThread?.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnTimeScaleChanged?.Invoke(valScale);
+                    Time.timeScale = valScale;
                 });
                 return outputTrigger;
             });

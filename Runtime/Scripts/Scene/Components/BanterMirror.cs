@@ -41,7 +41,8 @@ namespace Banter.SDK
             SetupMirror();
         }
         public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties) { 
+        public void UpdateCallback(List<PropertyName> changedProperties)
+        {
             SetupMirror(changedProperties);
         }
 
