@@ -6,7 +6,7 @@ namespace Banter.SDKEditor
 {
     public struct VsStubsAllowed
     {
-        public static readonly List<string> members = new List<string>() {
+        public static readonly string[] members = new string[] {
             "System.String.Compare",
             "System.String.CompareOrdinal",
             "System.String.CompareTo",

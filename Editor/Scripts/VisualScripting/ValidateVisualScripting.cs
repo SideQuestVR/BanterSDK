@@ -246,11 +246,6 @@ namespace Banter.SDKEditor
                         everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
                 });
 
-                foreach (var e in everything)
-                {
-                    Debug.Log(e); 
-                }
-
                 notAllowedElements = everything.Distinct().Where( e => {
                     string id = e;
                     bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;

@@ -767,7 +767,7 @@ public class BuilderWindow : EditorWindow
             trackingData = paths.First(x => x.EndsWith(".trackingdata"));
             prefab = paths.First(x => x.EndsWith(".prefab"));
         }
-        catch (Exception e)
+        catch
         {
             AddStatus("Tracking or prefab files not found in dropped files.");
             return;
