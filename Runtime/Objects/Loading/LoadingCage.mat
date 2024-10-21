@@ -44,7 +44,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DisolveGuide:
-        m_Texture: {fileID: 2800000, guid: 912443672bb71bc43a5669da1a66accd, type: 3}
+        m_Texture: {fileID: 2800000, guid: cb74c2b5397ba6746b6e8b670cc9c669, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
@@ -53,7 +53,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     - _MainTex:
         m_Texture: {fileID: 2800000, guid: 26373c8139d739c48bfab0de3d89f8ec, type: 3}
-        m_Scale: {x: 7, y: 7}
+        m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
         m_Texture: {fileID: 0}
@@ -76,7 +76,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ThumbDisolveGuide:
-        m_Texture: {fileID: 2800000, guid: 912443672bb71bc43a5669da1a66accd, type: 3}
+        m_Texture: {fileID: 2800000, guid: cb74c2b5397ba6746b6e8b670cc9c669, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _ThumbMask:

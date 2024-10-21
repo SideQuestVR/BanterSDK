@@ -52,29 +52,6 @@ public class UserData : MonoBehaviour
         }
     }
 
-    public void Attach(UnityAndBanterObject go, AttachmentType hand)
-    {
-        go.banterObject.previousParent = go.gameObject.transform.parent;
-        switch (hand)
-        {
-            case AttachmentType.Head:
-                go.gameObject.transform.SetParent(Head, false);
-                break;
-            case AttachmentType.LeftHand:
-                go.gameObject.transform.SetParent(LeftHand, false);
-                break;
-            case AttachmentType.RightHand:
-                go.gameObject.transform.SetParent(RightHand, false);
-                break;
-            case AttachmentType.Body:
-                go.gameObject.transform.SetParent(Body, false);
-                break;
-            case AttachmentType.Cockpit:
-                go.gameObject.transform.SetParent(Cockpit, false);
-                break;
-        }
-    }
-
     void OnDestroy()
     {
         scene.RemoveUser(this);

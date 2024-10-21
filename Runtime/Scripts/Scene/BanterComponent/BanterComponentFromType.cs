@@ -9,6 +9,8 @@ namespace Banter.SDK
             {
                 case ComponentType.BanterAssetBundle:
                     return gameObject.AddComponent<BanterAssetBundle>();
+                case ComponentType.BanterAttachedObject:
+                    return gameObject.AddComponent<BanterAttachedObject>();
                 case ComponentType.BanterAudioSource:
                     return gameObject.AddComponent<BanterAudioSource>();
                 case ComponentType.BanterBillboard:
@@ -47,6 +49,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterSphereCollider>();
                 case ComponentType.BanterStreetView:
                     return gameObject.AddComponent<BanterStreetView>();
+                case ComponentType.BanterSyncedObject:
+                    return gameObject.AddComponent<BanterSyncedObject>();
                 case ComponentType.BanterText:
                     return gameObject.AddComponent<BanterText>();
                 case ComponentType.Transform:
