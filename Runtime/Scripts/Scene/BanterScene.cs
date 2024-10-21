@@ -1683,7 +1683,7 @@ namespace Banter.SDK
                     actualPart = AvatarBoneName.RIGHTARM_HAND;
                     break;
                 case LegacyAttachmentPosition.BODY:
-                    actualPart = AvatarBoneName.SPINE;
+                    actualPart = AvatarBoneName.HIPS;
                     break;
             }
             var attachment = new BanterAttachment();
