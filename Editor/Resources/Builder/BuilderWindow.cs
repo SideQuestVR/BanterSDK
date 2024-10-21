@@ -625,7 +625,7 @@ public class BuilderWindow : EditorWindow
         Remove(rootVisualElement.Q<Button>("compileInjection"));
         Remove(rootVisualElement.Q<Button>("kitchenSink"));
 
-        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
+        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayersAndTags();
 #endif
 
 #if BANTER_VISUAL_SCRIPTING
@@ -758,22 +758,26 @@ public class BuilderWindow : EditorWindow
         }
     }
 
-    private void DropRecordingFile(bool isScene, string sceneFile, string[] paths) {
+    private void DropRecordingFile(bool isScene, string sceneFile, string[] paths)
+    {
         string trackingData = null;
         string prefab = null;
-        try{
+        try
+        {
             trackingData = paths.First(x => x.EndsWith(".trackingdata"));
             prefab = paths.First(x => x.EndsWith(".prefab"));
-        }catch(Exception e) {
+        }
+        catch (Exception e)
+        {
             AddStatus("Tracking or prefab files not found in dropped files.");
             return;
         }
         var avatar = AssetDatabase.LoadAssetAtPath<GameObject>(prefab);
         var bytes = File.ReadAllBytes(trackingData);
         AvatarUtilities.ParseAnimationCurves(bytes);
-        AvatarUtilities.SetBonePaths(avatar, (t) => {});
+        AvatarUtilities.SetBonePaths(avatar, (t) => { });
         AvatarUtilities.SetAnimationCurves();
-        AssetDatabase.CreateAsset ( AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim") ); 
+        AssetDatabase.CreateAsset(AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim"));
         AddStatus("Animation file generated at " + trackingData.Replace(".trackingdata", ".anim") + ".");
     }
 
