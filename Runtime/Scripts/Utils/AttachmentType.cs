@@ -1,4 +1,5 @@
-public enum AttachmentType{
+public enum AttachmentType
+{
     Physics,
     NonPhysics,
 }

@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    public class BanterSynced{
+    public class BanterSynced
+    {
         public bool syncPosition;
         public bool syncRotation;
         public bool takeOwnershipOnCollision;
@@ -17,17 +18,17 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterSyncedObject : BanterComponentBase
     {
-         [See(initial = "true")] public bool syncPosition;
+        [See(initial = "true")] public bool syncPosition;
 
-         [See(initial = "true")] public bool syncRotation;
+        [See(initial = "true")] public bool syncRotation;
 
-         [See(initial = "true")] public bool takeOwnershipOnCollision;
+        [See(initial = "true")] public bool takeOwnershipOnCollision;
 
-         [See(initial = "true")] public bool takeOwnershipOnGrab;
+        [See(initial = "true")] public bool takeOwnershipOnGrab;
 
-         [See(initial = "false")] public bool kinematicIfNotOwned;
+        [See(initial = "false")] public bool kinematicIfNotOwned;
 
-         [See(initial = "false")] public bool doIOwn;
+        [See(initial = "false")] public bool doIOwn;
 
         [Method]
         public void _TakeOwnership()
@@ -46,8 +47,10 @@ namespace Banter.SDK
         }
 
         public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties){
-            if(synced == null){
+        public void UpdateCallback(List<PropertyName> changedProperties)
+        {
+            if (synced == null)
+            {
                 synced = new BanterSynced();
                 synced.syncPosition = syncPosition;
                 synced.syncRotation = syncRotation;

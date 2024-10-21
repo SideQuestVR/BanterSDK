@@ -53,7 +53,7 @@ public class APICommands
     public const string LOCK_TELEPORT = "!lt!";
     public const string LOCK_SPIDERMAN = "!ls!";
 
-    
+
 
     #region Events
     public const string EVENT = "!e!";

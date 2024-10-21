@@ -40,11 +40,43 @@ namespace Banter.SDKEditor
             { 30, "BanterInternal7_DONTUSE" },
             { 31, "BanterInternal8_DONTUSE" }
         };
+
+        public static Dictionary<int, string> tagsToAdd = new Dictionary<int, string> {
+            { 0,  "__BA_NameTag" },
+            { 1,  "__BA_NameTagMenu" },
+            { 2,  "__BA_FootRig" },
+            { 3,  "__BA_PlayerHead" },
+            { 4,  "__BA_UNUSED0" },
+            { 5,  "__BA_UNUSED1" },
+            { 6,  "__BA_TriggerIndex" },
+            { 7,  "__BA_PlayerTorso" },
+            { 8,  "__BA_PlayerLegs" },
+            { 9,  "__BA_LocalPlayer" },
+            { 10, "__BA_PlayerLeftHand" },
+            { 11, "__BA_PlayerRightHand" },
+            { 12, "__BA_LocalPlayerFeet" },
+            { 13, "__BA_UserTag0" },
+            { 14, "__BA_UserTag1" },
+            { 15, "__BA_UserTag2" },
+            { 16, "__BA_UserTag3" },
+            { 17, "__BA_UserTag4" },
+            { 18, "__BA_UserTag5" },
+            { 19, "__BA_UserTag6" },
+            { 20, "__BA_UserTag7" },
+            { 21, "__BA_UserTag8" },
+            { 22, "__BA_UserTag9" },
+            { 23, "__BA_UserTag10" },
+            { 24, "__BA_UserTag11" },
+            { 25, "__BA_UserTag12" },
+            { 26, "__BA_UserTag13" },
+            { 27, "__BA_UserTag14" },
+        };
+
         static AddRequest Request;
         [InitializeOnLoadMethod()]
         static void Go()
         {
-            // SetupLayers();
+            // SetupLayersAndTags();
             CreateWebRoot();
         }
 
@@ -60,12 +92,14 @@ namespace Banter.SDKEditor
 #endif
         }
 
-        public static void SetupLayers()
+        public static void SetupLayersAndTags()
         {
             Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
             if (asset != null && asset.Length > 0)
             {
                 SerializedObject serializedObject = new SerializedObject(asset[0]);
+
+
                 SerializedProperty layers = serializedObject.FindProperty("layers");
                 bool isMissing = false;
                 List<string> missingLayers = new List<string>();
@@ -79,44 +113,66 @@ namespace Banter.SDKEditor
                     }
                 }
 
-                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers", "Do you want to setup Banter layers automatically?\nThese are required when using Banter specific features:\n" + string.Join(", \n", missingLayers), "Yes", "No"))
+                SerializedProperty tags = serializedObject.FindProperty("tags");
+                List<string> missingTags = new List<string>();
+                foreach (var tag in tagsToAdd)
+                {
+                    var utag = tags.GetArrayElementAtIndex(tag.Key);
+                    if (utag == null || utag.stringValue != tag.Value)
+                    {
+                        isMissing = true;
+                        missingTags.Add("T" + tag.Key + ": " + tag.Value);
+                    }
+                }
+
+                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers/Tags", "Do you want to setup Banter layers and tags automatically?\nThese are required when using Banter specific features.\n Please back up your project first!" + (missingLayers.Count > 0 ? "\nLayers:\n" : "") + string.Join("\n", missingLayers) + (missingTags.Count > 0 ? "\nTags:\n" : "") + string.Join("\n", missingTags), "Yes", "No"))
                 {
                     foreach (var layer in layersToAdd)
                     {
                         var ulayer = layers.GetArrayElementAtIndex(layer.Key);
                         if (ulayer == null || ulayer.stringValue != layer.Value)
                         {
-                            AddLayerAt(layers, layer.Key, layer.Value);
+                            AddTagManagerObjectAt(layers, "layer", layer.Key, layer.Value);
                         }
                     }
+
+                    foreach (var tag in tagsToAdd)
+                    {
+                        var utag = tags.GetArrayElementAtIndex(tag.Key);
+                        if (utag == null || utag.stringValue != tag.Value)
+                        {
+                            AddTagManagerObjectAt(tags, "tag", tag.Key, tag.Value);
+                        }
+                    }
+
                     serializedObject.ApplyModifiedProperties();
                     serializedObject.Update();
                 }
             }
         }
 
-        static void AddLayerAt(SerializedProperty layers, int index, string layerName, bool tryOtherIndex = false)
+        static void AddTagManagerObjectAt(SerializedProperty prop, string semantic, int index, string name, bool tryOtherIndex = false)
         {
-            // Skip if a layer with the name already exists.
-            for (int i = 0; i < layers.arraySize; ++i)
+            // Skip if an object with the name already exists.
+            for (int i = 0; i < prop.arraySize; ++i)
             {
-                if (layers.GetArrayElementAtIndex(i).stringValue == layerName)
+                if (prop.GetArrayElementAtIndex(i).stringValue == name)
                 {
-                    Debug.Log("Skipping layer '" + layerName + "' because it already exists.");
+                    Debug.Log($"Skipping {semantic} '{name}' because it already exists.");
                     return;
                 }
             }
 
             // Extend layers if necessary
-            if (index >= layers.arraySize)
-                layers.arraySize = index + 1;
+            if (index >= prop.arraySize)
+                prop.arraySize = index + 1;
 
             // set layer name at index
-            var element = layers.GetArrayElementAtIndex(index);
+            var element = prop.GetArrayElementAtIndex(index);
             // if (string.IsNullOrEmpty(element.stringValue))
             // {
-            element.stringValue = layerName;
-            Debug.Log("Added layer '" + layerName + "' at index " + index + ".");
+            element.stringValue = name;
+            Debug.Log($"Added {semantic} '{name}' at index {index}.");
             // }
             // else
             // {

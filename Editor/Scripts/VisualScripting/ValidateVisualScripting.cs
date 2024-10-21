@@ -196,6 +196,7 @@ namespace Banter.SDKEditor
        
         public static bool CheckVsNodes() {
             var everything = new List<string>();
+            var notAllowedElements = new List<string>();
             try {
                 AssetDatabase.Refresh();
                 string[] scriptguids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
@@ -204,11 +205,12 @@ namespace Banter.SDKEditor
 
                 foreach (string guid in scriptguids)
                 {
-                    everything = everything.Concat(FindNodesFromScriptGraphAssetGuid(guid)).ToList();
+                    everything.AddRange(FindNodesFromScriptGraphAssetGuid(guid));
+                    //everything = (List<string>)everything.Concat(FindNodesFromScriptGraphAssetGuid(guid));
                 }            
                 foreach (string guid in stateguids)
                 {
-                    everything = everything.Concat(FindNodesFromStateGraphAssetGuid(guid)).ToList();
+                    everything.AddRange(FindNodesFromStateGraphAssetGuid(guid));
                 }
                 var paths = AssetDatabase.GetAllAssetPaths().Select(path => path).Where(File.Exists).Where(f => Path.GetExtension(f) == ".prefab");
                 foreach (var p in paths)
@@ -222,11 +224,11 @@ namespace Banter.SDKEditor
                             GameObject go = (GameObject)o;
                             var scriptMachine = go.GetComponent<ScriptMachine>();
                             if (scriptMachine?.nest?.source == GraphSource.Embed)
-                                everything = everything.Concat(GetElementsFromScriptMachine(scriptMachine)).ToList();
+                                everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
 
                             var stateMachine = go.GetComponent<StateMachine>();
                             if (stateMachine?.nest?.source == GraphSource.Embed)
-                                everything = everything.Concat(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph)).ToList();
+                                everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
                         } catch (Exception e)
                         {
                             Debug.Log($"Error while loading prefabs to search from them in path {assetPath} {e.Message} {e.StackTrace}");
@@ -237,23 +239,27 @@ namespace Banter.SDKEditor
                 SceneManager.GetActiveScene().GetRootGameObjects().ToList().ForEach(go => {
                     var scriptMachine = go.GetComponent<ScriptMachine>();
                     if (scriptMachine?.nest?.source == GraphSource.Embed)
-                        everything = everything.Concat(GetElementsFromScriptMachine(scriptMachine)).ToList();
+                        everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
 
                     var stateMachine = go.GetComponent<StateMachine>();
                     if (stateMachine?.nest?.source == GraphSource.Embed)
-                        everything = everything.Concat(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph)).ToList();
+                        everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
                 });
-                var notAllowedElements = everything.Distinct().ToList().Where( e => {
-                    var id = e;
-                    var isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
-                    var isBanterVs = id?.StartsWith("Banter.VisualScripting.") ?? false;
-                    return !(id == null || isVs || isBanterVs || VsStubsAllowed.members.Contains(id));
-                });
-                foreach(var element in notAllowedElements.Distinct().ToList()) {
-                    Debug.LogError("[VisualScripting] Element not allowed in Banter: " + element);
-                }
+
+                notAllowedElements = everything.Distinct().Where( e => {
+                    string id = e;
+                    bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
+                    bool isBanterVs = id?.StartsWith("Banter.VisualScripting.") ?? false;
+                    
+                    var notAllowed = !(id == null || isVs || isBanterVs || VsStubsAllowed.members.Contains(id));
+                    return notAllowed;
+                }).ToList();
+
                 if(notAllowedElements.Count() > 0) {
                     Debug.LogError("[VisualScripting] Found elements that are not allowed for Visual Scripting");
+                    foreach(var element in notAllowedElements) {
+                        Debug.LogError("[VisualScripting] Element not allowed in Banter: " + element);
+                    }
                     return false;
                 }
             } catch(Exception e){

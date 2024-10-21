@@ -9,28 +9,37 @@ public class FollowConstraint : MonoBehaviour
     public float positionLerpSpeed = 0.0f; // Speed of movement
     public float rotationLerpSpeed = 0.0f; // Speed of rotation
     private bool _hasRigidBody;
-    void OnEnable() {
+    void OnEnable()
+    {
         _rb = GetComponent<Rigidbody>();
         _hasRigidBody = _rb != null;
     }
 
-    private void Update()  {
-        if(!followTransform) {
+    private void Update()
+    {
+        if (!followTransform)
+        {
             enabled = false;
             return;
         }
 
-        if(_hasRigidBody)
+        if (_hasRigidBody)
             return;
-        
-        if(positionLerpSpeed == 0) {
+
+        if (positionLerpSpeed == 0)
+        {
             transform.position = followTransform.position + positionOffset;
-        }else{
+        }
+        else
+        {
             transform.position = Vector3.Lerp(transform.position, followTransform.position + positionOffset, Time.deltaTime * positionLerpSpeed);
         }
-        if(rotationLerpSpeed == 0) {
+        if (rotationLerpSpeed == 0)
+        {
             transform.rotation = followTransform.rotation;
-        }else{
+        }
+        else
+        {
             transform.rotation = Quaternion.Lerp(transform.rotation, followTransform.rotation, Time.deltaTime * rotationLerpSpeed);
         }
     }
@@ -38,27 +47,34 @@ public class FollowConstraint : MonoBehaviour
     private void FixedUpdate()
     {
 
-        if(!followTransform) {
+        if (!followTransform)
+        {
             enabled = false;
             return;
         }
 
-        if(!_hasRigidBody)
+        if (!_hasRigidBody)
             return;
-    
+
 
         Vector3 newPosition;
-        if(positionLerpSpeed == 0) {
+        if (positionLerpSpeed == 0)
+        {
             newPosition = followTransform.position + positionOffset;
-        }else{
+        }
+        else
+        {
             newPosition = Vector3.Lerp(_rb.position, followTransform.position + positionOffset, Time.deltaTime * positionLerpSpeed);
         }
 
         Quaternion newRotation;
 
-        if(rotationLerpSpeed == 0) {
+        if (rotationLerpSpeed == 0)
+        {
             newRotation = followTransform.rotation;
-        }else{
+        }
+        else
+        {
             newRotation = Quaternion.Lerp(_rb.rotation, followTransform.rotation, Time.deltaTime * rotationLerpSpeed);
         }
 

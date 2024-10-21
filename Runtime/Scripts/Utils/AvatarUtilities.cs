@@ -3,45 +3,55 @@ using System.Collections.Generic;
 using SQ.Tracking;
 using UnityEngine;
 
-public class AnimationCurveContainer {
+public class AnimationCurveContainer
+{
     public AnimationCurve curve = new AnimationCurve();
     public string path;
     public string propertyName;
 }
-public class AvatarUtilities {
+public class AvatarUtilities
+{
     static SyncedBoneStatev1 bones = new SyncedBoneStatev1();
     public static AnimationClip clip;
     static Dictionary<string, AnimationCurveContainer[]> curves = new Dictionary<string, AnimationCurveContainer[]>();
-    private static string GetTransformPathName ( Transform rootTransform, Transform targetTransform ) {
+    private static string GetTransformPathName(Transform rootTransform, Transform targetTransform)
+    {
 
-		string returnName = targetTransform.name;
-		Transform tempObj = targetTransform;
+        string returnName = targetTransform.name;
+        Transform tempObj = targetTransform;
 
-		if (tempObj == rootTransform)
-			return "";
+        if (tempObj == rootTransform)
+            return "";
 
-		while (tempObj.parent != rootTransform) {
-			returnName = tempObj.parent.name + "/" + returnName;
-			tempObj = tempObj.parent;
-		}
+        while (tempObj.parent != rootTransform)
+        {
+            returnName = tempObj.parent.name + "/" + returnName;
+            tempObj = tempObj.parent;
+        }
 
-		return returnName;
-	}
-    public static void SetAnimationCurves() {
-        foreach(var curve in curves) {
-            foreach(var container in curve.Value) {
+        return returnName;
+    }
+    public static void SetAnimationCurves()
+    {
+        foreach (var curve in curves)
+        {
+            foreach (var container in curve.Value)
+            {
                 clip.SetCurve(container.path, typeof(Transform), container.propertyName, container.curve);
             }
         }
-        clip.EnsureQuaternionContinuity();       
+        clip.EnsureQuaternionContinuity();
     }
 
-    public static void ParseAnimationCurves(byte[] bytes) {
-        if(clip == null) {
+    public static void ParseAnimationCurves(byte[] bytes)
+    {
+        if (clip == null)
+        {
             clip = new AnimationClip();
         }
         var head = 0;
-        while(head < bytes.Length) {
+        while (head < bytes.Length)
+        {
             var time = BitConverter.ToSingle(bytes, head);
             head += 4;
             var length = BitConverter.ToInt32(bytes, head);
@@ -54,8 +64,10 @@ public class AvatarUtilities {
         }
     }
 
-    private static void ParseQuatFrame(float time, string key, HalfQuat quat, bool isWorld = false) {
-        if(!curves.ContainsKey(key)){
+    private static void ParseQuatFrame(float time, string key, HalfQuat quat, bool isWorld = false)
+    {
+        if (!curves.ContainsKey(key))
+        {
             curves.Add(key, new AnimationCurveContainer[4]);
             curves[key][0] = new AnimationCurveContainer();
             curves[key][0].propertyName = isWorld ? "localRotation.x" : "localRotation.x";
@@ -71,8 +83,10 @@ public class AvatarUtilities {
         curves[key][2].curve.AddKey(time, quat.Z);
         curves[key][3].curve.AddKey(time, quat.W);
     }
-    private static void ParseVecFrame(float time, string key, SQ.Tracking.Vector3 vec) {
-        if(!curves.ContainsKey(key)){
+    private static void ParseVecFrame(float time, string key, SQ.Tracking.Vector3 vec)
+    {
+        if (!curves.ContainsKey(key))
+        {
             curves.Add(key, new AnimationCurveContainer[3]);
             curves[key][0] = new AnimationCurveContainer();
             curves[key][0].propertyName = "localPosition.x";
@@ -85,9 +99,10 @@ public class AvatarUtilities {
         curves[key][1].curve.AddKey(time, vec.Y);
         curves[key][2].curve.AddKey(time, vec.Z);
     }
-    private static void ParseFrame(float time) {
+    private static void ParseFrame(float time)
+    {
         // ParseVecFrame(time, "HEAD_TRACKING_position", bones.HEAD_TRACKING_position);
-        
+
         // ParseQuatFrame(time, "HEAD_TRACKING", bones.HEAD_TRACKING);
         ParseQuatFrame(time, "HEAD", bones.HEAD);
         ParseQuatFrame(time, "NECK", bones.NECK);
@@ -151,7 +166,7 @@ public class AvatarUtilities {
         ParseQuatFrame(time, "RIGHTARM_HAND_THUMB3", bones.RIGHTARM_HAND_THUMB3);
 
 
-        
+
         /*
 
         public BaseFloat SPIDERMAN_LEFT_X;
@@ -184,382 +199,487 @@ public class AvatarUtilities {
         public BaseFloat UserBlendShape6;
         */
     }
-    
-    public static void SetBonePaths(GameObject avatarObj, Action<Transform> headCallback) {
-        foreach(var t in avatarObj.transform.GetComponentsInChildren<Transform>())
-		{
-			if(!AvatarBoneNames.AvatarBoneNamesMapping.ContainsKey(t.name))
-				continue;
+
+    public static void SetBonePaths(GameObject avatarObj, Action<Transform> headCallback)
+    {
+        foreach (var t in avatarObj.transform.GetComponentsInChildren<Transform>())
+        {
+            if (!AvatarBoneNames.AvatarBoneNamesMapping.ContainsKey(t.name))
+                continue;
 
             var path = GetTransformPathName(avatarObj.transform, t);
-            switch(AvatarBoneNames.AvatarBoneNamesMapping[t.name])
+            switch (AvatarBoneNames.AvatarBoneNamesMapping[t.name])
             {
                 case AvatarBoneName.HEAD:
-                    if(curves.ContainsKey("HEAD")){
-                        foreach(var curve in curves["HEAD"]) {
+                    if (curves.ContainsKey("HEAD"))
+                    {
+                        foreach (var curve in curves["HEAD"])
+                        {
                             curve.path = path;
                         }
                         headCallback(t);
                     }
                     break;
                 case AvatarBoneName.NECK:
-                    if(curves.ContainsKey("NECK")){
-                        foreach(var curve in curves["NECK"]) {
+                    if (curves.ContainsKey("NECK"))
+                    {
+                        foreach (var curve in curves["NECK"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.HIPS:
-                    if(curves.ContainsKey("HIPS")){
-                        foreach(var curve in curves["HIPS"]) {
+                    if (curves.ContainsKey("HIPS"))
+                    {
+                        foreach (var curve in curves["HIPS"])
+                        {
                             curve.path = path;
                         }
                     }
-                    if(curves.ContainsKey("HIPS_position")){
-                        foreach(var curve in curves["HIPS_position"]) {
+                    if (curves.ContainsKey("HIPS_position"))
+                    {
+                        foreach (var curve in curves["HIPS_position"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.SPINE:
-                    if(curves.ContainsKey("SPINE")){
-                        foreach(var curve in curves["SPINE"]) {
+                    if (curves.ContainsKey("SPINE"))
+                    {
+                        foreach (var curve in curves["SPINE"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.CHEST:
-                    if(curves.ContainsKey("CHEST")){
-                        foreach(var curve in curves["CHEST"]) {
+                    if (curves.ContainsKey("CHEST"))
+                    {
+                        foreach (var curve in curves["CHEST"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
 
                 case AvatarBoneName.LEFTARM_SHOULDER:
-                    if(curves.ContainsKey("LEFTARM_SHOULDER")){
-                        foreach(var curve in curves["LEFTARM_SHOULDER"]) {
+                    if (curves.ContainsKey("LEFTARM_SHOULDER"))
+                    {
+                        foreach (var curve in curves["LEFTARM_SHOULDER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_UPPER:
-                    if(curves.ContainsKey("LEFTARM_UPPER")){
-                        foreach(var curve in curves["LEFTARM_UPPER"]) {
+                    if (curves.ContainsKey("LEFTARM_UPPER"))
+                    {
+                        foreach (var curve in curves["LEFTARM_UPPER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_LOWER:
-                    if(curves.ContainsKey("LEFTARM_LOWER")){
-                        foreach(var curve in curves["LEFTARM_LOWER"]) {
+                    if (curves.ContainsKey("LEFTARM_LOWER"))
+                    {
+                        foreach (var curve in curves["LEFTARM_LOWER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND:
-                    if(curves.ContainsKey("LEFTARM_HAND")){
-                        foreach(var curve in curves["LEFTARM_HAND"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
-                
+
                 case AvatarBoneName.RIGHTARM_SHOULDER:
-                    if(curves.ContainsKey("RIGHTARM_SHOULDER")){
-                        foreach(var curve in curves["RIGHTARM_SHOULDER"]) {
+                    if (curves.ContainsKey("RIGHTARM_SHOULDER"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_SHOULDER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_UPPER:
-                    if(curves.ContainsKey("RIGHTARM_UPPER")){
-                        foreach(var curve in curves["RIGHTARM_UPPER"]) {
+                    if (curves.ContainsKey("RIGHTARM_UPPER"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_UPPER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_LOWER:
-                    if(curves.ContainsKey("RIGHTARM_LOWER")){
-                        foreach(var curve in curves["RIGHTARM_LOWER"]) {
+                    if (curves.ContainsKey("RIGHTARM_LOWER"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_LOWER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND:
-                    if(curves.ContainsKey("RIGHTARM_HAND")){
-                        foreach(var curve in curves["RIGHTARM_HAND"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
 
                 case AvatarBoneName.LEFTLEG_UPPER:
-                    if(curves.ContainsKey("LEFTLEG_UPPER")){
-                        foreach(var curve in curves["LEFTLEG_UPPER"]) {
+                    if (curves.ContainsKey("LEFTLEG_UPPER"))
+                    {
+                        foreach (var curve in curves["LEFTLEG_UPPER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTLEG_LOWER:
-                    if(curves.ContainsKey("LEFTLEG_LOWER")){
-                        foreach(var curve in curves["LEFTLEG_LOWER"]) {
+                    if (curves.ContainsKey("LEFTLEG_LOWER"))
+                    {
+                        foreach (var curve in curves["LEFTLEG_LOWER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTLEG_FOOT:
-                    if(curves.ContainsKey("LEFTLEG_FOOT")){
-                        foreach(var curve in curves["LEFTLEG_FOOT"]) {
+                    if (curves.ContainsKey("LEFTLEG_FOOT"))
+                    {
+                        foreach (var curve in curves["LEFTLEG_FOOT"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTLEG_TOES:
-                    if(curves.ContainsKey("LEFTLEG_TOES")){
-                        foreach(var curve in curves["LEFTLEG_TOES"]) {
+                    if (curves.ContainsKey("LEFTLEG_TOES"))
+                    {
+                        foreach (var curve in curves["LEFTLEG_TOES"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
 
                 case AvatarBoneName.RIGHTLEG_UPPER:
-                    if(curves.ContainsKey("RIGHTLEG_UPPER")){
-                        foreach(var curve in curves["RIGHTLEG_UPPER"]) {
+                    if (curves.ContainsKey("RIGHTLEG_UPPER"))
+                    {
+                        foreach (var curve in curves["RIGHTLEG_UPPER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTLEG_LOWER:
-                    if(curves.ContainsKey("RIGHTLEG_LOWER")){
-                        foreach(var curve in curves["RIGHTLEG_LOWER"]) {
+                    if (curves.ContainsKey("RIGHTLEG_LOWER"))
+                    {
+                        foreach (var curve in curves["RIGHTLEG_LOWER"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTLEG_FOOT:
-                    if(curves.ContainsKey("RIGHTLEG_FOOT")){
-                        foreach(var curve in curves["RIGHTLEG_FOOT"]) {
+                    if (curves.ContainsKey("RIGHTLEG_FOOT"))
+                    {
+                        foreach (var curve in curves["RIGHTLEG_FOOT"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTLEG_TOES:
-                    if(curves.ContainsKey("RIGHTLEG_TOES")){
-                        foreach(var curve in curves["RIGHTLEG_TOES"]) {
+                    if (curves.ContainsKey("RIGHTLEG_TOES"))
+                    {
+                        foreach (var curve in curves["RIGHTLEG_TOES"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
 
                 case AvatarBoneName.LEFTARM_HAND_PINKY1:
-                    if(curves.ContainsKey("LEFTARM_HAND_PINKY1")){
-                        foreach(var curve in curves["LEFTARM_HAND_PINKY1"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_PINKY1"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_PINKY1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_PINKY2:
-                    if(curves.ContainsKey("LEFTARM_HAND_PINKY2")){
-                        foreach(var curve in curves["LEFTARM_HAND_PINKY2"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_PINKY2"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_PINKY2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_PINKY3:
-                    if(curves.ContainsKey("LEFTARM_HAND_PINKY3")){
-                        foreach(var curve in curves["LEFTARM_HAND_PINKY3"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_PINKY3"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_PINKY3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_RING1:
-                    if(curves.ContainsKey("LEFTARM_HAND_RING1")){
-                        foreach(var curve in curves["LEFTARM_HAND_RING1"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_RING1"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_RING1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_RING2:
-                    if(curves.ContainsKey("LEFTARM_HAND_RING2")){
-                        foreach(var curve in curves["LEFTARM_HAND_RING2"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_RING2"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_RING2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_RING3:
-                    if(curves.ContainsKey("LEFTARM_HAND_RING3")){
-                        foreach(var curve in curves["LEFTARM_HAND_RING3"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_RING3"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_RING3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_MIDDLE1:
-                    if(curves.ContainsKey("LEFTARM_HAND_MIDDLE1")){
-                        foreach(var curve in curves["LEFTARM_HAND_MIDDLE1"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_MIDDLE1"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_MIDDLE1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_MIDDLE2:
-                    if(curves.ContainsKey("LEFTARM_HAND_MIDDLE2")){
-                        foreach(var curve in curves["LEFTARM_HAND_MIDDLE2"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_MIDDLE2"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_MIDDLE2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_MIDDLE3:
-                    if(curves.ContainsKey("LEFTARM_HAND_MIDDLE3")){
-                        foreach(var curve in curves["LEFTARM_HAND_MIDDLE3"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_MIDDLE3"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_MIDDLE3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_INDEX1:
-                    if(curves.ContainsKey("LEFTARM_HAND_INDEX1")){
-                        foreach(var curve in curves["LEFTARM_HAND_INDEX1"]) {
-                            curve.path = path;
-                        }
-                    }
-                    break;  
-                case AvatarBoneName.LEFTARM_HAND_INDEX2:
-                    if(curves.ContainsKey("LEFTARM_HAND_INDEX2")){
-                        foreach(var curve in curves["LEFTARM_HAND_INDEX2"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_INDEX1"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_INDEX1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
-                case AvatarBoneName.LEFTARM_HAND_INDEX3:    
-                    if(curves.ContainsKey("LEFTARM_HAND_INDEX3")){
-                        foreach(var curve in curves["LEFTARM_HAND_INDEX3"]) {
+                case AvatarBoneName.LEFTARM_HAND_INDEX2:
+                    if (curves.ContainsKey("LEFTARM_HAND_INDEX2"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_INDEX2"])
+                        {
+                            curve.path = path;
+                        }
+                    }
+                    break;
+                case AvatarBoneName.LEFTARM_HAND_INDEX3:
+                    if (curves.ContainsKey("LEFTARM_HAND_INDEX3"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_INDEX3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_THUMB1:
-                    if(curves.ContainsKey("LEFTARM_HAND_THUMB1")){
-                        foreach(var curve in curves["LEFTARM_HAND_THUMB1"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_THUMB1"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_THUMB1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_THUMB2:
-                    if(curves.ContainsKey("LEFTARM_HAND_THUMB2")){
-                        foreach(var curve in curves["LEFTARM_HAND_THUMB2"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_THUMB2"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_THUMB2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.LEFTARM_HAND_THUMB3:
-                    if(curves.ContainsKey("LEFTARM_HAND_THUMB3")){
-                        foreach(var curve in curves["LEFTARM_HAND_THUMB3"]) {
+                    if (curves.ContainsKey("LEFTARM_HAND_THUMB3"))
+                    {
+                        foreach (var curve in curves["LEFTARM_HAND_THUMB3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
 
                 case AvatarBoneName.RIGHTARM_HAND_PINKY1:
-                    if(curves.ContainsKey("RIGHTARM_HAND_PINKY1")){
-                        foreach(var curve in curves["RIGHTARM_HAND_PINKY1"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_PINKY1"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_PINKY1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_PINKY2:
-                    if(curves.ContainsKey("RIGHTARM_HAND_PINKY2")){
-                        foreach(var curve in curves["RIGHTARM_HAND_PINKY2"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_PINKY2"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_PINKY2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_PINKY3:
-                    if(curves.ContainsKey("RIGHTARM_HAND_PINKY3")){
-                        foreach(var curve in curves["RIGHTARM_HAND_PINKY3"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_PINKY3"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_PINKY3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
-                case AvatarBoneName.RIGHTARM_HAND_RING1:    
-                    if(curves.ContainsKey("RIGHTARM_HAND_RING1")){
-                        foreach(var curve in curves["RIGHTARM_HAND_RING1"]) {
+                case AvatarBoneName.RIGHTARM_HAND_RING1:
+                    if (curves.ContainsKey("RIGHTARM_HAND_RING1"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_RING1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_RING2:
-                    if(curves.ContainsKey("RIGHTARM_HAND_RING2")){
-                        foreach(var curve in curves["RIGHTARM_HAND_RING2"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_RING2"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_RING2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_RING3:
-                    if(curves.ContainsKey("RIGHTARM_HAND_RING3")){
-                        foreach(var curve in curves["RIGHTARM_HAND_RING3"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_RING3"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_RING3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_MIDDLE1:
-                    if(curves.ContainsKey("RIGHTARM_HAND_MIDDLE1")){
-                        foreach(var curve in curves["RIGHTARM_HAND_MIDDLE1"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_MIDDLE1"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_MIDDLE1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_MIDDLE2:
-                    if(curves.ContainsKey("RIGHTARM_HAND_MIDDLE2")){
-                        foreach(var curve in curves["RIGHTARM_HAND_MIDDLE2"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_MIDDLE2"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_MIDDLE2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
-                case AvatarBoneName.RIGHTARM_HAND_MIDDLE3:  
+                case AvatarBoneName.RIGHTARM_HAND_MIDDLE3:
 
-                    if(curves.ContainsKey("RIGHTARM_HAND_MIDDLE3")){
-                        foreach(var curve in curves["RIGHTARM_HAND_MIDDLE3"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_MIDDLE3"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_MIDDLE3"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_INDEX1:
-                    if(curves.ContainsKey("RIGHTARM_HAND_INDEX1")){
-                        foreach(var curve in curves["RIGHTARM_HAND_INDEX1"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_INDEX1"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_INDEX1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_INDEX2:
-                    if(curves.ContainsKey("RIGHTARM_HAND_INDEX2")){
-                        foreach(var curve in curves["RIGHTARM_HAND_INDEX2"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_INDEX2"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_INDEX2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_INDEX3:
-                    if(curves.ContainsKey("RIGHTARM_HAND_INDEX3")){
-                        foreach(var curve in curves["RIGHTARM_HAND_INDEX3"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_INDEX3"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_INDEX3"])
+                        {
                             curve.path = path;
                         }
                     }
-                    break;  
+                    break;
                 case AvatarBoneName.RIGHTARM_HAND_THUMB1:
-                    if(curves.ContainsKey("RIGHTARM_HAND_THUMB1")){
-                        foreach(var curve in curves["RIGHTARM_HAND_THUMB1"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_THUMB1"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_THUMB1"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_THUMB2:
-                    if(curves.ContainsKey("RIGHTARM_HAND_THUMB2")){
-                        foreach(var curve in curves["RIGHTARM_HAND_THUMB2"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_THUMB2"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_THUMB2"])
+                        {
                             curve.path = path;
                         }
                     }
                     break;
                 case AvatarBoneName.RIGHTARM_HAND_THUMB3:
-                    if(curves.ContainsKey("RIGHTARM_HAND_THUMB3")){
-                        foreach(var curve in curves["RIGHTARM_HAND_THUMB3"]) {
+                    if (curves.ContainsKey("RIGHTARM_HAND_THUMB3"))
+                    {
+                        foreach (var curve in curves["RIGHTARM_HAND_THUMB3"])
+                        {
                             curve.path = path;
                         }
                     }

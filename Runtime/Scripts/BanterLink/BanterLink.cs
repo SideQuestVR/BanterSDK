@@ -287,7 +287,8 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_UNSIT_PLAYER))
                 {
-                    if(lastSitObject.id) {
+                    if (lastSitObject.id)
+                    {
                         scene.events.OnLegacyPlayerSitChanged.Invoke(false, lastSitObject);
                     }
                 }

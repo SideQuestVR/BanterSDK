@@ -1,4 +1,5 @@
-public enum PhysicsAttachmentPoint{
+public enum PhysicsAttachmentPoint
+{
     Head,
     LeftHand,
     RigthHand,
