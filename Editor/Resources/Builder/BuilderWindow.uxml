@@ -37,7 +37,7 @@
                         <ui:VisualElement name="LoggedInView" style="display: flex;">
                             <ui:VisualElement style="flex-direction: row; justify-content: space-between; margin-top: 10px; margin-bottom: 10px; padding-left: 5%; padding-right: 5%;">
                                 <ui:Label text="Signed In As: Shane Harris" display-tooltip-when-elided="true" name="SignedInStatus" style="padding-top: 10px; padding-bottom: 10px; -unity-text-align: upper-center;" />
-                                <ui:Label text="Sign out?" display-tooltip-when-elided="true" name="SignOut" style="padding-top: 10px; padding-bottom: 10px; cursor: resource(&apos;pointer&apos;);" />
+                                <ui:Label text="Sign out?" display-tooltip-when-elided="true" name="SignOut" style="padding-top: 10px; padding-bottom: 10px; cursor: link;" />
                             </ui:VisualElement>
                             <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
                                 <ui:VisualElement name="spaceSlugPlaceholder" style="width: 100%;">
