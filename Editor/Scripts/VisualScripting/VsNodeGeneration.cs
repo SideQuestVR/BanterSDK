@@ -19,7 +19,7 @@ using System.Collections.Specialized;
 
 namespace Banter.SDKEditor
 {
-    public static class NodeGeneration
+    public static class VsNodeGeneration
     {
         private const string SETTINGS_ASSET_PATH = "ProjectSettings/VisualScriptingSettings.asset";
         private const string GENERATED_VS_NODES_VERSION_PREFS_KEY = "Banter_GeneratedVSNodesVersion";
@@ -128,10 +128,6 @@ namespace Banter.SDKEditor
             "UnityEngine.StyleSheetsModule",
             "UnityEngine.JSONSerializeModule",
             "UnityEngine.UmbraModule",
-            "Unity.Timeline",
-            "Unity.Timeline.Editor",
-            "Cinemachine",
-            "com.unity.cinemachine.editor",
             "Unity.TextMeshPro",
 
             //Note! This assembly is actually forcebly included in the VS assembly list.
@@ -139,6 +135,16 @@ namespace Banter.SDKEditor
             
             "Unity.VisualScripting.Flow",//contains all the if, for, while, etc nodes
             "Unity.VisualScripting.State",//state graph nodes (enter, exit)
+
+            "UnityEngine.UI",
+            "UnityEngine.UIModule",
+            "UnityEngine.UIElementsModule",
+            "UnityEngine.UIElements",
+            //"UnityEngine.IMGUIModule",
+
+            "Unity.Timeline",
+            "UnityEngine.DirectorModule",
+            "Cinemachine",
 
             // Banter
             "Banter.SDK",
@@ -186,11 +192,112 @@ namespace Banter.SDKEditor
             typeof(UnityEngine.Random),
             typeof(Physics),
             typeof(Physics2D),
-            typeof(GUI),
-            typeof(GUILayout),
-            typeof(GUIUtility),
+
+            // UI
+            typeof(UnityEngine.UI.CanvasScaler),
+            typeof(UnityEngine.UI.CanvasScaler.ScaleMode),
+            typeof(UnityEngine.UI.CanvasScaler.ScreenMatchMode),
+            typeof(UnityEngine.UI.CanvasScaler.Unit),
+            typeof(UnityEngine.UI.Button),
+            typeof(UnityEngine.UI.Button.ButtonClickedEvent),
+            typeof(UnityEngine.UI.Dropdown),
+            typeof(UnityEngine.UI.Dropdown.OptionData),
+            typeof(UnityEngine.UI.Dropdown.OptionDataList),
+            typeof(UnityEngine.UI.Dropdown.DropdownEvent),
+            typeof(UnityEngine.UI.Image),
+            typeof(UnityEngine.UI.InputField),
+            typeof(UnityEngine.UI.InputField.SubmitEvent),
+            typeof(UnityEngine.UI.InputField.LineType),
+            typeof(UnityEngine.UI.InputField.CharacterValidation),
+            typeof(UnityEngine.UI.InputField.InputType),
+            typeof(UnityEngine.UI.InputField.ContentType),
+            typeof(UnityEngine.UI.Mask),
+            typeof(UnityEngine.UI.MaskableGraphic),
+            typeof(UnityEngine.UI.RawImage),
+            typeof(UnityEngine.UI.Scrollbar),
+            typeof(UnityEngine.UI.Scrollbar.ScrollEvent),
+            typeof(UnityEngine.UI.ScrollRect),
+            typeof(UnityEngine.UI.ScrollRect.ScrollRectEvent),
+            typeof(UnityEngine.UI.Selectable),
+            typeof(UnityEngine.UI.Slider),
+            typeof(UnityEngine.UI.Slider.SliderEvent),
+            typeof(UnityEngine.UI.Toggle),
+            typeof(UnityEngine.UI.Toggle.ToggleEvent),
+            typeof(UnityEngine.UI.ToggleGroup),
+            typeof(UnityEngine.UI.VerticalLayoutGroup),
+            typeof(UnityEngine.UI.HorizontalLayoutGroup),
+            typeof(UnityEngine.UI.GridLayoutGroup),
+
+            // UIElements
+            typeof(UnityEngine.UIElements.VisualElement),
+            typeof(UnityEngine.UIElements.VisualElementExtensions),
+            typeof(UnityEngine.UIElements.UQuery),
+            typeof(UnityEngine.UIElements.UQueryExtensions),
+            typeof(UnityEngine.UIElements.Label),
+            typeof(UnityEngine.UIElements.Button),
+            typeof(UnityEngine.UIElements.Slider),
+            typeof(UnityEngine.UIElements.RadioButton),
+            typeof(UnityEngine.UIElements.RadioButtonGroup),
+            typeof(UnityEngine.UIElements.Toggle),
+            typeof(UnityEngine.UIElements.TextField),
+            typeof(UnityEngine.UIElements.Image),
+            typeof(UnityEngine.UIElements.Scroller),
+            typeof(UnityEngine.UIElements.ScrollView),
+            typeof(UnityEngine.UIElements.ListView),
+
+            // Physics
+            typeof(Joint),
+            typeof(JointLimits),
+            typeof(JointMotor),
+            typeof(JointSpring),
+            typeof(JointDrive),
+            typeof(SoftJointLimit),
+            typeof(SoftJointLimitSpring),
+            typeof(ConfigurableJoint),
+            typeof(ConfigurableJointMotion),
+            typeof(FixedJoint),
+            typeof(HingeJoint),
+            typeof(SpringJoint),
+            typeof(CharacterJoint),
+            typeof(Collision),
+
+            // Playables
+            typeof(UnityEngine.Playables.Playable),
+            typeof(UnityEngine.Playables.PlayableDirector),
+            typeof(UnityEngine.Playables.PlayableAsset),
+            typeof(UnityEngine.Playables.PlayableBinding),
+            typeof(UnityEngine.Playables.PlayableGraph),
+            typeof(UnityEngine.Playables.PlayableOutput),
+            typeof(UnityEngine.Playables.PlayableExtensions),
+            typeof(UnityEngine.Playables.PlayState),
+            typeof(UnityEngine.Playables.DirectorWrapMode),
+            typeof(UnityEngine.Playables.DirectorUpdateMode),
+            typeof(UnityEngine.Playables.FrameData),
+            typeof(UnityEngine.Playables.AnimationPlayableUtilities),
+            typeof(UnityEngine.Playables.ScriptPlayableOutput),
+#if BANTER_VS_TIMELINE
+            typeof(UnityEngine.Timeline.TimelineAsset),
+            typeof(UnityEngine.Timeline.TimelineAsset.DurationMode),
+            typeof(UnityEngine.Timeline.TimelinePlayable),
+            typeof(UnityEngine.Timeline.TimelineClip),
+            typeof(UnityEngine.Timeline.TimelineClipExtensions),
+            typeof(UnityEngine.Timeline.TrackAsset),
+            typeof(UnityEngine.Timeline.TrackAssetExtensions),
+            typeof(UnityEngine.Timeline.ActivationTrack),
+            typeof(UnityEngine.Timeline.AnimationTrack),
+            typeof(UnityEngine.Timeline.AudioTrack),
+            typeof(UnityEngine.Timeline.ControlTrack),
+            typeof(UnityEngine.Timeline.GroupTrack),
+            typeof(UnityEngine.Timeline.MarkerTrack),
+            typeof(UnityEngine.Timeline.SignalTrack),
+            typeof(UnityEngine.Timeline.SignalReceiver),
+            typeof(UnityEngine.Timeline.SignalAsset),
+            typeof(UnityEngine.Timeline.SignalEmitter),
+#endif
+
             typeof(AudioMixerGroup),
             typeof(AnimatorStateInfo),
+            typeof(Keyframe),
             typeof(BaseEventData),
             typeof(PointerEventData),
             typeof(AxisEventData),
