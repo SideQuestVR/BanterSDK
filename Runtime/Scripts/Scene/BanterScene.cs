@@ -73,16 +73,21 @@ namespace Banter.SDK
         public bool isHome = false;
         public bool isFallbackHome = false;
         private float _lookAtMirror;
-        public float LookAtMirror {
-            get{
-                if(_lookAtMirror == -1) {
+        public float LookAtMirror
+        {
+            get
+            {
+                if (_lookAtMirror == -1)
+                {
                     _lookAtMirror = PlayerPrefs.GetFloat("lookedAtMirror", 1);
                 }
                 return _lookAtMirror;
             }
-            set{
+            set
+            {
                 _lookAtMirror = value;
-                if(_lookAtMirror < 1) {
+                if (_lookAtMirror < 1)
+                {
                     _lookAtMirror = 1;
                 }
                 PlayerPrefs.SetFloat("lookedAtMirror", _lookAtMirror);
@@ -283,7 +288,8 @@ namespace Banter.SDK
             });
 #endif
         }
-        public void LookedAtMirror() {
+        public void LookedAtMirror()
+        {
             LookAtMirror = LookAtMirror + 0.001f;
             events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
@@ -328,7 +334,8 @@ namespace Banter.SDK
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
         }
 
-        public void LockThing(int reqId, UnityEvent handler, string command) {
+        public void LockThing(int reqId, UnityEvent handler, string command)
+        {
             mainThread?.Enqueue(() =>
             {
                 handler.Invoke();
@@ -414,7 +421,7 @@ namespace Banter.SDK
                 // }
             }
         }
-        
+
         public void UserPropChanged(string[] props, string id)
         {
             link.OnUserStateChanged(id + MessageDelimiters.SECONDARY + string.Join(MessageDelimiters.SECONDARY, props));
@@ -516,9 +523,9 @@ namespace Banter.SDK
         public UnityAndBanterObject GetObjectByBid(string objectId)
         {
             UnityAndBanterObject value = new UnityAndBanterObject();
-            foreach(var obj in objects)
+            foreach (var obj in objects)
             {
-                if(obj.Value.id.Id == objectId)
+                if (obj.Value.id.Id == objectId)
                 {
                     return obj.Value;
                 }
@@ -1422,7 +1429,7 @@ namespace Banter.SDK
         #endregion
 
         #region Set Banter Properties from the Unity thread and send to JS on another thread
-        
+
 
         //when _tickBuffer is not null, the scene's Tick event is executing and all property updates will be buffered to this list
         //  then buffered updates will then be handled all at once.
@@ -1664,7 +1671,8 @@ namespace Banter.SDK
             var whoToShow = parts[1];
             var part = (LegacyAttachmentPosition)int.Parse(parts[2]);
             var actualPart = AvatarBoneName.HEAD;
-            switch(part) {
+            switch (part)
+            {
                 case LegacyAttachmentPosition.HEAD:
                     actualPart = AvatarBoneName.HEAD;
                     break;

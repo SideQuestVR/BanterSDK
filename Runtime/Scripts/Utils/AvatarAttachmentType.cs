@@ -1,4 +1,5 @@
-public enum AvatarAttachmentType{
+public enum AvatarAttachmentType
+{
     AttachToAvatar,
     AvatarAttachTo,
 }

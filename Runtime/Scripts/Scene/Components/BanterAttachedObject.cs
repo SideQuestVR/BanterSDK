@@ -5,7 +5,8 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    public class BanterAttachment{
+    public class BanterAttachment
+    {
         public string uid;
         public UnityAndBanterObject attachedObject;
         public Vector3 attachmentPosition;
@@ -54,7 +55,8 @@ namespace Banter.SDK
         public override void DestroyStuff() { }
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if(attachment == null){
+            if (attachment == null)
+            {
                 attachment = new BanterAttachment();
             }
             if (changedProperties == null || changedProperties.Contains(PropertyName.autoSync))
@@ -113,7 +115,7 @@ namespace Banter.SDK
         public override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
-            
+
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAttachedObject);
