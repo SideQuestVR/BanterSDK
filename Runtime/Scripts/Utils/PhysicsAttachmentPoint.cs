@@ -2,7 +2,7 @@ public enum PhysicsAttachmentPoint
 {
     Head,
     LeftHand,
-    RigthHand,
+    RightHand,
     Torso,
     Legs
 }
