@@ -28,17 +28,11 @@ namespace Banter.SDK
         }
         void OnTriggerEnter(Collider collider)
         {
-            if (!collider.gameObject.CompareTag("__BA_ForceGrabView"))
-            {
-                BanterScene.Instance().link?._OnTriggerEnter(gameObject, collider);
-            }
+            BanterScene.Instance().link?._OnTriggerEnter(gameObject, collider);
         }
         void OnTriggerExit(Collider collider)
         {
-            if (!collider.gameObject.CompareTag("__BA_ForceGrabView"))
-            {
-                BanterScene.Instance().link?._OnTriggerExit(gameObject, collider);
-            }
+            BanterScene.Instance().link?._OnTriggerExit(gameObject, collider);
         }
         public override void DestroyStuff() { }
         public void UpdateCallback(List<PropertyName> changedProperties) { }

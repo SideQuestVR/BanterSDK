@@ -175,8 +175,9 @@ namespace Banter.SDK
 
         public void MoveToUser(Vector3 offset = default)
         {
-            var y = Camera.main.transform.position.y;
-            var pos = Camera.main.transform.position + offset;
+            var camPos = Camera.main.transform.position;
+            var y = camPos.y;
+            var pos = camPos + offset;
             pos.y = y;
             transform.position = pos;
         }
