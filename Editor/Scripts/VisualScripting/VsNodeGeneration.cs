@@ -341,6 +341,7 @@ namespace Banter.SDKEditor
 
             // Banter
             typeof(Banter.SDK.BanterUser),
+            typeof(Banter.SDK.BanterAttachment),
             // typeof(Banter.SDK.BanterAssetBundle),
             // typeof(Banter.SDK.BanterAudioSource),
             // typeof(Banter.SDK.BanterBillboard),
