@@ -33,16 +33,18 @@ namespace Banter.SDK
         [Method]
         public void _TakeOwnership()
         {
-            scene.events.OnTakeOwnership.Invoke(synced);
+            scene.events.OnTakeOwnership.Invoke(synced, banterObjectId);
         }
         [Method]
         public void _DoIOwn()
         {
-            scene.events.OnDoIOwn.Invoke(synced);
+            scene.events.OnDoIOwn.Invoke(synced, banterObjectId);
         }
         BanterSynced synced;
+        BanterObjectId banterObjectId;
         public override void StartStuff()
         {
+            banterObjectId = GetComponent<BanterObjectId>();
             SetLoadedIfNot();
         }
 
@@ -57,7 +59,7 @@ namespace Banter.SDK
                 synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
                 synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
                 synced.kinematicIfNotOwned = kinematicIfNotOwned;
-                scene.events.OnSyncedObject.Invoke(synced);
+                scene.events.OnSyncedObject.Invoke(synced, banterObjectId);
             }
         }
         // BANTER COMPILED CODE 
