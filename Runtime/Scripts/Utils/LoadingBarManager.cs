@@ -173,18 +173,21 @@ namespace Banter.SDK
             }
         }
 
-        public void MoveToUser(Vector3 offset = default)
-        {
-            var camPos = Camera.main.transform.position;
-            var y = camPos.y;
-            var pos = camPos + offset;
-            pos.y = y;
-            transform.position = pos;
-        }
+        // public void MoveToUser(Vector3 offset = default)
+        // {
+        //     var camPos = Camera.main.transform.position;
+        //     var y = camPos.y;
+        //     var pos = camPos + offset;
+        //     pos.y = y;
+        //     transform.position = pos;
+        // }
 
         public void Preload()
         {
-            MoveToUser();
+            var pos = Camera.main.transform.position;
+            pos.y -= 1.7f;
+            transform.position = pos;
+            // MoveToUser();
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();

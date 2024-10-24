@@ -1620,6 +1620,7 @@ namespace Banter.SDK
                         case SettingsMap.SpawnPoint:
                             var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
                             settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
+                            Debug.Log(settings.SpawnPoint);
                             break;
                     }
                 }
