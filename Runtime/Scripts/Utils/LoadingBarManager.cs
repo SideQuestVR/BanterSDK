@@ -181,13 +181,10 @@ namespace Banter.SDK
         //     pos.y = y;
         //     transform.position = pos;
         // }
-
+        public Transform feetTransform;
         public void Preload()
         {
-            var pos = Camera.main.transform.position;
-            pos.y -= 1.7f;
-            transform.position = pos;
-            // MoveToUser();
+            transform.position = feetTransform ? feetTransform.position : Camera.main.transform.position;
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();
