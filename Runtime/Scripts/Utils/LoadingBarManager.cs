@@ -188,10 +188,9 @@ namespace Banter.SDK
                 transform.position = feetTransform.position;
             }else{
                 var pos = Camera.main.transform.position;
-                pos.y -= 1.8f;
+                pos.y -= 1.55f;
                 transform.position = pos;
             }
-            transform.position = feetTransform ? feetTransform.position : Camera.main.transform.position;
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();
