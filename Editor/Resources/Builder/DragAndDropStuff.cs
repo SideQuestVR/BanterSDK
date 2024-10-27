@@ -6,9 +6,9 @@ using UnityEngine.UIElements;
 
 public class DragAndDropStuff
 {
-    private static VisualElement _dropArea;
-    private static Action<bool, string, string[]> _onDrop;
-    public static VisualElement SetupDropArea(VisualElement element, Action<bool, string, string[]> onDrop)
+    private VisualElement _dropArea;
+    private Action<bool, string, string[]> _onDrop;
+    public VisualElement SetupDropArea(VisualElement element, Action<bool, string, string[]> onDrop)
     {
         _onDrop = onDrop;
         _dropArea = element;
@@ -18,11 +18,11 @@ public class DragAndDropStuff
         return _dropArea;
     }
 
-    static void OnDragUpdate(DragUpdatedEvent _)
+    void OnDragUpdate(DragUpdatedEvent _)
     {
         DragAndDrop.visualMode = DragAndDropVisualMode.Generic;
     }
-    static void OnDragPerform(DragPerformEvent _)
+    void OnDragPerform(DragPerformEvent _)
     {
         if (DragAndDrop.paths.Length < 1)
         {
@@ -33,7 +33,7 @@ public class DragAndDropStuff
         _onDrop?.Invoke(isScene, sceneFileDrop, DragAndDrop.paths);
     }
 
-    public static void Disable()
+    public void Disable()
     {
         if (_dropArea != null)
         {
