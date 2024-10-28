@@ -36,14 +36,14 @@ namespace Banter.SDK
         {
             this.uid = uid;
             UpdateCallback(null);
-            scene.events.OnDetachObject.Invoke(attachment);
+            BanterScene.Instance().events.OnDetachObject.Invoke(attachment);
         }
         [Method]
         public void _Attach(string uid)
         {
             this.uid = uid;
             UpdateCallback(null);
-            scene.events.OnAttachObject.Invoke(attachment);
+            BanterScene.Instance().events.OnAttachObject.Invoke(attachment);
         }
 
         BanterAttachment attachment;
@@ -95,7 +95,7 @@ namespace Banter.SDK
             {
                 attachment.attachmentPoint = attachmentPoint;
             }
-            attachment.attachedObject = scene.GetObject(oid);
+            attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
         // BANTER COMPILED CODE 
         BanterScene scene;
@@ -115,7 +115,6 @@ namespace Banter.SDK
         public override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
-
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAttachedObject);

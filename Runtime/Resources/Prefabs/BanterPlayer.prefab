@@ -1452,12 +1452,9 @@ MonoBehaviour:
   uid: 
   color: 
   isLocal: 0
+  isSpaceAdmin: 0
   nameTag: {fileID: 5854192057530554817}
   Head: {fileID: 8311242068095087248}
-  LeftHand: {fileID: 4806353048099907382}
-  RightHand: {fileID: 1873407433968287933}
-  Body: {fileID: 1873407433364098422}
-  Cockpit: {fileID: 8311242068446693578}
 --- !u!114 &1919060131601198732
 MonoBehaviour:
   m_ObjectHideFlags: 0
