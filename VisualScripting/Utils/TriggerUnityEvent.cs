@@ -1,6 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using UnityEngine;
 
 namespace Banter.VisualScripting
 {
@@ -24,14 +25,11 @@ namespace Banter.VisualScripting
             Target = ValueInput(typeof(VisualScriptingEvent), nameof(Target));
             Target.SetDefaultValue(null);
             Target.NullMeansSelf();
-
             trigger = ControlInput("", (flow) => {
                 var target = flow.GetValue<VisualScriptingEvent>(Target);
                 target.OnCustomEvent?.Invoke();
-
                 return triggered;
             });
-
             triggered = ControlOutput("");
             Succession(trigger, triggered);
         }
