@@ -29,7 +29,7 @@ namespace Banter.SDKEditor
             { 19, "RPMAvatarBody" },
             { 20, "Grabbable" },
             { 21, "HandColliders" },
-            { 22, "WalkingLegs" },
+            { 22, "Menu" },
             { 23, "PhysicsPlayer" },
             { 24, "BanterInternal1_DONTUSE" },
             { 25, "BanterInternal2_DONTUSE" },
@@ -70,6 +70,9 @@ namespace Banter.SDKEditor
             { 25, "__BA_UserTag12" },
             { 26, "__BA_UserTag13" },
             { 27, "__BA_UserTag14" },
+            { 28, "MenuWorldSpace" },
+            { 29, "VRPlayerContextMenu" },
+            { 30, "PortalBall" },
         };
 
         static AddRequest Request;
