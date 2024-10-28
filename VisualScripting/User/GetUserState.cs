@@ -35,7 +35,11 @@ namespace Banter.VisualScripting
             var value = f.GetValue<string>(idOrName);
             var data = BanterScene.Instance().users.FirstOrDefault(user => user.id == value || user.name == value || user.uid == value);
 
-            return data.transform ?? null;
+            if (data == null)
+            {
+                LogLine.Err("User not found: " + value);
+            }
+            return (data != null) ? data.Head.transform : null;
         }
     }
 
@@ -56,13 +60,13 @@ namespace Banter.VisualScripting
             userPosition = ValueOutput("Position", (f) =>
             {
                 var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
-                return data.transform.position;
+                return (data != null) ? data.Head.transform.position : Vector3.zero;
             });
 
             userRotation = ValueOutput("Rotation", (f) =>
             {
                 var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
-                return data.transform.rotation;
+                return (data != null) ? data.Head.transform.rotation : Quaternion.identity;
             });
         }
     }
