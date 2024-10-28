@@ -17,6 +17,7 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
+	    [SerializeField] Transform _feetTransform;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
@@ -45,6 +46,7 @@ namespace Banter.SDK
             StartBrowser();
 #endif
             SetupBrowserLink();
+            scene.loadingManager.feetTransform = _feetTransform;
             scene.ResetLoadingProgress();
         }
 

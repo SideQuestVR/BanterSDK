@@ -50,7 +50,7 @@ namespace Banter.SDK
             scene = BanterScene.Instance();
             SetCanCancel(false);
             _ = CustomLoadSkybox();
-            Preload();
+            // Preload();
             SetLoadProgress("Welcome to Banter", 0, "Getting things ready...", false);
         }
         async Task CustomLoadSkybox()
@@ -173,18 +173,24 @@ namespace Banter.SDK
             }
         }
 
-        public void MoveToUser(Vector3 offset = default)
-        {
-            var camPos = Camera.main.transform.position;
-            var y = camPos.y;
-            var pos = camPos + offset;
-            pos.y = y;
-            transform.position = pos;
-        }
-
+        // public void MoveToUser(Vector3 offset = default)
+        // {
+        //     var camPos = Camera.main.transform.position;
+        //     var y = camPos.y;
+        //     var pos = camPos + offset;
+        //     pos.y = y;
+        //     transform.position = pos;
+        // }
+        public Transform feetTransform;
         public void Preload()
-        {
-            MoveToUser();
+        {   
+            if(feetTransform) {
+                transform.position = feetTransform.position;
+            }else{
+                var pos = Camera.main.transform.position;
+                pos.y -= 1.55f;
+                transform.position = pos;
+            }
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();

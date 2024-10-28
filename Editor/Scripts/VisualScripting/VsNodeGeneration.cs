@@ -342,31 +342,7 @@ namespace Banter.SDKEditor
             // Banter
             typeof(Banter.SDK.BanterUser),
             typeof(Banter.SDK.BanterAttachment),
-            // typeof(Banter.SDK.BanterAssetBundle),
-            // typeof(Banter.SDK.BanterAudioSource),
-            // typeof(Banter.SDK.BanterBillboard),
-            // typeof(Banter.SDK.BanterBrowser),
-            // typeof(Banter.SDK.BanterConfigurableJoint),
-            // typeof(Banter.SDK.BanterGeometry),
-            // typeof(Banter.SDK.BanterGLTF),
-            // typeof(Banter.SDK.BanterKitItem),
-            // typeof(Banter.SDK.BanterMaterial),
-            // typeof(Banter.SDK.BanterMirror),
-            // typeof(Banter.SDK.BanterObjectId),
-            // typeof(Banter.SDK.BanterPhysicMaterial),
-            // typeof(Banter.SDK.BanterPortal),
-            // typeof(Banter.SDK.BanterRigidbody),
-            // typeof(Banter.SDK.BanterStreetView),
-            // typeof(Banter.SDK.BanterText),
-            // typeof(Banter.SDK.BanterTransform),
-            // typeof(Banter.SDK.BanterVideoPlayer),
-
-            // typeof(Banter.SDK.BanterBoxCollider),
-            // typeof(Banter.SDK.BanterCapsuleCollider),
-            // typeof(Banter.SDK.BanterColliderEvents),
-            // typeof(Banter.SDK.BanterInvertedMesh),
-            // typeof(Banter.SDK.BanterMeshCollider),
-            // typeof(Banter.SDK.BanterSphereCollider),
+            typeof(Banter.SDK.BanterAttachedObject),
         };
     }
 }

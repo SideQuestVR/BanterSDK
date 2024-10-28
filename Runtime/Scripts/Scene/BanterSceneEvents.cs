@@ -31,10 +31,9 @@ public class BanterSceneEvents
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
     public UnityEvent<BanterAttachment> OnAttachObject = new UnityEvent<BanterAttachment>();
     public UnityEvent<BanterAttachment> OnDetachObject = new UnityEvent<BanterAttachment>();
-    public UnityEvent<BanterSynced> OnSyncedObject = new UnityEvent<BanterSynced>();
-    public UnityEvent<BanterSynced> OnDoIOwn = new UnityEvent<BanterSynced>();
-    public UnityEvent<BanterSynced> OnTakeOwnership = new UnityEvent<BanterSynced>();
-    public UnityEvent<BanterSynced> OnResetNetworkObject = new UnityEvent<BanterSynced>();
+    public UnityEvent<BanterSynced, BanterObjectId> OnSyncedObject = new UnityEvent<BanterSynced, BanterObjectId>();
+    public UnityEvent<BanterSynced, BanterObjectId> OnDoIOwn = new UnityEvent<BanterSynced, BanterObjectId>();
+    public UnityEvent<BanterSynced, BanterObjectId> OnTakeOwnership = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();

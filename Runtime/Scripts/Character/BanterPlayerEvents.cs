@@ -14,6 +14,10 @@ public class BanterPlayerEvents : MonoBehaviour
     public UnityEvent<Vector3, HandSide> onGrab;
     public UnityEvent<HandSide> onRelease;
 
+    [Foldout("Trigger", true)]
+    public float triggerThreshold = 0.5f;
+    public UnityEvent<HandSide> onTrigger;
+
     // [Foldout("Keyboard Keys", true)]
     // public UnityEvent<KeyCode> onKeyPress;
     // public UnityEvent<KeyCode> onKeyDown;
