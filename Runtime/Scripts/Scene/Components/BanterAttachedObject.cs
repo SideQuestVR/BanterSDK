@@ -95,7 +95,7 @@ namespace Banter.SDK
             {
                 attachment.attachmentPoint = attachmentPoint;
             }
-            attachment.attachedObject = BanterScene.Instance().GetObject(oid); 
+            attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
         // BANTER COMPILED CODE 
         BanterScene scene;
@@ -115,7 +115,6 @@ namespace Banter.SDK
         public override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
-
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAttachedObject);
