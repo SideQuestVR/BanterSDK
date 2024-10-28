@@ -13,10 +13,6 @@ public class UserData : MonoBehaviour
     public bool isSpaceAdmin;
     public TextMeshPro nameTag;
     public Transform Head;
-    public Transform LeftHand;
-    public Transform RightHand;
-    public Transform Body;
-    public Transform Cockpit;
     Dictionary<string, string> props = new Dictionary<string, string>();
     BanterScene scene;
     void Start()

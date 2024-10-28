@@ -34,6 +34,10 @@ namespace Banter.VisualScripting
                     }
                     return false;
                 });
+                if (data == null)
+                {
+                    return null;
+                }
                 return new BanterUser()
                 {
                     name = data.name,
@@ -61,6 +65,10 @@ namespace Banter.VisualScripting
             info = ValueOutput("User Info", (f) =>
             {
                 var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                if (data == null)
+                {
+                    return null;
+                }
                 return new BanterUser()
                 {
                     name = data.name,
