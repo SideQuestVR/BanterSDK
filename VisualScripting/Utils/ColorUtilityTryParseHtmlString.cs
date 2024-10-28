@@ -29,6 +29,11 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => 
             {
+                var colString = flow.GetValue<string>(hexColor);
+                if (colString[0] != '#')
+                {
+                    colString = "#" + colString;
+                }
                 ColorUtility.TryParseHtmlString(flow.GetValue<string>(hexColor), out var returnCol);
                 outputColor = returnCol;
                 return outputTrigger;
