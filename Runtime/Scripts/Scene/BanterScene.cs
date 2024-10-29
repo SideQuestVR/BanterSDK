@@ -1319,7 +1319,7 @@ namespace Banter.SDK
                     {
                         events.OnUnitySceneLoad.Invoke(url);
                     });
-                    await Task.Delay(500);
+                    await Task.Delay(2500);
                     await loadingManager?.LoadOut();
                     loading = false;
                 });
