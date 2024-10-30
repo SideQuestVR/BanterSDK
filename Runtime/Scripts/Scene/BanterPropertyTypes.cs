@@ -17,17 +17,18 @@ public struct BanterVector4
     }
     public string Serialise()
     {
-        return $"{(int)n}~~{GetShortType()}~~{x}~~{y}~~{z}~~{w}";
+        // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y + MessageDelimiters.SECONDARY + z + MessageDelimiters.SECONDARY + w;
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}{MessageDelimiters.SECONDARY}{w}";
     }
     public void Deserialise(string str)
     {
         var parts = str.Split(MessageDelimiters.SECONDARY);
         if (parts.Length < 2) return;
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
-        y = Germany.DeGermaniser(parts[2]);
-        z = Germany.DeGermaniser(parts[3]);
-        w = Germany.DeGermaniser(parts[4]);
+        x = NumberFormat.Parse(parts[2]);
+        y = NumberFormat.Parse(parts[3]);
+        z = NumberFormat.Parse(parts[4]);
+        w = NumberFormat.Parse(parts[5]);
     }
 
     public static explicit operator BanterVector4(Vector4 v)
@@ -54,19 +55,20 @@ public struct BanterVector2
     }
     public string Serialise()
     {
-        return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y;
+        //return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y;
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}";
     }
     public void Deserialise(string str)
     {
         var parts = str.Split(MessageDelimiters.SECONDARY);
-        if (parts.Length < 3)
+        if (parts.Length < 4)
         {
             LogLine.Do(Color.red, "[BanterTypes]", "Could not parse vector2: " + str);
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
-        y = Germany.DeGermaniser(parts[2]);
+        x = NumberFormat.Parse(parts[2]);
+        y = NumberFormat.Parse(parts[3]);
     }
 
     public static explicit operator BanterVector2(Vector2 v)
@@ -88,25 +90,21 @@ public struct BanterVector3
     }
     public string Serialise()
     {
-        return $"{n:D}~~5~~{x}~~{y}~~{z}";
         //return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y + MessageDelimiters.SECONDARY + z;
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}";
     }
     public void Deserialise(string str)
     {
-        for (int i = 0; i < str.Length; i++)
-        {
-
-        }
         var parts = str.Split(MessageDelimiters.SECONDARY);
-        if (parts.Length < 4)
+        if (parts.Length < 5)
         {
             LogLine.Do(Color.red, "[BanterTypes]", "Could not parse vector3: " + str);
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
-        y = Germany.DeGermaniser(parts[2]);
-        z = Germany.DeGermaniser(parts[3]);
+        x = NumberFormat.Parse(parts[2]);
+        y = NumberFormat.Parse(parts[3]);
+        z = NumberFormat.Parse(parts[4]);
     }
 
     public static explicit operator BanterVector3(Vector3 v)
@@ -126,7 +124,8 @@ public struct BanterFloat
     }
     public string Serialise()
     {
-        return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
+        // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}";
     }
     public void Deserialise(string str)
     {
@@ -137,7 +136,7 @@ public struct BanterFloat
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = Germany.DeGermaniser(parts[1]);
+        x = NumberFormat.Parse(parts[1]);
     }
 
     public static explicit operator BanterFloat(float v)
@@ -157,7 +156,8 @@ public struct BanterInt
     }
     public string Serialise()
     {
-        return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
+        // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}";
     }
     public void Deserialise(string str)
     {
@@ -188,7 +188,7 @@ public struct BanterBool
     }
     public string Serialise()
     {
-        return $"{(int)n}~~{GetShortType()}~~ {(x ? "1" : "0")}";
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{(x ? "1" : "0")}";
     }
     public void Deserialise(string str)
     {
@@ -218,7 +218,8 @@ public struct BanterString
     }
     public string Serialise()
     {
-        return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
+        // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}";
     }
     public void Deserialise(string str)
     {

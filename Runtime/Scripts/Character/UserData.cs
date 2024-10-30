@@ -10,12 +10,9 @@ public class UserData : MonoBehaviour
     public string uid;
     public string color;
     public bool isLocal;
+    public bool isSpaceAdmin;
     public TextMeshPro nameTag;
     public Transform Head;
-    public Transform LeftHand;
-    public Transform RightHand;
-    public Transform Body;
-    public Transform Cockpit;
     Dictionary<string, string> props = new Dictionary<string, string>();
     BanterScene scene;
     void Start()
@@ -25,6 +22,7 @@ public class UserData : MonoBehaviour
         name = NameGenerator.Generate();
         id = System.Guid.NewGuid().ToString();
         uid = System.Guid.NewGuid().ToString();
+        color = ColorUtility.ToHtmlStringRGB(Random.ColorHSV());
         //instance = System.Guid.NewGuid().ToString();
         nameTag.text = name;
         scene.AddUser(this);
@@ -48,29 +46,6 @@ public class UserData : MonoBehaviour
 #else
             // Debug.LogError("SetUserProps not implemented yet: " + prop);
 #endif
-        }
-    }
-
-    public void Attach(UnityAndBanterObject go, AttachmentType hand)
-    {
-        go.banterObject.previousParent = go.gameObject.transform.parent;
-        switch (hand)
-        {
-            case AttachmentType.Head:
-                go.gameObject.transform.SetParent(Head, false);
-                break;
-            case AttachmentType.LeftHand:
-                go.gameObject.transform.SetParent(LeftHand, false);
-                break;
-            case AttachmentType.RightHand:
-                go.gameObject.transform.SetParent(RightHand, false);
-                break;
-            case AttachmentType.Body:
-                go.gameObject.transform.SetParent(Body, false);
-                break;
-            case AttachmentType.Cockpit:
-                go.gameObject.transform.SetParent(Cockpit, false);
-                break;
         }
     }
 

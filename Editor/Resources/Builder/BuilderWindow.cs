@@ -588,7 +588,8 @@ public class BuilderWindow : EditorWindow
         kitListView.selectionType = SelectionType.Multiple;
         kitListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
         kitListView.reorderMode = ListViewReorderMode.Simple;
-        DragAndDropStuff.SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
+        new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
+        new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropRecordingArea"), DropRecordingFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
         LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
@@ -624,7 +625,7 @@ public class BuilderWindow : EditorWindow
         Remove(rootVisualElement.Q<Button>("compileInjection"));
         Remove(rootVisualElement.Q<Button>("kitchenSink"));
 
-        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayers();
+        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayersAndTags();
 #endif
 
 #if BANTER_VISUAL_SCRIPTING
@@ -632,7 +633,7 @@ public class BuilderWindow : EditorWindow
 #if BANTER_EDITOR
         rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
 #else // BANTER_EDITOR
-        rootVisualElement.Q<Button>("visualScript").clicked += () => NodeGeneration.SetVSTypesAndAssemblies();
+        rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
 #endif // BANTER_EDITOR
 
 #else // BANTER_VISUAL_SCRIPTING
@@ -755,6 +756,29 @@ public class BuilderWindow : EditorWindow
                 kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = path });
             }
         }
+    }
+
+    private void DropRecordingFile(bool isScene, string sceneFile, string[] paths)
+    {
+        string trackingData = null;
+        string prefab = null;
+        try
+        {
+            trackingData = paths.First(x => x.EndsWith(".trackingdata"));
+            prefab = paths.First(x => x.EndsWith(".prefab"));
+        }
+        catch
+        {
+            AddStatus("Tracking or prefab files not found in dropped files.");
+            return;
+        }
+        var avatar = AssetDatabase.LoadAssetAtPath<GameObject>(prefab);
+        var bytes = File.ReadAllBytes(trackingData);
+        AvatarUtilities.ParseAnimationCurves(bytes);
+        AvatarUtilities.SetBonePaths(avatar, (t) => { });
+        AvatarUtilities.SetAnimationCurves();
+        AssetDatabase.CreateAsset(AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim"));
+        AddStatus("Animation file generated at " + trackingData.Replace(".trackingdata", ".anim") + ".");
     }
 
     private void DropFile(bool isScene, string sceneFile, string[] paths)

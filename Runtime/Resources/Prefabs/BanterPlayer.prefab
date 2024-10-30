@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 1350326245974037959}
   - component: {fileID: 1568377537851202588}
   - component: {fileID: 4615023787875444371}
-  m_Layer: 8
+  m_Layer: 23
   m_Name: Head
   m_TagString: PlayerHead
   m_Icon: {fileID: 0}
@@ -305,7 +305,7 @@ GameObject:
   - component: {fileID: 1873407433364098422}
   - component: {fileID: 1873407433364098419}
   - component: {fileID: 1873407433364098420}
-  m_Layer: 8
+  m_Layer: 23
   m_Name: Pelvis
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -451,7 +451,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1873407433968287933}
   - component: {fileID: 1873407433968287934}
-  - component: {fileID: 4077444613284028100}
   - component: {fileID: 7510184136425133332}
   - component: {fileID: 4445831140117297109}
   m_Layer: 21
@@ -494,19 +493,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!135 &4077444613284028100
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1873407433968287924}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.09
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &7510184136425133332
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -798,9 +784,9 @@ GameObject:
   - component: {fileID: 8304093177321878052}
   - component: {fileID: 7661731985476628313}
   - component: {fileID: 3291403297403972767}
-  m_Layer: 8
+  m_Layer: 23
   m_Name: Knee
-  m_TagString: Untagged
+  m_TagString: __BA_HexaCollider
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 1
@@ -898,7 +884,7 @@ GameObject:
   - component: {fileID: 815779318333035343}
   m_Layer: 5
   m_Name: NameTag
-  m_TagString: Untagged
+  m_TagString: __BA_NameTag
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1081,9 +1067,9 @@ GameObject:
   - component: {fileID: 1617118216058286186}
   - component: {fileID: 7107122060433922470}
   - component: {fileID: 4261857088599458288}
-  m_Layer: 8
+  m_Layer: 23
   m_Name: Chest
-  m_TagString: Untagged
+  m_TagString: __BA_HexaCollider
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 1
@@ -1177,7 +1163,6 @@ GameObject:
   m_Component:
   - component: {fileID: 4806353048099907382}
   - component: {fileID: 8758396524613579618}
-  - component: {fileID: 4280545798028582156}
   - component: {fileID: 7736470686183637520}
   - component: {fileID: 3252808284673232751}
   m_Layer: 21
@@ -1220,19 +1205,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!135 &4280545798028582156
-SphereCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5894982112729958925}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 1
-  m_Enabled: 1
-  serializedVersion: 2
-  m_Radius: 0.09
-  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &7736470686183637520
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1314,9 +1286,9 @@ GameObject:
   - component: {fileID: 1885938448405849567}
   - component: {fileID: 3856535352405025924}
   - component: {fileID: 7633150028440588647}
-  m_Layer: 8
+  m_Layer: 23
   m_Name: Head
-  m_TagString: PlayerHead
+  m_TagString: __BA_PlayerHead
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1433,9 +1405,9 @@ GameObject:
   - component: {fileID: 8311242068446693578}
   - component: {fileID: 6702550802901468461}
   - component: {fileID: 1919060131601198732}
-  m_Layer: 0
+  m_Layer: 23
   m_Name: BanterPlayer
-  m_TagString: SqManager
+  m_TagString: __BA_HexaBodyPlayer
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -1480,12 +1452,9 @@ MonoBehaviour:
   uid: 
   color: 
   isLocal: 0
+  isSpaceAdmin: 0
   nameTag: {fileID: 5854192057530554817}
   Head: {fileID: 8311242068095087248}
-  LeftHand: {fileID: 4806353048099907382}
-  RightHand: {fileID: 1873407433968287933}
-  Body: {fileID: 1873407433364098422}
-  Cockpit: {fileID: 8311242068446693578}
 --- !u!114 &1919060131601198732
 MonoBehaviour:
   m_ObjectHideFlags: 0

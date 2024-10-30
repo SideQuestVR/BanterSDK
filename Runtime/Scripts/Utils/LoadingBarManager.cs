@@ -50,7 +50,7 @@ namespace Banter.SDK
             scene = BanterScene.Instance();
             SetCanCancel(false);
             _ = CustomLoadSkybox();
-            Preload();
+            // Preload();
             SetLoadProgress("Welcome to Banter", 0, "Getting things ready...", false);
         }
         async Task CustomLoadSkybox()
@@ -173,17 +173,27 @@ namespace Banter.SDK
             }
         }
 
-        public void MoveToUser(Vector3 offset = default)
-        {
-            var y = Camera.main.transform.position.y;
-            var pos = Camera.main.transform.position + offset;
-            pos.y = y;
-            transform.position = pos;
-        }
-
+        // public void MoveToUser(Vector3 offset = default)
+        // {
+        //     var camPos = Camera.main.transform.position;
+        //     var y = camPos.y;
+        //     var pos = camPos + offset;
+        //     pos.y = y;
+        //     transform.position = pos;
+        // }
+        public Transform feetTransform;
         public void Preload()
         {
-            MoveToUser();
+            if (feetTransform)
+            {
+                transform.position = feetTransform.position;
+            }
+            else
+            {
+                var pos = Camera.main.transform.position;
+                pos.y -= 1.55f;
+                transform.position = pos;
+            }
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();
@@ -203,7 +213,8 @@ namespace Banter.SDK
             state = LoadingState.Loading;
             SetLoadProgress("Loading", 0, scene.LoadingStatus, true);
             currentUrl = url;
-            loadingProgress.gameObject.GetComponent<Collider>().enabled = true;
+            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = true;
+            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = true;
             loadingSphere.clip = loadIn;
             loadingSphere.Play();
             await new WaitUntil(() => !loadingSphere.isPlaying);
@@ -234,7 +245,8 @@ namespace Banter.SDK
         async Task HideCollider()
         {
             await new WaitForSeconds(1.5f);
-            loadingProgress.gameObject.GetComponent<Collider>().enabled = false;
+            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = false;
+            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = false;
         }
     }
 }

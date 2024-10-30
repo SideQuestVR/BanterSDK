@@ -16,12 +16,11 @@ namespace Banter.SDK
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("__BA_HexaCollider") && CanActivate)
+            if (other.CompareTag("__BA_LocalPlayer") && CanActivate)
             {
                 CanActivate = false;
                 GetComponent<FaceTarget>().enabled = false;
                 sceneEvents.OnPortalEnter.Invoke(url);
-                // _ = scene.LoadUrl(url); //url  "https://google.com"
             }
         }
     }

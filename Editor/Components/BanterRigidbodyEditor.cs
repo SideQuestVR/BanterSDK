@@ -71,14 +71,14 @@ namespace Banter.SDKEditor
             containerangularVelocity.Add(toggleangularVelocity);
             myInspector.Add(containerangularVelocity);
 
-#if BANTER_EDITOR
+            //#if BANTER_EDITOR
             var foldout = new Foldout();
-            foldout.text = "Advanced Properties";
+            foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false; 
+            foldout.value = false;
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
-#endif
+            //#endif
 
             return myInspector;
         }
