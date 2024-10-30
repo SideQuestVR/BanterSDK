@@ -79,7 +79,7 @@ namespace Banter.SDKEditor
         [InitializeOnLoadMethod()]
         static void Go()
         {
-            // SetupLayersAndTags();
+            SetupLayersAndTags();
             CreateWebRoot();
         }
 
