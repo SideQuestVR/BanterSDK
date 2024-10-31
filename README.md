@@ -14,7 +14,7 @@ There is loads of info and examples here in the docs, and the full-text search i
 
 We have a new avatar system out in beta, including an extension for blender to make building avatars as easy as possible. 
 
-+ Click Here For More Info +
+<details><summary>Click Here For More Info</summary>
 
   Get your avatar ready for the Bantaverse. This plugin will help you set up your avatars with the correct LOD levels, prepare materials, and upload directly to your Banter account.
 
@@ -36,7 +36,7 @@ We have a new avatar system out in beta, including an extension for blender to m
   1. Assign or generate LODs of your avatar. Shapekeys are only allowed on LOD0.
   1. Press 'Run Validation' and fix any errors. If possible, a quick fix button will generate a new LOD per the requirements.
   1. Link with your SideQuest account to export and upload your new avatar.
-
+</details>
 
 ## Space Creation
 
@@ -70,8 +70,7 @@ Now you can jump into Banter and test your space! If you want your space to be f
 In the past loading a scene into banter was tricky, but we have made things easier with the new SDK. Now you can avoid a lot of the tricky parts and just build and upload your scene to Banter.
 In case you want to expand the basic example here is some more info around how you can do that in the `index.html`, or you can skip to the next section since our Unity plugin handles this for you!.
 
-
-+ Click Here For More Info +
+<details><summary>Click Here For More Info</summary>
 
  Unity uses asset bundles to store your scene which we then load into Banter via the `index.html`. Now you only need a small amount of HTML in your `index.html` to load the bundles, and we add it in automatically for you when you install the Banter Unity Plugin, so you can skip to the next section if you want!
 
@@ -92,6 +91,7 @@ BS.LoadAssetBundles("https://example.com/android.banter", "https://example.com/w
 ```
 This will be the default code in the `index.html` file in new projects, so if you're unsure about any of the above it can be safely ignored and everything should be fine.
 
+</details>
 
 You can make any object in your scene visible to `JavaScript` by adding a `BanterObjectId` component to it inside of Unity. This works for normal asset bundles as well as for kit (prefab) based bundles too. Objects that are created from `JavaScript` will have a `BanterObjectId` added automatically and will be exposed automatically. In order to access these object, listen for the `unity-loaded` event in `JavaScript` before you try to use methods like `scene.Find`.
 
@@ -124,7 +124,7 @@ For more guides and tutorials, please see some of these third party resources.
 Since our SDK is going to be open source, there are two ways that new functionality can be added. 
 The first way is that we add functionality when we need it in Banter, which makes sense. The second is if
 a creator wants to add functionality to Banter. In that case we have a process for accepting contributions. 
-To find out more, check out our [Contribution Guidelines](/contribution-guidelines) page.
+To find out more, check out our [Contribution Guidelines](/CONTRIBUTING) page.
 <!--
 ## Avatar Creation
 
@@ -152,7 +152,7 @@ Here is a full specification of the Banter SDK in `JavaScript`. BullShcript is j
 
 The scene in Banter is the top level object that everything is stored inside. It stores all the GameObjects in the scene as-well as data and settings. It also handles all of the interactions with the scene hierarchy in `Unity`, and all of the low level messaging between `Unity` and `JavaScript` - though you don't need to worry about that.
 
-+ Click Here For More Info +
+<details><summary>Click Here For More Info</summary>
 
  To get a reference to the scene from anywhere:
 
@@ -364,13 +364,13 @@ scene.On("voice-started", e => {
   // Do something.
 })
 ```
-
+</details>
 
 ### Game Object
 
 A GameObject can be thought of as the same as a `Unity` GameObject, it's the basic building block of creating a scene in `Unity`.
 
-+ Click Here For More Info +
+<details><summary>Click Here For More Info</summary>
  
  <b>Properties</b>
  
@@ -483,12 +483,13 @@ gameObject.On("browser-message", e => {
   // Do something with e.detail.
 })
 ```
+</details>
 
 ### Banter Constants/Enums
 
 THe below are some constants/enums used for various thing sin the banter SDK.
 
-+ ComponentType +
+<details><summary>ComponentType</summary>
 
  A list of the different component types used for `GetComponent`:
 
@@ -519,8 +520,9 @@ enum BS.ComponentType{
     BanterVideoPlayer,
 }
 ```
+</details>
 
-+ PropertyName +
+<details><summary>PropertyName</summary>
 
  A list of all property names used by different components in banter:
 
@@ -647,8 +649,9 @@ enum BS.PropertyName {
     waitForFirstFrame,
 }
 ```
+</details>
 
-+ BanterLayers +
+<details><summary>BanterLayers</summary>
 
  A list of all layers you can use on GameObjects in Banter:
 
@@ -683,9 +686,9 @@ enum BS.BanterLayers {
     BanterInternal8_DONTUSE = 31,
 }
 ```
+</details>
 
-
-+ ButtonType +
+<details><summary>ButtonType</summary>
 
  The button types for each controller:
 
@@ -697,8 +700,9 @@ enum BS.ButtonType{
     SECONDARY,
 }
 ```
+</details>
 
-+ GeometryType +
+<details><summary>GeometryType</summary>
 
  The different geometry types:
 
@@ -716,8 +720,9 @@ enum BS.GeometryType{
     ParametricGeometry,
 }
 ```
+</details>
 
-+ ParametricGeometryType +
+<details><summary>ParametricGeometryType</summary>
 
  The different parametric geometry types:
 
@@ -740,8 +745,9 @@ enum BS.ParametricGeometryType{
     Custom,
 }
 ```
+</details>
 
-+ HandSide +
+<details><summary>HandSide</summary>
 
  The sides of the hands, left and right:
 
@@ -751,8 +757,9 @@ enum BS.HandSide{
     RIGHT,
 }
 ```
+</details>
 
-+ ForceMode +
+<details><summary>ForceMode</summary>
 
  The types of rigid body force:
 
@@ -764,8 +771,9 @@ enum BS.ForceMode{
     Acceleration,
 }
 ```
+</details>
 
-+ MaterialSide +
+<details><summary>MaterialSide</summary>
 
  The sides to render a meterial on:
 
@@ -776,8 +784,9 @@ enum BS.MaterialSide{
     Double,
 }
 ```
+</details>
 
-+ VerticalAlignment +
+<details><summary>VerticalAlignment</summary>
 
  The alignment of text:
 
@@ -788,8 +797,9 @@ enum BS.VerticalAlignment{
     Bottom,
 }
 ```
+</details>
 
-+ HorizontalAlignment +
+<details><summary>HorizontalAlignment</summary>
 
  The alignment of text:
 
@@ -800,6 +810,7 @@ enum BS.HorizontalAlignment{
     Right,
 }
 ```
+</details>
 
 ### Components
 
