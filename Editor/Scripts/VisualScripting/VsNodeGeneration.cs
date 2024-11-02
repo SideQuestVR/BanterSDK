@@ -24,39 +24,19 @@ namespace Banter.SDKEditor
         private const string SETTINGS_ASSET_PATH = "ProjectSettings/VisualScriptingSettings.asset";
         private const string GENERATED_VS_NODES_VERSION_PREFS_KEY = "Banter_GeneratedVSNodesVersion";
 
-        // static NodeGeneration()
-        // {
-        //     if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
-        //     {
-        //         EditorApplication.update += CheckForNodeRegen;
-        //     }
-        // }
-
 #if !BANTER_EDITOR
         [InitializeOnLoadMethod]
         private static void OnScriptsReloaded()
         {
-            if (PlayerPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
+            if (EditorPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
             {
-                VSUsageUtility.isVisualScriptingUsed = true;
+                string DialogMessage = "Banter SDK has been updated and requires a Visual Scripting to be regenerated. This may take a few moments.";
+                if (!Application.isBatchMode)
+                    UnityEditor.EditorUtility.DisplayDialog("Banter SDK Updated", DialogMessage, "OK");
                 SetVSTypesAndAssemblies();
             }
         }
 #endif
-
-        // private static void CheckForNodeRegen()
-        // {
-        //     //in order to do a proper unit rebuild, we need to wait until we know VS has been initialized.
-        //     //waiting until a VS window is opened is the best way I have found to do this
-        //     if (EditorWindow.HasOpenInstances<GraphWindow>())
-        //     {
-        //         EditorApplication.update -= CheckForNodeRegen;
-        //         UnityEditor.EditorUtility.DisplayDialog("Banter Scripting Initialization", "Hold tight while we make sure your visual scripting settings are just right", "OK");
-                
-        //         SetVSTypesAndAssemblies();
-        //     }
-        // }
-
         /// <summary>
         /// We need to set the supported types and assemblies in ProjectSettings/VisualScripting
         /// Ludiq/Unity really does not want us to edit this... so we have to directly edit the json of the file >:(
@@ -64,14 +44,25 @@ namespace Banter.SDKEditor
         public static void SetVSTypesAndAssemblies()
         {
             // Initializes internal data structures and editor logic for Visual Scripting.
-            VSUsageUtility.isVisualScriptingUsed = true;
+            if(!VSUsageUtility.isVisualScriptingUsed)
+                    VSUsageUtility.isVisualScriptingUsed = true;
+
+            string DialogMessage = string.Empty;
 
             if (!File.Exists(SETTINGS_ASSET_PATH))
             {
-                const string MESSAGE = "Visual Scripting is not initialized. Please navigate to the Visual Scripting settings in the Unity project settings to initialize";
+                DialogMessage = "Visual Scripting is not initialized. Please navigate to the Visual Scripting settings in the Unity project settings to initialize.\n" +
+                    "Then, re-run 'Configure Visual Scripting' in the Banter Bundle Builder's Tools menu.";
                 if (!Application.isBatchMode)
-                    UnityEditor.EditorUtility.DisplayDialog("Visual Scripting Settings Not Found", MESSAGE, "OK");
-                throw new System.Exception(MESSAGE);
+                    UnityEditor.EditorUtility.DisplayDialog("Visual Scripting Settings Not Found", DialogMessage, "OK");
+                Debug.LogError(DialogMessage);
+                return;
+            }
+
+            if (!Application.isBatchMode && !EditorPrefs.HasKey(GENERATED_VS_NODES_VERSION_PREFS_KEY))
+            {
+                DialogMessage = "Initialising Banter Visual Scripting support. This may take a few moments.";
+                EditorUtility.DisplayDialog("Banter Scripting Initialization", DialogMessage, "OK");
             }
 
             // There's an embedded JSON in this asset file. Manually replace the assembly and type arrays.
@@ -91,8 +82,7 @@ namespace Banter.SDKEditor
 
             UnitBase.Rebuild();
 
-            PlayerPrefs.SetString(GENERATED_VS_NODES_VERSION_PREFS_KEY, PackageManagerUtility.currentVersion);
-            PlayerPrefs.Save();
+            EditorPrefs.SetString(GENERATED_VS_NODES_VERSION_PREFS_KEY, PackageManagerUtility.currentVersion);
         }
 
         private static string SetJSONArrayValueHelper(this string target, string arrayContainerName, IEnumerable<string> arrayContents)

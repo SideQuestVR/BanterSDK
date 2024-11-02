@@ -183,10 +183,13 @@ namespace Banter.SDK
         // }
         public Transform feetTransform;
         public void Preload()
-        {   
-            if(feetTransform) {
+        {
+            if (feetTransform)
+            {
                 transform.position = feetTransform.position;
-            }else{
+            }
+            else
+            {
                 var pos = Camera.main.transform.position;
                 pos.y -= 1.55f;
                 transform.position = pos;
