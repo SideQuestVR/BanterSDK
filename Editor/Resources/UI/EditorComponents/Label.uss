@@ -5,6 +5,7 @@
     /* Conditions */
     overflow: hidden;
     white-space: nowrap;
+    color: white!important;
 }
 .unity-label-margin {
     margin: 5px 12px;

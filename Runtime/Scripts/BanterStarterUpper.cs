@@ -126,7 +126,7 @@ namespace Banter.SDK
             });
         }
 
-        private void OnDisable()
+        private void OnApplicationQuit()
         {
             Kill(true);
         }
