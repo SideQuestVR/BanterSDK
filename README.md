@@ -1,18 +1,9 @@
-<img src="https://cdn.sidequestvr.com/file/606701/unity_uv0yc00xq7-ezgifcom-video-to-gif-converter.gif" style="float: right; max-width: 300px; margin: 20px; margin-top: 0;"/>
-
-<div style="font-size: 42px; color: white;">Banter Creator Documentation</div>
-
+# Banter Creator Documentation
 <sup>Powered by `BullShcript`<sup>TM</sup><br><sup>([bullshc.rip/t](https://bullshc.rip/t))</sup></sup>
 
+<img src="https://cdn.sidequestvr.com/file/606701/unity_uv0yc00xq7-ezgifcom-video-to-gif-converter.gif" style="float: right; max-width: 300px; margin: 20px; margin-top: 0;"/>
+
 Here you will find all the information you need to start building spaces and avatars in Banter. You should also [join our discord server](https://discord.gg/bantaverse) to interact with others interested in building spaces in Banter.
-
-## Introduction
-
-There is loads of info and examples here in the docs, and the full-text search in the top left is your best friend. 
-
-## Avatar Creation
-
-We have a new avatar system out in beta, including an extension for blender to make building avatars as easy as possible. 
 
 <details><summary>Click Here For More Info</summary>
 
