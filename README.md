@@ -5,6 +5,10 @@
 
 Here you will find all the information you need to start building spaces and avatars in Banter. You should also [join our discord server](https://discord.gg/bantaverse) to interact with others interested in building spaces in Banter.
 
+## Avatar Creation
+
+We have a new avatar system out in beta, including an extension for blender to make building avatars as easy as possible. 
+
 <details><summary>Click Here For More Info</summary>
 
   Get your avatar ready for the Bantaverse. This plugin will help you set up your avatars with the correct LOD levels, prepare materials, and upload directly to your Banter account.
