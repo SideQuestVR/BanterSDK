@@ -1,7 +1,6 @@
-<div style="font-size: 42px; color: white;">Contribution Guidelines</div>
-<p>
- <a href="/#/README?id=banter-sdk-contributions">Back to documentation</a>
-</p>
+# Contribution Guidelines
+
+[Back to documentation](/README.md?id=banter-sdk-contributions)
 
 ### Introduction
 
