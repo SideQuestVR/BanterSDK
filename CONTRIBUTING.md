@@ -1,3 +1,8 @@
+<div style="font-size: 42px; color: white;">Contribution Guidelines</div>
+<p>
+ <a href="/#/README?id=banter-sdk-contributions">Back to documentation</a>
+</p>
+
 ### Introduction
 
 You can contribute by submitting your own components to be added to the Banter SDK so you can use them in your spaces. There are two types of components 
