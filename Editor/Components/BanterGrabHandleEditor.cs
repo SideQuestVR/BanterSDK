@@ -28,6 +28,17 @@ namespace Banter.SDKEditor
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
+            var title = new Label("PROPERTIES SEEN BY JS");
+            title.style.fontSize = 14;
+            myInspector.Add(title);
+            var seeFields = new Label("grabType, grabRadius, ");
+            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
+            seeFields.style.flexWrap = Wrap.Wrap;
+            seeFields.style.whiteSpace = WhiteSpace.Normal;
+            seeFields.style.marginBottom = 10;
+            seeFields.style.marginTop = 10;
+            seeFields.style.color = Color.gray;
+            myInspector.Add(seeFields);
 
 //#if BANTER_EDITOR
             var foldout = new Foldout();

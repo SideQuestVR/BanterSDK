@@ -75,9 +75,22 @@ namespace Banter.SDK {
             DestroyStuff();
         }
 
+        void CollectColliders()
+        {
+            _CollectColliders();
+        }
         public override object CallMethod(string methodName, List<object> parameters)
         {
-            return null;
+
+            if (methodName == "CollectColliders" && parameters.Count == 0)
+            {
+                CollectColliders();
+                return null;
+            }
+            else
+            {
+                return null;
+            }
         }
 
         public override void Deserialise(List<object> values)

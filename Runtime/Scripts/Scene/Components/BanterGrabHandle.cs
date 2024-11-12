@@ -42,7 +42,7 @@ namespace Banter.SDK {
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.grabType, PropertyName.grabRadius, };
             UpdateCallback(changedProperties);
         }
 
@@ -88,6 +88,24 @@ namespace Banter.SDK {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
+                if (values[i] is BanterInt)
+                {
+                    var valgrabType = (BanterInt)values[i];
+                    if (valgrabType.n == PropertyName.grabType)
+                    {
+                        grabType = (BanterGrabType)valgrabType.x;
+                        changedProperties.Add(PropertyName.grabType);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valgrabRadius = (BanterFloat)values[i];
+                    if (valgrabRadius.n == PropertyName.grabRadius)
+                    {
+                        grabRadius = valgrabRadius.x;
+                        changedProperties.Add(PropertyName.grabRadius);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -95,6 +113,30 @@ namespace Banter.SDK {
         public override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.grabType,
+                    type = PropertyType.Int,
+                    value = grabType,
+                    componentType = ComponentType.BanterGrabHandle,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.grabRadius,
+                    type = PropertyType.Float,
+                    value = grabRadius,
+                    componentType = ComponentType.BanterGrabHandle,
+                    oid = oid,
+                    cid = cid
+                });
+            }
             scene.SetFromUnityProperties(updates, callback);
         }
 
