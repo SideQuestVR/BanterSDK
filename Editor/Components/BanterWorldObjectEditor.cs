@@ -5,14 +5,14 @@ using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
-    [CustomEditor(typeof(BanterKitItem))]
-    public class BanterKitItemEditor : Editor
+    [CustomEditor(typeof(BanterWorldObject))]
+    public class BanterWorldObjectEditor : Editor
     {
         void OnEnable()
         {
-            if (target is BanterKitItem)
+            if (target is BanterWorldObject)
             {
-                var script = (BanterKitItem)target;
+                var script = (BanterWorldObject)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
@@ -20,7 +20,7 @@ namespace Banter.SDKEditor
         public override bool UseDefaultMargins() => false;
         public override VisualElement CreateInspectorGUI()
         {
-            var script = (BanterKitItem)target;
+            var script = (BanterWorldObject)target;
             Editor editor = Editor.CreateEditor(script);
             // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
@@ -28,17 +28,6 @@ namespace Banter.SDKEditor
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
-            var title = new Label("PROPERTIES SEEN BY JS");
-            title.style.fontSize = 14;
-            myInspector.Add(title);
-            var seeFields = new Label("path, ");
-            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
-            seeFields.style.flexWrap = Wrap.Wrap;
-            seeFields.style.whiteSpace = WhiteSpace.Normal;
-            seeFields.style.marginBottom = 10;
-            seeFields.style.marginTop = 10;
-            seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields);
 
 //#if BANTER_EDITOR
             var foldout = new Foldout();

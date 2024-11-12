@@ -5,14 +5,14 @@ using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
-    [CustomEditor(typeof(BanterKitItem))]
-    public class BanterKitItemEditor : Editor
+    [CustomEditor(typeof(BanterHeldEvents))]
+    public class BanterHeldEventsEditor : Editor
     {
         void OnEnable()
         {
-            if (target is BanterKitItem)
+            if (target is BanterHeldEvents)
             {
-                var script = (BanterKitItem)target;
+                var script = (BanterHeldEvents)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
@@ -20,7 +20,7 @@ namespace Banter.SDKEditor
         public override bool UseDefaultMargins() => false;
         public override VisualElement CreateInspectorGUI()
         {
-            var script = (BanterKitItem)target;
+            var script = (BanterHeldEvents)target;
             Editor editor = Editor.CreateEditor(script);
             // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("path, ");
+            var seeFields = new Label("sensitivity, fireRate, auto, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
