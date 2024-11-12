@@ -1255,6 +1255,7 @@ namespace Banter.SDK
                 {
                     events.OnSceneReset.Invoke();
                 });
+                // This seems to be a bug in 2022, hard crash without this line.
                 GameObject.FindObjectsOfType<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
                 await Resources.UnloadUnusedAssets();
             }
