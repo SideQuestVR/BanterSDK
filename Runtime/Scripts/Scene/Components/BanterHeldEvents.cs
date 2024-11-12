@@ -10,28 +10,8 @@ namespace Banter.SDK {
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterHeldEvents : BanterComponentBase
-    {
-        [Foldout("Grabbing")]
-        public UnityEvent<Vector3, HandSide> onGrab;
-        public UnityEvent<HandSide> onRelease;
+    {    
 
-        [Foldout("Trigger")]
-        public UnityEvent<HandSide> onTriggerPress;      
-        public UnityEvent<float, HandSide> onTrigger;      
-
-        [Foldout("Thumbstick")] 
-        public UnityEvent<Vector2, HandSide> onThumbstick;  
-        public UnityEvent<HandSide> onThumbstickClickDown; 
-        public UnityEvent<HandSide> onThumbstickClickUp;   
-          
-
-        [Foldout("Primary/Secondary")] 
-        public UnityEvent<HandSide> onPrimaryDown;    
-        public UnityEvent<HandSide> onPrimaryup;    
-        public UnityEvent<HandSide> onSecondaryDown; 
-        public UnityEvent<HandSide> onSecondaryUp;      
-
-        [Foldout("Settings")] 
         [See(initial = "0.5")] public float sensitivity = 0.5f;
         [See(initial = "0.1")] public float fireRate = 0.1f;
         [See(initial = "false")] public bool auto = false; 
@@ -48,6 +28,9 @@ namespace Banter.SDK {
 
         public override void StartStuff()
         {
+            if(!gameObject.GetComponent<BanterPlayerEvents>())
+                gameObject.AddComponent<BanterPlayerEvents>();
+            
             scene.events.OnHeldEvents.Invoke(this);
         }
 

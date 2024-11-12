@@ -7,23 +7,27 @@ using UnityEngine.Events;
 
 public class BanterPlayerEvents : MonoBehaviour
 {
-    [Foldout("Click")]
+    [Foldout("Click", true)]
     public UnityEvent<Vector3, Vector3> onClick;
 
-    [Foldout("Grab", true)]
+    
+    [Foldout("Grabbing", true)]
     public UnityEvent<Vector3, HandSide> onGrab;
     public UnityEvent<HandSide> onRelease;
 
     [Foldout("Trigger", true)]
-    public float triggerThreshold = 0.5f;
-    public UnityEvent<HandSide> onTrigger;
+    public UnityEvent<HandSide> onTriggerPress;      
+    public UnityEvent<float, HandSide> onTrigger;      
 
-    // [Foldout("Keyboard Keys", true)]
-    // public UnityEvent<KeyCode> onKeyPress;
-    // public UnityEvent<KeyCode> onKeyDown;
-    // public UnityEvent<KeyCode> onKeyUp;
+    [Foldout("Thumbstick", true)] 
+    public UnityEvent<Vector2, HandSide> onThumbstick;  
+    public UnityEvent<HandSide> onThumbstickClickDown; 
+    public UnityEvent<HandSide> onThumbstickClickUp;   
+        
 
-    // [Foldout("Controller Buttons", true)]
-    // public UnityEvent<ButtonType> onButtonPress;
-    // public UnityEvent<ButtonType> onButtonRelease;
+    [Foldout("Primary/Secondary", true)] 
+    public UnityEvent<HandSide> onPrimaryDown;    
+    public UnityEvent<HandSide> onPrimaryup;    
+    public UnityEvent<HandSide> onSecondaryDown; 
+    public UnityEvent<HandSide> onSecondaryUp;  
 }
