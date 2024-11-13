@@ -1,3 +1,7 @@
+# Contribution Guidelines
+
+[Back to documentation](/README.md?id=banter-sdk-contributions)
+
 ### Introduction
 
 You can contribute by submitting your own components to be added to the Banter SDK so you can use them in your spaces. There are two types of components 
