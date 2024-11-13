@@ -24,7 +24,7 @@ namespace Banter.SDK
     {
         [See(initial = "")] public string uid;
         [See(initial = "0,0,0")] public Vector3 attachmentPosition;
-        [See(initial = "0,0,0,1")] public Quaternion attachmentRotation;
+        [See(initial = "0,0,0,1")] public Quaternion attachmentRotation = Quaternion.identity;
         [See(initial = "0")] public AttachmentType attachmentType;
         [See(initial = "0")] public AvatarAttachmentType avatarAttachmentType;
         [See(initial = "0")] public AvatarBoneName avatarAttachmentPoint;
