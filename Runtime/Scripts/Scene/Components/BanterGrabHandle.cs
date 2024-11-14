@@ -2,13 +2,15 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-public enum BanterGrabType{
+public enum BanterGrabType
+{
     Point,
     Cylinder,
     Ball,
     Soft
 }
-namespace Banter.SDK {
+namespace Banter.SDK
+{
 
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
