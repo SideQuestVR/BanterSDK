@@ -1269,6 +1269,18 @@ namespace Banter.SDK
             loadingManager?.Preload();
             await loadingManager?.LoadIn(url);
         }
+        public async Task ShowSpaceImage(string url) {
+            try
+            {
+                var space = await Get.SpaceMeta(url);
+                if (space != null && !string.IsNullOrEmpty(space.icon))
+                {
+                    loadingTexture = await Get.Texture(space.icon + "?size=1280");
+                }
+            }catch (Exception e){
+                Debug.LogError("[Banter] Error loading space image: " + url + " : " + e.Message);
+            }
+        }
         public async Task LoadUrl(string url, bool isLoadingOpen = false)
         {
             state = SceneState.NONE;
@@ -1293,18 +1305,7 @@ namespace Banter.SDK
                     {
                         return;
                     }
-                    try
-                    {
-                        var space = await Get.SpaceMeta(url);
-                        if (space != null && !string.IsNullOrEmpty(space.icon))
-                        {
-                            loadingTexture = await Get.Texture(space.icon + "?size=2048");
-                        }
-                    }
-                    catch (Exception)
-                    {
-
-                    }
+                    _ = ShowSpaceImage(url);
                     await ResetScene();
                     await link.LoadUrl(url);
                     await new WaitUntil(() => loaded);
@@ -1314,8 +1315,6 @@ namespace Banter.SDK
                         loading = false;
                         return;
                     }
-                    // link.OnUnitySceneLoaded();
-                    // state = SceneState.UNITY_READY;
                     loadUrlTaskCompletionSource.SetResult(true);
                     mainThread?.Enqueue(() =>
                     {
