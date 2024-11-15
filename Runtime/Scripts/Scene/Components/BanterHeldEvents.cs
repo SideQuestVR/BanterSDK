@@ -32,6 +32,7 @@ namespace Banter.SDK {
                 gameObject.AddComponent<BanterPlayerEvents>();
             
             scene.events.OnHeldEvents.Invoke(this);
+            SetLoadedIfNot();
         }
 
         public void UpdateCallback(List<PropertyName> changedProperties)

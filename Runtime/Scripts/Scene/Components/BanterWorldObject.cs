@@ -9,6 +9,8 @@ namespace Banter.SDK {
     [WatchComponent]
     public class BanterWorldObject : BanterComponentBase
     {
+
+        public Collider[] colliders;
         [Method]
         public void _CollectColliders() {
             scene.events.OnWorldObjectCollectColliders.Invoke(this);
@@ -22,6 +24,7 @@ namespace Banter.SDK {
         public override void StartStuff()
         {
             scene.events.OnWorldObject.Invoke(this);
+            SetLoadedIfNot();
         }
 
         public void UpdateCallback(List<PropertyName> changedProperties)
