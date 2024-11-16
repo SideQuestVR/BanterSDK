@@ -25,7 +25,7 @@ namespace Banter.SDK
             mainThread = UnityMainThreadDispatcher.Instance();
             SetupPipe();
 
-            scene.events.OnJsCallbackRecieved.AddListener((id, data) =>
+            scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
                 mainThread.Enqueue(() =>
                 {
@@ -120,7 +120,7 @@ namespace Banter.SDK
             else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
             {
                 var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
-                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1]);
+                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], true);
             }
             else
             {
@@ -137,6 +137,11 @@ namespace Banter.SDK
             if (msg.StartsWith(APICommands.OBJECT_ADDED))
             {
                 scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
+            }
+            else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+            {
+                var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], false);
             }
             else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
             {

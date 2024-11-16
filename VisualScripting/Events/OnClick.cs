@@ -33,7 +33,6 @@ namespace Banter.VisualScripting
             base.Definition();
             // Setting the value on our port.
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
-            isLeft = ValueOutput<bool>("Is Left");
             clickPoint = ValueOutput<Vector3>("Point");
             clickNormal = ValueOutput<Vector3>("Normal");
         }
