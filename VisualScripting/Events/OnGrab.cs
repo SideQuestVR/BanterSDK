@@ -32,7 +32,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            gameObject = ValueInput<GameObject>("Game Object", null).NullMeansSelf();
+            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
             grabPosition = ValueOutput<Vector3>("Point");
         }
