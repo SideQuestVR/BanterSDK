@@ -3,13 +3,13 @@ using Banter.SDK;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace Banter.VisualScripting
 {
-#if MODULE_PHYSICS_EXISTS
+// #if MODULE_PHYSICS_EXISTS
     /// <summary>
     /// Called when a collider enters the trigger.
     /// </summary>
-    public sealed class OnBanterTriggerEnter : TriggerEventUnit
+    public class OnBanterTriggerEnter : TriggerEventUnit
     {
         public override Type MessageListenerType => typeof(UnityOnTriggerEnterMessageListener);
         protected override string hookName => EventHooks.OnTriggerEnter;
@@ -33,5 +33,5 @@ namespace Banter.SDK
             }
         }
     }
-#endif
+// #endif
 }
