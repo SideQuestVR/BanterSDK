@@ -9,11 +9,17 @@ namespace Banter.VisualScripting
     /// <summary>
     /// Called when a collider enters the trigger.
     /// </summary>
+    [UnitTitle("On BanterTriggerEnter Event Received")]
+    [UnitShortTitle("On BanterTriggerEnter")]
+    [UnitCategory("Events\\Banter")]
+    [TypeIcon(typeof(BanterObjectId))]
     public class OnBanterTriggerEnter : TriggerEventUnit
     {
         public override Type MessageListenerType => typeof(UnityOnTriggerEnterMessageListener);
         protected override string hookName => EventHooks.OnTriggerEnter;
+        [DoNotSerialize]
         public new ValueOutput collider { get; private set; }
+        [DoNotSerialize]
         public ValueOutput user { get; private set; }
         protected override void Definition()
         {
