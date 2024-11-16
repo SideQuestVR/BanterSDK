@@ -1,4 +1,4 @@
-// #if BANTER_VISUAL_SCRIPTING
+#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
 using UnityEngine;
@@ -49,4 +49,4 @@ namespace Banter.VisualScripting
         }
     }
 }
-// #endif
+#endif
