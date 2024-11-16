@@ -30,7 +30,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            gameObject = ValueInput<GameObject>("Game Object", null);
+            gameObject = ValueInput<GameObject>("Game Object", null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
         }
 
