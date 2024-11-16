@@ -14,6 +14,7 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         [PortLabelHidden]
+        [NullMeansSelf]
         public ValueInput gameObject { get; private set; }
         [DoNotSerialize]
         public ValueOutput isLeft;
@@ -29,7 +30,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            gameObject = ValueInput<GameObject>("Game Object", null).NullMeansSelf();
+            gameObject = ValueInput<GameObject>("Game Object", null);
             isLeft = ValueOutput<bool>("Is Left");
         }
 
