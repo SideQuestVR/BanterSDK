@@ -42,7 +42,7 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
-            flow.SetValue(isLeft, (HandSide)data.arguments[1] == HandSide.LEFT);
+            flow.SetValue(isLeft, (HandSide)data.arguments[0] == HandSide.LEFT);
         }
     }
 }

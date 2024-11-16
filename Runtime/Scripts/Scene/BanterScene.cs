@@ -230,6 +230,9 @@ namespace Banter.SDK
             {
                 interaction.onRelease.Invoke(side);
             }
+#if BANTER_VISUAL_SCRIPTING
+        EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { side }));
+#endif
             link.OnRelease(obj, side);
         }
         public void Grab(GameObject obj, Vector3 point, HandSide side = HandSide.LEFT)
@@ -239,6 +242,9 @@ namespace Banter.SDK
             {
                 interaction.onGrab.Invoke(point, side);
             }
+#if BANTER_VISUAL_SCRIPTING
+        EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, side }));
+#endif
             link.OnGrab(obj, point, side);
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
