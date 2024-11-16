@@ -248,6 +248,9 @@ namespace Banter.SDK
             {
                 interaction.onClick.Invoke(point, normal);
             }
+#if BANTER_VISUAL_SCRIPTING
+        EventBus.Trigger("OnClick", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, normal }));
+#endif
             link.OnClick(obj, point, normal);
         }
         #endregion
