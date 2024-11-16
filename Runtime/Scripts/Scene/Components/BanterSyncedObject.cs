@@ -45,6 +45,7 @@ namespace Banter.SDK
         public override void StartStuff()
         {
             banterObjectId = GetComponent<BanterObjectId>();
+            UpdateCallback(null);
             SetLoadedIfNot();
         }
 
