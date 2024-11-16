@@ -6,24 +6,26 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Release BanterHeldEvent Event Received")]
-    [UnitShortTitle("On Release BanterHeldEvent")]
+    [UnitTitle("On Click BanterPlayerEvent Event Received")]
+    [UnitShortTitle("On Click BanterPlayerEvent")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnRelease : EventUnit<CustomEventArgs>
+    public class OnClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput gameObject { get; private set; }
         [DoNotSerialize]
-        public ValueOutput isLeft;
+        public ValueOutput clickPoint;
+        [DoNotSerialize]
+        public ValueOutput clickNormal;
 
         protected override bool register => true;
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnRelease");
+            return new EventHook("OnClick");
         }
 
         protected override void Definition()
@@ -32,6 +34,8 @@ namespace Banter.VisualScripting
             // Setting the value on our port.
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
+            clickPoint = ValueOutput<Vector3>("Point");
+            clickNormal = ValueOutput<Vector3>("Normal");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -42,7 +46,8 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
-            flow.SetValue(isLeft, (HandSide)data.arguments[1] == HandSide.LEFT);
+            flow.SetValue(clickPoint, data.arguments[0]);
+            flow.SetValue(clickNormal, data.arguments[1]);
         }
     }
 }

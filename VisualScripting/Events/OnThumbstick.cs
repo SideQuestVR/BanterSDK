@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Release BanterHeldEvent Event Received")]
-    [UnitShortTitle("On Release BanterHeldEvent")]
+    [UnitTitle("On Thumbstick BanterHeldEvent Event Received ")]
+    [UnitShortTitle("On Thumbstick BanterHeldEvent")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnRelease : EventUnit<CustomEventArgs>
+    public class OnThumbstick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -18,12 +18,14 @@ namespace Banter.VisualScripting
         public ValueInput gameObject { get; private set; }
         [DoNotSerialize]
         public ValueOutput isLeft;
+        [DoNotSerialize]
+        public ValueOutput input;
 
         protected override bool register => true;
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnRelease");
+            return new EventHook("OnThumbstick");
         }
 
         protected override void Definition()
@@ -32,6 +34,7 @@ namespace Banter.VisualScripting
             // Setting the value on our port.
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
+            input = ValueOutput<Vector2>("Input");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -42,6 +45,7 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
+            flow.SetValue(input, data.arguments[0]);
             flow.SetValue(isLeft, (HandSide)data.arguments[1] == HandSide.LEFT);
         }
     }

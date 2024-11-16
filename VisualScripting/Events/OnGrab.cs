@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Grab Passthrough Event Received")]
-    [UnitShortTitle("On Grab Passthrough")]
+    [UnitTitle("On Grab BanterHeldEvent Event Received")]
+    [UnitShortTitle("On Grab BanterHeldEvent")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnGrab : EventUnit<CustomEventArgs>
