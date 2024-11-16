@@ -1,8 +1,9 @@
 using System;
 using Banter.SDK;
+using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Unity.VisualScripting
+namespace Banter.SDK
 {
 #if MODULE_PHYSICS_EXISTS
     /// <summary>
