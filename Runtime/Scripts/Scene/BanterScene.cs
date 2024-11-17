@@ -225,11 +225,11 @@ namespace Banter.SDK
         #region Player Events
         public void Release(GameObject obj, HandSide side = HandSide.LEFT)
         {
-            var interaction = obj.GetComponent<BanterPlayerEvents>();
-            if (interaction != null)
-            {
-                interaction.onRelease.Invoke(side);
-            }
+            // var interaction = obj.GetComponent<BanterPlayerEvents>();
+            // if (interaction != null)
+            // {
+            //     interaction.onRelease.Invoke(side);
+            // }
 // #if BANTER_VISUAL_SCRIPTING
 //         EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { side }));
 // #endif
@@ -237,11 +237,11 @@ namespace Banter.SDK
         }
         public void Grab(GameObject obj, Vector3 point, HandSide side = HandSide.LEFT)
         {
-            var interaction = obj.GetComponent<BanterPlayerEvents>();
-            if (interaction != null)
-            {
-                interaction.onGrab.Invoke(point, side);
-            }
+            // var interaction = obj.GetComponent<BanterPlayerEvents>();
+            // if (interaction != null)
+            // {
+            //     interaction.onGrab.Invoke(point, side);
+            // }
 // #if BANTER_VISUAL_SCRIPTING
 //         EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, side }));
 // #endif
