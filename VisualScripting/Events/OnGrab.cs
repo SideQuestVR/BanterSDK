@@ -6,16 +6,16 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Grab BanterHeldEvent Event Received")]
-    [UnitShortTitle("On Grab BanterHeldEvent")]
-    [UnitCategory("Events\\Banter")]
+    [UnitTitle("On Grab Event Received")]
+    [UnitShortTitle("On Grab")]
+    [UnitCategory("Events\\Banter\\BanterHeldEvents\\")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnGrab : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
         [NullMeansSelf]
-        public ValueInput gameObject { get; private set; }
+        public ValueInput banterHeldEvents { get; private set; }
         [DoNotSerialize]
         public ValueOutput isLeft;
         [DoNotSerialize]
@@ -32,14 +32,14 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
+            banterHeldEvents = ValueInput<GameObject>(nameof(banterHeldEvents), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
             grabPosition = ValueOutput<Vector3>("Point");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return data.name == flow.GetValue<GameObject>(gameObject).GetInstanceID().ToString();
+            return data.name == flow.GetValue<GameObject>(banterHeldEvents).GetInstanceID().ToString();
         }
 
         // Setting the value on our port.

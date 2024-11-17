@@ -6,9 +6,9 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On PrimaryDown BanterHeldEvent Event Received")]
-    [UnitShortTitle("On PrimaryDown BanterHeldEvent")]
-    [UnitCategory("Events\\Banter")]
+    [UnitTitle("On PrimaryDown Event Received")]
+    [UnitShortTitle("On PrimaryDown")]
+    [UnitCategory("Events\\Banter\\BanterHeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnPrimaryDown : EventUnit<CustomEventArgs>
     {
