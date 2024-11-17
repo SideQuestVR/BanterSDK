@@ -18,20 +18,16 @@ namespace Banter.VisualScripting
         public override Type MessageListenerType => typeof(UnityOnTriggerEnterMessageListener);
         protected override string hookName => EventHooks.OnTriggerEnter;
         [DoNotSerialize]
-        public new ValueOutput collider { get; private set; }
-        [DoNotSerialize]
         public ValueOutput user { get; private set; }
         protected override void Definition()
         {
             base.Definition();
 
-            collider = ValueOutput<Collider>(nameof(collider));
-
             user = ValueOutput<BanterUser>(nameof(user));
         }
         protected override void AssignArguments(Flow flow, Collider other)
         {
-            flow.SetValue(collider, other);
+            base.AssignArguments(flow, other);
             var user = other.gameObject.GetComponentInParent<UserData>();
             if (user != null)
             {
