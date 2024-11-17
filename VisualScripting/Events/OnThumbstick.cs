@@ -6,16 +6,16 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Thumbstick BanterHeldEvent Event Received ")]
-    [UnitShortTitle("On Thumbstick BanterHeldEvent")]
-    [UnitCategory("Events\\Banter")]
+    [UnitTitle("On Thumbstick")]
+    [UnitShortTitle("On Thumbstick")]
+    [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnThumbstick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
         [NullMeansSelf]
-        public ValueInput gameObject { get; private set; }
+        public ValueInput banterHeldEvents { get; private set; }
         [DoNotSerialize]
         public ValueOutput isLeft;
         [DoNotSerialize]
@@ -32,14 +32,14 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
+            banterHeldEvents = ValueInput<GameObject>(nameof(banterHeldEvents), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
             input = ValueOutput<Vector2>("Input");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return data.name == flow.GetValue<GameObject>(gameObject).GetInstanceID().ToString();
+            return data.name == flow.GetValue<GameObject>(banterHeldEvents).GetInstanceID().ToString();
         }
 
         // Setting the value on our port.

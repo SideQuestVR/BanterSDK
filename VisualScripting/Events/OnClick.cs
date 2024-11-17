@@ -6,16 +6,16 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Click BanterPlayerEvent Event Received")]
-    [UnitShortTitle("On Click BanterPlayerEvent")]
-    [UnitCategory("Events\\Banter")]
+    [UnitTitle("On Click")]
+    [UnitShortTitle("On Click")]
+    [UnitCategory("Events\\Banter\\PlayerEvents")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
         [NullMeansSelf]
-        public ValueInput gameObject { get; private set; }
+        public ValueInput banterPlayerEvents { get; private set; }
         [DoNotSerialize]
         public ValueOutput clickPoint;
         [DoNotSerialize]
@@ -32,14 +32,14 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
+            banterPlayerEvents = ValueInput<GameObject>(nameof(banterPlayerEvents), null).NullMeansSelf();
             clickPoint = ValueOutput<Vector3>("Point");
             clickNormal = ValueOutput<Vector3>("Normal");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return data.name == flow.GetValue<GameObject>(gameObject).GetInstanceID().ToString();
+            return data.name == flow.GetValue<GameObject>(banterPlayerEvents).GetInstanceID().ToString();
         }
 
         // Setting the value on our port.

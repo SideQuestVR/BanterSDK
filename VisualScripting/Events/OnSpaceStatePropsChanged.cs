@@ -5,9 +5,9 @@ using Banter.SDK;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("On Space State Properties Changed")]
-    [UnitShortTitle("Space State Changed")]
-    [UnitCategory("Events\\Banter")]
+    [UnitTitle("On Space State")]
+    [UnitShortTitle("Space State")]
+    [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnSpaceStatePropsChanged : EventUnit<CustomEventArgs>
     {
