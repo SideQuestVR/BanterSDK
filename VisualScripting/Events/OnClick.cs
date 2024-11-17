@@ -15,6 +15,7 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         [PortLabelHidden]
         [NullMeansSelf]
+        [RenamedFrom("gameObject")]
         public ValueInput banterPlayerEvents { get; private set; }
         [DoNotSerialize]
         public ValueOutput clickPoint;
