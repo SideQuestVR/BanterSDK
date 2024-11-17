@@ -32,6 +32,8 @@ namespace Banter.VisualScripting
             if (user != null)
             {
                 flow.SetValue(this.user, new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+            }else{
+                flow.SetValue(this.user, null);
             }
         }
     }
