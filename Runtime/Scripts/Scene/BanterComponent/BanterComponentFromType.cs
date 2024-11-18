@@ -29,6 +29,10 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterGeometry>();
                 case ComponentType.BanterGLTF:
                     return gameObject.AddComponent<BanterGLTF>();
+                case ComponentType.BanterGrabHandle:
+                    return gameObject.AddComponent<BanterGrabHandle>();
+                case ComponentType.BanterHeldEvents:
+                    return gameObject.AddComponent<BanterHeldEvents>();
                 case ComponentType.BanterInvertedMesh:
                     return gameObject.AddComponent<BanterInvertedMesh>();
                 case ComponentType.BanterKitItem:
@@ -57,6 +61,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterTransform>();
                 case ComponentType.BanterVideoPlayer:
                     return gameObject.AddComponent<BanterVideoPlayer>();
+                case ComponentType.BanterWorldObject:
+                    return gameObject.AddComponent<BanterWorldObject>();
                 default:
                     return null;
             }

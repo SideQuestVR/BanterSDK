@@ -19,7 +19,7 @@ namespace Banter.SDK
     public class BanterMirror : BanterComponentBase
     {
         [See(initial = "1024")] public int renderTextureSize = 1024;
-        [See(initial = "1024")] public int cameraClear = 1;
+        [See(initial = "1")] public int cameraClear = 1;
         [See(initial = "'#000000'")] public string backgroundColor = "#000000";
 
         VRPortalRenderer _renderer;

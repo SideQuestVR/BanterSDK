@@ -13,6 +13,8 @@ namespace Banter.SDK
         ConfigurableJoint,
         BanterGeometry,
         BanterGLTF,
+        BanterGrabHandle,
+        BanterHeldEvents,
         BanterInvertedMesh,
         BanterKitItem,
         BanterMaterial,
@@ -27,5 +29,6 @@ namespace Banter.SDK
         BanterText,
         Transform,
         BanterVideoPlayer,
+        BanterWorldObject,
     }
 }

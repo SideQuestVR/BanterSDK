@@ -112,7 +112,7 @@ namespace Banter.SDKEditor
                     if (ulayer == null || ulayer.stringValue != layer.Value)
                     {
                         isMissing = true;
-                        missingLayers.Add("L" + layer.Key + ": " + layer.Value);
+                        missingLayers.Add(layer.Value);
                     }
                 }
 
@@ -124,11 +124,11 @@ namespace Banter.SDKEditor
                     if (utag == null || utag.stringValue != tag.Value)
                     {
                         isMissing = true;
-                        missingTags.Add("T" + tag.Key + ": " + tag.Value);
+                        missingTags.Add(tag.Value);
                     }
                 }
 
-                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers/Tags", "Do you want to setup Banter layers and tags automatically?\nThese are required when using Banter specific features.\n Please back up your project first!" + (missingLayers.Count > 0 ? "\nLayers:\n" : "") + string.Join("\n", missingLayers) + (missingTags.Count > 0 ? "\nTags:\n" : "") + string.Join("\n", missingTags), "Yes", "No"))
+                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers/Tags", "Do you want to setup Banter layers and tags automatically?\nThese are required when using Banter specific features.\n Please back up your project first!" + (missingLayers.Count > 0 ? "\n\nLayers:\n" : "") + string.Join(", ", missingLayers) + (missingTags.Count > 0 ? "\n\nTags:\n" : "") + string.Join(", ", missingTags), "Yes", "No"))
                 {
                     foreach (var layer in layersToAdd)
                     {
