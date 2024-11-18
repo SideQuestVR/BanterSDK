@@ -3,7 +3,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK {
+namespace Banter.SDK
+{
 
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -12,7 +13,8 @@ namespace Banter.SDK {
 
         public Collider[] colliders;
         [Method]
-        public void _CollectColliders() {
+        public void _CollectColliders()
+        {
             scene.events.OnWorldObjectCollectColliders.Invoke(this);
         }
 

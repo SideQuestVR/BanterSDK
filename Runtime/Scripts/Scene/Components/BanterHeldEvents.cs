@@ -5,20 +5,21 @@ using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter.SDK {
-    
+namespace Banter.SDK
+{
+
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterHeldEvents : BanterComponentBase
-    {    
+    {
 
         [See(initial = "0.5")] public float sensitivity = 0.5f;
         [See(initial = "0.1")] public float fireRate = 0.1f;
-        [See(initial = "false")] public bool auto = false; 
-        [See(initial = "false")] public bool blockThumbstick = false; 
-        [See(initial = "false")] public bool blockPrimary = false; 
-        [See(initial = "false")] public bool blockSecondary = false; 
-        [See(initial = "false")] public bool blockThumbstickClick = false; 
+        [See(initial = "false")] public bool auto = false;
+        [See(initial = "false")] public bool blockThumbstick = false;
+        [See(initial = "false")] public bool blockPrimary = false;
+        [See(initial = "false")] public bool blockSecondary = false;
+        [See(initial = "false")] public bool blockThumbstickClick = false;
 
         public override void DestroyStuff()
         {
@@ -28,9 +29,9 @@ namespace Banter.SDK {
 
         public override void StartStuff()
         {
-            if(!gameObject.GetComponent<BanterPlayerEvents>())
+            if (!gameObject.GetComponent<BanterPlayerEvents>())
                 gameObject.AddComponent<BanterPlayerEvents>();
-            
+
             scene.events.OnHeldEvents.Invoke(this);
             SetLoadedIfNot();
         }
