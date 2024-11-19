@@ -5,6 +5,7 @@ using UnityEngine;
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
+using Banter.Utilities.Async;
 
 namespace Banter.SDK
 {
@@ -15,19 +16,17 @@ namespace Banter.SDK
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
-        UnityMainThreadDispatcher mainThread;
         BatchUpdater batchUpdater;
         // public static string LOCAL_USER_ID;
 
         void Start()
         {
             scene = BanterScene.Instance();
-            mainThread = UnityMainThreadDispatcher.Instance();
             SetupPipe();
 
             scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
-                mainThread.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
 #if BANTER_VISUAL_SCRIPTING
                     EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
@@ -51,7 +50,7 @@ namespace Banter.SDK
             {
                 scene.state = SceneState.NOTHING_20S;
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 30 seconds...");
-                mainThread.Enqueue(() => timeoutDisplay = Time.time);
+               UnityMainThreadTaskScheduler.Default.Enqueue(() => timeoutDisplay = Time.time);
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
             }
             else if (msg.StartsWith(APICommands.NOTHING))
@@ -274,7 +273,7 @@ namespace Banter.SDK
             // if(msg.StartsWith(APICommands.LEGACY_SEND_TO_AFRAME)) {
             // scene.events.OnLegacySendToAframe.Invoke(GetMsgData(msg, APICommands.LEGACY_SEND_TO_AFRAME));
             // }else 
-            UnityMainThreadDispatcher.Instance().Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 UnityAndBanterObject lastSitObject = new UnityAndBanterObject();
                 if (msg.StartsWith(APICommands.LEGACY_LOCK_PLAYER))

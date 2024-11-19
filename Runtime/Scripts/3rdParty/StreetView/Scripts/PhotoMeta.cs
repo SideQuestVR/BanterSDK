@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using UnityEngine;
+using Banter.Utilities.Async;
 
 
 class DepthHeader
@@ -169,7 +170,7 @@ public class PhotoMeta
                 }
 
             }
-             UnityMainThreadDispatcher.Instance().Enqueue(() => DepthCallback(vertices, normals, uvs, tris));
+             UnityMainThreadTaskScheduler.Default.Enqueue(() => DepthCallback(vertices, normals, uvs, tris));
         });
         thread.Start();
     }

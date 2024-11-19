@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
+using Banter.Utilities.Async;
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -115,7 +116,6 @@ namespace Banter.SDK
                 return state == SceneState.DOM_READY || state == SceneState.SCENE_READY || state == SceneState.UNITY_READY || state == SceneState.SCENE_START;
             }
         }
-        public UnityMainThreadDispatcher mainThread;
         public string CurrentUrl;
         public bool ClearCacheOnRejoin;
         public Guid InstanceID { get; private set; }
@@ -277,7 +277,7 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-            mainThread.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
@@ -291,7 +291,7 @@ namespace Banter.SDK
             }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
-            mainThread.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
@@ -304,17 +304,17 @@ namespace Banter.SDK
         }
         public void OpenPage(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnPageOpened.Invoke(msg));
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnPageOpened.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OPEN_PAGE);
         }
         public void StartTTS(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnTTsStarted.Invoke(msg == "1"));
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStarted.Invoke(msg == "1"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.START_TTS);
         }
         public void StopTTS(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnTTsStoped.Invoke(msg));
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStoped.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.STOP_TTS);
         }
         public void Gravity(string msg, int reqId)
@@ -326,14 +326,14 @@ namespace Banter.SDK
                 return;
             }
             var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
-            mainThread?.Enqueue(() => Physics.gravity = gravity);
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => Physics.gravity = gravity);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = NumberFormat.Parse(msg);
-            mainThread?.Enqueue(() => Time.timeScale = timeScale);
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => Time.timeScale = timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
         public void PlayerSpeed(string msg, int reqId)
@@ -345,7 +345,7 @@ namespace Banter.SDK
 
         public void LockThing(int reqId, UnityEvent handler, string command)
         {
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 handler.Invoke();
             });
@@ -363,7 +363,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
             });
@@ -375,7 +375,7 @@ namespace Banter.SDK
             {
                 { "Content-Type", "application/json" },
             };
-            mainThread?.Enqueue(async () =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
                 var videoInfo = await Post.Text(
                     "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
@@ -508,7 +508,7 @@ namespace Banter.SDK
                 uBanterObject.banterObject.AddComponent(componetId, component);
                 banterComponents.TryAdd(componetId, component);
                 // Components added inside unity asset bundels load at weird times.
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     var banterComponent = uBanterObject.id.mainThreadComponentMap.FirstOrDefault(x => x.Key == componetId).Value;
                     if (banterComponent != null && banterComponent._loaded)
@@ -732,7 +732,7 @@ namespace Banter.SDK
                     Debug.LogError("[Banter] Error updating component offthread: " + e.Message + ": " + (gameObject.id == null) + ", " + msg);
                 }
             }
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 for (int i = 0; i < sheetFerMainThread.Count; i++)
                 {
@@ -868,7 +868,7 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     banterObject.SetActive(int.Parse(msgParts[1]) == 1);
                     SendObjectUpdate(banterObject, reqId);
@@ -886,7 +886,7 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     banterObject.layer = int.Parse(msgParts[1]);
                     SendObjectUpdate(banterObject, reqId);
@@ -905,7 +905,7 @@ namespace Banter.SDK
             var direction = new Vector3(NumberFormat.Parse(msgParts[3]), NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]));
             var maxDistance = msgParts.Length > 6 ? NumberFormat.Parse(msgParts[6]) : -1;
             var layerMask = msgParts.Length > 7 ? int.Parse(msgParts[7]) : -1;
-            mainThread.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 RaycastHit hit;
                 bool didHit = false;
@@ -931,7 +931,7 @@ namespace Banter.SDK
             var gameObject = GetGameObject(int.Parse(msg));
             if (gameObject != null)
             {
-                mainThread?.Enqueue(async () =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
                 {
                     var newObject = GameObject.Instantiate(gameObject);
                     var objectId = newObject.GetComponent<BanterObjectId>();
@@ -960,7 +960,7 @@ namespace Banter.SDK
         }
         public void SendBrowserMessage(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnMenuBrowserMessage.Invoke(msg));
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnMenuBrowserMessage.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SEND_MENU_BROWSER_MESSAGE);
         }
         public void AddJsComponent(string msg, int reqId)
@@ -984,7 +984,7 @@ namespace Banter.SDK
             }
             var linkId = parts[1];
             var componentType = (ComponentType)int.Parse(parts[2]);
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 if (!isReady)
                 {
@@ -1093,7 +1093,7 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[1]));
             if (banterObject != null && parentObject != null)
             {
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
                     SendObjectUpdate(banterObject, reqId);
@@ -1107,7 +1107,7 @@ namespace Banter.SDK
         }
         public void UpdateJsObject(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => SendObjectUpdate(int.Parse(msg), reqId));
+           UnityMainThreadTaskScheduler.Default.Enqueue(() => SendObjectUpdate(int.Parse(msg), reqId));
         }
         // TODO: Lets look at what this is doing and why, it could be better to propagate updates back to the object another way
         void SendObjectUpdate(int oid, int reqId)
@@ -1131,7 +1131,7 @@ namespace Banter.SDK
 
         public void DestroyJsObject(int oid, int reqId)
         {
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 var gameObject = GetGameObject(oid);
                 if (gameObject != null)
@@ -1154,7 +1154,7 @@ namespace Banter.SDK
         {
             if (banterComponents.TryGetValue(cid, out var comp))
             {
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     var gameObject = GetObject(comp.banterObject.oid);
                     if (gameObject.id != null)
@@ -1195,7 +1195,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Add Object message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(async () =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
                 try
                 {
@@ -1231,7 +1231,7 @@ namespace Banter.SDK
             // // _ = loadingManager.LoadOut();
             // loadingManager?.SetLoadProgress("Failed to load", 0, message, true);
             // loadingManager?.CancelPressed();
-            // mainThread?.Enqueue(() => {
+            //UnityMainThreadTaskScheduler.Default.QueueAction(() => {
             //     events.OnLoadFailed.Invoke(message);
             // });
             // }
@@ -1245,7 +1245,7 @@ namespace Banter.SDK
         }
         void ResetSceneAbilitySettings()
         {
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 _ = settings.Reset();
             });
@@ -1260,7 +1260,7 @@ namespace Banter.SDK
                 ResetSceneAbilitySettings();
                 ResetLoadingProgress();
                 bundlesLoaded = false;
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     events.OnSceneReset.Invoke();
                 });
@@ -1301,47 +1301,44 @@ namespace Banter.SDK
             this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
             loadingManager?.UpdateCancelText();
             ResetLoadingProgress();
-            if (UnityMainThreadDispatcher.Exists())
+            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
-                mainThread?.Enqueue(async () =>
+                if (!isLoadingOpen)
                 {
-                    if (!isLoadingOpen)
-                    {
-                        await this.OpenLoadingScreen(url);
-                    }
-                    // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
-                    if (!Application.isPlaying)
-                    {
-                        return;
-                    }
-                    _ = ShowSpaceImage(url);
-                    await ResetScene();
-                    await link.LoadUrl(url);
-                    await new WaitUntil(() => loaded);
-                    LoadingStatus = "Please wait, loading live space...";
-                    if (HasLoadFailed())
-                    {
-                        loading = false;
-                        return;
-                    }
-                    loadUrlTaskCompletionSource.SetResult(true);
-                    mainThread?.Enqueue(() =>
-                    {
-                        events.OnUnitySceneLoad.Invoke(url);
-                    });
-                    await Task.Delay(2500);
-                    await loadingManager?.LoadOut();
+                    await this.OpenLoadingScreen(url);
+                }
+                // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
+                if (!Application.isPlaying)
+                {
+                    return;
+                }
+                _ = ShowSpaceImage(url);
+                await ResetScene();
+                await link.LoadUrl(url);
+                await new WaitUntil(() => loaded);
+                LoadingStatus = "Please wait, loading live space...";
+                if (HasLoadFailed())
+                {
                     loading = false;
+                    return;
+                }
+                loadUrlTaskCompletionSource.SetResult(true);
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    events.OnUnitySceneLoad.Invoke(url);
                 });
-                await loadUrlTaskCompletionSource.Task;
-            }
+                await Task.Delay(2500);
+                await loadingManager?.LoadOut();
+                loading = false;
+            });
+            await loadUrlTaskCompletionSource.Task;
         }
         public async Task OnLoad(string instanceId)
         {
             // This is fired when the page loads or realods from the browser end, so it can be fired becuase 
             // we have explicitly naviagted the page, but also becuase someone hut f5 in the debugger. 
             state = SceneState.NONE;
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 if (settings != null)
                 {
@@ -1502,7 +1499,7 @@ namespace Banter.SDK
             }
             if (toReenqueue?.Count > 0)
             {
-                mainThread?.Enqueue(() =>
+               UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     Debug.LogWarning($"Having to reenqueue {toReenqueue.Count}");
                     EnqueuePropertyUpdates(toReenqueue);
@@ -1583,7 +1580,7 @@ namespace Banter.SDK
         public void SetSettings(string msg, int reqId)
         {
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 foreach (var part in settingsParts)
                 {
@@ -1713,7 +1710,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] LegacySetChildColor message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 var obj = GetGameObject(int.Parse(msgParts[0]));
                 var color = new Color(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3]));
@@ -1736,7 +1733,7 @@ namespace Banter.SDK
         }
         public void LegacySetVideoUrl(GameObject gameObject, string url, string id)
         {
-            mainThread?.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 var video = gameObject.GetComponentInChildren<VideoPlayer>();
                 if (video != null)

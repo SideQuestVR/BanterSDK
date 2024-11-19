@@ -5,6 +5,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SpatialTracking;
+using Banter.Utilities.Async;
+using Banter.Utilities;
+
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
@@ -24,14 +27,25 @@ namespace Banter.SDK
         public BanterScene scene;
         public static string WEB_ROOT = "WebRoot";
         private int processId;
+        private static bool initialized = false;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
 
         void Awake()
         {
+            if (!initialized)
+            {
+                UnityGame.SetMainThread();
+                var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
+                unitySched.SetMonoBehaviour(this);
+                if (!unitySched.IsRunning)
+                {
+                    StartCoroutine(unitySched.Coroutine());
+                }
+                initialized = true;
+            }
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
-            scene.mainThread = gameObject.AddComponent<UnityMainThreadDispatcher>();
 #if !BANTER_EDITOR
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
             SetupExtraEvents();
@@ -139,14 +153,14 @@ namespace Banter.SDK
         private void SetupBrowserLink()
         {
             scene.link = gameObject.AddComponent<BanterLink>();
-            scene.link.Connected += (arg0, arg1) => scene.mainThread?.Enqueue(() => scene.LoadSpaceState());
+            scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(() => scene.LoadSpaceState());
         }
         public void CancelLoading()
         {
             if (scene.HasLoadFailed())
             {
                 scene.LoadingStatus = "Couldn't load home space, loading fallback...";
-                UnityMainThreadDispatcher.Instance().Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
             }
             else
             {
@@ -156,7 +170,7 @@ namespace Banter.SDK
                     scene.LoadingStatus = "Loading canceled, falling back to lobby";
                     LogLine.Do("Taking you to your home...");
                     scene.Cancel("User cancelled loading", true);
-                    UnityMainThreadDispatcher.Instance().Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
+                    UnityMainThreadTaskScheduler.Default.Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
                 }
 
                 // The below allows canceling from outside loading screen
@@ -165,7 +179,7 @@ namespace Banter.SDK
                 //     scene.LoadingStatus = "Taking you to your home...";
                 //     LogLine.Do("Taking you to your home...");
                 //     scene.Cancel("User cancelled loading", true);
-                //     UnityMainThreadDispatcher.Instance().Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.CUSTOM_HOME_SPACE));
+                //     UnityMainThreadTaskScheduler.Default.QueueAction(() => scene.events.OnLoadUrl.Invoke(BanterScene.CUSTOM_HOME_SPACE));
                 // }
             }
         }
