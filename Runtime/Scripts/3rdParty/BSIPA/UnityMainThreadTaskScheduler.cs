@@ -84,7 +84,7 @@ namespace Banter.Utilities.Async
         /// <value><see langword="true"/> if the scheduler is shutting down, <see langword="false"/> otherwise</value>
         public bool Cancelling { get; private set; } = false;
 
-        private int yieldAfterTasks = 64;
+        private int yieldAfterTasks = 128;
         /// <summary>
         /// Gets or sets the number of tasks to execute before yielding back to Unity.
         /// </summary>
