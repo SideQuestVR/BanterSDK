@@ -16,10 +16,16 @@ namespace Banter.SDK
         [See(initial = "0.5")] public float sensitivity = 0.5f;
         [See(initial = "0.1")] public float fireRate = 0.1f;
         [See(initial = "false")] public bool auto = false;
-        [See(initial = "false")] public bool blockThumbstick = false;
-        [See(initial = "false")] public bool blockPrimary = false;
-        [See(initial = "false")] public bool blockSecondary = false;
-        [See(initial = "false")] public bool blockThumbstickClick = false;
+        [See(initial = "false")] public bool triggerActive = false;
+
+        [See(initial = "false")] public bool blockPrimaryThumbstick = false; 
+        [See(initial = "false")] public bool blockSecondaryThumbstick = false; 
+        [See(initial = "false")] public bool blockPrimaryTrigger = false; 
+        [See(initial = "false")] public bool blockSecondaryTrigger = false; 
+        [See(initial = "false")] public bool blockAButton = false; 
+        [See(initial = "false")] public bool blockBButton = false; 
+        [See(initial = "false")] public bool blockXButton = false; 
+        [See(initial = "false")] public bool blockYButton = false; 
 
         public override void DestroyStuff()
         {
@@ -51,7 +57,7 @@ namespace Banter.SDK
 
         public override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.sensitivity, PropertyName.fireRate, PropertyName.auto, PropertyName.blockThumbstick, PropertyName.blockPrimary, PropertyName.blockSecondary, PropertyName.blockThumbstickClick, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.sensitivity, PropertyName.fireRate, PropertyName.auto, PropertyName.triggerActive, PropertyName.blockPrimaryThumbstick, PropertyName.blockSecondaryThumbstick, PropertyName.blockPrimaryTrigger, PropertyName.blockSecondaryTrigger, PropertyName.blockAButton, PropertyName.blockBButton, PropertyName.blockXButton, PropertyName.blockYButton, };
             UpdateCallback(changedProperties);
         }
 
@@ -126,38 +132,83 @@ namespace Banter.SDK
                 }
                 if (values[i] is BanterBool)
                 {
-                    var valblockThumbstick = (BanterBool)values[i];
-                    if (valblockThumbstick.n == PropertyName.blockThumbstick)
+                    var valtriggerActive = (BanterBool)values[i];
+                    if (valtriggerActive.n == PropertyName.triggerActive)
                     {
-                        blockThumbstick = valblockThumbstick.x;
-                        changedProperties.Add(PropertyName.blockThumbstick);
+                        triggerActive = valtriggerActive.x;
+                        changedProperties.Add(PropertyName.triggerActive);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var valblockPrimary = (BanterBool)values[i];
-                    if (valblockPrimary.n == PropertyName.blockPrimary)
+                    var valblockPrimaryThumbstick = (BanterBool)values[i];
+                    if (valblockPrimaryThumbstick.n == PropertyName.blockPrimaryThumbstick)
                     {
-                        blockPrimary = valblockPrimary.x;
-                        changedProperties.Add(PropertyName.blockPrimary);
+                        blockPrimaryThumbstick = valblockPrimaryThumbstick.x;
+                        changedProperties.Add(PropertyName.blockPrimaryThumbstick);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var valblockSecondary = (BanterBool)values[i];
-                    if (valblockSecondary.n == PropertyName.blockSecondary)
+                    var valblockSecondaryThumbstick = (BanterBool)values[i];
+                    if (valblockSecondaryThumbstick.n == PropertyName.blockSecondaryThumbstick)
                     {
-                        blockSecondary = valblockSecondary.x;
-                        changedProperties.Add(PropertyName.blockSecondary);
+                        blockSecondaryThumbstick = valblockSecondaryThumbstick.x;
+                        changedProperties.Add(PropertyName.blockSecondaryThumbstick);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var valblockThumbstickClick = (BanterBool)values[i];
-                    if (valblockThumbstickClick.n == PropertyName.blockThumbstickClick)
+                    var valblockPrimaryTrigger = (BanterBool)values[i];
+                    if (valblockPrimaryTrigger.n == PropertyName.blockPrimaryTrigger)
                     {
-                        blockThumbstickClick = valblockThumbstickClick.x;
-                        changedProperties.Add(PropertyName.blockThumbstickClick);
+                        blockPrimaryTrigger = valblockPrimaryTrigger.x;
+                        changedProperties.Add(PropertyName.blockPrimaryTrigger);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valblockSecondaryTrigger = (BanterBool)values[i];
+                    if (valblockSecondaryTrigger.n == PropertyName.blockSecondaryTrigger)
+                    {
+                        blockSecondaryTrigger = valblockSecondaryTrigger.x;
+                        changedProperties.Add(PropertyName.blockSecondaryTrigger);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valblockAButton = (BanterBool)values[i];
+                    if (valblockAButton.n == PropertyName.blockAButton)
+                    {
+                        blockAButton = valblockAButton.x;
+                        changedProperties.Add(PropertyName.blockAButton);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valblockBButton = (BanterBool)values[i];
+                    if (valblockBButton.n == PropertyName.blockBButton)
+                    {
+                        blockBButton = valblockBButton.x;
+                        changedProperties.Add(PropertyName.blockBButton);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valblockXButton = (BanterBool)values[i];
+                    if (valblockXButton.n == PropertyName.blockXButton)
+                    {
+                        blockXButton = valblockXButton.x;
+                        changedProperties.Add(PropertyName.blockXButton);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valblockYButton = (BanterBool)values[i];
+                    if (valblockYButton.n == PropertyName.blockYButton)
+                    {
+                        blockYButton = valblockYButton.x;
+                        changedProperties.Add(PropertyName.blockYButton);
                     }
                 }
             }
@@ -207,9 +258,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.blockThumbstick,
+                    name = PropertyName.triggerActive,
                     type = PropertyType.Bool,
-                    value = blockThumbstick,
+                    value = triggerActive,
                     componentType = ComponentType.BanterHeldEvents,
                     oid = oid,
                     cid = cid
@@ -219,9 +270,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.blockPrimary,
+                    name = PropertyName.blockPrimaryThumbstick,
                     type = PropertyType.Bool,
-                    value = blockPrimary,
+                    value = blockPrimaryThumbstick,
                     componentType = ComponentType.BanterHeldEvents,
                     oid = oid,
                     cid = cid
@@ -231,9 +282,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.blockSecondary,
+                    name = PropertyName.blockSecondaryThumbstick,
                     type = PropertyType.Bool,
-                    value = blockSecondary,
+                    value = blockSecondaryThumbstick,
                     componentType = ComponentType.BanterHeldEvents,
                     oid = oid,
                     cid = cid
@@ -243,9 +294,69 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.blockThumbstickClick,
+                    name = PropertyName.blockPrimaryTrigger,
                     type = PropertyType.Bool,
-                    value = blockThumbstickClick,
+                    value = blockPrimaryTrigger,
+                    componentType = ComponentType.BanterHeldEvents,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.blockSecondaryTrigger,
+                    type = PropertyType.Bool,
+                    value = blockSecondaryTrigger,
+                    componentType = ComponentType.BanterHeldEvents,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.blockAButton,
+                    type = PropertyType.Bool,
+                    value = blockAButton,
+                    componentType = ComponentType.BanterHeldEvents,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.blockBButton,
+                    type = PropertyType.Bool,
+                    value = blockBButton,
+                    componentType = ComponentType.BanterHeldEvents,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.blockXButton,
+                    type = PropertyType.Bool,
+                    value = blockXButton,
+                    componentType = ComponentType.BanterHeldEvents,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.blockYButton,
+                    type = PropertyType.Bool,
+                    value = blockYButton,
                     componentType = ComponentType.BanterHeldEvents,
                     oid = oid,
                     cid = cid

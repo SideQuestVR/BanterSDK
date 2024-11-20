@@ -12,22 +12,31 @@ public class BanterPlayerEvents : MonoBehaviour
 
 
     [Foldout("Grabbing", true)]
-    public UnityEvent<Vector3, HandSide> onGrab;
+    public UnityEvent<HandSide> onGrab;
+    public UnityEvent<HandSide> onHeld;
     public UnityEvent<HandSide> onRelease;
 
     [Foldout("Trigger", true)]
-    public UnityEvent<HandSide> onTriggerPress;
-    public UnityEvent<float, HandSide> onTrigger;
+    public UnityEvent onGunTrigger;
+    public UnityEvent<float, HandSide> onPrimaryTrigger;
+    public UnityEvent<float, HandSide> onSecondaryTrigger;
 
     [Foldout("Thumbstick", true)]
-    public UnityEvent<Vector2, HandSide> onThumbstick;
-    public UnityEvent<HandSide> onThumbstickClickDown;
-    public UnityEvent<HandSide> onThumbstickClickUp;
+    public UnityEvent<Vector2, HandSide> onPrimaryThumbstick;
+    public UnityEvent<HandSide> onPrimaryThumbClickDown;
+    public UnityEvent<HandSide> onPrimaryThumbClickUp;
 
+    public UnityEvent<Vector2, HandSide> onSecondaryThumbstick;
+    public UnityEvent<HandSide> onSecondaryThumbClickDown;
+    public UnityEvent<HandSide> onSecondaryThumbClickUp;
 
-    [Foldout("Primary/Secondary", true)]
-    public UnityEvent<HandSide> onPrimaryDown;
-    public UnityEvent<HandSide> onPrimaryup;
-    public UnityEvent<HandSide> onSecondaryDown;
-    public UnityEvent<HandSide> onSecondaryUp;
+    [Foldout("Buttons", true)]
+    public UnityEvent<HandSide> onADown;
+    public UnityEvent<HandSide> onAUp;
+    public UnityEvent<HandSide> onBDown;
+    public UnityEvent<HandSide> onBUp;
+    public UnityEvent<HandSide> onXDown;
+    public UnityEvent<HandSide> onXUp;
+    public UnityEvent<HandSide> onYDown;
+    public UnityEvent<HandSide> onYUp;
 }

@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Grab")]
-    [UnitShortTitle("On Grab")]
+    [UnitTitle("On BUp")]
+    [UnitShortTitle("On BUp")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnGrab : EventUnit<CustomEventArgs>
+    public class OnBUp : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnGrab");
+            return new EventHook("OnBUp");
         }
 
         protected override void Definition()
@@ -42,7 +42,7 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
-            flow.SetValue(isLeft, (HandSide)data.arguments[1] == HandSide.LEFT);
+            flow.SetValue(isLeft, (HandSide)data.arguments[0] == HandSide.LEFT);
         }
     }
 }

@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("sensitivity, fireRate, auto, blockThumbstick, blockPrimary, blockSecondary, blockThumbstickClick, ");
+            var seeFields = new Label("sensitivity, fireRate, auto, triggerActive, blockPrimaryThumbstick, blockSecondaryThumbstick, blockPrimaryTrigger, blockSecondaryTrigger, blockAButton, blockBButton, blockXButton, blockYButton, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
@@ -40,14 +40,14 @@ namespace Banter.SDKEditor
             seeFields.style.color = Color.gray;
             myInspector.Add(seeFields);
 
-            //#if BANTER_EDITOR
+//#if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false;
+            foldout.value = false; 
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
-            //#endif
+//#endif
 
             return myInspector;
         }

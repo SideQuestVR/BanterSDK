@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On PrimaryUp")]
-    [UnitShortTitle("On PrimaryUp")]
+    [UnitTitle("On BDown")]
+    [UnitShortTitle("On BDown")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnPrimaryUp : EventUnit<CustomEventArgs>
+    public class OnBDown : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnPrimaryUp");
+            return new EventHook("OnBDown");
         }
 
         protected override void Definition()
