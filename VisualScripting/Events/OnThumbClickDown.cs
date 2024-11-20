@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On PrimaryThumbClickDown")]
-    [UnitShortTitle("On PrimaryThumbClickDown")]
+    [UnitTitle("On ThumbClickDown")]
+    [UnitShortTitle("On ThumbClickDown")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnPrimaryThumbClickDown : EventUnit<CustomEventArgs>
+    public class OnThumbClickDown : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnPrimaryThumbClickDown");
+            return new EventHook("OnThumbClickDown");
         }
 
         protected override void Definition()

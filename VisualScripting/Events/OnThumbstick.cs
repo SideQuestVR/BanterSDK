@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On PrimaryThumbstick")]
-    [UnitShortTitle("On PrimaryThumbstick")]
+    [UnitTitle("On Thumbstick")]
+    [UnitShortTitle("On Thumbstick")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnPrimaryThumbstick : EventUnit<CustomEventArgs>
+    public class OnThumbstick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -25,7 +25,7 @@ namespace Banter.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnPrimaryThumbstick");
+            return new EventHook("OnThumbstick");
         }
 
         protected override void Definition()

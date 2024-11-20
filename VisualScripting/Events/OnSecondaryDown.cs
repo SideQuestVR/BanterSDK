@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On PrimaryTrigger")]
-    [UnitShortTitle("On PrimaryTrigger")]
+    [UnitTitle("On SecondaryDown")]
+    [UnitShortTitle("On SecondaryDown")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnPrimaryTrigger : EventUnit<CustomEventArgs>
+    public class OnSecondaryDown : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -18,14 +18,12 @@ namespace Banter.VisualScripting
         public ValueInput banterHeldEvents { get; private set; }
         [DoNotSerialize]
         public ValueOutput isLeft;
-        [DoNotSerialize]
-        public ValueOutput input;
 
         protected override bool register => true;
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnPrimaryTrigger");
+            return new EventHook("OnSecondaryDown");
         }
 
         protected override void Definition()
@@ -34,7 +32,6 @@ namespace Banter.VisualScripting
             // Setting the value on our port.
             banterHeldEvents = ValueInput<GameObject>(nameof(banterHeldEvents), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
-            input = ValueOutput<float>("Input");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -45,8 +42,7 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
-            flow.SetValue(input, data.arguments[0]);
-            flow.SetValue(isLeft, (HandSide)data.arguments[1] == HandSide.LEFT);
+            flow.SetValue(isLeft, (HandSide)data.arguments[0] == HandSide.LEFT);
         }
     }
 }

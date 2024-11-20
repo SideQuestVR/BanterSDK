@@ -6,11 +6,11 @@ using UnityEngine;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On PrimaryThumbClickUp")]
-    [UnitShortTitle("On PrimaryThumbClickUp")]
+    [UnitTitle("On TriggerPress")]
+    [UnitShortTitle("On TriggerPress")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnPrimaryThumbClickUp : EventUnit<CustomEventArgs>
+    public class OnTriggerPress : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         [PortLabelHidden]
@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnPrimaryThumbClickUp");
+            return new EventHook("OnTriggerPress");
         }
 
         protected override void Definition()

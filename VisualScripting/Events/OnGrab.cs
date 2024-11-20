@@ -18,6 +18,8 @@ namespace Banter.VisualScripting
         public ValueInput banterHeldEvents { get; private set; }
         [DoNotSerialize]
         public ValueOutput isLeft;
+        [DoNotSerialize]
+        public ValueOutput grabPosition;
 
         protected override bool register => true;
 
@@ -32,6 +34,7 @@ namespace Banter.VisualScripting
             // Setting the value on our port.
             banterHeldEvents = ValueInput<GameObject>(nameof(banterHeldEvents), null).NullMeansSelf();
             isLeft = ValueOutput<bool>("Is Left");
+            grabPosition = ValueOutput<Vector3>("Point");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -42,6 +45,7 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
+            flow.SetValue(grabPosition, data.arguments[0]);
             flow.SetValue(isLeft, (HandSide)data.arguments[1] == HandSide.LEFT);
         }
     }
