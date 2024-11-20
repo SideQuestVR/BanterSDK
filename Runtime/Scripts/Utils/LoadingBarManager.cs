@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using DigitalRuby.Tween;
 using UnityEngine;
 using UnityEngine.Events;
-using Banter.Utilities.Async;
 
 namespace Banter.SDK
 {
@@ -83,7 +82,11 @@ namespace Banter.SDK
         }
         public void SetLoadProgress(string loadingTitle, float percentage, string detailMessage, bool canCancel, Texture2D spaceImage = null)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            if (!UnityMainThreadDispatcher.Exists())
+            {
+                return;
+            }
+            UnityMainThreadDispatcher.Instance().Enqueue(() =>
             {
                 SetCanCancel(canCancel);
                 if (spaceImage != null)

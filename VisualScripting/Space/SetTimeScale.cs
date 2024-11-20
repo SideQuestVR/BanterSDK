@@ -3,7 +3,6 @@ using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
 using System.Linq;
-using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
@@ -26,7 +25,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var valScale = flow.GetValue<float>(scale);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                BanterScene.Instance().mainThread?.Enqueue(() =>
                 {
                     Time.timeScale = valScale;
                 });
