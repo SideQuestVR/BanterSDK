@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Banter.Utilities;
+using Debug = UnityEngine.Debug;
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -149,6 +150,14 @@ namespace Banter.SDK
         {
             scene.state = SceneState.NONE;
             scene.Destroy();
+            try
+            {
+                var unitySched = UnityMainThreadTaskScheduler.Default;
+                unitySched.Cancel();
+            }
+            catch (Exception e)
+            {
+            }
         }
         private void SetupBrowserLink()
         {
