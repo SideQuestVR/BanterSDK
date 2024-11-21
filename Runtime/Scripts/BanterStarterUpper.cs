@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Banter.Utilities;
+using Debug = UnityEngine.Debug;
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -33,8 +34,8 @@ namespace Banter.SDK
 
         void Awake()
         {
-            if (!initialized)
-            {
+            //if (!initialized)
+            //{
                 UnityGame.SetMainThread();
                 var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
                 unitySched.SetMonoBehaviour(this);
@@ -43,7 +44,7 @@ namespace Banter.SDK
                     StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
-            }
+            //}
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
 #if !BANTER_EDITOR
