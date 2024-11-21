@@ -10,6 +10,8 @@ using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
 using Banter.Utilities.Async;
+using Banter.Utilities;
+
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -1218,6 +1220,14 @@ namespace Banter.SDK
         }
         public void Cancel(string message, bool isUserCancel = false)
         {
+            if(!UnityGame.OnMainThread)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    Cancel(message, isUserCancel);
+                });
+                return;
+            }
             loaded = true;
             loading = false;
             externalLoadFailed = true;

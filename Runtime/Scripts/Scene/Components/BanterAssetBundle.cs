@@ -199,6 +199,7 @@ namespace Banter.SDK
         async Task _Unload()
         {
             await assetBundle.UnloadAsync(true);
+            assetBundle = null;
             if (isScene)
             {
                 scene.settings.SceneAssetBundle = null;

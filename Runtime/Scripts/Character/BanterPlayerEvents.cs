@@ -12,11 +12,11 @@ public class BanterPlayerEvents : MonoBehaviour
 
 
     [Foldout("Grabbing", true)]
-    public UnityEvent<Vector3, HandSide> onGrab;
+    public UnityEvent<HandSide> onGrab;
     public UnityEvent<HandSide> onRelease;
 
     [Foldout("Trigger", true)]
-    public UnityEvent<HandSide> onTriggerPress;
+    public UnityEvent<HandSide> onGunTrigger;
     public UnityEvent<float, HandSide> onTrigger;
 
     [Foldout("Thumbstick", true)]

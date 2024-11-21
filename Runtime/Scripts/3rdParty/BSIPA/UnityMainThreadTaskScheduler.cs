@@ -137,6 +137,7 @@ namespace Banter.Utilities.Async
         /// <exception cref="InvalidOperationException">if the scheduler is already running</exception>
         public IEnumerator Coroutine()
         {
+            UnityEngine.Debug.LogError("ENTERED THE COROUTINE");
             ThrowIfDisposed();
 
             if (IsRunning)
@@ -163,17 +164,54 @@ namespace Banter.Utilities.Async
                             do if (!tasks.TryDequeue(out task)) goto exit; // try dequeue, if we can't exit
                             while (!task.HasTask); // if the dequeued task is empty, try again
 
-                            if (task.Task is not null)
+                            try
                             {
-                                _ = TryExecuteTask(task.Task);
+                                if (task.Task is not null)
+                                {
+                                    if (!TryExecuteTask(task.Task))
+                                    {
+
+                                        if (task.Task?.Exception != null)
+                                        {
+                                            UnityEngine.Debug.LogError("TryExecuteTask failed with exception:");
+                                            UnityEngine.Debug.LogException(task.Task.Exception);
+                                        }
+                                        else
+                                        {
+                                            UnityEngine.Debug.LogError("TryExecuteTask failed without exception");
+                                        }
+
+                                    }
+                                }
+                                if (task.Action is not null)
+                                {
+                                    try
+                                    {
+                                        task.Action.Invoke();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        UnityEngine.Debug.LogError("task.Action exception occurred:");
+                                        UnityEngine.Debug.LogException(ex);
+                                    }
+                                }
+                                else if (task.Coroutine is not null)
+                                {
+                                    try
+                                    {
+                                        _monoBehaviour.StartCoroutine(task.Coroutine);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        UnityEngine.Debug.LogError("task.Coroutine exception occurred:");
+                                        UnityEngine.Debug.LogException(ex);
+                                    }
+                                }
                             }
-                            if(task.Action is not null)
+                            catch (Exception ex)
                             {
-                                task.Action.Invoke();
-                            }
-                            else if (task.Coroutine is not null)
-                            {
-                                _monoBehaviour.StartCoroutine(task.Coroutine);
+                                UnityEngine.Debug.LogError("Thread Scheduler unhandled exception dealing with task!");
+                                UnityEngine.Debug.LogException(ex);
                             }
                         }
                         exit:
@@ -186,7 +224,9 @@ namespace Banter.Utilities.Async
             {
                 sw.Reset();
                 IsRunning = false;
+                UnityEngine.Debug.LogError("EXITED THE COROUTINE, BAD THING TO HAPPEN");
             }
+
         }
 
         private MonoBehaviour _monoBehaviour = null;
@@ -264,7 +304,8 @@ namespace Banter.Utilities.Async
         }
 
 
-        public void Enqueue(IEnumerator coroutine) {
+        public void Enqueue(IEnumerator coroutine)
+        {
             ThrowIfDisposed();
 
             tasks.Enqueue(new(coroutine));
