@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Banter.VisualScripting
 {
-// #if MODULE_PHYSICS_EXISTS
+    // #if MODULE_PHYSICS_EXISTS
     /// <summary>
     /// Called when a collider enters the trigger.
     /// </summary>
@@ -32,10 +32,12 @@ namespace Banter.VisualScripting
             if (user != null)
             {
                 flow.SetValue(this.user, new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
-            }else{
+            }
+            else
+            {
                 flow.SetValue(this.user, null);
             }
         }
     }
-// #endif
+    // #endif
 }

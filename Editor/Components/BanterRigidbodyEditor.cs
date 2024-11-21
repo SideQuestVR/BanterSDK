@@ -53,6 +53,7 @@ namespace Banter.SDKEditor
             togglevelocity.RegisterValueChangedCallback(evt =>
             {
                 script._velocity = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containervelocity.Add(togglevelocity);
             myInspector.Add(containervelocity);
@@ -67,18 +68,19 @@ namespace Banter.SDKEditor
             toggleangularVelocity.RegisterValueChangedCallback(evt =>
             {
                 script._angularVelocity = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerangularVelocity.Add(toggleangularVelocity);
             myInspector.Add(containerangularVelocity);
 
-//#if BANTER_EDITOR
+            //#if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false; 
+            foldout.value = false;
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
-//#endif
+            //#endif
 
             return myInspector;
         }

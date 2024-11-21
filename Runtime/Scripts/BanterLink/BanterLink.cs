@@ -50,7 +50,7 @@ namespace Banter.SDK
             {
                 scene.state = SceneState.NOTHING_20S;
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 30 seconds...");
-               UnityMainThreadTaskScheduler.Default.Enqueue(() => timeoutDisplay = Time.time);
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => timeoutDisplay = Time.time);
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
             }
             else if (msg.StartsWith(APICommands.NOTHING))
