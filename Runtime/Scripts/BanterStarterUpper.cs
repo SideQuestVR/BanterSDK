@@ -34,8 +34,8 @@ namespace Banter.SDK
 
         void Awake()
         {
-            //if (!initialized)
-            //{
+            if (!initialized)
+            {
                 UnityGame.SetMainThread();
                 var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
                 unitySched.SetMonoBehaviour(this);
@@ -44,7 +44,7 @@ namespace Banter.SDK
                     StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
-            //}
+            }
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
 #if !BANTER_EDITOR
@@ -150,6 +150,14 @@ namespace Banter.SDK
         {
             scene.state = SceneState.NONE;
             scene.Destroy();
+            try
+            {
+                var unitySched = UnityMainThreadTaskScheduler.Default;
+                unitySched.Cancel();
+            }
+            catch (Exception e)
+            {
+            }
         }
         private void SetupBrowserLink()
         {
