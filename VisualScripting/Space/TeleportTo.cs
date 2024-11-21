@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
 using System.Linq;
+using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
@@ -36,7 +37,7 @@ namespace Banter.VisualScripting
                 var rotation = flow.GetValue<float>(targetRotation);
                 var stop = flow.GetValue<bool>(stopVelocity);
                 var spawn = flow.GetValue<bool>(isSpawn);
-                BanterScene.Instance().mainThread?.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     BanterScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, rotation, 0f), stop, spawn);
                 });

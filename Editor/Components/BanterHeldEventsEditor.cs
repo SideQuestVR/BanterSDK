@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("sensitivity, fireRate, auto, blockThumbstick, blockPrimary, blockSecondary, blockThumbstickClick, ");
+            var seeFields = new Label("sensitivity, fireRate, auto, blockLeftPrimary, blockLeftSecondary, blockRightPrimary, blockRightSecondary, blockLeftThumbstick, blockLeftThumbstickClick, blockRightThumbstick, blockRightThumbstickClick, blockLeftTrigger, blockRightTrigger, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

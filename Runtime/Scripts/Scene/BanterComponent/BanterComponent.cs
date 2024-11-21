@@ -1,3 +1,4 @@
+using Banter.Utilities.Async;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -14,7 +15,6 @@ namespace Banter.SDK
         public BanterObject banterObject;
         public float progress;
         public bool loaded;
-        UnityMainThreadDispatcher mainThread;
         public void SetProperty(PropertyName name, PropertyType type, object value, Action callback = null)
         {
             BanterComponentProperty prop;
@@ -103,11 +103,7 @@ namespace Banter.SDK
 
         public Task ObjectOnMainThread(Action<BanterComponentBase> callback)
         {
-            if (!mainThread)
-            {
-                mainThread = UnityMainThreadDispatcher.Instance();
-            }
-            return mainThread.EnqueueAsync(() =>
+            return UnityMainThreadTaskScheduler.Default.EnqueueAsync(() =>
             {
                 var ObjectId = banterObject.unityAndBanterObject.id;
                 if (ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component))

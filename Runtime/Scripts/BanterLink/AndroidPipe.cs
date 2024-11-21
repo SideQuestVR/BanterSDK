@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using UnityEngine;
+using Banter.Utilities.Async;
 namespace Banter.SDK
 {
     public class AndroidPipe : BanterPipe
@@ -67,7 +68,7 @@ namespace Banter.SDK
                     {
                         await x;
                         UnityEngine.Debug.Log("BanterSocketClient connected");
-                        UnityMainThreadDispatcher.Instance().Enqueue(() => { connectedCallback(); });
+                        UnityMainThreadTaskScheduler.Default.Enqueue(() => { connectedCallback(); });
                     }
                     catch (Exception e)
                     {

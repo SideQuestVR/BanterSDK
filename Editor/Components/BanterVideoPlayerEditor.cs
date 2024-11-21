@@ -53,6 +53,7 @@ namespace Banter.SDKEditor
             toggletime.RegisterValueChangedCallback(evt =>
             {
                 script._time = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containertime.Add(toggletime);
             myInspector.Add(containertime);

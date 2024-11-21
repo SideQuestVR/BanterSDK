@@ -22,6 +22,9 @@ namespace Banter.SDKEditor
             {
                 script.ForceGenerateId();
                 myInspector.Q<TextField>("id").value = script.Id;
+                EditorUtility.SetDirty(script);
+                Debug.Log(EditorUtility.IsPersistent(script));
+                PrefabUtility.RecordPrefabInstancePropertyModifications(script);
             });
             return myInspector;
         }

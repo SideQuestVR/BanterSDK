@@ -3,6 +3,7 @@ using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
 using System.Linq;
+using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
@@ -25,7 +26,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var valGravity = flow.GetValue<Vector3>(gravity);
-                BanterScene.Instance().mainThread?.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     Physics.gravity = valGravity;
                 });

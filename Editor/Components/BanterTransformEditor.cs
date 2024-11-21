@@ -53,6 +53,7 @@ namespace Banter.SDKEditor
             toggleposition.RegisterValueChangedCallback(evt =>
             {
                 script._position = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerposition.Add(toggleposition);
             myInspector.Add(containerposition);
@@ -67,6 +68,7 @@ namespace Banter.SDKEditor
             togglelocalPosition.RegisterValueChangedCallback(evt =>
             {
                 script._localPosition = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerlocalPosition.Add(togglelocalPosition);
             myInspector.Add(containerlocalPosition);
@@ -81,6 +83,7 @@ namespace Banter.SDKEditor
             togglerotation.RegisterValueChangedCallback(evt =>
             {
                 script._rotation = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerrotation.Add(togglerotation);
             myInspector.Add(containerrotation);
@@ -95,6 +98,7 @@ namespace Banter.SDKEditor
             togglelocalRotation.RegisterValueChangedCallback(evt =>
             {
                 script._localRotation = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerlocalRotation.Add(togglelocalRotation);
             myInspector.Add(containerlocalRotation);
@@ -109,6 +113,7 @@ namespace Banter.SDKEditor
             togglelocalScale.RegisterValueChangedCallback(evt =>
             {
                 script._localScale = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerlocalScale.Add(togglelocalScale);
             myInspector.Add(containerlocalScale);
@@ -123,6 +128,7 @@ namespace Banter.SDKEditor
             toggleeulerAngles.RegisterValueChangedCallback(evt =>
             {
                 script._eulerAngles = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containereulerAngles.Add(toggleeulerAngles);
             myInspector.Add(containereulerAngles);
@@ -137,6 +143,7 @@ namespace Banter.SDKEditor
             togglelocalEulerAngles.RegisterValueChangedCallback(evt =>
             {
                 script._localEulerAngles = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerlocalEulerAngles.Add(togglelocalEulerAngles);
             myInspector.Add(containerlocalEulerAngles);
@@ -151,6 +158,7 @@ namespace Banter.SDKEditor
             toggleup.RegisterValueChangedCallback(evt =>
             {
                 script._up = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerup.Add(toggleup);
             myInspector.Add(containerup);
@@ -165,6 +173,7 @@ namespace Banter.SDKEditor
             toggleforward.RegisterValueChangedCallback(evt =>
             {
                 script._forward = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerforward.Add(toggleforward);
             myInspector.Add(containerforward);
@@ -179,6 +188,7 @@ namespace Banter.SDKEditor
             toggleright.RegisterValueChangedCallback(evt =>
             {
                 script._right = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerright.Add(toggleright);
             myInspector.Add(containerright);

@@ -9,6 +9,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
+using Banter.Utilities.Async;
+using Banter.Utilities;
+
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -115,7 +118,6 @@ namespace Banter.SDK
                 return state == SceneState.DOM_READY || state == SceneState.SCENE_READY || state == SceneState.UNITY_READY || state == SceneState.SCENE_START;
             }
         }
-        public UnityMainThreadDispatcher mainThread;
         public string CurrentUrl;
         public bool ClearCacheOnRejoin;
         public Guid InstanceID { get; private set; }
@@ -225,20 +227,26 @@ namespace Banter.SDK
         #region Player Events
         public void Release(GameObject obj, HandSide side = HandSide.LEFT)
         {
-            var interaction = obj.GetComponent<BanterPlayerEvents>();
-            if (interaction != null)
-            {
-                interaction.onRelease.Invoke(side);
-            }
+            // var interaction = obj.GetComponent<BanterPlayerEvents>();
+            // if (interaction != null)
+            // {
+            //     interaction.onRelease.Invoke(side);
+            // }
+            // #if BANTER_VISUAL_SCRIPTING
+            //         EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { side }));
+            // #endif
             link.OnRelease(obj, side);
         }
         public void Grab(GameObject obj, Vector3 point, HandSide side = HandSide.LEFT)
         {
-            var interaction = obj.GetComponent<BanterPlayerEvents>();
-            if (interaction != null)
-            {
-                interaction.onGrab.Invoke(point, side);
-            }
+            // var interaction = obj.GetComponent<BanterPlayerEvents>();
+            // if (interaction != null)
+            // {
+            //     interaction.onGrab.Invoke(point, side);
+            // }
+            // #if BANTER_VISUAL_SCRIPTING
+            //         EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, side }));
+            // #endif
             link.OnGrab(obj, point, side);
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
@@ -248,6 +256,9 @@ namespace Banter.SDK
             {
                 interaction.onClick.Invoke(point, normal);
             }
+#if BANTER_VISUAL_SCRIPTING
+        EventBus.Trigger("OnClick", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, normal }));
+#endif
             link.OnClick(obj, point, normal);
         }
         #endregion
@@ -268,7 +279,7 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-            mainThread.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
@@ -282,7 +293,7 @@ namespace Banter.SDK
             }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
-            mainThread.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
@@ -295,17 +306,17 @@ namespace Banter.SDK
         }
         public void OpenPage(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnPageOpened.Invoke(msg));
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnPageOpened.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OPEN_PAGE);
         }
         public void StartTTS(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnTTsStarted.Invoke(msg == "1"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStarted.Invoke(msg == "1"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.START_TTS);
         }
         public void StopTTS(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnTTsStoped.Invoke(msg));
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStoped.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.STOP_TTS);
         }
         public void Gravity(string msg, int reqId)
@@ -317,14 +328,14 @@ namespace Banter.SDK
                 return;
             }
             var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
-            mainThread?.Enqueue(() => Physics.gravity = gravity);
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => Physics.gravity = gravity);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = NumberFormat.Parse(msg);
-            mainThread?.Enqueue(() => Time.timeScale = timeScale);
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => Time.timeScale = timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
         public void PlayerSpeed(string msg, int reqId)
@@ -336,10 +347,10 @@ namespace Banter.SDK
 
         public void LockThing(int reqId, UnityEvent handler, string command)
         {
-            mainThread?.Enqueue(() =>
-            {
-                handler.Invoke();
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 handler.Invoke();
+             });
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + command);
         }
         public void Teleport(string msg, int reqId)
@@ -354,10 +365,10 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(() =>
-            {
-                events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
+             });
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
         public void YtInfo(string youtubeId, int reqId)
@@ -366,17 +377,17 @@ namespace Banter.SDK
             {
                 { "Content-Type", "application/json" },
             };
-            mainThread?.Enqueue(async () =>
-            {
-                var videoInfo = await Post.Text(
-                    "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
-                    "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" + youtubeId + "\"}",
-                    headers
-                );
-                var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
-                var cleanJson = JsonUtility.ToJson(responseContext);
-                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+             {
+                 var videoInfo = await Post.Text(
+                     "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+                     "{\"context\": {\"client\": {\"clientName\": \"ANDROID_TESTSUITE\",\"clientVersion\": \"1.9\",\"hl\": \"en\", \"androidSdkVersion\": 31}},\"videoId\": \"" + youtubeId + "\"}",
+                     headers
+                 );
+                 var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
+                 var cleanJson = JsonUtility.ToJson(responseContext);
+                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
+             });
         }
         #endregion
 
@@ -499,14 +510,14 @@ namespace Banter.SDK
                 uBanterObject.banterObject.AddComponent(componetId, component);
                 banterComponents.TryAdd(componetId, component);
                 // Components added inside unity asset bundels load at weird times.
-                mainThread?.Enqueue(() =>
-                {
-                    var banterComponent = uBanterObject.id.mainThreadComponentMap.FirstOrDefault(x => x.Key == componetId).Value;
-                    if (banterComponent != null && banterComponent._loaded)
-                    {
-                        component.loaded = banterComponent._loaded;
-                    }
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     var banterComponent = uBanterObject.id.mainThreadComponentMap.FirstOrDefault(x => x.Key == componetId).Value;
+                     if (banterComponent != null && banterComponent._loaded)
+                     {
+                         component.loaded = banterComponent._loaded;
+                     }
+                 });
                 return component;
             }
             return null;
@@ -723,21 +734,21 @@ namespace Banter.SDK
                     Debug.LogError("[Banter] Error updating component offthread: " + e.Message + ": " + (gameObject.id == null) + ", " + msg);
                 }
             }
-            mainThread?.Enqueue(() =>
-            {
-                for (int i = 0; i < sheetFerMainThread.Count; i++)
-                {
-                    var s = sheetFerMainThread[i];
-                    try
-                    {
-                        s.Item1.Deserialise(s.Item2);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError("[Banter] Error updating component: " + e.Message + ": " + msg);
-                    }
-                }
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 for (int i = 0; i < sheetFerMainThread.Count; i++)
+                 {
+                     var s = sheetFerMainThread[i];
+                     try
+                     {
+                         s.Item1.Deserialise(s.Item2);
+                     }
+                     catch (Exception e)
+                     {
+                         Debug.LogError("[Banter] Error updating component: " + e.Message + ": " + msg);
+                     }
+                 }
+             });
         }
         public async void CallMethodOnJsComponent(string msg, int reqId, string full)
         {
@@ -859,11 +870,11 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                mainThread?.Enqueue(() =>
-                {
-                    banterObject.SetActive(int.Parse(msgParts[1]) == 1);
-                    SendObjectUpdate(banterObject, reqId);
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     banterObject.SetActive(int.Parse(msgParts[1]) == 1);
+                     SendObjectUpdate(banterObject, reqId);
+                 });
             }
         }
         public void SetJsObjectLayer(string msg, int reqId)
@@ -877,11 +888,11 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                mainThread?.Enqueue(() =>
-                {
-                    banterObject.layer = int.Parse(msgParts[1]);
-                    SendObjectUpdate(banterObject, reqId);
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     banterObject.layer = int.Parse(msgParts[1]);
+                     SendObjectUpdate(banterObject, reqId);
+                 });
             }
         }
         public void PhysicsRaycast(string msg, int reqId)
@@ -896,62 +907,62 @@ namespace Banter.SDK
             var direction = new Vector3(NumberFormat.Parse(msgParts[3]), NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]));
             var maxDistance = msgParts.Length > 6 ? NumberFormat.Parse(msgParts[6]) : -1;
             var layerMask = msgParts.Length > 7 ? int.Parse(msgParts[7]) : -1;
-            mainThread.Enqueue(() =>
-            {
-                RaycastHit hit;
-                bool didHit = false;
-                if (msgParts.Length == 6)
-                {
-                    didHit = Physics.Raycast(position, direction, out hit);
-                }
-                else if (msgParts.Length == 7)
-                {
-                    didHit = Physics.Raycast(position, direction, out hit, maxDistance);
-                }
-                else
-                {
-                    didHit = Physics.Raycast(position, direction, out hit, maxDistance, layerMask);
-                }
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 RaycastHit hit;
+                 bool didHit = false;
+                 if (msgParts.Length == 6)
+                 {
+                     didHit = Physics.Raycast(position, direction, out hit);
+                 }
+                 else if (msgParts.Length == 7)
+                 {
+                     didHit = Physics.Raycast(position, direction, out hit, maxDistance);
+                 }
+                 else
+                 {
+                     didHit = Physics.Raycast(position, direction, out hit, maxDistance, layerMask);
+                 }
 
-                if (didHit)
-                    link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
-            });
+                 if (didHit)
+                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
+             });
         }
         public void InstantiateJsObject(string msg, int reqId)
         {
             var gameObject = GetGameObject(int.Parse(msg));
             if (gameObject != null)
             {
-                mainThread?.Enqueue(async () =>
-                {
-                    var newObject = GameObject.Instantiate(gameObject);
-                    var objectId = newObject.GetComponent<BanterObjectId>();
-                    objectId.GenerateId(true);
-                    newObject.transform.parent = settings.parentTransform;
-                    AddBanterObject(newObject, objectId);
-                    var banterObject = GetBanterObject(newObject.GetInstanceID());
-                    await new WaitForEndOfFrame();
-                    foreach (var comp in banterObject.banterComponents)
-                    {
-                        await comp.Value.GetProperties();
-                        foreach (var prop in comp.Value.componentProperties)
-                        {
-                            string change = Serialise(prop.Value, comp.Value);
-                            if (change != null)
-                            {
-                                EnqueueChange(change);
-                            }
-                        }
-                    }
-                    //dirty = true;
-                    await new WaitForEndOfFrame();
-                    SendObjectUpdate(newObject, reqId);
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+                 {
+                     var newObject = GameObject.Instantiate(gameObject);
+                     var objectId = newObject.GetComponent<BanterObjectId>();
+                     objectId.GenerateId(true);
+                     newObject.transform.parent = settings.parentTransform;
+                     AddBanterObject(newObject, objectId);
+                     var banterObject = GetBanterObject(newObject.GetInstanceID());
+                     await new WaitForEndOfFrame();
+                     foreach (var comp in banterObject.banterComponents)
+                     {
+                         await comp.Value.GetProperties();
+                         foreach (var prop in comp.Value.componentProperties)
+                         {
+                             string change = Serialise(prop.Value, comp.Value);
+                             if (change != null)
+                             {
+                                 EnqueueChange(change);
+                             }
+                         }
+                     }
+                     //dirty = true;
+                     await new WaitForEndOfFrame();
+                     SendObjectUpdate(newObject, reqId);
+                 });
             }
         }
         public void SendBrowserMessage(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => events.OnMenuBrowserMessage.Invoke(msg));
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnMenuBrowserMessage.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SEND_MENU_BROWSER_MESSAGE);
         }
         public void AddJsComponent(string msg, int reqId)
@@ -975,29 +986,29 @@ namespace Banter.SDK
             }
             var linkId = parts[1];
             var componentType = (ComponentType)int.Parse(parts[2]);
-            mainThread?.Enqueue(() =>
-            {
-                if (!isReady)
-                {
-                    return;
-                }
-                var comp = BanterComponentFromType.CreateComponent(gameObject, componentType);
-                if (comp == null)
-                {
-                    Debug.LogError("[Banter] Component type not found: " + componentType);
-                    return;
-                }
-                var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), componentType);
-                if (banterComp != null)
-                {
-                    link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
-                    APICommands.COMPONENT_ADDED + MessageDelimiters.PRIMARY + banterComp.banterObject.oid + MessageDelimiters.PRIMARY + banterComp.cid +
-                    MessageDelimiters.PRIMARY + (int)banterComp.type + MessageDelimiters.PRIMARY + linkId);
-                }
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 if (!isReady)
+                 {
+                     return;
+                 }
+                 var comp = BanterComponentFromType.CreateComponent(gameObject, componentType);
+                 if (comp == null)
+                 {
+                     Debug.LogError("[Banter] Component type not found: " + componentType);
+                     return;
+                 }
+                 var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), componentType);
+                 if (banterComp != null)
+                 {
+                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
+                     APICommands.COMPONENT_ADDED + MessageDelimiters.PRIMARY + banterComp.banterObject.oid + MessageDelimiters.PRIMARY + banterComp.cid +
+                     MessageDelimiters.PRIMARY + (int)banterComp.type + MessageDelimiters.PRIMARY + linkId);
+                 }
 
-                var constructorProps = SetComponentProperties(3, parts, banterComp, msg);
-                comp.Init(constructorProps);
-            });
+                 var constructorProps = SetComponentProperties(3, parts, banterComp, msg);
+                 comp.Init(constructorProps);
+             });
         }
         private List<object> SetComponentProperties(int startIndex, string[] parts, BanterComponent banterComp, string msg = null)
         {
@@ -1084,11 +1095,11 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[1]));
             if (banterObject != null && parentObject != null)
             {
-                mainThread?.Enqueue(() =>
-                {
-                    banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
-                    SendObjectUpdate(banterObject, reqId);
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
+                     SendObjectUpdate(banterObject, reqId);
+                 });
             }
         }
         public async Task WaitForEndOfFrame(int reqId)
@@ -1098,7 +1109,7 @@ namespace Banter.SDK
         }
         public void UpdateJsObject(string msg, int reqId)
         {
-            mainThread?.Enqueue(() => SendObjectUpdate(int.Parse(msg), reqId));
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => SendObjectUpdate(int.Parse(msg), reqId));
         }
         // TODO: Lets look at what this is doing and why, it could be better to propagate updates back to the object another way
         void SendObjectUpdate(int oid, int reqId)
@@ -1122,52 +1133,52 @@ namespace Banter.SDK
 
         public void DestroyJsObject(int oid, int reqId)
         {
-            mainThread?.Enqueue(() =>
-            {
-                var gameObject = GetGameObject(oid);
-                if (gameObject != null)
-                {
-                    // Should trigger OnDestroy on BanterObjectId to clean the object up.
-                    // Calling set active so that OnDestroy is called.
-                    gameObject.SetActive(true);
-                    GameObject.Destroy(GetGameObject(oid));
-                }
-                else
-                {
-                    // GameObject is null, killing the banter object now.
-                    BanterScene.Instance().DestroyBanterObject(oid);
-                }
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 var gameObject = GetGameObject(oid);
+                 if (gameObject != null)
+                 {
+                     // Should trigger OnDestroy on BanterObjectId to clean the object up.
+                     // Calling set active so that OnDestroy is called.
+                     gameObject.SetActive(true);
+                     GameObject.Destroy(GetGameObject(oid));
+                 }
+                 else
+                 {
+                     // GameObject is null, killing the banter object now.
+                     BanterScene.Instance().DestroyBanterObject(oid);
+                 }
 
-            });
+             });
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
         }
         public void DestroyJsComponent(int cid, int reqId)
         {
             if (banterComponents.TryGetValue(cid, out var comp))
             {
-                mainThread?.Enqueue(() =>
-                {
-                    var gameObject = GetObject(comp.banterObject.oid);
-                    if (gameObject.id != null)
-                    {
-                        try
-                        {
-                            if (gameObject.id.mainThreadComponentMap.ContainsKey(cid))
-                            {
-                                GameObject.Destroy(gameObject.id.mainThreadComponentMap[cid]);
-                            }
-                        }
-                        catch (Exception e)
-                        {
-                            Debug.LogError("[Banter] Error destroying component: " + e.Message);
-                        }
-                    }
-                    var component = GetBanterComponent(cid);
-                    if (component != null)
-                    {
-                        DestroyBanterComponent(cid);
-                    }
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     var gameObject = GetObject(comp.banterObject.oid);
+                     if (gameObject.id != null)
+                     {
+                         try
+                         {
+                             if (gameObject.id.mainThreadComponentMap.ContainsKey(cid))
+                             {
+                                 GameObject.Destroy(gameObject.id.mainThreadComponentMap[cid]);
+                             }
+                         }
+                         catch (Exception e)
+                         {
+                             Debug.LogError("[Banter] Error destroying component: " + e.Message);
+                         }
+                     }
+                     var component = GetBanterComponent(cid);
+                     if (component != null)
+                     {
+                         DestroyBanterComponent(cid);
+                     }
+                 });
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
             }
         }
@@ -1186,29 +1197,37 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Add Object message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(async () =>
-            {
-                try
-                {
-                    var go = new GameObject(parts[2]);
-                    go.transform.parent = settings.parentTransform;
-                    AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
-                    link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
-                    await new WaitForSeconds(2);
-                    if (parts[1] == "0")
-                    {
-                        Debug.Log("Creating object that is not active: " + go.name);
-                        go.SetActive(false);
-                    }
-                }
-                catch (Exception)
-                {
-                    Debug.LogError("[Banter] Add Object after act: " + msg);
-                }
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+             {
+                 try
+                 {
+                     var go = new GameObject(parts[2]);
+                     go.transform.parent = settings.parentTransform;
+                     AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
+                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
+                     await new WaitForSeconds(2);
+                     if (parts[1] == "0")
+                     {
+                         Debug.Log("Creating object that is not active: " + go.name);
+                         go.SetActive(false);
+                     }
+                 }
+                 catch (Exception)
+                 {
+                     Debug.LogError("[Banter] Add Object after act: " + msg);
+                 }
+             });
         }
         public void Cancel(string message, bool isUserCancel = false)
         {
+            if (!UnityGame.OnMainThread)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    Cancel(message, isUserCancel);
+                });
+                return;
+            }
             loaded = true;
             loading = false;
             externalLoadFailed = true;
@@ -1222,7 +1241,7 @@ namespace Banter.SDK
             // // _ = loadingManager.LoadOut();
             // loadingManager?.SetLoadProgress("Failed to load", 0, message, true);
             // loadingManager?.CancelPressed();
-            // mainThread?.Enqueue(() => {
+            //UnityMainThreadTaskScheduler.Default.QueueAction(() => {
             //     events.OnLoadFailed.Invoke(message);
             // });
             // }
@@ -1236,10 +1255,10 @@ namespace Banter.SDK
         }
         void ResetSceneAbilitySettings()
         {
-            mainThread?.Enqueue(() =>
-            {
-                _ = settings.Reset();
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 _ = settings.Reset();
+             });
         }
         public async Task ResetScene()
         {
@@ -1251,10 +1270,10 @@ namespace Banter.SDK
                 ResetSceneAbilitySettings();
                 ResetLoadingProgress();
                 bundlesLoaded = false;
-                mainThread?.Enqueue(() =>
-                {
-                    events.OnSceneReset.Invoke();
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     events.OnSceneReset.Invoke();
+                 });
                 // This seems to be a bug in 2022, hard crash without this line.
                 GameObject.FindObjectsOfType<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
                 await Resources.UnloadUnusedAssets();
@@ -1269,6 +1288,21 @@ namespace Banter.SDK
             loadingManager?.Preload();
             await loadingManager?.LoadIn(url);
         }
+        public async Task ShowSpaceImage(string url)
+        {
+            try
+            {
+                var space = await Get.SpaceMeta(url);
+                if (space != null && !string.IsNullOrEmpty(space.icon))
+                {
+                    loadingTexture = await Get.Texture(space.icon + "?size=1280");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[Banter] Error loading space image: " + url + " : " + e.Message);
+            }
+        }
         public async Task LoadUrl(string url, bool isLoadingOpen = false)
         {
             state = SceneState.NONE;
@@ -1280,69 +1314,53 @@ namespace Banter.SDK
             this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
             loadingManager?.UpdateCancelText();
             ResetLoadingProgress();
-            if (UnityMainThreadDispatcher.Exists())
+            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
-                mainThread?.Enqueue(async () =>
+                if (!isLoadingOpen)
                 {
-                    if (!isLoadingOpen)
-                    {
-                        await this.OpenLoadingScreen(url);
-                    }
-                    // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
-                    if (!Application.isPlaying)
-                    {
-                        return;
-                    }
-                    try
-                    {
-                        var space = await Get.SpaceMeta(url);
-                        if (space != null && !string.IsNullOrEmpty(space.icon))
-                        {
-                            loadingTexture = await Get.Texture(space.icon + "?size=2048");
-                        }
-                    }
-                    catch (Exception)
-                    {
-
-                    }
-                    await ResetScene();
-                    await link.LoadUrl(url);
-                    await new WaitUntil(() => loaded);
-                    LoadingStatus = "Please wait, loading live space...";
-                    if (HasLoadFailed())
-                    {
-                        loading = false;
-                        return;
-                    }
-                    // link.OnUnitySceneLoaded();
-                    // state = SceneState.UNITY_READY;
-                    loadUrlTaskCompletionSource.SetResult(true);
-                    mainThread?.Enqueue(() =>
-                    {
-                        events.OnUnitySceneLoad.Invoke(url);
-                    });
-                    await Task.Delay(2500);
-                    await loadingManager?.LoadOut();
+                    await this.OpenLoadingScreen(url);
+                }
+                // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
+                if (!Application.isPlaying)
+                {
+                    return;
+                }
+                _ = ShowSpaceImage(url);
+                await ResetScene();
+                await link.LoadUrl(url);
+                await new WaitUntil(() => loaded);
+                LoadingStatus = "Please wait, loading live space...";
+                if (HasLoadFailed())
+                {
                     loading = false;
+                    return;
+                }
+                loadUrlTaskCompletionSource.SetResult(true);
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    events.OnUnitySceneLoad.Invoke(url);
                 });
-                await loadUrlTaskCompletionSource.Task;
-            }
+                await Task.Delay(2500);
+                await loadingManager?.LoadOut();
+                loading = false;
+            });
+            await loadUrlTaskCompletionSource.Task;
         }
         public async Task OnLoad(string instanceId)
         {
             // This is fired when the page loads or realods from the browser end, so it can be fired becuase 
             // we have explicitly naviagted the page, but also becuase someone hut f5 in the debugger. 
             state = SceneState.NONE;
-            mainThread?.Enqueue(() =>
-            {
-                if (settings != null)
-                {
-                    _ = settings.Reset();
-                    settings.Destroy();
-                }
-                settings = new BanterSceneSettings(instanceId);
-                events.OnLoad.Invoke();
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 if (settings != null)
+                 {
+                     _ = settings.Reset();
+                     settings.Destroy();
+                 }
+                 settings = new BanterSceneSettings(instanceId);
+                 events.OnLoad.Invoke();
+             });
             // TODO: This wont work with 5 ms, but I tested it hundreds of times at 10ms and it never 
             // failed at that level. Maybe it is because the other thread stuff above? I think so. 
             // Maybe it will fail on android? Or other slower computers? Making it 100 for good measure.
@@ -1494,11 +1512,11 @@ namespace Banter.SDK
             }
             if (toReenqueue?.Count > 0)
             {
-                mainThread?.Enqueue(() =>
-                {
-                    Debug.LogWarning($"Having to reenqueue {toReenqueue.Count}");
-                    EnqueuePropertyUpdates(toReenqueue);
-                });
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                 {
+                     Debug.LogWarning($"Having to reenqueue {toReenqueue.Count}");
+                     EnqueuePropertyUpdates(toReenqueue);
+                 });
             }
         }
 
@@ -1575,57 +1593,57 @@ namespace Banter.SDK
         public void SetSettings(string msg, int reqId)
         {
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
-            mainThread?.Enqueue(() =>
-            {
-                foreach (var part in settingsParts)
-                {
-                    var setting = part.Split(MessageDelimiters.SECONDARY);
-                    switch (setting[0])
-                    {
-                        case SettingsMap.EnableDevTools:
-                            settings.EnableDevTools = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableTeleport:
-                            settings.EnableTeleport = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableForceGrab:
-                            settings.EnableForceGrab = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableSpiderMan:
-                            settings.EnableSpiderMan = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableDefaultTextures:
-                            settings.EnableDefaultTextures = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnablePortals:
-                            settings.EnablePortals = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableGuests:
-                            settings.EnableGuests = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableFriendPositionJoin:
-                            settings.EnableFriendPositionJoin = setting[1] == "1";
-                            break;
-                        case SettingsMap.EnableAvatars:
-                            settings.EnableAvatars = setting[1] == "1";
-                            break;
-                        case SettingsMap.MaxOccupancy:
-                            settings.MaxOccupancy = int.Parse(setting[1]);
-                            break;
-                        case SettingsMap.RefreshRate:
-                            settings.RefreshRate = int.Parse(setting[1]);
-                            break;
-                        case SettingsMap.ClippingPlane:
-                            var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                            settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]), NumberFormat.Parse(clippingParts[2]));
-                            break;
-                        case SettingsMap.SpawnPoint:
-                            var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                            settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
-                            break;
-                    }
-                }
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 foreach (var part in settingsParts)
+                 {
+                     var setting = part.Split(MessageDelimiters.SECONDARY);
+                     switch (setting[0])
+                     {
+                         case SettingsMap.EnableDevTools:
+                             settings.EnableDevTools = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableTeleport:
+                             settings.EnableTeleport = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableForceGrab:
+                             settings.EnableForceGrab = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableSpiderMan:
+                             settings.EnableSpiderMan = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableDefaultTextures:
+                             settings.EnableDefaultTextures = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnablePortals:
+                             settings.EnablePortals = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableGuests:
+                             settings.EnableGuests = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableFriendPositionJoin:
+                             settings.EnableFriendPositionJoin = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableAvatars:
+                             settings.EnableAvatars = setting[1] == "1";
+                             break;
+                         case SettingsMap.MaxOccupancy:
+                             settings.MaxOccupancy = int.Parse(setting[1]);
+                             break;
+                         case SettingsMap.RefreshRate:
+                             settings.RefreshRate = int.Parse(setting[1]);
+                             break;
+                         case SettingsMap.ClippingPlane:
+                             var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
+                             settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]), NumberFormat.Parse(clippingParts[2]));
+                             break;
+                         case SettingsMap.SpawnPoint:
+                             var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
+                             settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
+                             break;
+                     }
+                 }
+             });
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SCENE_SETTINGS);
         }
         public void FlushObjectToChanges(int oid, int cid = 0, ComponentType ct = 0)
@@ -1705,46 +1723,46 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] LegacySetChildColor message is malformed: " + msg);
                 return;
             }
-            mainThread?.Enqueue(() =>
-            {
-                var obj = GetGameObject(int.Parse(msgParts[0]));
-                var color = new Color(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3]));
-                var path = msgParts[4];
-                if (obj != null)
-                {
-                    try
-                    {
-                        // LogLine.Do("Setting child color: " + path + " - " + color);
-                        obj.transform.Find(path)
-                            .GetComponent<MeshRenderer>().material
-                            .SetColor("_Color", color);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError("[Banter] Error setting child color: " + path + " - " + e.Message);
-                    }
-                }
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 var obj = GetGameObject(int.Parse(msgParts[0]));
+                 var color = new Color(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3]));
+                 var path = msgParts[4];
+                 if (obj != null)
+                 {
+                     try
+                     {
+                         // LogLine.Do("Setting child color: " + path + " - " + color);
+                         obj.transform.Find(path)
+                             .GetComponent<MeshRenderer>().material
+                             .SetColor("_Color", color);
+                     }
+                     catch (Exception e)
+                     {
+                         Debug.LogError("[Banter] Error setting child color: " + path + " - " + e.Message);
+                     }
+                 }
+             });
         }
         public void LegacySetVideoUrl(GameObject gameObject, string url, string id)
         {
-            mainThread?.Enqueue(() =>
-            {
-                var video = gameObject.GetComponentInChildren<VideoPlayer>();
-                if (video != null)
-                {
-                    video.time = 0;
-                    video.url = url;
-                    video.Play();
-                    VideoPlayer.EventHandler callback = null;
-                    callback = (VideoPlayer vp) =>
-                    {
-                        events.OnVideoPrepareCompleted.Invoke(id);
-                        video.prepareCompleted -= callback;
-                    };
-                    video.prepareCompleted += callback;
-                }
-            });
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+             {
+                 var video = gameObject.GetComponentInChildren<VideoPlayer>();
+                 if (video != null)
+                 {
+                     video.time = 0;
+                     video.url = url;
+                     video.Play();
+                     VideoPlayer.EventHandler callback = null;
+                     callback = (VideoPlayer vp) =>
+                     {
+                         events.OnVideoPrepareCompleted.Invoke(id);
+                         video.prepareCompleted -= callback;
+                     };
+                     video.prepareCompleted += callback;
+                 }
+             });
         }
         #endregion
 

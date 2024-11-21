@@ -26,6 +26,7 @@ namespace Banter.SDK
         public override void StartStuff()
         {
             scene.events.OnGrabHandle.Invoke(this);
+            SetLoadedIfNot();
             // throw new NotImplementedException();
         }
 

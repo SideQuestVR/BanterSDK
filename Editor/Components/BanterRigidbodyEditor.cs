@@ -53,6 +53,7 @@ namespace Banter.SDKEditor
             togglevelocity.RegisterValueChangedCallback(evt =>
             {
                 script._velocity = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containervelocity.Add(togglevelocity);
             myInspector.Add(containervelocity);
@@ -67,6 +68,7 @@ namespace Banter.SDKEditor
             toggleangularVelocity.RegisterValueChangedCallback(evt =>
             {
                 script._angularVelocity = evt.newValue;
+                EditorUtility.SetDirty(script);
             });
             containerangularVelocity.Add(toggleangularVelocity);
             myInspector.Add(containerangularVelocity);

@@ -78,14 +78,14 @@ namespace Siccity.GLTFUtility {
 			}
 			// Emissive factor
 			if (emissiveFactor != Color.black) {
-				mat.SetColor("_EmissionColor", emissiveFactor);
+				mat.SetColor("_Color", emissiveFactor);
 				mat.EnableKeyword("_EMISSION");
 			}
 			// Emissive texture
 			if (emissiveTexture != null) {
 				en = TryGetTexture(textures, emissiveTexture, false, tex => {
 					if (tex != null) {
-						mat.SetTexture("_EmissionMap", tex);
+						mat.SetTexture("_MainTex", tex);
 						mat.EnableKeyword("_EMISSION");
 						if (emissiveTexture.extensions != null) {
 							emissiveTexture.extensions.Apply(emissiveTexture, mat, "_EmissionMap");
@@ -143,7 +143,6 @@ namespace Siccity.GLTFUtility {
 				mat.color = baseColorFactor;
 				mat.SetFloat("_Metallic", metallicFactor);
 				mat.SetFloat("_Roughness", roughnessFactor);
-
 				// Assign textures
 				if (textures != null) {
 					// Base color texture
