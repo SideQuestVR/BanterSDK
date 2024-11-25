@@ -69,6 +69,7 @@ namespace Banter.SDK
         public InputActionMap RightHandActions;
         public List<UserData> users = new List<UserData>();
         public List<GameObject> kitItems = new List<GameObject>();
+        public DataBridge data = new DataBridge();
         // SpaceState spaceState = new SpaceState();
         public bool loaded = false;
         public bool bundlesLoaded = false;
