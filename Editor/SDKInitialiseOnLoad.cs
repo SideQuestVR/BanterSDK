@@ -7,9 +7,9 @@ using Banter.SDK;
 namespace Banter.SDKEditor
 {
     [InitializeOnLoad]
-    public static class SDKInitializeOnLoad
+    public static class InitialiseOnLoad
     {
-        static SDKInitializeOnLoad()
+        static InitialiseOnLoad()
         {
 #if !BANTER_EDITOR
             SetupLayersAndTags();
