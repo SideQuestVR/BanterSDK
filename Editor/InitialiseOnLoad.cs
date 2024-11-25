@@ -11,8 +11,23 @@ namespace Banter.SDKEditor
     {
         static InitialiseOnLoad()
         {
+#if !BANTER_EDITOR
             SetupLayersAndTags();
             CreateWebRoot();
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+#endif
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange change)
+        {
+            if (change == PlayModeStateChange.EnteredPlayMode)
+            {
+                if (Object.FindObjectOfType<BanterStarterUpper>() == null)
+                {
+                    var go = new GameObject("BanterStarterUpper");
+                    go.AddComponent<BanterStarterUpper>();
+                }
+            }
         }
 
         static void CreateWebRoot()
