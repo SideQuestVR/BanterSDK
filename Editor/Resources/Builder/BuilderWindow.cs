@@ -625,7 +625,7 @@ public class BuilderWindow : EditorWindow
         Remove(rootVisualElement.Q<Button>("compileInjection"));
         Remove(rootVisualElement.Q<Button>("kitchenSink"));
 
-        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayersAndTags();
+        rootVisualElement.Q<Button>("setupLayers").clicked += () => SDKInitializeOnLoad.SetupLayersAndTags();
 #endif
 
 #if BANTER_VISUAL_SCRIPTING

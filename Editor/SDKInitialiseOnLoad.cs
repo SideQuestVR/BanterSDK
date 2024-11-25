@@ -7,9 +7,9 @@ using Banter.SDK;
 namespace Banter.SDKEditor
 {
     [InitializeOnLoad]
-    public static class InitialiseOnLoad
+    public static class SDKInitializeOnLoad
     {
-        static InitialiseOnLoad()
+        static SDKInitializeOnLoad()
         {
 #if !BANTER_EDITOR
             SetupLayersAndTags();
@@ -24,6 +24,7 @@ namespace Banter.SDKEditor
             {
                 if (Object.FindObjectOfType<BanterStarterUpper>() == null)
                 {
+                    Debug.LogWarning("BanterStarterUpper not found, adding one.");
                     var go = new GameObject("BanterStarterUpper");
                     go.AddComponent<BanterStarterUpper>();
                 }
