@@ -1,83 +1,15 @@
 using System.Collections.Generic;
 using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
 using UnityEngine;
+using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
-    public class InitialiseOnLoad
+    [InitializeOnLoad]
+    public static class InitialiseOnLoad
     {
-        public static Dictionary<int, string> layersToAdd = new Dictionary<int, string> {
-            { 3, "UserLayer1" },
-            { 6, "UserLayer2" },
-            { 7, "UserLayer3" },
-            { 8, "UserLayer4" },
-            { 9, "UserLayer5" },
-            { 10, "UserLayer6" },
-            { 11, "UserLayer7" },
-            { 12, "UserLayer8" },
-            { 13, "UserLayer9" },
-            { 14, "UserLayer10" },
-            { 15, "UserLayer11" },
-            { 16, "UserLayer12" },
-            { 17, "NetworkPlayer" },
-            { 18, "RPMAvatarHead" },
-            { 19, "RPMAvatarBody" },
-            { 20, "Grabbable" },
-            { 21, "HandColliders" },
-            { 22, "Menu" },
-            { 23, "PhysicsPlayer" },
-            { 24, "BanterInternal1_DONTUSE" },
-            { 25, "BanterInternal2_DONTUSE" },
-            { 26, "BanterInternal3_DONTUSE" },
-            { 27, "BanterInternal4_DONTUSE" },
-            { 28, "BanterInternal5_DONTUSE" },
-            { 29, "BanterInternal6_DONTUSE" },
-            { 30, "BanterInternal7_DONTUSE" },
-            { 31, "BanterInternal8_DONTUSE" }
-        };
-
-        public static Dictionary<int, string> tagsToAdd = new Dictionary<int, string> {
-            { 0,  "__BA_NameTag" },
-            { 1,  "__BA_NameTagMenu" },
-            { 2,  "__BA_FootRig" },
-            { 3,  "__BA_PlayerHead" },
-            { 4,  "__BA_UNUSED0" },
-            { 5,  "__BA_UNUSED1" },
-            { 6,  "__BA_TriggerIndex" },
-            { 7,  "__BA_PlayerTorso" },
-            { 8,  "__BA_PlayerLegs" },
-            { 9,  "__BA_LocalPlayer" },
-            { 10, "__BA_PlayerLeftHand" },
-            { 11, "__BA_PlayerRightHand" },
-            { 12, "__BA_LocalPlayerFeet" },
-            { 13, "__BA_UserTag0" },
-            { 14, "__BA_UserTag1" },
-            { 15, "__BA_UserTag2" },
-            { 16, "__BA_UserTag3" },
-            { 17, "__BA_UserTag4" },
-            { 18, "__BA_UserTag5" },
-            { 19, "__BA_UserTag6" },
-            { 20, "__BA_UserTag7" },
-            { 21, "__BA_UserTag8" },
-            { 22, "__BA_UserTag9" },
-            { 23, "__BA_UserTag10" },
-            { 24, "__BA_UserTag11" },
-            { 25, "__BA_UserTag12" },
-            { 26, "__BA_UserTag13" },
-            { 27, "__BA_UserTag14" },
-            { 28, "MenuWorldSpace" },
-            { 29, "VRPlayerContextMenu" },
-            { 30, "PortalBall" },
-        };
-
-        static AddRequest Request;
-        [InitializeOnLoadMethod()]
-        static void Go()
+        static InitialiseOnLoad()
         {
             SetupLayersAndTags();
             CreateWebRoot();
@@ -172,36 +104,73 @@ namespace Banter.SDKEditor
 
             // set layer name at index
             var element = prop.GetArrayElementAtIndex(index);
-            // if (string.IsNullOrEmpty(element.stringValue))
-            // {
+
             element.stringValue = name;
             Debug.Log($"Added {semantic} '{name}' at index {index}.");
-            // }
-            // else
-            // {
-            //     Debug.LogWarning("Could not add layer at index " + index + " because there already is another layer '" + element.stringValue + "'." );
-
-            //     if (tryOtherIndex)
-            //     {
-            //         // Go up in layer indices and try to find an empty spot.
-            //         for (int i = index + 1; i < 32; ++i)
-            //         {
-            //             // Extend layers if necessary
-            //             if (i >= layers.arraySize)
-            //                 layers.arraySize = i + 1;
-
-            //             element = layers.GetArrayElementAtIndex(i);
-            //             if (string.IsNullOrEmpty(element.stringValue))
-            //             {
-            //                 element.stringValue = layerName;
-            //                 Debug.Log("Added layer '" + layerName + "' at index " + i + " instead of " + index + ".");
-            //                 return;
-            //             }
-            //         }
-
-            //         Debug.LogError("Could not add layer " + layerName + " because there is no space left in the layers array.");
-            //     }
-            // }
         }
+
+        public static Dictionary<int, string> layersToAdd = new Dictionary<int, string> {
+            { 3, "UserLayer1" },
+            { 6, "UserLayer2" },
+            { 7, "UserLayer3" },
+            { 8, "UserLayer4" },
+            { 9, "UserLayer5" },
+            { 10, "UserLayer6" },
+            { 11, "UserLayer7" },
+            { 12, "UserLayer8" },
+            { 13, "UserLayer9" },
+            { 14, "UserLayer10" },
+            { 15, "UserLayer11" },
+            { 16, "UserLayer12" },
+            { 17, "NetworkPlayer" },
+            { 18, "RPMAvatarHead" },
+            { 19, "RPMAvatarBody" },
+            { 20, "Grabbable" },
+            { 21, "HandColliders" },
+            { 22, "Menu" },
+            { 23, "PhysicsPlayer" },
+            { 24, "BanterInternal1_DONTUSE" },
+            { 25, "BanterInternal2_DONTUSE" },
+            { 26, "BanterInternal3_DONTUSE" },
+            { 27, "BanterInternal4_DONTUSE" },
+            { 28, "BanterInternal5_DONTUSE" },
+            { 29, "BanterInternal6_DONTUSE" },
+            { 30, "BanterInternal7_DONTUSE" },
+            { 31, "BanterInternal8_DONTUSE" }
+        };
+
+        public static Dictionary<int, string> tagsToAdd = new Dictionary<int, string> {
+            { 0,  "__BA_NameTag" },
+            { 1,  "__BA_NameTagMenu" },
+            { 2,  "__BA_FootRig" },
+            { 3,  "__BA_PlayerHead" },
+            { 4,  "__BA_UNUSED0" },
+            { 5,  "__BA_UNUSED1" },
+            { 6,  "__BA_TriggerIndex" },
+            { 7,  "__BA_PlayerTorso" },
+            { 8,  "__BA_PlayerLegs" },
+            { 9,  "__BA_LocalPlayer" },
+            { 10, "__BA_PlayerLeftHand" },
+            { 11, "__BA_PlayerRightHand" },
+            { 12, "__BA_LocalPlayerFeet" },
+            { 13, "__BA_UserTag0" },
+            { 14, "__BA_UserTag1" },
+            { 15, "__BA_UserTag2" },
+            { 16, "__BA_UserTag3" },
+            { 17, "__BA_UserTag4" },
+            { 18, "__BA_UserTag5" },
+            { 19, "__BA_UserTag6" },
+            { 20, "__BA_UserTag7" },
+            { 21, "__BA_UserTag8" },
+            { 22, "__BA_UserTag9" },
+            { 23, "__BA_UserTag10" },
+            { 24, "__BA_UserTag11" },
+            { 25, "__BA_UserTag12" },
+            { 26, "__BA_UserTag13" },
+            { 27, "__BA_UserTag14" },
+            { 28, "MenuWorldSpace" },
+            { 29, "VRPlayerContextMenu" },
+            { 30, "PortalBall" },
+        };
     }
 }
