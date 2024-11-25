@@ -10,5 +10,6 @@ namespace Banter.SDK
     public class DataBridge
     {
         public Func<bool> IsSpaceFavourited = () => false;
+        public Func<bool> IsSpaceOwner = () => false;
     }
 }
