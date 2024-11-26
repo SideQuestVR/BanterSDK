@@ -102,6 +102,8 @@ namespace Banter.SDKEditor
             "UnityEngine",
             "UnityEngine.CoreModule",
             "UnityEngine.PhysicsModule",
+            "UnityEngine.Physics2DModule",
+            "UnityEngine.VehiclesModule",
             "UnityEngine.AudioModule",
             "UnityEngine.AnimationModule",
             "UnityEngine.VideoModule",
