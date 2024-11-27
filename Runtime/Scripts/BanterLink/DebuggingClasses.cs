@@ -40,21 +40,21 @@ namespace Banter.SDK
         private const double LOG_INTERVAL_SEC = 1;
         public string Name { get; private set; }
 
-        private long totalCount = 0;
+        public long TotalCount = 0;
         // private double firstStartStamp = 0;
 
         private double lastStamp = 0;
-        private long lastCount = 0;
+        public long LastCount = 0;
 
         private bool started = false;
 
         private void DumpLog(double nextStamp)
         {
             var delta = nextStamp - lastStamp;
-            string logstr = $"Counter {Name}: {lastCount} in {delta:F2} ({(lastCount / delta):F2}/sec), {totalCount} total";
-            lastCount = 0;
+            string logstr = $"Counter {Name}: {LastCount} in {delta:F2} ({(LastCount / delta):F2}/sec), {TotalCount} total";
+            LastCount = 0;
             lastStamp = nextStamp;
-            Debug.Log(logstr);
+            //Debug.Log(logstr);
         }
 
 
@@ -62,8 +62,8 @@ namespace Banter.SDK
         {
             try
             {
-                totalCount += num;
-                lastCount += num;
+                TotalCount += num;
+                LastCount += num;
 
                 if (!started)
                 {

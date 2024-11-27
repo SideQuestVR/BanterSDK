@@ -10,8 +10,6 @@ using Banter.SDK;
 
 public class ElectronPipe : BanterPipe
 {
-    private CountingLogger incomingLogger = new CountingLogger("ElectronPipe: Web -> Unity");
-    private CountingLogger outgoingLogger = new CountingLogger("ElectronPipe: Unity -> Web");
     private Thread SenderThread;
     private object _SenderThreadLock = new object();
     private ConcurrentQueue<string> toSendQueue = new ConcurrentQueue<string>();
@@ -156,7 +154,7 @@ public class ElectronPipe : BanterPipe
                     if (read > 0)
                     {
                         var strResult = Encoding.Default.GetString(result);
-                        // incomingLogger.Add();
+                        IncomingLogger.Add();
                         callback(strResult);
                     }
                 }
@@ -196,7 +194,7 @@ public class ElectronPipe : BanterPipe
                                 byte[] concat = new byte[b.Length + blen.Length];
                                 Buffer.BlockCopy(blen, 0, concat, 0, 4);
                                 Buffer.BlockCopy(b, 0, concat, 4, b.Length);
-                                // outgoingLogger.Add();
+                                OutgoingLogger.Add();
                                 SendMessage(concat);
                             }
                             else
