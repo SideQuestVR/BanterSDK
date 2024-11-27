@@ -8,7 +8,7 @@ namespace Banter.SDK
     public class AndroidPipe : BanterPipe
     {
         AndroidJavaObject activity;
-        
+
         private CountingLogger fromAndroid = new CountingLogger("AndroidPipe: from android -> unity");
         private BanterSocketClient socketClient;
         public override void Start(Action connectedCallback, Action<string> msgCallback)
