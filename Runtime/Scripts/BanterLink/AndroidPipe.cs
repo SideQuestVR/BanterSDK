@@ -9,8 +9,6 @@ namespace Banter.SDK
     {
         AndroidJavaObject activity;
 
-        private CountingLogger incomingLogger = new CountingLogger("AndroidPipe: Web -> Unity");
-        private CountingLogger outgoingLogger = new CountingLogger("AndroidPipe: Unity -> Web");
         private CountingLogger fromAndroid = new CountingLogger("AndroidPipe: from android -> unity");
         private BanterSocketClient socketClient;
         public override void Start(Action connectedCallback, Action<string> msgCallback)
@@ -20,7 +18,7 @@ namespace Banter.SDK
             var aframe = new AframeCallback();
             aframe.SetCallback(str =>
             {
-                // incomingLogger.Add();
+                IncomingLogger.Add();
 
                 if (str == "A")
                 {
@@ -101,7 +99,7 @@ namespace Banter.SDK
             AndroidJNI.AttachCurrentThread();
             if (activity != null)
             {
-                // outgoingLogger.Add();
+                OutgoingLogger.Add();
                 activity.Call("sendMessage", msg);
             }
         }
