@@ -20,7 +20,7 @@ namespace Banter.SDKEditor
 
         private static void OnPlayModeStateChanged(PlayModeStateChange change)
         {
-            if (change == PlayModeStateChange.EnteredPlayMode)
+            if (change == PlayModeStateChange.ExitingEditMode)
             {
                 if (Object.FindObjectOfType<BanterStarterUpper>() == null)
                 {
