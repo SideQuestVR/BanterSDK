@@ -1,5 +1,4 @@
 #if BANTER_VISUAL_SCRIPTING
-using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
 
@@ -29,13 +28,14 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             url = ValueInput<string>("URL");
-            portal = ValueInput<Portal>("TargetPortal");
+            portal = ValueInput<BanterPortal>("TargetPortal");
             portal.SetDefaultValue(null);
             portal.NullMeansSelf();
 
             input = ControlInput("", (flow) => {
-                var target = flow.GetValue<Portal>(portal);
+                var target = flow.GetValue<BanterPortal>(portal);
                 target.url = flow.GetValue<string>(url);
+                target.UpdateCallback(new System.Collections.Generic.List<PropertyName>() { PropertyName.url });
                 return output;
             });
             output = ControlOutput("");
