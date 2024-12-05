@@ -59,6 +59,7 @@ namespace Banter.VisualScripting
                 var browser = flow.GetValue<BanterBrowser>(browserComponent);
 
                 browser.url = urlVal;
+                browser.UpdateCallback(new System.Collections.Generic.List<PropertyName>() { PropertyName.url });
 
                 return outputTrigger;
             });
