@@ -48,6 +48,7 @@ public class BanterSceneEvents
     public UnityEvent<BanterGrabHandle> OnGrabHandle = new UnityEvent<BanterGrabHandle>();
     public UnityEvent<BanterWorldObject> OnWorldObject = new UnityEvent<BanterWorldObject>();
     public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
+    public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
 
     #region Legacy stuff
 
@@ -102,6 +103,7 @@ public class BanterSceneEvents
         OnTakeOwnership.RemoveAllListeners();
         OnPlayAvatar.RemoveAllListeners();
         OnSyncedObject.RemoveAllListeners();
+        OnAvatarSet.RemoveAllListeners();
 
         // Legacy stuff
         OnLegacyPlayerLockChanged.RemoveAllListeners();

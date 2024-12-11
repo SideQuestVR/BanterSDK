@@ -80,10 +80,10 @@ namespace Banter.SDK
     public class BanterBrowser : BanterComponentBase
     {
         [See(initial = "")] public string url;
-        [See(initial = "4")] public int mipMaps;
-        [See(initial = "1200")] public float pixelsPerUnit;
-        [See(initial = "1024")] public float pageWidth;
-        [See(initial = "576")] public float pageHeight;
+        [See(initial = "4")] public int mipMaps = 4;
+        [See(initial = "1200")] public float pixelsPerUnit = 1200;
+        [See(initial = "1024")] public float pageWidth = 1024;
+        [See(initial = "576")] public float pageHeight = 576;
         [See(initial = "")] public string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         [Method]
