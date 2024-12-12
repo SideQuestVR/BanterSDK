@@ -49,6 +49,7 @@ namespace Banter.SDK
         {
             sceneEvents = BanterScene.Instance().events;
             block = new MaterialPropertyBlock();
+            _ = SetupPortal();
         }
 
         public static async Task SetTexture(string texture, MeshRenderer rend)
@@ -101,7 +102,7 @@ namespace Banter.SDK
         }
 
         public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        public void UpdateCallback(List<PropertyName> changedProperties = null)
         {
             _ = SetupPortal();
         }

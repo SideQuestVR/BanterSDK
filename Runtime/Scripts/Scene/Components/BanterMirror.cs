@@ -57,17 +57,16 @@ namespace Banter.SDK
                 var obj = Instantiate(Resources.Load<GameObject>("Prefabs/BanterMirror3D"));
                 obj.transform.SetParent(transform, false);
                 _renderer = gameObject.GetComponentInChildren<VRPortalRenderer>();
-                return;
             }
-            if (changedProperties?.Contains(PropertyName.renderTextureSize) ?? false)
+            if (changedProperties?.Contains(PropertyName.renderTextureSize) ?? true)
             {
                 _renderer.SetRenderTextureSize(renderTextureSize);
             }
-            if (changedProperties?.Contains(PropertyName.cameraClear) ?? false)
+            if (changedProperties?.Contains(PropertyName.cameraClear) ?? true)
             {
                 _renderer.SetCameraClear(cameraClear);
             }
-            if (changedProperties?.Contains(PropertyName.backgroundColor) ?? false)
+            if (changedProperties?.Contains(PropertyName.backgroundColor) ?? true)
             {
                 _renderer.SetCameraColor(backgroundColor);
             }
