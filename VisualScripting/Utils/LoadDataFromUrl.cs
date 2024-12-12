@@ -51,13 +51,12 @@ namespace Banter.VisualScripting
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    flow.Invoke(failure);
-                    yield break;
+                    yield return failure;
                 }
 
                 var texture = DownloadHandlerTexture.GetContent(request);
                 flow.SetValue(this.texture, texture);
-                flow.Invoke(success);
+                yield return success;
             }
         }
     }
@@ -96,7 +95,7 @@ namespace Banter.VisualScripting
             failure = ControlOutput("Failed");
 
             url = ValueInput<string>("URL");
-            audioType = ValueInput<AudioType>("Audio Type");
+            audioType = ValueInput("Audio Type", AudioType.UNKNOWN);
             audio = ValueOutput<AudioClip>("Audio Clip");
         }
 
@@ -111,13 +110,12 @@ namespace Banter.VisualScripting
 
                 if (request.result != UnityWebRequest.Result.Success)
                 {
-                    flow.Invoke(failure);
-                    yield break;
+                    yield return failure;
                 }
 
                 var clip = DownloadHandlerAudioClip.GetContent(request);
                 flow.SetValue(audio, clip);
-                flow.Invoke(success);
+                yield return success;
             }
         }
     }
