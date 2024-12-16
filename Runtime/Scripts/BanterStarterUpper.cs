@@ -157,6 +157,7 @@ namespace Banter.SDK
                 var unitySched = UnityMainThreadTaskScheduler.Default;
                 unitySched.Cancel();
 #if UNITY_EDITOR
+                initialized = false;
                 if(currentCoroutine!=null)
                     StopCoroutine(currentCoroutine);
 #endif
