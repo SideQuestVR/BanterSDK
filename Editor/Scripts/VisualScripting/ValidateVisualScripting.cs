@@ -23,7 +23,7 @@ namespace Banter.SDKEditor
 
         private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph)
         {
-                var output = new List<string>();
+            var output = new List<string>();
             if (graph == null || graph.elements.Count == 0)
             {
                 return output;
@@ -98,6 +98,13 @@ namespace Banter.SDKEditor
         private static List<string> GrabElements(IGraphElement e,GraphReference reference)
         {
             var output = new List<string>();
+
+            // no analytics identifier implemented, but they're harmless
+            if (e is StickyNote || e is GraphGroup)
+            {
+                return output;
+            }
+            
             if (e is StateUnit)
             {
                 if ((((StateUnit)e).nest?.source == GraphSource.Embed && ((StateUnit)e).nest?.graph?.elements.Count() > 0) || ((StateUnit)e).nest?.source == GraphSource.Macro)
@@ -117,26 +124,13 @@ namespace Banter.SDKEditor
                 try
                 {
                     output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
-                } catch (Exception ex)
+                }
+                catch (Exception ex)
                 {
                     Debug.Log($"Could not add element {e?.guid} {reference?.graph?.title} because of {ex}");
                 }
             }
             return output;
-        }
-
-        private static bool IsIgnoredElement(IGraphElement graphElement)
-        {
-            switch (graphElement.GetType().ToString())
-            {
-                case "Bolt.ControlConnection":
-                case "Bolt.ValueConnection":
-                case "Unity.VisualScripting.ControlConnection":
-                case "Unity.VisualScripting.ValueConnection":
-                    return true;
-            }
-
-            return false;
         }
 
         private static string CleanString(string keyword)
