@@ -25,6 +25,7 @@ namespace Banter.SDK
         [SerializeField] AnimationClip loadIn;
         [SerializeField] AnimationClip loadOut;
         [SerializeField] Animation loadingSphere;
+        [SerializeField] private GameObject teleportWall; 
         public TMPro.TextMeshPro titleText;
         public TMPro.TextMeshPro cancelText;
         public TMPro.TextMeshPro loadingText;
@@ -212,6 +213,7 @@ namespace Banter.SDK
             currentUrl = url;
             loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = true;
             loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = true;
+            teleportWall.SetActive(true);
             loadingSphere.clip = loadIn;
             loadingSphere.Play();
             await new WaitUntil(() => !loadingSphere.isPlaying);
@@ -244,6 +246,7 @@ namespace Banter.SDK
             await new WaitForSeconds(1.5f);
             loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = false;
             loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = false;
+            teleportWall.SetActive(false);
         }
     }
 }
