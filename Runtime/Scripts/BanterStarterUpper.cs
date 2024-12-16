@@ -46,7 +46,7 @@ namespace Banter.SDK
                 }
                 initialized = true;
             }
-            
+
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
 #if !BANTER_EDITOR
