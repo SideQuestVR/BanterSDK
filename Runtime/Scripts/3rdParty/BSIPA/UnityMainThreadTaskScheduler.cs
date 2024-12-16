@@ -245,6 +245,9 @@ namespace Banter.Utilities.Async
 
             if (!IsRunning) throw new InvalidOperationException("The scheduler is not running");
             Cancelling = true;
+#if UNITY_EDITOR
+            IsRunning = false;
+#endif
         }
 
         /// <summary>
