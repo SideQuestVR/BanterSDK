@@ -137,7 +137,7 @@ namespace Banter.Utilities.Async
         /// <exception cref="InvalidOperationException">if the scheduler is already running</exception>
         public IEnumerator Coroutine()
         {
-            //UnityEngine.Debug.LogError("ENTERED THE COROUTINE");
+            UnityEngine.Debug.LogError("ENTERED THE COROUTINE");
             ThrowIfDisposed();
 
             if (IsRunning)
@@ -245,6 +245,9 @@ namespace Banter.Utilities.Async
 
             if (!IsRunning) throw new InvalidOperationException("The scheduler is not running");
             Cancelling = true;
+#if UNITY_EDITOR
+            IsRunning = false;
+#endif
         }
 
         /// <summary>

@@ -29,22 +29,24 @@ namespace Banter.SDK
         public static string WEB_ROOT = "WebRoot";
         private int processId;
         private static bool initialized = false;
+        private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
 
         void Awake()
         {
-            if (!initialized)
-            {
+            //if (!initialized)
+            //{
                 UnityGame.SetMainThread();
                 var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
                 unitySched.SetMonoBehaviour(this);
                 if (!unitySched.IsRunning)
                 {
-                    StartCoroutine(unitySched.Coroutine());
+                    currentCoroutine = StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
-            }
+            //}
+            
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
 #if !BANTER_EDITOR
@@ -154,6 +156,10 @@ namespace Banter.SDK
             {
                 var unitySched = UnityMainThreadTaskScheduler.Default;
                 unitySched.Cancel();
+#if UNITY_EDITOR
+                if(currentCoroutine!=null)
+                    StopCoroutine(currentCoroutine);
+#endif
             }
             catch (Exception e)
             {
