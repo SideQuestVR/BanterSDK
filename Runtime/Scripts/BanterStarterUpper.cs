@@ -35,8 +35,8 @@ namespace Banter.SDK
 
         void Awake()
         {
-            //if (!initialized)
-            //{
+            if (!initialized)
+            {
                 UnityGame.SetMainThread();
                 var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
                 unitySched.SetMonoBehaviour(this);
@@ -45,7 +45,7 @@ namespace Banter.SDK
                     currentCoroutine = StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
-            //}
+            }
             
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
