@@ -1295,10 +1295,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: SaftySandwitch
       objectReference: {fileID: 0}
-    - target: {fileID: 6860484771404617062, guid: 02d5f50e9ecff1f469af5141b634af86, type: 3}
-      propertyPath: m_IsActive
-      value: 0
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
