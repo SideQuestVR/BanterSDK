@@ -31,6 +31,12 @@ namespace Banter.SDKEditor
 
             foreach (var e in graph.elements)
             {
+                // no analytics identifier implemented, but they're harmless
+                if (e is StickyNote || e is GraphGroup)
+                {
+                    continue;
+                }
+
                 output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
             }
             return output;
@@ -147,6 +153,12 @@ namespace Banter.SDKEditor
             {
                 foreach (var e in sga.graph.elements)
                 {
+                    // no analytics identifier implemented, but they're harmless
+                    if (e is StickyNote || e is GraphGroup)
+                    {
+                        continue;
+                    }
+
                     output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
                 }
             }
