@@ -25,7 +25,7 @@ namespace Banter.SDK
         [SerializeField] AnimationClip loadIn;
         [SerializeField] AnimationClip loadOut;
         [SerializeField] Animation loadingSphere;
-        [SerializeField] GameObject teleportWall; 
+        [SerializeField] GameObject teleportWall;
         public TMPro.TextMeshPro titleText;
         public TMPro.TextMeshPro cancelText;
         public TMPro.TextMeshPro loadingText;
