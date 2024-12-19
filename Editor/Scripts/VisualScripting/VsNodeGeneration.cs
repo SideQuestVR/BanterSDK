@@ -158,7 +158,6 @@ namespace Banter.SDKEditor
             typeof(byte),
             typeof(string),
             typeof(char),
-            typeof(TimeSpan),
             typeof(Vector2),
             typeof(Vector3),
             typeof(Vector4),
@@ -181,9 +180,8 @@ namespace Banter.SDKEditor
             typeof(Exception),
             typeof(Time),
             typeof(DateTime),
+            typeof(TimeSpan),
             typeof(UnityEngine.Random),
-            typeof(Physics),
-            typeof(Physics2D),
 
             // UI
             typeof(UnityEngine.UI.CanvasScaler),
@@ -238,6 +236,9 @@ namespace Banter.SDKEditor
             typeof(UnityEngine.UIElements.ListView),
 
             // Physics
+            
+            typeof(Physics),
+            typeof(Physics2D),
             typeof(Joint),
             typeof(JointLimits),
             typeof(JointMotor),

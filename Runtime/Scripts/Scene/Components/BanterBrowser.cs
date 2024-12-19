@@ -121,19 +121,20 @@ namespace Banter.SDK
                 browser.name = "BanterBrowser";
                 browser.SendMessage("RunActions", actions);
             }
-            if (changedProperties?.Contains(PropertyName.url) ?? false)
+
+            if (changedProperties?.Contains(PropertyName.url) ?? true)
             {
                 browser.SendMessage("LoadUrl", url);
             }
-            if (changedProperties?.Contains(PropertyName.mipMaps) ?? false)
+            if (changedProperties?.Contains(PropertyName.mipMaps) ?? true)
             {
                 browser.SendMessage("SetMipMaps", mipMaps);
             }
-            if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? false)
+            if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? true)
             {
                 browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
             }
-            if ((changedProperties?.Contains(PropertyName.pageWidth) ?? false) || (changedProperties?.Contains(PropertyName.pageHeight) ?? false))
+            if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
             {
                 RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
                 rt.sizeDelta = new Vector2(pageWidth, pageHeight);
