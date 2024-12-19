@@ -29,9 +29,14 @@
   },
   "samples": [
     {
-      "displayName": "QuickStart",
-      "description": "This quick start sample demonstrates how to make a basic world.",
-      "path": "Samples~/QuickStart"
+      "displayName": "Gravity Maze",
+      "description": "",
+      "path": "Samples~/GravityMaze"
+    },
+    {
+      "displayName": "Thruster Gadget",
+      "description": "",
+      "path": "Samples~/ThrusterGadget"
     }
   ]
 }
