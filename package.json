@@ -29,9 +29,9 @@
   },
   "samples": [
     {
-      "displayName": "Gravity Maze",
+      "displayName": "Basics",
       "description": "",
-      "path": "Samples~/GravityMaze"
+      "path": "Samples~/Basics"
     },
     {
       "displayName": "Thruster Gadget",
