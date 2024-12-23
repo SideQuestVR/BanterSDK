@@ -17,6 +17,10 @@ namespace Banter.SDK
         public bool EnableForceGrab { get { return _EnableForceGrab; } set { _EnableForceGrab = value; scene.events.OnEnableForceGrabChanged.Invoke(value); } }
         private bool _EnableSpiderMan = false;
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
+        private bool _EnableRadar = true;
+        public bool EnableRadar { get { return _EnableRadar; } set { _EnableRadar = value; scene.events.OnEnableRadarChanged.Invoke(value); } }
+        private bool _EnableNametags = true;
+        public bool EnableNametags { get { return _EnableNametags; } set { _EnableNametags = value; scene.events.OnEnableNametagsChanged.Invoke(value); } }
         private bool _EnablePortals = true;
         public bool EnablePortals { get { return _EnablePortals; } set { _EnablePortals = value; scene.events.OnEnablePortalsChanged.Invoke(value); } }
         private bool _EnableGuests = true;
@@ -97,6 +101,8 @@ namespace Banter.SDK
             EnableTeleport = true;
             EnableForceGrab = false;
             EnableSpiderMan = false;
+            EnableRadar = true;
+            EnableNametags = true;
             EnablePortals = true;
             EnableGuests = true;
             EnableFriendPositionJoin = true;
