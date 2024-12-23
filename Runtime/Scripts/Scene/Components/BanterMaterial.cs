@@ -102,7 +102,7 @@ namespace Banter.SDK
         {
             try
             {
-                if (!scene.settings.EnableDefaultTextures && string.IsNullOrEmpty(texture))
+                if ((!scene.settings.EnableDefaultTextures && string.IsNullOrEmpty(texture)) || !Uri.IsWellFormedUriString(texture, UriKind.Absolute))
                 {
                     return;
                 }

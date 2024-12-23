@@ -868,14 +868,19 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
                 return;
             }
-            var banterObject = GetGameObject(int.Parse(msgParts[0]));
-            if (banterObject != null)
-            {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                 {
-                     banterObject.SetActive(int.Parse(msgParts[1]) == 1);
-                     SendObjectUpdate(banterObject, reqId);
-                 });
+            try{
+                var banterObject = GetGameObject(int.Parse(msgParts[0]));
+                if (banterObject != null)
+                {
+                    UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                    {
+                        banterObject.SetActive(int.Parse(msgParts[1]) == 1);
+                        SendObjectUpdate(banterObject, reqId);
+                    });
+                }
+            }catch(Exception ex){ 
+                Debug.LogError("SetJsObjectActive threw an exception: "  +msg);
+                Debug.LogException(ex);
             }
         }
         public void SetJsObjectLayer(string msg, int reqId)
@@ -1048,6 +1053,9 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, valFloat);
                             break;
                         case PropertyType.Int:
+                            if(propParts[2].Equals("null")) {
+                                propParts[2] = "0";
+                            }
                             var valInt = int.Parse(propParts[2]);
                             updates.Add(new BanterInt() { n = name, x = valInt });
                             banterComp.UpdateProperty(name, valInt);
@@ -1079,7 +1087,7 @@ namespace Banter.SDK
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("[Banter] Error setting property: " + e.Message + ": " + msg);
+                    Debug.LogError("[Banter] Error setting property: " + name + " " + type + " " + e.Message + ": " + msg);
                 }
             }
             return updates;
