@@ -1336,7 +1336,7 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                _ = ShowSpaceImage(url);
+                await ShowSpaceImage(url);
                 await ResetScene();
                 await link.LoadUrl(url);
                 await new WaitUntil(() => loaded);
