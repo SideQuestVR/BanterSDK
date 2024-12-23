@@ -1336,10 +1336,15 @@ namespace Banter.SDK
                 {
                     return;
                 }
+                LogLine.Do("[BanterScene] Loading ShowSpaceImage: " + url);
                 await ShowSpaceImage(url);
+                LogLine.Do("[BanterScene] Loading ResetScene: " + url);
                 await ResetScene();
+                LogLine.Do("[BanterScene] Loading LoadUrl: " + url);
                 await link.LoadUrl(url);
+                LogLine.Do("[BanterScene] Loading WaitUntil: " + url);
                 await new WaitUntil(() => loaded);
+                LogLine.Do("[BanterScene] Loading after WaitUntil: " + url);
                 LoadingStatus = "Please wait, loading live space...";
                 if (HasLoadFailed())
                 {
@@ -1351,7 +1356,11 @@ namespace Banter.SDK
                 {
                     events.OnUnitySceneLoad.Invoke(url);
                 });
+                LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
+
                 await Task.Delay(2500);
+                LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
+
                 await loadingManager?.LoadOut();
                 loading = false;
             });
