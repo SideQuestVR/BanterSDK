@@ -5,15 +5,15 @@ using Banter.SDK;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Ai Model Callback Received")]
-    [UnitShortTitle("On Ai Model")]
+    [UnitTitle("On Base64 CDN Link Callback Received")]
+    [UnitShortTitle("On Base64 CDN Link")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnAiModel : EventUnit<CustomEventArgs>
+    public class OnBase64CDNLink : EventUnit<CustomEventArgs>
     {
 
         //#if BANTER_VISUAL_SCRIPTING
-        //            EventBus.Trigger("OnAiModel", new CustomEventArgs(id, new object[] { data }));
+        //            EventBus.Trigger("OnAiImage", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
         // [DoNotSerialize]
@@ -27,7 +27,7 @@ namespace Banter.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnAiModel");
+            return new EventHook("OnBase64CDNLink");
         }
 
         protected override void Definition()
@@ -36,12 +36,12 @@ namespace Banter.VisualScripting
             // Setting the value on our port.
             // id = ValueInput("Return ID", string.Empty);
 
-            result = ValueOutput<string>("Data");
+            result = ValueOutput<long>("Data");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return true; //data.name == flow.GetValue<string>(id)?.Trim();
+            return true; // data.name == flow.GetValue<string>(id)?.Trim();
         }
 
         // Setting the value on our port.

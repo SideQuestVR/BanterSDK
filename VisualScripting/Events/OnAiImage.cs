@@ -16,9 +16,9 @@ namespace Banter.VisualScripting
         //            EventBus.Trigger("OnAiImage", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
-        [DoNotSerialize]
-        [PortLabelHidden]
-        public ValueInput id { get; private set; }
+        // [DoNotSerialize]
+        // [PortLabelHidden]
+        // public ValueInput id { get; private set; }
 
         [DoNotSerialize]
         public ValueOutput result;
@@ -34,14 +34,14 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             // Setting the value on our port.
-            id = ValueInput("Return ID", string.Empty);
+            // id = ValueInput("Return ID", string.Empty);
 
             result = ValueOutput<string>("Data");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return data.name == flow.GetValue<string>(id)?.Trim();
+            return true; // data.name == flow.GetValue<string>(id)?.Trim();
         }
 
         // Setting the value on our port.
