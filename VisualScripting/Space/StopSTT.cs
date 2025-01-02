@@ -15,6 +15,9 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
+    
+        [DoNotSerialize]
+        public ControlOutput outputTrigger;
 
         [DoNotSerialize]
         public ValueInput returnId;
@@ -27,8 +30,9 @@ namespace Banter.VisualScripting
                 {
                     BanterScene.Instance().events.OnTTsStoped.Invoke(_returnId);
                 });
-                return null;
+                return outputTrigger;
             });
+            outputTrigger = ControlOutput("");
             returnId = ValueInput("Return Id", "");
         }
     }

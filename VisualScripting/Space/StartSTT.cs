@@ -15,6 +15,9 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
+    
+        [DoNotSerialize]
+        public ControlOutput outputTrigger;
 
         [DoNotSerialize]
         public ValueInput detectSpeech;
@@ -27,8 +30,9 @@ namespace Banter.VisualScripting
                 {
                     BanterScene.Instance().events.OnTTsStarted.Invoke(_detectSpeech);
                 });
-                return null;
+                return outputTrigger;
             });
+            outputTrigger = ControlOutput("");
             detectSpeech = ValueInput("Detect Speech", false);
         }
     }
