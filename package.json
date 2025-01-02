@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.banter",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "displayName": "Banter SDK",
   "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
   "unity": "2022.3",
@@ -29,9 +29,9 @@
   },
   "samples": [
     {
-      "displayName": "Gravity Maze",
+      "displayName": "Basics",
       "description": "",
-      "path": "Samples~/GravityMaze"
+      "path": "Samples~/Basics"
     },
     {
       "displayName": "Thruster Gadget",
