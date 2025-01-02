@@ -544,6 +544,9 @@ namespace Banter.SDK
 
         public void OnOneShot(string data, string fromId, bool fromAdmin)
         {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
+#endif
             Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + data);
         }
 
