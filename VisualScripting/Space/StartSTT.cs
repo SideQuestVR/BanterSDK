@@ -7,28 +7,29 @@ using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Stop Text To Speech")]
-    [UnitShortTitle("StopTTS")]
+    [UnitTitle("Start Speech To Text")]
+    [UnitShortTitle("StartSTT")]
     [UnitCategory("Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class StopTTS : Unit
+    public class StartSTT : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
 
         [DoNotSerialize]
-        public ValueInput returnId;
+        public ValueInput detectSpeech;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var returnId = flow.GetValue<string>(returnId);
+                var _detectSpeech = flow.GetValue<bool>(detectSpeech);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnTTsStoped.Invoke(returnId);
+                    BanterScene.Instance().events.OnTTsStarted.Invoke(_detectSpeech);
                 });
+                return null;
             });
-            returnId = ValueInput("Return Id", "");
+            detectSpeech = ValueInput("Detect Speech", false);
         }
     }
 }
