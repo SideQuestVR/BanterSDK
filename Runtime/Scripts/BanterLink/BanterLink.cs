@@ -524,6 +524,9 @@ namespace Banter.SDK
 
         public void OnTranscription(string message, string id)
         {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnSTT", new CustomEventArgs(id, new object[] { message }));
+#endif
             Send(APICommands.EVENT + APICommands.SEND_TRANSCRIPTION + MessageDelimiters.PRIMARY + id + MessageDelimiters.SECONDARY + message);
         }
 

@@ -28,11 +28,11 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var allInstances = flow.GetValue<bool>(allInstances);
-                var data = flow.GetValue<string>(data);
+                var _allInstances = flow.GetValue<bool>(allInstances);
+                var _data = flow.GetValue<string>(data);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnOneShot.Invoke(data, allInstances);
+                    BanterScene.Instance().events.OnOneShot.Invoke(_data, _allInstances);
                 });
                 return outputTrigger;
             });
