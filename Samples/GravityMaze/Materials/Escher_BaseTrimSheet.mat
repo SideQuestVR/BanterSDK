@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Escher_BaseTrimSheet
   m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords:
   - _EMISSION
   - _METALLICGLOSSMAP
@@ -20,11 +22,12 @@ Material:
   m_CustomRenderQueue: -1
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: cd5be085bcbf392429a0498c296b5ff8, type: 3}
+        m_Texture: {fileID: 2800000, guid: 4cc4da36707fcd9448b3cd9a18ab6281, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -40,15 +43,15 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _EmissionMap:
-        m_Texture: {fileID: 2800000, guid: 0643143b024b36d4eb2ea2550bec2546, type: 3}
+        m_Texture: {fileID: 2800000, guid: 7c81a936d1af8c94ea8fc2c27106a937, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 4287b3466430fbe4dbe650d2acd4223c, type: 3}
+        m_Texture: {fileID: 2800000, guid: 644faec04aa8ecd4ca24b3ef708b4e95, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
-        m_Texture: {fileID: 2800000, guid: ed331a4e81c791d4dacfaeffc32cea19, type: 3}
+        m_Texture: {fileID: 2800000, guid: bc2b6dae73603e844b765436222bbd72, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _OcclusionMap:
