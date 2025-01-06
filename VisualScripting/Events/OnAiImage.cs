@@ -48,7 +48,6 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {   
-            UnityEngine.Debug.Log(data.arguments[0]);
             flow.SetValue(result, data.arguments[0]);
         }
     }
