@@ -43,7 +43,7 @@ public class BanterSceneEvents
     public UnityEvent<string> OnTTsStoped = new UnityEvent<string>();
     public UnityEvent<string> OnAiImage = new UnityEvent<string>();
     public UnityEvent<string> OnAiModel = new UnityEvent<string>();
-    public UnityEvent<string> OnBase64ToCDN = new UnityEvent<string>();
+    public UnityEvent<string,string> OnBase64ToCDN = new UnityEvent<string, string>();
     public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();

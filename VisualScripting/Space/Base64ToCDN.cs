@@ -22,13 +22,17 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput base64Image;
 
+        [DoNotSerialize]
+        public ValueInput fileName;
+
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _base64Image = flow.GetValue<string>(base64Image);
+                var _fileName = flow.GetValue<string>(fileName);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnBase64ToCDN.Invoke(_base64Image);
+                    BanterScene.Instance().events.OnBase64ToCDN.Invoke(_base64Image, _fileName);
                 });
                 return outputTrigger;
             });
