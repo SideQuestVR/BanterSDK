@@ -870,14 +870,19 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
                 return;
             }
-            var banterObject = GetGameObject(int.Parse(msgParts[0]));
-            if (banterObject != null)
-            {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                 {
-                     banterObject.SetActive(int.Parse(msgParts[1]) == 1);
-                     SendObjectUpdate(banterObject, reqId);
-                 });
+            try{
+                var banterObject = GetGameObject(int.Parse(msgParts[0]));
+                if (banterObject != null)
+                {
+                    UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                    {
+                        banterObject.SetActive(int.Parse(msgParts[1]) == 1);
+                        SendObjectUpdate(banterObject, reqId);
+                    });
+                }
+            }catch(Exception ex){ 
+                Debug.LogError("SetJsObjectActive threw an exception: "  +msg);
+                Debug.LogException(ex);
             }
         }
         public void SetJsObjectLayer(string msg, int reqId)
@@ -1050,6 +1055,9 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, valFloat);
                             break;
                         case PropertyType.Int:
+                            if(propParts[2].Equals("null")) {
+                                propParts[2] = "0";
+                            }
                             var valInt = int.Parse(propParts[2]);
                             updates.Add(new BanterInt() { n = name, x = valInt });
                             banterComp.UpdateProperty(name, valInt);
@@ -1081,7 +1089,7 @@ namespace Banter.SDK
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError("[Banter] Error setting property: " + e.Message + ": " + msg);
+                    Debug.LogError("[Banter] Error setting property: " + name + " " + type + " " + e.Message + ": " + msg);
                 }
             }
             return updates;
@@ -1328,10 +1336,15 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                _ = ShowSpaceImage(url);
+                LogLine.Do("[BanterScene] Loading ShowSpaceImage: " + url);
+                await ShowSpaceImage(url);
+                LogLine.Do("[BanterScene] Loading ResetScene: " + url);
                 await ResetScene();
+                LogLine.Do("[BanterScene] Loading LoadUrl: " + url);
                 await link.LoadUrl(url);
+                LogLine.Do("[BanterScene] Loading WaitUntil: " + url);
                 await new WaitUntil(() => loaded);
+                LogLine.Do("[BanterScene] Loading after WaitUntil: " + url);
                 LoadingStatus = "Please wait, loading live space...";
                 if (HasLoadFailed())
                 {
@@ -1343,7 +1356,11 @@ namespace Banter.SDK
                 {
                     events.OnUnitySceneLoad.Invoke(url);
                 });
+                LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
+
                 await Task.Delay(2500);
+                LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
+
                 await loadingManager?.LoadOut();
                 loading = false;
             });

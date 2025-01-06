@@ -157,8 +157,7 @@ namespace Banter.Utilities.Async
                     {
                         var yieldAfter = YieldAfterTasks;
                         sw.Start();
-                        for (int i = 0; i < yieldAfter && !tasks.IsEmpty
-                                                        && sw.Elapsed < YieldAfterTime; i++)
+                        for (int i = 0; i < tasks.Count; i++)
                         {
                             QueueItem task;
                             do if (!tasks.TryDequeue(out task)) goto exit; // try dequeue, if we can't exit
