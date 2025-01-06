@@ -1,6 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System.Diagnostics;
 
 namespace Banter.VisualScripting
 {
@@ -46,7 +47,8 @@ namespace Banter.VisualScripting
 
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
-        {
+        {   
+            UnityEngine.Debug.Log(data.arguments[0]);
             flow.SetValue(result, data.arguments[0]);
         }
     }

@@ -334,7 +334,8 @@ namespace Banter.SDK
         }
         public void Base64ToCDN(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(msg));
+            var parts = msg.Split(MessageDelimiters.PRIMARY);
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
         public void Gravity(string msg, int reqId)

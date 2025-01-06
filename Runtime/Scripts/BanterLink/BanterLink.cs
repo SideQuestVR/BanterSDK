@@ -543,6 +543,7 @@ namespace Banter.SDK
         public void OnAiImage(string image)
         {
 #if BANTER_VISUAL_SCRIPTING
+            Debug.Log(image);
             EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
 #endif
             Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + image);
