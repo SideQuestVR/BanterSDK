@@ -30,16 +30,14 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _base64Image = flow.GetValue<string>(base64Image);
                 var _fileName = flow.GetValue<string>(fileName);
-                if(string.IsNullOrEmpty(_fileName)) {
-                    _fileName = "image.png";
-                }
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnBase64ToCDN.Invoke(_base64Image, _fileName);
+                    BanterScene.Instance().events.OnBase64ToCDN.Invoke(_base64Image,  _fileName);
                 });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
+            fileName = ValueInput("Filename", "");
             base64Image = ValueInput("Base64 String", "");
         }
     }
