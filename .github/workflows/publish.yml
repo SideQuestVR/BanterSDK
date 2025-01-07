@@ -35,22 +35,19 @@ jobs:
         cp -r . ../upm
         rm -rf ../upm/.git # don't want to replace git history!
 
-        # WORKING UP TO HERE!!
-
         git reset --hard HEAD
         git checkout upm
-        cp -r ../upm/* .
 
+        cp -r ../upm/* .
         rm -rf ../upm
 
-        git add .
         git config --global user.name 'github-bot'
         git config --global user.email 'github-bot@users.noreply.github.com'
-        git commit -m "$TAG" --no-verify
+        git commit -am "$TAG" --no-verify
         git push -u origin upm
 
     - name: Create Release
       if: env.TAG_EXISTS == 'false'
       run: |
-        git tag ${{ env.TAG }} main
+        git tag ${{ env.TAG }} upm
         git push origin --tags
