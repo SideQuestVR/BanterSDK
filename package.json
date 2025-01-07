@@ -30,13 +30,18 @@
   "samples": [
     {
       "displayName": "Basics",
-      "description": "",
+      "description": "Learn how to use Banter components in your spaces!",
       "path": "Samples~/Basics"
     },
     {
-      "displayName": "Thruster Gadget",
-      "description": "",
-      "path": "Samples~/ThrusterGadget"
+      "displayName": "Gadgets",
+      "description": "Fun toys you can include in your spaces.",
+      "path": "Samples~/Gadgets"
+    },
+    {
+      "displayName": "Gravity Maze",
+      "description": "Sample space that demonstrates how to manipulate gravity.",
+      "path": "Samples~/GravityMaze"
     }
   ]
 }
