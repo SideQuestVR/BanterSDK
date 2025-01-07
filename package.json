@@ -34,11 +34,6 @@
       "path": "Samples~/Basics"
     },
     {
-      "displayName": "Gadgets",
-      "description": "Fun toys you can include in your spaces.",
-      "path": "Samples~/Gadgets"
-    },
-    {
       "displayName": "Gravity Maze",
       "description": "Sample space that demonstrates how to manipulate gravity.",
       "path": "Samples~/GravityMaze"
