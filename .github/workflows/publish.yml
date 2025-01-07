@@ -19,7 +19,7 @@ jobs:
         TAG=$(jq -r '.version' package.json)
         echo "TAG=$TAG" >> $GITHUB_ENV
         if git rev-parse $TAG >/dev/null 2>&1; then
-            echo ""::error::Tag already exists: $TAG"
+            echo "::error::Tag already exists: $TAG"
         else
             echo "TAG_EXISTS=false" >> $GITHUB_ENV
         fi
