@@ -119,5 +119,46 @@ namespace Banter.VisualScripting
             }
         }
     }
+
+    [UnitTitle("Load glTF/glb from URL")]
+    [UnitShortTitle("Load glTF")]
+    [UnitCategory("Banter")]
+    [TypeIcon(typeof(BanterObjectId))]
+    public class LoadGltfUrl : Unit
+    {
+        [DoNotSerialize]
+        public ValueInput url;
+
+        [DoNotSerialize]
+        public ValueInput gltfComponent;
+
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlInput input;
+
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlOutput output;
+
+        protected override void Definition()
+        {
+            input = ControlInput("", (flow) => LoadGltf(flow));
+            output = ControlOutput("");
+            url = ValueInput<string>("URL", string.Empty);
+            gltfComponent = ValueInput<BanterGLTF>("BanterGltf", null);
+            gltfComponent.SetDefaultValue(null);
+            gltfComponent.NullMeansSelf();
+        }
+
+        private ControlOutput LoadGltf(Flow flow)
+        {
+            var url = flow.GetValue<string>(this.url);
+            var bGLTF = flow.GetValue<BanterGLTF>(gltfComponent);
+            bGLTF.url = url;
+            bGLTF.UpdateCallback(null);
+
+            return output;
+        }
+    }
 }
 #endif

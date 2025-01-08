@@ -144,11 +144,13 @@ namespace Banter.SDK
                             }
                         }
                         SetLoadedIfNot();
+                        loadStarted = false;
                     }
                     catch (Exception e)
                     {
                         SetLoadedIfNot(false, e.Message + " - " + url);
                         Destroy(go);
+                        loadStarted = false;
                     }
                 });
             }
@@ -156,6 +158,7 @@ namespace Banter.SDK
             {
                 Debug.LogError(e + " " + url);
                 SetLoadedIfNot(false, e.Message);
+                loadStarted = false;
             }
         }
         public override void DestroyStuff() { }
