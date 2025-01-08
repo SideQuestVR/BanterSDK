@@ -85,7 +85,7 @@ public class APICommands
     public const string SEND_TRANSCRIPTION = "st!";
     public const string AI_IMAGE_RECV = "aiimg!";
     public const string AI_MODEL_RECV = "aiglb!";
-    public const string BASE_64_TO_CDN_RECV = "aiglb!";
+    public const string BASE_64_TO_CDN_RECV = "b64cdn!";
     public const string BANTER_VERSION = "bv!";
     public const string SEND_USER = "su!";
     public const string FULL_SPACE_STATE = "fss!";
