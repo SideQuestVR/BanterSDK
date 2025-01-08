@@ -158,6 +158,18 @@ namespace Banter.SDK
             {
                 scene.StopTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
             }
+            else if (msg.StartsWith(APICommands.AI_IMAGE))
+            {
+                scene.AiImage(GetMsgData(msg, APICommands.AI_IMAGE), id);
+            }
+            else if (msg.StartsWith(APICommands.AI_MODEL))
+            {
+                scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
+            }
+            else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
+            {
+                scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
+            }
             else if (msg.StartsWith(APICommands.GRAVITY))
             {
                 scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);
@@ -521,9 +533,32 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.VOICE_STARTED + MessageDelimiters.PRIMARY);
         }
-
+        public void OnAiModel(string glb)
+        {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnAiModel", new CustomEventArgs("", new object[] { glb }));
+#endif
+            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + glb);
+        }
+        public void OnAiImage(string image)
+        {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
+#endif
+            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + image);
+        }
+        public void OnBase64ToCDN(long image)
+        {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnBase64CDNLink", new CustomEventArgs("", new object[] { image }));
+#endif
+            Send(APICommands.EVENT + APICommands.BASE_64_TO_CDN_RECV + MessageDelimiters.PRIMARY + image);
+        }
         public void OnTranscription(string message, string id)
         {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnSTT", new CustomEventArgs(id, new object[] { message }));
+#endif
             Send(APICommands.EVENT + APICommands.SEND_TRANSCRIPTION + MessageDelimiters.PRIMARY + id + MessageDelimiters.SECONDARY + message);
         }
 
@@ -544,6 +579,9 @@ namespace Banter.SDK
 
         public void OnOneShot(string data, string fromId, bool fromAdmin)
         {
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
+#endif
             Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + data);
         }
 
