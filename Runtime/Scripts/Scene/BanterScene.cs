@@ -322,6 +322,22 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStoped.Invoke(msg));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.STOP_TTS);
         }
+        public void AiImage(string msg, int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiImage.Invoke(msg));
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_IMAGE);
+        }
+        public void AiModel(string msg, int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiImage.Invoke(msg));
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_MODEL);
+        }
+        public void Base64ToCDN(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY);
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
+        }
         public void Gravity(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);

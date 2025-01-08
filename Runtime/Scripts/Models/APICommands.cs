@@ -41,6 +41,9 @@ public class APICommands
     public const string OPEN_PAGE = "!op!";
     public const string START_TTS = "!stts!";
     public const string STOP_TTS = "!otts!";
+    public const string AI_IMAGE = "!aiimg!";
+    public const string AI_MODEL = "!aiglb!";
+    public const string BASE_64_TO_CDN = "!b64cdn!";
     public const string GRAVITY = "!gv!";
     public const string TIME_SCALE = "!ts!";
     public const string PLAYER_SPEED = "!ps!";
@@ -80,6 +83,9 @@ public class APICommands
     public const string MENU_BROWSER_MESSAGE = "mbm!";
     public const string BROWSER_MESSAGE = "bm!";
     public const string SEND_TRANSCRIPTION = "st!";
+    public const string AI_IMAGE_RECV = "aiimg!";
+    public const string AI_MODEL_RECV = "aiglb!";
+    public const string BASE_64_TO_CDN_RECV = "b64cdn!";
     public const string BANTER_VERSION = "bv!";
     public const string SEND_USER = "su!";
     public const string FULL_SPACE_STATE = "fss!";

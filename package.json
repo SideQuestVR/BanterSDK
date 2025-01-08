@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.banter",
-  "version": "2.5.2",
+  "version": "2.6.0",
   "displayName": "Banter SDK",
   "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
   "unity": "2022.3",
@@ -30,13 +30,13 @@
   "samples": [
     {
       "displayName": "Basics",
-      "description": "",
-      "path": "Samples~/Basics"
+      "description": "Learn how to use Banter components in your spaces! Contains 3 worlds to explore.\n\n1. Basics: Learn how to build Banter spaces.\n2. Gadgets: Fun tools to add to your world!\n3. Gravity Maze: An example space that manipulates gravity.",
+      "path": "Samples~/GettingStarted"
     },
     {
-      "displayName": "Thruster Gadget",
-      "description": "",
-      "path": "Samples~/ThrusterGadget"
+      "displayName": "FlexaWorld",
+      "description": "A physics-fuelled playground showcasing the best of our FlexaBody system.",
+      "path": "Samples~/FlexaWorld"
     }
   ]
 }
