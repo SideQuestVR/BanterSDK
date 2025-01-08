@@ -1,4 +1,4 @@
-name: CI
+name: Publish Package
 on:
   workflow_dispatch:
     
@@ -39,11 +39,16 @@ jobs:
         git reset --hard HEAD
         git checkout upm
 
-        cp -r ../upm/* .
+        # Remove all files except .git
+        git rm -rf .
+        
+        # Copy back the files
+        cp -r ../upm/. .
         rm -rf ../upm
 
         git config --global user.name 'github-bot'
         git config --global user.email 'github-bot@users.noreply.github.com'
+        git add .
         git commit -am "$TAG" --no-verify
         git push -u origin upm
 
