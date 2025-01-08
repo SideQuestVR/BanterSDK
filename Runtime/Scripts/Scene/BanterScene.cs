@@ -886,7 +886,8 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
                 return;
             }
-            try{
+            try
+            {
                 var banterObject = GetGameObject(int.Parse(msgParts[0]));
                 if (banterObject != null)
                 {
@@ -896,8 +897,10 @@ namespace Banter.SDK
                         SendObjectUpdate(banterObject, reqId);
                     });
                 }
-            }catch(Exception ex){ 
-                Debug.LogError("SetJsObjectActive threw an exception: "  +msg);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError("SetJsObjectActive threw an exception: " + msg);
                 Debug.LogException(ex);
             }
         }
@@ -1071,7 +1074,8 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, valFloat);
                             break;
                         case PropertyType.Int:
-                            if(propParts[2].Equals("null")) {
+                            if (propParts[2].Equals("null"))
+                            {
                                 propParts[2] = "0";
                             }
                             var valInt = int.Parse(propParts[2]);
