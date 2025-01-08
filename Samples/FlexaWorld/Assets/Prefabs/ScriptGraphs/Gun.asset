@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e66c6366d904e98bc83428217d4fd7, type: 3}
+  m_Name: Gun
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":37.60641,"y":-27.0},"zoom":1.0,"elements":[{"chainable":false,"parameterNames":["count"],"member":{"name":"Emit","parameterTypes":["System.Int32"],"targetType":"UnityEngine.ParticleSystem","targetTypeName":"UnityEngine.ParticleSystem","$version":"A"},"defaultValues":{"target":{"$content":0,"$type":"UnityEngine.Object"},"%count":{"$content":1,"$type":"System.Int32"}},"position":{"x":108.0,"y":-120.0},"guid":"68abe6d6-2d47-4ed7-9604-02edbb8dbdd9","$version":"A","$type":"Unity.VisualScripting.InvokeMember","$id":"9"},{"coroutine":false,"defaultValues":{"banterHeldEvents":null},"position":{"x":-84.0,"y":-120.0},"guid":"2adb1c78-fd08-40f9-b165-8de576bd41ca","$version":"A","$type":"Banter.VisualScripting.OnGunTrigger","$id":"13"},{"specifyFallback":false,"kind":"Object","defaultValues":{"name":{"$content":"Muzzle","$type":"System.String"},"object":null},"position":{"x":-72.0,"y":12.0},"guid":"269d6e8d-f652-48d9-88c8-1a848dd91961","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"15"},{"specifyFallback":false,"kind":"Object","defaultValues":{"name":{"$content":"Handle","$type":"System.String"},"object":null},"position":{"x":-276.0,"y":-120.0},"guid":"5818850e-5e5a-426f-831a-256f00c405ac","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"17"},{"sourceUnit":{"$ref":"13"},"sourceKey":"trigger","destinationUnit":{"$ref":"9"},"destinationKey":"enter","guid":"6b146e76-e4b4-49db-823c-f9b766d210a6","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"15"},"sourceKey":"value","destinationUnit":{"$ref":"9"},"destinationKey":"target","guid":"7783dada-d2a6-4e84-9bea-5aa41a5bc2be","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"17"},"sourceKey":"value","destinationUnit":{"$ref":"13"},"destinationKey":"banterHeldEvents","guid":"492a616e-1d5c-41dc-bc62-aa3b281680b8","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences:
+    - {fileID: 0}
