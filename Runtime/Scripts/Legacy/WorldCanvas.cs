@@ -7,7 +7,8 @@ public class WorldCanvas : MonoBehaviour
     void Start()
     {
         var canvas = GetComponent<Canvas>();
-        if(canvas != null){
+        if (canvas != null)
+        {
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.worldCamera = Camera.main;
         }
