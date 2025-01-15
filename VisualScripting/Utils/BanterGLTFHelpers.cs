@@ -24,7 +24,7 @@ namespace Banter.VisualScripting
                 return gltfComp.ModelLoaded;
             });
 
-            gltfObject = ValueInput<BanterGLTF>("Banter GLTF", null);
+            gltfObject = ValueInput<BanterGLTF>("BanterGltf", null);
             gltfObject.SetDefaultValue(null);
             gltfObject.NullMeansSelf();
         }
