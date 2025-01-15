@@ -3,12 +3,7 @@ guid: 3feb4fd28d465be43a4ab9e231f5e3f2
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Stilt
-    second: {fileID: 2100000, guid: 70c73f2e074ad954d8fe654a32492589, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

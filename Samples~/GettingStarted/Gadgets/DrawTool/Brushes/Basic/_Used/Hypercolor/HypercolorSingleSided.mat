@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: HypercolorSingleSided
-  m_Shader: {fileID: 4800000, guid: ea5570411cfab2d4b9b3f053e5497f0a, type: 3}
+  m_Shader: {fileID: 4800000, guid: 68c2ff8257244554096c3a3cab40c772, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -24,11 +24,11 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 7c4d1ee0e90a536468404363fb2bef1d, type: 3}
+        m_Texture: {fileID: 2800000, guid: ec44b8e382456b74ca4fa9dc17362aea, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: df7c592ef1f278543b4de38471df9994, type: 3}
+        m_Texture: {fileID: 2800000, guid: 05c8708751541cc4d9123252cddfd2cc, type: 3}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Ints: []

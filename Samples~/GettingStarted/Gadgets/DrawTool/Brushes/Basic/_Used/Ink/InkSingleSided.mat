@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: InkSingleSided
-  m_Shader: {fileID: 4800000, guid: 6af6ca8fad7576846a6a44f5c6d7bf6b, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3fe0cf11d792fc148b75f7612217b6ed, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 599e16957e2a8a84c81e8e72b55312d7, type: 3}
+        m_Texture: {fileID: 2800000, guid: 194bdb70042f5624cbdc57dd9b70b265, type: 3}
         m_Scale: {x: 1, y: 0.25}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -46,7 +46,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 31a0dba64c25fa442a02171bc2131ccc, type: 3}
+        m_Texture: {fileID: 2800000, guid: 6f767a16ce16685478ba6de81041caad, type: 3}
         m_Scale: {x: 1, y: 0.25}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:

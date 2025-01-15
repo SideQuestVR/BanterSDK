@@ -3,17 +3,7 @@ guid: 6554e184d7f38354fb043802a0eeefb8
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockBlue_1
-    second: {fileID: 2100000, guid: 7a8d2e7b6746a1647bd0163010ae15c9, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockGreen_1
-    second: {fileID: 2100000, guid: 2b8de6756f11c8b42ad932a060ad1027, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
@@ -47,7 +37,7 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    addColliders: 1
+    addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
     importPhysicalCameras: 1

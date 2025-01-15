@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: OilPaintSingleSided
-  m_Shader: {fileID: 4800000, guid: 6af6ca8fad7576846a6a44f5c6d7bf6b, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3fe0cf11d792fc148b75f7612217b6ed, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 432d5c408cd625945ab19bb572a6f8e4, type: 3}
+        m_Texture: {fileID: 2800000, guid: cf000ae6b8e49fa4bbfdd690f0b7caba, type: 3}
         m_Scale: {x: 1, y: 0.25}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -46,7 +46,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: d986b523673bfdb4f8325bc62054d06b, type: 3}
+        m_Texture: {fileID: 2800000, guid: 03acfc813212e9a4e947941288d583e6, type: 3}
         m_Scale: {x: 1, y: 0.25}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:

@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: WetPaintSingleSided
-  m_Shader: {fileID: 4800000, guid: 6af6ca8fad7576846a6a44f5c6d7bf6b, type: 3}
+  m_Shader: {fileID: 4800000, guid: 3fe0cf11d792fc148b75f7612217b6ed, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
@@ -26,7 +26,7 @@ Material:
     serializedVersion: 3
     m_TexEnvs:
     - _BumpMap:
-        m_Texture: {fileID: 2800000, guid: 2dc1a52e6c8e9734dbc80815d8732e8a, type: 3}
+        m_Texture: {fileID: 2800000, guid: 44ec26a9701c70e4eb4b1438c636309f, type: 3}
         m_Scale: {x: 1, y: 0.25}
         m_Offset: {x: 0, y: 0}
     - _DetailAlbedoMap:
@@ -46,7 +46,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _MainTex:
-        m_Texture: {fileID: 2800000, guid: 5e3fee17e4e859e499de57ab74599628, type: 3}
+        m_Texture: {fileID: 2800000, guid: e9dab6d21457e3c4bae1f0656db73291, type: 3}
         m_Scale: {x: 1, y: 0.25}
         m_Offset: {x: 0, y: 0}
     - _MetallicGlossMap:
