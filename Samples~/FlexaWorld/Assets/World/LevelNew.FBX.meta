@@ -3,55 +3,10 @@ guid: f422bd6c400f15840a56a5b3385e431e
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockBlue_2
-    second: {fileID: 2100000, guid: fe9ddbb3dc36a4c45929745d9a56c975, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockGreen_1
-    second: {fileID: 2100000, guid: 2b8de6756f11c8b42ad932a060ad1027, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockGreen_2
-    second: {fileID: 2100000, guid: 0a25979b404315b44909911659320b24, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockRed_1
-    second: {fileID: 2100000, guid: abed99e6bff0cee4e8a5eba6eaea21b5, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockRed_2
-    second: {fileID: 2100000, guid: c083e2bf4ad61e3448a5b3cf4b7d3f6c, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockYellow_1
-    second: {fileID: 2100000, guid: 42471b8d996aa684e9adea9742290a6b, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugBlockYellow_2
-    second: {fileID: 2100000, guid: 3c32b7dd61f93324cbe26685218d9069, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DebugFloorGrid
-    second: {fileID: 2100000, guid: 641e606cdcfbd514da95f0a576415b25, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Shroom
-    second: {fileID: 2100000, guid: 6f7c31850450c4246810a009eb69d6c9, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
-    materialName: 2
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -82,7 +37,7 @@ ModelImporter:
     lODScreenPercentages: []
     globalScale: 1
     meshCompression: 0
-    addColliders: 1
+    addColliders: 0
     useSRGBMaterialColor: 1
     sortHierarchyByName: 1
     importPhysicalCameras: 1

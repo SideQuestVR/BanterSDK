@@ -3,12 +3,7 @@ guid: 522d727728957c94a8d365720d1553da
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Katana
-    second: {fileID: 2100000, guid: 3655540839c3ab6428ec9f8182ae6e72, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0

@@ -1,18 +1,7 @@
 fileFormatVersion: 2
 guid: 96dcc601db04f92499d521261b40470c
-labels:
-- lowpoly
-- minigolf
-- 3d
-- mobile
-- golf
-- Golf
-- Lowpoly
-- Minigolf
-- Mobile
-timeCreated: 1426871126
-licenseType: Store
-NativeFormatImporter:
+PrefabImporter:
+  externalObjects: {}
   userData: 
   assetBundleName: 
   assetBundleVariant: 

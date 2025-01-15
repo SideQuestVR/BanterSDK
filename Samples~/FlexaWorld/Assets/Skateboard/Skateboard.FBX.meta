@@ -3,12 +3,7 @@ guid: e347683b9fc658f4b854d4114d926900
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Skateboard
-    second: {fileID: 2100000, guid: 37e439b83910b8e4d800fe4103e20f4d, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
     materialName: 0
