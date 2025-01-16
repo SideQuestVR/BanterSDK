@@ -64,15 +64,15 @@ namespace Banter.SDK
 
     public class BanterAudioSource : BanterComponentBase
     {
-        [See(initial = "1")] public float volume;
-        [See(initial = "1")] public float pitch;
-        [See(initial = "false")] public bool mute;
-        [See(initial = "false")] public bool loop;
-        [See(initial = "false")] public bool bypassEffects;
-        [See(initial = "false")] public bool bypassListenerEffects;
-        [See(initial = "false")] public bool bypassReverbZones;
-        [See(initial = "true")] public bool playOnAwake;
-        [See(initial = "0")] public float spatialBlend;
+        [See(initial = "1")] public float volume = 1.0f;
+        [See(initial = "1")] public float pitch = 1.0f;
+        [See(initial = "false")] public bool mute = false;
+        [See(initial = "false")] public bool loop = false;
+        [See(initial = "false")] public bool bypassEffects = false;
+        [See(initial = "false")] public bool bypassListenerEffects = false;
+        [See(initial = "false")] public bool bypassReverbZones = false;
+        [See(initial = "true")] public bool playOnAwake = true;
+        [See(initial = "0")] public float spatialBlend = 0.0f;
 
         public List<AudioClip> clips = new List<AudioClip>();
 

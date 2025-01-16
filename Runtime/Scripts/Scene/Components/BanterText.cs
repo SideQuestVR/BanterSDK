@@ -42,13 +42,13 @@ namespace Banter.SDK
     {
         TextMeshPro _text;
         [See(initial = "")] public string text;
-        [See] public Vector4 color;
-        [See(initial = "0")] public HorizontalAlignment horizontalAlignment;
-        [See(initial = "0")] public VerticalAlignment verticalAlignment;
-        [See(initial = "2")] public float fontSize;
-        [See(initial = "true")] public bool richText;
-        [See(initial = "true")] public bool enableWordWrapping;
-        [See(initial = "20,5")] public Vector2 rectTransformSizeDelta;
+        [See(initial = "1,1,1,1")] public Vector4 color = new Vector4(1, 1, 1, 1);
+        [See(initial = "0")] public HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
+        [See(initial = "0")] public VerticalAlignment verticalAlignment = VerticalAlignment.Top;
+        [See(initial = "2")] public float fontSize = 2;
+        [See(initial = "true")] public bool richText = true;
+        [See(initial = "true")] public bool enableWordWrapping = true;
+        [See(initial = "20,5")] public Vector2 rectTransformSizeDelta = new Vector2(20, 5);
 
 
         internal override void StartStuff()

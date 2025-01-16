@@ -37,18 +37,18 @@ namespace Banter.SDK
 
     public class BanterVideoPlayer : BanterComponentBase
     {
-        [See(initial = "1")] public string url;
-        [See(initial = "0.5")] public float volume;
-        [See(initial = "false")] public bool loop;
-        [See(initial = "true")] public bool playOnAwake;
-        [See(initial = "true")] public bool skipOnDrop;
-        [Watch(initial = "0")] public float time;
-        [See(initial = "true")] public bool waitForFirstFrame;
-        [See(initial = "false")] public bool isPlaying;
-        [See(initial = "false")] public bool isLooping;
-        [See(initial = "false")] public bool isPrepared;
-        [See(initial = "false")] public bool isMuted;
-        [See(initial = "0")] public float duration;
+        [See(initial = "")] public string url;
+        [See(initial = "0.5")] public float volume = 0.5f;
+        [See(initial = "false")] public bool loop = false;
+        [See(initial = "true")] public bool playOnAwake = true;
+        [See(initial = "true")] public bool skipOnDrop = true;
+        [Watch(initial = "0")] public float time = 0;
+        [See(initial = "true")] public bool waitForFirstFrame = true;
+        [See(initial = "false")] public bool isPlaying = false;
+        [See(initial = "false")] public bool isLooping = false;
+        [See(initial = "false")] public bool isPrepared = false;
+        [See(initial = "false")] public bool isMuted = false;
+        [See(initial = "0")] public float duration = 0;
         [Method]
         public void _PlayToggle()
         {

@@ -32,10 +32,10 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBillboard : BanterComponentBase
     {
-        [See(initial = "0")] public float smoothing;
-        [See(initial = "true")] public bool enableXAxis;
-        [See(initial = "true")] public bool enableYAxis;
-        [See(initial = "true")] public bool enableZAxis;
+        [See(initial = "0")] public float smoothing = 0;
+        [See(initial = "true")] public bool enableXAxis = true;
+        [See(initial = "true")] public bool enableYAxis = true;
+        [See(initial = "true")] public bool enableZAxis = true;
         internal override void StartStuff()
         {
             SetLoadedIfNot();

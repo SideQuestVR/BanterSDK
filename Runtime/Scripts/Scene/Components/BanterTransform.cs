@@ -33,16 +33,16 @@ namespace Banter.SDK
     [WatchComponent(typeof(Transform))]
     public class BanterTransform : UnityComponentBase
     {
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 position;
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 localPosition;
-        [Watch(initial = "0,0,0,1")][HideInInspector] public Quaternion rotation;
-        [Watch(initial = "0,0,0,1")][HideInInspector] public Quaternion localRotation;
-        [Watch(initial = "1,1,1")][HideInInspector] public Vector3 localScale;
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 eulerAngles;
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 localEulerAngles;
-        [Watch(initial = "0,1,0")][HideInInspector] public Vector3 up;
-        [Watch(initial = "0,0,1")][HideInInspector] public Vector3 forward;
-        [Watch(initial = "1,0,0")][HideInInspector] public Vector3 right;
+        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 position = Vector3.zero;
+        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 localPosition = Vector3.zero;
+        [Watch(initial = "0,0,0,1")][HideInInspector] public Quaternion rotation = Quaternion.identity;
+        [Watch(initial = "0,0,0,1")][HideInInspector] public Quaternion localRotation = Quaternion.identity;
+        [Watch(initial = "1,1,1")][HideInInspector] public Vector3 localScale = Vector3.one;
+        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 eulerAngles = Vector3.zero;
+        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 localEulerAngles = Vector3.zero;
+        [Watch(initial = "0,1,0")][HideInInspector] public Vector3 up = Vector3.up;
+        [Watch(initial = "0,0,1")][HideInInspector] public Vector3 forward = Vector3.forward;
+        [Watch(initial = "1,0,0")][HideInInspector] public Vector3 right = Vector3.right;
         [See(initial = "false")][HideInInspector] public bool lerpPosition = false;
         [See(initial = "false")][HideInInspector] public bool lerpRotation = false;
         float _stepPosition = 0.3f;

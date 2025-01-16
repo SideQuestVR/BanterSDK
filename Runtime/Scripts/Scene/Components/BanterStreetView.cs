@@ -23,7 +23,7 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterStreetView : BanterComponentBase
     {
-        [See(initial = "")] public string panoId;
+        [See(initial = "")] public string panoId = "";
 
         PhotoSphere photoSphere;
         internal override void DestroyStuff() { }

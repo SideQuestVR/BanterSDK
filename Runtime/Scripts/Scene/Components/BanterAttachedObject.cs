@@ -23,13 +23,13 @@ namespace Banter.SDK
     public class BanterAttachedObject : BanterComponentBase
     {
         [See(initial = "")] public string uid;
-        [See(initial = "0,0,0")] public Vector3 attachmentPosition;
+        [See(initial = "0,0,0")] public Vector3 attachmentPosition = Vector3.zero;
         [See(initial = "0,0,0,1")] public Quaternion attachmentRotation = Quaternion.identity;
-        [See(initial = "0")] public AttachmentType attachmentType;
-        [See(initial = "0")] public AvatarAttachmentType avatarAttachmentType;
-        [See(initial = "0")] public AvatarBoneName avatarAttachmentPoint;
-        [See(initial = "0")] public PhysicsAttachmentPoint attachmentPoint;
-        [See(initial = "false")] public bool autoSync;
+        [See(initial = "0")] public AttachmentType attachmentType = AttachmentType.Physics;
+        [See(initial = "0")] public AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
+        [See(initial = "0")] public AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
+        [See(initial = "0")] public PhysicsAttachmentPoint attachmentPoint = PhysicsAttachmentPoint.Head;
+        [See(initial = "false")] public bool autoSync = false;
         [See(initial = "true")] public bool jointAvatar = true;
         [Method]
         public void _Detach(string uid)

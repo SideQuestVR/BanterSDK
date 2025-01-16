@@ -18,17 +18,17 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterSyncedObject : BanterComponentBase
     {
-        [See(initial = "true")] public bool syncPosition;
+        [See(initial = "true")] public bool syncPosition = true;
 
-        [See(initial = "true")] public bool syncRotation;
+        [See(initial = "true")] public bool syncRotation = true;
 
-        [See(initial = "true")] public bool takeOwnershipOnCollision;
+        [See(initial = "true")] public bool takeOwnershipOnCollision = true;
 
-        [See(initial = "true")] public bool takeOwnershipOnGrab;
+        [See(initial = "true")] public bool takeOwnershipOnGrab = true;
 
-        [See(initial = "false")] public bool kinematicIfNotOwned;
+        [See(initial = "false")] public bool kinematicIfNotOwned = false;
 
-        [See(initial = "false")] public bool doIOwn;
+        [See(initial = "false")] public bool doIOwn = false;
 
         [Method]
         public void _TakeOwnership()

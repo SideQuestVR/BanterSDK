@@ -33,11 +33,11 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterConfigurableJoint : UnityComponentBase
     {
-        [See(initial = "0,0,0")] public Vector3 targetPosition;
-        [See(initial = "false")] public bool autoConfigureConnectedAnchor;
-        [See(initial = "0")] public ConfigurableJointMotion xMotion;
-        [See(initial = "0")] public ConfigurableJointMotion yMotion;
-        [See(initial = "0")] public ConfigurableJointMotion zMotion;
+        [See(initial = "0,0,0")] public Vector3 targetPosition = Vector3.zero;
+        [See(initial = "false")] public bool autoConfigureConnectedAnchor = false;
+        [See(initial = "0")] public ConfigurableJointMotion xMotion = ConfigurableJointMotion.Locked;
+        [See(initial = "0")] public ConfigurableJointMotion yMotion = ConfigurableJointMotion.Locked;
+        [See(initial = "0")] public ConfigurableJointMotion zMotion = ConfigurableJointMotion.Locked;
         // BANTER COMPILED CODE 
         public ConfigurableJoint _componentType;
         public ConfigurableJoint componentType

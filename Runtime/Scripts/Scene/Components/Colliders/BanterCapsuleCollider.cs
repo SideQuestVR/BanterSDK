@@ -28,9 +28,9 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterCapsuleCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool isTrigger;
-        [See(initial = "0.5")] public float radius;
-        [See(initial = "2")] public float height;
+        [See(initial = "false")] public bool isTrigger = false;
+        [See(initial = "0.5")] public float radius = 0.5f;
+        [See(initial = "2")] public float height = 2;
         // BANTER COMPILED CODE 
         public CapsuleCollider _componentType;
         public CapsuleCollider componentType

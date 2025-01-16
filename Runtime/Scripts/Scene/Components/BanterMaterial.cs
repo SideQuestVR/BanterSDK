@@ -46,11 +46,11 @@ namespace Banter.SDK
     public class BanterMaterial : BanterComponentBase
     {
         public ShaderType shaderType = ShaderType.Custom;
-        [See] public string shaderName = "Unlit/Diffuse";
+        [See(initial = "\"Unlit/Diffuse\"")] public string shaderName = "Unlit/Diffuse";
         MeshRenderer _renderer;
-        [See] public string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        [See] public Vector4 color;
-        [See] public MaterialSide side;
+        [See(initial = "")] public string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
+        [See(initial = "1,1,1,1")] public Vector4 color = new Vector4(1, 1, 1, 1);
+        [See(initial = "0")] public MaterialSide side = MaterialSide.Front;
         [See(initial = "false")] public bool generateMipMaps = false;
         Texture2D defaultTexture;
         Texture2D mainTex;

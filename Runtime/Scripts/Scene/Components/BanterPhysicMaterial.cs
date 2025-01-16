@@ -29,8 +29,8 @@ namespace Banter.SDK
 
     public class BanterPhysicMaterial : BanterComponentBase
     {
-        [See(initial = "1")] public float dynamicFriction;
-        [See(initial = "1")] public float staticFriction;
+        [See(initial = "1")] public float dynamicFriction = 1;
+        [See(initial = "1")] public float staticFriction = 1;
         PhysicMaterial _material;
         Collider _collider;
         internal override void StartStuff()

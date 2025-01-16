@@ -27,7 +27,7 @@ namespace Banter.SDK
     public class BanterSphereCollider : UnityComponentBase
     {
         [See(initial = "false")] public bool isTrigger;
-        [See(initial = "0.5")] public float radius;
+        [See(initial = "0.5")] public float radius = 0.5f;
         // BANTER COMPILED CODE 
         public SphereCollider _componentType;
         public SphereCollider componentType

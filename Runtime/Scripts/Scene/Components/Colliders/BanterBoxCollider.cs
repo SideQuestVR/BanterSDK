@@ -28,9 +28,9 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterBoxCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool isTrigger;
-        [See(initial = "0,0,0")] public Vector3 center;
-        [See(initial = "1,1,1")] public Vector3 size;
+        [See(initial = "false")] public bool isTrigger = false;
+        [See(initial = "0,0,0")] public Vector3 center = Vector3.zero;
+        [See(initial = "1,1,1")] public Vector3 size = Vector3.one;
         // BANTER COMPILED CODE 
         public BoxCollider _componentType;
         public BoxCollider componentType
