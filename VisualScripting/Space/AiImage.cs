@@ -22,18 +22,23 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput prompt;
 
+        [DoNotSerialize]
+        public ValueInput ratio;
+
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _prompt = flow.GetValue<string>(prompt);
+                var _ratio = flow.GetValue<string>(ratio);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnAiImage.Invoke(_prompt);
+                    BanterScene.Instance().events.OnAiImage.Invoke(_prompt, _ratio);
                 });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
             prompt = ValueInput("Prompt", "");
+            ratio = ValueInput("Ratio", "1:1");
         }
     }
 }
