@@ -346,7 +346,7 @@ namespace Banter.SDK
                     Debug.LogError("[Banter] AiModel message is malformed: " + msg);
                     return;
                 }
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiModel.Invoke(parts[0], float.Parse(parts[1]), int.Parse(parts[1])));
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiModel.Invoke(parts[0], NumberFormat.Parse(parts[1]), int.Parse(parts[1])));
             }catch(Exception e){
                 Debug.LogError(e);
             }
