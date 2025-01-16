@@ -36,12 +36,12 @@ namespace Banter.SDK
         [See(initial = "true")] public bool enableXAxis;
         [See(initial = "true")] public bool enableYAxis;
         [See(initial = "true")] public bool enableZAxis;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetLoadedIfNot();
         }
 
-        public override void DestroyStuff() { }
+        internal override void DestroyStuff() { }
         FaceTarget lookAt;
         public void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -64,13 +64,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.smoothing, PropertyName.enableXAxis, PropertyName.enableYAxis, PropertyName.enableZAxis, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -102,12 +102,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -152,7 +152,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -206,7 +206,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

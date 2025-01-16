@@ -129,7 +129,7 @@ namespace Banter.SDK
         }
 
         Rigidbody _rigidbody;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetupRigidbody();
         }
@@ -221,7 +221,7 @@ namespace Banter.SDK
             SetupRigidbody(changedProperties);
         }
 
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
             if (_rigidbody != null)
             {
@@ -241,13 +241,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.velocity, PropertyName.angularVelocity, PropertyName.mass, PropertyName.drag, PropertyName.angularDrag, PropertyName.isKinematic, PropertyName.useGravity, PropertyName.centerOfMass, PropertyName.collisionDetectionMode, PropertyName.freezePositionX, PropertyName.freezePositionY, PropertyName.freezePositionZ, PropertyName.freezeRotationX, PropertyName.freezeRotationY, PropertyName.freezeRotationZ, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -303,7 +303,7 @@ namespace Banter.SDK
         {
             _AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
         }
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
 
             if (methodName == "AddForce" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
@@ -355,7 +355,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -499,7 +499,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if ((_velocity) || force)
@@ -687,7 +687,7 @@ namespace Banter.SDK
 
         void Tick(object sender, EventArgs e) { SyncProperties(); }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
             _velocity = false;
             _angularVelocity = false;
