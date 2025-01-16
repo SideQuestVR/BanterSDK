@@ -324,13 +324,17 @@ namespace Banter.SDK
         }
         public void AiImage(string msg, int reqId)
         {
-            var parts = msg.Split(MessageDelimiters.PRIMARY);
-            if (parts.Length < 2)
-            {
-                Debug.LogError("[Banter] AiImage message is malformed: " + msg);
-                return;
+            try{
+                var parts = msg.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length < 2)
+                {
+                    Debug.LogError("[Banter] AiImage message is malformed: " + msg);
+                    return;
+                }
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])));
+            }catch(Exception e){
+                Debug.LogError(e);
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiImage.Invoke(parts[0], parts[1]));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_IMAGE);
         }
         public void AiModel(string msg, int reqId)

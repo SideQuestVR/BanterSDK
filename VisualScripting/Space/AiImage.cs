@@ -29,7 +29,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _prompt = flow.GetValue<string>(prompt);
-                var _ratio = flow.GetValue<string>(ratio);
+                var _ratio = flow.GetValue<AiImageRatio>(ratio);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     BanterScene.Instance().events.OnAiImage.Invoke(_prompt, _ratio);
@@ -38,7 +38,7 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             prompt = ValueInput("Prompt", "");
-            ratio = ValueInput("Ratio", "1:1");
+            ratio = ValueInput("Ratio", AiImageRatio._1_1);
         }
     }
 }
