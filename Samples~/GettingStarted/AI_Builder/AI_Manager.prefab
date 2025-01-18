@@ -5035,7 +5035,7 @@ Transform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2166946555629194068}
-  - {fileID: 4326344090661465078}
+  - {fileID: 5730071204003603625}
   - {fileID: 1970611012189800241}
   m_Father: {fileID: 2198140312882367535}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -10046,23 +10046,24 @@ MonoBehaviour:
       UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"Prompt","value":{"$content":1,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
       UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"STT_Indicator","value":{"$content":2,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
       UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"TTI_Button","value":{"$content":3,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"TTI_Image","value":null,"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"TTI_Indicator","value":{"$content":4,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"ITM_Button","value":{"$content":5,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"ITM_Indicator","value":{"$content":6,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"SpawnPos","value":{"$content":7,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"SaveButton","value":{"$content":8,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"ClearButton","value":{"$content":9,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"TTI_Image","value":{"$content":4,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"TTI_Indicator","value":{"$content":5,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"ITM_Button","value":{"$content":6,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"ITM_Indicator","value":{"$content":7,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"SpawnPos","value":{"$content":8,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"SaveButton","value":{"$content":9,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"ClearButton","value":{"$content":10,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
       UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"AutoSave","value":{"$content":true,"$type":"System.Boolean"},"typeHandle":{"Identification":"System.Boolean,
-      mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"},{"name":"WhiteButton","value":{"$content":10,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"BlackButton","value":{"$content":11,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"NoneButton","value":{"$content":12,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"},{"name":"WhiteButton","value":{"$content":11,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"BlackButton","value":{"$content":12,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
+      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"NoneButton","value":{"$content":13,"$type":"UnityEngine.Object"},"typeHandle":{"Identification":"UnityEngine.GameObject,
       UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"}],"$version":"A"},"$version":"A"}}'
     _objectReferences:
     - {fileID: 5644120911588890323}
     - {fileID: 9195472647556521814}
     - {fileID: 712383378618238853}
     - {fileID: 9180718231404750972}
+    - {fileID: 4958073730806070803}
     - {fileID: 5437277771116776808}
     - {fileID: 7279999077683603100}
     - {fileID: 3017737664297383160}
@@ -17540,7 +17541,7 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_renderer: {fileID: 3060873875102111076}
   m_maskType: 0
---- !u!1001 &4287702248043170845
+--- !u!1001 &5192637295989687106
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -17548,51 +17549,47 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 5033258814863863866}
     m_Modifications:
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.901
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalPosition.y
       value: 0.291
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0.010000005
+      value: 0.010000169
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalRotation.w
       value: -0.00000035762784
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalRotation.x
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalRotation.y
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalRotation.z
       value: -0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: -7511558181221131132, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
-      propertyPath: m_Materials.Array.data[0]
-      value: 
-      objectReference: {fileID: 2100000, guid: 96aba775243adc44d9068bc1bd951bfc, type: 2}
-    - target: {fileID: 919132149155446097, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
+    - target: {fileID: 919132149155446097, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
       propertyPath: m_Name
       value: CircelImage
       objectReference: {fileID: 0}
@@ -17600,9 +17597,14 @@ PrefabInstance:
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
---- !u!4 &4326344090661465078 stripped
+  m_SourcePrefab: {fileID: 100100000, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
+--- !u!1 &4958073730806070803 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
+  m_PrefabInstance: {fileID: 5192637295989687106}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &5730071204003603625 stripped
 Transform:
-  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6f41ebd95fba82846ab20f4c4650abfc, type: 3}
-  m_PrefabInstance: {fileID: 4287702248043170845}
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 6f40fcb2c905a924caca96261c1f4354, type: 3}
+  m_PrefabInstance: {fileID: 5192637295989687106}
   m_PrefabAsset: {fileID: 0}
