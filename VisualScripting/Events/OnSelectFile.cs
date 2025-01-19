@@ -10,11 +10,11 @@ namespace Banter.VisualScripting
     [UnitShortTitle("On Select GLB")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class OnSelectGLB : EventUnit<CustomEventArgs>
+    public class OnSelectFile : EventUnit<CustomEventArgs>
     {
 
         //#if BANTER_VISUAL_SCRIPTING
-        //            EventBus.Trigger("OnSelectGLB", new CustomEventArgs(id, new object[] { data }));
+        //            EventBus.Trigger("OnSelectFile", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
         // [DoNotSerialize]
@@ -23,12 +23,14 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueOutput result;
+        [DoNotSerialize]
+        public ValueOutput type;
 
         protected override bool register => true;
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnSelectGLB");
+            return new EventHook("OnSelectFile");
         }
 
         protected override void Definition()
@@ -38,17 +40,19 @@ namespace Banter.VisualScripting
             // id = ValueInput("Return ID", string.Empty);
 
             result = ValueOutput<string>("Data");
+            type = ValueOutput<SelectFileType>("Type");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return true; // data.name == flow.GetValue<string>(id)?.Trim();
+            return true;
         }
 
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {   
             flow.SetValue(result, data.arguments[0]);
+            flow.SetValue(type, data.arguments[1]);
         }
     }
 }

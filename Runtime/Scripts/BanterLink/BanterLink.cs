@@ -172,9 +172,9 @@ namespace Banter.SDK
             {
                 scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
             }
-            else if (msg.StartsWith(APICommands.SELECT_GLB))
+            else if (msg.StartsWith(APICommands.SELECT_FILE))
             {
-                scene.SelectGLB(id);
+                scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
             }
             else if (msg.StartsWith(APICommands.GRAVITY))
             {
@@ -560,13 +560,13 @@ namespace Banter.SDK
 #endif
             Send(APICommands.EVENT + APICommands.BASE_64_TO_CDN_RECV + MessageDelimiters.PRIMARY + image);
         }
-        public void OnSelectGLB(string path)
+        public void OnSelectFile(SelectFileType type, string path)
         {
             string file = Convert.ToBase64String(File.ReadAllBytes(path));
 #if BANTER_VISUAL_SCRIPTING
-            EventBus.Trigger("OnSelectGLB", new CustomEventArgs("", new object[] { file }));
+            EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { file, type }));
 #endif
-            Send(APICommands.EVENT + APICommands.SELECT_GLB_RECV + MessageDelimiters.PRIMARY + file);
+            Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + file + MessageDelimiters.SECONDARY + (int)type);
         }
         public void OnTranscription(string message, string id)
         {
