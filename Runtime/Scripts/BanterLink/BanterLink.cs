@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.IO;
+using UnityEngine.WSA;
+
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -562,7 +564,15 @@ namespace Banter.SDK
         }
         public void OnSelectFile(SelectFileType type, string path)
         {
-            string file = Convert.ToBase64String(File.ReadAllBytes(path));
+            byte[] bytes = File.ReadAllBytes(path);
+            if(bytes.Length > 1048576 * 4) {
+#if BANTER_VISUAL_SCRIPTING
+                EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { "too-large-over-4mb", type }));
+#endif
+                Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + "too-large-over-4mb" + MessageDelimiters.SECONDARY + (int)type);
+                return;
+            }
+            string file = Convert.ToBase64String(bytes);
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { file, type }));
 #endif
