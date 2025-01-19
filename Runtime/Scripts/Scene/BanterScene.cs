@@ -358,6 +358,11 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
+        public void SelectGLB(int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnSelectGlb.Invoke());
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SELECT_GLB);
+        }
         public void Gravity(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);

@@ -44,6 +44,7 @@ public class BanterSceneEvents
     public UnityEvent<string, AiImageRatio> OnAiImage = new UnityEvent<string, AiImageRatio>();
     public UnityEvent<string, AiModelSimplify, int> OnAiModel = new UnityEvent<string, AiModelSimplify, int>();
     public UnityEvent<string, string> OnBase64ToCDN = new UnityEvent<string, string>();
+    public UnityEvent OnSelectGlb = new UnityEvent();
     public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();

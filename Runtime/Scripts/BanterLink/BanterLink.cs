@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.IO;
+
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
@@ -169,6 +171,10 @@ namespace Banter.SDK
             else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
             {
                 scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
+            }
+            else if (msg.StartsWith(APICommands.SELECT_GLB))
+            {
+                scene.SelectGLB(id);
             }
             else if (msg.StartsWith(APICommands.GRAVITY))
             {
@@ -553,6 +559,14 @@ namespace Banter.SDK
             EventBus.Trigger("OnBase64CDNLink", new CustomEventArgs("", new object[] { image }));
 #endif
             Send(APICommands.EVENT + APICommands.BASE_64_TO_CDN_RECV + MessageDelimiters.PRIMARY + image);
+        }
+        public void OnSelectGLB(string path)
+        {
+            string file = Convert.ToBase64String(File.ReadAllBytes(path));
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnSelectGLB", new CustomEventArgs("", new object[] { file }));
+#endif
+            Send(APICommands.EVENT + APICommands.SELECT_GLB_RECV + MessageDelimiters.PRIMARY + file);
         }
         public void OnTranscription(string message, string id)
         {

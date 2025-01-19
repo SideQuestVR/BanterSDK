@@ -42,7 +42,7 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             base64Image = ValueInput("Base64 Image", "");
-            simplify = ValueInput("Simplify", AiModelSimplify.med);
+            simplify = ValueInput("Detail", AiModelSimplify.med);
             textureSize = ValueInput("Texture Size", 1024);
         }
     }
