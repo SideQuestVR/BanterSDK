@@ -32,7 +32,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _base64Image = flow.GetValue<string>(base64Image);
-                var _simplify = flow.GetValue<float>(simplify);
+                var _simplify = flow.GetValue<AiModelSimplify>(simplify);
                 var _textureSize = flow.GetValue<int>(textureSize);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
@@ -42,7 +42,7 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             base64Image = ValueInput("Base64 Image", "");
-            simplify = ValueInput("Simplify", 0.95f);
+            simplify = ValueInput("Simplify", AiModelSimplify.med);
             textureSize = ValueInput("Texture Size", 1024);
         }
     }
