@@ -6,8 +6,8 @@ using System.Diagnostics;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Select GLB Callback Received")]
-    [UnitShortTitle("On Select GLB")]
+    [UnitTitle("On Select File Callback Received")]
+    [UnitShortTitle("On Select File")]
     [UnitCategory("Events\\Banter")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnSelectFile : EventUnit<CustomEventArgs>
