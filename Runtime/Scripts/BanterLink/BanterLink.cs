@@ -2,6 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using System.IO;
+
+
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
@@ -169,6 +172,10 @@ namespace Banter.SDK
             else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
             {
                 scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
+            }
+            else if (msg.StartsWith(APICommands.SELECT_FILE))
+            {
+                scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
             }
             else if (msg.StartsWith(APICommands.GRAVITY))
             {
@@ -553,6 +560,23 @@ namespace Banter.SDK
             EventBus.Trigger("OnBase64CDNLink", new CustomEventArgs("", new object[] { image }));
 #endif
             Send(APICommands.EVENT + APICommands.BASE_64_TO_CDN_RECV + MessageDelimiters.PRIMARY + image);
+        }
+        public void OnSelectFile(SelectFileType type, string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            if (bytes.Length > 1048576 * 4)
+            {
+#if BANTER_VISUAL_SCRIPTING
+                EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { "too-large-over-4mb", type }));
+#endif
+                Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + "too-large-over-4mb" + MessageDelimiters.SECONDARY + (int)type);
+                return;
+            }
+            string file = Convert.ToBase64String(bytes);
+#if BANTER_VISUAL_SCRIPTING
+            EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { file, type }));
+#endif
+            Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + file + MessageDelimiters.SECONDARY + (int)type);
         }
         public void OnTranscription(string message, string id)
         {
