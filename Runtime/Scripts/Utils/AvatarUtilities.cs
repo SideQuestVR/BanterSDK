@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using SQ.Tracking;
 using UnityEngine;
+using Banter.SDK;
 
 public class AnimationCurveContainer
 {
