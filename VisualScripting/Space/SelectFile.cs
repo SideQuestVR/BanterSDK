@@ -7,11 +7,11 @@ using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Generate Ai Image")]
-    [UnitShortTitle("AiImage")]
+    [UnitTitle("Select file (GLB/JPG/PNG)")]
+    [UnitShortTitle("SelectFile")]
     [UnitCategory("Banter")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class AiImage : Unit
+    public class SelectFile : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
@@ -20,25 +20,20 @@ namespace Banter.VisualScripting
         public ControlOutput outputTrigger;
 
         [DoNotSerialize]
-        public ValueInput prompt;
-
-        [DoNotSerialize]
-        public ValueInput ratio;
+        public ValueInput type;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var _prompt = flow.GetValue<string>(prompt);
-                var _ratio = flow.GetValue<AiImageRatio>(ratio);
+                var _type = flow.GetValue<SelectFileType>(type);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnAiImage.Invoke(_prompt, _ratio);
+                    BanterScene.Instance().events.OnSelectFile.Invoke(_type);
                 });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
-            prompt = ValueInput("Prompt", "");
-            ratio = ValueInput("Ratio", AiImageRatio._1_1);
+            type = ValueInput("Type", SelectFileType.GLB);
         }
     }
 }

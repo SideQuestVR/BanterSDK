@@ -44,6 +44,7 @@ public class APICommands
     public const string AI_IMAGE = "!aiimg!";
     public const string AI_MODEL = "!aiglb!";
     public const string BASE_64_TO_CDN = "!b64cdn!";
+    public const string SELECT_FILE = "!sltglb!";
     public const string GRAVITY = "!gv!";
     public const string TIME_SCALE = "!ts!";
     public const string PLAYER_SPEED = "!ps!";
@@ -86,6 +87,7 @@ public class APICommands
     public const string AI_IMAGE_RECV = "aiimg!";
     public const string AI_MODEL_RECV = "aiglb!";
     public const string BASE_64_TO_CDN_RECV = "b64cdn!";
+    public const string SELECT_FILE_RECV = "sltglb!";
     public const string BANTER_VERSION = "bv!";
     public const string SEND_USER = "su!";
     public const string FULL_SPACE_STATE = "fss!";
