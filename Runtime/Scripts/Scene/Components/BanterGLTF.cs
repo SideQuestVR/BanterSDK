@@ -52,6 +52,8 @@ namespace Banter.SDK
         [See(initial = "false")] public bool legacyRotate;
         bool loadStarted;
 
+        public bool ModelLoaded { get; private set; }
+
         public override void StartStuff()
         {
             LogLine.Do("Warning: Using BanterGLTF is not recommended for production use. It is slow and not optimized.");
@@ -64,6 +66,7 @@ namespace Banter.SDK
                 return;
             }
             loadStarted = true;
+            ModelLoaded = false;
             try
             {
                 Importer.ImportGLBAsync(await Get.Bytes(url), new ImportSettings(), (go, animations) =>
@@ -144,12 +147,14 @@ namespace Banter.SDK
                             }
                         }
                         SetLoadedIfNot();
+                        ModelLoaded = true;
                         loadStarted = false;
                     }
                     catch (Exception e)
                     {
                         SetLoadedIfNot(false, e.Message + " - " + url);
                         Destroy(go);
+                        ModelLoaded = false;
                         loadStarted = false;
                     }
                 });
@@ -158,6 +163,7 @@ namespace Banter.SDK
             {
                 Debug.LogError(e + " " + url);
                 SetLoadedIfNot(false, e.Message);
+                ModelLoaded = false;
                 loadStarted = false;
             }
         }
