@@ -1,4 +1,5 @@
-namespace Banter.SDK {
+namespace Banter.SDK
+{
     public enum SelectFileType
     {
         GLB,

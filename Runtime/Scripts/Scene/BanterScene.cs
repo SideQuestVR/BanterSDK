@@ -324,7 +324,8 @@ namespace Banter.SDK
         }
         public void AiImage(string msg, int reqId)
         {
-            try{
+            try
+            {
                 var parts = msg.Split(MessageDelimiters.PRIMARY);
                 if (parts.Length < 2)
                 {
@@ -332,14 +333,17 @@ namespace Banter.SDK
                     return;
                 }
                 UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])));
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.LogError(e);
             }
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_IMAGE);
         }
         public void AiModel(string msg, int reqId)
         {
-            try{
+            try
+            {
                 var parts = msg.Split(MessageDelimiters.PRIMARY);
                 if (parts.Length < 3)
                 {
@@ -347,7 +351,9 @@ namespace Banter.SDK
                     return;
                 }
                 UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiModel.Invoke(parts[0], (AiModelSimplify)int.Parse(parts[1]), int.Parse(parts[2])));
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.LogError(e);
             }
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_MODEL);

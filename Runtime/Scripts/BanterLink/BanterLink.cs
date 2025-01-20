@@ -564,7 +564,8 @@ namespace Banter.SDK
         public void OnSelectFile(SelectFileType type, string path)
         {
             byte[] bytes = File.ReadAllBytes(path);
-            if(bytes.Length > 1048576 * 4) {
+            if (bytes.Length > 1048576 * 4)
+            {
 #if BANTER_VISUAL_SCRIPTING
                 EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { "too-large-over-4mb", type }));
 #endif
