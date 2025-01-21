@@ -10,6 +10,7 @@ namespace Banter.VisualScripting
     [TypeIcon(typeof(BanterGLTF))]
     public class BanterGLTFIsLoaded : Unit
     {
+        [PortLabelHidden]
         [DoNotSerialize]
         [NullMeansSelf]
         public ValueInput gltfObject;
@@ -24,7 +25,7 @@ namespace Banter.VisualScripting
                 return gltfComp.ModelLoaded;
             });
 
-            gltfObject = ValueInput<BanterGLTF>("BanterGltf", null);
+            gltfObject = ValueInput(typeof(BanterGLTF), nameof(gltfObject));
             gltfObject.SetDefaultValue(null);
             gltfObject.NullMeansSelf();
         }

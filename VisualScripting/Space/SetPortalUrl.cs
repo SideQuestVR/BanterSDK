@@ -14,6 +14,7 @@ namespace Banter.VisualScripting
         public ValueInput url;
 
         [DoNotSerialize]
+        [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput portal;
 
@@ -28,7 +29,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             url = ValueInput<string>("URL");
-            portal = ValueInput<BanterPortal>("TargetPortal");
+            portal = ValueInput(typeof(BanterPortal), nameof(portal));
             portal.SetDefaultValue(null);
             portal.NullMeansSelf();
 

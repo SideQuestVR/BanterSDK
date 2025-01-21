@@ -130,6 +130,8 @@ namespace Banter.VisualScripting
         public ValueInput url;
 
         [DoNotSerialize]
+        [PortLabelHidden]
+        [NullMeansSelf]
         public ValueInput gltfComponent;
 
         [DoNotSerialize]
@@ -145,7 +147,7 @@ namespace Banter.VisualScripting
             input = ControlInput("", (flow) => LoadGltf(flow));
             output = ControlOutput("");
             url = ValueInput<string>("URL", string.Empty);
-            gltfComponent = ValueInput<BanterGLTF>("BanterGltf", null);
+            gltfComponent = ValueInput(typeof(BanterGLTF), nameof(gltfComponent));
             gltfComponent.SetDefaultValue(null);
             gltfComponent.NullMeansSelf();
         }

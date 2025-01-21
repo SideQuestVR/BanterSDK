@@ -64,7 +64,7 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             url = ValueInput("Url", string.Empty);
-            browserComponent = ValueInput<BanterBrowser>("Banter Browser", null);
+            browserComponent = ValueInput(typeof(BanterBrowser), nameof(browserComponent));
             browserComponent.SetDefaultValue(null);
             browserComponent.NullMeansSelf();
         }

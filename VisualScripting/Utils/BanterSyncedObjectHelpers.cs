@@ -16,9 +16,11 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
+        [PortLabelHidden]
         [DoNotSerialize]
         [NullMeansSelf]
         public ValueInput syncedObject;
+
 
         protected override void Definition()
         {
@@ -29,7 +31,7 @@ namespace Banter.VisualScripting
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
-            syncedObject = ValueInput<BanterSyncedObject>("Sync Object", null);
+            syncedObject = ValueInput(typeof(BanterSyncedObject), nameof(syncedObject));
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
         }
@@ -41,6 +43,7 @@ namespace Banter.VisualScripting
     [TypeIcon(typeof(BanterSyncedObject))]
     public class BanterSyncedObjectDoIOwn : Unit
     {
+        [PortLabelHidden]
         [DoNotSerialize]
         [NullMeansSelf]
         public ValueInput syncedObject;
@@ -50,7 +53,7 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            syncedObject = ValueInput<BanterSyncedObject>("Sync Object", null);
+            syncedObject = ValueInput(typeof(BanterSyncedObject), nameof(syncedObject));
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
 
