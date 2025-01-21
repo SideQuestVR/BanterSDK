@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.banter",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "displayName": "Banter SDK",
   "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
   "unity": "2022.3",
@@ -28,7 +28,7 @@
   "samples": [
     {
       "displayName": "Basics",
-      "description": "Learn how to use Banter components in your spaces! Contains 3 worlds to explore.\n\n1. Basics: Learn how to build Banter spaces.\n2. Gadgets: Fun tools to add to your world!\n3. Gravity Maze: An example space that manipulates gravity.",
+      "description": "Learn how to use Banter components in your spaces! Contains many worlds to explore.\n\n1. Basics: Learn how to build Banter spaces.\n2. Gadgets: Fun tools to add to your world!\n3. Gravity Maze: An example space that manipulates gravity.\n4. Networking: Learn how to use Banter networking components.\n5. AI Builder: Generate dynamic images and models in Banter!",
       "path": "Samples~/GettingStarted"
     },
     {

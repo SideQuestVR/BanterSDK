@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 95e66c6366d904e98bc83428217d4fd7, type: 3}
+  m_Name: ReceiveSpaceStatePropertie
+  m_EditorClassIdentifier: 
+  _data:
+    _json: '{"graph":{"variables":{"Kind":"Flow","collection":{"$content":[],"$version":"A"},"$version":"A"},"controlInputDefinitions":[],"controlOutputDefinitions":[],"valueInputDefinitions":[],"valueOutputDefinitions":[],"title":null,"summary":null,"pan":{"x":-59.0,"y":-3.0},"zoom":1.0,"elements":[{"coroutine":false,"defaultValues":{"Property
+      Name":{"$content":"SpaceStateExample","$type":"System.String"}},"position":{"x":-360.0,"y":-132.0},"guid":"16eee631-6437-422f-ae74-8005d9429b32","$version":"A","$type":"Banter.VisualScripting.OnSpaceStatePropsChanged","$id":"9"},{"specifyFallback":false,"kind":"Object","defaultValues":{"name":{"$content":"SpaceStateExampleText","$type":"System.String"},"object":null},"position":{"x":-204.0,"y":24.0},"guid":"89a6704a-05ed-4c5b-962f-c5737ae398a2","$version":"A","$type":"Unity.VisualScripting.GetVariable","$id":"11"},{"chainable":false,"member":{"name":"text","parameterTypes":null,"targetType":"TMPro.TextMeshPro","targetTypeName":"TMPro.TextMeshPro","$version":"A"},"defaultValues":{"target":null,"input":{"$content":"","$type":"System.String"}},"position":{"x":132.0,"y":-144.0},"guid":"fa54dcc9-b1bf-487e-b45c-44a6427e94d9","$version":"A","$type":"Unity.VisualScripting.SetMember","$id":"13"},{"sourceUnit":{"$ref":"9"},"sourceKey":"trigger","destinationUnit":{"$ref":"13"},"destinationKey":"assign","guid":"afd7d170-baef-4408-a7cf-4f8604802da2","$type":"Unity.VisualScripting.ControlConnection"},{"sourceUnit":{"$ref":"11"},"sourceKey":"value","destinationUnit":{"$ref":"13"},"destinationKey":"target","guid":"a8e0291a-a623-480c-8453-cea9e2a6f7e7","$type":"Unity.VisualScripting.ValueConnection"},{"sourceUnit":{"$ref":"9"},"sourceKey":"New
+      Value","destinationUnit":{"$ref":"13"},"destinationKey":"input","guid":"3da544d3-98dc-4ef9-95c9-2ea4e1a7b6f0","$type":"Unity.VisualScripting.ValueConnection"}],"$version":"A"}}'
+    _objectReferences: []
