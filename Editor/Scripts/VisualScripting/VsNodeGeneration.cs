@@ -332,10 +332,10 @@ namespace Banter.SDKEditor
             typeof(UnityEngine.AI.ObstacleAvoidanceType),
             typeof(UnityEngine.AI.OffMeshLinkType),
 
-            // Banter
+            // Banter classes that aren't MonoBehaviours
+            // See AotPreBuilder._allowedBanterTypes for the MBs
             typeof(Banter.SDK.BanterUser),
             typeof(Banter.SDK.BanterAttachment),
-            typeof(Banter.SDK.BanterAttachedObject),
         };
     }
 }

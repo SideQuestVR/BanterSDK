@@ -26,9 +26,11 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterMeshCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool convex;
-        [See(initial = "false")] public bool isTrigger;
+        [See(initial = "false")][SerializeField] internal bool convex;
+        [See(initial = "false")][SerializeField] internal bool isTrigger;
         // BANTER COMPILED CODE 
+        public System.Boolean _convex { get { return convex; } set { convex = value; } }
+        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
         public MeshCollider _componentType;
         public MeshCollider componentType
         {

@@ -40,15 +40,15 @@ namespace Banter.SDK
 
     public class BanterText : BanterComponentBase
     {
-        TextMeshPro _text;
-        [See(initial = "")] public string text;
-        [See(initial = "1,1,1,1")] public Vector4 color = new Vector4(1, 1, 1, 1);
-        [See(initial = "0")] public HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
-        [See(initial = "0")] public VerticalAlignment verticalAlignment = VerticalAlignment.Top;
-        [See(initial = "2")] public float fontSize = 2;
-        [See(initial = "true")] public bool richText = true;
-        [See(initial = "true")] public bool enableWordWrapping = true;
-        [See(initial = "20,5")] public Vector2 rectTransformSizeDelta = new Vector2(20, 5);
+        TextMeshPro tmpComponent;
+        [See(initial = "")][SerializeField] internal string text;
+        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+        [See(initial = "0")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
+        [See(initial = "0")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Top;
+        [See(initial = "2")][SerializeField] internal float fontSize = 2;
+        [See(initial = "true")][SerializeField] internal bool richText = true;
+        [See(initial = "true")][SerializeField] internal bool enableWordWrapping = true;
+        [See(initial = "20,5")][SerializeField] internal Vector2 rectTransformSizeDelta = new Vector2(20, 5);
 
 
         internal override void StartStuff()
@@ -58,43 +58,43 @@ namespace Banter.SDK
 
         void SetupText()
         {
-            if (_text == null)
+            if (tmpComponent == null)
             {
-                _text = gameObject.GetComponent<TextMeshPro>();
-                if (_text == null)
+                tmpComponent = gameObject.GetComponent<TextMeshPro>();
+                if (tmpComponent == null)
                 {
-                    _text = gameObject.AddComponent<TextMeshPro>();
+                    tmpComponent = gameObject.AddComponent<TextMeshPro>();
                 }
             }
-            _text.text = text;
-            _text.color = new Color(color.x, color.y, color.z, color.w);
-            _text.fontSize = fontSize;
-            _text.richText = richText;
+            tmpComponent.text = text;
+            tmpComponent.color = new Color(color.x, color.y, color.z, color.w);
+            tmpComponent.fontSize = fontSize;
+            tmpComponent.richText = richText;
             switch (horizontalAlignment)
             {
                 case HorizontalAlignment.Left:
-                    _text.alignment = TextAlignmentOptions.Left;
+                    tmpComponent.alignment = TextAlignmentOptions.Left;
                     break;
                 case HorizontalAlignment.Right:
-                    _text.alignment = TextAlignmentOptions.Right;
+                    tmpComponent.alignment = TextAlignmentOptions.Right;
                     break;
                 case HorizontalAlignment.Center:
-                    _text.alignment = TextAlignmentOptions.Center;
+                    tmpComponent.alignment = TextAlignmentOptions.Center;
                     break;
             }
             switch (verticalAlignment)
             {
                 case VerticalAlignment.Top:
-                    _text.verticalAlignment = VerticalAlignmentOptions.Top;
+                    tmpComponent.verticalAlignment = VerticalAlignmentOptions.Top;
                     break;
                 case VerticalAlignment.Bottom:
-                    _text.verticalAlignment = VerticalAlignmentOptions.Bottom;
+                    tmpComponent.verticalAlignment = VerticalAlignmentOptions.Bottom;
                     break;
                 case VerticalAlignment.Center:
-                    _text.verticalAlignment = VerticalAlignmentOptions.Middle;
+                    tmpComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
                     break;
             }
-            _text.enableWordWrapping = enableWordWrapping;
+            tmpComponent.enableWordWrapping = enableWordWrapping;
             var rect = gameObject.GetComponent<RectTransform>();
             if (rect != null)
             {
@@ -104,9 +104,9 @@ namespace Banter.SDK
         }
         internal override void DestroyStuff()
         {
-            if (_text != null)
+            if (tmpComponent != null)
             {
-                Destroy(_text);
+                Destroy(tmpComponent);
             }
         }
         void UpdateCallback(List<PropertyName> changedProperties)
@@ -114,6 +114,15 @@ namespace Banter.SDK
             SetupText();
         }
         // BANTER COMPILED CODE 
+        public System.String _text { get { return text; } set { text = value; UpdateCallback(new List<PropertyName> { PropertyName.text }); } }
+        public UnityEngine.Vector4 _color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
+        public HorizontalAlignment _horizontalAlignment { get { return horizontalAlignment; } set { horizontalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.horizontalAlignment }); } }
+        public VerticalAlignment _verticalAlignment { get { return verticalAlignment; } set { verticalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.verticalAlignment }); } }
+        public System.Single _fontSize { get { return fontSize; } set { fontSize = value; UpdateCallback(new List<PropertyName> { PropertyName.fontSize }); } }
+        public System.Boolean _richText { get { return richText; } set { richText = value; UpdateCallback(new List<PropertyName> { PropertyName.richText }); } }
+        public System.Boolean _enableWordWrapping { get { return enableWordWrapping; } set { enableWordWrapping = value; UpdateCallback(new List<PropertyName> { PropertyName.enableWordWrapping }); } }
+        public UnityEngine.Vector2 _rectTransformSizeDelta { get { return rectTransformSizeDelta; } set { rectTransformSizeDelta = value; UpdateCallback(new List<PropertyName> { PropertyName.rectTransformSizeDelta }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

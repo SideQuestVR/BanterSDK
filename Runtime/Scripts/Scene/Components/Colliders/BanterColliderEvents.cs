@@ -35,7 +35,7 @@ namespace Banter.SDK
             BanterScene.Instance().link?._OnTriggerExit(gameObject, collider);
         }
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties) { }
+        internal void UpdateCallback(List<PropertyName> changedProperties) { }
         internal override void StartStuff()
         {
             SetLoadedIfNot();

@@ -18,9 +18,9 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterMirror : BanterComponentBase
     {
-        [See(initial = "1024")] public int renderTextureSize = 1024;
-        [See(initial = "1")] public int cameraClear = 1;
-        [See(initial = "'#000000'")] public string backgroundColor = "#000000";
+        [See(initial = "1024")][SerializeField] internal int renderTextureSize = 1024;
+        [See(initial = "1")][SerializeField] internal int cameraClear = 1;
+        [See(initial = "'#000000'")][SerializeField] internal string backgroundColor = "#000000";
 
         VRPortalRenderer _renderer;
 
@@ -41,7 +41,7 @@ namespace Banter.SDK
             SetupMirror();
         }
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupMirror(changedProperties);
         }
@@ -73,6 +73,10 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
         // BANTER COMPILED CODE 
+        public System.Int32 _renderTextureSize { get { return renderTextureSize; } set { renderTextureSize = value; UpdateCallback(new List<PropertyName> { PropertyName.renderTextureSize }); } }
+        public System.Int32 _cameraClear { get { return cameraClear; } set { cameraClear = value; UpdateCallback(new List<PropertyName> { PropertyName.cameraClear }); } }
+        public System.String _backgroundColor { get { return backgroundColor; } set { backgroundColor = value; UpdateCallback(new List<PropertyName> { PropertyName.backgroundColor }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

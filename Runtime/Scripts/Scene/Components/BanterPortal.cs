@@ -40,8 +40,8 @@ namespace Banter.SDK
             "https://cdn.sidequestvr.com/file/567306/portalplaceholder_11.png",
             "https://cdn.sidequestvr.com/file/567307/portalplaceholder_12.png",
         };
-        [See(initial = "")] public string url = "";
-        [See(initial = "")] public string instance = "";
+        [See(initial = "")][SerializeField] internal string url = "";
+        [See(initial = "")][SerializeField] internal string instance = "";
         MaterialPropertyBlock block;
         GameObject portal;
         BanterSceneEvents sceneEvents;
@@ -102,11 +102,14 @@ namespace Banter.SDK
         }
 
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties = null)
+        internal void UpdateCallback(List<PropertyName> changedProperties = null)
         {
             _ = SetupPortal();
         }
         // BANTER COMPILED CODE 
+        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.String _instance { get { return instance; } set { instance = value; UpdateCallback(new List<PropertyName> { PropertyName.instance }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

@@ -79,12 +79,12 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBrowser : BanterComponentBase
     {
-        [See(initial = "")] public string url;
-        [See(initial = "4")] public int mipMaps = 4;
-        [See(initial = "1200")] public float pixelsPerUnit = 1200;
-        [See(initial = "1024")] public float pageWidth = 1024;
-        [See(initial = "576")] public float pageHeight = 576;
-        [See(initial = "")] public string actions;
+        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "4")][SerializeField] internal int mipMaps = 4;
+        [See(initial = "1200")][SerializeField] internal float pixelsPerUnit = 1200;
+        [See(initial = "1024")][SerializeField] internal float pageWidth = 1024;
+        [See(initial = "576")][SerializeField] internal float pageHeight = 576;
+        [See(initial = "")][SerializeField] internal string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         [Method]
         public void _ToggleInteraction(bool enabled)
@@ -143,11 +143,18 @@ namespace Banter.SDK
         }
 
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupBrowser(changedProperties);
         }
         // BANTER COMPILED CODE 
+        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Int32 _mipMaps { get { return mipMaps; } set { mipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.mipMaps }); } }
+        public System.Single _pixelsPerUnit { get { return pixelsPerUnit; } set { pixelsPerUnit = value; UpdateCallback(new List<PropertyName> { PropertyName.pixelsPerUnit }); } }
+        public System.Single _pageWidth { get { return pageWidth; } set { pageWidth = value; UpdateCallback(new List<PropertyName> { PropertyName.pageWidth }); } }
+        public System.Single _pageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
+        public System.String _actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

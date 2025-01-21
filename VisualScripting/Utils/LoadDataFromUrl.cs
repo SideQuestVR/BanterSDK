@@ -154,8 +154,7 @@ namespace Banter.VisualScripting
         {
             var url = flow.GetValue<string>(this.url);
             var bGLTF = flow.GetValue<BanterGLTF>(gltfComponent);
-            bGLTF.url = url;
-            bGLTF.UpdateCallback(null);
+            bGLTF._url = url;
 
             return output;
         }

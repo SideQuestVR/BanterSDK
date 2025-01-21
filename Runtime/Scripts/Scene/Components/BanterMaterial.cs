@@ -46,19 +46,19 @@ namespace Banter.SDK
     public class BanterMaterial : BanterComponentBase
     {
         public ShaderType shaderType = ShaderType.Custom;
-        [See(initial = "\"Unlit/Diffuse\"")] public string shaderName = "Unlit/Diffuse";
         MeshRenderer _renderer;
-        [See(initial = "")] public string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        [See(initial = "1,1,1,1")] public Vector4 color = new Vector4(1, 1, 1, 1);
-        [See(initial = "0")] public MaterialSide side = MaterialSide.Front;
-        [See(initial = "false")] public bool generateMipMaps = false;
+        [See(initial = "\"Unlit/Diffuse\"")][SerializeField] internal string shaderName = "Unlit/Diffuse";
+        [See(initial = "")][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
+        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+        [See(initial = "0")][SerializeField] internal MaterialSide side = MaterialSide.Front;
+        [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
         Texture2D defaultTexture;
         Texture2D mainTex;
         internal override void StartStuff()
         {
             _ = SetupMaterial();
         }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             _ = SetupMaterial(changedProperties);
         }
@@ -131,6 +131,12 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public System.String _shaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
+        public System.String _texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
+        public UnityEngine.Vector4 _color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
+        public Banter.SDK.MaterialSide _side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
+        public System.Boolean _generateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

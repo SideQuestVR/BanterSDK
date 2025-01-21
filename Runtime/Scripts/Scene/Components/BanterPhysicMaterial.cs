@@ -29,15 +29,15 @@ namespace Banter.SDK
 
     public class BanterPhysicMaterial : BanterComponentBase
     {
-        [See(initial = "1")] public float dynamicFriction = 1;
-        [See(initial = "1")] public float staticFriction = 1;
+        [See(initial = "1")][SerializeField] internal float dynamicFriction = 1;
+        [See(initial = "1")][SerializeField] internal float staticFriction = 1;
         PhysicMaterial _material;
         Collider _collider;
         internal override void StartStuff()
         {
             SetupPhysicMaterial(null);
         }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupPhysicMaterial(changedProperties);
         }
@@ -86,6 +86,9 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public System.Single _dynamicFriction { get { return dynamicFriction; } set { dynamicFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.dynamicFriction }); } }
+        public System.Single _staticFriction { get { return staticFriction; } set { staticFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.staticFriction }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

@@ -25,7 +25,7 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterKitItem : BanterComponentBase
     {
-        [See(initial = "")] public string path = "";
+        [See(initial = "")][SerializeField] internal string path = "";
         GameObject item;
         public AssetBundle KitBundle;
         private async Task SetupKitItem()
@@ -67,11 +67,13 @@ namespace Banter.SDK
             }
         }
         internal override void StartStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             _ = SetupKitItem();
         }
         // BANTER COMPILED CODE 
+        public System.String _path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

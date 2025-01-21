@@ -23,12 +23,12 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterStreetView : BanterComponentBase
     {
-        [See(initial = "")] public string panoId = "";
+        [See(initial = "")][SerializeField] internal string panoId = "";
 
         PhotoSphere photoSphere;
         internal override void DestroyStuff() { }
         internal override void StartStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (photoSphere != null)
             {
@@ -46,6 +46,8 @@ namespace Banter.SDK
             photoSphere.LoadCallback += photoSphereCallback;
         }
         // BANTER COMPILED CODE 
+        public System.String _panoId { get { return panoId; } set { panoId = value; UpdateCallback(new List<PropertyName> { PropertyName.panoId }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

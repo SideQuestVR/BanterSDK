@@ -32,10 +32,10 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBillboard : BanterComponentBase
     {
-        [See(initial = "0")] public float smoothing = 0;
-        [See(initial = "true")] public bool enableXAxis = true;
-        [See(initial = "true")] public bool enableYAxis = true;
-        [See(initial = "true")] public bool enableZAxis = true;
+        [See(initial = "0")][SerializeField] internal float smoothing = 0;
+        [See(initial = "true")][SerializeField] internal bool enableXAxis = true;
+        [See(initial = "true")][SerializeField] internal bool enableYAxis = true;
+        [See(initial = "true")][SerializeField] internal bool enableZAxis = true;
         internal override void StartStuff()
         {
             SetLoadedIfNot();
@@ -43,7 +43,7 @@ namespace Banter.SDK
 
         internal override void DestroyStuff() { }
         FaceTarget lookAt;
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (lookAt == null)
             {
@@ -56,6 +56,11 @@ namespace Banter.SDK
             lookAt.isBillboard = true;
         }
         // BANTER COMPILED CODE 
+        public System.Single _smoothing { get { return smoothing; } set { smoothing = value; UpdateCallback(new List<PropertyName> { PropertyName.smoothing }); } }
+        public System.Boolean _enableXAxis { get { return enableXAxis; } set { enableXAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableXAxis }); } }
+        public System.Boolean _enableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
+        public System.Boolean _enableZAxis { get { return enableZAxis; } set { enableZAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableZAxis }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

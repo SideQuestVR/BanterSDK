@@ -16,8 +16,8 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterGrabHandle : BanterComponentBase
     {
-        [See(initial = "0")] public BanterGrabType grabType;
-        [See(initial = "0.01")] public float grabRadius = 0.01f;
+        [See(initial = "0")][SerializeField] internal BanterGrabType grabType;
+        [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
         internal override void DestroyStuff()
         {
             // throw new NotImplementedException();
@@ -30,11 +30,14 @@ namespace Banter.SDK
             // throw new NotImplementedException();
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             // SetupPhysicMaterial(changedProperties);
         }
         // BANTER COMPILED CODE 
+        public BanterGrabType _grabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
+        public System.Single _grabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

@@ -33,12 +33,17 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterConfigurableJoint : UnityComponentBase
     {
-        [See(initial = "0,0,0")] public Vector3 targetPosition = Vector3.zero;
-        [See(initial = "false")] public bool autoConfigureConnectedAnchor = false;
-        [See(initial = "0")] public ConfigurableJointMotion xMotion = ConfigurableJointMotion.Locked;
-        [See(initial = "0")] public ConfigurableJointMotion yMotion = ConfigurableJointMotion.Locked;
-        [See(initial = "0")] public ConfigurableJointMotion zMotion = ConfigurableJointMotion.Locked;
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 targetPosition = Vector3.zero;
+        [See(initial = "false")][SerializeField] internal bool autoConfigureConnectedAnchor = false;
+        [See(initial = "0")][SerializeField] internal ConfigurableJointMotion xMotion = ConfigurableJointMotion.Locked;
+        [See(initial = "0")][SerializeField] internal ConfigurableJointMotion yMotion = ConfigurableJointMotion.Locked;
+        [See(initial = "0")][SerializeField] internal ConfigurableJointMotion zMotion = ConfigurableJointMotion.Locked;
         // BANTER COMPILED CODE 
+        public UnityEngine.Vector3 _targetPosition { get { return targetPosition; } set { targetPosition = value; } }
+        public System.Boolean _autoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
+        public UnityEngine.ConfigurableJointMotion _xMotion { get { return xMotion; } set { xMotion = value; } }
+        public UnityEngine.ConfigurableJointMotion _yMotion { get { return yMotion; } set { yMotion = value; } }
+        public UnityEngine.ConfigurableJointMotion _zMotion { get { return zMotion; } set { zMotion = value; } }
         public ConfigurableJoint _componentType;
         public ConfigurableJoint componentType
         {

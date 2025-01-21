@@ -82,21 +82,21 @@ namespace Banter.SDK
 
     public class BanterRigidbody : BanterComponentBase
     {
-        [See(initial = "1")] public float mass;
-        [See(initial = "0")] public float drag;
-        [See(initial = "0.05")] public float angularDrag;
-        [See(initial = "false")] public bool isKinematic;
-        [See(initial = "true")] public bool useGravity;
-        [See(initial = "0,0,0")] public Vector3 centerOfMass;
-        [See(initial = "0")] public CollisionDetectionMode collisionDetectionMode;
-        [Watch(initial = "0,0,0")] public Vector3 velocity;
-        [Watch(initial = "0,0,0")] public Vector3 angularVelocity;
-        [See(initial = "false")] public bool freezePositionX;
-        [See(initial = "false")] public bool freezePositionY;
-        [See(initial = "false")] public bool freezePositionZ;
-        [See(initial = "false")] public bool freezeRotationX;
-        [See(initial = "false")] public bool freezeRotationY;
-        [See(initial = "false")] public bool freezeRotationZ;
+        [See(initial = "1")][SerializeField] internal float mass;
+        [See(initial = "0")][SerializeField] internal float drag;
+        [See(initial = "0.05")][SerializeField] internal float angularDrag;
+        [See(initial = "false")][SerializeField] internal bool isKinematic;
+        [See(initial = "true")][SerializeField] internal bool useGravity;
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 centerOfMass;
+        [See(initial = "0")][SerializeField] internal CollisionDetectionMode collisionDetectionMode;
+        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 velocity;
+        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 angularVelocity;
+        [See(initial = "false")][SerializeField] internal bool freezePositionX;
+        [See(initial = "false")][SerializeField] internal bool freezePositionY;
+        [See(initial = "false")][SerializeField] internal bool freezePositionZ;
+        [See(initial = "false")][SerializeField] internal bool freezeRotationX;
+        [See(initial = "false")][SerializeField] internal bool freezeRotationY;
+        [See(initial = "false")][SerializeField] internal bool freezeRotationZ;
         [Method]
         public void _AddForce(Vector3 force, ForceMode mode)
         {
@@ -216,7 +216,7 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupRigidbody(changedProperties);
         }
@@ -229,9 +229,24 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public UnityEngine.Vector3 _velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
+        public UnityEngine.Vector3 _angularVelocity { get { return angularVelocity; } set { angularVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.angularVelocity }); } }
+        public System.Single _mass { get { return mass; } set { mass = value; UpdateCallback(new List<PropertyName> { PropertyName.mass }); } }
+        public System.Single _drag { get { return drag; } set { drag = value; UpdateCallback(new List<PropertyName> { PropertyName.drag }); } }
+        public System.Single _angularDrag { get { return angularDrag; } set { angularDrag = value; UpdateCallback(new List<PropertyName> { PropertyName.angularDrag }); } }
+        public System.Boolean _isKinematic { get { return isKinematic; } set { isKinematic = value; UpdateCallback(new List<PropertyName> { PropertyName.isKinematic }); } }
+        public System.Boolean _useGravity { get { return useGravity; } set { useGravity = value; UpdateCallback(new List<PropertyName> { PropertyName.useGravity }); } }
+        public UnityEngine.Vector3 _centerOfMass { get { return centerOfMass; } set { centerOfMass = value; UpdateCallback(new List<PropertyName> { PropertyName.centerOfMass }); } }
+        public UnityEngine.CollisionDetectionMode _collisionDetectionMode { get { return collisionDetectionMode; } set { collisionDetectionMode = value; UpdateCallback(new List<PropertyName> { PropertyName.collisionDetectionMode }); } }
+        public System.Boolean _freezePositionX { get { return freezePositionX; } set { freezePositionX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionX }); } }
+        public System.Boolean _freezePositionY { get { return freezePositionY; } set { freezePositionY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionY }); } }
+        public System.Boolean _freezePositionZ { get { return freezePositionZ; } set { freezePositionZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionZ }); } }
+        public System.Boolean _freezeRotationX { get { return freezeRotationX; } set { freezeRotationX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationX }); } }
+        public System.Boolean _freezeRotationY { get { return freezeRotationY; } set { freezeRotationY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationY }); } }
+        public System.Boolean _freezeRotationZ { get { return freezeRotationZ; } set { freezeRotationZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationZ }); } }
         [Header("SYNC BANTERRIGIDBODY TO JS")]
-        public bool _velocity;
-        public bool _angularVelocity;
+        public bool sync_velocity;
+        public bool sync_angularVelocity;
 
         BanterScene scene;
         bool alreadyStarted = false;
@@ -502,7 +517,7 @@ namespace Banter.SDK
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
-            if ((_velocity) || force)
+            if ((sync_velocity) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -514,7 +529,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((_angularVelocity) || force)
+            if ((sync_angularVelocity) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -689,17 +704,17 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
-            _velocity = false;
-            _angularVelocity = false;
+            sync_velocity = false;
+            sync_angularVelocity = false;
             for (int i = 0; i < properties.Length; i++)
             {
                 if (properties[i] == PropertyName.velocity)
                 {
-                    _velocity = true;
+                    sync_velocity = true;
                 }
                 if (properties[i] == PropertyName.angularVelocity)
                 {
-                    _angularVelocity = true;
+                    sync_angularVelocity = true;
                 }
             }
         }

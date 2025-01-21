@@ -28,10 +28,13 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterBoxCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool isTrigger = false;
-        [See(initial = "0,0,0")] public Vector3 center = Vector3.zero;
-        [See(initial = "1,1,1")] public Vector3 size = Vector3.one;
+        [See(initial = "false")][SerializeField] internal bool isTrigger = false;
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 center = Vector3.zero;
+        [See(initial = "1,1,1")][SerializeField] internal Vector3 size = Vector3.one;
         // BANTER COMPILED CODE 
+        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public UnityEngine.Vector3 _center { get { return center; } set { center = value; } }
+        public UnityEngine.Vector3 _size { get { return size; } set { size = value; } }
         public BoxCollider _componentType;
         public BoxCollider componentType
         {

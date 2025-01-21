@@ -38,18 +38,18 @@ namespace Banter.SDK
 
     public class BanterGLTF : BanterComponentBase
     {
-        [See(initial = "")] public string url;
-        [See(initial = "false")] public bool generateMipMaps;
-        [See(initial = "false")] public bool addColliders;
-        [See(initial = "false")] public bool nonConvexColliders;
-        [See(initial = "false")] public bool slippery;
-        [See(initial = "false")] public bool climbable;
+        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "false")][SerializeField] internal bool generateMipMaps;
+        [See(initial = "false")][SerializeField] internal bool addColliders;
+        [See(initial = "false")][SerializeField] internal bool nonConvexColliders;
+        [See(initial = "false")][SerializeField] internal bool slippery;
+        [See(initial = "false")][SerializeField] internal bool climbable;
         // This has been added because unity changed the forward direction of GLTF fast between version 3 and 4. 
         // https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@5.0/manual/UpgradeGuides.html#upgrade-to-4x
         // We decided to leave legacy aframe stuff on the old one by default for compatibility reasons, but 
         // that new stuff will use the forward direction of the new version by default. Aframe shim will set 
         // this to true automaticaly.
-        [See(initial = "false")] public bool legacyRotate;
+        [See(initial = "false")][SerializeField] internal bool legacyRotate;
         bool loadStarted;
 
         public bool ModelLoaded { get; private set; }
@@ -168,11 +168,19 @@ namespace Banter.SDK
             }
         }
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGLTF();
         }
         // BANTER COMPILED CODE 
+        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Boolean _generateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+        public System.Boolean _addColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
+        public System.Boolean _nonConvexColliders { get { return nonConvexColliders; } set { nonConvexColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.nonConvexColliders }); } }
+        public System.Boolean _slippery { get { return slippery; } set { slippery = value; UpdateCallback(new List<PropertyName> { PropertyName.slippery }); } }
+        public System.Boolean _climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
+        public System.Boolean _legacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

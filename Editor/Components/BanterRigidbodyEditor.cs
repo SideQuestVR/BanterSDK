@@ -49,10 +49,10 @@ namespace Banter.SDKEditor
             containervelocity.Add(labelvelocity);
             var togglevelocity = new Toggle();
             togglevelocity.AddToClassList("switch");
-            togglevelocity.value = script._velocity;
+            togglevelocity.value = script.sync_velocity;
             togglevelocity.RegisterValueChangedCallback(evt =>
             {
-                script._velocity = evt.newValue;
+                script.sync_velocity = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containervelocity.Add(togglevelocity);
@@ -64,10 +64,10 @@ namespace Banter.SDKEditor
             containerangularVelocity.Add(labelangularVelocity);
             var toggleangularVelocity = new Toggle();
             toggleangularVelocity.AddToClassList("switch");
-            toggleangularVelocity.value = script._angularVelocity;
+            toggleangularVelocity.value = script.sync_angularVelocity;
             toggleangularVelocity.RegisterValueChangedCallback(evt =>
             {
-                script._angularVelocity = evt.newValue;
+                script.sync_angularVelocity = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerangularVelocity.Add(toggleangularVelocity);

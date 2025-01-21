@@ -29,7 +29,7 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             // SetupPhysicMaterial(changedProperties);
         }

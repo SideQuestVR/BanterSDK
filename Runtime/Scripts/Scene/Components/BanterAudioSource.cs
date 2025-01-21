@@ -64,15 +64,15 @@ namespace Banter.SDK
 
     public class BanterAudioSource : BanterComponentBase
     {
-        [See(initial = "1")] public float volume = 1.0f;
-        [See(initial = "1")] public float pitch = 1.0f;
-        [See(initial = "false")] public bool mute = false;
-        [See(initial = "false")] public bool loop = false;
-        [See(initial = "false")] public bool bypassEffects = false;
-        [See(initial = "false")] public bool bypassListenerEffects = false;
-        [See(initial = "false")] public bool bypassReverbZones = false;
-        [See(initial = "true")] public bool playOnAwake = true;
-        [See(initial = "0")] public float spatialBlend = 0.0f;
+        [See(initial = "1")][SerializeField] internal float volume = 1.0f;
+        [See(initial = "1")][SerializeField] internal float pitch = 1.0f;
+        [See(initial = "false")][SerializeField] internal bool mute = false;
+        [See(initial = "false")][SerializeField] internal bool loop = false;
+        [See(initial = "false")][SerializeField] internal bool bypassEffects = false;
+        [See(initial = "false")][SerializeField] internal bool bypassListenerEffects = false;
+        [See(initial = "false")][SerializeField] internal bool bypassReverbZones = false;
+        [See(initial = "true")][SerializeField] internal bool playOnAwake = true;
+        [See(initial = "0")][SerializeField] internal float spatialBlend = 0.0f;
 
         public List<AudioClip> clips = new List<AudioClip>();
 
@@ -102,7 +102,7 @@ namespace Banter.SDK
             SetupAudio(null);
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupAudio(changedProperties);
         }
@@ -144,6 +144,16 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public System.Single _volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
+        public System.Single _pitch { get { return pitch; } set { pitch = value; UpdateCallback(new List<PropertyName> { PropertyName.pitch }); } }
+        public System.Boolean _mute { get { return mute; } set { mute = value; UpdateCallback(new List<PropertyName> { PropertyName.mute }); } }
+        public System.Boolean _loop { get { return loop; } set { loop = value; UpdateCallback(new List<PropertyName> { PropertyName.loop }); } }
+        public System.Boolean _bypassEffects { get { return bypassEffects; } set { bypassEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassEffects }); } }
+        public System.Boolean _bypassListenerEffects { get { return bypassListenerEffects; } set { bypassListenerEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassListenerEffects }); } }
+        public System.Boolean _bypassReverbZones { get { return bypassReverbZones; } set { bypassReverbZones = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassReverbZones }); } }
+        public System.Boolean _playOnAwake { get { return playOnAwake; } set { playOnAwake = value; UpdateCallback(new List<PropertyName> { PropertyName.playOnAwake }); } }
+        public System.Single _spatialBlend { get { return spatialBlend; } set { spatialBlend = value; UpdateCallback(new List<PropertyName> { PropertyName.spatialBlend }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

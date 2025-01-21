@@ -28,10 +28,13 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterCapsuleCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool isTrigger = false;
-        [See(initial = "0.5")] public float radius = 0.5f;
-        [See(initial = "2")] public float height = 2;
+        [See(initial = "false")][SerializeField] internal bool isTrigger = false;
+        [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
+        [See(initial = "2")][SerializeField] internal float height = 2;
         // BANTER COMPILED CODE 
+        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public System.Single _radius { get { return radius; } set { radius = value; } }
+        public System.Single _height { get { return height; } set { height = value; } }
         public CapsuleCollider _componentType;
         public CapsuleCollider componentType
         {

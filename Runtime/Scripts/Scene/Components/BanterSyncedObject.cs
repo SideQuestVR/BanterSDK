@@ -18,17 +18,17 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterSyncedObject : BanterComponentBase
     {
-        [See(initial = "true")] public bool syncPosition = true;
+        [See(initial = "true")][SerializeField] internal bool syncPosition = true;
 
-        [See(initial = "true")] public bool syncRotation = true;
+        [See(initial = "true")][SerializeField] internal bool syncRotation = true;
 
-        [See(initial = "true")] public bool takeOwnershipOnCollision = true;
+        [See(initial = "true")][SerializeField] internal bool takeOwnershipOnCollision = true;
 
-        [See(initial = "true")] public bool takeOwnershipOnGrab = true;
+        [See(initial = "true")][SerializeField] internal bool takeOwnershipOnGrab = true;
 
-        [See(initial = "false")] public bool kinematicIfNotOwned = false;
+        [See(initial = "false")][SerializeField] internal bool kinematicIfNotOwned = false;
 
-        [See(initial = "false")] public bool doIOwn = false;
+        [See(initial = "false")][SerializeField] internal bool doIOwn = false;
 
         [Method]
         public void _TakeOwnership()
@@ -50,7 +50,7 @@ namespace Banter.SDK
         }
 
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (synced == null)
             {
@@ -64,6 +64,13 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public System.Boolean _syncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
+        public System.Boolean _syncRotation { get { return syncRotation; } set { syncRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.syncRotation }); } }
+        public System.Boolean _takeOwnershipOnCollision { get { return takeOwnershipOnCollision; } set { takeOwnershipOnCollision = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnCollision }); } }
+        public System.Boolean _takeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
+        public System.Boolean _kinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
+        public System.Boolean _doIOwn { get { return doIOwn; } set { doIOwn = value; UpdateCallback(new List<PropertyName> { PropertyName.doIOwn }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()

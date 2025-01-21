@@ -20,7 +20,7 @@ namespace Banter.SDK
     public class BanterInvertedMesh : BanterComponentBase
     {
         internal override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties) { }
+        internal void UpdateCallback(List<PropertyName> changedProperties) { }
         internal override void StartStuff()
         {
             var meshFilter = GetComponent<MeshFilter>();

@@ -26,9 +26,11 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterSphereCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool isTrigger;
-        [See(initial = "0.5")] public float radius = 0.5f;
+        [See(initial = "false")][SerializeField] internal bool isTrigger;
+        [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
         // BANTER COMPILED CODE 
+        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public System.Single _radius { get { return radius; } set { radius = value; } }
         public SphereCollider _componentType;
         public SphereCollider componentType
         {

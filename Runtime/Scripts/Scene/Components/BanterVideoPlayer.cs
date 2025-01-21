@@ -37,18 +37,18 @@ namespace Banter.SDK
 
     public class BanterVideoPlayer : BanterComponentBase
     {
-        [See(initial = "")] public string url;
-        [See(initial = "0.5")] public float volume = 0.5f;
-        [See(initial = "false")] public bool loop = false;
-        [See(initial = "true")] public bool playOnAwake = true;
-        [See(initial = "true")] public bool skipOnDrop = true;
-        [Watch(initial = "0")] public float time = 0;
-        [See(initial = "true")] public bool waitForFirstFrame = true;
-        [See(initial = "false")] public bool isPlaying = false;
-        [See(initial = "false")] public bool isLooping = false;
-        [See(initial = "false")] public bool isPrepared = false;
-        [See(initial = "false")] public bool isMuted = false;
-        [See(initial = "0")] public float duration = 0;
+        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "0.5")][SerializeField] internal float volume = 0.5f;
+        [See(initial = "false")][SerializeField] internal bool loop = false;
+        [See(initial = "true")][SerializeField] internal bool playOnAwake = true;
+        [See(initial = "true")][SerializeField] internal bool skipOnDrop = true;
+        [Watch(initial = "0")][SerializeField] internal float time = 0;
+        [See(initial = "true")][SerializeField] internal bool waitForFirstFrame = true;
+        [See(initial = "false")][SerializeField] internal bool isPlaying = false;
+        [See(initial = "false")][SerializeField] internal bool isLooping = false;
+        [See(initial = "false")][SerializeField] internal bool isPrepared = false;
+        [See(initial = "false")][SerializeField] internal bool isMuted = false;
+        [See(initial = "0")][SerializeField] internal float duration = 0;
         [Method]
         public void _PlayToggle()
         {
@@ -90,7 +90,7 @@ namespace Banter.SDK
         }
         VideoPlayer _source;
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupVideo(changedProperties);
         }
@@ -210,8 +210,20 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public System.Single _time { get { return time; } set { time = value; UpdateCallback(new List<PropertyName> { PropertyName.time }); } }
+        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Single _volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
+        public System.Boolean _loop { get { return loop; } set { loop = value; UpdateCallback(new List<PropertyName> { PropertyName.loop }); } }
+        public System.Boolean _playOnAwake { get { return playOnAwake; } set { playOnAwake = value; UpdateCallback(new List<PropertyName> { PropertyName.playOnAwake }); } }
+        public System.Boolean _skipOnDrop { get { return skipOnDrop; } set { skipOnDrop = value; UpdateCallback(new List<PropertyName> { PropertyName.skipOnDrop }); } }
+        public System.Boolean _waitForFirstFrame { get { return waitForFirstFrame; } set { waitForFirstFrame = value; UpdateCallback(new List<PropertyName> { PropertyName.waitForFirstFrame }); } }
+        public System.Boolean _isPlaying { get { return isPlaying; } set { isPlaying = value; UpdateCallback(new List<PropertyName> { PropertyName.isPlaying }); } }
+        public System.Boolean _isLooping { get { return isLooping; } set { isLooping = value; UpdateCallback(new List<PropertyName> { PropertyName.isLooping }); } }
+        public System.Boolean _isPrepared { get { return isPrepared; } set { isPrepared = value; UpdateCallback(new List<PropertyName> { PropertyName.isPrepared }); } }
+        public System.Boolean _isMuted { get { return isMuted; } set { isMuted = value; UpdateCallback(new List<PropertyName> { PropertyName.isMuted }); } }
+        public System.Single _duration { get { return duration; } set { duration = value; UpdateCallback(new List<PropertyName> { PropertyName.duration }); } }
         [Header("SYNC BANTERVIDEOPLAYER TO JS")]
-        public bool _time;
+        public bool sync_time;
 
         BanterScene scene;
         bool alreadyStarted = false;
@@ -415,7 +427,7 @@ namespace Banter.SDK
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
-            if ((_time) || force)
+            if ((sync_time) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -566,12 +578,12 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
-            _time = false;
+            sync_time = false;
             for (int i = 0; i < properties.Length; i++)
             {
                 if (properties[i] == PropertyName.time)
                 {
-                    _time = true;
+                    sync_time = true;
                 }
             }
         }
