@@ -18,7 +18,8 @@ namespace Banter.SDK
         public string Label;
         public Texture2D Icon;
         public Texture2D Image;
-        public UnityEvent Click;
+        public string SceneVariableName;
+        public UnityEvent<QuickMenuItem> Click;
         public QuickMenuItem[] Children;
         public QuickMenuItem Parent;
 
