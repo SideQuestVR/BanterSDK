@@ -41,9 +41,10 @@ public class BanterSceneEvents
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();
     public UnityEvent<bool> OnTTsStarted = new UnityEvent<bool>();
     public UnityEvent<string> OnTTsStoped = new UnityEvent<string>();
-    public UnityEvent<string> OnAiImage = new UnityEvent<string>();
-    public UnityEvent<string> OnAiModel = new UnityEvent<string>();
+    public UnityEvent<string, AiImageRatio> OnAiImage = new UnityEvent<string, AiImageRatio>();
+    public UnityEvent<string, AiModelSimplify, int> OnAiModel = new UnityEvent<string, AiModelSimplify, int>();
     public UnityEvent<string, string> OnBase64ToCDN = new UnityEvent<string, string>();
+    public UnityEvent<SelectFileType> OnSelectFile = new UnityEvent<SelectFileType>();
     public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
