@@ -49,6 +49,7 @@ namespace Banter.VisualScripting
         public ValueInput url;
 
         [DoNotSerialize]
+        [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput browserComponent;
 
