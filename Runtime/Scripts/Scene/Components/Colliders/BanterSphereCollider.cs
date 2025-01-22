@@ -29,8 +29,8 @@ namespace Banter.SDK
         [See(initial = "false")][SerializeField] internal bool isTrigger;
         [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
         // BANTER COMPILED CODE 
-        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
-        public System.Single _radius { get { return radius; } set { radius = value; } }
+        public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public System.Single Radius { get { return radius; } set { radius = value; } }
         public SphereCollider _componentType;
         public SphereCollider componentType
         {

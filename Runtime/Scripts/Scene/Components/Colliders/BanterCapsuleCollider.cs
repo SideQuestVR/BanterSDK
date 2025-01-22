@@ -32,9 +32,9 @@ namespace Banter.SDK
         [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
         [See(initial = "2")][SerializeField] internal float height = 2;
         // BANTER COMPILED CODE 
-        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
-        public System.Single _radius { get { return radius; } set { radius = value; } }
-        public System.Single _height { get { return height; } set { height = value; } }
+        public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public System.Single Radius { get { return radius; } set { radius = value; } }
+        public System.Single Height { get { return height; } set { height = value; } }
         public CapsuleCollider _componentType;
         public CapsuleCollider componentType
         {

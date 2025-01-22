@@ -72,7 +72,7 @@ namespace Banter.SDK
             _ = SetupKitItem();
         }
         // BANTER COMPILED CODE 
-        public System.String _path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
+        public System.String Path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

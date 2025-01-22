@@ -98,15 +98,15 @@ namespace Banter.SDK
             attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
         // BANTER COMPILED CODE 
-        public System.String _uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
-        public UnityEngine.Vector3 _attachmentPosition { get { return attachmentPosition; } set { attachmentPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPosition }); } }
-        public UnityEngine.Quaternion _attachmentRotation { get { return attachmentRotation; } set { attachmentRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentRotation }); } }
-        public Banter.SDK.AttachmentType _attachmentType { get { return attachmentType; } set { attachmentType = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentType }); } }
-        public Banter.SDK.AvatarAttachmentType _avatarAttachmentType { get { return avatarAttachmentType; } set { avatarAttachmentType = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarAttachmentType }); } }
-        public Banter.SDK.AvatarBoneName _avatarAttachmentPoint { get { return avatarAttachmentPoint; } set { avatarAttachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarAttachmentPoint }); } }
-        public PhysicsAttachmentPoint _attachmentPoint { get { return attachmentPoint; } set { attachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPoint }); } }
-        public System.Boolean _autoSync { get { return autoSync; } set { autoSync = value; UpdateCallback(new List<PropertyName> { PropertyName.autoSync }); } }
-        public System.Boolean _jointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
+        public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
+        public UnityEngine.Vector3 AttachmentPosition { get { return attachmentPosition; } set { attachmentPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPosition }); } }
+        public UnityEngine.Quaternion AttachmentRotation { get { return attachmentRotation; } set { attachmentRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentRotation }); } }
+        public Banter.SDK.AttachmentType AttachmentType { get { return attachmentType; } set { attachmentType = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentType }); } }
+        public Banter.SDK.AvatarAttachmentType AvatarAttachmentType { get { return avatarAttachmentType; } set { avatarAttachmentType = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarAttachmentType }); } }
+        public Banter.SDK.AvatarBoneName AvatarAttachmentPoint { get { return avatarAttachmentPoint; } set { avatarAttachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarAttachmentPoint }); } }
+        public PhysicsAttachmentPoint AttachmentPoint { get { return attachmentPoint; } set { attachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPoint }); } }
+        public System.Boolean AutoSync { get { return autoSync; } set { autoSync = value; UpdateCallback(new List<PropertyName> { PropertyName.autoSync }); } }
+        public System.Boolean JointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

@@ -132,7 +132,6 @@ namespace Banter.SDK
         takeOwnershipOnCollision,
         takeOwnershipOnGrab,
         kinematicIfNotOwned,
-        doIOwn,
         text,
         horizontalAlignment,
         verticalAlignment,

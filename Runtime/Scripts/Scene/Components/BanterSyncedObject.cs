@@ -12,7 +12,6 @@ namespace Banter.SDK
         public bool takeOwnershipOnCollision;
         public bool takeOwnershipOnGrab;
         public bool kinematicIfNotOwned;
-        public bool doIOwn;
     }
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -28,17 +27,15 @@ namespace Banter.SDK
 
         [See(initial = "false")][SerializeField] internal bool kinematicIfNotOwned = false;
 
-        [See(initial = "false")][SerializeField] internal bool doIOwn = false;
-
         [Method]
         public void _TakeOwnership()
         {
             scene.events.OnTakeOwnership.Invoke(synced, banterObjectId);
         }
         [Method]
-        public void _DoIOwn()
+        public bool _DoIOwn()
         {
-            scene.events.OnDoIOwn.Invoke(synced, banterObjectId);
+            return scene.data.NSODoIOwn(synced, banterObjectId);
         }
         BanterSynced synced;
         BanterObjectId banterObjectId;
@@ -64,12 +61,11 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public System.Boolean _syncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
-        public System.Boolean _syncRotation { get { return syncRotation; } set { syncRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.syncRotation }); } }
-        public System.Boolean _takeOwnershipOnCollision { get { return takeOwnershipOnCollision; } set { takeOwnershipOnCollision = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnCollision }); } }
-        public System.Boolean _takeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
-        public System.Boolean _kinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
-        public System.Boolean _doIOwn { get { return doIOwn; } set { doIOwn = value; UpdateCallback(new List<PropertyName> { PropertyName.doIOwn }); } }
+        public System.Boolean SyncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
+        public System.Boolean SyncRotation { get { return syncRotation; } set { syncRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.syncRotation }); } }
+        public System.Boolean TakeOwnershipOnCollision { get { return takeOwnershipOnCollision; } set { takeOwnershipOnCollision = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnCollision }); } }
+        public System.Boolean TakeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
+        public System.Boolean KinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;
@@ -81,7 +77,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, PropertyName.doIOwn, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, };
             UpdateCallback(changedProperties);
         }
 
@@ -121,9 +117,9 @@ namespace Banter.SDK
         {
             _TakeOwnership();
         }
-        void DoIOwn()
+        Boolean DoIOwn()
         {
-            _DoIOwn();
+            return _DoIOwn();
         }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
@@ -135,8 +131,7 @@ namespace Banter.SDK
             }
             else if (methodName == "DoIOwn" && parameters.Count == 0)
             {
-                DoIOwn();
-                return null;
+                return DoIOwn();
             }
             else
             {
@@ -192,15 +187,6 @@ namespace Banter.SDK
                     {
                         kinematicIfNotOwned = valkinematicIfNotOwned.x;
                         changedProperties.Add(PropertyName.kinematicIfNotOwned);
-                    }
-                }
-                if (values[i] is BanterBool)
-                {
-                    var valdoIOwn = (BanterBool)values[i];
-                    if (valdoIOwn.n == PropertyName.doIOwn)
-                    {
-                        doIOwn = valdoIOwn.x;
-                        changedProperties.Add(PropertyName.doIOwn);
                     }
                 }
             }
@@ -265,18 +251,6 @@ namespace Banter.SDK
                     name = PropertyName.kinematicIfNotOwned,
                     type = PropertyType.Bool,
                     value = kinematicIfNotOwned,
-                    componentType = ComponentType.BanterSyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
-                    name = PropertyName.doIOwn,
-                    type = PropertyType.Bool,
-                    value = doIOwn,
                     componentType = ComponentType.BanterSyncedObject,
                     oid = oid,
                     cid = cid

@@ -148,12 +148,12 @@ namespace Banter.SDK
             SetupBrowser(changedProperties);
         }
         // BANTER COMPILED CODE 
-        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
-        public System.Int32 _mipMaps { get { return mipMaps; } set { mipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.mipMaps }); } }
-        public System.Single _pixelsPerUnit { get { return pixelsPerUnit; } set { pixelsPerUnit = value; UpdateCallback(new List<PropertyName> { PropertyName.pixelsPerUnit }); } }
-        public System.Single _pageWidth { get { return pageWidth; } set { pageWidth = value; UpdateCallback(new List<PropertyName> { PropertyName.pageWidth }); } }
-        public System.Single _pageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
-        public System.String _actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
+        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Int32 MipMaps { get { return mipMaps; } set { mipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.mipMaps }); } }
+        public System.Single PixelsPerUnit { get { return pixelsPerUnit; } set { pixelsPerUnit = value; UpdateCallback(new List<PropertyName> { PropertyName.pixelsPerUnit }); } }
+        public System.Single PageWidth { get { return pageWidth; } set { pageWidth = value; UpdateCallback(new List<PropertyName> { PropertyName.pageWidth }); } }
+        public System.Single PageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
+        public System.String Actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

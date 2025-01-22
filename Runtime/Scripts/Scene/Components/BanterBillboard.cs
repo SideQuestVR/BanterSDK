@@ -56,10 +56,10 @@ namespace Banter.SDK
             lookAt.isBillboard = true;
         }
         // BANTER COMPILED CODE 
-        public System.Single _smoothing { get { return smoothing; } set { smoothing = value; UpdateCallback(new List<PropertyName> { PropertyName.smoothing }); } }
-        public System.Boolean _enableXAxis { get { return enableXAxis; } set { enableXAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableXAxis }); } }
-        public System.Boolean _enableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
-        public System.Boolean _enableZAxis { get { return enableZAxis; } set { enableZAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableZAxis }); } }
+        public System.Single Smoothing { get { return smoothing; } set { smoothing = value; UpdateCallback(new List<PropertyName> { PropertyName.smoothing }); } }
+        public System.Boolean EnableXAxis { get { return enableXAxis; } set { enableXAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableXAxis }); } }
+        public System.Boolean EnableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
+        public System.Boolean EnableZAxis { get { return enableZAxis; } set { enableZAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableZAxis }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

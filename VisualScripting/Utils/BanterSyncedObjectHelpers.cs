@@ -59,8 +59,7 @@ namespace Banter.VisualScripting
 
             isOwner = ValueOutput<bool>("Is Owner", (flow) => {
                 var syncObject = flow.GetValue<BanterSyncedObject>(syncedObject);
-                syncObject._DoIOwn();
-                return syncObject._doIOwn;
+                return syncObject._DoIOwn();
             });
         }
     }

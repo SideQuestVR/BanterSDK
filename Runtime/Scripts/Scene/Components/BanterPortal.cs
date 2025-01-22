@@ -107,8 +107,8 @@ namespace Banter.SDK
             _ = SetupPortal();
         }
         // BANTER COMPILED CODE 
-        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
-        public System.String _instance { get { return instance; } set { instance = value; UpdateCallback(new List<PropertyName> { PropertyName.instance }); } }
+        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.String Instance { get { return instance; } set { instance = value; UpdateCallback(new List<PropertyName> { PropertyName.instance }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

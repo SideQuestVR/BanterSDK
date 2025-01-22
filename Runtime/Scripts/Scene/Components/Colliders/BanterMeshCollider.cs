@@ -29,8 +29,8 @@ namespace Banter.SDK
         [See(initial = "false")][SerializeField] internal bool convex;
         [See(initial = "false")][SerializeField] internal bool isTrigger;
         // BANTER COMPILED CODE 
-        public System.Boolean _convex { get { return convex; } set { convex = value; } }
-        public System.Boolean _isTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public System.Boolean Convex { get { return convex; } set { convex = value; } }
+        public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
         public MeshCollider _componentType;
         public MeshCollider componentType
         {

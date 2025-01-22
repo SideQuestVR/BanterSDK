@@ -86,8 +86,8 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public System.Single _dynamicFriction { get { return dynamicFriction; } set { dynamicFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.dynamicFriction }); } }
-        public System.Single _staticFriction { get { return staticFriction; } set { staticFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.staticFriction }); } }
+        public System.Single DynamicFriction { get { return dynamicFriction; } set { dynamicFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.dynamicFriction }); } }
+        public System.Single StaticFriction { get { return staticFriction; } set { staticFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.staticFriction }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

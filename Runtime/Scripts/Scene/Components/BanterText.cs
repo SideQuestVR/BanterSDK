@@ -114,14 +114,14 @@ namespace Banter.SDK
             SetupText();
         }
         // BANTER COMPILED CODE 
-        public System.String _text { get { return text; } set { text = value; UpdateCallback(new List<PropertyName> { PropertyName.text }); } }
-        public UnityEngine.Vector4 _color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
-        public HorizontalAlignment _horizontalAlignment { get { return horizontalAlignment; } set { horizontalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.horizontalAlignment }); } }
-        public VerticalAlignment _verticalAlignment { get { return verticalAlignment; } set { verticalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.verticalAlignment }); } }
-        public System.Single _fontSize { get { return fontSize; } set { fontSize = value; UpdateCallback(new List<PropertyName> { PropertyName.fontSize }); } }
-        public System.Boolean _richText { get { return richText; } set { richText = value; UpdateCallback(new List<PropertyName> { PropertyName.richText }); } }
-        public System.Boolean _enableWordWrapping { get { return enableWordWrapping; } set { enableWordWrapping = value; UpdateCallback(new List<PropertyName> { PropertyName.enableWordWrapping }); } }
-        public UnityEngine.Vector2 _rectTransformSizeDelta { get { return rectTransformSizeDelta; } set { rectTransformSizeDelta = value; UpdateCallback(new List<PropertyName> { PropertyName.rectTransformSizeDelta }); } }
+        public System.String Text { get { return text; } set { text = value; UpdateCallback(new List<PropertyName> { PropertyName.text }); } }
+        public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
+        public HorizontalAlignment HorizontalAlignment { get { return horizontalAlignment; } set { horizontalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.horizontalAlignment }); } }
+        public VerticalAlignment VerticalAlignment { get { return verticalAlignment; } set { verticalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.verticalAlignment }); } }
+        public System.Single FontSize { get { return fontSize; } set { fontSize = value; UpdateCallback(new List<PropertyName> { PropertyName.fontSize }); } }
+        public System.Boolean RichText { get { return richText; } set { richText = value; UpdateCallback(new List<PropertyName> { PropertyName.richText }); } }
+        public System.Boolean EnableWordWrapping { get { return enableWordWrapping; } set { enableWordWrapping = value; UpdateCallback(new List<PropertyName> { PropertyName.enableWordWrapping }); } }
+        public UnityEngine.Vector2 RectTransformSizeDelta { get { return rectTransformSizeDelta; } set { rectTransformSizeDelta = value; UpdateCallback(new List<PropertyName> { PropertyName.rectTransformSizeDelta }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

@@ -49,10 +49,10 @@ namespace Banter.SDKEditor
             containertime.Add(labeltime);
             var toggletime = new Toggle();
             toggletime.AddToClassList("switch");
-            toggletime.value = script.sync_time;
+            toggletime.value = script._time;
             toggletime.RegisterValueChangedCallback(evt =>
             {
-                script.sync_time = evt.newValue;
+                script._time = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containertime.Add(toggletime);

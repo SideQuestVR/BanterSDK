@@ -144,15 +144,15 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public System.Single _volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
-        public System.Single _pitch { get { return pitch; } set { pitch = value; UpdateCallback(new List<PropertyName> { PropertyName.pitch }); } }
-        public System.Boolean _mute { get { return mute; } set { mute = value; UpdateCallback(new List<PropertyName> { PropertyName.mute }); } }
-        public System.Boolean _loop { get { return loop; } set { loop = value; UpdateCallback(new List<PropertyName> { PropertyName.loop }); } }
-        public System.Boolean _bypassEffects { get { return bypassEffects; } set { bypassEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassEffects }); } }
-        public System.Boolean _bypassListenerEffects { get { return bypassListenerEffects; } set { bypassListenerEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassListenerEffects }); } }
-        public System.Boolean _bypassReverbZones { get { return bypassReverbZones; } set { bypassReverbZones = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassReverbZones }); } }
-        public System.Boolean _playOnAwake { get { return playOnAwake; } set { playOnAwake = value; UpdateCallback(new List<PropertyName> { PropertyName.playOnAwake }); } }
-        public System.Single _spatialBlend { get { return spatialBlend; } set { spatialBlend = value; UpdateCallback(new List<PropertyName> { PropertyName.spatialBlend }); } }
+        public System.Single Volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
+        public System.Single Pitch { get { return pitch; } set { pitch = value; UpdateCallback(new List<PropertyName> { PropertyName.pitch }); } }
+        public System.Boolean Mute { get { return mute; } set { mute = value; UpdateCallback(new List<PropertyName> { PropertyName.mute }); } }
+        public System.Boolean Loop { get { return loop; } set { loop = value; UpdateCallback(new List<PropertyName> { PropertyName.loop }); } }
+        public System.Boolean BypassEffects { get { return bypassEffects; } set { bypassEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassEffects }); } }
+        public System.Boolean BypassListenerEffects { get { return bypassListenerEffects; } set { bypassListenerEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassListenerEffects }); } }
+        public System.Boolean BypassReverbZones { get { return bypassReverbZones; } set { bypassReverbZones = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassReverbZones }); } }
+        public System.Boolean PlayOnAwake { get { return playOnAwake; } set { playOnAwake = value; UpdateCallback(new List<PropertyName> { PropertyName.playOnAwake }); } }
+        public System.Single SpatialBlend { get { return spatialBlend; } set { spatialBlend = value; UpdateCallback(new List<PropertyName> { PropertyName.spatialBlend }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

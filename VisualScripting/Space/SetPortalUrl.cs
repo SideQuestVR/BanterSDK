@@ -35,7 +35,7 @@ namespace Banter.VisualScripting
 
             input = ControlInput("", (flow) => {
                 var target = flow.GetValue<BanterPortal>(portal);
-                target._url = flow.GetValue<string>(url);
+                target.Url = flow.GetValue<string>(url);
                 return output;
             });
             output = ControlOutput("");

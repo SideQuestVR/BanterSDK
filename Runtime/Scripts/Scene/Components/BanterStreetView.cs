@@ -46,7 +46,7 @@ namespace Banter.SDK
             photoSphere.LoadCallback += photoSphereCallback;
         }
         // BANTER COMPILED CODE 
-        public System.String _panoId { get { return panoId; } set { panoId = value; UpdateCallback(new List<PropertyName> { PropertyName.panoId }); } }
+        public System.String PanoId { get { return panoId; } set { panoId = value; UpdateCallback(new List<PropertyName> { PropertyName.panoId }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

@@ -229,24 +229,24 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public UnityEngine.Vector3 _velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
-        public UnityEngine.Vector3 _angularVelocity { get { return angularVelocity; } set { angularVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.angularVelocity }); } }
-        public System.Single _mass { get { return mass; } set { mass = value; UpdateCallback(new List<PropertyName> { PropertyName.mass }); } }
-        public System.Single _drag { get { return drag; } set { drag = value; UpdateCallback(new List<PropertyName> { PropertyName.drag }); } }
-        public System.Single _angularDrag { get { return angularDrag; } set { angularDrag = value; UpdateCallback(new List<PropertyName> { PropertyName.angularDrag }); } }
-        public System.Boolean _isKinematic { get { return isKinematic; } set { isKinematic = value; UpdateCallback(new List<PropertyName> { PropertyName.isKinematic }); } }
-        public System.Boolean _useGravity { get { return useGravity; } set { useGravity = value; UpdateCallback(new List<PropertyName> { PropertyName.useGravity }); } }
-        public UnityEngine.Vector3 _centerOfMass { get { return centerOfMass; } set { centerOfMass = value; UpdateCallback(new List<PropertyName> { PropertyName.centerOfMass }); } }
-        public UnityEngine.CollisionDetectionMode _collisionDetectionMode { get { return collisionDetectionMode; } set { collisionDetectionMode = value; UpdateCallback(new List<PropertyName> { PropertyName.collisionDetectionMode }); } }
-        public System.Boolean _freezePositionX { get { return freezePositionX; } set { freezePositionX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionX }); } }
-        public System.Boolean _freezePositionY { get { return freezePositionY; } set { freezePositionY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionY }); } }
-        public System.Boolean _freezePositionZ { get { return freezePositionZ; } set { freezePositionZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionZ }); } }
-        public System.Boolean _freezeRotationX { get { return freezeRotationX; } set { freezeRotationX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationX }); } }
-        public System.Boolean _freezeRotationY { get { return freezeRotationY; } set { freezeRotationY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationY }); } }
-        public System.Boolean _freezeRotationZ { get { return freezeRotationZ; } set { freezeRotationZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationZ }); } }
+        public UnityEngine.Vector3 Velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
+        public UnityEngine.Vector3 AngularVelocity { get { return angularVelocity; } set { angularVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.angularVelocity }); } }
+        public System.Single Mass { get { return mass; } set { mass = value; UpdateCallback(new List<PropertyName> { PropertyName.mass }); } }
+        public System.Single Drag { get { return drag; } set { drag = value; UpdateCallback(new List<PropertyName> { PropertyName.drag }); } }
+        public System.Single AngularDrag { get { return angularDrag; } set { angularDrag = value; UpdateCallback(new List<PropertyName> { PropertyName.angularDrag }); } }
+        public System.Boolean IsKinematic { get { return isKinematic; } set { isKinematic = value; UpdateCallback(new List<PropertyName> { PropertyName.isKinematic }); } }
+        public System.Boolean UseGravity { get { return useGravity; } set { useGravity = value; UpdateCallback(new List<PropertyName> { PropertyName.useGravity }); } }
+        public UnityEngine.Vector3 CenterOfMass { get { return centerOfMass; } set { centerOfMass = value; UpdateCallback(new List<PropertyName> { PropertyName.centerOfMass }); } }
+        public UnityEngine.CollisionDetectionMode CollisionDetectionMode { get { return collisionDetectionMode; } set { collisionDetectionMode = value; UpdateCallback(new List<PropertyName> { PropertyName.collisionDetectionMode }); } }
+        public System.Boolean FreezePositionX { get { return freezePositionX; } set { freezePositionX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionX }); } }
+        public System.Boolean FreezePositionY { get { return freezePositionY; } set { freezePositionY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionY }); } }
+        public System.Boolean FreezePositionZ { get { return freezePositionZ; } set { freezePositionZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionZ }); } }
+        public System.Boolean FreezeRotationX { get { return freezeRotationX; } set { freezeRotationX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationX }); } }
+        public System.Boolean FreezeRotationY { get { return freezeRotationY; } set { freezeRotationY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationY }); } }
+        public System.Boolean FreezeRotationZ { get { return freezeRotationZ; } set { freezeRotationZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationZ }); } }
         [Header("SYNC BANTERRIGIDBODY TO JS")]
-        public bool sync_velocity;
-        public bool sync_angularVelocity;
+        public bool _velocity;
+        public bool _angularVelocity;
 
         BanterScene scene;
         bool alreadyStarted = false;
@@ -517,7 +517,7 @@ namespace Banter.SDK
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
-            if ((sync_velocity) || force)
+            if ((_velocity) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -529,7 +529,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_angularVelocity) || force)
+            if ((_angularVelocity) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -704,17 +704,17 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
-            sync_velocity = false;
-            sync_angularVelocity = false;
+            _velocity = false;
+            _angularVelocity = false;
             for (int i = 0; i < properties.Length; i++)
             {
                 if (properties[i] == PropertyName.velocity)
                 {
-                    sync_velocity = true;
+                    _velocity = true;
                 }
                 if (properties[i] == PropertyName.angularVelocity)
                 {
-                    sync_angularVelocity = true;
+                    _angularVelocity = true;
                 }
             }
         }

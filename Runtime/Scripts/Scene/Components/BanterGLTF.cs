@@ -173,13 +173,13 @@ namespace Banter.SDK
             SetupGLTF();
         }
         // BANTER COMPILED CODE 
-        public System.String _url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
-        public System.Boolean _generateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
-        public System.Boolean _addColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
-        public System.Boolean _nonConvexColliders { get { return nonConvexColliders; } set { nonConvexColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.nonConvexColliders }); } }
-        public System.Boolean _slippery { get { return slippery; } set { slippery = value; UpdateCallback(new List<PropertyName> { PropertyName.slippery }); } }
-        public System.Boolean _climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
-        public System.Boolean _legacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
+        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+        public System.Boolean AddColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
+        public System.Boolean NonConvexColliders { get { return nonConvexColliders; } set { nonConvexColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.nonConvexColliders }); } }
+        public System.Boolean Slippery { get { return slippery; } set { slippery = value; UpdateCallback(new List<PropertyName> { PropertyName.slippery }); } }
+        public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
+        public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

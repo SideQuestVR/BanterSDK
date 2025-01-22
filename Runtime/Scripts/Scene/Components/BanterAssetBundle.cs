@@ -232,14 +232,14 @@ namespace Banter.SDK
             _ = SetupBundle();
         }
         // BANTER COMPILED CODE 
-        public System.String _windowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
-        public System.String _osxUrl { get { return osxUrl; } set { osxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.osxUrl }); } }
-        public System.String _linuxUrl { get { return linuxUrl; } set { linuxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.linuxUrl }); } }
-        public System.String _androidUrl { get { return androidUrl; } set { androidUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.androidUrl }); } }
-        public System.String _iosUrl { get { return iosUrl; } set { iosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.iosUrl }); } }
-        public System.String _vosUrl { get { return vosUrl; } set { vosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.vosUrl }); } }
-        public System.Boolean _isScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
-        public System.Boolean _legacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
+        public System.String WindowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
+        public System.String OsxUrl { get { return osxUrl; } set { osxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.osxUrl }); } }
+        public System.String LinuxUrl { get { return linuxUrl; } set { linuxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.linuxUrl }); } }
+        public System.String AndroidUrl { get { return androidUrl; } set { androidUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.androidUrl }); } }
+        public System.String IosUrl { get { return iosUrl; } set { iosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.iosUrl }); } }
+        public System.String VosUrl { get { return vosUrl; } set { vosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.vosUrl }); } }
+        public System.Boolean IsScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
+        public System.Boolean LegacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

@@ -49,10 +49,10 @@ namespace Banter.SDKEditor
             containerposition.Add(labelposition);
             var toggleposition = new Toggle();
             toggleposition.AddToClassList("switch");
-            toggleposition.value = script.sync_position;
+            toggleposition.value = script._position;
             toggleposition.RegisterValueChangedCallback(evt =>
             {
-                script.sync_position = evt.newValue;
+                script._position = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerposition.Add(toggleposition);
@@ -64,10 +64,10 @@ namespace Banter.SDKEditor
             containerlocalPosition.Add(labellocalPosition);
             var togglelocalPosition = new Toggle();
             togglelocalPosition.AddToClassList("switch");
-            togglelocalPosition.value = script.sync_localPosition;
+            togglelocalPosition.value = script._localPosition;
             togglelocalPosition.RegisterValueChangedCallback(evt =>
             {
-                script.sync_localPosition = evt.newValue;
+                script._localPosition = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerlocalPosition.Add(togglelocalPosition);
@@ -79,10 +79,10 @@ namespace Banter.SDKEditor
             containerrotation.Add(labelrotation);
             var togglerotation = new Toggle();
             togglerotation.AddToClassList("switch");
-            togglerotation.value = script.sync_rotation;
+            togglerotation.value = script._rotation;
             togglerotation.RegisterValueChangedCallback(evt =>
             {
-                script.sync_rotation = evt.newValue;
+                script._rotation = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerrotation.Add(togglerotation);
@@ -94,10 +94,10 @@ namespace Banter.SDKEditor
             containerlocalRotation.Add(labellocalRotation);
             var togglelocalRotation = new Toggle();
             togglelocalRotation.AddToClassList("switch");
-            togglelocalRotation.value = script.sync_localRotation;
+            togglelocalRotation.value = script._localRotation;
             togglelocalRotation.RegisterValueChangedCallback(evt =>
             {
-                script.sync_localRotation = evt.newValue;
+                script._localRotation = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerlocalRotation.Add(togglelocalRotation);
@@ -109,10 +109,10 @@ namespace Banter.SDKEditor
             containerlocalScale.Add(labellocalScale);
             var togglelocalScale = new Toggle();
             togglelocalScale.AddToClassList("switch");
-            togglelocalScale.value = script.sync_localScale;
+            togglelocalScale.value = script._localScale;
             togglelocalScale.RegisterValueChangedCallback(evt =>
             {
-                script.sync_localScale = evt.newValue;
+                script._localScale = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerlocalScale.Add(togglelocalScale);
@@ -124,10 +124,10 @@ namespace Banter.SDKEditor
             containereulerAngles.Add(labeleulerAngles);
             var toggleeulerAngles = new Toggle();
             toggleeulerAngles.AddToClassList("switch");
-            toggleeulerAngles.value = script.sync_eulerAngles;
+            toggleeulerAngles.value = script._eulerAngles;
             toggleeulerAngles.RegisterValueChangedCallback(evt =>
             {
-                script.sync_eulerAngles = evt.newValue;
+                script._eulerAngles = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containereulerAngles.Add(toggleeulerAngles);
@@ -139,10 +139,10 @@ namespace Banter.SDKEditor
             containerlocalEulerAngles.Add(labellocalEulerAngles);
             var togglelocalEulerAngles = new Toggle();
             togglelocalEulerAngles.AddToClassList("switch");
-            togglelocalEulerAngles.value = script.sync_localEulerAngles;
+            togglelocalEulerAngles.value = script._localEulerAngles;
             togglelocalEulerAngles.RegisterValueChangedCallback(evt =>
             {
-                script.sync_localEulerAngles = evt.newValue;
+                script._localEulerAngles = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerlocalEulerAngles.Add(togglelocalEulerAngles);
@@ -154,10 +154,10 @@ namespace Banter.SDKEditor
             containerup.Add(labelup);
             var toggleup = new Toggle();
             toggleup.AddToClassList("switch");
-            toggleup.value = script.sync_up;
+            toggleup.value = script._up;
             toggleup.RegisterValueChangedCallback(evt =>
             {
-                script.sync_up = evt.newValue;
+                script._up = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerup.Add(toggleup);
@@ -169,10 +169,10 @@ namespace Banter.SDKEditor
             containerforward.Add(labelforward);
             var toggleforward = new Toggle();
             toggleforward.AddToClassList("switch");
-            toggleforward.value = script.sync_forward;
+            toggleforward.value = script._forward;
             toggleforward.RegisterValueChangedCallback(evt =>
             {
-                script.sync_forward = evt.newValue;
+                script._forward = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerforward.Add(toggleforward);
@@ -184,10 +184,10 @@ namespace Banter.SDKEditor
             containerright.Add(labelright);
             var toggleright = new Toggle();
             toggleright.AddToClassList("switch");
-            toggleright.value = script.sync_right;
+            toggleright.value = script._right;
             toggleright.RegisterValueChangedCallback(evt =>
             {
-                script.sync_right = evt.newValue;
+                script._right = evt.newValue;
                 EditorUtility.SetDirty(script);
             });
             containerright.Add(toggleright);

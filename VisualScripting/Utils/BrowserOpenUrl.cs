@@ -59,7 +59,7 @@ namespace Banter.VisualScripting
                 var urlVal = flow.GetValue<string>(url);
                 var browser = flow.GetValue<BanterBrowser>(browserComponent);
 
-                browser._url = urlVal;
+                browser.Url = urlVal;
 
                 return outputTrigger;
             });

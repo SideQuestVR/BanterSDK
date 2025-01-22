@@ -39,11 +39,11 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal ConfigurableJointMotion yMotion = ConfigurableJointMotion.Locked;
         [See(initial = "0")][SerializeField] internal ConfigurableJointMotion zMotion = ConfigurableJointMotion.Locked;
         // BANTER COMPILED CODE 
-        public UnityEngine.Vector3 _targetPosition { get { return targetPosition; } set { targetPosition = value; } }
-        public System.Boolean _autoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
-        public UnityEngine.ConfigurableJointMotion _xMotion { get { return xMotion; } set { xMotion = value; } }
-        public UnityEngine.ConfigurableJointMotion _yMotion { get { return yMotion; } set { yMotion = value; } }
-        public UnityEngine.ConfigurableJointMotion _zMotion { get { return zMotion; } set { zMotion = value; } }
+        public UnityEngine.Vector3 TargetPosition { get { return targetPosition; } set { targetPosition = value; } }
+        public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
+        public UnityEngine.ConfigurableJointMotion XMotion { get { return xMotion; } set { xMotion = value; } }
+        public UnityEngine.ConfigurableJointMotion YMotion { get { return yMotion; } set { yMotion = value; } }
+        public UnityEngine.ConfigurableJointMotion ZMotion { get { return zMotion; } set { zMotion = value; } }
         public ConfigurableJoint _componentType;
         public ConfigurableJoint componentType
         {

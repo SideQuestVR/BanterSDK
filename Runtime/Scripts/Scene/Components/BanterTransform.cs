@@ -64,29 +64,29 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public UnityEngine.Vector3 _position { get { return position; } set { position = value; } }
-        public UnityEngine.Vector3 _localPosition { get { return localPosition; } set { localPosition = value; } }
-        public UnityEngine.Quaternion _rotation { get { return rotation; } set { rotation = value; } }
-        public UnityEngine.Quaternion _localRotation { get { return localRotation; } set { localRotation = value; } }
-        public UnityEngine.Vector3 _localScale { get { return localScale; } set { localScale = value; } }
-        public UnityEngine.Vector3 _eulerAngles { get { return eulerAngles; } set { eulerAngles = value; } }
-        public UnityEngine.Vector3 _localEulerAngles { get { return localEulerAngles; } set { localEulerAngles = value; } }
-        public UnityEngine.Vector3 _up { get { return up; } set { up = value; } }
-        public UnityEngine.Vector3 _forward { get { return forward; } set { forward = value; } }
-        public UnityEngine.Vector3 _right { get { return right; } set { right = value; } }
-        public System.Boolean _lerpPosition { get { return lerpPosition; } set { lerpPosition = value; } }
-        public System.Boolean _lerpRotation { get { return lerpRotation; } set { lerpRotation = value; } }
+        public UnityEngine.Vector3 Position { get { return position; } set { position = value; } }
+        public UnityEngine.Vector3 LocalPosition { get { return localPosition; } set { localPosition = value; } }
+        public UnityEngine.Quaternion Rotation { get { return rotation; } set { rotation = value; } }
+        public UnityEngine.Quaternion LocalRotation { get { return localRotation; } set { localRotation = value; } }
+        public UnityEngine.Vector3 LocalScale { get { return localScale; } set { localScale = value; } }
+        public UnityEngine.Vector3 EulerAngles { get { return eulerAngles; } set { eulerAngles = value; } }
+        public UnityEngine.Vector3 LocalEulerAngles { get { return localEulerAngles; } set { localEulerAngles = value; } }
+        public UnityEngine.Vector3 Up { get { return up; } set { up = value; } }
+        public UnityEngine.Vector3 Forward { get { return forward; } set { forward = value; } }
+        public UnityEngine.Vector3 Right { get { return right; } set { right = value; } }
+        public System.Boolean LerpPosition { get { return lerpPosition; } set { lerpPosition = value; } }
+        public System.Boolean LerpRotation { get { return lerpRotation; } set { lerpRotation = value; } }
         [Header("SYNC TRANSFORM TO JS")]
-        public bool sync_position;
-        public bool sync_localPosition;
-        public bool sync_rotation;
-        public bool sync_localRotation;
-        public bool sync_localScale;
-        public bool sync_eulerAngles;
-        public bool sync_localEulerAngles;
-        public bool sync_up;
-        public bool sync_forward;
-        public bool sync_right;
+        public bool _position;
+        public bool _localPosition;
+        public bool _rotation;
+        public bool _localRotation;
+        public bool _localScale;
+        public bool _eulerAngles;
+        public bool _localEulerAngles;
+        public bool _up;
+        public bool _forward;
+        public bool _right;
         public Transform _componentType;
         public Transform componentType
         {
@@ -282,7 +282,7 @@ namespace Banter.SDK
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
-            if ((sync_position && transform.hasChanged) || force)
+            if ((_position && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -294,7 +294,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_localPosition && transform.hasChanged) || force)
+            if ((_localPosition && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -306,7 +306,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_rotation && transform.hasChanged) || force)
+            if ((_rotation && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -318,7 +318,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_localRotation && transform.hasChanged) || force)
+            if ((_localRotation && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -330,7 +330,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_localScale && transform.hasChanged) || force)
+            if ((_localScale && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -342,7 +342,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_eulerAngles && transform.hasChanged) || force)
+            if ((_eulerAngles && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -354,7 +354,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_localEulerAngles && transform.hasChanged) || force)
+            if ((_localEulerAngles && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -366,7 +366,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_up && transform.hasChanged) || force)
+            if ((_up && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -378,7 +378,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_forward && transform.hasChanged) || force)
+            if ((_forward && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -390,7 +390,7 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-            if ((sync_right && transform.hasChanged) || force)
+            if ((_right && transform.hasChanged) || force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
@@ -434,57 +434,57 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
-            sync_position = false;
-            sync_localPosition = false;
-            sync_rotation = false;
-            sync_localRotation = false;
-            sync_localScale = false;
-            sync_eulerAngles = false;
-            sync_localEulerAngles = false;
-            sync_up = false;
-            sync_forward = false;
-            sync_right = false;
+            _position = false;
+            _localPosition = false;
+            _rotation = false;
+            _localRotation = false;
+            _localScale = false;
+            _eulerAngles = false;
+            _localEulerAngles = false;
+            _up = false;
+            _forward = false;
+            _right = false;
             for (int i = 0; i < properties.Length; i++)
             {
                 if (properties[i] == PropertyName.position)
                 {
-                    sync_position = true;
+                    _position = true;
                 }
                 if (properties[i] == PropertyName.localPosition)
                 {
-                    sync_localPosition = true;
+                    _localPosition = true;
                 }
                 if (properties[i] == PropertyName.rotation)
                 {
-                    sync_rotation = true;
+                    _rotation = true;
                 }
                 if (properties[i] == PropertyName.localRotation)
                 {
-                    sync_localRotation = true;
+                    _localRotation = true;
                 }
                 if (properties[i] == PropertyName.localScale)
                 {
-                    sync_localScale = true;
+                    _localScale = true;
                 }
                 if (properties[i] == PropertyName.eulerAngles)
                 {
-                    sync_eulerAngles = true;
+                    _eulerAngles = true;
                 }
                 if (properties[i] == PropertyName.localEulerAngles)
                 {
-                    sync_localEulerAngles = true;
+                    _localEulerAngles = true;
                 }
                 if (properties[i] == PropertyName.up)
                 {
-                    sync_up = true;
+                    _up = true;
                 }
                 if (properties[i] == PropertyName.forward)
                 {
-                    sync_forward = true;
+                    _forward = true;
                 }
                 if (properties[i] == PropertyName.right)
                 {
-                    sync_right = true;
+                    _right = true;
                 }
             }
         }

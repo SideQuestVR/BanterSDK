@@ -35,8 +35,8 @@ namespace Banter.SDK
             // SetupPhysicMaterial(changedProperties);
         }
         // BANTER COMPILED CODE 
-        public BanterGrabType _grabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
-        public System.Single _grabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
+        public BanterGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
+        public System.Single GrabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;

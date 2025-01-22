@@ -131,11 +131,11 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public System.String _shaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
-        public System.String _texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
-        public UnityEngine.Vector4 _color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
-        public Banter.SDK.MaterialSide _side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
-        public System.Boolean _generateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+        public System.String ShaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
+        public System.String Texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
+        public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
+        public Banter.SDK.MaterialSide Side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
+        public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
 
         BanterScene scene;
         bool alreadyStarted = false;
