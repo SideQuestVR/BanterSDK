@@ -1,28 +1,13 @@
 fileFormatVersion: 2
-guid: 4c5b352766176bc46bdf761e40695704
+guid: bc956effc83959748a586ffa3fa8f0fe
 ModelImporter:
   serializedVersion: 22200
   internalIDToNameTable: []
-  externalObjects:
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: DarkRough
-    second: {fileID: 2100000, guid: 6a0527dc6e85c434c9a8954715fd9e98, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Emissive
-    second: {fileID: 2100000, guid: ed794294f1c9d644b8c36d26cb9fc9fb, type: 2}
-  - first:
-      type: UnityEngine:Material
-      assembly: UnityEngine.CoreModule
-      name: Glossy
-    second: {fileID: 2100000, guid: f9354f20e81dd124f8d66233d26a85f6, type: 2}
+  externalObjects: {}
   materials:
     materialImportMode: 2
-    materialName: 1
-    materialSearch: 2
+    materialName: 0
+    materialSearch: 1
     materialLocation: 1
   animations:
     legacyGenerateAnimations: 4
