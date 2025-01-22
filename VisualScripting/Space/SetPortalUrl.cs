@@ -1,12 +1,14 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("Set Portal URL")]
     [UnitShortTitle("Set Portal URL")]
     [UnitCategory("Banter")]
+    [Obsolete("Use BanterPortal.Url instead")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SetPortalUrl : Unit
     {
@@ -14,7 +16,6 @@ namespace Banter.VisualScripting
         public ValueInput url;
 
         [DoNotSerialize]
-        [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput portal;
 
@@ -29,7 +30,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             url = ValueInput<string>("URL");
-            portal = ValueInput(typeof(BanterPortal), nameof(portal));
+            portal = ValueInput<BanterPortal>("TargetPortal");
             portal.SetDefaultValue(null);
             portal.NullMeansSelf();
 

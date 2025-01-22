@@ -1,16 +1,17 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("Banter glTF is Loaded")]
     [UnitShortTitle("is glTF Loaded")]
     [UnitCategory("Banter/Components/Banter glTF")]
+    [Obsolete("Use BanterGLTF ModelLoaded instead")]
     [TypeIcon(typeof(BanterGLTF))]
     public class BanterGLTFIsLoaded : Unit
     {
-        [PortLabelHidden]
         [DoNotSerialize]
         [NullMeansSelf]
         public ValueInput gltfObject;
@@ -25,7 +26,7 @@ namespace Banter.VisualScripting
                 return gltfComp.ModelLoaded;
             });
 
-            gltfObject = ValueInput(typeof(BanterGLTF), nameof(gltfObject));
+            gltfObject = ValueInput<BanterGLTF>("BanterGltf", null);
             gltfObject.SetDefaultValue(null);
             gltfObject.NullMeansSelf();
         }

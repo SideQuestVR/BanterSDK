@@ -1,12 +1,14 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("Banter Synced Object Take Ownership")]
     [UnitShortTitle("Take Ownership")]
     [UnitCategory("Banter/Components/Banter Synced Object")]
+    [Obsolete("Use BanterSyncedObject _TakeOwnership()")]
     [TypeIcon(typeof(BanterSyncedObject))]
     public class BanterSyncedObjectTakeOwnership : Unit
     {
@@ -16,11 +18,9 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
-        [PortLabelHidden]
         [DoNotSerialize]
         [NullMeansSelf]
         public ValueInput syncedObject;
-
 
         protected override void Definition()
         {
@@ -31,7 +31,7 @@ namespace Banter.VisualScripting
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
-            syncedObject = ValueInput(typeof(BanterSyncedObject), nameof(syncedObject));
+            syncedObject = ValueInput<BanterSyncedObject>("Sync Object", null);
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
         }
@@ -40,10 +40,10 @@ namespace Banter.VisualScripting
     [UnitTitle("Banter Synced Object Is Owner")]
     [UnitShortTitle("Is Synced Object Owner")]
     [UnitCategory("Banter/Components/Banter Synced Object")]
+    [Obsolete("Use BanterSyncedObject _DoIOwn()")]
     [TypeIcon(typeof(BanterSyncedObject))]
     public class BanterSyncedObjectDoIOwn : Unit
     {
-        [PortLabelHidden]
         [DoNotSerialize]
         [NullMeansSelf]
         public ValueInput syncedObject;
@@ -53,7 +53,7 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            syncedObject = ValueInput(typeof(BanterSyncedObject), nameof(syncedObject));
+            syncedObject = ValueInput<BanterSyncedObject>("Sync Object", null);
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
 

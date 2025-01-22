@@ -1,6 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
@@ -36,6 +37,7 @@ namespace Banter.VisualScripting
     [UnitTitle("World Browser Open URL")]
     [UnitShortTitle("World Browser Nav")]
     [UnitCategory("Banter")]
+    [Obsolete("Use BanterBrowser Set Url")]
     [TypeIcon(typeof(BanterObjectId))]
     public class WorldOpenUrl : Unit
     {
@@ -49,7 +51,6 @@ namespace Banter.VisualScripting
         public ValueInput url;
 
         [DoNotSerialize]
-        [PortLabelHidden]
         [NullMeansSelf]
         public ValueInput browserComponent;
 
@@ -65,7 +66,7 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             url = ValueInput("Url", string.Empty);
-            browserComponent = ValueInput(typeof(BanterBrowser), nameof(browserComponent));
+            browserComponent = ValueInput<BanterBrowser>("Banter Browser", null);
             browserComponent.SetDefaultValue(null);
             browserComponent.NullMeansSelf();
         }
