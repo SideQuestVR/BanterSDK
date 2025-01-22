@@ -11,7 +11,8 @@ namespace Banter.SDK
         public enum RadialMenuItemType
         {
             Basic,
-            Toggle
+            Toggle,
+            Slider
         }
 
         public RadialMenuItemType Type;
@@ -19,7 +20,9 @@ namespace Banter.SDK
         public Texture2D Icon;
         public Texture2D Image;
         public string SceneVariableName;
+        public Vector2 SliderMinMaxValue;
         public UnityEvent<QuickMenuItem> Click;
+        public UnityEvent<QuickMenuItem, float> SliderValueChanged;
         public QuickMenuItem[] Children;
         public QuickMenuItem Parent;
 
