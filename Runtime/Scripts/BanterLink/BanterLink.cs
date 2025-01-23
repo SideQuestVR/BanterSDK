@@ -65,8 +65,8 @@ namespace Banter.SDK
         }
         
         IEnumerator VisualScriptingReadyTimout() {
-            yield return new WaitForSeconds(5);
-            _IsVsLoaded = true;
+            yield return new WaitForSeconds(6);
+            IsVsLoaded = true;
         }
         async void ParseCommand(string msg)
         {
