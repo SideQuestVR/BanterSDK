@@ -34,7 +34,6 @@ public class BanterSceneEvents
     public UnityEvent<BanterAttachment> OnAttachObject = new UnityEvent<BanterAttachment>();
     public UnityEvent<BanterAttachment> OnDetachObject = new UnityEvent<BanterAttachment>();
     public UnityEvent<BanterSynced, BanterObjectId> OnSyncedObject = new UnityEvent<BanterSynced, BanterObjectId>();
-    public UnityEvent<BanterSynced, BanterObjectId> OnDoIOwn = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<BanterSynced, BanterObjectId> OnTakeOwnership = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
@@ -111,7 +110,6 @@ public class BanterSceneEvents
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
         OnJsCallbackRecieved.RemoveAllListeners();
-        OnDoIOwn.RemoveAllListeners();
         OnTakeOwnership.RemoveAllListeners();
         OnPlayAvatar.RemoveAllListeners();
         OnSyncedObject.RemoveAllListeners();

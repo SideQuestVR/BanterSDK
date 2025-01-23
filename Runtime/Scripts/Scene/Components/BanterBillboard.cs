@@ -32,18 +32,18 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBillboard : BanterComponentBase
     {
-        [See(initial = "0")] public float smoothing;
-        [See(initial = "true")] public bool enableXAxis;
-        [See(initial = "true")] public bool enableYAxis;
-        [See(initial = "true")] public bool enableZAxis;
-        public override void StartStuff()
+        [See(initial = "0")][SerializeField] internal float smoothing = 0;
+        [See(initial = "true")][SerializeField] internal bool enableXAxis = true;
+        [See(initial = "true")][SerializeField] internal bool enableYAxis = true;
+        [See(initial = "true")][SerializeField] internal bool enableZAxis = true;
+        internal override void StartStuff()
         {
             SetLoadedIfNot();
         }
 
-        public override void DestroyStuff() { }
+        internal override void DestroyStuff() { }
         FaceTarget lookAt;
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (lookAt == null)
             {
@@ -56,6 +56,11 @@ namespace Banter.SDK
             lookAt.isBillboard = true;
         }
         // BANTER COMPILED CODE 
+        public System.Single Smoothing { get { return smoothing; } set { smoothing = value; UpdateCallback(new List<PropertyName> { PropertyName.smoothing }); } }
+        public System.Boolean EnableXAxis { get { return enableXAxis; } set { enableXAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableXAxis }); } }
+        public System.Boolean EnableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
+        public System.Boolean EnableZAxis { get { return enableZAxis; } set { enableZAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableZAxis }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -64,13 +69,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.smoothing, PropertyName.enableXAxis, PropertyName.enableYAxis, PropertyName.enableZAxis, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -102,12 +107,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -152,7 +157,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -206,7 +211,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

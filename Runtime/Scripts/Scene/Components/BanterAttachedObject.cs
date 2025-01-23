@@ -22,15 +22,15 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterAttachedObject : BanterComponentBase
     {
-        [See(initial = "")] public string uid;
-        [See(initial = "0,0,0")] public Vector3 attachmentPosition;
-        [See(initial = "0,0,0,1")] public Quaternion attachmentRotation = Quaternion.identity;
-        [See(initial = "0")] public AttachmentType attachmentType;
-        [See(initial = "0")] public AvatarAttachmentType avatarAttachmentType;
-        [See(initial = "0")] public AvatarBoneName avatarAttachmentPoint;
-        [See(initial = "0")] public PhysicsAttachmentPoint attachmentPoint;
-        [See(initial = "false")] public bool autoSync;
-        [See(initial = "true")] public bool jointAvatar = true;
+        [See(initial = "")][SerializeField] internal string uid;
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 attachmentPosition = Vector3.zero;
+        [See(initial = "0,0,0,1")][SerializeField] internal Quaternion attachmentRotation = Quaternion.identity;
+        [See(initial = "0")][SerializeField] internal AttachmentType attachmentType = AttachmentType.Physics;
+        [See(initial = "0")][SerializeField] internal AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
+        [See(initial = "0")][SerializeField] internal AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
+        [See(initial = "0")][SerializeField] internal PhysicsAttachmentPoint attachmentPoint = PhysicsAttachmentPoint.Head;
+        [See(initial = "false")][SerializeField] internal bool autoSync = false;
+        [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
         [Method]
         public void _Detach(string uid)
         {
@@ -47,13 +47,13 @@ namespace Banter.SDK
         }
 
         BanterAttachment attachment;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetLoadedIfNot();
         }
 
-        public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal override void DestroyStuff() { }
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (attachment == null)
             {
@@ -98,6 +98,16 @@ namespace Banter.SDK
             attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
         // BANTER COMPILED CODE 
+        public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
+        public UnityEngine.Vector3 AttachmentPosition { get { return attachmentPosition; } set { attachmentPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPosition }); } }
+        public UnityEngine.Quaternion AttachmentRotation { get { return attachmentRotation; } set { attachmentRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentRotation }); } }
+        public Banter.SDK.AttachmentType AttachmentType { get { return attachmentType; } set { attachmentType = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentType }); } }
+        public Banter.SDK.AvatarAttachmentType AvatarAttachmentType { get { return avatarAttachmentType; } set { avatarAttachmentType = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarAttachmentType }); } }
+        public Banter.SDK.AvatarBoneName AvatarAttachmentPoint { get { return avatarAttachmentPoint; } set { avatarAttachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarAttachmentPoint }); } }
+        public PhysicsAttachmentPoint AttachmentPoint { get { return attachmentPoint; } set { attachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPoint }); } }
+        public System.Boolean AutoSync { get { return autoSync; } set { autoSync = value; UpdateCallback(new List<PropertyName> { PropertyName.autoSync }); } }
+        public System.Boolean JointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -106,13 +116,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -152,7 +162,7 @@ namespace Banter.SDK
         {
             _Attach(uid);
         }
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
 
             if (methodName == "Detach" && parameters.Count == 1 && parameters[0] is String)
@@ -173,7 +183,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -263,7 +273,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -377,7 +387,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

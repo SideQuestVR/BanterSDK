@@ -1,6 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
@@ -36,6 +37,7 @@ namespace Banter.VisualScripting
     [UnitTitle("World Browser Open URL")]
     [UnitShortTitle("World Browser Nav")]
     [UnitCategory("Banter")]
+    [Obsolete("Use BanterBrowser Set Url")]
     [TypeIcon(typeof(BanterObjectId))]
     public class WorldOpenUrl : Unit
     {
@@ -58,8 +60,7 @@ namespace Banter.VisualScripting
                 var urlVal = flow.GetValue<string>(url);
                 var browser = flow.GetValue<BanterBrowser>(browserComponent);
 
-                browser.url = urlVal;
-                browser.UpdateCallback(new System.Collections.Generic.List<PropertyName>() { PropertyName.url });
+                browser.Url = urlVal;
 
                 return outputTrigger;
             });
