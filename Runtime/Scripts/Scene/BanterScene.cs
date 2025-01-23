@@ -1381,6 +1381,7 @@ namespace Banter.SDK
                 {
                     return;
                 }
+                link.IsVsLoaded = false;
                 LogLine.Do("[BanterScene] Loading ShowSpaceImage: " + url);
                 await ShowSpaceImage(url);
                 LogLine.Do("[BanterScene] Loading ResetScene: " + url);
@@ -1400,6 +1401,7 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
+                    link.StartVSLoadedTimeout();
                 });
                 LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
 

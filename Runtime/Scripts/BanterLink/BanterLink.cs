@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.IO;
+using System.Collections;
+
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -19,6 +21,20 @@ namespace Banter.SDK
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
+
+        bool _IsVsLoaded;
+        public bool IsVsLoaded
+        {
+            get => _IsVsLoaded;
+            set
+            {
+                if(_IsVsLoaded && vsLoaded != null) {
+                    StopCoroutine(vsLoaded);
+                }
+                _IsVsLoaded = value;
+            }
+        }
+        IEnumerator vsLoaded;
         BatchUpdater batchUpdater;
         // public static string LOCAL_USER_ID;
 
@@ -41,6 +57,16 @@ namespace Banter.SDK
         string GetMsgData(string msg, string command)
         {
             return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
+        }
+
+        public void StartVSLoadedTimeout() {
+            vsLoaded = VisualScriptingReadyTimout();
+            StartCoroutine(vsLoaded);
+        }
+        
+        IEnumerator VisualScriptingReadyTimout() {
+            yield return new WaitForSeconds(5);
+            _IsVsLoaded = true;
         }
         async void ParseCommand(string msg)
         {
