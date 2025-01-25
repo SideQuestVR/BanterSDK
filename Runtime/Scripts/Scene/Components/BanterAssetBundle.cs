@@ -183,17 +183,16 @@ namespace Banter.SDK
                         {
                             Destroy(audioListener);
                         }
-                        // if(!PlatformCompat.Instance.Is2DMode){
-                        //     var cam = transform.gameObject.GetComponent<Camera>();
-                        //     if(cam != null && cam.CompareTag("MainCamera")) {
-                        //         Destroy(cam.gameObject);
-                        //     }
-                        // }
+                        var canvas = transform.gameObject.GetComponent<Canvas>();
+                        if (canvas != null)
+                        {
+                            if (canvas.renderMode == RenderMode.WorldSpace)
+                            {
+                                canvas.worldCamera = Camera.main;
+                            }
+                        }
                     }
                 }
-                // sceneParser.CurrentSceneName = sceneName;
-                // Debug.Log("[AssetBundleComponent] " + sceneParser.CurrentSceneName);
-                // item.isLoaded = true;
             }
         }
         async Task _Unload()
