@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: GeneratedImage
+  m_Name: ManipulatorClimbable
   m_Shader: {fileID: 4800000, guid: 6ff2f5e05840ee0488b77de633c37c51, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
