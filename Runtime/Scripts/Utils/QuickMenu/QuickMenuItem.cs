@@ -7,7 +7,8 @@ using UnityEngine.Events;
 namespace Banter.SDK
 {
     [Serializable]
-    public class QuickMenuItem : INotifyPropertyChanged {
+    public class QuickMenuItem : INotifyPropertyChanged 
+    {
         public enum RadialMenuItemType
         {
             Basic,
@@ -30,7 +31,7 @@ namespace Banter.SDK
         {
             get => _value;
             set 
-            { 
+            {
                 _value = value; 
                 OnPropertyChanged(); 
             }
