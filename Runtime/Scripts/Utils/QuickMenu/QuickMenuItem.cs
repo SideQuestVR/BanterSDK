@@ -30,13 +30,13 @@ namespace Banter.SDK
         public object Value
         {
             get => _value;
-            set 
+            set
             {
-                _value = value; 
-                OnPropertyChanged(); 
+                _value = value;
+                OnPropertyChanged();
             }
         }
-    
+        
         private object _value;
 
         public event PropertyChangedEventHandler PropertyChanged;
