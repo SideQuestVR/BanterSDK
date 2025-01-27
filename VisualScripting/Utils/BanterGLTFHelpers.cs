@@ -1,12 +1,14 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("Banter glTF is Loaded")]
     [UnitShortTitle("is glTF Loaded")]
     [UnitCategory("Banter/Components/Banter glTF")]
+    [Obsolete("Use BanterGLTF ModelLoaded instead")]
     [TypeIcon(typeof(BanterGLTF))]
     public class BanterGLTFIsLoaded : Unit
     {

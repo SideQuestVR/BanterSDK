@@ -40,61 +40,61 @@ namespace Banter.SDK
 
     public class BanterText : BanterComponentBase
     {
-        TextMeshPro _text;
-        [See(initial = "")] public string text;
-        [See] public Vector4 color;
-        [See(initial = "0")] public HorizontalAlignment horizontalAlignment;
-        [See(initial = "0")] public VerticalAlignment verticalAlignment;
-        [See(initial = "2")] public float fontSize;
-        [See(initial = "true")] public bool richText;
-        [See(initial = "true")] public bool enableWordWrapping;
-        [See(initial = "20,5")] public Vector2 rectTransformSizeDelta;
+        TextMeshPro tmpComponent;
+        [See(initial = "")][SerializeField] internal string text;
+        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+        [See(initial = "0")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
+        [See(initial = "0")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Top;
+        [See(initial = "2")][SerializeField] internal float fontSize = 2;
+        [See(initial = "true")][SerializeField] internal bool richText = true;
+        [See(initial = "true")][SerializeField] internal bool enableWordWrapping = true;
+        [See(initial = "20,5")][SerializeField] internal Vector2 rectTransformSizeDelta = new Vector2(20, 5);
 
 
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetupText();
         }
 
         void SetupText()
         {
-            if (_text == null)
+            if (tmpComponent == null)
             {
-                _text = gameObject.GetComponent<TextMeshPro>();
-                if (_text == null)
+                tmpComponent = gameObject.GetComponent<TextMeshPro>();
+                if (tmpComponent == null)
                 {
-                    _text = gameObject.AddComponent<TextMeshPro>();
+                    tmpComponent = gameObject.AddComponent<TextMeshPro>();
                 }
             }
-            _text.text = text;
-            _text.color = new Color(color.x, color.y, color.z, color.w);
-            _text.fontSize = fontSize;
-            _text.richText = richText;
+            tmpComponent.text = text;
+            tmpComponent.color = new Color(color.x, color.y, color.z, color.w);
+            tmpComponent.fontSize = fontSize;
+            tmpComponent.richText = richText;
             switch (horizontalAlignment)
             {
                 case HorizontalAlignment.Left:
-                    _text.alignment = TextAlignmentOptions.Left;
+                    tmpComponent.alignment = TextAlignmentOptions.Left;
                     break;
                 case HorizontalAlignment.Right:
-                    _text.alignment = TextAlignmentOptions.Right;
+                    tmpComponent.alignment = TextAlignmentOptions.Right;
                     break;
                 case HorizontalAlignment.Center:
-                    _text.alignment = TextAlignmentOptions.Center;
+                    tmpComponent.alignment = TextAlignmentOptions.Center;
                     break;
             }
             switch (verticalAlignment)
             {
                 case VerticalAlignment.Top:
-                    _text.verticalAlignment = VerticalAlignmentOptions.Top;
+                    tmpComponent.verticalAlignment = VerticalAlignmentOptions.Top;
                     break;
                 case VerticalAlignment.Bottom:
-                    _text.verticalAlignment = VerticalAlignmentOptions.Bottom;
+                    tmpComponent.verticalAlignment = VerticalAlignmentOptions.Bottom;
                     break;
                 case VerticalAlignment.Center:
-                    _text.verticalAlignment = VerticalAlignmentOptions.Middle;
+                    tmpComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
                     break;
             }
-            _text.enableWordWrapping = enableWordWrapping;
+            tmpComponent.enableWordWrapping = enableWordWrapping;
             var rect = gameObject.GetComponent<RectTransform>();
             if (rect != null)
             {
@@ -102,11 +102,11 @@ namespace Banter.SDK
             }
             SetLoadedIfNot();
         }
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
-            if (_text != null)
+            if (tmpComponent != null)
             {
-                Destroy(_text);
+                Destroy(tmpComponent);
             }
         }
         void UpdateCallback(List<PropertyName> changedProperties)
@@ -114,6 +114,15 @@ namespace Banter.SDK
             SetupText();
         }
         // BANTER COMPILED CODE 
+        public System.String Text { get { return text; } set { text = value; UpdateCallback(new List<PropertyName> { PropertyName.text }); } }
+        public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
+        public HorizontalAlignment HorizontalAlignment { get { return horizontalAlignment; } set { horizontalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.horizontalAlignment }); } }
+        public VerticalAlignment VerticalAlignment { get { return verticalAlignment; } set { verticalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.verticalAlignment }); } }
+        public System.Single FontSize { get { return fontSize; } set { fontSize = value; UpdateCallback(new List<PropertyName> { PropertyName.fontSize }); } }
+        public System.Boolean RichText { get { return richText; } set { richText = value; UpdateCallback(new List<PropertyName> { PropertyName.richText }); } }
+        public System.Boolean EnableWordWrapping { get { return enableWordWrapping; } set { enableWordWrapping = value; UpdateCallback(new List<PropertyName> { PropertyName.enableWordWrapping }); } }
+        public UnityEngine.Vector2 RectTransformSizeDelta { get { return rectTransformSizeDelta; } set { rectTransformSizeDelta = value; UpdateCallback(new List<PropertyName> { PropertyName.rectTransformSizeDelta }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -122,13 +131,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.text, PropertyName.color, PropertyName.horizontalAlignment, PropertyName.verticalAlignment, PropertyName.fontSize, PropertyName.richText, PropertyName.enableWordWrapping, PropertyName.rectTransformSizeDelta, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -160,12 +169,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -246,7 +255,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -348,7 +357,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

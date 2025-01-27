@@ -5,6 +5,7 @@ using Banter.SDK;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Runtime.Serialization;
+using System;
 
 namespace Banter.VisualScripting
 {
@@ -123,6 +124,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load glTF/glb from URL")]
     [UnitShortTitle("Load glTF")]
     [UnitCategory("Banter")]
+    [Obsolete("Use BanterGLTF Set Url")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadGltfUrl : Unit
     {
@@ -154,8 +156,7 @@ namespace Banter.VisualScripting
         {
             var url = flow.GetValue<string>(this.url);
             var bGLTF = flow.GetValue<BanterGLTF>(gltfComponent);
-            bGLTF.url = url;
-            bGLTF.UpdateCallback(null);
+            bGLTF.Url = url;
 
             return output;
         }

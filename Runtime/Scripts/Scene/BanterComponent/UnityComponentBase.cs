@@ -8,42 +8,42 @@ namespace Banter.SDK
     public class UnityComponentBase : BanterComponentBase
     {
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             throw new System.NotImplementedException();
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             throw new System.NotImplementedException();
         }
 
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             // throw new NotImplementedException();
         }
 
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
             // throw new NotImplementedException();
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             throw new System.NotImplementedException();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             throw new System.NotImplementedException();
         }
 
-        public override void SyncProperties(bool force, Action callback)
+        internal override void SyncProperties(bool force, Action callback)
         {
             throw new System.NotImplementedException();
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
             throw new System.NotImplementedException();
         }
