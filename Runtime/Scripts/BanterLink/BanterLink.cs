@@ -169,6 +169,10 @@ namespace Banter.SDK
             {
                 scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
             }
+            else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
+            {
+                scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
+            }
             else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
             {
                 scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
