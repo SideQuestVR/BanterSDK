@@ -6,19 +6,20 @@ using UnityEngine;
 namespace Banter.SDK
 {
     [System.Serializable]
-    public struct BanterAttachment
+    public class BanterAttachment
     {
         public string uid;
-        public UnityAndBanterObject attachedObject;
-        public Vector3 attachmentPosition;
-        public Quaternion attachmentRotation;
-        public AttachmentType attachmentType;
-        public AvatarAttachmentType avatarAttachmentType;
-        public AvatarBoneName avatarAttachmentPoint;
+        public Vector3 attachmentPosition = Vector3.zero;
+        public Quaternion attachmentRotation = Quaternion.identity;
+        public AttachmentType attachmentType = AttachmentType.Physics;
+        public AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
+        public AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
         [RenamedFrom("attachmentPoint")]
-        public PhysicsAttachmentPoint physicsAttachmentPoint;
-        public bool autoSync;
-        public bool jointAvatar;
+        public PhysicsAttachmentPoint physicsAttachmentPoint = PhysicsAttachmentPoint.Head;
+        public bool autoSync = false;
+        public bool jointAvatar = true;
+
+        public UnityAndBanterObject attachedObject;
     }
 
     [RequireComponent(typeof(BanterObjectId))]
@@ -35,17 +36,18 @@ namespace Banter.SDK
         [See(initial = "false")][SerializeField] internal bool autoSync = false;
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
 
-        BanterAttachment attachment = new BanterAttachment();
+        [SerializeField] BanterAttachment attachment = new BanterAttachment();
 
         [Method]
-        public void _Detach(string uid)
+        public void _Attach(string uid)
         {
             this.uid = uid;
             UpdateCallback(null);
-            BanterScene.Instance().data.DetachObject(attachment);
+            BanterScene.Instance().data.AttachObject(attachment);
         }
+
         [Method]
-        public void _Attach(string uid)
+        public void _Detach(string uid)
         {
             this.uid = uid;
             UpdateCallback(null);
@@ -60,14 +62,6 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (changedProperties == null || changedProperties.Contains(PropertyName.autoSync))
-            {
-                attachment.autoSync = autoSync;
-            }
-            if (changedProperties == null || changedProperties.Contains(PropertyName.jointAvatar))
-            {
-                attachment.jointAvatar = jointAvatar;
-            }
             if (changedProperties == null || changedProperties.Contains(PropertyName.uid))
             {
                 attachment.uid = uid;
@@ -95,6 +89,14 @@ namespace Banter.SDK
             if (changedProperties == null || changedProperties.Contains(PropertyName.attachmentPoint))
             {
                 attachment.physicsAttachmentPoint = attachmentPoint;
+            }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.autoSync))
+            {
+                attachment.autoSync = autoSync;
+            }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.jointAvatar))
+            {
+                attachment.jointAvatar = jointAvatar;
             }
             attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
