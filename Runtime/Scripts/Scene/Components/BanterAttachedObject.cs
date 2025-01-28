@@ -1,11 +1,12 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace Banter.SDK
 {
-    public class BanterAttachment
+    [System.Serializable]
+    public struct BanterAttachment
     {
         public string uid;
         public UnityAndBanterObject attachedObject;
@@ -14,10 +15,12 @@ namespace Banter.SDK
         public AttachmentType attachmentType;
         public AvatarAttachmentType avatarAttachmentType;
         public AvatarBoneName avatarAttachmentPoint;
-        public PhysicsAttachmentPoint attachmentPoint;
+        [RenamedFrom("attachmentPoint")]
+        public PhysicsAttachmentPoint physicsAttachmentPoint;
         public bool autoSync;
         public bool jointAvatar;
     }
+
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterAttachedObject : BanterComponentBase
@@ -31,22 +34,24 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal PhysicsAttachmentPoint attachmentPoint = PhysicsAttachmentPoint.Head;
         [See(initial = "false")][SerializeField] internal bool autoSync = false;
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
+
+        BanterAttachment attachment = new BanterAttachment();
+
         [Method]
         public void _Detach(string uid)
         {
             this.uid = uid;
             UpdateCallback(null);
-            BanterScene.Instance().events.OnDetachObject.Invoke(attachment);
+            BanterScene.Instance().data.DetachObject(attachment);
         }
         [Method]
         public void _Attach(string uid)
         {
             this.uid = uid;
             UpdateCallback(null);
-            BanterScene.Instance().events.OnAttachObject.Invoke(attachment);
+            BanterScene.Instance().data.DetachObject(attachment);
         }
 
-        BanterAttachment attachment;
         internal override void StartStuff()
         {
             SetLoadedIfNot();
@@ -55,10 +60,6 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (attachment == null)
-            {
-                attachment = new BanterAttachment();
-            }
             if (changedProperties == null || changedProperties.Contains(PropertyName.autoSync))
             {
                 attachment.autoSync = autoSync;
@@ -93,7 +94,7 @@ namespace Banter.SDK
             }
             if (changedProperties == null || changedProperties.Contains(PropertyName.attachmentPoint))
             {
-                attachment.attachmentPoint = attachmentPoint;
+                attachment.physicsAttachmentPoint = attachmentPoint;
             }
             attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }

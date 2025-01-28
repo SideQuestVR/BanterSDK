@@ -1802,7 +1802,7 @@ namespace Banter.SDK
             attachment.attachmentRotation = gameObject.gameObject.transform.localRotation;
             attachment.attachmentType = AttachmentType.NonPhysics;
             attachment.avatarAttachmentPoint = actualPart;
-            events.OnAttachObject.Invoke(attachment);
+            data.AttachObject(attachment);
         }
         public void LegacySetChildColor(string msg)
         {
