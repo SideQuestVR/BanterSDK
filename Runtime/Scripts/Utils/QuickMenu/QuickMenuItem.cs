@@ -45,5 +45,10 @@ namespace Banter.SDK
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+
+        public void SetValueWithoutNotify(object obj)
+        {
+            _value = obj;
+        }
     }
 }
