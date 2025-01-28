@@ -17,9 +17,10 @@ namespace Banter.SDK
         }
 
         public RadialMenuItemType Type;
-        public string Label;
         public Texture2D Icon;
+        public string Label;
         public Texture2D Image;
+        public AudioClip Sound;
         public string SceneVariableName;
         public Vector2 SliderMinMaxValue;
         public UnityEvent<QuickMenuItem> Click;
