@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Banter.SDK
 {
+    // Data, but used as a class to pass by reference
     [System.Serializable]
     public class BanterAttachment
     {
@@ -14,7 +16,10 @@ namespace Banter.SDK
         public AttachmentType attachmentType = AttachmentType.Physics;
         public AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
         public AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
+#if BANTER_VISUAL_SCRIPTING
         [RenamedFrom("attachmentPoint")]
+#endif
+        [FormerlySerializedAs("attachmentPoint")]
         public PhysicsAttachmentPoint physicsAttachmentPoint = PhysicsAttachmentPoint.Head;
         public bool autoSync = false;
         public bool jointAvatar = true;
