@@ -38,23 +38,23 @@ namespace Banter.SDK
 
     public class BanterGLTF : BanterComponentBase
     {
-        [See(initial = "")] public string url;
-        [See(initial = "false")] public bool generateMipMaps;
-        [See(initial = "false")] public bool addColliders;
-        [See(initial = "false")] public bool nonConvexColliders;
-        [See(initial = "false")] public bool slippery;
-        [See(initial = "false")] public bool climbable;
+        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "false")][SerializeField] internal bool generateMipMaps;
+        [See(initial = "false")][SerializeField] internal bool addColliders;
+        [See(initial = "false")][SerializeField] internal bool nonConvexColliders;
+        [See(initial = "false")][SerializeField] internal bool slippery;
+        [See(initial = "false")][SerializeField] internal bool climbable;
         // This has been added because unity changed the forward direction of GLTF fast between version 3 and 4. 
         // https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@5.0/manual/UpgradeGuides.html#upgrade-to-4x
         // We decided to leave legacy aframe stuff on the old one by default for compatibility reasons, but 
         // that new stuff will use the forward direction of the new version by default. Aframe shim will set 
         // this to true automaticaly.
-        [See(initial = "false")] public bool legacyRotate;
+        [See(initial = "false")][SerializeField] internal bool legacyRotate;
         bool loadStarted;
 
         public bool ModelLoaded { get; private set; }
 
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             LogLine.Do("Warning: Using BanterGLTF is not recommended for production use. It is slow and not optimized.");
             SetupGLTF();
@@ -167,12 +167,20 @@ namespace Banter.SDK
                 loadStarted = false;
             }
         }
-        public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal override void DestroyStuff() { }
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGLTF();
         }
         // BANTER COMPILED CODE 
+        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+        public System.Boolean AddColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
+        public System.Boolean NonConvexColliders { get { return nonConvexColliders; } set { nonConvexColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.nonConvexColliders }); } }
+        public System.Boolean Slippery { get { return slippery; } set { slippery = value; UpdateCallback(new List<PropertyName> { PropertyName.slippery }); } }
+        public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
+        public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -181,13 +189,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.generateMipMaps, PropertyName.addColliders, PropertyName.nonConvexColliders, PropertyName.slippery, PropertyName.climbable, PropertyName.legacyRotate, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -219,12 +227,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -296,7 +304,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -386,7 +394,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

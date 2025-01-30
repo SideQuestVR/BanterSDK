@@ -28,10 +28,13 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterCapsuleCollider : UnityComponentBase
     {
-        [See(initial = "false")] public bool isTrigger;
-        [See(initial = "0.5")] public float radius;
-        [See(initial = "2")] public float height;
+        [See(initial = "false")][SerializeField] internal bool isTrigger = false;
+        [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
+        [See(initial = "2")][SerializeField] internal float height = 2;
         // BANTER COMPILED CODE 
+        public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
+        public System.Single Radius { get { return radius; } set { radius = value; } }
+        public System.Single Height { get { return height; } set { height = value; } }
         public CapsuleCollider _componentType;
         public CapsuleCollider componentType
         {
@@ -52,12 +55,12 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
 
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -89,12 +92,12 @@ namespace Banter.SDK
             Destroy(componentType);
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -129,7 +132,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -171,7 +174,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

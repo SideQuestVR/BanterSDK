@@ -46,19 +46,19 @@ namespace Banter.SDK
     public class BanterMaterial : BanterComponentBase
     {
         public ShaderType shaderType = ShaderType.Custom;
-        [See] public string shaderName = "Unlit/Diffuse";
         MeshRenderer _renderer;
-        [See] public string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        [See] public Vector4 color;
-        [See] public MaterialSide side;
-        [See(initial = "false")] public bool generateMipMaps = false;
+        [See(initial = "\"Unlit/Diffuse\"")][SerializeField] internal string shaderName = "Unlit/Diffuse";
+        [See(initial = "")][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
+        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+        [See(initial = "0")][SerializeField] internal MaterialSide side = MaterialSide.Front;
+        [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
         Texture2D defaultTexture;
         Texture2D mainTex;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             _ = SetupMaterial();
         }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             _ = SetupMaterial(changedProperties);
         }
@@ -123,7 +123,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
             if (_renderer != null)
             {
@@ -131,6 +131,12 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public System.String ShaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
+        public System.String Texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
+        public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
+        public Banter.SDK.MaterialSide Side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
+        public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -139,13 +145,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.shaderName, PropertyName.texture, PropertyName.color, PropertyName.side, PropertyName.generateMipMaps, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -177,12 +183,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -236,7 +242,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -302,7 +308,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

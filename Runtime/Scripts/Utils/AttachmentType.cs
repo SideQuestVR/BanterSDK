@@ -1,5 +1,8 @@
-public enum AttachmentType
+namespace Banter.SDK
 {
-    Physics,
-    NonPhysics,
+    public enum AttachmentType
+    {
+        Physics,
+        NonPhysics,
+    }
 }

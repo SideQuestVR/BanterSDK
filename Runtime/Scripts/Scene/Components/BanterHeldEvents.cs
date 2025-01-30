@@ -13,27 +13,27 @@ namespace Banter.SDK
     public class BanterHeldEvents : BanterComponentBase
     {
 
-        [See(initial = "0.5")] public float sensitivity = 0.5f;
-        [See(initial = "0.1")] public float fireRate = 0.1f;
-        [See(initial = "false")] public bool auto = false;
-        [See(initial = "false")] public bool blockLeftPrimary = false;
-        [See(initial = "false")] public bool blockLeftSecondary = false;
-        [See(initial = "false")] public bool blockRightPrimary = false;
-        [See(initial = "false")] public bool blockRightSecondary = false;
-        [See(initial = "false")] public bool blockLeftThumbstick = false;
-        [See(initial = "false")] public bool blockLeftThumbstickClick = false;
-        [See(initial = "false")] public bool blockRightThumbstick = false;
-        [See(initial = "false")] public bool blockRightThumbstickClick = false;
-        [See(initial = "false")] public bool blockLeftTrigger = false;
-        [See(initial = "false")] public bool blockRightTrigger = false;
+        [See(initial = "0.5")][SerializeField] internal float sensitivity = 0.5f;
+        [See(initial = "0.1")][SerializeField] internal float fireRate = 0.1f;
+        [See(initial = "false")][SerializeField] internal bool auto = false;
+        [See(initial = "false")][SerializeField] internal bool blockLeftPrimary = false;
+        [See(initial = "false")][SerializeField] internal bool blockLeftSecondary = false;
+        [See(initial = "false")][SerializeField] internal bool blockRightPrimary = false;
+        [See(initial = "false")][SerializeField] internal bool blockRightSecondary = false;
+        [See(initial = "false")][SerializeField] internal bool blockLeftThumbstick = false;
+        [See(initial = "false")][SerializeField] internal bool blockLeftThumbstickClick = false;
+        [See(initial = "false")][SerializeField] internal bool blockRightThumbstick = false;
+        [See(initial = "false")][SerializeField] internal bool blockRightThumbstickClick = false;
+        [See(initial = "false")][SerializeField] internal bool blockLeftTrigger = false;
+        [See(initial = "false")][SerializeField] internal bool blockRightTrigger = false;
 
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
             // throw new NotImplementedException();
         }
 
 
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             if (!gameObject.GetComponent<BanterPlayerEvents>())
                 gameObject.AddComponent<BanterPlayerEvents>();
@@ -42,11 +42,25 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             // SetupPhysicMaterial(changedProperties);
         }
         // BANTER COMPILED CODE 
+        public System.Single Sensitivity { get { return sensitivity; } set { sensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.sensitivity }); } }
+        public System.Single FireRate { get { return fireRate; } set { fireRate = value; UpdateCallback(new List<PropertyName> { PropertyName.fireRate }); } }
+        public System.Boolean Auto { get { return auto; } set { auto = value; UpdateCallback(new List<PropertyName> { PropertyName.auto }); } }
+        public System.Boolean BlockLeftPrimary { get { return blockLeftPrimary; } set { blockLeftPrimary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftPrimary }); } }
+        public System.Boolean BlockLeftSecondary { get { return blockLeftSecondary; } set { blockLeftSecondary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftSecondary }); } }
+        public System.Boolean BlockRightPrimary { get { return blockRightPrimary; } set { blockRightPrimary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightPrimary }); } }
+        public System.Boolean BlockRightSecondary { get { return blockRightSecondary; } set { blockRightSecondary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightSecondary }); } }
+        public System.Boolean BlockLeftThumbstick { get { return blockLeftThumbstick; } set { blockLeftThumbstick = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftThumbstick }); } }
+        public System.Boolean BlockLeftThumbstickClick { get { return blockLeftThumbstickClick; } set { blockLeftThumbstickClick = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftThumbstickClick }); } }
+        public System.Boolean BlockRightThumbstick { get { return blockRightThumbstick; } set { blockRightThumbstick = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightThumbstick }); } }
+        public System.Boolean BlockRightThumbstickClick { get { return blockRightThumbstickClick; } set { blockRightThumbstickClick = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightThumbstickClick }); } }
+        public System.Boolean BlockLeftTrigger { get { return blockLeftTrigger; } set { blockLeftTrigger = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftTrigger }); } }
+        public System.Boolean BlockRightTrigger { get { return blockRightTrigger; } set { blockRightTrigger = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightTrigger }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -55,13 +69,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.sensitivity, PropertyName.fireRate, PropertyName.auto, PropertyName.blockLeftPrimary, PropertyName.blockLeftSecondary, PropertyName.blockRightPrimary, PropertyName.blockRightSecondary, PropertyName.blockLeftThumbstick, PropertyName.blockLeftThumbstickClick, PropertyName.blockRightThumbstick, PropertyName.blockRightThumbstickClick, PropertyName.blockLeftTrigger, PropertyName.blockRightTrigger, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -93,12 +107,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -224,7 +238,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -386,7 +400,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

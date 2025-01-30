@@ -1,12 +1,14 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using System;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("Set Portal URL")]
     [UnitShortTitle("Set Portal URL")]
     [UnitCategory("Banter")]
+    [Obsolete("Use BanterPortal.Url instead")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SetPortalUrl : Unit
     {
@@ -34,8 +36,7 @@ namespace Banter.VisualScripting
 
             input = ControlInput("", (flow) => {
                 var target = flow.GetValue<BanterPortal>(portal);
-                target.url = flow.GetValue<string>(url);
-                target.UpdateCallback(new System.Collections.Generic.List<PropertyName>() { PropertyName.url });
+                target.Url = flow.GetValue<string>(url);
                 return output;
             });
             output = ControlOutput("");

@@ -44,6 +44,7 @@ public class APICommands
     public const string AI_IMAGE = "!aiimg!";
     public const string AI_MODEL = "!aiglb!";
     public const string BASE_64_TO_CDN = "!b64cdn!";
+    public const string OBJECT_TEX_TO_BASE_64 = "!objtob64!";
     public const string SELECT_FILE = "!sltglb!";
     public const string GRAVITY = "!gv!";
     public const string TIME_SCALE = "!ts!";
