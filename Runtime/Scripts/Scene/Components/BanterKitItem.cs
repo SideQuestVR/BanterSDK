@@ -25,7 +25,9 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterKitItem : BanterComponentBase
     {
+        [Tooltip("The location of the prefab in the kit object. Must match the path in the asset bundle (always lowercase).")]
         [See(initial = "")][SerializeField] internal string path = "";
+
         GameObject item;
         public AssetBundle KitBundle;
         private async Task SetupKitItem()

@@ -9,6 +9,7 @@ namespace Banter.SDK
     [DisallowMultipleComponent]
     public class BanterObjectId : MonoBehaviour
     {
+        [Tooltip("A unique identifier for this object within the Banter system.")]
         public string Id;
 
         [HideInInspector]

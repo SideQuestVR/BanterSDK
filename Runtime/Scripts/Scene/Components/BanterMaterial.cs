@@ -47,11 +47,21 @@ namespace Banter.SDK
     {
         public ShaderType shaderType = ShaderType.Custom;
         MeshRenderer _renderer;
+		[Tooltip("The name of the shader to use for this material.")]
         [See(initial = "\"Unlit/Diffuse\"")][SerializeField] internal string shaderName = "Unlit/Diffuse";
+		
+		[Tooltip("The texture to apply to the material. Provide a valid URL.")]
         [See(initial = "")][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+       
+		[Tooltip("The color of the material in RGBA format.")]
+		[See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+		
+		[Tooltip("Determines which side(s) of the material are rendered.")]
         [See(initial = "0")][SerializeField] internal MaterialSide side = MaterialSide.Front;
+		
+		[Tooltip("Enable to generate mipmaps for the texture (improves texture scaling).")]
         [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
+		
         Texture2D defaultTexture;
         Texture2D mainTex;
         internal override void StartStuff()

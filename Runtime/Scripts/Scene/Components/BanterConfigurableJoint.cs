@@ -33,10 +33,19 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterConfigurableJoint : UnityComponentBase
     {
+        [Tooltip("The target position of the joint in world space.")]
         [See(initial = "0,0,0")][SerializeField] internal Vector3 targetPosition = Vector3.zero;
+
+        [Tooltip("If true, the connected anchor will be automatically configured.")]
         [See(initial = "false")][SerializeField] internal bool autoConfigureConnectedAnchor = false;
+
+        [Tooltip("The motion of the joint along the x-axis.")]
         [See(initial = "0")][SerializeField] internal ConfigurableJointMotion xMotion = ConfigurableJointMotion.Locked;
+
+        [Tooltip("The motion of the joint along the y-axis.")]
         [See(initial = "0")][SerializeField] internal ConfigurableJointMotion yMotion = ConfigurableJointMotion.Locked;
+
+        [Tooltip("The motion of the joint along the z-axis.")]
         [See(initial = "0")][SerializeField] internal ConfigurableJointMotion zMotion = ConfigurableJointMotion.Locked;
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 TargetPosition { get { return targetPosition; } set { targetPosition = value; } }

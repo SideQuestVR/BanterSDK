@@ -23,6 +23,7 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterStreetView : BanterComponentBase
     {
+        [Tooltip("The panoId of the Street View location to be displayed.")]
         [See(initial = "")][SerializeField] internal string panoId = "";
 
         PhotoSphere photoSphere;

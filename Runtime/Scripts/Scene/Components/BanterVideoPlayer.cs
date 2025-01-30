@@ -37,18 +37,42 @@ namespace Banter.SDK
 
     public class BanterVideoPlayer : BanterComponentBase
     {
+        [Tooltip("The URL of the video to be played.")]
         [See(initial = "")][SerializeField] internal string url;
+
+        [Tooltip("The volume of the video player (0.0 to 1.0).")]
         [See(initial = "0.5")][SerializeField] internal float volume = 0.5f;
+
+        [Tooltip("Enable looping of the video.")]
         [See(initial = "false")][SerializeField] internal bool loop = false;
+
+        [Tooltip("If enabled, the video will start playing as soon as it is loaded.")]
         [See(initial = "true")][SerializeField] internal bool playOnAwake = true;
+
+        [Tooltip("If enabled, frames will be skipped to maintain smooth playback under performance constraints.")]
         [See(initial = "true")][SerializeField] internal bool skipOnDrop = true;
-        [Watch(initial = "0")][SerializeField] internal float time = 0;
+
+        [Tooltip("If enabled, the video player will wait for the first frame to be ready before starting playback.")]
         [See(initial = "true")][SerializeField] internal bool waitForFirstFrame = true;
+
+        [Tooltip("The current playback time of the video.")]
+        [Watch(initial = "0")][SerializeField] internal float time = 0;
+
+        [Tooltip("Indicates if the video is currently playing.")]
         [See(initial = "false")][SerializeField] internal bool isPlaying = false;
+
+        [Tooltip("Indicates if the video is set to loop.")]
         [See(initial = "false")][SerializeField] internal bool isLooping = false;
+
+        [Tooltip("Indicates if the video is prepared and ready to play.")]
         [See(initial = "false")][SerializeField] internal bool isPrepared = false;
+
+        [Tooltip("Indicates if the video is currently muted.")]
         [See(initial = "false")][SerializeField] internal bool isMuted = false;
+
+        [Tooltip("The total duration of the video in seconds.")]
         [See(initial = "0")][SerializeField] internal float duration = 0;
+
         [Method]
         public void _PlayToggle()
         {

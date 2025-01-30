@@ -17,15 +17,21 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterSyncedObject : BanterComponentBase
     {
+        [Tooltip("Determines if the object's position is synchronized across all clients.")]
         [See(initial = "true")][SerializeField] internal bool syncPosition = true;
 
+        [Tooltip("Determines if the object's rotation is synchronized across all clients.")]
         [See(initial = "true")][SerializeField] internal bool syncRotation = true;
 
+        [Tooltip("Determines if ownership is taken when the object collides with another object.")]
         [See(initial = "true")][SerializeField] internal bool takeOwnershipOnCollision = true;
 
+        [Tooltip("Determines if ownership is taken when the object is grabbed.")]
         [See(initial = "true")][SerializeField] internal bool takeOwnershipOnGrab = true;
 
+        [Tooltip("If enabled, the object becomes kinematic when it is not owned by the local player.")]
         [See(initial = "false")][SerializeField] internal bool kinematicIfNotOwned = false;
+
 
         [Method]
         public void _TakeOwnership()
