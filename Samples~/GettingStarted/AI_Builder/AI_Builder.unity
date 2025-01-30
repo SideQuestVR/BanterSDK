@@ -23183,7 +23183,7 @@ GameObject:
   - component: {fileID: 1404648065206851122}
   - component: {fileID: 4237470883829486132}
   m_Layer: 0
-  m_Name: AI_Manager
+  m_Name: AI_Manager_VS
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
