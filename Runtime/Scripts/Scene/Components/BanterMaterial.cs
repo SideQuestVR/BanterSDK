@@ -54,7 +54,7 @@ namespace Banter.SDK
         [See(initial = "")][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
        
 		[Tooltip("The color of the material in RGBA format.")]
-		[See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+		[See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
 		
 		[Tooltip("Determines which side(s) of the material are rendered.")]
         [See(initial = "0")][SerializeField] internal MaterialSide side = MaterialSide.Front;
