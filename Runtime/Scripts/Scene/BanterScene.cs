@@ -266,8 +266,9 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
+                await new WaitUntil(() => state == SceneState.UNITY_READY);
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
 #endif
@@ -280,7 +281,7 @@ namespace Banter.SDK
             }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
