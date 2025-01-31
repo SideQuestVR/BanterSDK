@@ -16,8 +16,13 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterGrabHandle : BanterComponentBase
     {
+
+        [Tooltip("Defines the type of grab interaction (Point, Cylinder, Ball, Soft).")]
         [See(initial = "0")][SerializeField] internal BanterGrabType grabType;
+
+        [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
         [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
+
         internal override void DestroyStuff()
         {
             // throw new NotImplementedException();

@@ -349,11 +349,15 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
-        public string GameObjectTextureToBase64(GameObject obj, int materialIndex) {
+        public string GameObjectTextureToBase64(GameObject obj, int materialIndex)
+        {
             var renderer = obj.gameObject.GetComponent<Renderer>();
-            try{
+            try
+            {
                 return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.LogError(e);
             }
             return null;
@@ -363,9 +367,11 @@ namespace Banter.SDK
             var parts = msg.Split(MessageDelimiters.PRIMARY);
             var obj = GetObjectByBid(parts[0]);
             var extra = "null";
-            if(obj.gameObject != null) {
+            if (obj.gameObject != null)
+            {
                 var b64 = GameObjectTextureToBase64(obj.gameObject, int.Parse(parts[1]));
-                if(b64 != null){
+                if (b64 != null)
+                {
                     extra = b64;
                 }
             }

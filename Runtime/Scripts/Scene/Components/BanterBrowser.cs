@@ -79,11 +79,22 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBrowser : BanterComponentBase
     {
+        [Tooltip("The URL of the webpage to display")]
         [See(initial = "")][SerializeField] internal string url;
+
+        [Tooltip("The number of mipmaps to use for the browser texture")]
         [See(initial = "4")][SerializeField] internal int mipMaps = 4;
+
+        [Tooltip("The number of pixels per unit for the browser texture")]
         [See(initial = "1200")][SerializeField] internal float pixelsPerUnit = 1200;
+
+        [Tooltip("The width of the browser page in pixels")]
         [See(initial = "1024")][SerializeField] internal float pageWidth = 1024;
+
+        [Tooltip("The height of the browser page in pixels")]
         [See(initial = "576")][SerializeField] internal float pageHeight = 576;
+
+        [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
         [See(initial = "")][SerializeField] internal string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         [Method]

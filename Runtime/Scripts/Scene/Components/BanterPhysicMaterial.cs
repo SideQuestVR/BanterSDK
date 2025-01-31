@@ -29,8 +29,12 @@ namespace Banter.SDK
 
     public class BanterPhysicMaterial : BanterComponentBase
     {
+        [Tooltip("The dynamic friction of the material, affecting movement when in contact with another surface.")]
         [See(initial = "1")][SerializeField] internal float dynamicFriction = 1;
+
+        [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
         [See(initial = "1")][SerializeField] internal float staticFriction = 1;
+
         PhysicMaterial _material;
         Collider _collider;
         internal override void StartStuff()

@@ -13,19 +13,45 @@ namespace Banter.SDK
     public class BanterHeldEvents : BanterComponentBase
     {
 
+        [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
         [See(initial = "0.5")][SerializeField] internal float sensitivity = 0.5f;
+
+        [Tooltip("Rate at which held events are fired (in seconds).")]
         [See(initial = "0.1")][SerializeField] internal float fireRate = 0.1f;
+
+        [Tooltip("Enable automatic triggering of held events without manual input.")]
         [See(initial = "false")][SerializeField] internal bool auto = false;
+
+        [Tooltip("Blocks the left controller's primary button input.")]
         [See(initial = "false")][SerializeField] internal bool blockLeftPrimary = false;
+
+        [Tooltip("Blocks the left controller's secondary button input.")]
         [See(initial = "false")][SerializeField] internal bool blockLeftSecondary = false;
+
+        [Tooltip("Blocks the right controller's primary button input.")]
         [See(initial = "false")][SerializeField] internal bool blockRightPrimary = false;
+
+        [Tooltip("Blocks the right controller's secondary button input.")]
         [See(initial = "false")][SerializeField] internal bool blockRightSecondary = false;
+
+        [Tooltip("Blocks the left controller's thumbstick movement.")]
         [See(initial = "false")][SerializeField] internal bool blockLeftThumbstick = false;
+
+        [Tooltip("Blocks the left controller's thumbstick click.")]
         [See(initial = "false")][SerializeField] internal bool blockLeftThumbstickClick = false;
+
+        [Tooltip("Blocks the right controller's thumbstick movement.")]
         [See(initial = "false")][SerializeField] internal bool blockRightThumbstick = false;
+
+        [Tooltip("Blocks the right controller's thumbstick click.")]
         [See(initial = "false")][SerializeField] internal bool blockRightThumbstickClick = false;
+
+        [Tooltip("Blocks the left controller's trigger input.")]
         [See(initial = "false")][SerializeField] internal bool blockLeftTrigger = false;
+
+        [Tooltip("Blocks the right controller's trigger input.")]
         [See(initial = "false")][SerializeField] internal bool blockRightTrigger = false;
+
 
         internal override void DestroyStuff()
         {

@@ -22,15 +22,33 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterAttachedObject : BanterComponentBase
     {
+        [Tooltip("Player uid for the object to attach to.")]
         [See(initial = "")][SerializeField] internal string uid;
+
+        [Tooltip("Position of the attachment relative to the parent object.")]
         [See(initial = "0,0,0")][SerializeField] internal Vector3 attachmentPosition = Vector3.zero;
+
+        [Tooltip("Rotation of the attachment relative to the parent object.")]
         [See(initial = "0,0,0,1")][SerializeField] internal Quaternion attachmentRotation = Quaternion.identity;
+
+        [Tooltip("Type of attachment, e.g., physics-based or avatar-based.")]
         [See(initial = "0")][SerializeField] internal AttachmentType attachmentType = AttachmentType.Physics;
+
+        [Tooltip("Select if an object is attached to the player or the player to an object.")]
         [See(initial = "0")][SerializeField] internal AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
+
+        [Tooltip("Bone of the avatar where the object is attached.")]
         [See(initial = "0")][SerializeField] internal AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
+
+        [Tooltip("Physics attachment point for this object.")]
         [See(initial = "0")][SerializeField] internal PhysicsAttachmentPoint attachmentPoint = PhysicsAttachmentPoint.Head;
+
+        [Tooltip("Automatically synchronizes the attachment position and rotation.")]
         [See(initial = "false")][SerializeField] internal bool autoSync = false;
+
+        [Tooltip("Indicates whether this attachment is jointed to the avatar.")]
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
+
         [Method]
         public void _Detach(string uid)
         {
