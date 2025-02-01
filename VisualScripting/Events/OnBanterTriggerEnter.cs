@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     /// </summary>
     [UnitTitle("On BanterTriggerEnter Event Received")]
     [UnitShortTitle("On BanterTriggerEnter")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\Trigger")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnBanterTriggerEnter : TriggerEventUnit
     {

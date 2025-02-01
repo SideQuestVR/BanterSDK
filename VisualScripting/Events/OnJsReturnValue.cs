@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On BullSchript Callback Received")]
     [UnitShortTitle("On BS Callback")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\Browser")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnJsReturnValue : EventUnit<CustomEventArgs>
     {

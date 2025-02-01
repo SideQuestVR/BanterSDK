@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On Base64 CDN Link Callback Received")]
     [UnitShortTitle("On Base64 CDN Link")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnBase64CDNLink : EventUnit<CustomEventArgs>
     {

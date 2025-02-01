@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On Ai Image Callback Received")]
     [UnitShortTitle("On Ai Image")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnAiImage : EventUnit<CustomEventArgs>
     {

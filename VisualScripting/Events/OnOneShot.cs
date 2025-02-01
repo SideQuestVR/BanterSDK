@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On One Shot Callback Received")]
     [UnitShortTitle("On One Shot")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnOneShot : EventUnit<CustomEventArgs>
     {

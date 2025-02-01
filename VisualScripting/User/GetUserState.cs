@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Get User State")]
     [UnitShortTitle("User State")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class GetUserState : Unit
     {
