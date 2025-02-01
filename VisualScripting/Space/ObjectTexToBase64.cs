@@ -2,7 +2,6 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
@@ -13,34 +12,22 @@ namespace Banter.VisualScripting
     public class ObjectTexToBase64 : Unit
     {
         [DoNotSerialize]
-        public ControlInput inputTrigger;
-    
-        [DoNotSerialize]
-        public ControlOutput outputTrigger;
-        [DoNotSerialize]
-        [NullMeansSelf]
         public ValueInput gameObject;
 
         [DoNotSerialize]
         public ValueInput material;
 
+        [DoNotSerialize]
+        public ValueOutput base64;
+
+
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
-                var _gameObject = flow.GetValue<GameObject>(gameObject);
-                var _material = flow.GetValue<int>(material);
-                UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
-                {
-                    var data = await BanterScene.Instance().GameObjectTextureToBase64(_gameObject, _material);
-#if BANTER_VISUAL_SCRIPTING
-                    EventBus.Trigger("OnTextureToBase64", new CustomEventArgs("texture", new object[] { data }));
-#endif
-                });
-                return outputTrigger;
-            });
-            outputTrigger = ControlOutput("");
             material = ValueInput("Material Index", 0);
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
+            base64 = ValueOutput<string>("Base64", flow => {
+                return BanterScene.Instance().GameObjectTextureToBase64(flow.GetValue<GameObject>(gameObject), flow.GetValue<int>(material));
+            });
         }
     }
 }

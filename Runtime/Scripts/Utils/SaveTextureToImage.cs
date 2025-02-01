@@ -1,8 +1,7 @@
 
 using System;
-using Unity.Collections;
+using System.IO;
 using UnityEngine;
-using UnityEngine.Rendering;
 
 public class SaveTextureToImage{
  public enum SaveTextureFileFormat
@@ -18,79 +17,57 @@ public class SaveTextureToImage{
         bool asynchronous = true,
         bool skipSave = false,
         Action<bool, byte[]> done = null){
-        // check that the input we're getting is something we can handle:
         if (!(source is Texture2D || source is RenderTexture))
         {
             done?.Invoke(false, null);
             return;
         }
- 
-        // use the original texture size in case the input is negative:
+
         if (width < 0 || height < 0)
         {
             width = source.width;
             height = source.height;
         }
-        Texture resizeRT = null;
-        // resize the original image:
-        if(width != source.width || height != source.height)
+
+        RenderTexture tempRT = RenderTexture.GetTemporary(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+        Graphics.Blit(source, tempRT);
+
+        Texture2D tempTex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        RenderTexture.active = tempRT;
+        tempTex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+        tempTex.Apply();
+        RenderTexture.active = null;
+        RenderTexture.ReleaseTemporary(tempRT);
+
+        byte[] encoded;
+        switch (fileFormat)
         {
-            resizeRT = RenderTexture.GetTemporary(width, height, 0);
-            Graphics.Blit(source, (RenderTexture)resizeRT);
-        }else{
-            resizeRT = source;
+            case SaveTextureFileFormat.JPG:
+                encoded = tempTex.EncodeToJPG(jpgQuality);
+                break;
+            case SaveTextureFileFormat.PNG:
+                encoded = tempTex.EncodeToPNG();
+                break;
+            case SaveTextureFileFormat.TGA:
+                encoded = tempTex.EncodeToTGA();
+                break;
+            default:
+                encoded = tempTex.EncodeToEXR();
+                break;
         }
-        // create a native array to receive data from the GPU:
-        var narray = new NativeArray<byte>(width * height * 4, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
 
-        // request the texture data back from the GPU:
-        var request = AsyncGPUReadback.RequestIntoNativeArray (ref narray, resizeRT, 0, (AsyncGPUReadbackRequest request) =>
+        done?.Invoke(true, encoded);
+        if (!skipSave)
         {
-                // if the readback was successful, encode and write the results to disk
-            if (!request.hasError)
-            {
-                NativeArray<byte> encoded;
-
-                switch (fileFormat)
-                {
-                    case SaveTextureFileFormat.EXR:
-                        encoded = ImageConversion.EncodeNativeArrayToEXR(narray, resizeRT.graphicsFormat, (uint)width, (uint)height);
-                        break;
-                    case SaveTextureFileFormat.JPG:
-                        encoded = ImageConversion.EncodeNativeArrayToJPG(narray, resizeRT.graphicsFormat, (uint)width, (uint)height, 0, jpgQuality);
-                        break;
-                    case SaveTextureFileFormat.TGA:
-                        encoded = ImageConversion.EncodeNativeArrayToTGA(narray, resizeRT.graphicsFormat, (uint)width, (uint)height);
-                        break;
-                    default:
-                        encoded = ImageConversion.EncodeNativeArrayToPNG(narray, resizeRT.graphicsFormat, (uint)width, (uint)height);
-                        break;
-                }
-
-                // notify the user that the operation is done, and its outcome.
-                done?.Invoke(!request.hasError, encoded.ToArray());
-                if(!skipSave) {
 #if UNITY_ANDROID
-                AndroidExtensions.SaveImageToGallery(encoded.ToArray(), Path.GetFileName(filePath), "Banter Photo!");
+            AndroidExtensions.SaveImageToGallery(encoded, Path.GetFileName(filePath), "Banter Photo!");
 #else
-                System.IO.File.WriteAllBytes(filePath, encoded.ToArray());
+            File.WriteAllBytes(filePath, encoded);
 #endif
-                
-                }
-                encoded.Dispose();
-            }else{
-                // notify the user that the operation is done, and its outcome.
-                done?.Invoke(!request.hasError, null);
-            }
+        }
 
-            narray.Dispose();
-            
-        });
-
-
-        if (!asynchronous)
-            request.WaitForCompletion();
-
+        UnityEngine.Object.Destroy(tempTex);
+    
         
     }
 }
