@@ -22,7 +22,7 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            floatInput = ValueInput("float", 0);
+            floatInput = ValueInput("float", 0f);
             stringOutput = ValueOutput("string", flow => {
                 return flow.GetValue<float>(floatInput).ToString(CultureInfo.InvariantCulture);
             });
