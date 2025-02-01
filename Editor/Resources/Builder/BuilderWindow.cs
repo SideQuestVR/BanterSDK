@@ -970,7 +970,7 @@ public class BuilderWindow : EditorWindow
         {
             File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
         }
-        if (names.Count > 0)
+        if (names.Count > 0 && !autoUpload.value)
         {
             EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
         }
