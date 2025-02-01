@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Generate Ai Image")]
     [UnitShortTitle("AiImage")]
-    [UnitCategory("Banter\\")]
+    [UnitCategory("Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class AiImage : Unit
     {
