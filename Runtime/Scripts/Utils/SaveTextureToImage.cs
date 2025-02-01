@@ -8,16 +8,14 @@ public class SaveTextureToImage{
    {
        EXR, JPG, PNG, TGA
     };
-    public static void Do(Texture source,
+    public static byte[] Do(Texture source,
         int width = -1,
         int height = -1,
         SaveTextureFileFormat fileFormat = SaveTextureFileFormat.JPG,
-        int jpgQuality = 95,
-        Action<bool, byte[]> done = null){
+        int jpgQuality = 95){
         if (!(source is Texture2D || source is RenderTexture))
         {
-            done?.Invoke(false, null);
-            return;
+            return null;
         }
 
         if (width < 0 || height < 0)
@@ -53,10 +51,9 @@ public class SaveTextureToImage{
                 break;
         }
 
-        done?.Invoke(true, encoded);
-
         UnityEngine.Object.Destroy(tempTex);
-    
+
+        return encoded;
         
     }
 }

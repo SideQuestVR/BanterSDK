@@ -354,11 +354,7 @@ namespace Banter.SDK
             var renderer = obj.gameObject.GetComponent<Renderer>();
             try
             {
-                byte[] bytes = null;
-                SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG, 100, (done, data) =>
-                {
-                    bytes = data;
-                });
+                byte[] bytes = SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG);
                 // Utils.SaveTextureToFile(_lensCam.targetTexture, Path.Join(dir, $"{DateTime.Now:yyyy-MM-dd}_{DateTime.Now:HH-mm-ss}_" + (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds + ".jpg"));
                 // await new WaitUntil(() => isDone);
                 if(bytes != null)
