@@ -171,7 +171,7 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
             {
-                scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
+                _ = scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
             }
             else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
             {

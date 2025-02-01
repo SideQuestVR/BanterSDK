@@ -349,12 +349,27 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
-        public string GameObjectTextureToBase64(GameObject obj, int materialIndex)
+        public async Task<string> GameObjectTextureToBase64(GameObject obj, int materialIndex)
         {
             var renderer = obj.gameObject.GetComponent<Renderer>();
             try
             {
-                return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
+                bool isDone = false;
+                byte[] bytes = null;
+                SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, null, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG, 100, true, true, (done, data) =>
+                {
+                    isDone = true;
+                    bytes = data;
+                });
+                // Utils.SaveTextureToFile(_lensCam.targetTexture, Path.Join(dir, $"{DateTime.Now:yyyy-MM-dd}_{DateTime.Now:HH-mm-ss}_" + (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds + ".jpg"));
+                await new WaitUntil(() => isDone);
+                if(bytes != null)
+                {
+                    return Convert.ToBase64String(bytes);
+                }else{
+                    return null;
+                }
+                // return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
             }
             catch (Exception e)
             {
@@ -362,14 +377,14 @@ namespace Banter.SDK
             }
             return null;
         }
-        public void ObjectTextureToBase64(string msg, int reqId)
+        public async Task ObjectTextureToBase64(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
             var obj = GetObjectByBid(parts[0]);
             var extra = "null";
             if (obj.gameObject != null)
             {
-                var b64 = GameObjectTextureToBase64(obj.gameObject, int.Parse(parts[1]));
+                var b64 = await GameObjectTextureToBase64(obj.gameObject, int.Parse(parts[1]));
                 if (b64 != null)
                 {
                     extra = b64;
