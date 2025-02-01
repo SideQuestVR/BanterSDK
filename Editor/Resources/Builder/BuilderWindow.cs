@@ -719,12 +719,12 @@ public class BuilderWindow : EditorWindow
         }
 
         buildProgress.Rebuild();
-        if (resetDebounce != null && !resetDebounce.Token.IsCancellationRequested)
-        {
-            resetDebounce.Cancel();
-        }
-        resetDebounce = new CancellationTokenSource();
-        _ = ResetStatus(resetDebounce);
+        // if (resetDebounce != null && !resetDebounce.Token.IsCancellationRequested)
+        // {
+        //     resetDebounce.Cancel();
+        // }
+        // resetDebounce = new CancellationTokenSource();
+        // _ = ResetStatus(resetDebounce);
     }
 
     public void Remove(VisualElement element)
