@@ -9,13 +9,10 @@ public class SaveTextureToImage{
        EXR, JPG, PNG, TGA
     };
     public static void Do(Texture source,
-        string filePath,
         int width = -1,
         int height = -1,
         SaveTextureFileFormat fileFormat = SaveTextureFileFormat.JPG,
         int jpgQuality = 95,
-        bool asynchronous = true,
-        bool skipSave = false,
         Action<bool, byte[]> done = null){
         if (!(source is Texture2D || source is RenderTexture))
         {
@@ -57,14 +54,6 @@ public class SaveTextureToImage{
         }
 
         done?.Invoke(true, encoded);
-        if (!skipSave)
-        {
-#if UNITY_ANDROID
-            AndroidExtensions.SaveImageToGallery(encoded, Path.GetFileName(filePath), "Banter Photo!");
-#else
-            File.WriteAllBytes(filePath, encoded);
-#endif
-        }
 
         UnityEngine.Object.Destroy(tempTex);
     

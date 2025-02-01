@@ -355,7 +355,7 @@ namespace Banter.SDK
             try
             {
                 byte[] bytes = null;
-                SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, null, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG, 100, true, true, (done, data) =>
+                SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG, 100, (done, data) =>
                 {
                     bytes = data;
                 });
