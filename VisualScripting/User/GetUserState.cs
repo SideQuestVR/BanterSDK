@@ -45,7 +45,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Get Local User State")]
     [UnitShortTitle("Local User State")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class GetLocalUserState : Unit
     {

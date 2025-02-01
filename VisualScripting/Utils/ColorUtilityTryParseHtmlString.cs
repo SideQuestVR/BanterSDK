@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Color: TryParseHtmlString")]
     [UnitShortTitle("TryParseHtmlString")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(Color))]
     public class ColorUtilityTryParseHtmlString : Unit
     {
