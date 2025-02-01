@@ -8,8 +8,8 @@ using System.Globalization;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("To String Invariant Culture")]
-    [UnitShortTitle("ToStringInvariant")]
+    [UnitTitle("Float To String Invariant Culture")]
+    [UnitShortTitle("FloatToString")]
     [UnitCategory("Banter")]
     [TypeIcon(typeof(BanterObjectId))]
     public class ToStringInvariant : Unit
