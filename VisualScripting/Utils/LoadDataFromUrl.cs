@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Load Texture from URL")]
     [UnitShortTitle("Load Texture")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadTextureUrl : Unit
     {
