@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("String To Float Invariant Culture")]
     [UnitShortTitle("String To Float")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class ParseStringInvariant : Unit
     {
