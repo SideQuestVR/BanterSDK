@@ -64,7 +64,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Load Audio from URL")]
     [UnitShortTitle("Load Audio")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadAudioUrl : Unit
     {
