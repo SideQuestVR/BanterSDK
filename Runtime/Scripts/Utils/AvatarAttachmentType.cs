@@ -1,5 +1,8 @@
-public enum AvatarAttachmentType
+namespace Banter.SDK
 {
-    AttachToAvatar,
-    AvatarAttachTo,
+    public enum AvatarAttachmentType
+    {
+        AttachToAvatar,
+        AvatarAttachTo,
+    }
 }

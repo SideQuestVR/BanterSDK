@@ -41,18 +41,35 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterAssetBundle : BanterComponentBase
     {
-        [See(initial = "")] public string windowsUrl = "";
-        [See(initial = "")] public string osxUrl = "";
-        [See(initial = "")] public string linuxUrl = "";
-        [See(initial = "")] public string androidUrl = "";
-        [See(initial = "")] public string iosUrl = "";
-        [See(initial = "")] public string vosUrl = "";
-        [See(initial = "false")] public bool isScene = false;
-        [See(initial = "false")] public bool legacyShaderFix = false;
+        [Tooltip("The URL to the Windows asset bundle.")]
+        [See(initial = "")][SerializeField] internal string windowsUrl = "";
+
+        [Tooltip("The URL to the OSX asset bundle.")]
+        [See(initial = "")][SerializeField] internal string osxUrl = "";
+
+        [Tooltip("The URL to the Linux asset bundle.")]
+        [See(initial = "")][SerializeField] internal string linuxUrl = "";
+
+        [Tooltip("The URL to the Android asset bundle.")]
+        [See(initial = "")][SerializeField] internal string androidUrl = "";
+
+        [Tooltip("The URL to the iOS asset bundle.")]
+        [See(initial = "")][SerializeField] internal string iosUrl = "";
+
+        [Tooltip("The URL to the Vision OS asset bundle.")]
+        [See(initial = "")][SerializeField] internal string vosUrl = "";
+
+        [Tooltip("Indicates whether this asset bundle contains a scene or a collection of prefabs.")]
+        [See(initial = "false")][SerializeField] internal bool isScene = false;
+
+        [Tooltip("Enables a legacy shader fix for compatibility with older lighting models.")]
+        [See(initial = "false")][SerializeField] internal bool legacyShaderFix = false;
+
+        [Tooltip("The loaded asset bundle.")]
         public AssetBundle assetBundle;
         List<string> assetPaths;
         bool isLoading = false;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             // _ = SetupBundle();
         }
@@ -183,17 +200,16 @@ namespace Banter.SDK
                         {
                             Destroy(audioListener);
                         }
-                        // if(!PlatformCompat.Instance.Is2DMode){
-                        //     var cam = transform.gameObject.GetComponent<Camera>();
-                        //     if(cam != null && cam.CompareTag("MainCamera")) {
-                        //         Destroy(cam.gameObject);
-                        //     }
-                        // }
+                        var canvas = transform.gameObject.GetComponent<Canvas>();
+                        if (canvas != null)
+                        {
+                            if (canvas.renderMode == RenderMode.WorldSpace)
+                            {
+                                canvas.worldCamera = Camera.main;
+                            }
+                        }
                     }
                 }
-                // sceneParser.CurrentSceneName = sceneName;
-                // Debug.Log("[AssetBundleComponent] " + sceneParser.CurrentSceneName);
-                // item.isLoaded = true;
             }
         }
         async Task _Unload()
@@ -226,12 +242,21 @@ namespace Banter.SDK
             }
         }
 
-        public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal override void DestroyStuff() { }
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             _ = SetupBundle();
         }
         // BANTER COMPILED CODE 
+        public System.String WindowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
+        public System.String OsxUrl { get { return osxUrl; } set { osxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.osxUrl }); } }
+        public System.String LinuxUrl { get { return linuxUrl; } set { linuxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.linuxUrl }); } }
+        public System.String AndroidUrl { get { return androidUrl; } set { androidUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.androidUrl }); } }
+        public System.String IosUrl { get { return iosUrl; } set { iosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.iosUrl }); } }
+        public System.String VosUrl { get { return vosUrl; } set { vosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.vosUrl }); } }
+        public System.Boolean IsScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
+        public System.Boolean LegacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -240,13 +265,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, PropertyName.legacyShaderFix, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -278,12 +303,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -364,7 +389,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -466,7 +491,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

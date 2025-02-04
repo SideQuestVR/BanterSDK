@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On Select File Callback Received")]
     [UnitShortTitle("On Select File")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\Files")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnSelectFile : EventUnit<CustomEventArgs>
     {

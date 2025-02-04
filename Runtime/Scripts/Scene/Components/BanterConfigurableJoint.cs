@@ -33,12 +33,26 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     public class BanterConfigurableJoint : UnityComponentBase
     {
-        [See(initial = "0,0,0")] public Vector3 targetPosition;
-        [See(initial = "false")] public bool autoConfigureConnectedAnchor;
-        [See(initial = "0")] public ConfigurableJointMotion xMotion;
-        [See(initial = "0")] public ConfigurableJointMotion yMotion;
-        [See(initial = "0")] public ConfigurableJointMotion zMotion;
+        [Tooltip("The target position of the joint in world space.")]
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 targetPosition = Vector3.zero;
+
+        [Tooltip("If true, the connected anchor will be automatically configured.")]
+        [See(initial = "false")][SerializeField] internal bool autoConfigureConnectedAnchor = false;
+
+        [Tooltip("The motion of the joint along the x-axis.")]
+        [See(initial = "0")][SerializeField] internal ConfigurableJointMotion xMotion = ConfigurableJointMotion.Locked;
+
+        [Tooltip("The motion of the joint along the y-axis.")]
+        [See(initial = "0")][SerializeField] internal ConfigurableJointMotion yMotion = ConfigurableJointMotion.Locked;
+
+        [Tooltip("The motion of the joint along the z-axis.")]
+        [See(initial = "0")][SerializeField] internal ConfigurableJointMotion zMotion = ConfigurableJointMotion.Locked;
         // BANTER COMPILED CODE 
+        public UnityEngine.Vector3 TargetPosition { get { return targetPosition; } set { targetPosition = value; } }
+        public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
+        public UnityEngine.ConfigurableJointMotion XMotion { get { return xMotion; } set { xMotion = value; } }
+        public UnityEngine.ConfigurableJointMotion YMotion { get { return yMotion; } set { yMotion = value; } }
+        public UnityEngine.ConfigurableJointMotion ZMotion { get { return zMotion; } set { zMotion = value; } }
         public ConfigurableJoint _componentType;
         public ConfigurableJoint componentType
         {
@@ -59,12 +73,12 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
 
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -96,12 +110,12 @@ namespace Banter.SDK
             Destroy(componentType);
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -154,7 +168,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -220,7 +234,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

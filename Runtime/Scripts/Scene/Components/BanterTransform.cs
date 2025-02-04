@@ -33,18 +33,42 @@ namespace Banter.SDK
     [WatchComponent(typeof(Transform))]
     public class BanterTransform : UnityComponentBase
     {
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 position;
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 localPosition;
-        [Watch(initial = "0,0,0,1")][HideInInspector] public Quaternion rotation;
-        [Watch(initial = "0,0,0,1")][HideInInspector] public Quaternion localRotation;
-        [Watch(initial = "1,1,1")][HideInInspector] public Vector3 localScale;
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 eulerAngles;
-        [Watch(initial = "0,0,0")][HideInInspector] public Vector3 localEulerAngles;
-        [Watch(initial = "0,1,0")][HideInInspector] public Vector3 up;
-        [Watch(initial = "0,0,1")][HideInInspector] public Vector3 forward;
-        [Watch(initial = "1,0,0")][HideInInspector] public Vector3 right;
-        [See(initial = "false")][HideInInspector] public bool lerpPosition = false;
-        [See(initial = "false")][HideInInspector] public bool lerpRotation = false;
+        [Tooltip("The world position of the object.")]
+        [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 position = Vector3.zero;
+
+        [Tooltip("The local position of the object relative to its parent.")]
+        [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 localPosition = Vector3.zero;
+
+        [Tooltip("The world rotation of the object.")]
+        [Watch(initial = "0,0,0,1")][HideInInspector][SerializeField] internal Quaternion rotation = Quaternion.identity;
+
+        [Tooltip("The local rotation of the object relative to its parent.")]
+        [Watch(initial = "0,0,0,1")][HideInInspector][SerializeField] internal Quaternion localRotation = Quaternion.identity;
+
+        [Tooltip("The local scale of the object.")]
+        [Watch(initial = "1,1,1")][HideInInspector][SerializeField] internal Vector3 localScale = Vector3.one;
+
+        [Tooltip("The world rotation of the object in Euler angles.")]
+        [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 eulerAngles = Vector3.zero;
+
+        [Tooltip("The local rotation of the object in Euler angles relative to its parent.")]
+        [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 localEulerAngles = Vector3.zero;
+
+        [Tooltip("The up direction of the object.")]
+        [Watch(initial = "0,1,0")][HideInInspector][SerializeField] internal Vector3 up = Vector3.up;
+
+        [Tooltip("The forward direction of the object.")]
+        [Watch(initial = "0,0,1")][HideInInspector][SerializeField] internal Vector3 forward = Vector3.forward;
+
+        [Tooltip("The right direction of the object.")]
+        [Watch(initial = "1,0,0")][HideInInspector][SerializeField] internal Vector3 right = Vector3.right;
+
+        [Tooltip("Enable to smoothly interpolate the position changes.")]
+        [See(initial = "false")][HideInInspector][SerializeField] internal bool lerpPosition = false;
+
+        [Tooltip("Enable to smoothly interpolate the rotation changes.")]
+        [See(initial = "false")][HideInInspector][SerializeField] internal bool lerpRotation = false;
+
         float _stepPosition = 0.3f;
         Vector3 tempPosition;
         Quaternion tempRotation;
@@ -64,6 +88,18 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public UnityEngine.Vector3 Position { get { return position; } set { position = value; } }
+        public UnityEngine.Vector3 LocalPosition { get { return localPosition; } set { localPosition = value; } }
+        public UnityEngine.Quaternion Rotation { get { return rotation; } set { rotation = value; } }
+        public UnityEngine.Quaternion LocalRotation { get { return localRotation; } set { localRotation = value; } }
+        public UnityEngine.Vector3 LocalScale { get { return localScale; } set { localScale = value; } }
+        public UnityEngine.Vector3 EulerAngles { get { return eulerAngles; } set { eulerAngles = value; } }
+        public UnityEngine.Vector3 LocalEulerAngles { get { return localEulerAngles; } set { localEulerAngles = value; } }
+        public UnityEngine.Vector3 Up { get { return up; } set { up = value; } }
+        public UnityEngine.Vector3 Forward { get { return forward; } set { forward = value; } }
+        public UnityEngine.Vector3 Right { get { return right; } set { right = value; } }
+        public System.Boolean LerpPosition { get { return lerpPosition; } set { lerpPosition = value; } }
+        public System.Boolean LerpRotation { get { return lerpRotation; } set { lerpRotation = value; } }
         [Header("SYNC TRANSFORM TO JS")]
         public bool _position;
         public bool _localPosition;
@@ -95,12 +131,12 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
 
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -132,12 +168,12 @@ namespace Banter.SDK
 
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -267,7 +303,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if ((_position && transform.hasChanged) || force)
@@ -420,7 +456,7 @@ namespace Banter.SDK
 
         void Tick(object sender, EventArgs e) { SyncProperties(); }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
             _position = false;
             _localPosition = false;

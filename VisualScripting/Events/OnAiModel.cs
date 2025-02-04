@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On Ai Model Callback Received")]
     [UnitShortTitle("On Ai Model")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnAiModel : EventUnit<CustomEventArgs>
     {

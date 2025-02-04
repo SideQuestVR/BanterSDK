@@ -82,21 +82,51 @@ namespace Banter.SDK
 
     public class BanterRigidbody : BanterComponentBase
     {
-        [See(initial = "1")] public float mass;
-        [See(initial = "0")] public float drag;
-        [See(initial = "0.05")] public float angularDrag;
-        [See(initial = "false")] public bool isKinematic;
-        [See(initial = "true")] public bool useGravity;
-        [See(initial = "0,0,0")] public Vector3 centerOfMass;
-        [See(initial = "0")] public CollisionDetectionMode collisionDetectionMode;
-        [Watch(initial = "0,0,0")] public Vector3 velocity;
-        [Watch(initial = "0,0,0")] public Vector3 angularVelocity;
-        [See(initial = "false")] public bool freezePositionX;
-        [See(initial = "false")] public bool freezePositionY;
-        [See(initial = "false")] public bool freezePositionZ;
-        [See(initial = "false")] public bool freezeRotationX;
-        [See(initial = "false")] public bool freezeRotationY;
-        [See(initial = "false")] public bool freezeRotationZ;
+        [Tooltip("The mass of the rigidbody, affecting its inertia and interactions with forces.")]
+        [See(initial = "1")][SerializeField] internal float mass;
+
+        [Tooltip("The linear drag of the rigidbody, reducing its velocity over time.")]
+        [See(initial = "0")][SerializeField] internal float drag;
+
+        [Tooltip("The angular drag of the rigidbody, reducing rotational motion over time.")]
+        [See(initial = "0.05")][SerializeField] internal float angularDrag;
+
+        [Tooltip("Determines if the rigidbody is kinematic (not affected by physics but can be moved via code).")]
+        [See(initial = "false")][SerializeField] internal bool isKinematic;
+
+        [Tooltip("Determines if gravity affects this rigidbody.")]
+        [See(initial = "true")][SerializeField] internal bool useGravity;
+
+        [Tooltip("Sets the center of mass for the rigidbody, affecting rotation and stability.")]
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 centerOfMass;
+
+        [Tooltip("The collision detection mode for the rigidbody, affecting physics precision.")]
+        [See(initial = "0")][SerializeField] internal CollisionDetectionMode collisionDetectionMode;
+
+        [Tooltip("The velocity of the rigidbody, representing its movement in world space.")]
+        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 velocity;
+
+        [Tooltip("The angular velocity of the rigidbody, representing its rotational movement.")]
+        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 angularVelocity;
+
+        [Tooltip("Locks movement along the X axis.")]
+        [See(initial = "false")][SerializeField] internal bool freezePositionX;
+
+        [Tooltip("Locks movement along the Y axis.")]
+        [See(initial = "false")][SerializeField] internal bool freezePositionY;
+
+        [Tooltip("Locks movement along the Z axis.")]
+        [See(initial = "false")][SerializeField] internal bool freezePositionZ;
+
+        [Tooltip("Locks rotation around the X axis.")]
+        [See(initial = "false")][SerializeField] internal bool freezeRotationX;
+
+        [Tooltip("Locks rotation around the Y axis.")]
+        [See(initial = "false")][SerializeField] internal bool freezeRotationY;
+
+        [Tooltip("Locks rotation around the Z axis.")]
+        [See(initial = "false")][SerializeField] internal bool freezeRotationZ;
+
         [Method]
         public void _AddForce(Vector3 force, ForceMode mode)
         {
@@ -129,7 +159,7 @@ namespace Banter.SDK
         }
 
         Rigidbody _rigidbody;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetupRigidbody();
         }
@@ -216,12 +246,12 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupRigidbody(changedProperties);
         }
 
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
             if (_rigidbody != null)
             {
@@ -229,6 +259,21 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public UnityEngine.Vector3 Velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
+        public UnityEngine.Vector3 AngularVelocity { get { return angularVelocity; } set { angularVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.angularVelocity }); } }
+        public System.Single Mass { get { return mass; } set { mass = value; UpdateCallback(new List<PropertyName> { PropertyName.mass }); } }
+        public System.Single Drag { get { return drag; } set { drag = value; UpdateCallback(new List<PropertyName> { PropertyName.drag }); } }
+        public System.Single AngularDrag { get { return angularDrag; } set { angularDrag = value; UpdateCallback(new List<PropertyName> { PropertyName.angularDrag }); } }
+        public System.Boolean IsKinematic { get { return isKinematic; } set { isKinematic = value; UpdateCallback(new List<PropertyName> { PropertyName.isKinematic }); } }
+        public System.Boolean UseGravity { get { return useGravity; } set { useGravity = value; UpdateCallback(new List<PropertyName> { PropertyName.useGravity }); } }
+        public UnityEngine.Vector3 CenterOfMass { get { return centerOfMass; } set { centerOfMass = value; UpdateCallback(new List<PropertyName> { PropertyName.centerOfMass }); } }
+        public UnityEngine.CollisionDetectionMode CollisionDetectionMode { get { return collisionDetectionMode; } set { collisionDetectionMode = value; UpdateCallback(new List<PropertyName> { PropertyName.collisionDetectionMode }); } }
+        public System.Boolean FreezePositionX { get { return freezePositionX; } set { freezePositionX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionX }); } }
+        public System.Boolean FreezePositionY { get { return freezePositionY; } set { freezePositionY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionY }); } }
+        public System.Boolean FreezePositionZ { get { return freezePositionZ; } set { freezePositionZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezePositionZ }); } }
+        public System.Boolean FreezeRotationX { get { return freezeRotationX; } set { freezeRotationX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationX }); } }
+        public System.Boolean FreezeRotationY { get { return freezeRotationY; } set { freezeRotationY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationY }); } }
+        public System.Boolean FreezeRotationZ { get { return freezeRotationZ; } set { freezeRotationZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationZ }); } }
         [Header("SYNC BANTERRIGIDBODY TO JS")]
         public bool _velocity;
         public bool _angularVelocity;
@@ -241,13 +286,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.velocity, PropertyName.angularVelocity, PropertyName.mass, PropertyName.drag, PropertyName.angularDrag, PropertyName.isKinematic, PropertyName.useGravity, PropertyName.centerOfMass, PropertyName.collisionDetectionMode, PropertyName.freezePositionX, PropertyName.freezePositionY, PropertyName.freezePositionZ, PropertyName.freezeRotationX, PropertyName.freezeRotationY, PropertyName.freezeRotationZ, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -303,7 +348,7 @@ namespace Banter.SDK
         {
             _AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
         }
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
 
             if (methodName == "AddForce" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
@@ -355,7 +400,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -499,7 +544,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if ((_velocity) || force)
@@ -687,7 +732,7 @@ namespace Banter.SDK
 
         void Tick(object sender, EventArgs e) { SyncProperties(); }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
             _velocity = false;
             _angularVelocity = false;

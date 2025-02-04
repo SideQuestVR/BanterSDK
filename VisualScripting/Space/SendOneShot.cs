@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Send a One Shot Message")]
     [UnitShortTitle("SendOneShot")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SendOneShot : Unit
     {

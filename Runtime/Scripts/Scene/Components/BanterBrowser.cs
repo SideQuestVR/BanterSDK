@@ -79,12 +79,23 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterBrowser : BanterComponentBase
     {
-        [See(initial = "")] public string url;
-        [See(initial = "4")] public int mipMaps = 4;
-        [See(initial = "1200")] public float pixelsPerUnit = 1200;
-        [See(initial = "1024")] public float pageWidth = 1024;
-        [See(initial = "576")] public float pageHeight = 576;
-        [See(initial = "")] public string actions;
+        [Tooltip("The URL of the webpage to display")]
+        [See(initial = "")][SerializeField] internal string url;
+
+        [Tooltip("The number of mipmaps to use for the browser texture")]
+        [See(initial = "4")][SerializeField] internal int mipMaps = 4;
+
+        [Tooltip("The number of pixels per unit for the browser texture")]
+        [See(initial = "1200")][SerializeField] internal float pixelsPerUnit = 1200;
+
+        [Tooltip("The width of the browser page in pixels")]
+        [See(initial = "1024")][SerializeField] internal float pageWidth = 1024;
+
+        [Tooltip("The height of the browser page in pixels")]
+        [See(initial = "576")][SerializeField] internal float pageHeight = 576;
+
+        [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
+        [See(initial = "")][SerializeField] internal string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         [Method]
         public void _ToggleInteraction(bool enabled)
@@ -103,7 +114,7 @@ namespace Banter.SDK
         }
         GameObject browser;
 
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetupBrowser();
             OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
@@ -142,12 +153,19 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal override void DestroyStuff() { }
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupBrowser(changedProperties);
         }
         // BANTER COMPILED CODE 
+        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Int32 MipMaps { get { return mipMaps; } set { mipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.mipMaps }); } }
+        public System.Single PixelsPerUnit { get { return pixelsPerUnit; } set { pixelsPerUnit = value; UpdateCallback(new List<PropertyName> { PropertyName.pixelsPerUnit }); } }
+        public System.Single PageWidth { get { return pageWidth; } set { pageWidth = value; UpdateCallback(new List<PropertyName> { PropertyName.pageWidth }); } }
+        public System.Single PageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
+        public System.String Actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -156,13 +174,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -206,7 +224,7 @@ namespace Banter.SDK
         {
             _RunActions(actions);
         }
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
 
             if (methodName == "ToggleInteraction" && parameters.Count == 1 && parameters[0] is Boolean)
@@ -233,7 +251,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -296,7 +314,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -374,7 +392,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

@@ -91,77 +91,77 @@ namespace Banter.SDK
     public class BanterGeometry : BanterComponentBase
     {
         [Tooltip("The type of primitive shape to generate.")]
-        [See(initial = "0")] public GeometryType geometryType;
+        [See(initial = "0")][SerializeField] internal GeometryType geometryType;
         [Tooltip("The type of parametric shape to generate if using ParametricGeometry.")]
-        [See(initial = "0")] public ParametricGeometryType parametricType;
+        [See(initial = "0")][SerializeField] internal ParametricGeometryType parametricType;
         [Tooltip("The width of the shape.")]
-        [See(initial = "1")] public float width = 1;
+        [See(initial = "1")][SerializeField] internal float width = 1;
         [Tooltip("The height of the shape.")]
-        [See(initial = "1")] public float height = 1;
+        [See(initial = "1")][SerializeField] internal float height = 1;
         [Tooltip("The depth of the shape.")]
-        [See(initial = "1")] public float depth = 1;
+        [See(initial = "1")][SerializeField] internal float depth = 1;
         [Tooltip("The number of width segments to divide the shape into.")]
-        [See(initial = "1")] public int widthSegments = 1;
+        [See(initial = "1")][SerializeField] internal int widthSegments = 1;
         [Tooltip("The number of height segments to divide the shape into.")]
-        [See(initial = "1")] public int heightSegments = 1;
+        [See(initial = "1")][SerializeField] internal int heightSegments = 1;
         [Tooltip("The number of depth segments to divide the shape into.")]
-        [See(initial = "1")] public int depthSegments = 1;
+        [See(initial = "1")][SerializeField] internal int depthSegments = 1;
 
         [Tooltip("The radius of the shape.")]
-        [See(initial = "1")] public float radius = 1;
+        [See(initial = "1")][SerializeField] internal float radius = 1;
         [Tooltip("The number of segments to divide the shape into.")]
-        [See(initial = "24")] public int segments = 24;
+        [See(initial = "24")][SerializeField] internal int segments = 24;
         [Tooltip("The starting x angle of the shape.")]
-        [See(initial = "0")] public float thetaStart = 0;
+        [See(initial = "0")][SerializeField] internal float thetaStart = 0;
         [Tooltip("The ending x angle of the shape.")]
-        [See(initial = "6.283185")] public float thetaLength = Mathf.PI * 2f;
+        [See(initial = "6.283185")][SerializeField] internal float thetaLength = Mathf.PI * 2f;
 
         [Tooltip("The starting y angle of the shape.")]
-        [See(initial = "0")] public float phiStart = 0;
+        [See(initial = "0")][SerializeField] internal float phiStart = 0;
         [Tooltip("The ending y angle of the shape.")]
-        [See(initial = "6.283185")] public float phiLength = Mathf.PI * 2f;
+        [See(initial = "6.283185")][SerializeField] internal float phiLength = Mathf.PI * 2f;
 
         [Tooltip("The number of radial segments to divide the shape into.")]
-        [See(initial = "8")] public int radialSegments = 8;
+        [See(initial = "8")][SerializeField] internal int radialSegments = 8;
         [Tooltip("Whether the object is open on the end or not.")]
-        [See(initial = "false")] public bool openEnded = false;
+        [See(initial = "false")][SerializeField] internal bool openEnded = false;
 
         [Tooltip("The radius of the top of the shape.")]
-        [See(initial = "1")] public float radiusTop = 1;
+        [See(initial = "1")][SerializeField] internal float radiusTop = 1;
         [Tooltip("The radius of the bottom of the shape.")]
-        [See(initial = "1")] public float radiusBottom = 1;
+        [See(initial = "1")][SerializeField] internal float radiusBottom = 1;
 
         [Tooltip("The inner radius of the shape.")]
-        [See(initial = "0.3")] public float innerRadius = 0.3f;
+        [See(initial = "0.3")][SerializeField] internal float innerRadius = 0.3f;
         [Tooltip("The outer radius of the shape.")]
-        [See(initial = "1")] public float outerRadius = 1f;
+        [See(initial = "1")][SerializeField] internal float outerRadius = 1f;
         [Tooltip("The number of angular x segments to divide the shape into.")]
-        [See(initial = "24")] public int thetaSegments = 24;
+        [See(initial = "24")][SerializeField] internal int thetaSegments = 24;
         [Tooltip("The number of angular y segments to divide the shape into.")]
-        [See(initial = "8")] public int phiSegments = 8;
+        [See(initial = "8")][SerializeField] internal int phiSegments = 8;
         [Tooltip("The tube size.")]
-        [See(initial = "0.4")] public float tube = 0.4f;
+        [See(initial = "0.4")][SerializeField] internal float tube = 0.4f;
         [Tooltip("The number of tubular segments to divide the tube into.")]
-        [See(initial = "16")] public int tubularSegments = 16;
+        [See(initial = "16")][SerializeField] internal int tubularSegments = 16;
         [Tooltip("The arc of the shape.")]
-        [See(initial = "6.283185")] public float arc = Mathf.PI * 2;
+        [See(initial = "6.283185")][SerializeField] internal float arc = Mathf.PI * 2;
         [Tooltip("The number of p segments to divide the shape into.")]
-        [See(initial = "2")] public int p = 2;
+        [See(initial = "2")][SerializeField] internal int p = 2;
         [Tooltip("The number of q segments to divide the shape into.")]
-        [See(initial = "3")] public int q = 3;
+        [See(initial = "3")][SerializeField] internal int q = 3;
         [Tooltip("The number of stacks to divide the shape into.")]
-        [See(initial = "5")] public int stacks = 5;
+        [See(initial = "5")][SerializeField] internal int stacks = 5;
         [Tooltip("The number of slices to divide the shape into.")]
-        [See(initial = "5")] public int slices = 5;
-        [See(initial = "0")] public float detail = 0;
-        [See(initial = "")] public string parametricPoints = "";
+        [See(initial = "5")][SerializeField] internal int slices = 5;
+        [See(initial = "0")][SerializeField] internal float detail = 0;
+        [See(initial = "")][SerializeField] internal string parametricPoints = "";
         MeshFilter _filter;
         // bool alreadyStarted = false;
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetGeometry();
         }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetGeometry(changedProperties);
         }
@@ -258,7 +258,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void DestroyStuff()
+        internal override void DestroyStuff()
         {
             if (_filter != null)
             {
@@ -266,6 +266,38 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
+        public Banter.SDK.GeometryType GeometryType { get { return geometryType; } set { geometryType = value; UpdateCallback(new List<PropertyName> { PropertyName.geometryType }); } }
+        public Banter.SDK.ParametricGeometryType ParametricType { get { return parametricType; } set { parametricType = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricType }); } }
+        public System.Single Width { get { return width; } set { width = value; UpdateCallback(new List<PropertyName> { PropertyName.width }); } }
+        public System.Single Height { get { return height; } set { height = value; UpdateCallback(new List<PropertyName> { PropertyName.height }); } }
+        public System.Single Depth { get { return depth; } set { depth = value; UpdateCallback(new List<PropertyName> { PropertyName.depth }); } }
+        public System.Int32 WidthSegments { get { return widthSegments; } set { widthSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.widthSegments }); } }
+        public System.Int32 HeightSegments { get { return heightSegments; } set { heightSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.heightSegments }); } }
+        public System.Int32 DepthSegments { get { return depthSegments; } set { depthSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.depthSegments }); } }
+        public System.Single Radius { get { return radius; } set { radius = value; UpdateCallback(new List<PropertyName> { PropertyName.radius }); } }
+        public System.Int32 Segments { get { return segments; } set { segments = value; UpdateCallback(new List<PropertyName> { PropertyName.segments }); } }
+        public System.Single ThetaStart { get { return thetaStart; } set { thetaStart = value; UpdateCallback(new List<PropertyName> { PropertyName.thetaStart }); } }
+        public System.Single ThetaLength { get { return thetaLength; } set { thetaLength = value; UpdateCallback(new List<PropertyName> { PropertyName.thetaLength }); } }
+        public System.Single PhiStart { get { return phiStart; } set { phiStart = value; UpdateCallback(new List<PropertyName> { PropertyName.phiStart }); } }
+        public System.Single PhiLength { get { return phiLength; } set { phiLength = value; UpdateCallback(new List<PropertyName> { PropertyName.phiLength }); } }
+        public System.Int32 RadialSegments { get { return radialSegments; } set { radialSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.radialSegments }); } }
+        public System.Boolean OpenEnded { get { return openEnded; } set { openEnded = value; UpdateCallback(new List<PropertyName> { PropertyName.openEnded }); } }
+        public System.Single RadiusTop { get { return radiusTop; } set { radiusTop = value; UpdateCallback(new List<PropertyName> { PropertyName.radiusTop }); } }
+        public System.Single RadiusBottom { get { return radiusBottom; } set { radiusBottom = value; UpdateCallback(new List<PropertyName> { PropertyName.radiusBottom }); } }
+        public System.Single InnerRadius { get { return innerRadius; } set { innerRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.innerRadius }); } }
+        public System.Single OuterRadius { get { return outerRadius; } set { outerRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.outerRadius }); } }
+        public System.Int32 ThetaSegments { get { return thetaSegments; } set { thetaSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.thetaSegments }); } }
+        public System.Int32 PhiSegments { get { return phiSegments; } set { phiSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.phiSegments }); } }
+        public System.Single Tube { get { return tube; } set { tube = value; UpdateCallback(new List<PropertyName> { PropertyName.tube }); } }
+        public System.Int32 TubularSegments { get { return tubularSegments; } set { tubularSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.tubularSegments }); } }
+        public System.Single Arc { get { return arc; } set { arc = value; UpdateCallback(new List<PropertyName> { PropertyName.arc }); } }
+        public System.Int32 P { get { return p; } set { p = value; UpdateCallback(new List<PropertyName> { PropertyName.p }); } }
+        public System.Int32 Q { get { return q; } set { q = value; UpdateCallback(new List<PropertyName> { PropertyName.q }); } }
+        public System.Int32 Stacks { get { return stacks; } set { stacks = value; UpdateCallback(new List<PropertyName> { PropertyName.stacks }); } }
+        public System.Int32 Slices { get { return slices; } set { slices = value; UpdateCallback(new List<PropertyName> { PropertyName.slices }); } }
+        public System.Single Detail { get { return detail; } set { detail = value; UpdateCallback(new List<PropertyName> { PropertyName.detail }); } }
+        public System.String ParametricPoints { get { return parametricPoints; } set { parametricPoints = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricPoints }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -274,13 +306,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.geometryType, PropertyName.parametricType, PropertyName.width, PropertyName.height, PropertyName.depth, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.depthSegments, PropertyName.radius, PropertyName.segments, PropertyName.thetaStart, PropertyName.thetaLength, PropertyName.phiStart, PropertyName.phiLength, PropertyName.radialSegments, PropertyName.openEnded, PropertyName.radiusTop, PropertyName.radiusBottom, PropertyName.innerRadius, PropertyName.outerRadius, PropertyName.thetaSegments, PropertyName.phiSegments, PropertyName.tube, PropertyName.tubularSegments, PropertyName.arc, PropertyName.p, PropertyName.q, PropertyName.stacks, PropertyName.slices, PropertyName.detail, PropertyName.parametricPoints, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -312,12 +344,12 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -605,7 +637,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -983,7 +1015,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

@@ -18,9 +18,15 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterMirror : BanterComponentBase
     {
-        [See(initial = "1024")] public int renderTextureSize = 1024;
-        [See(initial = "1")] public int cameraClear = 1;
-        [See(initial = "'#000000'")] public string backgroundColor = "#000000";
+        [Tooltip("The resolution of the mirror's render texture. Higher values improve quality but use more memory.")]
+        [See(initial = "1024")][SerializeField] internal int renderTextureSize = 1024;
+
+        [Tooltip("Determines how the mirror camera clears the background. 0 = Skybox, 1 = Solid Color, 2 = Depth Only.")]
+        [See(initial = "1")][SerializeField] internal int cameraClear = 1;
+
+        [Tooltip("The background color of the mirror when using solid color clearing (Hex format, e.g., #000000 for black).")]
+        [See(initial = "'#000000'")][SerializeField] internal string backgroundColor = "#000000";
+
 
         VRPortalRenderer _renderer;
 
@@ -36,12 +42,12 @@ namespace Banter.SDK
             _renderer?.AddCullingLayer(layer);
         }
 
-        public override void StartStuff()
+        internal override void StartStuff()
         {
             SetupMirror();
         }
-        public override void DestroyStuff() { }
-        public void UpdateCallback(List<PropertyName> changedProperties)
+        internal override void DestroyStuff() { }
+        internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupMirror(changedProperties);
         }
@@ -73,6 +79,10 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
         // BANTER COMPILED CODE 
+        public System.Int32 RenderTextureSize { get { return renderTextureSize; } set { renderTextureSize = value; UpdateCallback(new List<PropertyName> { PropertyName.renderTextureSize }); } }
+        public System.Int32 CameraClear { get { return cameraClear; } set { cameraClear = value; UpdateCallback(new List<PropertyName> { PropertyName.cameraClear }); } }
+        public System.String BackgroundColor { get { return backgroundColor; } set { backgroundColor = value; UpdateCallback(new List<PropertyName> { PropertyName.backgroundColor }); } }
+
         BanterScene scene;
         bool alreadyStarted = false;
         void Start()
@@ -81,13 +91,13 @@ namespace Banter.SDK
             StartStuff();
         }
 
-        public override void ReSetup()
+        internal override void ReSetup()
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.renderTextureSize, PropertyName.cameraClear, PropertyName.backgroundColor, };
             UpdateCallback(changedProperties);
         }
 
-        public override void Init(List<object> constructorProperties = null)
+        internal override void Init(List<object> constructorProperties = null)
         {
             scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
@@ -127,7 +137,7 @@ namespace Banter.SDK
         {
             _AddCullingLayer(layer);
         }
-        public override object CallMethod(string methodName, List<object> parameters)
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
 
             if (methodName == "SetCullingLayer" && parameters.Count == 1 && parameters[0] is Int32)
@@ -148,7 +158,7 @@ namespace Banter.SDK
             }
         }
 
-        public override void Deserialise(List<object> values)
+        internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
@@ -184,7 +194,7 @@ namespace Banter.SDK
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        public override void SyncProperties(bool force = false, Action callback = null)
+        internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
             if (force)
@@ -226,7 +236,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        public override void WatchProperties(PropertyName[] properties)
+        internal override void WatchProperties(PropertyName[] properties)
         {
         }
         // END BANTER COMPILED CODE 

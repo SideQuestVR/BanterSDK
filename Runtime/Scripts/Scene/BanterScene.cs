@@ -230,26 +230,10 @@ namespace Banter.SDK
         #region Player Events
         public void Release(GameObject obj, HandSide side = HandSide.LEFT)
         {
-            // var interaction = obj.GetComponent<BanterPlayerEvents>();
-            // if (interaction != null)
-            // {
-            //     interaction.onRelease.Invoke(side);
-            // }
-            // #if BANTER_VISUAL_SCRIPTING
-            //         EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { side }));
-            // #endif
             link.OnRelease(obj, side);
         }
         public void Grab(GameObject obj, Vector3 point, HandSide side = HandSide.LEFT)
         {
-            // var interaction = obj.GetComponent<BanterPlayerEvents>();
-            // if (interaction != null)
-            // {
-            //     interaction.onGrab.Invoke(point, side);
-            // }
-            // #if BANTER_VISUAL_SCRIPTING
-            //         EventBus.Trigger("OnGrab", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, side }));
-            // #endif
             link.OnGrab(obj, point, side);
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
@@ -282,8 +266,9 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
+                await new WaitUntil(() => state == SceneState.UNITY_READY);
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
 #endif
@@ -296,7 +281,7 @@ namespace Banter.SDK
             }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
@@ -363,6 +348,43 @@ namespace Banter.SDK
             var parts = msg.Split(MessageDelimiters.PRIMARY);
             UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
+        }
+        public string GameObjectTextureToBase64(GameObject obj, int materialIndex)
+        {
+            var renderer = obj.gameObject.GetComponent<Renderer>();
+            try
+            {
+                byte[] bytes = SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG);
+                // Utils.SaveTextureToFile(_lensCam.targetTexture, Path.Join(dir, $"{DateTime.Now:yyyy-MM-dd}_{DateTime.Now:HH-mm-ss}_" + (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds + ".jpg"));
+                // await new WaitUntil(() => isDone);
+                if(bytes != null)
+                {
+                    return Convert.ToBase64String(bytes);
+                }else{
+                    return null;
+                }
+                // return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+            return null;
+        }
+        public void ObjectTextureToBase64(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY);
+            var obj = GetObjectByBid(parts[0]);
+            var extra = "null";
+            if (obj.gameObject != null)
+            {
+                var b64 = GameObjectTextureToBase64(obj.gameObject, int.Parse(parts[1]));
+                if (b64 != null)
+                {
+                    extra = b64;
+                }
+            }
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OBJECT_TEX_TO_BASE_64 + MessageDelimiters.SECONDARY + extra);
         }
         public void SelectFile(string msg, int reqId)
         {

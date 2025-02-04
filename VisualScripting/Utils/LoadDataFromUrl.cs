@@ -5,12 +5,13 @@ using Banter.SDK;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Runtime.Serialization;
+using System;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("Load Texture from URL")]
     [UnitShortTitle("Load Texture")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadTextureUrl : Unit
     {
@@ -63,7 +64,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Load Audio from URL")]
     [UnitShortTitle("Load Audio")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadAudioUrl : Unit
     {
@@ -123,6 +124,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load glTF/glb from URL")]
     [UnitShortTitle("Load glTF")]
     [UnitCategory("Banter")]
+    [Obsolete("Use BanterGLTF Set Url")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadGltfUrl : Unit
     {
@@ -154,8 +156,7 @@ namespace Banter.VisualScripting
         {
             var url = flow.GetValue<string>(this.url);
             var bGLTF = flow.GetValue<BanterGLTF>(gltfComponent);
-            bGLTF.url = url;
-            bGLTF.UpdateCallback(null);
+            bGLTF.Url = url;
 
             return output;
         }

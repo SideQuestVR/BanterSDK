@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Read BullSchript from File")]
     [UnitShortTitle("Read BS")]
     [UnitSubtitle("it's not JavaScript, it's BullSchript!")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Browser")]
     [TypeIcon(typeof(BanterObjectId))]
     public class ReadJsFromFile : Unit
     {

@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On Ai SpeechToText Callback Received")]
     [UnitShortTitle("On Ai SpeechToText")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnSTT : EventUnit<CustomEventArgs>
     {
