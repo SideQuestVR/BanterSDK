@@ -18,6 +18,7 @@ namespace Banter.SDK
 
         public RadialMenuItemType Type;
         public Texture2D Icon;
+        public Sprite SpriteIcon;
         public string Label;
         public Texture2D Image;
         public AudioClip Sound;
