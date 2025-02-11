@@ -279,21 +279,9 @@ namespace Banter.SDKEditor
             typeof(ParticleSystem.LightsModule),
             typeof(ParticleSystem.TrailModule),
             typeof(ParticleSystem.CustomDataModule),
-            typeof(ParticleSystem.Burst),
             typeof(ParticleSystem.MinMaxCurve),
             typeof(ParticleSystem.MinMaxGradient),
-            typeof(ParticleSystem.Particle),
-            typeof(ParticleSystem.Particle[]),
-            typeof(ParticleSystem.EmitParams),
-            typeof(ParticleSystem.EmitParams[]),
-            typeof(ParticleSystem.Burst[]),
-            typeof(ParticleSystem.CollisionModule),
-            typeof(ParticleSystem.TriggerModule),
-            typeof(ParticleSystem.TriggerModule[]),
-            typeof(ParticleSystem.TextureSheetAnimationModule),
-            typeof(ParticleSystem.TextureSheetAnimationModule[]),
             typeof(ParticleSystemRenderer),
-            typeof(ParticleSystemRenderer[]),
 
 
             // Playables
@@ -349,9 +337,6 @@ namespace Banter.SDKEditor
             typeof(JointSpring),
             typeof(ArrayList),
             typeof(CombineInstance),
-
-            //Additional types
-            typeof(ParticleSystem),
 
             //AI Classes
             //Subset of AI features that seem the most useful from: https://docs.unity3d.com/ScriptReference/UnityEngine.AIModule.html
