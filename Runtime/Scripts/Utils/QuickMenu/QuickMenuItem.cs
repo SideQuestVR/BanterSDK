@@ -18,6 +18,7 @@ namespace Banter.SDK
 
         public RadialMenuItemType Type;
         public Texture2D Icon;
+        public Sprite SpriteIcon;
         public string Label;
         public Texture2D Image;
         public AudioClip Sound;
@@ -28,6 +29,18 @@ namespace Banter.SDK
         public QuickMenuItem[] Children;
         public QuickMenuItem Parent;
 
+        public bool IsVisible
+        {
+            get => _isVisible;
+            set
+            {
+                _isVisible = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isVisible = true;
+        
         public object Value
         {
             get => _value;
