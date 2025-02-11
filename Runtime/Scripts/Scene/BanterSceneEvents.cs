@@ -19,6 +19,7 @@ public class BanterSceneEvents
     public UnityEvent OnLockSpiderman = new UnityEvent();
     public UnityEvent<bool> OnEnableForceGrabChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableSpiderManChanged = new UnityEvent<bool>();
+    public UnityEvent<bool> OnEnableHandHoldChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableRadarChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableNametagsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnablePortalsChanged = new UnityEvent<bool>();
@@ -83,6 +84,7 @@ public class BanterSceneEvents
         OnEnableTeleportChanged.RemoveAllListeners();
         OnEnableForceGrabChanged.RemoveAllListeners();
         OnEnableSpiderManChanged.RemoveAllListeners();
+        OnEnableHandHoldChanged.RemoveAllListeners();
         OnEnableRadarChanged.RemoveAllListeners();
         OnEnableNametagsChanged.RemoveAllListeners();
         OnEnablePortalsChanged.RemoveAllListeners();

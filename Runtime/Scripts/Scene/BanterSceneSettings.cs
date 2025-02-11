@@ -17,6 +17,8 @@ namespace Banter.SDK
         public bool EnableForceGrab { get { return _EnableForceGrab; } set { _EnableForceGrab = value; scene.events.OnEnableForceGrabChanged.Invoke(value); } }
         private bool _EnableSpiderMan = false;
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
+        private bool _EnableHandHold = true;
+        public bool EnableHandHold{ get { return _EnableHandHold; } set { _EnableHandHold = value; scene.events.OnEnableHandHoldChanged.Invoke(value); } }
         private bool _EnableRadar = true;
         public bool EnableRadar { get { return _EnableRadar; } set { _EnableRadar = value; scene.events.OnEnableRadarChanged.Invoke(value); } }
         private bool _EnableNametags = true;
@@ -49,7 +51,8 @@ namespace Banter.SDK
         // public Dictionary<string, string> CachedFiles = new Dictionary<string, string>();
         public bool isDestroying { get; private set; } = false;
         public DateTime? destroyedAt { get; private set; } = null;
-        BanterScene scene;
+        private BanterScene scene;
+
         public BanterSceneSettings(string instanceId)
         {
             this.instanceId = instanceId;
