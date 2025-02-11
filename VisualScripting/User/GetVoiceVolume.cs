@@ -18,7 +18,7 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            volume = ValueOutput<float>("isFavourited", flow => {
+            volume = ValueOutput<float>("Volume", flow => {
                 return BanterStarterUpper.voiceVolume;
             });
         }
