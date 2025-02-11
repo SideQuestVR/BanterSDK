@@ -31,6 +31,7 @@ namespace Banter.SDK
         public const string EnableTeleport = "EnableTeleport";
         public const string EnableForceGrab = "EnableForceGrab";
         public const string EnableSpiderMan = "EnableSpiderMan";
+        public const string EnableHandHold = "EnableHandHold";
         public const string EnableRadar = "EnableRadar";
         public const string EnableNametags = "EnableNametags";
         public const string EnablePortals = "EnablePortals";
@@ -1705,6 +1706,9 @@ namespace Banter.SDK
                              break;
                          case SettingsMap.EnableSpiderMan:
                              settings.EnableSpiderMan = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableHandHold:
+                             settings.EnableHandHold = setting[1] == "1";
                              break;
                          case SettingsMap.EnableRadar:
                              settings.EnableRadar = setting[1] == "1";
