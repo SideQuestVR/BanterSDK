@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8067013032866326908}
   - component: {fileID: 1358085653289877311}
   - component: {fileID: 6592971747859506581}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Explosion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -4875,7 +4875,7 @@ GameObject:
   - component: {fileID: 3261395011735491499}
   - component: {fileID: 2951590218008506582}
   - component: {fileID: 8788780056552596666}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Sparks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9670,7 +9670,7 @@ GameObject:
   - component: {fileID: 2457145234709443711}
   - component: {fileID: 9142579501192270505}
   - component: {fileID: -6123960844652325420}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Projectile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -9820,9 +9820,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _data:
-    _json: '{"declarations":{"Kind":"Object","collection":{"$content":[{"name":"initialVelocity","value":{"x":10.0,"y":0.0,"z":0.0,"$type":"UnityEngine.Vector3"},"typeHandle":{"Identification":"UnityEngine.Vector3,
-      UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"},{"name":"gravity","value":{"$content":-9.81,"$type":"System.Single"},"typeHandle":{"Identification":"System.Single,
-      mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"},{"name":"LayerMask","value":{"value":-1,"$type":"UnityEngine.LayerMask"},"typeHandle":{"Identification":"UnityEngine.LayerMask,
+    _json: '{"declarations":{"Kind":"Object","collection":{"$content":[{"name":"initialVelocity","value":{"$content":10.0,"$type":"System.Single"},"typeHandle":{"Identification":"System.Single,
+      mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"},{"name":"gravity","value":{"$content":-9.81,"$type":"System.Single"},"typeHandle":{"Identification":"System.Single,
+      mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"},{"name":"LayerMask","value":{"value":-73,"$type":"UnityEngine.LayerMask"},"typeHandle":{"Identification":"UnityEngine.LayerMask,
       UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null","$version":"A"},"$version":"A"}],"$version":"A"},"$version":"A"}}'
     _objectReferences: []
 --- !u!114 &2457145234709443711
@@ -9960,7 +9960,7 @@ GameObject:
   - component: {fileID: 2591622698102868277}
   - component: {fileID: 6550049216151267564}
   - component: {fileID: 8048973338120734009}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Projectile (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -10043,7 +10043,7 @@ GameObject:
   - component: {fileID: 1096452441080965328}
   - component: {fileID: 2025738741140668199}
   - component: {fileID: 5611911455086500344}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Lines
   m_TagString: Untagged
   m_Icon: {fileID: 0}
