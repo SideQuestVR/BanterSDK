@@ -254,6 +254,36 @@ namespace Banter.SDKEditor
             typeof(CharacterJoint),
             typeof(Collision),
 
+            // Particles
+
+            typeof(ParticleSystem),
+            typeof(ParticleSystem.MainModule),
+            typeof(ParticleSystem.EmissionModule),
+            typeof(ParticleSystem.ShapeModule),
+            typeof(ParticleSystem.VelocityOverLifetimeModule),
+            typeof(ParticleSystem.LimitVelocityOverLifetimeModule),
+            typeof(ParticleSystem.InheritVelocityModule),
+            typeof(ParticleSystem.ForceOverLifetimeModule),
+            typeof(ParticleSystem.ColorOverLifetimeModule),
+            typeof(ParticleSystem.ColorBySpeedModule),
+            typeof(ParticleSystem.SizeOverLifetimeModule),
+            typeof(ParticleSystem.SizeBySpeedModule),
+            typeof(ParticleSystem.RotationOverLifetimeModule),
+            typeof(ParticleSystem.RotationBySpeedModule),
+            typeof(ParticleSystem.ExternalForcesModule),
+            typeof(ParticleSystem.NoiseModule),
+            typeof(ParticleSystem.CollisionModule),
+            typeof(ParticleSystem.TriggerModule),
+            typeof(ParticleSystem.SubEmittersModule),
+            typeof(ParticleSystem.TextureSheetAnimationModule),
+            typeof(ParticleSystem.LightsModule),
+            typeof(ParticleSystem.TrailModule),
+            typeof(ParticleSystem.CustomDataModule),
+            typeof(ParticleSystem.MinMaxCurve),
+            typeof(ParticleSystem.MinMaxGradient),
+            typeof(ParticleSystemRenderer),
+
+
             // Playables
             typeof(UnityEngine.Playables.Playable),
             typeof(UnityEngine.Playables.PlayableDirector),
@@ -307,9 +337,6 @@ namespace Banter.SDKEditor
             typeof(JointSpring),
             typeof(ArrayList),
             typeof(CombineInstance),
-
-            //Additional types
-            typeof(ParticleSystem),
 
             //AI Classes
             //Subset of AI features that seem the most useful from: https://docs.unity3d.com/ScriptReference/UnityEngine.AIModule.html

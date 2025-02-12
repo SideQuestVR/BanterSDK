@@ -31,6 +31,7 @@ namespace Banter.SDK
         public const string EnableTeleport = "EnableTeleport";
         public const string EnableForceGrab = "EnableForceGrab";
         public const string EnableSpiderMan = "EnableSpiderMan";
+        public const string EnableHandHold = "EnableHandHold";
         public const string EnableRadar = "EnableRadar";
         public const string EnableNametags = "EnableNametags";
         public const string EnablePortals = "EnablePortals";
@@ -1317,6 +1318,7 @@ namespace Banter.SDK
             externalLoadFailed = true;
             loadUrlTaskCompletionSource?.TrySetException(new Exception((isUserCancel ? "Cancelled: " : "Load failed: ") + message));
             loadUrlTaskCompletionSource?.TrySetCanceled();
+            state = SceneState.LOAD_FAILED;
             loadingManager?.SetLoadProgress(isUserCancel ? "Loading Cancelled" : "Loading failed", 0, message, true);
             LogLine.Do(isUserCancel ? "Loading Cancelled" : "Loading failed");
             loadingManager?.UpdateCancelText();
@@ -1704,6 +1706,9 @@ namespace Banter.SDK
                              break;
                          case SettingsMap.EnableSpiderMan:
                              settings.EnableSpiderMan = setting[1] == "1";
+                             break;
+                         case SettingsMap.EnableHandHold:
+                             settings.EnableHandHold = setting[1] == "1";
                              break;
                          case SettingsMap.EnableRadar:
                              settings.EnableRadar = setting[1] == "1";
