@@ -7,9 +7,9 @@ using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Send Haptic Impulse")]
-    [UnitShortTitle("Haptics")]
-    [UnitCategory("Banter\\Utils")]
+    // [UnitTitle("Send Haptic Impulse")]
+    // [UnitShortTitle("Haptics")]
+    // [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SendHapticImpulse : Unit
     {
