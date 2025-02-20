@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Teleport To Location")]
     [UnitShortTitle("Teleport")]
-    [UnitCategory("Banter\\Space")]
+    [UnitCategory("Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class TeleportTo : Unit
     {
