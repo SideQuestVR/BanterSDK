@@ -43,6 +43,7 @@ public class BanterSceneEvents
     public UnityEvent<string> OnTTsStoped = new UnityEvent<string>();
     public UnityEvent<string, AiImageRatio> OnAiImage = new UnityEvent<string, AiImageRatio>();
     public UnityEvent<string, AiModelSimplify, int> OnAiModel = new UnityEvent<string, AiModelSimplify, int>();
+    public UnityEvent<Vector3, ForceMode> OnAddPlayerForce = new UnityEvent<Vector3, ForceMode>();
     public UnityEvent<string, string> OnBase64ToCDN = new UnityEvent<string, string>();
     public UnityEvent<SelectFileType> OnSelectFile = new UnityEvent<SelectFileType>();
     public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();

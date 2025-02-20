@@ -326,6 +326,25 @@ namespace Banter.SDK
             }
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_IMAGE);
         }
+        public void AddPlayerForce(string msg, int reqId)
+        {
+            try
+            {
+                var parts = msg.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length < 4)
+                {
+                    Debug.LogError("[Banter] AddPlayerForce message is malformed: " + msg);
+                    return;
+                }
+                var force = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAddPlayerForce.Invoke(force, (ForceMode)int.Parse(parts[3])));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.ADD_PLAYER_FORCE);
+        }
         public void AiModel(string msg, int reqId)
         {
             try
