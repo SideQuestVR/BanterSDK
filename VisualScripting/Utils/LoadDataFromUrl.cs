@@ -62,6 +62,76 @@ namespace Banter.VisualScripting
         }
     }
 
+    [UnitTitle("Load Text from URL")]
+    [UnitShortTitle("Load Text")]
+    [UnitCategory("Banter\\Networking")]
+    [TypeIcon(typeof(BanterObjectId))]
+    public class LoadTextUrl : Unit
+    {
+        [DoNotSerialize]
+        public ValueInput url;
+        [DoNotSerialize]
+        public ValueInput method;
+        [DoNotSerialize]
+        public ValueInput body;
+        [DoNotSerialize]
+        public ValueInput contentType;
+
+        [DoNotSerialize]
+        public ValueOutput text;
+
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlInput input;
+
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlOutput success;
+
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ControlOutput failure;
+
+        protected override void Definition()
+        {
+            input = ControlInputCoroutine("Load", (flow) => LoadText(flow));
+            success = ControlOutput("Loaded");
+            failure = ControlOutput("Failed");
+            url = ValueInput<string>("URL");
+            method = ValueInput<string>("Method", "GET");
+            body = ValueInput<string>("Body", "");
+            contentType = ValueInput<string>("ContentType", "application/json");
+            text = ValueOutput<string>("Text");
+        }
+
+        private IEnumerator LoadText(Flow flow)
+        {
+            var url = flow.GetValue<string>(this.url);
+            var method = flow.GetValue<string>(this.method);
+
+            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+                yield return failure;
+                yield break;
+            }
+
+            using (var request = method == "POST" ? UnityWebRequest.Put(url, flow.GetValue<string>(body)) : UnityWebRequest.Get(url))
+            {
+                if(method == "POST") {
+                    request.SetRequestHeader("Content-Type", flow.GetValue<string>(this.contentType));
+                }
+                yield return request.SendWebRequest();
+
+                if (request.result != UnityWebRequest.Result.Success)
+                {
+                    yield return failure;
+                }else{
+                    flow.SetValue(this.text, request.downloadHandler.text);
+                    yield return success;
+                }
+            }
+        }
+    }
+
     [UnitTitle("Load Audio from URL")]
     [UnitShortTitle("Load Audio")]
     [UnitCategory("Banter\\Networking")]
