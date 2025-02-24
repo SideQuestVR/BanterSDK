@@ -38,7 +38,7 @@ namespace Banter.VisualScripting
             input = ControlInputCoroutine("Load", (flow) => LoadTexture(flow));
             success = ControlOutput("Loaded");
             failure = ControlOutput("Failed");
-            url = ValueInput<string>("URL");
+            url = ValueInput<string>("URL", string.Empty);
             texture = ValueOutput<Texture2D>("Texture");
         }
 
@@ -97,9 +97,9 @@ namespace Banter.VisualScripting
             input = ControlInputCoroutine("Load", (flow) => LoadText(flow));
             success = ControlOutput("Loaded");
             failure = ControlOutput("Failed");
-            url = ValueInput<string>("URL");
+            url = ValueInput<string>("URL", string.Empty);
             method = ValueInput<string>("Method", "GET");
-            body = ValueInput<string>("Body", "");
+            body = ValueInput<string>("Body", string.Empty);
             contentType = ValueInput<string>("ContentType", "application/json");
             text = ValueOutput<string>("Text");
         }
@@ -165,7 +165,7 @@ namespace Banter.VisualScripting
             success = ControlOutput("Loaded");
             failure = ControlOutput("Failed");
 
-            url = ValueInput<string>("URL");
+            url = ValueInput<string>("URL", string.Empty);
             audioType = ValueInput("Audio Type", AudioType.UNKNOWN);
             audio = ValueOutput<AudioClip>("Audio Clip");
         }
