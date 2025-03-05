@@ -33,15 +33,19 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput score;
 
+        [DoNotSerialize]
+        public ValueInput unique;
+
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _board = flow.GetValue<string>(board);
                 var _sort = flow.GetValue<SortType>(sort);
                 var _score = flow.GetValue<float>(score);
+                var _unique = flow.GetValue<bool>(unique);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc");
+                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc", _unique);
                 });
                 return outputTrigger;
             });
@@ -49,6 +53,7 @@ namespace Banter.VisualScripting
             board = ValueInput("Board", "");
             sort = ValueInput("Sort", SortType.ASC);
             score = ValueInput("Score", 0f);
+            unique = ValueInput("Unique", false);
         }
     }
 }
