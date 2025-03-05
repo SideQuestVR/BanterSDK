@@ -64,7 +64,7 @@ public class UpdateScores{
         {
             var updateScores = (UpdateScores)data.arguments[0];
             flow.SetValue(board, updateScores.board);
-            flow.SetValue(scores, updateScores.scores);
+            flow.SetValue(scores, updateScores.scores.scores);
         }
     }
 
