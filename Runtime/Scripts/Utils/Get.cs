@@ -114,6 +114,9 @@ namespace Banter.SDK
         }
         public static async Task<Community> SpaceMeta(string url)
         {
+            if (url.Contains("?"))
+                url = url.Split('?')[0];
+            
             try
             {
                 var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/communities/space-info?space_url=" + UnityWebRequest.EscapeURL(url));
