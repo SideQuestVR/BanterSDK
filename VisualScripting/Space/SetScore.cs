@@ -52,7 +52,7 @@ namespace Banter.VisualScripting
             outputTrigger = ControlOutput("");
             board = ValueInput("Board", "");
             room = ValueInput("Room", "");
-            sort = ValueInput("Sort", "asc");
+            sort = ValueInput("Sort", SortType.ASC);
             score = ValueInput("Score", 0f);
         }
     }
