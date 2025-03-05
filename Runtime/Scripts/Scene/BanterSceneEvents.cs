@@ -56,7 +56,7 @@ public class BanterSceneEvents
     public UnityEvent<BanterWorldObject> OnWorldObject = new UnityEvent<BanterWorldObject>();
     public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
-    public UnityEvent<string, string, float, string> OnLeaderBoardScore = new UnityEvent<string, string, float, string>();
+    public UnityEvent<string, float, string> OnLeaderBoardScore = new UnityEvent<string, float, string>();
 
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });

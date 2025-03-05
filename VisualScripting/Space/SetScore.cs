@@ -31,27 +31,22 @@ namespace Banter.VisualScripting
         public ValueInput sort;
 
         [DoNotSerialize]
-        public ValueInput room;
-
-        [DoNotSerialize]
         public ValueInput score;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _board = flow.GetValue<string>(board);
-                var _room = flow.GetValue<string>(room);
                 var _sort = flow.GetValue<SortType>(sort);
                 var _score = flow.GetValue<float>(score);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_room, _board, _score, _sort == SortType.ASC ? "asc" : "desc");
+                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc");
                 });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
             board = ValueInput("Board", "");
-            room = ValueInput("Room", "");
             sort = ValueInput("Sort", SortType.ASC);
             score = ValueInput("Score", 0f);
         }
