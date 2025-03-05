@@ -45,6 +45,8 @@ namespace Banter.SDK
         public const string RefreshRate = "RefreshRate";
         public const string ClippingPlane = "ClippingPlane";
         public const string SpawnPoint = "SpawnPoint";
+        
+        public const string PhysicsMoveSpeed = "PhysicsMoveSpeed";
     }
     public class BanterScene
     {
@@ -430,12 +432,12 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(() => Time.timeScale = timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
-        public void PlayerSpeed(string msg, int reqId)
-        {
-            var speed = msg == "1";
-            events.OnPlayerSpeedChanged?.Invoke(speed);
-            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
-        }
+        // public void PlayerSpeed(string msg, int reqId)
+        // {
+        //     var speed = msg == "1";
+        //     events.OnPlayerSpeedChanged?.Invoke(speed);
+        //     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
+        // }
 
         public void LockThing(int reqId, UnityEvent handler, string command)
         {
@@ -1763,6 +1765,9 @@ namespace Banter.SDK
                          case SettingsMap.SpawnPoint:
                              var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
                              settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
+                             break;
+                         case SettingsMap.PhysicsMoveSpeed:
+                             settings.PhysicsMoveSpeed = float.Parse(setting[1]);
                              break;
                      }
                  }

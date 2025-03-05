@@ -39,6 +39,11 @@ namespace Banter.SDK
         public Vector2 ClippingPlane { get { return _ClippingPlane; } set { _ClippingPlane = value; scene.events.OnClippingPlaneChanged.Invoke(value); } }
         private Vector4 _SpawnPoint = Vector4.zero;
         public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
+        
+        // Physics settings
+        private float _physicsMoveSpeed = 4f;
+        public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
+    
         public Transform LeftHand = null;
         public Transform RightHand = null;
         public Transform Head = null;

@@ -189,10 +189,10 @@ namespace Banter.SDK
             {
                 scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
             }
-            else if (msg.StartsWith(APICommands.PLAYER_SPEED))
-            {
-                scene.PlayerSpeed(GetMsgData(msg, APICommands.PLAYER_SPEED), id);
-            }
+            // else if (msg.StartsWith(APICommands.PLAYER_SPEED))
+            // {
+            //     scene.PlayerSpeed(GetMsgData(msg, APICommands.PLAYER_SPEED), id);
+            // } //OnPlayerSpeedChanged was never re-implemented for Flexa, and will now be superceded by physics settings/move speed
             else if (msg.StartsWith(APICommands.DEEP_LINK))
             {
                 var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);

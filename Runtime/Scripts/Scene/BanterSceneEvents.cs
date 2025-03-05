@@ -46,7 +46,7 @@ public class BanterSceneEvents
     public UnityEvent<Vector3, ForceMode> OnAddPlayerForce = new UnityEvent<Vector3, ForceMode>();
     public UnityEvent<string, string> OnBase64ToCDN = new UnityEvent<string, string>();
     public UnityEvent<SelectFileType> OnSelectFile = new UnityEvent<SelectFileType>();
-    public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
+    //public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
@@ -57,6 +57,10 @@ public class BanterSceneEvents
     public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
 
+    #region Physics Settings
+    public UnityEvent<float> OnPhysicsMoveSpeedChanged = new UnityEvent<float>();
+    #endregion
+    
 
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
@@ -114,7 +118,7 @@ public class BanterSceneEvents
         OnAiImage.RemoveAllListeners();
         OnAiModel.RemoveAllListeners();
         OnBase64ToCDN.RemoveAllListeners();
-        OnPlayerSpeedChanged.RemoveAllListeners();
+        //OnPlayerSpeedChanged.RemoveAllListeners();
         OnMenuBrowserMessage.RemoveAllListeners();
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
@@ -124,6 +128,9 @@ public class BanterSceneEvents
         OnSyncedObject.RemoveAllListeners();
         OnAvatarSet.RemoveAllListeners();
 
+        // Physics
+        OnPhysicsMoveSpeedChanged.RemoveAllListeners();
+        
         // Legacy stuff
         OnLegacyPlayerLockChanged.RemoveAllListeners();
         OnLegacyPlayerSitChanged.RemoveAllListeners();
