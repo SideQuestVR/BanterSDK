@@ -7,6 +7,11 @@ using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
+    enum SortType
+    {
+        ASC,
+        DESC
+    }
     [UnitTitle("Set a Score on a Leaderboard")]
     [UnitShortTitle("SetScore")]
     [UnitCategory("Banter\\Networking")]
@@ -36,11 +41,11 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _board = flow.GetValue<string>(board);
                 var _room = flow.GetValue<string>(room);
-                var _sort = flow.GetValue<string>(sort);
+                var _sort = flow.GetValue<SortType>(sort);
                 var _score = flow.GetValue<float>(score);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_room, _board, _score, _sort);
+                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_room, _board, _score, _sort == SortType.ASC ? "asc" : "desc");
                 });
                 return outputTrigger;
             });
