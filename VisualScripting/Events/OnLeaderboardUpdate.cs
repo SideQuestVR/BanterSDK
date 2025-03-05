@@ -16,7 +16,7 @@ public class Score{
 [Serializable]
 public class Board{
     public Score[] scores;
-    public string type;
+    public string sort;
 }
 
 
@@ -35,7 +35,9 @@ public class UpdateScores{
     {
 
         [DoNotSerialize]
-        public ValueOutput result;
+        public ValueOutput board;
+        [DoNotSerialize]
+        public ValueOutput scores;
 
         protected override bool register => true;
 
@@ -47,10 +49,9 @@ public class UpdateScores{
         protected override void Definition()
         {
             base.Definition();
-            // Setting the value on our port.
-            // id = ValueInput("Return ID", string.Empty);
 
-            result = ValueOutput<UpdateScores>("Board Data");
+            board = ValueOutput<string>("Board");
+            scores = ValueOutput<Score[]>("Scores");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -61,7 +62,9 @@ public class UpdateScores{
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
-            flow.SetValue(result, data.arguments[0]);
+            var updateScores = (UpdateScores)data.arguments[0];
+            flow.SetValue(board, updateScores.board);
+            flow.SetValue(scores, updateScores.scores);
         }
     }
 
