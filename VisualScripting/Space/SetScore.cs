@@ -40,7 +40,7 @@ namespace Banter.VisualScripting
                 var _score = flow.GetValue<float>(score);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.events.OnLeaderBoardScore.Invoke(_room, _board, _score, _sort);
+                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_room, _board, _score, _sort);
                 });
                 return outputTrigger;
             });
