@@ -1,0 +1,55 @@
+#if BANTER_VISUAL_SCRIPTING
+using UnityEngine;
+using Unity.VisualScripting;
+using Banter.SDK;
+using System.Linq;
+using Banter.Utilities.Async;
+
+namespace Banter.VisualScripting
+{
+    [UnitTitle("Set a Score on a Leaderboard")]
+    [UnitShortTitle("SetScore")]
+    [UnitCategory("Banter\\Networking")]
+    [TypeIcon(typeof(BanterObjectId))]
+    public class SetScore : Unit
+    {
+        [DoNotSerialize]
+        public ControlInput inputTrigger;
+    
+        [DoNotSerialize]
+        public ControlOutput outputTrigger;
+
+        [DoNotSerialize]
+        public ValueInput board;
+
+        [DoNotSerialize]
+        public ValueInput sort;
+
+        [DoNotSerialize]
+        public ValueInput room;
+
+        [DoNotSerialize]
+        public ValueInput score;
+
+        protected override void Definition()
+        {
+            inputTrigger = ControlInput("", (flow) => {
+                var _board = flow.GetValue<string>(board);
+                var _room = flow.GetValue<string>(room);
+                var _sort = flow.GetValue<string>(sort);
+                var _score = flow.GetValue<float>(score);
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    BanterScene.Instance().events.events.OnLeaderBoardScore.Invoke(_room, _board, _score, _sort);
+                });
+                return outputTrigger;
+            });
+            outputTrigger = ControlOutput("");
+            board = ValueInput("Board", "");
+            room = ValueInput("Room", "");
+            sort = ValueInput("Sort", "asc");
+            score = ValueInput("Score", 0f);
+        }
+    }
+}
+#endif
