@@ -58,7 +58,7 @@ namespace Banter.SDK
         public const string PhysicsHandSpringiness = "PhysicsHandSpringiness";
         public const string PhysicsGrappleRange = "PhysicsGrappleRange";
         public const string PhysicsGrappleReelSpeed = "PhysicsGrappleReelSpeed";
-        public const string PhysicsGrappleStretchiness = "PhysicsGrappleStretchiness";
+        public const string PhysicsGrappleSpringiness = "PhysicsGrappleSpringiness";
         public const string PhysicsGorillaMode = "PhysicsGorillaMode";
 
         public const string SettingsLocked = "SettingsLocked";
@@ -1834,8 +1834,8 @@ namespace Banter.SDK
                              case SettingsMap.PhysicsGrappleReelSpeed:
                                  settings.PhysicsGrappleReelSpeed = float.Parse(setting[1]);
                                  break;
-                             case SettingsMap.PhysicsGrappleStretchiness:
-                                 settings.PhysicsGrappleStretchiness = float.Parse(setting[1]);
+                             case SettingsMap.PhysicsGrappleSpringiness:
+                                 settings.PhysicsGrappleSpringiness = float.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsGorillaMode:
                                  settings.PhysicsGorillaMode = setting[1] == "1";

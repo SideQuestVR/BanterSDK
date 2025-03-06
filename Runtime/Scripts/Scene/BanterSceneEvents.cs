@@ -68,7 +68,7 @@ public class BanterSceneEvents
     public UnityEvent<float> OnPhysicsHandSpringinessChanged = new UnityEvent<float>();
     public UnityEvent<float> OnPhysicsGrappleRangeChanged = new UnityEvent<float>();
     public UnityEvent<float> OnPhysicsGrappleReelSpeedChanged = new UnityEvent<float>();
-    public UnityEvent<float> OnPhysicsGrappleStretchinessChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleSpringinessChanged = new UnityEvent<float>();
     public UnityEvent<bool> OnPhysicsGorillaModeChanged = new UnityEvent<bool>();
     #endregion
     
@@ -152,7 +152,7 @@ public class BanterSceneEvents
         OnPhysicsHandSpringinessChanged.RemoveAllListeners();
         OnPhysicsGrappleRangeChanged.RemoveAllListeners();
         OnPhysicsGrappleReelSpeedChanged.RemoveAllListeners();
-        OnPhysicsGrappleStretchinessChanged.RemoveAllListeners();
+        OnPhysicsGrappleSpringinessChanged.RemoveAllListeners();
         OnPhysicsGorillaModeChanged.RemoveAllListeners();
             
         // Legacy stuff

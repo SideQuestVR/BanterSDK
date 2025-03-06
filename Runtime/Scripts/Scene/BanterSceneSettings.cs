@@ -51,7 +51,7 @@ namespace Banter.SDK
         public float PhysicsAirControlAcceleration { get { return _physicsAirControlAcceleration; } set { _physicsAirControlAcceleration = value; scene.events.OnPhysicsAirControlAccelerationChanged.Invoke(value); } }
         private float _physicsDrag = 0f;
         public float PhysicsDrag { get { return _physicsDrag; } set { _physicsDrag = value; scene.events.OnPhysicsDragChanged.Invoke(value); } } 
-        private float _physicsFreeFallAngularDrag = 0f;
+        private float _physicsFreeFallAngularDrag = 6f;
         public float PhysicsFreeFallAngularDrag { get { return _physicsFreeFallAngularDrag; } set { _physicsFreeFallAngularDrag = value; scene.events.OnPhysicsFreeFallAngularDragChanged.Invoke(value); } } 
         private float _physicsJumpStrength = 1f;
         public float PhysicsJumpStrength { get { return _physicsJumpStrength; } set { _physicsJumpStrength = value; scene.events.OnPhysicsJumpStrengthChanged.Invoke(value); } } 
@@ -59,14 +59,14 @@ namespace Banter.SDK
         public float PhysicsHandPositionStrength { get { return _physicsHandPositionStrength; } set { _physicsHandPositionStrength = value; scene.events.OnPhysicsHandPositionStrengthChanged.Invoke(value); } } 
         private float _physicsHandRotationStrength = 1f;
         public float PhysicsHandRotationStrength { get { return _physicsHandRotationStrength; } set { _physicsHandRotationStrength = value; scene.events.OnPhysicsHandRotationStrengthChanged.Invoke(value); } } 
-        private float _physicsHandSpringiness = 1f;
+        private float _physicsHandSpringiness = 10f;
         public float PhysicsHandSpringiness { get { return _physicsHandSpringiness; } set { _physicsHandSpringiness = value; scene.events.OnPhysicsHandSpringinessChanged.Invoke(value); } } 
         private float _physicsGrappleRange = 512f;
         public float PhysicsGrappleRange { get { return _physicsGrappleRange; } set { _physicsGrappleRange = value; scene.events.OnPhysicsGrappleRangeChanged.Invoke(value); } } 
         private float _physicsGrappleReelSpeed = 1;
         public float PhysicsGrappleReelSpeed { get { return _physicsGrappleReelSpeed; } set { _physicsGrappleReelSpeed = value; scene.events.OnPhysicsGrappleReelSpeedChanged.Invoke(value); } } 
-        private float _physicsGrappleStretchiness = 1;
-        public float PhysicsGrappleStretchiness { get { return _physicsGrappleStretchiness; } set { _physicsGrappleStretchiness = value; scene.events.OnPhysicsGrappleStretchinessChanged.Invoke(value); } } 
+        private float _physicsGrappleSpringiness = 10;
+        public float PhysicsGrappleSpringiness { get { return _physicsGrappleSpringiness; } set { _physicsGrappleSpringiness = value; scene.events.OnPhysicsGrappleSpringinessChanged.Invoke(value); } } 
         private bool _physicsGorillaMode = false;
         public bool PhysicsGorillaMode { get { return _physicsGorillaMode; } set { _physicsGorillaMode = value; scene.events.OnPhysicsGorillaModeChanged.Invoke(value); } } 
 
@@ -154,6 +154,19 @@ namespace Banter.SDK
             SpawnPoint = Vector4.zero;
             
             PhysicsMoveSpeed = 4f;
+            PhysicsMoveAcceleration = 4.6f;
+            PhysicsAirControlSpeed = 3.8f;
+            PhysicsAirControlAcceleration = 6;
+            PhysicsDrag = 0;
+            PhysicsFreeFallAngularDrag = 6;
+            PhysicsJumpStrength = 1;
+            PhysicsHandPositionStrength = 1; 
+            PhysicsHandRotationStrength = 1;
+            PhysicsHandSpringiness = 10;
+            PhysicsGrappleRange = 512;
+            PhysicsGrappleReelSpeed = 1;
+            PhysicsGrappleSpringiness = 10;
+            PhysicsGorillaMode = false;
             
             if (SceneAssetBundle != null)
             {
