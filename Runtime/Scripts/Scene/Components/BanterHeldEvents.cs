@@ -71,6 +71,7 @@ namespace Banter.SDK
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             // SetupPhysicMaterial(changedProperties);
+            scene.events.OnHeldEvents.Invoke(this);
         }
         // BANTER COMPILED CODE 
         public System.Single Sensitivity { get { return sensitivity; } set { sensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.sensitivity }); } }
