@@ -12,7 +12,6 @@ public class BanterSceneEvents
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
     public UnityEvent<string> OnPortalEnter = new UnityEvent<string>();
-    public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableTeleportChanged = new UnityEvent<bool>();
     public UnityEvent OnLockTeleport = new UnityEvent();
@@ -32,8 +31,6 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<BanterAttachment> OnAttachObject = new UnityEvent<BanterAttachment>();
-    public UnityEvent<BanterAttachment> OnDetachObject = new UnityEvent<BanterAttachment>();
     public UnityEvent<BanterSynced, BanterObjectId> OnSyncedObject = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<BanterSynced, BanterObjectId> OnTakeOwnership = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
@@ -67,6 +64,7 @@ public class BanterSceneEvents
 
     #region Legacy stuff
 
+    public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnLegacyPlayerLockChanged = new UnityEvent<bool>();
     public UnityEvent<bool, UnityAndBanterObject> OnLegacyPlayerSitChanged = new UnityEvent<bool, UnityAndBanterObject>();
     public UnityEvent<bool> OnLegacyPlayerGorillaChanged = new UnityEvent<bool>();
@@ -88,7 +86,6 @@ public class BanterSceneEvents
         OnUnitySceneLoad.RemoveAllListeners();
         OnTeleport.RemoveAllListeners();
         OnPortalEnter.RemoveAllListeners();
-        OnLegacyEnabled.RemoveAllListeners();
         OnEnableDevToolsChanged.RemoveAllListeners();
         OnEnableTeleportChanged.RemoveAllListeners();
         OnEnableForceGrabChanged.RemoveAllListeners();
@@ -106,7 +103,6 @@ public class BanterSceneEvents
         OnClippingPlaneChanged.RemoveAllListeners();
         OnPageOpened.RemoveAllListeners();
         OnOneShot.RemoveAllListeners();
-        OnAttachObject.RemoveAllListeners();
         OnPublicSpaceStateChanged.RemoveAllListeners();
         OnProtectedSpaceStateChanged.RemoveAllListeners();
         OnDeepLink.RemoveAllListeners();
@@ -127,6 +123,7 @@ public class BanterSceneEvents
         OnAvatarSet.RemoveAllListeners();
 
         // Legacy stuff
+        OnLegacyEnabled.RemoveAllListeners();
         OnLegacyPlayerLockChanged.RemoveAllListeners();
         OnLegacyPlayerSitChanged.RemoveAllListeners();
         OnLegacyPlayerGorillaChanged.RemoveAllListeners();

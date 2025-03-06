@@ -1,5 +1,4 @@
 using System;
-using UnityEngine;
 
 namespace Banter.SDK
 {
@@ -12,5 +11,8 @@ namespace Banter.SDK
         public Func<bool> IsSpaceFavourited = () => false;
         public Func<bool> IsSpaceOwner = () => false;
         public Func<BanterSynced, BanterObjectId, bool> NSODoIOwn = (_, _) => false;
+
+        public Action<BanterAttachment> AttachObject = _ => { };
+        public Action<BanterAttachment> DetachObject = _ => { };
     }
 }

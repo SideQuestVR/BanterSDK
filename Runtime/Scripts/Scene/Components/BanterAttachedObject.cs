@@ -1,23 +1,32 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Banter.SDK
 {
+    // Data, but used as a class to pass by reference
+    [System.Serializable]
     public class BanterAttachment
     {
         public string uid;
+        public Vector3 attachmentPosition = Vector3.zero;
+        public Quaternion attachmentRotation = Quaternion.identity;
+        public AttachmentType attachmentType = AttachmentType.Physics;
+        public AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
+        public AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
+#if BANTER_VISUAL_SCRIPTING
+        [RenamedFrom("attachmentPoint")]
+#endif
+        [FormerlySerializedAs("attachmentPoint")]
+        public PhysicsAttachmentPoint physicsAttachmentPoint = PhysicsAttachmentPoint.Head;
+        public bool autoSync = false;
+        public bool jointAvatar = true;
+
         public UnityAndBanterObject attachedObject;
-        public Vector3 attachmentPosition;
-        public Quaternion attachmentRotation;
-        public AttachmentType attachmentType;
-        public AvatarAttachmentType avatarAttachmentType;
-        public AvatarBoneName avatarAttachmentPoint;
-        public PhysicsAttachmentPoint attachmentPoint;
-        public bool autoSync;
-        public bool jointAvatar;
     }
+
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterAttachedObject : BanterComponentBase
@@ -49,22 +58,25 @@ namespace Banter.SDK
         [Tooltip("Indicates whether this attachment is jointed to the avatar.")]
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
 
-        [Method]
-        public void _Detach(string uid)
-        {
-            this.uid = uid;
-            UpdateCallback(null);
-            BanterScene.Instance().events.OnDetachObject.Invoke(attachment);
-        }
+
+        [SerializeField] BanterAttachment attachment = new BanterAttachment();
+
         [Method]
         public void _Attach(string uid)
         {
             this.uid = uid;
             UpdateCallback(null);
-            BanterScene.Instance().events.OnAttachObject.Invoke(attachment);
+            BanterScene.Instance().data.AttachObject(attachment);
         }
 
-        BanterAttachment attachment;
+        [Method]
+        public void _Detach(string uid)
+        {
+            this.uid = uid;
+            UpdateCallback(null);
+            BanterScene.Instance().data.DetachObject(attachment);
+        }
+
         internal override void StartStuff()
         {
             SetLoadedIfNot();
@@ -73,18 +85,6 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (attachment == null)
-            {
-                attachment = new BanterAttachment();
-            }
-            if (changedProperties == null || changedProperties.Contains(PropertyName.autoSync))
-            {
-                attachment.autoSync = autoSync;
-            }
-            if (changedProperties == null || changedProperties.Contains(PropertyName.jointAvatar))
-            {
-                attachment.jointAvatar = jointAvatar;
-            }
             if (changedProperties == null || changedProperties.Contains(PropertyName.uid))
             {
                 attachment.uid = uid;
@@ -111,7 +111,15 @@ namespace Banter.SDK
             }
             if (changedProperties == null || changedProperties.Contains(PropertyName.attachmentPoint))
             {
-                attachment.attachmentPoint = attachmentPoint;
+                attachment.physicsAttachmentPoint = attachmentPoint;
+            }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.autoSync))
+            {
+                attachment.autoSync = autoSync;
+            }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.jointAvatar))
+            {
+                attachment.jointAvatar = jointAvatar;
             }
             attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
