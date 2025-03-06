@@ -1911,12 +1911,12 @@ namespace Banter.SDK
             }
             var attachment = new BanterAttachment();
             attachment.uid = whoToShow;
-            attachment.attachedObject = gameObject;
             attachment.attachmentPosition = gameObject.gameObject.transform.localPosition;
             attachment.attachmentRotation = gameObject.gameObject.transform.localRotation;
             attachment.attachmentType = AttachmentType.NonPhysics;
             attachment.avatarAttachmentPoint = actualPart;
-            events.OnAttachObject.Invoke(attachment);
+            attachment.attachedObject = gameObject;
+            data.AttachObject(attachment);
         }
         public void LegacySetChildColor(string msg)
         {
