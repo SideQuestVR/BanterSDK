@@ -57,6 +57,7 @@ public class BanterSceneEvents
     public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
     public UnityEvent<string, float, string, bool> OnLeaderBoardScore = new UnityEvent<string, float, string, bool>();
+    public UnityEvent<string> OnLeaderBoardClear = new UnityEvent<string>();
     public UnityEvent OnGetLeaderBoard = new UnityEvent();
 
     #region Callback Functions
