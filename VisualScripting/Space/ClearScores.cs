@@ -7,11 +7,6 @@ using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
-    enum SortType
-    {
-        ASC,
-        DESC
-    }
     [UnitTitle("Clear Scores on a Leaderboard")]
     [UnitShortTitle("ClearScores")]
     [UnitCategory("Banter\\Networking")]
