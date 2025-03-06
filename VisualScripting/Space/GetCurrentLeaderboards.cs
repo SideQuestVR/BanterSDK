@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Get the Current Leaderboard")]
     [UnitShortTitle("GetCurrentLeaderboard")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("Banter\\Leaderboard")]
     [TypeIcon(typeof(BanterObjectId))]
     public class GetCurrentLeaderboard : Unit
     {

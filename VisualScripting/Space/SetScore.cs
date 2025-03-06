@@ -14,7 +14,7 @@ namespace Banter.VisualScripting
     }
     [UnitTitle("Set a Score on a Leaderboard")]
     [UnitShortTitle("SetScore")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("Banter\\Leaderboard")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SetScore : Unit
     {
