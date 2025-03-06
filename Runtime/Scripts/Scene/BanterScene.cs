@@ -47,6 +47,22 @@ namespace Banter.SDK
         public const string SpawnPoint = "SpawnPoint";
         
         public const string PhysicsMoveSpeed = "PhysicsMoveSpeed";
+        public const string PhysicsMoveAcceleration = "PhysicsMoveAcceleration";
+        public const string PhysicsAirControlSpeed = "PhysicsAirControlSpeed";
+        public const string PhysicsAirControlAcceleration = "PhysicsAirControlAcceleration";
+        public const string PhysicsDrag = "PhysicsDrag";
+        public const string PhysicsFreeFallAngularDrag = "PhysicsFreeFallAngularDrag";
+        public const string PhysicsJumpStrength = "PhysicsJumpStrength";
+        public const string PhysicsHandPositionStrength = "PhysicsHandPositionStrength";
+        public const string PhysicsHandRotationStrength = "PhysicsHandRotationStrength";
+        public const string PhysicsHandSpringiness = "PhysicsHandSpringiness";
+        public const string PhysicsGrappleRange = "PhysicsGrappleRange";
+        public const string PhysicsGrappleReelSpeed = "PhysicsGrappleReelSpeed";
+        public const string PhysicsGrappleStretchiness = "PhysicsGrappleStretchiness";
+        public const string PhysicsGorillaMode = "PhysicsGorillaMode";
+
+        public const string SettingsLocked = "SettingsLocked";
+        public const string PhysicsSettingsLocked = "PhysicsSettingsLocked";
     }
     public class BanterScene
     {
@@ -1708,67 +1724,126 @@ namespace Banter.SDK
 
         public void SetSettings(string msg, int reqId)
         {
+            
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
             UnityMainThreadTaskScheduler.Default.Enqueue(() =>
              {
                  foreach (var part in settingsParts)
                  {
                      var setting = part.Split(MessageDelimiters.SECONDARY);
-                     switch (setting[0])
+                     if (!settings.IsSettingsLocked)
                      {
-                         case SettingsMap.EnableDevTools:
-                             settings.EnableDevTools = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableTeleport:
-                             settings.EnableTeleport = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableForceGrab:
-                             settings.EnableForceGrab = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableSpiderMan:
-                             settings.EnableSpiderMan = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableHandHold:
-                             settings.EnableHandHold = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableRadar:
-                             settings.EnableRadar = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableNametags:
-                             settings.EnableNametags = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableDefaultTextures:
-                             settings.EnableDefaultTextures = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnablePortals:
-                             settings.EnablePortals = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableGuests:
-                             settings.EnableGuests = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableFriendPositionJoin:
-                             settings.EnableFriendPositionJoin = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableAvatars:
-                             settings.EnableAvatars = setting[1] == "1";
-                             break;
-                         case SettingsMap.MaxOccupancy:
-                             settings.MaxOccupancy = int.Parse(setting[1]);
-                             break;
-                         case SettingsMap.RefreshRate:
-                             settings.RefreshRate = int.Parse(setting[1]);
-                             break;
-                         case SettingsMap.ClippingPlane:
-                             var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                             settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]), NumberFormat.Parse(clippingParts[2]));
-                             break;
-                         case SettingsMap.SpawnPoint:
-                             var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                             settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
-                             break;
-                         case SettingsMap.PhysicsMoveSpeed:
-                             settings.PhysicsMoveSpeed = float.Parse(setting[1]);
-                             break;
+                         switch (setting[0])
+                         {
+                             case SettingsMap.EnableDevTools:
+                                 settings.EnableDevTools = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableTeleport:
+                                 settings.EnableTeleport = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableForceGrab:
+                                 settings.EnableForceGrab = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableSpiderMan:
+                                 settings.EnableSpiderMan = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableHandHold:
+                                 settings.EnableHandHold = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableRadar:
+                                 settings.EnableRadar = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableNametags:
+                                 settings.EnableNametags = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableDefaultTextures:
+                                 settings.EnableDefaultTextures = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnablePortals:
+                                 settings.EnablePortals = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableGuests:
+                                 settings.EnableGuests = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableFriendPositionJoin:
+                                 settings.EnableFriendPositionJoin = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableAvatars:
+                                 settings.EnableAvatars = setting[1] == "1";
+                                 break;
+                             case SettingsMap.MaxOccupancy:
+                                 settings.MaxOccupancy = int.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.RefreshRate:
+                                 settings.RefreshRate = int.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.ClippingPlane:
+                                 var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
+                                 settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]),
+                                     NumberFormat.Parse(clippingParts[2]));
+                                 break;
+                             case SettingsMap.SpawnPoint:
+                                 var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
+                                 settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]),
+                                     NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]),
+                                     NumberFormat.Parse(spawnParts[4]));
+                                 break;
+                             case SettingsMap.SettingsLocked:
+                                 settings.IsSettingsLocked = setting[1] == "1";
+                                 break;
+                         }
+                     }
+
+                     if (!settings.IsPhysicsSettingsLocked)
+                     {
+                         switch (setting[0])
+                         {
+                             case SettingsMap.PhysicsMoveSpeed:
+                                 settings.PhysicsMoveSpeed = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsMoveAcceleration:
+                                 settings.PhysicsMoveAcceleration = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsAirControlSpeed:
+                                 settings.PhysicsAirControlSpeed = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsAirControlAcceleration:
+                                 settings.PhysicsAirControlAcceleration = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsDrag:
+                                 settings.PhysicsDrag = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsFreeFallAngularDrag:
+                                 settings.PhysicsFreeFallAngularDrag = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsJumpStrength:
+                                 settings.PhysicsJumpStrength = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsHandPositionStrength:
+                                 settings.PhysicsHandPositionStrength = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsHandRotationStrength:
+                                 settings.PhysicsHandRotationStrength = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsHandSpringiness:
+                                 settings.PhysicsHandSpringiness = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGrappleRange:
+                                 settings.PhysicsGrappleRange = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGrappleReelSpeed:
+                                 settings.PhysicsGrappleReelSpeed = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGrappleStretchiness:
+                                 settings.PhysicsGrappleStretchiness = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGorillaMode:
+                                 settings.PhysicsGorillaMode = setting[1] == "1";
+                                 break;
+                             case SettingsMap.PhysicsSettingsLocked:
+                                 settings.IsPhysicsSettingsLocked = setting[1] == "1";
+                                 break;
+                         }
                      }
                  }
              });

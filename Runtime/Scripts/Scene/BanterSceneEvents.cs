@@ -15,8 +15,6 @@ public class BanterSceneEvents
     public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableTeleportChanged = new UnityEvent<bool>();
-    public UnityEvent OnLockTeleport = new UnityEvent();
-    public UnityEvent OnLockSpiderman = new UnityEvent();
     public UnityEvent<bool> OnEnableForceGrabChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableSpiderManChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableHandHoldChanged = new UnityEvent<bool>();
@@ -59,6 +57,19 @@ public class BanterSceneEvents
 
     #region Physics Settings
     public UnityEvent<float> OnPhysicsMoveSpeedChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsMoveAccelerationChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsAirControlSpeedChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsAirControlAccelerationChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsDragChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsFreeFallAngularDragChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsJumpStrengthChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsHandPositionStrengthChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsHandRotationStrengthChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsHandSpringinessChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleRangeChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleReelSpeedChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleStretchinessChanged = new UnityEvent<float>();
+    public UnityEvent<bool> OnPhysicsGorillaModeChanged = new UnityEvent<bool>();
     #endregion
     
 
@@ -130,7 +141,20 @@ public class BanterSceneEvents
 
         // Physics
         OnPhysicsMoveSpeedChanged.RemoveAllListeners();
-        
+        OnPhysicsMoveAccelerationChanged.RemoveAllListeners();
+        OnPhysicsAirControlSpeedChanged.RemoveAllListeners();
+        OnPhysicsAirControlAccelerationChanged.RemoveAllListeners();
+        OnPhysicsDragChanged.RemoveAllListeners();
+        OnPhysicsFreeFallAngularDragChanged.RemoveAllListeners();
+        OnPhysicsJumpStrengthChanged.RemoveAllListeners();
+        OnPhysicsHandPositionStrengthChanged.RemoveAllListeners();
+        OnPhysicsHandRotationStrengthChanged.RemoveAllListeners();
+        OnPhysicsHandSpringinessChanged.RemoveAllListeners();
+        OnPhysicsGrappleRangeChanged.RemoveAllListeners();
+        OnPhysicsGrappleReelSpeedChanged.RemoveAllListeners();
+        OnPhysicsGrappleStretchinessChanged.RemoveAllListeners();
+        OnPhysicsGorillaModeChanged.RemoveAllListeners();
+            
         // Legacy stuff
         OnLegacyPlayerLockChanged.RemoveAllListeners();
         OnLegacyPlayerSitChanged.RemoveAllListeners();

@@ -43,7 +43,37 @@ namespace Banter.SDK
         // Physics settings
         private float _physicsMoveSpeed = 4f;
         public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
-    
+        private float _physicsMoveAcceleration = 4.6f;
+        public float PhysicsMoveAcceleration { get { return _physicsMoveAcceleration; } set { _physicsMoveAcceleration = value; scene.events.OnPhysicsMoveAccelerationChanged.Invoke(value); } }
+        private float _physicsAirControlSpeed = 3.8f;
+        public float PhysicsAirControlSpeed { get { return _physicsAirControlSpeed; } set { _physicsAirControlSpeed = value; scene.events.OnPhysicsAirControlSpeedChanged.Invoke(value); } }
+        private float _physicsAirControlAcceleration = 6f;
+        public float PhysicsAirControlAcceleration { get { return _physicsAirControlAcceleration; } set { _physicsAirControlAcceleration = value; scene.events.OnPhysicsAirControlAccelerationChanged.Invoke(value); } }
+        private float _physicsDrag = 0f;
+        public float PhysicsDrag { get { return _physicsDrag; } set { _physicsDrag = value; scene.events.OnPhysicsDragChanged.Invoke(value); } } 
+        private float _physicsFreeFallAngularDrag = 0f;
+        public float PhysicsFreeFallAngularDrag { get { return _physicsFreeFallAngularDrag; } set { _physicsFreeFallAngularDrag = value; scene.events.OnPhysicsFreeFallAngularDragChanged.Invoke(value); } } 
+        private float _physicsJumpStrength = 1f;
+        public float PhysicsJumpStrength { get { return _physicsJumpStrength; } set { _physicsJumpStrength = value; scene.events.OnPhysicsJumpStrengthChanged.Invoke(value); } } 
+        private float _physicsHandPositionStrength = 1f;
+        public float PhysicsHandPositionStrength { get { return _physicsHandPositionStrength; } set { _physicsHandPositionStrength = value; scene.events.OnPhysicsHandPositionStrengthChanged.Invoke(value); } } 
+        private float _physicsHandRotationStrength = 1f;
+        public float PhysicsHandRotationStrength { get { return _physicsHandRotationStrength; } set { _physicsHandRotationStrength = value; scene.events.OnPhysicsHandRotationStrengthChanged.Invoke(value); } } 
+        private float _physicsHandSpringiness = 1f;
+        public float PhysicsHandSpringiness { get { return _physicsHandSpringiness; } set { _physicsHandSpringiness = value; scene.events.OnPhysicsHandSpringinessChanged.Invoke(value); } } 
+        private float _physicsGrappleRange = 512f;
+        public float PhysicsGrappleRange { get { return _physicsGrappleRange; } set { _physicsGrappleRange = value; scene.events.OnPhysicsGrappleRangeChanged.Invoke(value); } } 
+        private float _physicsGrappleReelSpeed = 1;
+        public float PhysicsGrappleReelSpeed { get { return _physicsGrappleReelSpeed; } set { _physicsGrappleReelSpeed = value; scene.events.OnPhysicsGrappleReelSpeedChanged.Invoke(value); } } 
+        private float _physicsGrappleStretchiness = 1;
+        public float PhysicsGrappleStretchiness { get { return _physicsGrappleStretchiness; } set { _physicsGrappleStretchiness = value; scene.events.OnPhysicsGrappleStretchinessChanged.Invoke(value); } } 
+        private bool _physicsGorillaMode = false;
+        public bool PhysicsGorillaMode { get { return _physicsGorillaMode; } set { _physicsGorillaMode = value; scene.events.OnPhysicsGorillaModeChanged.Invoke(value); } } 
+
+        
+        public bool IsSettingsLocked = false;
+        public bool IsPhysicsSettingsLocked = false;
+        
         public Transform LeftHand = null;
         public Transform RightHand = null;
         public Transform Head = null;
@@ -104,6 +134,9 @@ namespace Banter.SDK
             isDestroying = true;
             destroyedAt = DateTime.Now;
 
+            IsSettingsLocked = false;
+            IsPhysicsSettingsLocked = false;
+            
             EnableDevTools = true;
             EnableDefaultTextures = true;
             EnableTeleport = true;
@@ -119,6 +152,9 @@ namespace Banter.SDK
             RefreshRate = 72.0f;
             ClippingPlane = new Vector2(0.02f, 1500.0f);
             SpawnPoint = Vector4.zero;
+            
+            PhysicsMoveSpeed = 4f;
+            
             if (SceneAssetBundle != null)
             {
                 await SceneAssetBundle.Unload();
