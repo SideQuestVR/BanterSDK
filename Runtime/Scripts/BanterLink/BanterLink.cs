@@ -189,10 +189,10 @@ namespace Banter.SDK
             {
                 scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
             }
-            else if (msg.StartsWith(APICommands.PLAYER_SPEED))
-            {
-                scene.PlayerSpeed(GetMsgData(msg, APICommands.PLAYER_SPEED), id);
-            }
+            // else if (msg.StartsWith(APICommands.PLAYER_SPEED))
+            // {
+            //     scene.PlayerSpeed(GetMsgData(msg, APICommands.PLAYER_SPEED), id);
+            // } //OnPlayerSpeedChanged was never re-implemented for Flexa, and will now be superceded by physics settings/move speed
             else if (msg.StartsWith(APICommands.DEEP_LINK))
             {
                 var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
@@ -211,14 +211,6 @@ namespace Banter.SDK
             else if (msg.StartsWith(APICommands.OPEN_PAGE))
             {
                 scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.LOCK_SPIDERMAN))
-            {
-                scene.LockThing(id, scene.events.OnLockSpiderman, APICommands.LOCK_SPIDERMAN);
-            }
-            else if (msg.StartsWith(APICommands.LOCK_TELEPORT))
-            {
-                scene.LockThing(id, scene.events.OnLockTeleport, APICommands.LOCK_TELEPORT);
             }
             else if (msg.StartsWith(APICommands.TELEPORT))
             {
