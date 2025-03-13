@@ -26,7 +26,7 @@ namespace Banter.SDK
 
         public UnityAndBanterObject attachedObject;
     }
-
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterAttachedObject : BanterComponentBase
@@ -64,7 +64,7 @@ namespace Banter.SDK
         [Method]
         public void _Attach(string uid)
         {
-            this.uid = uid;
+            this.uid = attachment.uid = uid; 
             UpdateCallback(null);
             BanterScene.Instance().data.AttachObject(attachment);
         }
@@ -72,7 +72,7 @@ namespace Banter.SDK
         [Method]
         public void _Detach(string uid)
         {
-            this.uid = uid;
+            this.uid = attachment.uid = uid;
             UpdateCallback(null);
             BanterScene.Instance().data.DetachObject(attachment);
         }
@@ -85,6 +85,7 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            attachment.attachedObject = BanterScene.Instance().GetObject(oid);
             if (changedProperties == null || changedProperties.Contains(PropertyName.uid))
             {
                 attachment.uid = uid;
@@ -121,7 +122,6 @@ namespace Banter.SDK
             {
                 attachment.jointAvatar = jointAvatar;
             }
-            attachment.attachedObject = BanterScene.Instance().GetObject(oid);
         }
         // BANTER COMPILED CODE 
         public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }

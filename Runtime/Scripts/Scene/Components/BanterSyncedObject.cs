@@ -13,6 +13,7 @@ namespace Banter.SDK
         public bool takeOwnershipOnGrab;
         public bool kinematicIfNotOwned;
     }
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterSyncedObject : BanterComponentBase

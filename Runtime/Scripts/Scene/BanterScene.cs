@@ -582,6 +582,7 @@ namespace Banter.SDK
                 };
                 banterObject.unityAndBanterObject = unityAndBanterObject;
                 objects.TryAdd(oid, unityAndBanterObject);
+                Debug.Log("HERER - AddBanterObject - " + oid + " " + gameObject.name);
                 if (!skipChangeFlush)
                 {
                     FlushObjectToChanges(oid, 0, 0);
@@ -656,6 +657,7 @@ namespace Banter.SDK
         public UnityAndBanterObject GetObject(int objectId)
         {
             UnityAndBanterObject value;
+            Debug.Log("HERER - GetObject - " + objectId);
             objects.TryGetValue(objectId, out value);
             return value;
         }

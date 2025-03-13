@@ -19,6 +19,7 @@ namespace Banter.SDK
         const streetView = await gameObject.AddComponent(new BS.BanterStreetView(panoId));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterStreetView : BanterComponentBase

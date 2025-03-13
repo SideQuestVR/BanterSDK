@@ -35,6 +35,7 @@ namespace Banter.SDK
         const text = await gameObject.AddComponent(new BS.BanterText(text, color, horizontalAlignment, verticalAlignment, fontSize, richText, enableWordWrapping, rectTransformSizeDelta));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BanterObjectId))]
 

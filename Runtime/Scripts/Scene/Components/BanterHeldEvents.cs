@@ -7,7 +7,7 @@ using UnityEngine.Events;
 
 namespace Banter.SDK
 {
-
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterHeldEvents : BanterComponentBase
