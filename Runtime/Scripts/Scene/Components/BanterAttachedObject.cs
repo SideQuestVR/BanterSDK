@@ -59,7 +59,7 @@ namespace Banter.SDK
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
 
 
-        [SerializeField] BanterAttachment attachment = new BanterAttachment();
+        [SerializeField] [HideInInspector] BanterAttachment attachment = new BanterAttachment();
 
         [Method]
         public void _Attach(string uid)
