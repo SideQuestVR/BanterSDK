@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitShortTitle("Get User State")]
     [UnitCategory("Events\\Banter\\Space")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class GetUserState : EventUnit<CustomEventArgs>
+    public class OnGetUserState : EventUnit<CustomEventArgs>
     {
 
         [DoNotSerialize]
