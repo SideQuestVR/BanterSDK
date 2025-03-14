@@ -43,8 +43,7 @@ namespace Banter.VisualScripting
                 var _sort = flow.GetValue<SortType>(sort);
                 var _score = flow.GetValue<float>(score);
                 var _unique = flow.GetValue<bool>(unique);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                {
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => {
                     BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc", _unique);
                 });
                 return outputTrigger;

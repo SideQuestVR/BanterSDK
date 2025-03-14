@@ -72,6 +72,9 @@ public class BanterSceneEvents
     public UnityEvent<string, float, string, bool> OnLeaderBoardScore = new UnityEvent<string, float, string, bool>();
     public UnityEvent<string> OnLeaderBoardClear = new UnityEvent<string>();
     public UnityEvent OnGetLeaderBoard = new UnityEvent();
+    public UnityEvent<string, string> OnGetUserState = new UnityEvent<string, string>();
+    public UnityEvent<string, string, string> OnSetUserState = new UnityEvent<string, string, string>();
+    public UnityEvent<string, string> OnRemoveUserState = new UnityEvent<string, string>();
 
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
