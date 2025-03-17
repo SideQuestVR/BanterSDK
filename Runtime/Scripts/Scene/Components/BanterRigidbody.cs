@@ -77,26 +77,57 @@ namespace Banter.SDK
         const rigidBody = await gameObject.AddComponent(new BS.BanterRigidbody(mass, drag, angularDrag, isKinematic, useGravity, centerOfMass, collisionDetectionMode, velocity, angularVelocity, freezePositionX, freezePositionY, freezePositionZ, freezeRotationX, freezeRotationY, freezeRotationZ));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
 
     public class BanterRigidbody : BanterComponentBase
     {
+        [Tooltip("The mass of the rigidbody, affecting its inertia and interactions with forces.")]
         [See(initial = "1")][SerializeField] internal float mass;
+
+        [Tooltip("The linear drag of the rigidbody, reducing its velocity over time.")]
         [See(initial = "0")][SerializeField] internal float drag;
+
+        [Tooltip("The angular drag of the rigidbody, reducing rotational motion over time.")]
         [See(initial = "0.05")][SerializeField] internal float angularDrag;
+
+        [Tooltip("Determines if the rigidbody is kinematic (not affected by physics but can be moved via code).")]
         [See(initial = "false")][SerializeField] internal bool isKinematic;
+
+        [Tooltip("Determines if gravity affects this rigidbody.")]
         [See(initial = "true")][SerializeField] internal bool useGravity;
+
+        [Tooltip("Sets the center of mass for the rigidbody, affecting rotation and stability.")]
         [See(initial = "0,0,0")][SerializeField] internal Vector3 centerOfMass;
+
+        [Tooltip("The collision detection mode for the rigidbody, affecting physics precision.")]
         [See(initial = "0")][SerializeField] internal CollisionDetectionMode collisionDetectionMode;
+
+        [Tooltip("The velocity of the rigidbody, representing its movement in world space.")]
         [Watch(initial = "0,0,0")][SerializeField] internal Vector3 velocity;
+
+        [Tooltip("The angular velocity of the rigidbody, representing its rotational movement.")]
         [Watch(initial = "0,0,0")][SerializeField] internal Vector3 angularVelocity;
+
+        [Tooltip("Locks movement along the X axis.")]
         [See(initial = "false")][SerializeField] internal bool freezePositionX;
+
+        [Tooltip("Locks movement along the Y axis.")]
         [See(initial = "false")][SerializeField] internal bool freezePositionY;
+
+        [Tooltip("Locks movement along the Z axis.")]
         [See(initial = "false")][SerializeField] internal bool freezePositionZ;
+
+        [Tooltip("Locks rotation around the X axis.")]
         [See(initial = "false")][SerializeField] internal bool freezeRotationX;
+
+        [Tooltip("Locks rotation around the Y axis.")]
         [See(initial = "false")][SerializeField] internal bool freezeRotationY;
+
+        [Tooltip("Locks rotation around the Z axis.")]
         [See(initial = "false")][SerializeField] internal bool freezeRotationZ;
+
         [Method]
         public void _AddForce(Vector3 force, ForceMode mode)
         {

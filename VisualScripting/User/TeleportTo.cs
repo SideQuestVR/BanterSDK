@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Teleport To Location")]
     [UnitShortTitle("Teleport")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class TeleportTo : Unit
     {
@@ -26,6 +26,9 @@ namespace Banter.VisualScripting
         public ValueInput targetRotation;
 
         [DoNotSerialize]
+        public ValueInput targetRotationVector;
+
+        [DoNotSerialize]
         public ValueInput stopVelocity;
         [DoNotSerialize]
         public ValueInput isSpawn;
@@ -35,17 +38,19 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var position = flow.GetValue<Vector3>(targetPosition);
                 var rotation = flow.GetValue<float>(targetRotation);
+                var rotationVec = flow.GetValue<Vector3>(targetRotationVector);
                 var stop = flow.GetValue<bool>(stopVelocity);
                 var spawn = flow.GetValue<bool>(isSpawn);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    BanterScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, rotation, 0f), stop, spawn);
+                    BanterScene.Instance().events.OnTeleport.Invoke(position, rotation > 0 ? new Vector3(0f, rotation, 0f) : rotationVec, stop, spawn);
                 });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
             targetPosition = ValueInput("Position", Vector3.zero);
             targetRotation = ValueInput("Rotation", 0f);
+            targetRotationVector = ValueInput("Rotation Vector", Vector3.zero);
             stopVelocity = ValueInput("Stop Velocity", false);
             isSpawn = ValueInput("Is Spawn", false);
         }

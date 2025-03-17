@@ -1,311 +1,310 @@
-using Banter.SDK;
 using UnityEngine;
-// using UnityEngine.InputSystem;
 using UnityEngine.XR;
 
-public class VRPortalRenderer: MonoBehaviour/*, IPlayerInputHandler*/{
-	[Header("Camera")]
-	[SerializeField] Camera sourceCamOverride = null;
-	[SerializeField] LayerMask cameraViewMask;
-	[SerializeField] public int renderTargetSize = 1024;
-	[SerializeField] float cameraFov = 120.0f;
-	[SerializeField] CameraClearFlags cameraClear = CameraClearFlags.Skybox;
+public class VRPortalRenderer : MonoBehaviour {
+    [Header("Camera")]
+    [SerializeField] private Camera sourceCamOverride = null;
+    [SerializeField] private LayerMask cameraViewMask;
+    [SerializeField] public int renderTargetSize = 1024;
+    [SerializeField] private float cameraFov = 120.0f;
+    [SerializeField] private CameraClearFlags cameraClear = CameraClearFlags.Skybox;
 
-	// [Header("Portals")]
-	Transform portalEye;
-	bool mirrorMode = true;
+    [Header("Portals")]
+    [Tooltip("When true the mirror mode will be used (reflection). When false, the portal mode is used.")]
+    public bool mirrorMode = true;
+    [Tooltip("Portal transform to use when mirrorMode is false (portal mode).")]
+    public Transform portalTransform;
 
-	[Header("Shader parameters")]
-	[SerializeField] string eyeTexLParam = "EyeTexL";
-	[SerializeField] string eyeTexRParam = "EyeTexR";
-	[SerializeField] string eyeViewMatLParam = "EyeViewMatrixL";
-	[SerializeField] string eyeViewMatRParam = "EyeViewMatrixR";
-	[SerializeField] string eyeProjMatLParam = "EyeProjMatrixL";
-	[SerializeField] string eyeProjMatRParam = "EyeProjMatrixR";
-	[SerializeField] Material targetMaterial;
+    [Header("Shader Parameters")]
+    [SerializeField] private string eyeTexLParam = "EyeTexL";
+    [SerializeField] private string eyeTexRParam = "EyeTexR";
+    [SerializeField] private string eyeViewMatLParam = "EyeViewMatrixL";
+    [SerializeField] private string eyeViewMatRParam = "EyeViewMatrixR";
+    [SerializeField] private string eyeProjMatLParam = "EyeProjMatrixL";
+    [SerializeField] private string eyeProjMatRParam = "EyeProjMatrixR";
+    [SerializeField] private Material targetMaterial;
 
-	[Header("Internals (do not touch)")]
-	[SerializeField] Pose deviceEyePoseL;
-	[SerializeField] Pose deviceEyePoseR;
-	[SerializeField] Pose worldEyePoseL;
-	[SerializeField] Pose worldEyePoseR;
+    [Header("Internals (do not touch)")]
+    [SerializeField] private Pose deviceEyePoseL;
+    [SerializeField] private Pose deviceEyePoser;
+    [SerializeField] private Pose worldEyePoseL;
+    [SerializeField] private Pose worldEyePoser;
 
-	[SerializeField] GameObject renderCamObj;
-	[SerializeField] Camera renderCam;
-	[SerializeField] GameObject eyeDebugObjL;
-	[SerializeField] GameObject eyeDebugObjR;
+    [SerializeField] private GameObject renderCamObj;
+    [SerializeField] private Camera renderCam;
+    [SerializeField] private GameObject eyeDebugObjL;
+    [SerializeField] private GameObject eyeDebugObjR;
 
-	[SerializeField]RenderTexture renderTexL = null;
-	[SerializeField]RenderTexture renderTexR = null;
+    [SerializeField] private RenderTexture renderTexL = null;
+    [SerializeField] private RenderTexture renderTexR = null;
 
-	[SerializeField] Matrix4x4 eyeProjL = Matrix4x4.identity;
-	[SerializeField] Matrix4x4 eyeProjR = Matrix4x4.identity;
-	[SerializeField] Matrix4x4 eyeViewL = Matrix4x4.identity;
-	[SerializeField] Matrix4x4 eyeViewR = Matrix4x4.identity;
+    [SerializeField] private Matrix4x4 eyeProjL = Matrix4x4.identity;
+    [SerializeField] private Matrix4x4 eyeProjR = Matrix4x4.identity;
+    [SerializeField] private Matrix4x4 eyeViewL = Matrix4x4.identity;
+    [SerializeField] private Matrix4x4 eyeViewR = Matrix4x4.identity;
 
-	BanterScene scene;
+    // Use the override camera if assigned; otherwise default to Camera.main.
+    private Camera _srcCamera {
+        get => sourceCamOverride ? sourceCamOverride : Camera.main;
+    }
 
-	Camera _srcCamera{
-		get => sourceCamOverride ? sourceCamOverride: Camera.main;
-	}
+    #region Public Methods
 
-	void Start() {
-		scene = BanterScene.Instance();
-		InvokeRepeating("IsLookingAt", 0, 10f);
-	}
+    public void SetRenderTextureSize(int size) {
+        renderTargetSize = size;
+        DestroyRenderTextures();
+        CreateRenderTextures();
+    }
 
-	public void SetRenderTextureSize(int size){
-		renderTargetSize = size;
-		DestroyRenderTextures();
-		CreateRenderTextures();
-	}
+    public void SetCameraClear(int clear) {
+        cameraClear = (CameraClearFlags)clear;
+    }
 
-	public void SetCameraClear(int clear){
-		cameraClear = (CameraClearFlags)clear;
-	}
-	public void SetCameraColor(string color){
-		if(renderCam) {
-			renderCam.backgroundColor = ColorUtility.TryParseHtmlString(color, out Color c) ? c : Color.black;
-		}
-	}
+    public void SetCameraColor(string color) {
+        if (renderCam) {
+            renderCam.backgroundColor = ColorUtility.TryParseHtmlString(color, out Color c) ? c : Color.black;
+        }
+    }
 
-	public void SetCullingLayer(int mask){
-		cameraViewMask = 1 << mask;
-	}
+    public void SetCullingLayer(int mask) {
+        cameraViewMask = 1 << mask;
+    }
 
-	public void AddCullingLayer(int mask){
-		cameraViewMask |= 1 << mask;
-	}
-	
-	void CreateRenderTextures() {
-		renderTexL = new RenderTexture(renderTargetSize, renderTargetSize, 16);
-		renderTexR = new RenderTexture(renderTargetSize, renderTargetSize, 16);
-		renderTexL.Create();
-		renderTexR.Create();
-	}
+    public void AddCullingLayer(int mask) {
+        cameraViewMask |= 1 << mask;
+    }
 
-	void OnEnable(){
-		CreateRenderTextures();
+    // Optional public setters for runtime changes.
+    public void SetMirrorMode(bool mode) {
+        mirrorMode = mode;
+    }
 
-		renderCamObj = new GameObject("Render Camera");
-		renderCamObj.hideFlags = HideFlags.DontSave;
-		renderCamObj.transform.SetParent(transform);
+    public void SetPortalTransform(Transform t) {
+        portalTransform = t;
+    }
 
-		renderCam = renderCamObj.AddComponent<Camera>();
-		renderCam.hideFlags = HideFlags.DontSave;
+    #endregion
 
-		renderCam.enabled = false;
+    #region Initialization & Cleanup
 
-		eyeDebugObjL = new GameObject("DebugEyeL");
-		eyeDebugObjL.hideFlags = HideFlags.DontSave;
-		eyeDebugObjL.transform.SetParent(transform);
+    void CreateRenderTextures() {
+        renderTexL = new RenderTexture(renderTargetSize, renderTargetSize, 16);
+        renderTexR = new RenderTexture(renderTargetSize, renderTargetSize, 16);
+        renderTexL.Create();
+        renderTexR.Create();
+    }
 
-		eyeDebugObjR = new GameObject("DebugEyeR");
-		eyeDebugObjR.hideFlags = HideFlags.DontSave;
-		eyeDebugObjR.transform.SetParent(transform);
-	}
+    void OnEnable() {
+        CreateRenderTextures();
 
-	void DestroyRenderTextures() {
-		if (renderTexL){
-			renderTexL.Release();
-			renderTexL = null;
-		}
-		if (renderTexR){
-			renderTexR.Release();
-			renderTexR = null;
-		}
-	}
+        renderCamObj = new GameObject("Render Camera");
+        renderCamObj.hideFlags = HideFlags.DontSave;
+        renderCamObj.transform.SetParent(transform);
 
-	void OnDisable(){
-		DestroyRenderTextures();
-		Destroy(renderCamObj);
-		Destroy(eyeDebugObjL);
-		Destroy(eyeDebugObjR);
+        renderCam = renderCamObj.AddComponent<Camera>();
+        renderCam.hideFlags = HideFlags.DontSave;
+        renderCam.enabled = false;
 
-	}
+        eyeDebugObjL = new GameObject("DebugEyeL");
+        eyeDebugObjL.hideFlags = HideFlags.DontSave;
+        eyeDebugObjL.transform.SetParent(transform);
 
-	private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye)
-	{
-		InputFeatureUsage<Vector3> inputFeatureUsagePosition = CommonUsages.leftEyePosition;
-		InputFeatureUsage<Quaternion> inputFeatureUsageRotation = CommonUsages.leftEyeRotation;
+        eyeDebugObjR = new GameObject("DebugEyeR");
+        eyeDebugObjR.hideFlags = HideFlags.DontSave;
+        eyeDebugObjR.transform.SetParent(transform);
+    }
 
-		if (eye == XRNode.RightEye) {
-			inputFeatureUsagePosition = CommonUsages.rightEyePosition;
-			inputFeatureUsageRotation = CommonUsages.rightEyeRotation;
-		}
-		
-		InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
-		if (device.isValid)
-		{
-			if (
-				device.TryGetFeatureValue(inputFeatureUsagePosition, out position) && 
-				device.TryGetFeatureValue(inputFeatureUsageRotation, out rotation))
-					return true;
-				
-		}
-		// This is the fail case
-		position = Vector3.zero;
-		rotation = Quaternion.identity;
-		return false;
-	}
+    void DestroyRenderTextures() {
+        if (renderTexL) {
+            renderTexL.Release();
+            renderTexL = null;
+        }
+        if (renderTexR) {
+            renderTexR.Release();
+            renderTexR = null;
+        }
+    }
 
-	void IsLookingAt() {
-		if(Vector3.Distance(transform.position, Camera.main.transform.position) < 3f && 
-		Vector3.Angle(transform.position - Camera.main.transform.position, Camera.main.transform.forward) < 90f) {
-			scene.LookedAtMirror();
-		}
-		// else{
-		// 	Debug.Log("Not looking at mirror" + Vector3.Angle(transform.position - Camera.main.transform.position, Camera.main.transform.forward) + " " + Vector3.Distance(transform.position, Camera.main.transform.position));
-		// }
-	}
+    void OnDisable() {
+        DestroyRenderTextures();
+        if (renderCamObj != null) Destroy(renderCamObj);
+        if (eyeDebugObjL != null) Destroy(eyeDebugObjL);
+        if (eyeDebugObjR != null) Destroy(eyeDebugObjR);
+    }
 
-	void updateEyePos(){
-		if( XRSettings.isDeviceActive) {
-			TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
-			TryGetEye(out deviceEyePoseR.position, out deviceEyePoseR.rotation, XRNode.RightEye);
-		}else{
-			deviceEyePoseL.position = deviceEyePoseR.position = Camera.main.transform.position;
-			deviceEyePoseL.rotation = deviceEyePoseR.rotation = Camera.main.transform.rotation;
-		}
-		var cam = _srcCamera;
-		var camParent = cam.transform.parent;
-		if (!camParent || !XRSettings.isDeviceActive){
-			worldEyePoseL = deviceEyePoseL;
-			worldEyePoseR = deviceEyePoseR;
-		}
-		else{
-			worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
-			worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;
-			worldEyePoseR.position = camParent.TransformPoint(deviceEyePoseR.position);
-			worldEyePoseR.rotation = camParent.rotation * deviceEyePoseR.rotation;
-		}
-		eyeDebugObjL.transform.position = worldEyePoseL.position;
-		eyeDebugObjL.transform.rotation = worldEyePoseL.rotation;
-		eyeDebugObjR.transform.position = worldEyePoseR.position;
-		eyeDebugObjR.transform.rotation = worldEyePoseR.rotation;
-	}
+    #endregion
 
-	void renderToTexture(RenderTexture rt, Pose eyePose, out Matrix4x4 viewMat, out Matrix4x4 projMat){
-		viewMat = Matrix4x4.identity;
-		projMat = Matrix4x4.identity;
+    #region Eye Position
 
-		var srcCam = _srcCamera;
+    // Retrieves the XR eye (left/right) position and rotation.
+    private bool TryGetEye(out Vector3 position, out Quaternion rotation, XRNode eye) {
+        InputFeatureUsage<Vector3> posUsage = (eye == XRNode.RightEye) ? CommonUsages.rightEyePosition : CommonUsages.leftEyePosition;
+        InputFeatureUsage<Quaternion> rotUsage = (eye == XRNode.RightEye) ? CommonUsages.rightEyeRotation : CommonUsages.leftEyeRotation;
 
-		renderCam.enabled = true;
-		renderCam.transform.position = eyePose.position;
-		renderCam.transform.rotation = eyePose.rotation;
+        InputDevice device = InputDevices.GetDeviceAtXRNode(XRNode.Head);
+        if (device.isValid) {
+            if (device.TryGetFeatureValue(posUsage, out position) &&
+                device.TryGetFeatureValue(rotUsage, out rotation))
+                return true;
+        }
+        position = Vector3.zero;
+        rotation = Quaternion.identity;
+        return false;
+    }
 
-		renderCam.nearClipPlane = srcCam.nearClipPlane;
-		renderCam.farClipPlane = srcCam.farClipPlane;
-		renderCam.fieldOfView = cameraFov;
-		renderCam.cullingMask = cameraViewMask;
-		renderCam.clearFlags = cameraClear;
+    // Update the current eye poses from XR (or fallback to Camera.main).
+    void updateEyePos() {
+        if (XRSettings.isDeviceActive) {
+            TryGetEye(out deviceEyePoseL.position, out deviceEyePoseL.rotation, XRNode.LeftEye);
+            TryGetEye(out deviceEyePoser.position, out deviceEyePoser.rotation, XRNode.RightEye);
+        } else {
+            deviceEyePoseL.position = deviceEyePoser.position = Camera.main.transform.position;
+            deviceEyePoseL.rotation = deviceEyePoser.rotation = Camera.main.transform.rotation;
+        }
 
-		viewMat = renderCam.worldToCameraMatrix;
-		Vector3 mirrorPos = Vector3.zero, mirrorNormal = Vector3.up;
-		bool useOblique = false;
-		if (portalEye && !mirrorMode){
-			Coord srcCoord = new(transform);
-			Coord dstCoord = new(portalEye);
+        Camera cam = _srcCamera;
+        Transform camParent = cam.transform.parent;
+        if (camParent == null || !XRSettings.isDeviceActive) {
+            worldEyePoseL = deviceEyePoseL;
+            worldEyePoser = deviceEyePoser;
+        } else {
+            worldEyePoseL.position = camParent.TransformPoint(deviceEyePoseL.position);
+            worldEyePoseL.rotation = camParent.rotation * deviceEyePoseL.rotation;
+            worldEyePoser.position = camParent.TransformPoint(deviceEyePoser.position);
+            worldEyePoser.rotation = camParent.rotation * deviceEyePoser.rotation;
+        }
 
-			var localEyePos = srcCoord.worldToLocalPos(eyePose.position);
-			var srcEyeUp = eyePose.rotation * Vector3.up;
-			var srcEyeForward = eyePose.rotation * Vector3.forward;
-			var localEyeUp = srcCoord.worldToLocalDir(srcEyeUp);
-			var localEyeForward = srcCoord.worldToLocalDir(srcEyeForward);
+        eyeDebugObjL.transform.position = worldEyePoseL.position;
+        eyeDebugObjL.transform.rotation = worldEyePoseL.rotation;
+        eyeDebugObjR.transform.position = worldEyePoser.position;
+        eyeDebugObjR.transform.rotation = worldEyePoser.rotation;
+    }
 
-			var newEyePos = dstCoord.localToWorldPos(localEyePos);
-			var newEyeUp = dstCoord.localToWorldDir(localEyeUp);
-			var newEyeForward = dstCoord.localToWorldDir(localEyeForward);
-			var newEyeRot = Quaternion.LookRotation(newEyeForward, newEyeUp);
+    #endregion
 
-			eyePose.position = newEyePos;
-			eyePose.rotation = newEyeRot;
-			renderCam.transform.position = eyePose.position;
-			renderCam.transform.rotation = eyePose.rotation;
-		}
-		else if (mirrorMode){
-			Coord srcCoord = new(transform);
-			Coord dstCoord = srcCoord;
-			
-			var localEyePos = srcCoord.worldToLocalPos(eyePose.position);
-			var localEyeUp = srcCoord.worldToLocalDir(eyePose.rotation * Vector3.up);
-			var localEyeForward = srcCoord.worldToLocalDir(eyePose.rotation * Vector3.forward);
+    #region Rendering
 
-			var planeNormal = Vector3.up;
-			localEyePos = Vector3.Reflect(localEyePos, planeNormal);
-			localEyeUp = Vector3.Reflect(localEyeUp, planeNormal);
-			localEyeForward = Vector3.Reflect(localEyeForward, planeNormal);
+    // Renders the given eye view to the provided RenderTexture and outputs the view and projection matrices.
+    void renderToTexture(RenderTexture rt, Pose eyePose, out Matrix4x4 viewMat, out Matrix4x4 projMat) {
+        viewMat = Matrix4x4.identity;
+        projMat = Matrix4x4.identity;
 
-			var newEyePos = dstCoord.localToWorldPos(localEyePos);
-			var newEyeUp = dstCoord.localToWorldDir(localEyeUp);
-			var newEyeForward = dstCoord.localToWorldDir(localEyeForward);
-			var newEyeRot = Quaternion.LookRotation(newEyeForward, newEyeUp);
+        Camera srcCam = _srcCamera;
 
-			eyePose.position = newEyePos;
-			eyePose.rotation = newEyeRot;
-			renderCam.transform.position = eyePose.position;
-			renderCam.transform.rotation = eyePose.rotation;
+        renderCam.enabled = true;
+        renderCam.transform.position = eyePose.position;
+        renderCam.transform.rotation = eyePose.rotation;
 
-			mirrorPos = srcCoord.pos;
-			mirrorNormal = srcCoord.y;
-			useOblique = true;
-		}
+        renderCam.nearClipPlane = srcCam.nearClipPlane;
+        renderCam.farClipPlane = srcCam.farClipPlane;
+        renderCam.fieldOfView = cameraFov;
+        renderCam.cullingMask = cameraViewMask;
+        renderCam.clearFlags = cameraClear;
 
-		projMat = renderCam.projectionMatrix;
-		if (useOblique){
-			var camMirrorPos = renderCam.worldToCameraMatrix.MultiplyPoint(mirrorPos);
-			var camMirrorNormal = renderCam.worldToCameraMatrix.MultiplyVector(mirrorNormal);
-			var camClipPlane = new Vector4(
-				camMirrorNormal.x, camMirrorNormal.y, camMirrorNormal.z, 
-				-Vector3.Dot(camMirrorNormal, camMirrorPos)
-			);
-			var mirrorProj = renderCam.CalculateObliqueMatrix(camClipPlane);
-			renderCam.projectionMatrix = mirrorProj;
-		}
-		if (mirrorMode){
-			projMat *= Matrix4x4.Scale(new Vector3(-1.0f, 1.0f, 1.0f));
-		}
+        viewMat = renderCam.worldToCameraMatrix;
 
-		renderCam.targetTexture = rt;
+        Vector3 clipPlanePos = Vector3.zero;
+        Vector3 clipPlaneNormal = Vector3.up;
+        bool useOblique = false;
 
-		renderCam.Render();
+        // When mirrorMode is false, do portal mode; otherwise use mirror mode.
+        if (!mirrorMode && portalTransform != null) {
+            // Portal mode: transform the eye pose from this object's coordinate space into the portal's.
+            Coord srcCoord = new Coord(transform);
+            Coord dstCoord = new Coord(portalTransform);
 
-		renderCam.enabled = false;
-	}
+            Vector3 localEyePos = srcCoord.worldToLocalPos(eyePose.position);
+            Vector3 srcEyeUp = eyePose.rotation * Vector3.up;
+            Vector3 srcEyeForward = eyePose.rotation * Vector3.forward;
+            Vector3 localEyeUp = srcCoord.worldToLocalDir(srcEyeUp);
+            Vector3 localEyeForward = srcCoord.worldToLocalDir(srcEyeForward);
 
-	void drawGizmos(Color c){
+            Vector3 newEyePos = dstCoord.localToWorldPos(localEyePos);
+            Vector3 newEyeUp = dstCoord.localToWorldDir(localEyeUp);
+            Vector3 newEyeForward = dstCoord.localToWorldDir(localEyeForward);
+            Quaternion newEyeRot = Quaternion.LookRotation(newEyeForward, newEyeUp);
 
-	}
+            eyePose.position = newEyePos;
+            eyePose.rotation = newEyeRot;
+            renderCam.transform.position = eyePose.position;
+            renderCam.transform.rotation = eyePose.rotation;
+        }
+        else if (mirrorMode) {
+            // Mirror mode: reflect the eye pose across a plane.
+            Coord srcCoord = new Coord(transform);
+            Vector3 localEyePos = srcCoord.worldToLocalPos(eyePose.position);
+            Vector3 localEyeUp = srcCoord.worldToLocalDir(eyePose.rotation * Vector3.up);
+            Vector3 localEyeForward = srcCoord.worldToLocalDir(eyePose.rotation * Vector3.forward);
 
-	void OnDrawGizmosSelected(){
-		drawGizmos(Color.white);
-	}
-	void OnDrawGizmos(){
-		drawGizmos(Color.yellow);
-	}
+            // Assume a horizontal mirror plane (normal = Vector3.up).
+            Vector3 planeNormal = Vector3.up;
+            localEyePos = Vector3.Reflect(localEyePos, planeNormal);
+            localEyeUp = Vector3.Reflect(localEyeUp, planeNormal);
+            localEyeForward = Vector3.Reflect(localEyeForward, planeNormal);
 
-	void setShaderParams(){
-		if (targetMaterial){
-			targetMaterial.SetMatrix(eyeProjMatLParam, eyeProjL);
-			targetMaterial.SetMatrix(eyeProjMatRParam, eyeProjR);
-			targetMaterial.SetMatrix(eyeViewMatLParam, eyeViewL);
-			targetMaterial.SetMatrix(eyeViewMatRParam, eyeViewR);
-			targetMaterial.SetTexture(eyeTexLParam, renderTexL);
-			targetMaterial.SetTexture(eyeTexRParam, renderTexR);
-		}
-		Shader.SetGlobalMatrix(eyeProjMatLParam, eyeProjL);
-		Shader.SetGlobalMatrix(eyeProjMatRParam, eyeProjR);
-		Shader.SetGlobalMatrix(eyeViewMatLParam, eyeViewL);
-		Shader.SetGlobalMatrix(eyeViewMatRParam, eyeViewR);
-		Shader.SetGlobalTexture(eyeTexLParam, renderTexL);
-		Shader.SetGlobalTexture(eyeTexRParam, renderTexR);
-	}
+            Vector3 newEyePos = srcCoord.localToWorldPos(localEyePos);
+            Vector3 newEyeUp = srcCoord.localToWorldDir(localEyeUp);
+            Vector3 newEyeForward = srcCoord.localToWorldDir(localEyeForward);
+            Quaternion newEyeRot = Quaternion.LookRotation(newEyeForward, newEyeUp);
 
-	void LateUpdate(){
-		updateEyePos();
-		renderToTexture(renderTexL, worldEyePoseL, out eyeViewL, out eyeProjL);
-		renderToTexture(renderTexR, worldEyePoseR, out eyeViewR, out eyeProjR);
-		setShaderParams();
-	}
+            eyePose.position = newEyePos;
+            eyePose.rotation = newEyeRot;
+            renderCam.transform.position = eyePose.position;
+            renderCam.transform.rotation = eyePose.rotation;
+
+            // Set up an oblique near-clip plane so that only what is in front of the mirror is rendered.
+            clipPlanePos = srcCoord.pos;
+            clipPlaneNormal = srcCoord.y;
+            useOblique = true;
+        }
+
+        projMat = renderCam.projectionMatrix;
+        if (useOblique) {
+            Vector3 camSpacePos = renderCam.worldToCameraMatrix.MultiplyPoint(clipPlanePos);
+            Vector3 camSpaceNormal = renderCam.worldToCameraMatrix.MultiplyVector(clipPlaneNormal);
+            Vector4 clipPlane = new Vector4(camSpaceNormal.x, camSpaceNormal.y, camSpaceNormal.z,
+                                            -Vector3.Dot(camSpaceNormal, camSpacePos));
+            Matrix4x4 obliqueProj = renderCam.CalculateObliqueMatrix(clipPlane);
+            renderCam.projectionMatrix = obliqueProj;
+            projMat = obliqueProj;
+        }
+        // In mirror mode flip the projection matrix along X.
+        if (mirrorMode) {
+            projMat *= Matrix4x4.Scale(new Vector3(-1.0f, 1.0f, 1.0f));
+        }
+
+        renderCam.targetTexture = rt;
+        renderCam.Render();
+        renderCam.enabled = false;
+    }
+
+    #endregion
+
+    #region Shader Setup
+
+    void setShaderParams() {
+        if (targetMaterial) {
+            targetMaterial.SetMatrix(eyeProjMatLParam, eyeProjL);
+            targetMaterial.SetMatrix(eyeProjMatRParam, eyeProjR);
+            targetMaterial.SetMatrix(eyeViewMatLParam, eyeViewL);
+            targetMaterial.SetMatrix(eyeViewMatRParam, eyeViewR);
+            targetMaterial.SetTexture(eyeTexLParam, renderTexL);
+            targetMaterial.SetTexture(eyeTexRParam, renderTexR);
+        }
+        Shader.SetGlobalMatrix(eyeProjMatLParam, eyeProjL);
+        Shader.SetGlobalMatrix(eyeProjMatRParam, eyeProjR);
+        Shader.SetGlobalMatrix(eyeViewMatLParam, eyeViewL);
+        Shader.SetGlobalMatrix(eyeViewMatRParam, eyeViewR);
+        Shader.SetGlobalTexture(eyeTexLParam, renderTexL);
+        Shader.SetGlobalTexture(eyeTexRParam, renderTexR);
+    }
+
+    #endregion
+
+    void LateUpdate() {
+        updateEyePos();
+        renderToTexture(renderTexL, worldEyePoseL, out eyeViewL, out eyeProjL);
+        renderToTexture(renderTexR, worldEyePoser, out eyeViewR, out eyeProjR);
+        setShaderParams();
+    }
 }

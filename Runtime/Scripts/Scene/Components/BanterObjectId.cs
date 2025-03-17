@@ -7,8 +7,10 @@ namespace Banter.SDK
 {
     [ExecuteInEditMode]
     [DisallowMultipleComponent]
+    [DefaultExecutionOrder(-1)]
     public class BanterObjectId : MonoBehaviour
     {
+        [Tooltip("A unique identifier for this object within the Banter system.")]
         public string Id;
 
         [HideInInspector]

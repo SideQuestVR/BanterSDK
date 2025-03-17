@@ -6,7 +6,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Is Space Favourited")]
     [UnitShortTitle("Space Favourited?")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Space")]
     [TypeIcon(typeof(BanterObjectId))]
     public class IsSpaceFavourited : Unit
     {

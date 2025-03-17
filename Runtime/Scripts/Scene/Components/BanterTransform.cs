@@ -29,22 +29,47 @@ namespace Banter.SDK
         transform.position = new BS.Vector3(1,1,1);
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent(typeof(Transform))]
     public class BanterTransform : UnityComponentBase
     {
+        [Tooltip("The world position of the object.")]
         [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 position = Vector3.zero;
+
+        [Tooltip("The local position of the object relative to its parent.")]
         [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 localPosition = Vector3.zero;
+
+        [Tooltip("The world rotation of the object.")]
         [Watch(initial = "0,0,0,1")][HideInInspector][SerializeField] internal Quaternion rotation = Quaternion.identity;
+
+        [Tooltip("The local rotation of the object relative to its parent.")]
         [Watch(initial = "0,0,0,1")][HideInInspector][SerializeField] internal Quaternion localRotation = Quaternion.identity;
+
+        [Tooltip("The local scale of the object.")]
         [Watch(initial = "1,1,1")][HideInInspector][SerializeField] internal Vector3 localScale = Vector3.one;
+
+        [Tooltip("The world rotation of the object in Euler angles.")]
         [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 eulerAngles = Vector3.zero;
+
+        [Tooltip("The local rotation of the object in Euler angles relative to its parent.")]
         [Watch(initial = "0,0,0")][HideInInspector][SerializeField] internal Vector3 localEulerAngles = Vector3.zero;
+
+        [Tooltip("The up direction of the object.")]
         [Watch(initial = "0,1,0")][HideInInspector][SerializeField] internal Vector3 up = Vector3.up;
+
+        [Tooltip("The forward direction of the object.")]
         [Watch(initial = "0,0,1")][HideInInspector][SerializeField] internal Vector3 forward = Vector3.forward;
+
+        [Tooltip("The right direction of the object.")]
         [Watch(initial = "1,0,0")][HideInInspector][SerializeField] internal Vector3 right = Vector3.right;
+
+        [Tooltip("Enable to smoothly interpolate the position changes.")]
         [See(initial = "false")][HideInInspector][SerializeField] internal bool lerpPosition = false;
+
+        [Tooltip("Enable to smoothly interpolate the rotation changes.")]
         [See(initial = "false")][HideInInspector][SerializeField] internal bool lerpRotation = false;
+
         float _stepPosition = 0.3f;
         Vector3 tempPosition;
         Quaternion tempRotation;

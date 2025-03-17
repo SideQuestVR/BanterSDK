@@ -28,14 +28,23 @@ namespace Banter.SDK
     ```
 
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterBillboard : BanterComponentBase
     {
+        [Tooltip("Controls the smoothness of the billboard's rotation.")]
         [See(initial = "0")][SerializeField] internal float smoothing = 0;
+
+        [Tooltip("Enable or disable the X axis rotation for the billboard.")]
         [See(initial = "true")][SerializeField] internal bool enableXAxis = true;
+
+        [Tooltip("Enable or disable the Y axis rotation for the billboard.")]
         [See(initial = "true")][SerializeField] internal bool enableYAxis = true;
+
+        [Tooltip("Enable or disable the Z axis rotation for the billboard.")]
         [See(initial = "true")][SerializeField] internal bool enableZAxis = true;
+        
         internal override void StartStuff()
         {
             SetLoadedIfNot();

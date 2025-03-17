@@ -183,13 +183,13 @@ namespace Banter.SDKEditor
         private static List<string> GetElementsFromScriptMachine(ScriptMachine scriptMachine)
         {
             var output = new List<string>();
-            if (scriptMachine == null || (scriptMachine.graph.elements.Count() == 0 && scriptMachine.nest?.embed?.elements.Count == 0))
+            if (scriptMachine == null || (scriptMachine.graph?.elements.Count() == 0 && scriptMachine.nest?.embed?.elements.Count == 0))
             {
                 return output;
             }
 
             var reference = scriptMachine.GetReference().AsReference();
-            foreach (var e in scriptMachine.graph.elements)
+            foreach (var e in scriptMachine.graph?.elements)
             {
                 output = output.Concat(GrabElements(e, reference)).ToList();
             }

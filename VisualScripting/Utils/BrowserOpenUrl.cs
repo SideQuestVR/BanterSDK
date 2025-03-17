@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Menu Browser Open URL")]
     [UnitShortTitle("Menu Browser Nav")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Browser")]
     [TypeIcon(typeof(BanterObjectId))]
     public class MenuOpenUrl : Unit
     {

@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On User Joined")]
     [UnitShortTitle("User Joined")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnUserJoined : EventUnit<BanterUser>
     {

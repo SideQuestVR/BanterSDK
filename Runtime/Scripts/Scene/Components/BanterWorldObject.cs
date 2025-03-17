@@ -5,12 +5,17 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterWorldObject : BanterComponentBase
     {
 
+        /// <summary>
+        /// Array of colliders associated with this object.
+        /// This array is automatically populated when colliders are collected.
+        /// </summary>
+        [Tooltip("Automatically populated array of colliders associated with this object.")]
         public Collider[] colliders;
         [Method]
         public void _CollectColliders()

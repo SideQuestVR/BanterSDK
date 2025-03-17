@@ -31,6 +31,7 @@ namespace Banter.SDK
         public const string EnableTeleport = "EnableTeleport";
         public const string EnableForceGrab = "EnableForceGrab";
         public const string EnableSpiderMan = "EnableSpiderMan";
+        public const string EnableHandHold = "EnableHandHold";
         public const string EnableRadar = "EnableRadar";
         public const string EnableNametags = "EnableNametags";
         public const string EnablePortals = "EnablePortals";
@@ -44,6 +45,24 @@ namespace Banter.SDK
         public const string RefreshRate = "RefreshRate";
         public const string ClippingPlane = "ClippingPlane";
         public const string SpawnPoint = "SpawnPoint";
+        
+        public const string PhysicsMoveSpeed = "PhysicsMoveSpeed";
+        public const string PhysicsMoveAcceleration = "PhysicsMoveAcceleration";
+        public const string PhysicsAirControlSpeed = "PhysicsAirControlSpeed";
+        public const string PhysicsAirControlAcceleration = "PhysicsAirControlAcceleration";
+        public const string PhysicsDrag = "PhysicsDrag";
+        public const string PhysicsFreeFallAngularDrag = "PhysicsFreeFallAngularDrag";
+        public const string PhysicsJumpStrength = "PhysicsJumpStrength";
+        public const string PhysicsHandPositionStrength = "PhysicsHandPositionStrength";
+        public const string PhysicsHandRotationStrength = "PhysicsHandRotationStrength";
+        public const string PhysicsHandSpringiness = "PhysicsHandSpringiness";
+        public const string PhysicsGrappleRange = "PhysicsGrappleRange";
+        public const string PhysicsGrappleReelSpeed = "PhysicsGrappleReelSpeed";
+        public const string PhysicsGrappleSpringiness = "PhysicsGrappleSpringiness";
+        public const string PhysicsGorillaMode = "PhysicsGorillaMode";
+
+        public const string SettingsLocked = "SettingsLocked";
+        public const string PhysicsSettingsLocked = "PhysicsSettingsLocked";
     }
     public class BanterScene
     {
@@ -266,8 +285,9 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
+                await new WaitUntil(() => state == SceneState.UNITY_READY);
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
 #endif
@@ -280,7 +300,7 @@ namespace Banter.SDK
             }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             });
@@ -324,6 +344,25 @@ namespace Banter.SDK
             }
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_IMAGE);
         }
+        public void AddPlayerForce(string msg, int reqId)
+        {
+            try
+            {
+                var parts = msg.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length < 4)
+                {
+                    Debug.LogError("[Banter] AddPlayerForce message is malformed: " + msg);
+                    return;
+                }
+                var force = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
+                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAddPlayerForce.Invoke(force, (ForceMode)int.Parse(parts[3])));
+            }
+            catch (Exception e)
+            {
+                Debug.LogError(e);
+            }
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.ADD_PLAYER_FORCE);
+        }
         public void AiModel(string msg, int reqId)
         {
             try
@@ -353,7 +392,16 @@ namespace Banter.SDK
             var renderer = obj.gameObject.GetComponent<Renderer>();
             try
             {
-                return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
+                byte[] bytes = SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG);
+                // Utils.SaveTextureToFile(_lensCam.targetTexture, Path.Join(dir, $"{DateTime.Now:yyyy-MM-dd}_{DateTime.Now:HH-mm-ss}_" + (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds + ".jpg"));
+                // await new WaitUntil(() => isDone);
+                if(bytes != null)
+                {
+                    return Convert.ToBase64String(bytes);
+                }else{
+                    return null;
+                }
+                // return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
             }
             catch (Exception e)
             {
@@ -400,12 +448,12 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(() => Time.timeScale = timeScale);
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
-        public void PlayerSpeed(string msg, int reqId)
-        {
-            var speed = msg == "1";
-            events.OnPlayerSpeedChanged?.Invoke(speed);
-            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
-        }
+        // public void PlayerSpeed(string msg, int reqId)
+        // {
+        //     var speed = msg == "1";
+        //     events.OnPlayerSpeedChanged?.Invoke(speed);
+        //     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PLAYER_SPEED);
+        // }
 
         public void LockThing(int reqId, UnityEvent handler, string command)
         {
@@ -534,6 +582,7 @@ namespace Banter.SDK
                 };
                 banterObject.unityAndBanterObject = unityAndBanterObject;
                 objects.TryAdd(oid, unityAndBanterObject);
+                Debug.Log("HERER - AddBanterObject - " + oid + " " + gameObject.name);
                 if (!skipChangeFlush)
                 {
                     FlushObjectToChanges(oid, 0, 0);
@@ -608,6 +657,7 @@ namespace Banter.SDK
         public UnityAndBanterObject GetObject(int objectId)
         {
             UnityAndBanterObject value;
+            Debug.Log("HERER - GetObject - " + objectId);
             objects.TryGetValue(objectId, out value);
             return value;
         }
@@ -1307,6 +1357,7 @@ namespace Banter.SDK
             externalLoadFailed = true;
             loadUrlTaskCompletionSource?.TrySetException(new Exception((isUserCancel ? "Cancelled: " : "Load failed: ") + message));
             loadUrlTaskCompletionSource?.TrySetCanceled();
+            state = SceneState.LOAD_FAILED;
             loadingManager?.SetLoadProgress(isUserCancel ? "Loading Cancelled" : "Loading failed", 0, message, true);
             LogLine.Do(isUserCancel ? "Loading Cancelled" : "Loading failed");
             loadingManager?.UpdateCancelText();
@@ -1675,61 +1726,126 @@ namespace Banter.SDK
 
         public void SetSettings(string msg, int reqId)
         {
+            
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
             UnityMainThreadTaskScheduler.Default.Enqueue(() =>
              {
                  foreach (var part in settingsParts)
                  {
                      var setting = part.Split(MessageDelimiters.SECONDARY);
-                     switch (setting[0])
+                     if (!settings.IsSettingsLocked)
                      {
-                         case SettingsMap.EnableDevTools:
-                             settings.EnableDevTools = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableTeleport:
-                             settings.EnableTeleport = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableForceGrab:
-                             settings.EnableForceGrab = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableSpiderMan:
-                             settings.EnableSpiderMan = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableRadar:
-                             settings.EnableRadar = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableNametags:
-                             settings.EnableNametags = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableDefaultTextures:
-                             settings.EnableDefaultTextures = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnablePortals:
-                             settings.EnablePortals = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableGuests:
-                             settings.EnableGuests = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableFriendPositionJoin:
-                             settings.EnableFriendPositionJoin = setting[1] == "1";
-                             break;
-                         case SettingsMap.EnableAvatars:
-                             settings.EnableAvatars = setting[1] == "1";
-                             break;
-                         case SettingsMap.MaxOccupancy:
-                             settings.MaxOccupancy = int.Parse(setting[1]);
-                             break;
-                         case SettingsMap.RefreshRate:
-                             settings.RefreshRate = int.Parse(setting[1]);
-                             break;
-                         case SettingsMap.ClippingPlane:
-                             var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                             settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]), NumberFormat.Parse(clippingParts[2]));
-                             break;
-                         case SettingsMap.SpawnPoint:
-                             var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                             settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]), NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]), NumberFormat.Parse(spawnParts[4]));
-                             break;
+                         switch (setting[0])
+                         {
+                             case SettingsMap.EnableDevTools:
+                                 settings.EnableDevTools = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableTeleport:
+                                 settings.EnableTeleport = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableForceGrab:
+                                 settings.EnableForceGrab = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableSpiderMan:
+                                 settings.EnableSpiderMan = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableHandHold:
+                                 settings.EnableHandHold = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableRadar:
+                                 settings.EnableRadar = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableNametags:
+                                 settings.EnableNametags = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableDefaultTextures:
+                                 settings.EnableDefaultTextures = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnablePortals:
+                                 settings.EnablePortals = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableGuests:
+                                 settings.EnableGuests = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableFriendPositionJoin:
+                                 settings.EnableFriendPositionJoin = setting[1] == "1";
+                                 break;
+                             case SettingsMap.EnableAvatars:
+                                 settings.EnableAvatars = setting[1] == "1";
+                                 break;
+                             case SettingsMap.MaxOccupancy:
+                                 settings.MaxOccupancy = int.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.RefreshRate:
+                                 settings.RefreshRate = int.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.ClippingPlane:
+                                 var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
+                                 settings.ClippingPlane = new Vector2(NumberFormat.Parse(clippingParts[1]),
+                                     NumberFormat.Parse(clippingParts[2]));
+                                 break;
+                             case SettingsMap.SpawnPoint:
+                                 var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
+                                 settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]),
+                                     NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]),
+                                     NumberFormat.Parse(spawnParts[4]));
+                                 break;
+                             case SettingsMap.SettingsLocked:
+                                 settings.IsSettingsLocked = setting[1] == "1";
+                                 break;
+                         }
+                     }
+
+                     if (!settings.IsPhysicsSettingsLocked)
+                     {
+                         switch (setting[0])
+                         {
+                             case SettingsMap.PhysicsMoveSpeed:
+                                 settings.PhysicsMoveSpeed = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsMoveAcceleration:
+                                 settings.PhysicsMoveAcceleration = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsAirControlSpeed:
+                                 settings.PhysicsAirControlSpeed = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsAirControlAcceleration:
+                                 settings.PhysicsAirControlAcceleration = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsDrag:
+                                 settings.PhysicsDrag = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsFreeFallAngularDrag:
+                                 settings.PhysicsFreeFallAngularDrag = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsJumpStrength:
+                                 settings.PhysicsJumpStrength = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsHandPositionStrength:
+                                 settings.PhysicsHandPositionStrength = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsHandRotationStrength:
+                                 settings.PhysicsHandRotationStrength = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsHandSpringiness:
+                                 settings.PhysicsHandSpringiness = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGrappleRange:
+                                 settings.PhysicsGrappleRange = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGrappleReelSpeed:
+                                 settings.PhysicsGrappleReelSpeed = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGrappleSpringiness:
+                                 settings.PhysicsGrappleSpringiness = float.Parse(setting[1]);
+                                 break;
+                             case SettingsMap.PhysicsGorillaMode:
+                                 settings.PhysicsGorillaMode = setting[1] == "1";
+                                 break;
+                             case SettingsMap.PhysicsSettingsLocked:
+                                 settings.IsPhysicsSettingsLocked = setting[1] == "1";
+                                 break;
+                         }
                      }
                  }
              });
@@ -1797,12 +1913,12 @@ namespace Banter.SDK
             }
             var attachment = new BanterAttachment();
             attachment.uid = whoToShow;
-            attachment.attachedObject = gameObject;
             attachment.attachmentPosition = gameObject.gameObject.transform.localPosition;
             attachment.attachmentRotation = gameObject.gameObject.transform.localRotation;
             attachment.attachmentType = AttachmentType.NonPhysics;
             attachment.avatarAttachmentPoint = actualPart;
-            events.OnAttachObject.Invoke(attachment);
+            attachment.attachedObject = gameObject;
+            data.AttachObject(attachment);
         }
         public void LegacySetChildColor(string msg)
         {

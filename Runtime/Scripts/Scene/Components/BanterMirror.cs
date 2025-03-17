@@ -14,13 +14,20 @@ namespace Banter.SDK
         const mirror = await gameObject.AddComponent(new BS.BanterMirror());
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterMirror : BanterComponentBase
     {
+        [Tooltip("The resolution of the mirror's render texture. Higher values improve quality but use more memory.")]
         [See(initial = "1024")][SerializeField] internal int renderTextureSize = 1024;
+
+        [Tooltip("Determines how the mirror camera clears the background. 0 = Skybox, 1 = Solid Color, 2 = Depth Only.")]
         [See(initial = "1")][SerializeField] internal int cameraClear = 1;
+
+        [Tooltip("The background color of the mirror when using solid color clearing (Hex format, e.g., #000000 for black).")]
         [See(initial = "'#000000'")][SerializeField] internal string backgroundColor = "#000000";
+
 
         VRPortalRenderer _renderer;
 

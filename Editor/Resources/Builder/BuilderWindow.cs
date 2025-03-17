@@ -719,12 +719,12 @@ public class BuilderWindow : EditorWindow
         }
 
         buildProgress.Rebuild();
-        if (resetDebounce != null && !resetDebounce.Token.IsCancellationRequested)
-        {
-            resetDebounce.Cancel();
-        }
-        resetDebounce = new CancellationTokenSource();
-        _ = ResetStatus(resetDebounce);
+        // if (resetDebounce != null && !resetDebounce.Token.IsCancellationRequested)
+        // {
+        //     resetDebounce.Cancel();
+        // }
+        // resetDebounce = new CancellationTokenSource();
+        // _ = ResetStatus(resetDebounce);
     }
 
     public void Remove(VisualElement element)
@@ -970,7 +970,7 @@ public class BuilderWindow : EditorWindow
         {
             File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
         }
-        if (names.Count > 0)
+        if (names.Count > 0 && !autoUpload.value)
         {
             EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
         }

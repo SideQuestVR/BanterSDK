@@ -59,20 +59,39 @@ namespace Banter.SDK
     ```
 
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
 
     public class BanterAudioSource : BanterComponentBase
     {
+        [Tooltip("The volume of the audio source (0.0 to 1.0).")]
         [See(initial = "1")][SerializeField] internal float volume = 1.0f;
+
+        [Tooltip("The pitch of the audio source. Values greater than 1 increase pitch, while values less than 1 decrease it.")]
         [See(initial = "1")][SerializeField] internal float pitch = 1.0f;
+
+        [Tooltip("Mutes the audio source when enabled.")]
         [See(initial = "false")][SerializeField] internal bool mute = false;
+
+        [Tooltip("Enables looping of the audio clip.")]
         [See(initial = "false")][SerializeField] internal bool loop = false;
+
+        [Tooltip("Bypasses any applied audio effects.")]
         [See(initial = "false")][SerializeField] internal bool bypassEffects = false;
+
+        [Tooltip("Bypasses any listener effects such as 3D audio spatialization.")]
         [See(initial = "false")][SerializeField] internal bool bypassListenerEffects = false;
+
+        [Tooltip("Bypasses reverb zones applied to the audio source.")]
         [See(initial = "false")][SerializeField] internal bool bypassReverbZones = false;
+
+        [Tooltip("If enabled, the audio source will play automatically when the GameObject is enabled.")]
         [See(initial = "true")][SerializeField] internal bool playOnAwake = true;
+
+        [Tooltip("Determines the blend between 2D and 3D spatial sound (0.0 = fully 2D, 1.0 = fully 3D).")]
         [See(initial = "0")][SerializeField] internal float spatialBlend = 0.0f;
+
 
         public List<AudioClip> clips = new List<AudioClip>();
 

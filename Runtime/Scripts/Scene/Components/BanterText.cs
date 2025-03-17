@@ -35,20 +35,37 @@ namespace Banter.SDK
         const text = await gameObject.AddComponent(new BS.BanterText(text, color, horizontalAlignment, verticalAlignment, fontSize, richText, enableWordWrapping, rectTransformSizeDelta));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BanterObjectId))]
 
     public class BanterText : BanterComponentBase
     {
         TextMeshPro tmpComponent;
+        [Tooltip("The text content to display.")]
         [See(initial = "")][SerializeField] internal string text;
+
+        [Tooltip("The color of the text in RGBA format.")]
         [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+
+        [Tooltip("The horizontal alignment of the text.")]
         [See(initial = "0")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
+
+        [Tooltip("The vertical alignment of the text.")]
         [See(initial = "0")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Top;
+
+        [Tooltip("The font size of the text.")]
         [See(initial = "2")][SerializeField] internal float fontSize = 2;
+
+        [Tooltip("Enable or disable rich text formatting.")]
         [See(initial = "true")][SerializeField] internal bool richText = true;
+
+        [Tooltip("Enable or disable word wrapping.")]
         [See(initial = "true")][SerializeField] internal bool enableWordWrapping = true;
+
+        [Tooltip("The size delta of the text RectTransform.")]
         [See(initial = "20,5")][SerializeField] internal Vector2 rectTransformSizeDelta = new Vector2(20, 5);
+
 
 
         internal override void StartStuff()

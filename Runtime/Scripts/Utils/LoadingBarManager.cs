@@ -223,7 +223,7 @@ namespace Banter.SDK
         public async Task LoadOut()
         {
             LogLine.Do($"[LOADING] LoadOut state={state} scene.state={scene.state}");
-            if (state == LoadingState.Loading)
+            if (state == LoadingState.Loading || scene.state==SceneState.LOAD_FAILED)
             {
                 return;
             }

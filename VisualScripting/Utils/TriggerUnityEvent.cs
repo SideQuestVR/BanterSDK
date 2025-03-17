@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Trigger VisualScriptingEvent")]
     [UnitShortTitle("Trigger VisualScriptingEvent")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class TriggerUnityEvent : Unit
     {

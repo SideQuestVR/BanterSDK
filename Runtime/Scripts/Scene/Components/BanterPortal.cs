@@ -21,6 +21,7 @@ namespace Banter.SDK
     ```
 
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterPortal : BanterComponentBase
@@ -40,8 +41,12 @@ namespace Banter.SDK
             "https://cdn.sidequestvr.com/file/567306/portalplaceholder_11.png",
             "https://cdn.sidequestvr.com/file/567307/portalplaceholder_12.png",
         };
+        [Tooltip("The URL of the space to link to.")]
         [See(initial = "")][SerializeField] internal string url = "";
+
+        [Tooltip("The instance ID of the space to link to.")]
         [See(initial = "")][SerializeField] internal string instance = "";
+
         MaterialPropertyBlock block;
         GameObject portal;
         BanterSceneEvents sceneEvents;

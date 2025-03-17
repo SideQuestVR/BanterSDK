@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Space State Properties Changed")]
     [UnitShortTitle("Space State Changed")]
-    [UnitCategory("Events\\Banter")]
+    [UnitCategory("Events\\Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnSpaceStatePropsChanged : EventUnit<CustomEventArgs>
     {

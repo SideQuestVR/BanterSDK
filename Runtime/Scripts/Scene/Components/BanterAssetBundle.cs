@@ -37,18 +37,36 @@ namespace Banter.SDK
     ```
 
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterAssetBundle : BanterComponentBase
     {
+        [Tooltip("The URL to the Windows asset bundle.")]
         [See(initial = "")][SerializeField] internal string windowsUrl = "";
+
+        [Tooltip("The URL to the OSX asset bundle.")]
         [See(initial = "")][SerializeField] internal string osxUrl = "";
+
+        [Tooltip("The URL to the Linux asset bundle.")]
         [See(initial = "")][SerializeField] internal string linuxUrl = "";
+
+        [Tooltip("The URL to the Android asset bundle.")]
         [See(initial = "")][SerializeField] internal string androidUrl = "";
+
+        [Tooltip("The URL to the iOS asset bundle.")]
         [See(initial = "")][SerializeField] internal string iosUrl = "";
+
+        [Tooltip("The URL to the Vision OS asset bundle.")]
         [See(initial = "")][SerializeField] internal string vosUrl = "";
+
+        [Tooltip("Indicates whether this asset bundle contains a scene or a collection of prefabs.")]
         [See(initial = "false")][SerializeField] internal bool isScene = false;
+
+        [Tooltip("Enables a legacy shader fix for compatibility with older lighting models.")]
         [See(initial = "false")][SerializeField] internal bool legacyShaderFix = false;
+
+        [Tooltip("The loaded asset bundle.")]
         public AssetBundle assetBundle;
         List<string> assetPaths;
         bool isLoading = false;

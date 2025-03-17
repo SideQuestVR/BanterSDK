@@ -6,7 +6,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("Inject BullSchript")]
     [UnitShortTitle("Inject BS")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Browser")]
     [TypeIcon(typeof(BanterObjectId))]
     public class InjectJS : Unit
     {

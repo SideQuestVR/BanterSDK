@@ -33,22 +33,35 @@ namespace Banter.SDK
         const gltf = await gameObject.AddComponent(new BS.BanterGLTF(url, generateMipMaps, addColliders, nonConvexColliders, slippery, climbable, legacyRotate));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BanterObjectId))]
 
     public class BanterGLTF : BanterComponentBase
     {
+        [Tooltip("The URL of the GLB file to be loaded.")]
         [See(initial = "")][SerializeField] internal string url;
+
+        [Tooltip("Enable to generate mipmaps for improved texture scaling.")]
         [See(initial = "false")][SerializeField] internal bool generateMipMaps;
+
+        [Tooltip("Enable to automatically add colliders to the imported model.")]
         [See(initial = "false")][SerializeField] internal bool addColliders;
+
+        [Tooltip("Enable to use non-convex colliders instead of convex ones.")]
         [See(initial = "false")][SerializeField] internal bool nonConvexColliders;
+
+        [Tooltip("Enable to make colliders slippery (zero friction).")]
         [See(initial = "false")][SerializeField] internal bool slippery;
+
+        [Tooltip("Enable to make the model's colliders climbable.")]
         [See(initial = "false")][SerializeField] internal bool climbable;
         // This has been added because unity changed the forward direction of GLTF fast between version 3 and 4. 
         // https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@5.0/manual/UpgradeGuides.html#upgrade-to-4x
         // We decided to leave legacy aframe stuff on the old one by default for compatibility reasons, but 
         // that new stuff will use the forward direction of the new version by default. Aframe shim will set 
         // this to true automaticaly.
+        [Tooltip("Enable to rotate the model for compatibility with legacy GLTF forward direction.")]
         [See(initial = "false")][SerializeField] internal bool legacyRotate;
         bool loadStarted;
 

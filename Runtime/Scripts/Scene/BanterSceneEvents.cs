@@ -12,13 +12,11 @@ public class BanterSceneEvents
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
     public UnityEvent<string> OnPortalEnter = new UnityEvent<string>();
-    public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableTeleportChanged = new UnityEvent<bool>();
-    public UnityEvent OnLockTeleport = new UnityEvent();
-    public UnityEvent OnLockSpiderman = new UnityEvent();
     public UnityEvent<bool> OnEnableForceGrabChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableSpiderManChanged = new UnityEvent<bool>();
+    public UnityEvent<bool> OnEnableHandHoldChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableRadarChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableNametagsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnablePortalsChanged = new UnityEvent<bool>();
@@ -31,8 +29,6 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<BanterAttachment> OnAttachObject = new UnityEvent<BanterAttachment>();
-    public UnityEvent<BanterAttachment> OnDetachObject = new UnityEvent<BanterAttachment>();
     public UnityEvent<BanterSynced, BanterObjectId> OnSyncedObject = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<BanterSynced, BanterObjectId> OnTakeOwnership = new UnityEvent<BanterSynced, BanterObjectId>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
@@ -42,9 +38,10 @@ public class BanterSceneEvents
     public UnityEvent<string> OnTTsStoped = new UnityEvent<string>();
     public UnityEvent<string, AiImageRatio> OnAiImage = new UnityEvent<string, AiImageRatio>();
     public UnityEvent<string, AiModelSimplify, int> OnAiModel = new UnityEvent<string, AiModelSimplify, int>();
+    public UnityEvent<Vector3, ForceMode> OnAddPlayerForce = new UnityEvent<Vector3, ForceMode>();
     public UnityEvent<string, string> OnBase64ToCDN = new UnityEvent<string, string>();
     public UnityEvent<SelectFileType> OnSelectFile = new UnityEvent<SelectFileType>();
-    public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
+    //public UnityEvent<bool> OnPlayerSpeedChanged = new UnityEvent<bool>();
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
@@ -55,8 +52,38 @@ public class BanterSceneEvents
     public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
 
+    #region Physics Settings
+    public UnityEvent<float> OnPhysicsMoveSpeedChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsMoveAccelerationChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsAirControlSpeedChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsAirControlAccelerationChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsDragChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsFreeFallAngularDragChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsJumpStrengthChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsHandPositionStrengthChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsHandRotationStrengthChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsHandSpringinessChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleRangeChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleReelSpeedChanged = new UnityEvent<float>();
+    public UnityEvent<float> OnPhysicsGrappleSpringinessChanged = new UnityEvent<float>();
+    public UnityEvent<bool> OnPhysicsGorillaModeChanged = new UnityEvent<bool>();
+    #endregion
+    
+    public UnityEvent<string, float, string, bool> OnLeaderBoardScore = new UnityEvent<string, float, string, bool>();
+    public UnityEvent<string> OnLeaderBoardClear = new UnityEvent<string>();
+    public UnityEvent OnGetLeaderBoard = new UnityEvent();
+    public UnityEvent<string, string> OnGetUserState = new UnityEvent<string, string>();
+    public UnityEvent<string, string, string> OnSetUserState = new UnityEvent<string, string, string>();
+    public UnityEvent<string, string> OnRemoveUserState = new UnityEvent<string, string>();
+
+    #region Callback Functions
+    public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
+
+    #endregion
+
     #region Legacy stuff
 
+    public UnityEvent OnLegacyEnabled = new UnityEvent();
     public UnityEvent<bool> OnLegacyPlayerLockChanged = new UnityEvent<bool>();
     public UnityEvent<bool, UnityAndBanterObject> OnLegacyPlayerSitChanged = new UnityEvent<bool, UnityAndBanterObject>();
     public UnityEvent<bool> OnLegacyPlayerGorillaChanged = new UnityEvent<bool>();
@@ -78,11 +105,11 @@ public class BanterSceneEvents
         OnUnitySceneLoad.RemoveAllListeners();
         OnTeleport.RemoveAllListeners();
         OnPortalEnter.RemoveAllListeners();
-        OnLegacyEnabled.RemoveAllListeners();
         OnEnableDevToolsChanged.RemoveAllListeners();
         OnEnableTeleportChanged.RemoveAllListeners();
         OnEnableForceGrabChanged.RemoveAllListeners();
         OnEnableSpiderManChanged.RemoveAllListeners();
+        OnEnableHandHoldChanged.RemoveAllListeners();
         OnEnableRadarChanged.RemoveAllListeners();
         OnEnableNametagsChanged.RemoveAllListeners();
         OnEnablePortalsChanged.RemoveAllListeners();
@@ -95,7 +122,6 @@ public class BanterSceneEvents
         OnClippingPlaneChanged.RemoveAllListeners();
         OnPageOpened.RemoveAllListeners();
         OnOneShot.RemoveAllListeners();
-        OnAttachObject.RemoveAllListeners();
         OnPublicSpaceStateChanged.RemoveAllListeners();
         OnProtectedSpaceStateChanged.RemoveAllListeners();
         OnDeepLink.RemoveAllListeners();
@@ -105,7 +131,7 @@ public class BanterSceneEvents
         OnAiImage.RemoveAllListeners();
         OnAiModel.RemoveAllListeners();
         OnBase64ToCDN.RemoveAllListeners();
-        OnPlayerSpeedChanged.RemoveAllListeners();
+        //OnPlayerSpeedChanged.RemoveAllListeners();
         OnMenuBrowserMessage.RemoveAllListeners();
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
@@ -115,7 +141,24 @@ public class BanterSceneEvents
         OnSyncedObject.RemoveAllListeners();
         OnAvatarSet.RemoveAllListeners();
 
+        // Physics
+        OnPhysicsMoveSpeedChanged.RemoveAllListeners();
+        OnPhysicsMoveAccelerationChanged.RemoveAllListeners();
+        OnPhysicsAirControlSpeedChanged.RemoveAllListeners();
+        OnPhysicsAirControlAccelerationChanged.RemoveAllListeners();
+        OnPhysicsDragChanged.RemoveAllListeners();
+        OnPhysicsFreeFallAngularDragChanged.RemoveAllListeners();
+        OnPhysicsJumpStrengthChanged.RemoveAllListeners();
+        OnPhysicsHandPositionStrengthChanged.RemoveAllListeners();
+        OnPhysicsHandRotationStrengthChanged.RemoveAllListeners();
+        OnPhysicsHandSpringinessChanged.RemoveAllListeners();
+        OnPhysicsGrappleRangeChanged.RemoveAllListeners();
+        OnPhysicsGrappleReelSpeedChanged.RemoveAllListeners();
+        OnPhysicsGrappleSpringinessChanged.RemoveAllListeners();
+        OnPhysicsGorillaModeChanged.RemoveAllListeners();
+            
         // Legacy stuff
+        OnLegacyEnabled.RemoveAllListeners();
         OnLegacyPlayerLockChanged.RemoveAllListeners();
         OnLegacyPlayerSitChanged.RemoveAllListeners();
         OnLegacyPlayerGorillaChanged.RemoveAllListeners();

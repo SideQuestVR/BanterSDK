@@ -19,10 +19,12 @@ namespace Banter.SDK
         const streetView = await gameObject.AddComponent(new BS.BanterStreetView(panoId));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterStreetView : BanterComponentBase
     {
+        [Tooltip("The panoId of the Street View location to be displayed.")]
         [See(initial = "")][SerializeField] internal string panoId = "";
 
         PhotoSphere photoSphere;

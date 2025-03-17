@@ -1,17 +1,14 @@
 #if BANTER_VISUAL_SCRIPTING
-using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
-using System.Linq;
-using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Set Space Gravity")]
-    [UnitShortTitle("Set Gravity")]
-    [UnitCategory("Banter")]
+    [UnitTitle("Copy Text To Clipboard")]
+    [UnitShortTitle("CopyToClipboard")]
+    [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class SetGravity : Unit
+    public class CopyToClipboard : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
@@ -20,20 +17,17 @@ namespace Banter.VisualScripting
         public ControlOutput outputTrigger;
 
         [DoNotSerialize]
-        public ValueInput gravity;
+        public ValueInput text;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var valGravity = flow.GetValue<Vector3>(gravity);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                {
-                    Physics.gravity = valGravity;
-                });
+                var _text = flow.GetValue<string>(text);
+                UniClipboard.SetText(_text);
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
-            gravity = ValueInput("Gravity", new Vector3(0, -9.81f, 0));
+            text = ValueInput("String", string.Empty);
         }
     }
 }

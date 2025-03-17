@@ -7,33 +7,33 @@ using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
-    [UnitTitle("Set TimeScale")]
-    [UnitShortTitle("Set TimeScale")]
-    [UnitCategory("Banter")]
+    [UnitTitle("Clear Scores on a Leaderboard")]
+    [UnitShortTitle("ClearScores")]
+    [UnitCategory("Banter\\Leaderboard")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class SetTimeScale : Unit
+    public class ClearScores : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
-
+    
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
         [DoNotSerialize]
-        public ValueInput scale;
+        public ValueInput board;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var valScale = flow.GetValue<float>(scale);
+                var _board = flow.GetValue<string>(board);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
-                    Time.timeScale = valScale;
+                    BanterScene.Instance().events.OnLeaderBoardClear.Invoke(_board);
                 });
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
-            scale = ValueInput("Fast", 1.0f);
+            board = ValueInput("Board", "");
         }
     }
 }
