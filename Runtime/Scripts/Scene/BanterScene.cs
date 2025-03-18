@@ -657,7 +657,7 @@ namespace Banter.SDK
         public UnityAndBanterObject GetObject(int objectId)
         {
             UnityAndBanterObject value;
-            Debug.Log("HERER - GetObject - " + objectId);
+            //Debug.Log("HERER - GetObject - " + objectId);
             objects.TryGetValue(objectId, out value);
             return value;
         }
