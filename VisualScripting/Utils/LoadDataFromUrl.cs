@@ -39,12 +39,14 @@ namespace Banter.VisualScripting
             success = ControlOutput("Loaded");
             failure = ControlOutput("Failed");
             url = ValueInput<string>("URL", string.Empty);
+            generateMipmaps = ValueInput<bool>("Generate Mipmaps", true);
             texture = ValueOutput<Texture2D>("Texture");
         }
 
         private IEnumerator LoadTexture(Flow flow)
         {
             var url = flow.GetValue<string>(this.url);
+            var genMipmaps = flow.GetValue<bool>(this.generateMipmaps);
 
             using (var request = UnityWebRequestTexture.GetTexture(url))
             {
@@ -56,6 +58,15 @@ namespace Banter.VisualScripting
                 }
 
                 var texture = DownloadHandlerTexture.GetContent(request);
+
+                if (!genMipmaps && texture.mipmapCount > 1)
+                {
+                    // Create a new texture without mipmaps
+                    Texture2D noMipTexture = new Texture2D(texture.width, texture.height, texture.format, false);
+                    noMipTexture.SetPixels(texture.GetPixels());
+                    noMipTexture.Apply(false); // false = don't generate mipmaps
+                    texture = noMipTexture;
+                }
                 flow.SetValue(this.texture, texture);
                 yield return success;
             }
