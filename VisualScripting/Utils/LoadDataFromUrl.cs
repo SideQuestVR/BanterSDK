@@ -17,6 +17,9 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         public ValueInput url;
+        
+        [DoNotSerialize]
+        public ValueInput generateMipmaps;
 
         [DoNotSerialize]
         public ValueOutput texture;
