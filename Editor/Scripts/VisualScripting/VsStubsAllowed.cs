@@ -12775,6 +12775,7 @@ namespace Banter.SDKEditor
             "UnityEngine.Timeline.PlayableTrack.supportsNotifications",
             "UnityEngine.Timeline.PlayableTrack.name",
             "UnityEngine.Timeline.PlayableTrack.hideFlags",
+            "PicaVoxel.VisualScripting.OnVoxelManipulatorChange"
         };
     }
 }
