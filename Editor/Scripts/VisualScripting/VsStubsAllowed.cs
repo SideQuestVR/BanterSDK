@@ -12776,7 +12776,8 @@ namespace Banter.SDKEditor
             "UnityEngine.Timeline.PlayableTrack.name",
             "UnityEngine.Timeline.PlayableTrack.hideFlags",
             "PicaVoxel.VisualScripting.OnVoxelManipulatorChange",
-            "PicaVoxel.VoxelManipulator.VoxelValue"
+            "PicaVoxel.VoxelManipulator.VoxelValue",
+            "PicaVoxel.VoxelManipulator.NumberOfTiles"
         };
     }
 }
