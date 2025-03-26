@@ -363,6 +363,8 @@ namespace Banter.SDKEditor
             // See AotPreBuilder._allowedBanterTypes for the MBs
             typeof(Banter.SDK.BanterUser),
             typeof(Banter.SDK.BanterAttachment),
+
+            typeof(Banter.SDK.Score)
         };
     }
 }
