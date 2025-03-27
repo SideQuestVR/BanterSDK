@@ -12775,7 +12775,7 @@ namespace Banter.SDKEditor
             "UnityEngine.Timeline.PlayableTrack.supportsNotifications",
             "UnityEngine.Timeline.PlayableTrack.name",
             "UnityEngine.Timeline.PlayableTrack.hideFlags",
-            "PicaVoxel.VisualScripting.OnVoxelManipulatorChange",
+            "PicaVoxel.OnVoxelManipulatorChange",
             "PicaVoxel.VoxelManipulator.VoxelValue",
             "PicaVoxel.VoxelManipulator.NumberOfTiles",
             "PicaVoxel.Volume.SetVoxelByChangeEvent",
