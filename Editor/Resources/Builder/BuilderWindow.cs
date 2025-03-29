@@ -84,6 +84,7 @@ public class BuilderWindow : EditorWindow
 
     ObjectField markitCoverImage;
     Label uploadEverythingKit;
+    Button uploadWebOnlyKit;
     Label confirmBuildMode;
     Label confirmSceneFile;
     Label confirmSpaceCode;
@@ -605,6 +606,7 @@ public class BuilderWindow : EditorWindow
         statusText = rootVisualElement.Q<Label>("SignedInStatus");
         signOut = rootVisualElement.Q<Label>("SignOut");
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
+        uploadWebOnlyKit = rootVisualElement.Q<Button>("UploadWebOnlyKit");
         uploadEverything = rootVisualElement.Q<Label>("UploadEverything");
         uploadEverythingKit = rootVisualElement.Q<Label>("UploadEverythingKit");
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
@@ -660,7 +662,7 @@ public class BuilderWindow : EditorWindow
         });
 
         uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) => {
-            // autoUpload.value = true;
+            autoUpload.value = true;
             BuildAssetBundles();
         }
         // {
@@ -679,6 +681,11 @@ public class BuilderWindow : EditorWindow
         //     };
         // }
         );
+        
+        uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) => {
+            autoUpload.value = false;
+            BuildAssetBundles(true);
+        });
 
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
@@ -934,16 +941,19 @@ public class BuilderWindow : EditorWindow
         RenderTexture.ReleaseTemporary(renderTex);
         return readableText;
     }
-    private IEnumerator UploadKit(Action callback) {
+
+    private IEnumerator UploadKit(Action callback, bool skipUpload = false) {
         EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_windows.banter...", 0.1f);
         long androidFileId = 0;
         long windowsFileId = 0;
         long coverFileId = 0;
         long[] imageIds = new long[kitObjectList.Count];
-        yield return UploadFile("windows.banter", null, fileId => windowsFileId = fileId);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android.banter...", 0.5f);
-        yield return UploadFile("android.banter", null, fileId => androidFileId = fileId);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+        if(!skipUpload) {
+            yield return UploadFile("windows.banter", null, fileId => windowsFileId = fileId);
+            EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android.banter...", 0.5f);
+            yield return UploadFile("android.banter", null, fileId => androidFileId = fileId);
+            EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+        }
 
         yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
 
@@ -971,8 +981,8 @@ public class BuilderWindow : EditorWindow
             users_id = sq.User.UserId.ToString(),
             id = selectedKitId,
             picture = "https://cdn.sidequestvr.com/file/" + coverFileId.ToString() + "/kitbundle_cover_image.png",
-            windows = "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_windows.banter",
-            android = "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android.banter",
+            windows = skipUpload ? myKits[existingDropDown.index].windows : "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_windows.banter",
+            android = skipUpload ? myKits[existingDropDown.index].android : "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android.banter",
             items = kitObjectList.Select(ko => new KitItem{
                 name = ko.obj.name,
                 picture = "https://cdn.sidequestvr.com/file/" + imageIds[kitObjectList.IndexOf(ko)].ToString() + "/kitbundle_prefab_image.png",
@@ -1248,7 +1258,7 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text =  "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
-    private void BuildAssetBundles()
+    private void BuildAssetBundles(bool skipUpload = false)
     {
         Debug.Log("ShowBuildConfirm0");
         if (mode == BanterBuilderBundleMode.None)
@@ -1392,7 +1402,7 @@ public class BuilderWindow : EditorWindow
                     {
                         AddStatus("Upload complete.");
                         uploadEverythingKit.SetEnabled(true);
-                    }), this);
+                    }, skipUpload), this);
                 }
             }
         };

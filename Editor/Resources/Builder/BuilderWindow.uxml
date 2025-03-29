@@ -93,7 +93,8 @@
                                 </ui:VisualElement>
                                 <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
                                 <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center;">
-                                    <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonPrimary&apos;); width: 206px; height: 63px; cursor: initial; margin-top: 25px;">
+                                    <ui:Button text="Update Info" display-tooltip-when-elided="true" name="UploadWebOnlyKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                                    <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 203px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
                                         <ui:Label text="Build &amp; Upload it Now!" display-tooltip-when-elided="true" name="UploadEverythingKit" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
                                     </ui:VisualElement>
                                 </ui:VisualElement>
