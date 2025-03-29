@@ -918,6 +918,24 @@ public class BuilderWindow : EditorWindow
         callback();
         EditorUtility.ClearProgressBar();
     }
+    private Texture2D CopyIt(Texture2D source) {
+        RenderTexture renderTex = RenderTexture.GetTemporary(
+                    source.width,
+                    source.height,
+                    0,
+                    RenderTextureFormat.Default,
+                    RenderTextureReadWrite.Linear);
+
+        Graphics.Blit(source, renderTex);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = renderTex;
+        Texture2D readableText = new Texture2D(source.width, source.height);
+        readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+        readableText.Apply();
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(renderTex);
+        return readableText;
+    }
     private IEnumerator UploadKit(Action callback) {
         EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kit...", 0.1f);
         long androidFileId = 0;
@@ -929,7 +947,7 @@ public class BuilderWindow : EditorWindow
         yield return UploadFile("android.banter", null, fileId => androidFileId = fileId);
         EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded kitbundle_android.banter...", 0.9f);
 
-        yield return UploadFile("cover_image.png", ((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
+        yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
 
         for(int i = 0; i < kitObjectList.Count; i++) {
             Texture2D previewTexture = null;
@@ -940,11 +958,10 @@ public class BuilderWindow : EditorWindow
             }
 
             if (previewTexture != null) {
-                yield return UploadFile("prefab_image.png", previewTexture.EncodeToPNG(), fileId => imageIds[i] = fileId);
+                yield return UploadFile("prefab_image.png", CopyIt(previewTexture).EncodeToPNG(), fileId => imageIds[i] = fileId);
             }
         }
 
-        yield return UploadFile("cover_image.png", ((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
         string createdKitId = null;
         var headers = new Dictionary<string, string>{
             { "Content-Type", "application/json" },
