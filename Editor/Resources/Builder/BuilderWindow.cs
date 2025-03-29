@@ -1324,20 +1324,33 @@ public class BuilderWindow : EditorWindow
                 File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
             }
             AddStatus("Build finished.");
-            if (autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene)
+            if (autoUpload.value && sq.User != null)
             {
-                if (string.IsNullOrEmpty(spaceSlug.text)){
-                    AddStatus("No space slug provided, please enter a slug to upload.");
-                    return;
+                if(mode == BanterBuilderBundleMode.Scene) {
+                    if (string.IsNullOrEmpty(spaceSlug.text)){
+                        AddStatus("No space slug provided, please enter a slug to upload.");
+                        return;
+                    }
+                    uploadWebOnly.SetEnabled(false);
+                    uploadEverything.SetEnabled(false);
+                    EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+                    {
+                        AddStatus("Upload complete.");
+                        uploadWebOnly.SetEnabled(true);
+                        uploadEverything.SetEnabled(true);
+                    }), this);
+                }else{
+                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
+                        AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select an image.");
+                        return;
+                    }
+                    uploadEverythingKit.SetEnabled(false);
+                    EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
+                    {
+                        AddStatus("Upload complete.");
+                        uploadEverythingKit.SetEnabled(true);
+                    }), this);
                 }
-                uploadWebOnly.SetEnabled(false);
-                uploadEverything.SetEnabled(false);
-                EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
-                {
-                    AddStatus("Upload complete.");
-                    uploadWebOnly.SetEnabled(true);
-                    uploadEverything.SetEnabled(true);
-                }), this);
             }
         };
     }
