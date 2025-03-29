@@ -683,7 +683,7 @@ public class BuilderWindow : EditorWindow
         );
         
         uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) => {
-            autoUpload.value = false;
+            autoUpload.value = true;
             BuildAssetBundles(true);
         });
 
@@ -1260,7 +1260,6 @@ public class BuilderWindow : EditorWindow
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
-        Debug.Log("ShowBuildConfirm0");
         if (mode == BanterBuilderBundleMode.None)
         {
             AddStatus("Nothing to build...");
@@ -1288,86 +1287,88 @@ public class BuilderWindow : EditorWindow
             AddStatus("Visual Scripting check passed!");
         }
 #endif
-        Debug.Log("ShowBuildConfirm");
         ShowBuildConfirm();
         confirmCallback = () => {
-            AddStatus("Build started...");
+            if(!skipUpload) {
+                AddStatus("Build started...");
 
-            if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
-            {
-                Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
-            }
-
-            buildProgressBar.value = 25;
-            List<string> names = new List<string>();
-
-
-            for (int i = 0; i < buildTargets.Length; i++)
-            {
-                buildProgressBar.value += 25;
-                if (buildTargetFlags[i])
+                if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
                 {
-                    string newAssetBundleName = "bundle";
-                    string platform = buildTargets[i].ToString().ToLower();
-                    AssetBundleBuild abb = new AssetBundleBuild();
-
-                    if (mode == BanterBuilderBundleMode.Scene)
-                    {
-                        string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
-                        newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
-                        AddStatus("Building: " + newAssetBundleName);
-
-                        AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
-                        abb.assetNames = new[] { scenePath };
-                    }
-                    else if (mode == BanterBuilderBundleMode.Kit)
-                    {
-                        newAssetBundleName = "kitbundle_" + platform + ".banter";
-                        AddStatus("Building: " + newAssetBundleName);
-                        abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                    abb.assetBundleName = newAssetBundleName;
-                    CustomSceneProcessor.isBuildingAssetBundles = true;
-                    BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
-                    CustomSceneProcessor.isBuildingAssetBundles = false;
-                    names.Add(newAssetBundleName);
-                    if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
-                    {
-                        File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
-                    }
-
+                    Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
                 }
-            }
 
-            if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
-            {
-                File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+                buildProgressBar.value = 25;
+                List<string> names = new List<string>();
+
+
+                for (int i = 0; i < buildTargets.Length; i++)
+                {
+                    buildProgressBar.value += 25;
+                    if (buildTargetFlags[i])
+                    {
+                        string newAssetBundleName = "bundle";
+                        string platform = buildTargets[i].ToString().ToLower();
+                        AssetBundleBuild abb = new AssetBundleBuild();
+
+                        if (mode == BanterBuilderBundleMode.Scene)
+                        {
+                            string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
+                            newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
+                            AddStatus("Building: " + newAssetBundleName);
+
+                            AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
+                            abb.assetNames = new[] { scenePath };
+                        }
+                        else if (mode == BanterBuilderBundleMode.Kit)
+                        {
+                            newAssetBundleName = "kitbundle_" + platform + ".banter";
+                            AddStatus("Building: " + newAssetBundleName);
+                            abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                        abb.assetBundleName = newAssetBundleName;
+                        CustomSceneProcessor.isBuildingAssetBundles = true;
+                        BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
+                        CustomSceneProcessor.isBuildingAssetBundles = false;
+                        names.Add(newAssetBundleName);
+                        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
+                        {
+                            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
+                        }
+
+                    }
+                }
+
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+                }
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
+                }
+                if (names.Count > 0 && !autoUpload.value)
+                {
+                    EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
+                }
+                buildProgressBar.value = 100;
+                var task = new Task(async () =>
+                {
+                    await Task.Delay(5000);
+                    HideProgressBar();
+                });
+                task.Start();
+                if (mode == BanterBuilderBundleMode.Kit)
+                {
+                    AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
+                    File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
+                }
+                AddStatus("Build finished.");
             }
-            if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
-            {
-                File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
-            }
-            if (names.Count > 0 && !autoUpload.value)
-            {
-                EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
-            }
-            buildProgressBar.value = 100;
-            var task = new Task(async () =>
-            {
-                await Task.Delay(5000);
-                HideProgressBar();
-            });
-            task.Start();
-            if (mode == BanterBuilderBundleMode.Kit)
-            {
-                AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
-                File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
-            }
-            AddStatus("Build finished.");
+            
             if (autoUpload.value && sq.User != null)
             {
                 if(mode == BanterBuilderBundleMode.Scene) {
