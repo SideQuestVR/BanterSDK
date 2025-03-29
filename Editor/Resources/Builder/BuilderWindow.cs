@@ -660,7 +660,7 @@ public class BuilderWindow : EditorWindow
         });
 
         uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) => {
-            autoUpload.value = true;
+            // autoUpload.value = true;
             BuildAssetBundles();
         }
         // {
@@ -908,13 +908,11 @@ public class BuilderWindow : EditorWindow
 
     private IEnumerator UploadWebOnly(Action callback)
     {
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading everything...", 0.1f);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading web files...", 0.1f);
         yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded index.html...", 0.92f);
         yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded script.js...", 0.95f);
         yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded bullshcript.js...", 0.99f);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
         callback();
         EditorUtility.ClearProgressBar();
     }
@@ -937,15 +935,15 @@ public class BuilderWindow : EditorWindow
         return readableText;
     }
     private IEnumerator UploadKit(Action callback) {
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kit...", 0.1f);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_windows.banter...", 0.1f);
         long androidFileId = 0;
         long windowsFileId = 0;
         long coverFileId = 0;
         long[] imageIds = new long[kitObjectList.Count];
         yield return UploadFile("windows.banter", null, fileId => windowsFileId = fileId);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded kitbundle_windows.banter...", 0.5f);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android.banter...", 0.5f);
         yield return UploadFile("android.banter", null, fileId => androidFileId = fileId);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded kitbundle_android.banter...", 0.9f);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
 
         yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
 
@@ -1252,6 +1250,7 @@ public class BuilderWindow : EditorWindow
     }
     private void BuildAssetBundles()
     {
+        Debug.Log("ShowBuildConfirm0");
         if (mode == BanterBuilderBundleMode.None)
         {
             AddStatus("Nothing to build...");
