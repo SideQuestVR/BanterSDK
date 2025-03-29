@@ -924,9 +924,9 @@ public class BuilderWindow : EditorWindow
         long windowsFileId = 0;
         long coverFileId = 0;
         long[] imageIds = new long[kitObjectList.Count];
-        yield return UploadFile("kitbundle_windows.banter", null, fileId => windowsFileId = fileId);
+        yield return UploadFile("windows.banter", null, fileId => windowsFileId = fileId);
         EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded kitbundle_windows.banter...", 0.5f);
-        yield return UploadFile("kitbundle_android.banter", null, fileId => androidFileId = fileId);
+        yield return UploadFile("android.banter", null, fileId => androidFileId = fileId);
         EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded kitbundle_android.banter...", 0.9f);
 
         yield return UploadFile("cover_image.png", ((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
@@ -983,7 +983,7 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null)
     {
         var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
-        if (File.Exists(file))
+        if (File.Exists(file) || bytes != null)
         {
             AddStatus("Upload started: " + file + "...");
         }
@@ -993,7 +993,7 @@ public class BuilderWindow : EditorWindow
             yield break;
         }
         var data = bytes == null ? File.ReadAllBytes(file) : bytes;
-        yield return sq.UploadFile(name, data, spaceSlug.text, (text) =>
+        yield return sq.UploadFile(name, data, "", (text) =>
         {
             callback?.Invoke(text.FileId);
             AddStatus("Uploaded " + file + " to Banter Markit");
@@ -1252,7 +1252,7 @@ public class BuilderWindow : EditorWindow
             AddStatus("Visual Scripting check passed!");
         }
 #endif
-        
+        Debug.Log("ShowBuildConfirm");
         ShowBuildConfirm();
         confirmCallback = () => {
             AddStatus("Build started...");
