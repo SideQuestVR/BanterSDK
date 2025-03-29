@@ -12,6 +12,7 @@ public class Kit{
   public string windows;
   public string android;
   public int use_count;
+  public string access_token;
   public KitUser user;
   public KitItem[] items;
 }

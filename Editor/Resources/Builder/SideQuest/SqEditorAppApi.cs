@@ -378,7 +378,7 @@ namespace Banter.SDKEditor
         }
 
         private SqEditorPersistentData _data;
-        private SqEditorPersistentData Data
+        public SqEditorPersistentData Data
         {
             get
             {

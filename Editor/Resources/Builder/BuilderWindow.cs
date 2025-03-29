@@ -980,6 +980,7 @@ public class BuilderWindow : EditorWindow
             kit_categories_id = kitCategories[kitCategoryDropDown.index].id,
             users_id = sq.User.UserId.ToString(),
             id = selectedKitId,
+            access_token = sq.Data.Token.AccessToken,
             picture = "https://cdn.sidequestvr.com/file/" + coverFileId.ToString() + "/kitbundle_cover_image.png",
             windows = skipUpload ? myKits[existingDropDown.index].windows : "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_windows.banter",
             android = skipUpload ? myKits[existingDropDown.index].android : "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android.banter",
@@ -1031,10 +1032,10 @@ public class BuilderWindow : EditorWindow
         yield return sq.UploadFile(name, data, "", (text) =>
         {
             callback?.Invoke(text.FileId);
-            AddStatus("Uploaded " + file + " to Banter Markit");
+            AddStatus("Uploaded " + name + " to Banter Markit");
         }, e =>
         {
-            AddStatus("FAILED UPLOADING " + file + " to Banter Markit");
+            AddStatus("FAILED UPLOADING " + name + " to Banter Markit");
             Debug.LogException(e);
         });
     }
@@ -1385,15 +1386,6 @@ public class BuilderWindow : EditorWindow
                         uploadEverything.SetEnabled(true);
                     }), this);
                 }else{
-                    var tex = (Texture2D)markitCoverImage.value;
-                    if(!tex.isReadable) {
-                        TextureImporter ti = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex));
-                        if (!ti.isReadable)
-                        {
-                            ti.isReadable = true;
-                            ti.SaveAndReimport();
-                        }
-                    }
                     if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
                         AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
                         return;
