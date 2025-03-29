@@ -932,7 +932,16 @@ public class BuilderWindow : EditorWindow
         yield return UploadFile("cover_image.png", ((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
 
         for(int i = 0; i < kitObjectList.Count; i++) {
-           yield return UploadFile("prefab_image.png", AssetPreview.GetAssetPreview(kitObjectList[i].obj).EncodeToPNG(), fileId => imageIds[i] = fileId);
+            Texture2D previewTexture = null;
+            try {
+                previewTexture = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
+            } catch (Exception e) {
+                Debug.LogException(e);
+            }
+
+            if (previewTexture != null) {
+                yield return UploadFile("prefab_image.png", previewTexture.EncodeToPNG(), fileId => imageIds[i] = fileId);
+            }
         }
 
         yield return UploadFile("cover_image.png", ((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
