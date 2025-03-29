@@ -378,7 +378,7 @@ namespace Banter.SDKEditor
         }
 
         private SqEditorPersistentData _data;
-        private SqEditorPersistentData Data
+        public SqEditorPersistentData Data
         {
             get
             {
@@ -394,7 +394,7 @@ namespace Banter.SDKEditor
             }
         }
 
-        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
         {
             SqEditorCreateUpload _uploadRequest = null;
             yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
@@ -410,6 +410,21 @@ namespace Banter.SDKEditor
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
 
+        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError)
+        {
+            SqEditorCreateUpload _uploadRequest = null;
+            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
+
+            if (_uploadRequest == null)
+            {
+                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                yield break;
+            }
+
+            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => { }, OnError);
+            OnCompleted?.Invoke(_uploadRequest);
+
+        }
 
         private IEnumerator UploadFileInternal(string url, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
         {
