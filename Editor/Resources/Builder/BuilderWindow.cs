@@ -328,7 +328,7 @@ public class BuilderWindow : EditorWindow
             //This should be called periodically (e.g. on app start) to update the user's profile information.
             EditorCoroutineUtility.StartCoroutine(sq.RefreshUserProfile((u) =>
             {
-                AddStatus("User profile information has been refreshed from the API successfully");
+                // AddStatus("User profile information has been refreshed from the API successfully");
                 statusText.text = $"Logged in as: {sq.User.Name}";
             }, (e) =>
             {
@@ -659,22 +659,26 @@ public class BuilderWindow : EditorWindow
             };
         });
 
-        uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
-                AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select an image.");
-                return;
-            }
-            ShowBuildConfirm();
-            confirmCallback = () => {
-                uploadEverythingKit.SetEnabled(false);
-                EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
-                {
-                    AddStatus("Upload complete.");
-                    uploadEverythingKit.SetEnabled(true);
-                }), this);
-            };
-        });
+        uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) => {
+            autoUpload.value = true;
+            BuildAssetBundles();
+        }
+        // {
+        //     if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
+        //         AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select an image.");
+        //         return;
+        //     }
+        //     ShowBuildConfirm();
+        //     confirmCallback = () => {
+        //         uploadEverythingKit.SetEnabled(false);
+        //         EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
+        //         {
+        //             AddStatus("Upload complete.");
+        //             uploadEverythingKit.SetEnabled(true);
+        //         }), this);
+        //     };
+        // }
+        );
 
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
@@ -840,6 +844,7 @@ public class BuilderWindow : EditorWindow
 
         if (uwr.result != UnityWebRequest.Result.Success)
         {
+            Debug.LogError(url + ":" + JsonUtility.ToJson(postData));
             throw new System.Exception(uwr.error);
         }
         else
@@ -932,6 +937,9 @@ public class BuilderWindow : EditorWindow
 
         yield return UploadFile("cover_image.png", ((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
         string createdKitId = null;
+        var headers = new Dictionary<string, string>{
+            { "Content-Type", "application/json" },
+        };  
         yield return Json("https://screen.sdq.st:2096/kit", new Kit{
             name = kitName.value,
             description = kitDescription.value,
@@ -949,7 +957,7 @@ public class BuilderWindow : EditorWindow
         }, resp => {
             var kitResponse = JsonUtility.FromJson<KitRows>(resp);
             createdKitId = kitResponse.rows[0].id;
-        });
+        }, headers);
 
         AddStatus("Uploaded kit to Banter Markit");
         callback();
@@ -1340,8 +1348,17 @@ public class BuilderWindow : EditorWindow
                         uploadEverything.SetEnabled(true);
                     }), this);
                 }else{
+                    var tex = (Texture2D)markitCoverImage.value;
+                    if(!tex.isReadable) {
+                        TextureImporter ti = (TextureImporter)AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(tex));
+                        if (!ti.isReadable)
+                        {
+                            ti.isReadable = true;
+                            ti.SaveAndReimport();
+                        }
+                    }
                     if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
-                        AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select an image.");
+                        AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
                         return;
                     }
                     uploadEverythingKit.SetEnabled(false);
