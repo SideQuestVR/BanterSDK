@@ -986,6 +986,7 @@ public class BuilderWindow : EditorWindow
         }, headers);
 
         AddStatus("Uploaded kit to Banter Markit");
+        EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
         callback();
         EditorUtility.ClearProgressBar();
     }
