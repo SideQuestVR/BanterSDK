@@ -582,7 +582,6 @@ namespace Banter.SDK
                 };
                 banterObject.unityAndBanterObject = unityAndBanterObject;
                 objects.TryAdd(oid, unityAndBanterObject);
-                Debug.Log("HERER - AddBanterObject - " + oid + " " + gameObject.name);
                 if (!skipChangeFlush)
                 {
                     FlushObjectToChanges(oid, 0, 0);
