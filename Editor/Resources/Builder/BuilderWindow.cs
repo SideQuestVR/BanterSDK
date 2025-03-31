@@ -760,6 +760,10 @@ public class BuilderWindow : EditorWindow
                 }
                 if(tex == null) {
                     tex = AssetPreview.GetMiniThumbnail(kitObjectList[i].obj);
+                    AssetPreview.GetMiniTypeThumbnail
+                }
+                if(tex == null) {
+                    tex = AssetPreview.GetMiniTypeThumbnail(kitObjectList[i].obj);
                 }
                 kitObjectList[i].texture = CopyIt(tex);
             }
