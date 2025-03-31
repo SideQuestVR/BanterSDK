@@ -12779,7 +12779,9 @@ namespace Banter.SDKEditor
             "PicaVoxel.VoxelManipulator.VoxelValue",
             "PicaVoxel.VoxelManipulator.NumberOfTiles",
             "PicaVoxel.Volume.SetVoxelByChangeEvent",
-            "PicaVoxel.VoxelChangeEventArgs..ctor"
+            "PicaVoxel.Volume.SetChunkChangesByChangesEvent",
+            "PicaVoxel.VoxelChangeEventArgs..ctor",
+            "PicaVoxel.ChunkChangesEventArgs..ctor"
         };
     }
 }
