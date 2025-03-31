@@ -26,6 +26,7 @@ public class KitObjectAndPath
 {
     public UnityEngine.Object obj;
     public string path;
+    public Texture2D texture;
     public static List<Type> ALLOWED_KIT_TYPES = new List<Type>()
     {
         typeof(GameObject),
@@ -153,7 +154,7 @@ public class BuilderWindow : EditorWindow
             GetCode();
         }
 
-        AssetPreview.SetPreviewTextureCacheSize(256);
+        AssetPreview.SetPreviewTextureCacheSize(1024);
 
     }
     private void ShowUploadToggle()
@@ -752,11 +753,13 @@ public class BuilderWindow : EditorWindow
         kitListView.bindItem = (e, i) =>
         {
             var name = kitObjectList[i].path.ToLower();
-            var imagePreview = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
+            if(kitObjectList[i].texture == null) {
+                kitObjectList[i].texture = CopyIt(AssetPreview.GetAssetPreview(kitObjectList[i].obj));
+            }
             var text = e.Q<Label>("kitItemName");
             text.text = i + 1 + ". " + name;
             var image = e.Q<VisualElement>("kitItemImage");
-            image.style.backgroundImage = new StyleBackground(imagePreview);
+            image.style.backgroundImage = new StyleBackground(kitObjectList[i].texture);
             var button = e.Q<Button>("kitItemCopy");
             button.text = "copy";
             button.clicked += () =>
@@ -960,16 +963,8 @@ public class BuilderWindow : EditorWindow
         yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
 
         for(int i = 0; i < kitObjectList.Count; i++) {
-            Texture2D previewTexture = null;
-            try {
-                previewTexture = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
-            } catch (Exception e) {
-                Debug.LogException(e);
-            }
-
-            if (previewTexture != null) {
-                yield return UploadFile("prefab_image.png", CopyIt(previewTexture).EncodeToPNG(), fileId => imageIds[i] = fileId);
-            }
+            // TODO this sucks - Replace with something bespoke like this: https://gist.github.com/mickdekkers/5c3c62539c057010d4497f9865060e20
+            yield return UploadFile("prefab_image.png", kitObjectList[i].texture.EncodeToPNG(), fileId => imageIds[i] = fileId);
         }
 
         string createdKitId = null;
