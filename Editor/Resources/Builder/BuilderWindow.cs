@@ -943,7 +943,7 @@ public class BuilderWindow : EditorWindow
     }
 
     private IEnumerator UploadKit(Action callback, bool skipUpload = false) {
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_windows.banter...", 0.1f);
+        EditorUtility.DisplayProgressBar("Banter Upload", skipUpload ? "Updating Kit details..." : "Uploading kitbundle_windows.banter...", 0.1f);
         long androidFileId = 0;
         long windowsFileId = 0;
         long coverFileId = 0;
