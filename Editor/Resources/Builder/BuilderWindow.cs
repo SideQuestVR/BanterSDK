@@ -754,7 +754,14 @@ public class BuilderWindow : EditorWindow
         {
             var name = kitObjectList[i].path.ToLower();
             if(kitObjectList[i].texture == null) {
-                kitObjectList[i].texture = CopyIt(AssetPreview.GetAssetPreview(kitObjectList[i].obj));
+                var tex = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
+                if(tex == null) {
+                    tex = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
+                }
+                if(tex == null) {
+                    tex = AssetPreview.GetMiniThumbnail(kitObjectList[i].obj);
+                }
+                kitObjectList[i].texture = CopyIt(tex);
             }
             var text = e.Q<Label>("kitItemName");
             text.text = i + 1 + ". " + name;
