@@ -153,6 +153,8 @@ public class BuilderWindow : EditorWindow
             GetCode();
         }
 
+        AssetPreview.SetPreviewTextureCacheSize(256);
+
     }
     private void ShowUploadToggle()
     {
