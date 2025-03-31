@@ -12781,7 +12781,9 @@ namespace Banter.SDKEditor
             "PicaVoxel.Volume.SetVoxelByChangeEvent",
             "PicaVoxel.Volume.SetChunkChangesByChangesEvent",
             "PicaVoxel.VoxelChangeEventArgs..ctor",
-            "PicaVoxel.ChunkChangesEventArgs..ctor"
+            "PicaVoxel.ChunkChangesEventArgs..ctor",
+            "PicaVoxel.OnLoadChunkChanges",
+            "PicaVoxel.OnSaveChunkChanges"
         };
     }
 }
