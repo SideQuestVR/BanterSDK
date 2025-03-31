@@ -1279,19 +1279,19 @@ public class BuilderWindow : EditorWindow
             return;
         }
 
-#if BANTER_VISUAL_SCRIPTING
-        if (!ValidateVisualScripting.CheckVsNodes())
-        {
-            AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
-            return;
-        }
-        else
-        {
-            AddStatus("Visual Scripting check passed!");
-        }
-#endif
         ShowBuildConfirm();
         confirmCallback = () => {
+#if BANTER_VISUAL_SCRIPTING
+            if (!ValidateVisualScripting.CheckVsNodes())
+            {
+                AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
+                return;
+            }
+            else
+            {
+                AddStatus("Visual Scripting check passed!");
+            }
+#endif
             if(!skipUpload) {
                 AddStatus("Build started...");
 

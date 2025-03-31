@@ -162,7 +162,7 @@ namespace Banter.SDKEditor
                         output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
                     }catch(Exception ex)
                     {
-                        Debug.Log($"Could not add element {e?.GetType()}{e?.guid} {sga?.graph?.title} because of {ex} ");
+                        Debug.Log($"Could not add element {e?.GetType()}{e?.guid} {assetPath} {sga.graph.title} because of {ex} ");
                     }
                 }
             }
