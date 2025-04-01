@@ -154,8 +154,6 @@ public class BuilderWindow : EditorWindow
             GetCode();
         }
 
-        AssetPreview.SetPreviewTextureCacheSize(1024);
-
     }
     private void ShowUploadToggle()
     {
@@ -750,26 +748,24 @@ public class BuilderWindow : EditorWindow
             ele.AddToClassList("unity-label-margin");
             return ele;
         };
+
+        SnapshotCamera snapshotCamera = FindAnyObjectByType<SnapshotCamera>();
+        
         kitListView.bindItem = (e, i) =>
         {
             var name = kitObjectList[i].path.ToLower();
             if(kitObjectList[i].texture == null) {
-                var tex = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
-                if(tex == null) {
-                    tex = AssetPreview.GetAssetPreview(kitObjectList[i].obj);
+                
+                if(snapshotCamera == null) {
+                    snapshotCamera = SnapshotCamera.MakeSnapshotCamera(0);
                 }
-                if(tex == null) {
-                    tex = AssetPreview.GetMiniThumbnail(kitObjectList[i].obj);
-                }
-                if(tex == null) {
-                    tex = AssetPreview.GetMiniTypeThumbnail(kitObjectList[i].obj.GetType());
-                }
-                kitObjectList[i].texture = CopyIt(tex);
+                kitObjectList[i].texture = snapshotCamera.TakePrefabSnapshot((GameObject)kitObjectList[i].obj);
             }
             var text = e.Q<Label>("kitItemName");
             text.text = i + 1 + ". " + name;
             var image = e.Q<VisualElement>("kitItemImage");
             image.style.backgroundImage = new StyleBackground(kitObjectList[i].texture);
+            image.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
             var button = e.Q<Button>("kitItemCopy");
             button.text = "copy";
             button.clicked += () =>
