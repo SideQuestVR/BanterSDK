@@ -93,7 +93,8 @@
                                 </ui:VisualElement>
                                 <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
                                 <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center;">
-                                    <ui:Button text="Update Details" display-tooltip-when-elided="true" name="UploadWebOnlyKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                                    <ui:Button text="Delete Kit" display-tooltip-when-elided="true" name="DeleteKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; border-left-color: rgb(224, 83, 83); border-right-color: rgb(224, 83, 83); border-top-color: rgb(224, 83, 83); border-bottom-color: rgb(224, 83, 83); display: none;" />
+                                    <ui:Button text="Update Details" display-tooltip-when-elided="true" name="UploadWebOnlyKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; display: none;" />
                                     <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
                                         <ui:Label text="Build &amp; Upload" display-tooltip-when-elided="true" name="UploadEverythingKit" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
                                     </ui:VisualElement>
@@ -142,10 +143,22 @@
                 <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
+                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelBuild" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
                 <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
                     <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmBuild" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
                 </ui:VisualElement>
-                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelBuild" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="DeleteConfirm" style="display: none; flex-grow: 1; position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);">
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-background-scale-mode: scale-and-crop;">
+            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 30px; margin-top: 30px;" />
+            <ui:Label tabindex="-1" text="Do you want to delete this kit?" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 18px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
+            <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
+                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelDelete" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
+                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmDelete" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

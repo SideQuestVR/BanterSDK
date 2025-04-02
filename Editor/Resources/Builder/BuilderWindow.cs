@@ -86,6 +86,7 @@ public class BuilderWindow : EditorWindow
     ObjectField markitCoverImage;
     Label uploadEverythingKit;
     Button uploadWebOnlyKit;
+    Button deleteKit;
     Label confirmBuildMode;
     Label confirmSceneFile;
     Label confirmSpaceCode;
@@ -97,6 +98,10 @@ public class BuilderWindow : EditorWindow
     Button cancelBuild;
 
     VisualElement buildConfirm;
+
+    VisualElement deleteConfirm;
+    Label confirmDelete;
+    Button cancelDelete;
 
    
     Kit[] myKits; 
@@ -486,8 +491,12 @@ public class BuilderWindow : EditorWindow
             selectedKitId = "";
             kitCategoryDropDown.index = -1;
             markitCoverImage.value = null;
+            uploadWebOnlyKit.style.display = DisplayStyle.None;
+            deleteKit.style.display = DisplayStyle.None;
             return;
         }
+        uploadWebOnlyKit.style.display = DisplayStyle.Flex;
+        deleteKit.style.display = DisplayStyle.Flex;
         selectedKitId = myKits[selectedIndex].id;
         kitName.value = myKits[selectedIndex].name;
         kitDescription.value = myKits[selectedIndex].description;
@@ -499,6 +508,7 @@ public class BuilderWindow : EditorWindow
     }
     Label buildButton;
     Action confirmCallback;
+    Action deleteCallback;
     private void SetupUI()
     {
         statusBar = rootVisualElement.Q<Label>("StatusBar");
@@ -588,7 +598,21 @@ public class BuilderWindow : EditorWindow
         confirmKitBundleID = rootVisualElement.Q<Label>("ConfirmKitBundleID");
         confirmKitNumber = rootVisualElement.Q<Label>("ConfirmKitNumber");
 
+
+        deleteConfirm = rootVisualElement.Q<VisualElement>("DeleteConfirm");
+
+        confirmDelete = rootVisualElement.Q<Label>("ConfirmDelete");
+        cancelDelete = rootVisualElement.Q<Button>("CancelDelete");
+        cancelDelete.RegisterCallback<MouseUpEvent>((e) => {
+            deleteConfirm.style.display = DisplayStyle.None;
+        });
+        confirmDelete.RegisterCallback<MouseUpEvent>((e) => {
+            deleteConfirm.style.display = DisplayStyle.None;
+            deleteCallback?.Invoke();
+        });
         buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
+
+
         confirmBuild = rootVisualElement.Q<Label>("ConfirmBuild");
         cancelBuild = rootVisualElement.Q<Button>("CancelBuild");
         cancelBuild.RegisterCallback<MouseUpEvent>((e) => {
@@ -608,6 +632,7 @@ public class BuilderWindow : EditorWindow
         signOut = rootVisualElement.Q<Label>("SignOut");
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
         uploadWebOnlyKit = rootVisualElement.Q<Button>("UploadWebOnlyKit");
+        deleteKit = rootVisualElement.Q<Button>("DeleteKit");
         uploadEverything = rootVisualElement.Q<Label>("UploadEverything");
         uploadEverythingKit = rootVisualElement.Q<Label>("UploadEverythingKit");
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
@@ -686,6 +711,22 @@ public class BuilderWindow : EditorWindow
         uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) => {
             autoUpload.value = true;
             BuildAssetBundles(true);
+        });
+
+        deleteKit.RegisterCallback<MouseUpEvent>((e) => {
+            deleteConfirm.style.display = DisplayStyle.Flex;
+            deleteCallback = () => {
+                if (string.IsNullOrEmpty(selectedKitId)){
+                    AddStatus("No kit selected, please select a kit.");
+                    return;
+                }
+                deleteKit.SetEnabled(false);
+                EditorCoroutineUtility.StartCoroutine(DeleteKit(() =>
+                {
+                    AddStatus("Deleted kit.");
+                    deleteKit.SetEnabled(true);
+                }), this);
+            };
         });
 
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
@@ -1001,6 +1042,27 @@ public class BuilderWindow : EditorWindow
         EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
         callback();
         EditorUtility.ClearProgressBar();
+    }
+    private IEnumerator DeleteKit(Action callback) {
+        if(string.IsNullOrEmpty(selectedKitId)) {
+            AddStatus("No kit selected, please select a kit.");
+            yield break;
+        }
+        var headers = new Dictionary<string, string>{
+            { "Content-Type", "application/json" },
+        };  
+        var kit = new Kit();
+        kit.users_id = sq.User.UserId.ToString();
+        kit.access_token = sq.Data.Token.AccessToken;
+        yield return Json("https://screen.sdq.st:2096/kit/delete/" + selectedKitId, kit, resp => {
+            EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
+            SelectKit(myKits.Length);
+            try{
+                existingDropDown.index = -1;
+            }catch{}
+            AddStatus("Deleted kit from Banter Markit");
+            callback();
+        }, headers);
     }
     private IEnumerator UploadEverything(Action callback)
     {
