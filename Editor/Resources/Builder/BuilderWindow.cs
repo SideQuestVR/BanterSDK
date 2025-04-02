@@ -765,7 +765,7 @@ public class BuilderWindow : EditorWindow
             text.text = i + 1 + ". " + name;
             var image = e.Q<VisualElement>("kitItemImage");
             image.style.backgroundImage = new StyleBackground(kitObjectList[i].texture);
-            image.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Cover);
+            image.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
             var button = e.Q<Button>("kitItemCopy");
             button.text = "copy";
             button.clicked += () =>

@@ -32,7 +32,7 @@ public class SnapshotCamera : MonoBehaviour {
     /// <summary>
     /// The default rotation applied to objects when none is specified.
     /// </summary>
-    public Vector3 defaultRotation = new Vector3(345.8529f, 313.8297f, 14.28433f);
+    public Vector3 defaultRotation = new Vector3(330, 330, 10);
     /// <summary>
     /// The default scale applied to objects when none is specified.
     /// </summary>
@@ -74,7 +74,7 @@ public class SnapshotCamera : MonoBehaviour {
         // cam.orthographicSize = 1;
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = Color.clear;
-        cam.nearClipPlane = 0.1f;
+        cam.nearClipPlane = 0.01f;
         cam.enabled = false;
         
         // Add a SnapshotCamera component to the GameObject
@@ -219,27 +219,23 @@ public class SnapshotCamera : MonoBehaviour {
     /// <param name="rotation">The rotation to apply to the prefab.</param>
     /// <param name="scale">The scale to apply to the prefab.</param>
     /// <returns>A prefab instance ready for taking a snapshot.</returns>
-    private GameObject PreparePrefab (GameObject prefab, Vector3 positionOffset, Quaternion rotation, Vector3 scale)
+    private GameObject PreparePrefab(GameObject prefab, Vector3 positionOffset, Quaternion rotation, Vector3 scale)
     {
-        GameObject gameObject = GameObject.Instantiate(prefab, transform.position + positionOffset, rotation) as GameObject;
+        GameObject gameObject = Instantiate(prefab, transform.position + positionOffset, rotation * Quaternion.Euler(0,180,0)) as GameObject;
         gameObject.transform.localScale = scale;
-        SetLayersRecursively(gameObject);
+        SetLayersRecursively(gameObject); 
        
         Bounds bounds = new Bounds(Vector3.zero, Vector3.zero);
         foreach (Renderer r in gameObject.GetComponentsInChildren<Renderer>(true))
         {
-            if (bounds == null)
-                bounds = r.bounds;
-            else
-                bounds.Encapsulate(r.bounds);
+            bounds.Encapsulate(r.bounds);
         }
-        float cameraDistance = 0.3f; // Constant factor
-        Vector3 objectSizes = bounds.max - bounds.min;
-        float objectSize = Mathf.Max(objectSizes.x, objectSizes.y, objectSizes.z);
-        float cameraView = 2.0f * Mathf.Tan(0.5f * Mathf.Deg2Rad * cam.fieldOfView); // Visible height 1 meter in front
-        float distance = cameraDistance * objectSize / cameraView; // Combined wanted distance from the object
-        distance += 0.5f * objectSize; // Estimated offset from the center to the outside of the object
-        cam.transform.position = bounds.center - distance * cam.transform.forward;
+        float fov = Mathf.Tan(cam.fieldOfView / 2 * Mathf.Deg2Rad);
+        float x = Mathf.Max((bounds.extents.x / 2) / fov, (bounds.extents.y / 2) / fov);
+        float distanceToFront = bounds.extents.z / 2;
+        float distance = distanceToFront + x;
+
+        cam.transform.position = bounds.center - distance * 1.7f * cam.transform.forward;// + (Vector3.up * -10000); ;
         return gameObject;
     }
     #endregion
