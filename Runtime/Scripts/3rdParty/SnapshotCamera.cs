@@ -221,7 +221,7 @@ public class SnapshotCamera : MonoBehaviour {
     /// <returns>A prefab instance ready for taking a snapshot.</returns>
     private GameObject PreparePrefab(GameObject prefab, Vector3 positionOffset, Quaternion rotation, Vector3 scale)
     {
-        GameObject gameObject = Instantiate(prefab, transform.position + positionOffset, rotation * Quaternion.Euler(0,180,0)) as GameObject;
+        GameObject gameObject = Instantiate(prefab, positionOffset, rotation * Quaternion.Euler(0,180,0)) as GameObject;
         gameObject.transform.localScale = scale;
         SetLayersRecursively(gameObject); 
        
@@ -235,7 +235,9 @@ public class SnapshotCamera : MonoBehaviour {
         float distanceToFront = bounds.extents.z / 2;
         float distance = distanceToFront + x;
 
-        cam.transform.position = bounds.center - distance * 1.7f * cam.transform.forward;// + (Vector3.up * -10000); ;
+        cam.transform.position = bounds.center - distance * 1.7f * cam.transform.forward;
+        gameObject.transform.SetParent(cam.transform, true);
+        cam.transform.position = cam.transform.position + (Vector3.up * -10000);
         return gameObject;
     }
     #endregion
