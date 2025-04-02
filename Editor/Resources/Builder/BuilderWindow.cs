@@ -1060,6 +1060,8 @@ public class BuilderWindow : EditorWindow
             try{
                 existingDropDown.index = -1;
             }catch{}
+            uploadWebOnlyKit.style.display = DisplayStyle.None;
+            deleteKit.style.display = DisplayStyle.None;
             AddStatus("Deleted kit from Banter Markit");
             callback();
         }, headers);
