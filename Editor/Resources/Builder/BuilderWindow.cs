@@ -911,7 +911,7 @@ public class BuilderWindow : EditorWindow
             callback(uwr.downloadHandler.text);
         }
     }
-    private IEnumerator PopulateExistingKits() {
+    private IEnumerator PopulateExistingKits(Action callback = null) {
         yield return Json<KitRows>("https://screen.sdq.st:2096/kits/user/" + sq.User.UserId, kit => {
             myKits = kit.rows;
             if(kit.rows.Length != 0) {
@@ -919,6 +919,7 @@ public class BuilderWindow : EditorWindow
             }else{
                 existingDropDown.choices = new List<string>{"Create New..."};
             }
+            callback?.Invoke();
         });
     }
     bool KitUserCreated = false;
@@ -1055,15 +1056,17 @@ public class BuilderWindow : EditorWindow
         kit.users_id = sq.User.UserId.ToString();
         kit.access_token = sq.Data.Token.AccessToken;
         yield return Json("https://screen.sdq.st:2096/kit/delete/" + selectedKitId, kit, resp => {
-            EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
-            SelectKit(myKits.Length);
-            try{
-                existingDropDown.index = -1;
-            }catch{}
-            uploadWebOnlyKit.style.display = DisplayStyle.None;
-            deleteKit.style.display = DisplayStyle.None;
-            AddStatus("Deleted kit from Banter Markit");
-            callback();
+            EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(()=>{
+                SelectKit(myKits.Length);
+                try{
+                    existingDropDown.index = myKits.Length;
+                }catch{}
+                uploadWebOnlyKit.style.display = DisplayStyle.None;
+                deleteKit.style.display = DisplayStyle.None;
+                AddStatus("Deleted kit from Banter Markit");
+                callback();
+            }), this);
+            
         }, headers);
     }
     private IEnumerator UploadEverything(Action callback)
