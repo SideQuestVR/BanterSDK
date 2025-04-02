@@ -237,7 +237,7 @@ public class SnapshotCamera : MonoBehaviour {
 
         cam.transform.position = bounds.center - distance * 1.7f * cam.transform.forward;
         gameObject.transform.SetParent(cam.transform, true);
-        cam.transform.position = cam.transform.position + (Vector3.up * -10000);
+        cam.transform.position = cam.transform.position + (Vector3.up * 10000) + (Vector3.forward * -10000);
         return gameObject;
     }
     #endregion

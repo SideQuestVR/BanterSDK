@@ -15,6 +15,8 @@ using System.Collections;
 using UnityEngine.Networking;
 using UnityEditor.UIElements;
 
+        // TODO - Textures that are updated after the kit is created are darker than others - just uplaod one then update detils on it after
+        // TODO - Confirm buttons are only clickable on the text and not ont he button itself.
 public enum BanterBuilderBundleMode
 {
     None = 0,
@@ -1043,6 +1045,7 @@ public class BuilderWindow : EditorWindow
         EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
         callback();
         EditorUtility.ClearProgressBar();
+
     }
     private IEnumerator DeleteKit(Action callback) {
         if(string.IsNullOrEmpty(selectedKitId)) {
