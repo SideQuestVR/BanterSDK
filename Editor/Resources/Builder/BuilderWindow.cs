@@ -914,6 +914,9 @@ public class BuilderWindow : EditorWindow
         }
     }
     private IEnumerator PopulateExistingKits(Action callback = null) {
+        if(sq.User == null) {
+            yield break;
+        }
         yield return Json<KitRows>("https://screen.sdq.st:2096/kits/user/" + sq.User.UserId, kit => {
             myKits = kit.rows;
             if(kit.rows.Length != 0) {
