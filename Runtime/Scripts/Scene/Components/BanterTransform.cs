@@ -29,6 +29,7 @@ namespace Banter.SDK
         transform.position = new BS.Vector3(1,1,1);
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent(typeof(Transform))]
     public class BanterTransform : UnityComponentBase

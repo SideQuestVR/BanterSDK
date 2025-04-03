@@ -14,6 +14,7 @@ namespace Banter.SDK
         const mirror = await gameObject.AddComponent(new BS.BanterMirror());
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterMirror : BanterComponentBase

@@ -114,6 +114,9 @@ namespace Banter.SDK
         }
         public static async Task<Community> SpaceMeta(string url)
         {
+            if (url.Contains("?"))
+                url = url.Split('?')[0];
+            
             try
             {
                 var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/communities/space-info?space_url=" + UnityWebRequest.EscapeURL(url));
@@ -147,6 +150,19 @@ namespace Banter.SDK
             else
             {
                 return uwr.downloadHandler.data;
+            }
+        }
+        public static async Task<T> Json<T>(string url)
+        {
+            UnityWebRequest uwr = UnityWebRequest.Get(url);
+            await uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                throw new System.Exception(uwr.error);
+            }
+            else
+            {
+                return JsonUtility.FromJson<T>(uwr.downloadHandler.text);
             }
         }
         public static async Task<string> Text(string url)

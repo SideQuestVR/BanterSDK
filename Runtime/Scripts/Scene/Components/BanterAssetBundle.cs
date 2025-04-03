@@ -37,6 +37,7 @@ namespace Banter.SDK
     ```
 
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
     public class BanterAssetBundle : BanterComponentBase
@@ -84,14 +85,6 @@ namespace Banter.SDK
                     return;
                 }
                 scene.settings.SceneAssetBundle = this;
-            }
-            else
-            {
-                if (scene.settings.KitBundles.Count > 2)
-                {
-                    SetLoadedIfNot(false, "Three kit bundles already registered!");
-                    return;
-                }
             }
 #if !BANTER_EDITOR
             if (isScene)

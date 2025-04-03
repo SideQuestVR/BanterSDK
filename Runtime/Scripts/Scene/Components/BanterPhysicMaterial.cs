@@ -24,6 +24,7 @@ namespace Banter.SDK
         const physicMaterial = await gameObject.AddComponent(new BS.BanterPhysicMaterial(dynamicFriction, staticFriction));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
 

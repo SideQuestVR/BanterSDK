@@ -33,6 +33,7 @@ namespace Banter.SDK
         const gltf = await gameObject.AddComponent(new BS.BanterGLTF(url, generateMipMaps, addColliders, nonConvexColliders, slippery, climbable, legacyRotate));
     ```
     */
+    [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BanterObjectId))]
 
