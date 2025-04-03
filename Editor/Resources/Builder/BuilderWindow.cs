@@ -15,8 +15,6 @@ using System.Collections;
 using UnityEngine.Networking;
 using UnityEditor.UIElements;
 
-        // TODO - Textures that are updated after the kit is created are darker than others - just uplaod one then update detils on it after
-        // TODO - Confirm buttons are only clickable on the text and not ont he button itself.
 public enum BanterBuilderBundleMode
 {
     None = 0,
@@ -505,7 +503,7 @@ public class BuilderWindow : EditorWindow
         kitCategoryDropDown.index = -1;
         kitCategoryDropDown.index = kitCategories.ToList().IndexOf(kitCategories.First(k => k.id == myKits[selectedIndex].kit_categories_id));
         EditorCoroutineUtility.StartCoroutine(Texture(myKits[selectedIndex].picture, tex => {
-            markitCoverImage.value = tex;
+            markitCoverImage.value = CopyIt(tex);
         }), this);
     }
     Label buildButton;
@@ -987,8 +985,8 @@ public class BuilderWindow : EditorWindow
                     source.height,
                     0,
                     RenderTextureFormat.Default,
-                    RenderTextureReadWrite.Linear);
-
+                    source.isDataSRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear);
+        
         Graphics.Blit(source, renderTex);
         RenderTexture previous = RenderTexture.active;
         RenderTexture.active = renderTex;

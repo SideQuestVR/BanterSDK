@@ -145,7 +145,7 @@
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
                 <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelBuild" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
                 <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
-                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmBuild" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmBuild" style="-unity-text-align: middle-center; height: 80%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255); width: 80%; margin-top: 6px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
@@ -157,7 +157,7 @@
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
                 <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelDelete" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
                 <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
-                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmDelete" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmDelete" style="-unity-text-align: middle-center; height: 80%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255); width: 80%; margin-top: 6px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
