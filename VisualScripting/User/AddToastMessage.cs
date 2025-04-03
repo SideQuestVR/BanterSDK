@@ -31,8 +31,8 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _message = flow.GetValue<string>(message);
                 var _color = flow.GetValue<Color>(color);
-                var _timeout = flow.GetValue<float>(timeout);
-                var _delay = flow.GetValue<float>(delay);
+                var _timeout = flow.GetValue<int>(timeout);
+                var _delay = flow.GetValue<int>(delay);
                 
                 BanterScene.Instance().events.OnToast?.Invoke(_message, _timeout, _delay, _color);
 
