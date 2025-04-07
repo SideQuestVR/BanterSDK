@@ -12783,6 +12783,8 @@ namespace Banter.SDKEditor
             "PicaVoxel.VoxelManipulator.IsActive",
             "PicaVoxel.VoxelManipulator.PreviewMesh",
             "PicaVoxel.VoxelManipulator.IsPreviewCustomMesh",
+            "PicaVoxel.VoxelManipulator.ValuePreviewMaterial",
+            "PicaVoxel.VoxelManipulator.ColorPreviewMaterial",
             "PicaVoxel.Volume.SetVoxelByEditEvent",
             "PicaVoxel.Volume.SetChunkChangesByChangesEvent",
             "PicaVoxel.VoxelEditEventArgs..ctor",
