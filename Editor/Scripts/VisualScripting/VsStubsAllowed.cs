@@ -12781,6 +12781,8 @@ namespace Banter.SDKEditor
             "PicaVoxel.VoxelManipulator.VoxelValue",
             "PicaVoxel.VoxelManipulator.MaxValue",
             "PicaVoxel.VoxelManipulator.IsActive",
+            "PicaVoxel.VoxelManipulator.PreviewMesh",
+            "PicaVoxel.VoxelManipulator.IsPreviewCustomMesh",
             "PicaVoxel.Volume.SetVoxelByEditEvent",
             "PicaVoxel.Volume.SetChunkChangesByChangesEvent",
             "PicaVoxel.VoxelEditEventArgs..ctor",
