@@ -86,14 +86,6 @@ namespace Banter.SDK
                 }
                 scene.settings.SceneAssetBundle = this;
             }
-            else
-            {
-                if (scene.settings.KitBundles.Count > 2)
-                {
-                    SetLoadedIfNot(false, "Three kit bundles already registered!");
-                    return;
-                }
-            }
 #if !BANTER_EDITOR
             if (isScene)
             {

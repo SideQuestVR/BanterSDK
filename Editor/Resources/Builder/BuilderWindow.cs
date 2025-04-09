@@ -12,6 +12,8 @@ using System.Threading;
 using Banter.SDKEditor;
 using Unity.EditorCoroutines.Editor;
 using System.Collections;
+using UnityEngine.Networking;
+using UnityEditor.UIElements;
 
 public enum BanterBuilderBundleMode
 {
@@ -24,6 +26,7 @@ public class KitObjectAndPath
 {
     public UnityEngine.Object obj;
     public string path;
+    public Texture2D texture;
     public static List<Type> ALLOWED_KIT_TYPES = new List<Type>()
     {
         typeof(GameObject),
@@ -68,8 +71,41 @@ public class BuilderWindow : EditorWindow
     Toggle autoUpload;
 
     VisualElement loggedInView;
+    VisualElement loggedInViewScene;
+    VisualElement loggedInViewPrefab;
 
+    DropdownField existingDropDown;
+    DropdownField kitCategoryDropDown;
+    Label numberOfItems;
 
+    KitCategory[] kitCategories;
+
+    TextField kitName;
+    TextField kitDescription;
+
+    ObjectField markitCoverImage;
+    Label uploadEverythingKit;
+    Button uploadWebOnlyKit;
+    Button deleteKit;
+    Label confirmBuildMode;
+    Label confirmSceneFile;
+    Label confirmSpaceCode;
+    Label confirmKitBundle;
+    Label confirmKitBundleID;
+    Label confirmKitNumber;
+
+    Label confirmBuild;
+    Button cancelBuild;
+
+    VisualElement buildConfirm;
+
+    VisualElement deleteConfirm;
+    Label confirmDelete;
+    Button cancelDelete;
+
+   
+    Kit[] myKits; 
+    string selectedKitId;
     string assetBundleRoot = "Assets";
     string assetBundleDirectory = "WebRoot";
     List<string> statusMessages = new List<string>();
@@ -94,8 +130,6 @@ public class BuilderWindow : EditorWindow
 
     void ShowWebRoot()
     {
-        Debug.Log("SelectPath");
-
         string path = Path.Join(assetBundleRoot, assetBundleDirectory);
 
         UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath(path, typeof(UnityEngine.Object));
@@ -118,7 +152,6 @@ public class BuilderWindow : EditorWindow
         SetLoginState();
         if (sq.User != null)
         {
-            AddStatus("User is logged in at startup, refreshing the user's profile");
             RefreshUser();
         }
         else
@@ -129,7 +162,7 @@ public class BuilderWindow : EditorWindow
     }
     private void ShowUploadToggle()
     {
-        if (sq.User != null && mode == BanterBuilderBundleMode.Scene)
+        if (sq.User != null)
         {
             autoUpload.style.display = DisplayStyle.Flex;
         }
@@ -160,7 +193,6 @@ public class BuilderWindow : EditorWindow
         //call GetLoginCode from the api to retrieve the short code a user should enter
         EditorCoroutineUtility.StartCoroutine(sq.GetLoginCode((code) =>
         {
-            AddStatus("Successfully got login short code from API");
             //When a code has been retrieved, the Code and the VerificationUrl returned from the API should
             //  be shown to the user
             codeText.text = $"Go to {code.VerificationUrl}\nput in {code.Code}";
@@ -178,7 +210,6 @@ public class BuilderWindow : EditorWindow
 
     private void StopPolling()
     {
-        AddStatus("Stopping polling for completion of short code login");
         if (waitCoroutine != null)
         {
             EditorCoroutineUtility.StopCoroutine(waitCoroutine);
@@ -188,7 +219,6 @@ public class BuilderWindow : EditorWindow
 
     private void StartPolling(int delaySec)
     {
-        AddStatus("Beginning polling for completion of short code login");
         waitCoroutine = EditorCoroutineUtility.StartCoroutine(Poller(delaySec), this);
     }
 
@@ -227,7 +257,6 @@ public class BuilderWindow : EditorWindow
             }
             if (isDone)
             {
-                AddStatus("Login with short code has completed");
                 //if the user logged in with the short code, stop the polling coroutine and continue on
                 LoginCompleted();
                 StopPolling();
@@ -237,11 +266,11 @@ public class BuilderWindow : EditorWindow
             {
                 if (codeCheckCount++ < 10)
                 {
-                    AddStatus($"Login with short code is not yet complete.  Will check again in {delaySec} seconds");
+                    // AddStatus($"Login with short code is not yet complete.  Will check again in {delaySec} seconds");
                 }
                 else
                 {
-                    AddStatus($"Nothing after 10 attempts, stopping polling.");
+                    // AddStatus($"Nothing after 10 attempts, stopping polling.");
                     StopPolling();
                     yield break;
                 }
@@ -263,6 +292,7 @@ public class BuilderWindow : EditorWindow
         statusText.text = $"Logged in as: {sq.User.Name}";
         autoUpload.style.display = DisplayStyle.Flex;
         SetBuildButtonText();
+        EditorCoroutineUtility.StartCoroutine(CheckKitUserExists(), this);
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -305,7 +335,7 @@ public class BuilderWindow : EditorWindow
             //This should be called periodically (e.g. on app start) to update the user's profile information.
             EditorCoroutineUtility.StartCoroutine(sq.RefreshUserProfile((u) =>
             {
-                AddStatus("User profile information has been refreshed from the API successfully");
+                // AddStatus("User profile information has been refreshed from the API successfully");
                 statusText.text = $"Logged in as: {sq.User.Name}";
             }, (e) =>
             {
@@ -435,9 +465,50 @@ public class BuilderWindow : EditorWindow
 
     void SetBuildButtonText()
     {
-        buildButton.text = autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene ? "Build & Upload it Now!" : "Build it Now!";
+        buildButton.text = autoUpload.value && sq.User != null ? "Build & Upload it Now!" : "Build it Now!";
+    }
+
+     public IEnumerator Texture(string url, Action<Texture2D> callback)
+        {
+            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
+            {
+                yield return uwr.SendWebRequest();
+                if (uwr.result != UnityWebRequest.Result.Success)
+                {
+                    throw new System.Exception(uwr.error);
+                }
+                else
+                {
+                    callback(DownloadHandlerTexture.GetContent(uwr));
+                }
+            }
+        }
+
+    void SelectKit(int selectedIndex) {
+        if(myKits == null || myKits.Length == 0 || selectedIndex == myKits.Length) {
+            kitName.value = "";
+            kitDescription.value = "";
+            selectedKitId = "";
+            kitCategoryDropDown.index = -1;
+            markitCoverImage.value = null;
+            uploadWebOnlyKit.style.display = DisplayStyle.None;
+            deleteKit.style.display = DisplayStyle.None;
+            return;
+        }
+        uploadWebOnlyKit.style.display = DisplayStyle.Flex;
+        deleteKit.style.display = DisplayStyle.Flex;
+        selectedKitId = myKits[selectedIndex].id;
+        kitName.value = myKits[selectedIndex].name;
+        kitDescription.value = myKits[selectedIndex].description;
+        kitCategoryDropDown.index = -1;
+        kitCategoryDropDown.index = kitCategories.ToList().IndexOf(kitCategories.First(k => k.id == myKits[selectedIndex].kit_categories_id));
+        EditorCoroutineUtility.StartCoroutine(Texture(myKits[selectedIndex].picture, tex => {
+            markitCoverImage.value = CopyIt(tex);
+        }), this);
     }
     Label buildButton;
+    Action confirmCallback;
+    Action deleteCallback;
     private void SetupUI()
     {
         statusBar = rootVisualElement.Q<Label>("StatusBar");
@@ -484,14 +555,89 @@ public class BuilderWindow : EditorWindow
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
             SetBuildButtonText();
         });
+
+        markitCoverImage = rootVisualElement.Q<ObjectField>("MarkitCoverImage");
+        existingDropDown = rootVisualElement.Q<DropdownField>("ExistingDropDown");
+        var kitSelectPlaceholder = rootVisualElement.Q<Label>("KitSelectPlaceholder");
+        existingDropDown.RegisterValueChangedCallback((e) =>
+        {
+           ShowSpaceSlugPlaceholder(kitSelectPlaceholder, e.newValue);
+           SelectKit(existingDropDown.index);
+
+        });
+
+        numberOfItems = rootVisualElement.Q<Label>("NumberOfItems");
+        kitCategoryDropDown = rootVisualElement.Q<DropdownField>("KitCategoryDropDown");
+        var kitCategoryPlaceholder = rootVisualElement.Q<Label>("KitCategoryPlaceholder");
+        kitCategoryDropDown.RegisterValueChangedCallback((e) =>
+        {
+            ShowSpaceSlugPlaceholder(kitCategoryPlaceholder, e.newValue);
+        });
+        EditorCoroutineUtility.StartCoroutine(Json<KitCategoryRows>("https://screen.sdq.st:2096/kit/categories", categories => {
+            kitCategories = categories.rows;
+            kitCategoryDropDown.choices = categories.rows.Select(k => k.name).ToList();
+        }), this);
         var spaceSlugPlaceholder = rootVisualElement.Q<Label>("SpaceSlugPlaceholder");
+        
+        kitName = rootVisualElement.Q<TextField>("KitName");
+        var kitNamePlaceholder = rootVisualElement.Q<Label>("KitNamePlaceholder");
+        kitName.RegisterValueChangedCallback((e) =>
+        {
+            ShowSpaceSlugPlaceholder(kitNamePlaceholder, e.newValue);
+        });
+        kitDescription = rootVisualElement.Q<TextField>("KitDescription");
+        var kitDescPlaceholder = rootVisualElement.Q<Label>("KitDescPlaceholder");
+        kitDescription.RegisterValueChangedCallback((e) =>
+        {
+            ShowSpaceSlugPlaceholder(kitDescPlaceholder, e.newValue);
+        });
+        confirmBuildMode = rootVisualElement.Q<Label>("ConfirmBuildMode");
+        confirmSceneFile = rootVisualElement.Q<Label>("ConfirmSceneFile");
+        confirmSpaceCode = rootVisualElement.Q<Label>("ConfirmSpaceCode");
+        confirmKitBundle = rootVisualElement.Q<Label>("ConfirmKitBundle");
+        confirmKitBundleID = rootVisualElement.Q<Label>("ConfirmKitBundleID");
+        confirmKitNumber = rootVisualElement.Q<Label>("ConfirmKitNumber");
+
+
+        deleteConfirm = rootVisualElement.Q<VisualElement>("DeleteConfirm");
+
+        confirmDelete = rootVisualElement.Q<Label>("ConfirmDelete");
+        cancelDelete = rootVisualElement.Q<Button>("CancelDelete");
+        cancelDelete.RegisterCallback<MouseUpEvent>((e) => {
+            deleteConfirm.style.display = DisplayStyle.None;
+        });
+        confirmDelete.RegisterCallback<MouseUpEvent>((e) => {
+            deleteConfirm.style.display = DisplayStyle.None;
+            deleteCallback?.Invoke();
+        });
+        buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
+
+
+        confirmBuild = rootVisualElement.Q<Label>("ConfirmBuild");
+        cancelBuild = rootVisualElement.Q<Button>("CancelBuild");
+        cancelBuild.RegisterCallback<MouseUpEvent>((e) => {
+            buildConfirm.style.display = DisplayStyle.None;
+        });
+        confirmBuild.RegisterCallback<MouseUpEvent>((e) => {
+            buildConfirm.style.display = DisplayStyle.None;
+            confirmCallback?.Invoke();
+        });
+
+        
+        EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
+
         codeText = rootVisualElement.Q<Label>("LoginCode");
         spaceSlug = rootVisualElement.Q<TextField>("SpaceSlug");
         statusText = rootVisualElement.Q<Label>("SignedInStatus");
         signOut = rootVisualElement.Q<Label>("SignOut");
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
+        uploadWebOnlyKit = rootVisualElement.Q<Button>("UploadWebOnlyKit");
+        deleteKit = rootVisualElement.Q<Button>("DeleteKit");
         uploadEverything = rootVisualElement.Q<Label>("UploadEverything");
+        uploadEverythingKit = rootVisualElement.Q<Label>("UploadEverythingKit");
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
+        loggedInViewScene = rootVisualElement.Q<VisualElement>("LoggedInViewScene");
+        loggedInViewPrefab = rootVisualElement.Q<VisualElement>("LoggedInViewPrefab");
         signOut.RegisterCallback<MouseUpEvent>((e) => LogOut());
 
         spaceSlug.RegisterValueChangedCallback((e) =>
@@ -504,28 +650,84 @@ public class BuilderWindow : EditorWindow
         ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, spaceSlug.value);
         uploadWebOnly.clicked += () =>
         {
-            uploadWebOnly.SetEnabled(false);
-            uploadEverything.SetEnabled(false);
-            EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() =>
-            {
-                AddStatus("Upload complete.");
-                uploadWebOnly.SetEnabled(true);
-                uploadEverything.SetEnabled(true);
-            }), this);
+            if (string.IsNullOrEmpty(spaceSlug.text)){
+                AddStatus("No space slug provided, please enter a slug.");
+                return;
+            }
+            ShowBuildConfirm();
+            confirmCallback = () => {
+                uploadWebOnly.SetEnabled(false);
+                uploadEverything.SetEnabled(false);
+                EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() =>
+                {
+                    AddStatus("Upload complete.");
+                    uploadWebOnly.SetEnabled(true);
+                    uploadEverything.SetEnabled(true);
+                }), this);
+            };
         };
 
         uploadEverything.RegisterCallback<MouseUpEvent>((e) =>
         {
-            uploadWebOnly.SetEnabled(false);
-            uploadEverything.SetEnabled(false);
-            EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
-            {
-                AddStatus("Upload complete.");
-                uploadWebOnly.SetEnabled(true);
-                uploadEverything.SetEnabled(true);
-            }), this);
+            if (string.IsNullOrEmpty(spaceSlug.text)){
+                AddStatus("No space slug provided, please enter a slug.");
+                return;
+            }
+            ShowBuildConfirm();
+            confirmCallback = () => {
+                confirmCallback = null;
+                uploadWebOnly.SetEnabled(false);
+                uploadEverything.SetEnabled(false);
+                EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+                {
+                    AddStatus("Upload complete.");
+                    uploadWebOnly.SetEnabled(true);
+                    uploadEverything.SetEnabled(true);
+                }), this);
+            };
         });
 
+        uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) => {
+            autoUpload.value = true;
+            BuildAssetBundles();
+        }
+        // {
+        //     if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
+        //         AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select an image.");
+        //         return;
+        //     }
+        //     ShowBuildConfirm();
+        //     confirmCallback = () => {
+        //         uploadEverythingKit.SetEnabled(false);
+        //         EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
+        //         {
+        //             AddStatus("Upload complete.");
+        //             uploadEverythingKit.SetEnabled(true);
+        //         }), this);
+        //     };
+        // }
+        );
+        
+        uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) => {
+            autoUpload.value = true;
+            BuildAssetBundles(true);
+        });
+
+        deleteKit.RegisterCallback<MouseUpEvent>((e) => {
+            deleteConfirm.style.display = DisplayStyle.Flex;
+            deleteCallback = () => {
+                if (string.IsNullOrEmpty(selectedKitId)){
+                    AddStatus("No kit selected, please select a kit.");
+                    return;
+                }
+                deleteKit.SetEnabled(false);
+                EditorCoroutineUtility.StartCoroutine(DeleteKit(() =>
+                {
+                    AddStatus("Deleted kit.");
+                    deleteKit.SetEnabled(true);
+                }), this);
+            };
+        });
 
         mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
@@ -551,7 +753,7 @@ public class BuilderWindow : EditorWindow
         kitListView.makeItem = () =>
         {
             var ele = new VisualElement();
-            ele.style.flexDirection = FlexDirection.RowReverse;
+            ele.style.flexDirection = FlexDirection.Row;
             ele.style.justifyContent = Justify.SpaceBetween;
             var label = new Label
             {
@@ -561,22 +763,50 @@ public class BuilderWindow : EditorWindow
             {
                 name = "kitItemCopy"
             };
+            var image = new VisualElement
+            {
+                name = "kitItemImage"
+            };
+            image.style.width = 50;
+            image.style.height = 50;
+            image.style.flexShrink = 0;
             label.style.color = new Color(0.560f, 0.560f, 0.560f);
             label.style.textOverflow = TextOverflow.Ellipsis;
+            label.style.fontSize = 16;
+            label.style.unityTextAlign = TextAnchor.MiddleLeft;
+            
+            label.style.width = new StyleLength(Length.Percent(100));
+            label.style.flexShrink = 1;
             button.style.paddingBottom = button.style.paddingTop = 0;
             button.style.paddingLeft = button.style.paddingRight = 2;
             button.style.borderTopRightRadius = button.style.borderBottomRightRadius = button.style.borderTopLeftRadius = button.style.borderBottomLeftRadius = 8;
             button.style.marginTop = button.style.marginLeft = button.style.marginRight = 0;
             button.style.marginBottom = 2;
-            ele.Add(button);
+            button.style.flexShrink = 0;
+            ele.Add(image);
             ele.Add(label);
+            ele.Add(button);
             ele.AddToClassList("unity-label-margin");
             return ele;
         };
+
+        SnapshotCamera snapshotCamera = FindAnyObjectByType<SnapshotCamera>();
+        
         kitListView.bindItem = (e, i) =>
         {
             var name = kitObjectList[i].path.ToLower();
-            e.Q<Label>("kitItemName").text = i + 1 + ". " + name;
+            if(kitObjectList[i].texture == null) {
+                
+                if(snapshotCamera == null) {
+                    snapshotCamera = SnapshotCamera.MakeSnapshotCamera(0);
+                }
+                kitObjectList[i].texture = snapshotCamera.TakePrefabSnapshot((GameObject)kitObjectList[i].obj);
+            }
+            var text = e.Q<Label>("kitItemName");
+            text.text = i + 1 + ". " + name;
+            var image = e.Q<VisualElement>("kitItemImage");
+            image.style.backgroundImage = new StyleBackground(kitObjectList[i].texture);
+            image.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
             var button = e.Q<Button>("kitItemCopy");
             button.text = "copy";
             button.clicked += () =>
@@ -595,12 +825,16 @@ public class BuilderWindow : EditorWindow
         if (!string.IsNullOrEmpty(scenePath))
         {
             mode = BanterBuilderBundleMode.Scene;
+            loggedInViewPrefab.style.display = DisplayStyle.None;
+            loggedInViewScene.style.display = DisplayStyle.Flex;
         }
         else
         {
             if (kitObjectList.Count > 0)
             {
                 mode = BanterBuilderBundleMode.Kit;
+                loggedInViewPrefab.style.display = DisplayStyle.Flex;
+                loggedInViewScene.style.display = DisplayStyle.None;
             }
         }
         RefreshView();
@@ -641,7 +875,88 @@ public class BuilderWindow : EditorWindow
 #endif // BANTER_VISUAL_SCRIPTING
         rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
     }
+    public IEnumerator Json<T>(string url, Action<T> callback)
+    {
+        UnityWebRequest uwr = UnityWebRequest.Get(url);
+        yield return uwr.SendWebRequest();
+        if (uwr.result != UnityWebRequest.Result.Success)
+        {
+            throw new System.Exception(uwr.error);
+        }
+        else
+        {
+            callback(JsonUtility.FromJson<T>(uwr.downloadHandler.text));
+        }
+    }
+    public IEnumerator Json<T>(string url, T postData, Action<string> callback, Dictionary<string, string> headers = null)
+    {
+        UnityWebRequest uwr = UnityWebRequest.Put(url, JsonUtility.ToJson(postData));
+        uwr.method = "POST";
+        if (headers != null)
+        {
+            foreach (var header in headers)
+            {
+                uwr.SetRequestHeader(header.Key, header.Value);
+            }
+        }
+        yield return uwr.SendWebRequest();
 
+        if (uwr.result != UnityWebRequest.Result.Success)
+        {
+            Debug.LogError(url + ":" + JsonUtility.ToJson(postData));
+            throw new System.Exception(uwr.error);
+        }
+        else
+        {
+            callback(uwr.downloadHandler.text);
+        }
+    }
+    private IEnumerator PopulateExistingKits(Action callback = null) {
+        if(sq.User == null) {
+            yield break;
+        }
+        yield return Json<KitRows>("https://screen.sdq.st:2096/kits/user/" + sq.User.UserId, kit => {
+            myKits = kit.rows;
+            if(kit.rows.Length != 0) {
+                existingDropDown.choices = kit.rows.Select(k => k.id + ": " + k.name).ToList().Concat(new List<string>{"Create New..."}).ToList();
+            }else{
+                existingDropDown.choices = new List<string>{"Create New..."};
+            }
+            callback?.Invoke();
+        });
+    }
+    bool KitUserCreated = false;
+    private IEnumerator CreateKitUser() {
+        var headers = new Dictionary<string, string>{
+            { "Content-Type", "application/json" },
+        };  
+        var kitUser = new KitUser{
+            ext_id = sq.User.UserId.ToString(),
+            name = sq.User.Name,
+            bio = sq.User.TagLine,
+            profile_pic = "https://cdn.sidequestvr.com/" + sq.User.PreviewImageUrl
+        };
+        yield return Json("https://screen.sdq.st:2096/user", kitUser, resp => {
+            var kitUserResponse = JsonUtility.FromJson<KitUserRows>(resp);
+            if(kitUserResponse.rows.Length == 0) {
+                AddStatus("Failed to create kit user, are you online?");
+                return;
+            }
+            KitUserCreated = true;
+        }, headers);
+    }
+    private IEnumerator CheckKitUserExists() {
+        if(sq.User == null || KitUserCreated) {
+            yield break;
+        }
+        yield return Json<KitUserRows>("https://screen.sdq.st:2096/user/" + sq.User.UserId, user => {
+            if(user.rows.Length == 0) {
+                EditorCoroutineUtility.StartCoroutine(CreateKitUser(), this);
+            }else{
+                KitUserCreated = true;
+            }
+        });
+    }
     private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue)
     {
         if (!string.IsNullOrEmpty(newValue))
@@ -656,22 +971,150 @@ public class BuilderWindow : EditorWindow
 
     private IEnumerator UploadWebOnly(Action callback)
     {
-        yield return UploadFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
-        yield return UploadFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        yield return UploadFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading web files...", 0.1f);
+        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
+        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
         callback();
+        EditorUtility.ClearProgressBar();
+    }
+    private Texture2D CopyIt(Texture2D source) {
+        RenderTexture renderTex = RenderTexture.GetTemporary(
+                    source.width,
+                    source.height,
+                    0,
+                    RenderTextureFormat.Default,
+                    source.isDataSRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear);
+        
+        Graphics.Blit(source, renderTex);
+        RenderTexture previous = RenderTexture.active;
+        RenderTexture.active = renderTex;
+        Texture2D readableText = new Texture2D(source.width, source.height);
+        readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
+        readableText.Apply();
+        RenderTexture.active = previous;
+        RenderTexture.ReleaseTemporary(renderTex);
+        return readableText;
+    }
+
+    private IEnumerator UploadKit(Action callback, bool skipUpload = false) {
+        EditorUtility.DisplayProgressBar("Banter Upload", skipUpload ? "Updating Kit details..." : "Uploading kitbundle_windows.banter...", 0.1f);
+        long androidFileId = 0;
+        long windowsFileId = 0;
+        long coverFileId = 0;
+        long[] imageIds = new long[kitObjectList.Count];
+        if(!skipUpload) {
+            yield return UploadFile("windows.banter", null, fileId => windowsFileId = fileId);
+            EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android.banter...", 0.5f);
+            yield return UploadFile("android.banter", null, fileId => androidFileId = fileId);
+            EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+        }
+
+        yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
+
+        for(int i = 0; i < kitObjectList.Count; i++) {
+            // TODO this sucks - Replace with something bespoke like this: https://gist.github.com/mickdekkers/5c3c62539c057010d4497f9865060e20
+            yield return UploadFile("prefab_image.png", kitObjectList[i].texture.EncodeToPNG(), fileId => imageIds[i] = fileId);
+        }
+
+        string createdKitId = null;
+        var headers = new Dictionary<string, string>{
+            { "Content-Type", "application/json" },
+        };  
+        yield return Json("https://screen.sdq.st:2096/kit", new Kit{
+            name = kitName.value,
+            description = kitDescription.value,
+            kit_categories_id = kitCategories[kitCategoryDropDown.index].id,
+            users_id = sq.User.UserId.ToString(),
+            id = selectedKitId,
+            access_token = sq.Data.Token.AccessToken,
+            picture = "https://cdn.sidequestvr.com/file/" + coverFileId.ToString() + "/kitbundle_cover_image.png",
+            windows = skipUpload ? myKits[existingDropDown.index].windows : "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_windows.banter",
+            android = skipUpload ? myKits[existingDropDown.index].android : "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android.banter",
+            items = kitObjectList.Select(ko => new KitItem{
+                name = ko.obj.name,
+                picture = "https://cdn.sidequestvr.com/file/" + imageIds[kitObjectList.IndexOf(ko)].ToString() + "/kitbundle_prefab_image.png",
+                path = ko.path,
+            }).ToArray(),
+        }, resp => {
+            var kitResponse = JsonUtility.FromJson<KitRows>(resp);
+            createdKitId = kitResponse.rows[0].id;
+        }, headers);
+
+        AddStatus("Uploaded kit to Banter Markit");
+        EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
+        callback();
+        EditorUtility.ClearProgressBar();
+
+    }
+    private IEnumerator DeleteKit(Action callback) {
+        if(string.IsNullOrEmpty(selectedKitId)) {
+            AddStatus("No kit selected, please select a kit.");
+            yield break;
+        }
+        var headers = new Dictionary<string, string>{
+            { "Content-Type", "application/json" },
+        };  
+        var kit = new Kit();
+        kit.users_id = sq.User.UserId.ToString();
+        kit.access_token = sq.Data.Token.AccessToken;
+        yield return Json("https://screen.sdq.st:2096/kit/delete/" + selectedKitId, kit, resp => {
+            EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(()=>{
+                SelectKit(myKits.Length);
+                try{
+                    existingDropDown.index = myKits.Length;
+                }catch{}
+                uploadWebOnlyKit.style.display = DisplayStyle.None;
+                deleteKit.style.display = DisplayStyle.None;
+                AddStatus("Deleted kit from Banter Markit");
+                callback();
+            }), this);
+            
+        }, headers);
     }
     private IEnumerator UploadEverything(Action callback)
     {
-        yield return UploadFile("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows);
-        yield return UploadFile("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android);
-        yield return UploadFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
-        yield return UploadFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        yield return UploadFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading everything...", 0.1f);
+        yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded windows.banter...", 0.5f);
+        yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded android.banter...", 0.9f);
+        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded index.html...", 0.92f);
+        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded script.js...", 0.95f);
+        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded bullshcript.js...", 0.99f);
         callback();
+        EditorUtility.ClearProgressBar();
     }
 
-    private IEnumerator UploadFile(string name, UploadAssetType type, UploadAssetTypePlatform platform)
+    private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null)
+    {
+        var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
+        if (File.Exists(file) || bytes != null)
+        {
+            AddStatus("Upload started: " + file + "...");
+        }
+        else
+        {
+            AddStatus("File not found, skipping: " + file);
+            yield break;
+        }
+        var data = bytes == null ? File.ReadAllBytes(file) : bytes;
+        yield return sq.UploadFile(name, data, "", (text) =>
+        {
+            callback?.Invoke(text.FileId);
+            AddStatus("Uploaded " + name + " to Banter Markit");
+        }, e =>
+        {
+            AddStatus("FAILED UPLOADING " + name + " to Banter Markit");
+            Debug.LogException(e);
+        });
+    }
+
+    private IEnumerator UploadFileToCommunity(string name, UploadAssetType type, UploadAssetTypePlatform platform)
     {
         var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
         if (File.Exists(file))
@@ -684,7 +1127,7 @@ public class BuilderWindow : EditorWindow
             yield break;
         }
         var data = File.ReadAllBytes(file);
-        yield return sq.UploadFile(name, data, spaceSlug.text, (text) =>
+        yield return sq.UploadFileToCommunity(name, data, spaceSlug.text, (text) =>
         {
             AddStatus("Uploaded " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
         }, e =>
@@ -692,16 +1135,6 @@ public class BuilderWindow : EditorWindow
             AddStatus("FAILED UPLOADING " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
             Debug.LogException(e);
         }, type, platform);
-    }
-    CancellationTokenSource resetDebounce;
-    private async Task ResetStatus(CancellationTokenSource cts)
-    {
-        await Task.Delay(3000);
-        if (cts.Token.IsCancellationRequested)
-        {
-            return;
-        }
-        statusBar.text = "STATUS: Idle";
     }
     void ClearLogs()
     {
@@ -719,12 +1152,6 @@ public class BuilderWindow : EditorWindow
         }
 
         buildProgress.Rebuild();
-        // if (resetDebounce != null && !resetDebounce.Token.IsCancellationRequested)
-        // {
-        //     resetDebounce.Cancel();
-        // }
-        // resetDebounce = new CancellationTokenSource();
-        // _ = ResetStatus(resetDebounce);
     }
 
     public void Remove(VisualElement element)
@@ -756,6 +1183,7 @@ public class BuilderWindow : EditorWindow
                 kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = path });
             }
         }
+        numberOfItems.text = "Number of items: " + kitObjectList.Count;
     }
 
     private void DropRecordingFile(bool isScene, string sceneFile, string[] paths)
@@ -787,6 +1215,8 @@ public class BuilderWindow : EditorWindow
         {
             scenePathLabel.text = scenePath = sceneFile;
             mode = BanterBuilderBundleMode.Scene;
+            loggedInViewPrefab.style.display = DisplayStyle.None;
+            loggedInViewScene.style.display = DisplayStyle.Flex;
         }
         else
         {
@@ -807,7 +1237,10 @@ public class BuilderWindow : EditorWindow
             if (kitObjectList.Count > 0)
             {
                 mode = BanterBuilderBundleMode.Kit;
+                loggedInViewPrefab.style.display = DisplayStyle.Flex;
+                loggedInViewScene.style.display = DisplayStyle.None;
             }
+            numberOfItems.text = "Number of items: " + kitObjectList.Count;
         }
         EditorPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
         EditorPrefs.SetString("BanterBuilder_ScenePath", scenePath);
@@ -858,6 +1291,8 @@ public class BuilderWindow : EditorWindow
 
             kitListView.itemsSource = kitObjectList;
             kitListView.Rebuild();
+            loggedInViewPrefab.style.display = DisplayStyle.Flex;
+            loggedInViewScene.style.display = DisplayStyle.None;
         }
         else if (mode == BanterBuilderBundleMode.Scene)
         {
@@ -865,12 +1300,16 @@ public class BuilderWindow : EditorWindow
             mainTitle.style.display = DisplayStyle.Flex;
             scenePathLabel.style.display = DisplayStyle.Flex;
             scenePathLabel.text = "<color=\"white\">Scene Path:</color> " + scenePath;
+            loggedInViewPrefab.style.display = DisplayStyle.None;
+            loggedInViewScene.style.display = DisplayStyle.Flex;
             // button to open the webroot folder - highlight in unity.
         }
         else
         {
             mainTitle.style.display = DisplayStyle.None;
             mainTitle.text = "";
+            loggedInViewPrefab.style.display = DisplayStyle.None;
+            loggedInViewScene.style.display = DisplayStyle.Flex;
         }
         ShowRemoveSelected();
         ShowUploadToggle();
@@ -880,7 +1319,21 @@ public class BuilderWindow : EditorWindow
     {
         Application.OpenURL("https://sidequestvr.com/account/create-space");
     }
-    private void BuildAssetBundles()
+    private void ShowBuildConfirm() {
+        buildConfirm.style.display = DisplayStyle.Flex;
+        confirmBuildMode.text = "<color=\"white\">Build Mode:</color> " + (mode == BanterBuilderBundleMode.Scene ? "Scene Bundle" : "Kit Bundle");
+        confirmKitBundle.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmKitBundle.text = "<color=\"white\">Kit Name:</color> " + kitName.value;
+        confirmKitBundleID.style.display = mode == BanterBuilderBundleMode.Kit && !string.IsNullOrEmpty(selectedKitId) ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmKitBundleID.text = "<color=\"white\">Kit Bundle ID:</color> " + selectedKitId;
+        confirmSceneFile.style.display = mode == BanterBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
+        confirmSpaceCode.style.display = mode == BanterBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmSpaceCode.text = "<color=\"white\">Space:</color> https://" + spaceSlug.text + ".bant.ing";
+        confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmKitNumber.text =  "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
+    }
+    private void BuildAssetBundles(bool skipUpload = false)
     {
         if (mode == BanterBuilderBundleMode.None)
         {
@@ -898,111 +1351,128 @@ public class BuilderWindow : EditorWindow
             return;
         }
 
+        ShowBuildConfirm();
+        confirmCallback = () => {
 #if BANTER_VISUAL_SCRIPTING
-        if (!ValidateVisualScripting.CheckVsNodes())
-        {
-            AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
-            return;
-        }
-        else
-        {
-            AddStatus("Visual Scripting check passed!");
-        }
-#endif
-
-        AddStatus("Build started...");
-
-        if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
-        {
-            Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
-        }
-
-        buildProgressBar.value = 25;
-        List<string> names = new List<string>();
-
-
-        for (int i = 0; i < buildTargets.Length; i++)
-        {
-            buildProgressBar.value += 25;
-            if (buildTargetFlags[i])
+            if (!ValidateVisualScripting.CheckVsNodes())
             {
-                string newAssetBundleName = "bundle";
-                string platform = buildTargets[i].ToString().ToLower();
-                AssetBundleBuild abb = new AssetBundleBuild();
-
-                if (mode == BanterBuilderBundleMode.Scene)
-                {
-                    string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
-                    newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
-                    AddStatus("Building: " + newAssetBundleName);
-
-                    AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
-                    abb.assetNames = new[] { scenePath };
-                }
-                else if (mode == BanterBuilderBundleMode.Kit)
-                {
-                    newAssetBundleName = "kitbundle_" + platform + ".banter";
-                    AddStatus("Building: " + newAssetBundleName);
-                    abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
-                }
-                else
-                {
-                    continue;
-                }
-                abb.assetBundleName = newAssetBundleName;
-                CustomSceneProcessor.isBuildingAssetBundles = true;
-                BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
-                CustomSceneProcessor.isBuildingAssetBundles = false;
-                names.Add(newAssetBundleName);
-                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
-                {
-                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
-                }
-
-            }
-        }
-
-        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
-        {
-            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
-        }
-        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
-        {
-            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
-        }
-        if (names.Count > 0 && !autoUpload.value)
-        {
-            EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
-        }
-        buildProgressBar.value = 100;
-        var task = new Task(async () =>
-        {
-            await Task.Delay(5000);
-            HideProgressBar();
-        });
-        task.Start();
-        if (mode == BanterBuilderBundleMode.Kit)
-        {
-            AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
-            File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
-        }
-        AddStatus("Build finished.");
-        if (autoUpload.value && sq.User != null && mode == BanterBuilderBundleMode.Scene)
-        {
-            if (string.IsNullOrEmpty(spaceSlug.text))
-            {
-                AddStatus("No space subdomain specified, skipping upload.");
+                AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
                 return;
             }
-            uploadWebOnly.SetEnabled(false);
-            uploadEverything.SetEnabled(false);
-            EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+            else
             {
-                AddStatus("Upload complete.");
-                uploadWebOnly.SetEnabled(true);
-                uploadEverything.SetEnabled(true);
-            }), this);
-        }
+                AddStatus("Visual Scripting check passed!");
+            }
+#endif
+            if(!skipUpload) {
+                AddStatus("Build started...");
+
+                if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
+                {
+                    Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
+                }
+
+                buildProgressBar.value = 25;
+                List<string> names = new List<string>();
+
+
+                for (int i = 0; i < buildTargets.Length; i++)
+                {
+                    buildProgressBar.value += 25;
+                    if (buildTargetFlags[i])
+                    {
+                        string newAssetBundleName = "bundle";
+                        string platform = buildTargets[i].ToString().ToLower();
+                        AssetBundleBuild abb = new AssetBundleBuild();
+
+                        if (mode == BanterBuilderBundleMode.Scene)
+                        {
+                            string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
+                            newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
+                            AddStatus("Building: " + newAssetBundleName);
+
+                            AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
+                            abb.assetNames = new[] { scenePath };
+                        }
+                        else if (mode == BanterBuilderBundleMode.Kit)
+                        {
+                            newAssetBundleName = "kitbundle_" + platform + ".banter";
+                            AddStatus("Building: " + newAssetBundleName);
+                            abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
+                        }
+                        else
+                        {
+                            continue;
+                        }
+                        abb.assetBundleName = newAssetBundleName;
+                        CustomSceneProcessor.isBuildingAssetBundles = true;
+                        BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
+                        CustomSceneProcessor.isBuildingAssetBundles = false;
+                        names.Add(newAssetBundleName);
+                        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
+                        {
+                            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
+                        }
+
+                    }
+                }
+
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+                }
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
+                }
+                if (names.Count > 0 && !autoUpload.value)
+                {
+                    EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
+                }
+                buildProgressBar.value = 100;
+                var task = new Task(async () =>
+                {
+                    await Task.Delay(5000);
+                    HideProgressBar();
+                });
+                task.Start();
+                if (mode == BanterBuilderBundleMode.Kit)
+                {
+                    AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
+                    File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
+                }
+                AddStatus("Build finished.");
+            }
+            
+            if (autoUpload.value && sq.User != null)
+            {
+                if(mode == BanterBuilderBundleMode.Scene) {
+                    if (string.IsNullOrEmpty(spaceSlug.text)){
+                        AddStatus("No space slug provided, please enter a slug to upload.");
+                        return;
+                    }
+                    uploadWebOnly.SetEnabled(false);
+                    uploadEverything.SetEnabled(false);
+                    EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+                    {
+                        AddStatus("Upload complete.");
+                        uploadWebOnly.SetEnabled(true);
+                        uploadEverything.SetEnabled(true);
+                    }), this);
+                }else{
+                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
+                        AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
+                        return;
+                    }
+                    uploadEverythingKit.SetEnabled(false);
+                    EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
+                    {
+                        AddStatus("Upload complete.");
+                        uploadEverythingKit.SetEnabled(true);
+                    }, skipUpload), this);
+                }
+            }
+        };
     }
     void HideProgressBar()
     {

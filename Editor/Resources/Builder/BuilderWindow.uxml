@@ -18,9 +18,9 @@
                     <ui:VisualElement name="dropArea" tooltip="Drop a scne file here to build a normal asset bunlde, or drop multiple prefab files here to make a kit bundle." style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; margin-bottom: 20px; -unity-background-image-tint-color: rgb(255, 255, 255);">
                         <ui:Label text="Drop Scene/Prefab files here&#10;to select a build mode" display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
                     </ui:VisualElement>
-                    <ui:Label name="mainTitle" display-tooltip-when-elided="true" text="Build Mode:  something" class="unity-label-margin" style="display: none; font-size: 14px; -unity-text-align: upper-left; margin-top: 20px; -unity-text-outline-color: rgb(143, 143, 143); color: rgb(143, 143, 143); margin-left: 5%; margin-right: 5%;" />
+                    <ui:Label name="mainTitle" display-tooltip-when-elided="true" text="Build Mode:  something" class="unity-label-margin" style="display: none; font-size: 18px; -unity-text-align: upper-left; margin-top: 20px; -unity-text-outline-color: rgb(143, 143, 143); color: rgb(143, 143, 143); margin-left: 5%; margin-right: 5%;" />
                     <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin" style="display: none; color: rgb(143, 143, 143); margin-bottom: 30px; margin-left: 5%; margin-right: 5%; font-size: 14px;" />
-                    <ui:ListView focusable="true" name="kitItemList" style="display: none; margin-left: 5%; margin-right: 5%;" />
+                    <ui:ListView focusable="true" name="kitItemList" style="display: none; margin-left: 5%; margin-right: 5%; margin-top: 16px; margin-bottom: 16px;" />
                     <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" style="display: none; margin-bottom: 20px; max-width: none; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; flex-direction: column; flex-wrap: nowrap; margin-left: 48px; margin-right: 48px;" />
                     <ui:Toggle label="Auto Upload:" value="false" name="autoUpload" style="margin-top: 5px; justify-content: flex-start; display: none; margin-left: 5%; margin-right: 5%;" />
                     <ui:Toggle label="Android:" value="true" name="buildForAndroid" style="margin-top: 5px; justify-content: flex-start; margin-left: 5%; margin-right: 5%;" />
@@ -34,29 +34,72 @@
                 <ui:ScrollView horizontal-scroller-visibility="Hidden">
                     <ui:VisualElement name="LoginToUpload">
                         <ui:Label text="678 654\nGo to sdq.st/link\nto Sign In" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 10px; padding-bottom: 10px; font-size: 30px; display: flex;" />
-                        <ui:VisualElement name="LoggedInView" style="display: flex;">
+                        <ui:VisualElement name="LoggedInView" style="flex-grow: 1;">
                             <ui:VisualElement style="flex-direction: row; justify-content: space-between; margin-top: 10px; margin-bottom: 10px; padding-left: 5%; padding-right: 5%;">
                                 <ui:Label text="Signed In As: Shane Harris" display-tooltip-when-elided="true" name="SignedInStatus" style="padding-top: 10px; padding-bottom: 10px; -unity-text-align: upper-center;" />
                                 <ui:Label text="Sign out?" display-tooltip-when-elided="true" name="SignOut" style="padding-top: 10px; padding-bottom: 10px; cursor: link;" />
                             </ui:VisualElement>
-                            <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
-                                <ui:VisualElement name="spaceSlugPlaceholder" style="width: 100%;">
-                                    <ui:Label text="space-subdomain" display-tooltip-when-elided="true" name="SpaceSlugPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px;" />
-                                    <ui:TextField picking-mode="Ignore" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
+                            <ui:VisualElement name="LoggedInViewScene" style="display: flex;">
+                                <ui:Label tabindex="-1" text="Scene Bundle Upload" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-text-align: upper-center; -unity-font-style: bold; font-size: 18px;" />
+                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                                    <ui:VisualElement name="spaceSlugPlaceholder" style="width: 100%;">
+                                        <ui:Label text="space-subdomain" display-tooltip-when-elided="true" name="SpaceSlugPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px;" />
+                                        <ui:TextField picking-mode="Ignore" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
+                                    </ui:VisualElement>
+                                    <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; border-left-width: 0.5px; border-left-color: rgba(168, 168, 168, 0.1); padding-left: 10px; font-size: 12px; color: rgb(255, 255, 255);" />
                                 </ui:VisualElement>
-                                <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; border-left-width: 0.5px; border-left-color: rgba(168, 168, 168, 0.1); padding-left: 10px; font-size: 12px; color: rgb(255, 255, 255);" />
+                                <ui:VisualElement style="flex-direction: row;">
+                                    <ui:Label text="Don&apos;t have a space yet? " display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 0; margin-bottom: 20px; font-size: 12px;" />
+                                    <ui:Label text="Create One." display-tooltip-when-elided="true" name="CreateSpace" style="cursor: link; font-size: 12px; color: rgb(0, 172, 255);" />
+                                </ui:VisualElement>
+                                <ui:VisualElement style="flex-direction: row; width: 100%; align-items: center; justify-content: center;">
+                                    <ui:Button text="Upload HTML+JS Only" display-tooltip-when-elided="true" name="UploadWebOnly" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                                    <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
+                                        <ui:Label text="Upload All" display-tooltip-when-elided="true" name="UploadEverything" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:Button text="Open Web Folder" display-tooltip-when-elided="true" name="OpenWebRoot" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; margin-left: 25%; margin-right: 25%;" />
                             </ui:VisualElement>
-                            <ui:VisualElement style="flex-direction: row;">
-                                <ui:Label text="Don&apos;t have a space yet? " display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 0; margin-bottom: 20px; font-size: 12px;" />
-                                <ui:Label text="Create One." display-tooltip-when-elided="true" name="CreateSpace" style="cursor: link; font-size: 12px; color: rgb(0, 172, 255);" />
-                            </ui:VisualElement>
-                            <ui:VisualElement style="flex-direction: row; width: 100%; align-items: center; justify-content: center;">
-                                <ui:Button text="Upload HTML+JS Only" display-tooltip-when-elided="true" name="UploadWebOnly" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
-                                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
-                                    <ui:Label text="Upload All" display-tooltip-when-elided="true" name="UploadEverything" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                            <ui:VisualElement name="LoggedInViewPrefab" style="flex-grow: 1;">
+                                <ui:Label tabindex="-1" text="Kit Bundle Upload" parse-escape-sequences="true" display-tooltip-when-elided="true" style="-unity-font-style: bold; font-size: 18px; -unity-text-align: upper-center;" />
+                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                                    <ui:VisualElement style="width: 100%;">
+                                        <ui:Label text="Select or Create New..." display-tooltip-when-elided="true" name="KitSelectPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                        <ui:DropdownField name="ExistingDropDown" style="color: white;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                                    <ui:VisualElement style="width: 100%;">
+                                        <ui:Label text="Kit Name" display-tooltip-when-elided="true" name="KitNamePlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                        <ui:TextField picking-mode="Ignore" name="KitName" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                                    <ui:VisualElement style="width: 100%;">
+                                        <ui:Label text="Kit Description" display-tooltip-when-elided="true" name="KitDescPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                        <ui:TextField picking-mode="Ignore" name="KitDescription" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                                    <ui:VisualElement style="width: 100%;">
+                                        <ui:Label text="Select Category..." display-tooltip-when-elided="true" name="KitCategoryPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                        <ui:DropdownField name="KitCategoryDropDown" style="color: white;" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                                    <ui:VisualElement style="width: 100%;">
+                                        <uie:ObjectField type="UnityEngine.Texture2D, UnityEngine.CoreModule" label="Select a cover image:" name="MarkitCoverImage" />
+                                    </ui:VisualElement>
+                                </ui:VisualElement>
+                                <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
+                                <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center;">
+                                    <ui:Button text="Delete Kit" display-tooltip-when-elided="true" name="DeleteKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; border-left-color: rgb(224, 83, 83); border-right-color: rgb(224, 83, 83); border-top-color: rgb(224, 83, 83); border-bottom-color: rgb(224, 83, 83); display: none;" />
+                                    <ui:Button text="Update Details" display-tooltip-when-elided="true" name="UploadWebOnlyKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; display: none;" />
+                                    <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
+                                        <ui:Label text="Build &amp; Upload" display-tooltip-when-elided="true" name="UploadEverythingKit" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                                    </ui:VisualElement>
                                 </ui:VisualElement>
                             </ui:VisualElement>
-                            <ui:Button text="Open Web Folder" display-tooltip-when-elided="true" name="OpenWebRoot" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; margin-left: 25%; margin-right: 25%;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:ScrollView>
@@ -86,5 +129,37 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:Label text="STATUS: Idle" display-tooltip-when-elided="true" name="StatusBar" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 5px; padding-left: 5%; padding-right: 5%; padding-top: 5px; padding-bottom: 5px; font-size: 14px; justify-content: flex-start; position: absolute; bottom: 0; width: 100%;" />
+    </ui:VisualElement>
+    <ui:VisualElement name="BuildConfirm" style="display: none; flex-grow: 1; position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);">
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-background-scale-mode: scale-and-crop;">
+            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 30px; margin-top: 30px;" />
+            <ui:Label tabindex="-1" text="Check the following info to make sure everything is correct before you continue." parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 18px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
+            <ui:VisualElement style="width: 100%; margin-top: 45px; margin-left: 24px;">
+                <ui:Label tabindex="-1" text="Build Mode: " name="ConfirmBuildMode" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+                <ui:Label tabindex="-1" text="Scene File: " name="ConfirmSceneFile" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+                <ui:Label tabindex="-1" text="Space: " name="ConfirmSpaceCode" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+                <ui:Label tabindex="-1" text="Kit Bundle: " name="ConfirmKitBundle" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+                <ui:Label tabindex="-1" text="Kit Bundle ID: " name="ConfirmKitBundleID" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+                <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
+                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelBuild" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
+                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmBuild" style="-unity-text-align: middle-center; height: 80%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255); width: 80%; margin-top: 6px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:VisualElement name="DeleteConfirm" style="display: none; flex-grow: 1; position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);">
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-background-scale-mode: scale-and-crop;">
+            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 30px; margin-top: 30px;" />
+            <ui:Label tabindex="-1" text="Do you want to delete this kit?" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 18px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
+            <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
+                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelDelete" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
+                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmDelete" style="-unity-text-align: middle-center; height: 80%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255); width: 80%; margin-top: 6px;" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -158,8 +158,12 @@ namespace Banter.SDKEditor
                     {
                         continue;
                     }
-
-                    output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
+                    try{
+                        output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
+                    }catch(Exception ex)
+                    {
+                        Debug.Log($"Could not add element {e?.GetType()}{e?.guid} {assetPath} {sga.graph.title} because of {ex} ");
+                    }
                 }
             }
             return output;
@@ -187,15 +191,19 @@ namespace Banter.SDKEditor
             {
                 return output;
             }
-
-            var reference = scriptMachine.GetReference().AsReference();
-            foreach (var e in scriptMachine.graph?.elements)
+            try{
+                var reference = scriptMachine.GetReference().AsReference();
+                foreach (var e in scriptMachine.graph?.elements)
+                {
+                    output = output.Concat(GrabElements(e, reference)).ToList();
+                }
+                foreach (var e in scriptMachine.nest?.embed?.elements)
+                {
+                    output = output.Concat(GrabElements(e, reference)).ToList();
+                }
+            }catch  (Exception ex)
             {
-                output = output.Concat(GrabElements(e, reference)).ToList();
-            }
-            foreach (var e in scriptMachine.nest?.embed?.elements)
-            {
-                output = output.Concat(GrabElements(e, reference)).ToList();
+                Debug.Log($"Could not add scriptMachine {scriptMachine?.GetType()}{scriptMachine?.GetInstanceID()} {scriptMachine?.name} because of {ex} ");
             }
             return output;
         }
