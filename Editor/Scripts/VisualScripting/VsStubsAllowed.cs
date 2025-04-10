@@ -12778,6 +12778,7 @@ namespace Banter.SDKEditor
             "PicaVoxel.OnVoxelManipulatorEdit",
             "PicaVoxel.OnVoxelManipulatorValueChanged",
             "PicaVoxel.OnVoxelManipulatorActiveChanged",
+            "PicaVoxel.OnVoxelDetected",
             "PicaVoxel.VoxelManipulator.Mode",
             "PicaVoxel.VoxelManipulator.VoxelValue",
             "PicaVoxel.VoxelManipulator.VoxelColor",
