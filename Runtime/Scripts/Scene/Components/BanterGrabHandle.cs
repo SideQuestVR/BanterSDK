@@ -43,7 +43,18 @@ namespace Banter.SDK
         public BanterGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
         public System.Single GrabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -59,7 +70,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterGrabHandle);

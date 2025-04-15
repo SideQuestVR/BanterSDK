@@ -194,7 +194,18 @@ namespace Banter.SDK
         public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
         public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -210,7 +221,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterGLTF);

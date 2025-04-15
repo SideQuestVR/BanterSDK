@@ -299,7 +299,18 @@ namespace Banter.SDK
         public System.Single Detail { get { return detail; } set { detail = value; UpdateCallback(new List<PropertyName> { PropertyName.detail }); } }
         public System.String ParametricPoints { get { return parametricPoints; } set { parametricPoints = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricPoints }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -315,7 +326,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterGeometry);

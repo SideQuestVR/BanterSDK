@@ -134,7 +134,18 @@ namespace Banter.SDK
         public System.Boolean AutoSync { get { return autoSync; } set { autoSync = value; UpdateCallback(new List<PropertyName> { PropertyName.autoSync }); } }
         public System.Boolean JointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -150,7 +161,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAttachedObject);
@@ -180,27 +190,27 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        void Detach(String uid)
-        {
-            _Detach(uid);
-        }
         void Attach(String uid)
         {
             _Attach(uid);
         }
+        void Detach(String uid)
+        {
+            _Detach(uid);
+        }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
 
-            if (methodName == "Detach" && parameters.Count == 1 && parameters[0] is String)
-            {
-                var uid = (String)parameters[0];
-                Detach(uid);
-                return null;
-            }
-            else if (methodName == "Attach" && parameters.Count == 1 && parameters[0] is String)
+            if (methodName == "Attach" && parameters.Count == 1 && parameters[0] is String)
             {
                 var uid = (String)parameters[0];
                 Attach(uid);
+                return null;
+            }
+            else if (methodName == "Detach" && parameters.Count == 1 && parameters[0] is String)
+            {
+                var uid = (String)parameters[0];
+                Detach(uid);
                 return null;
             }
             else

@@ -70,7 +70,18 @@ namespace Banter.SDK
         public System.Boolean EnableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
         public System.Boolean EnableZAxis { get { return enableZAxis; } set { enableZAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableZAxis }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -86,7 +97,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterBillboard);
