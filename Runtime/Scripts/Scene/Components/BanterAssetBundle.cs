@@ -74,7 +74,7 @@ namespace Banter.SDK
         {
             // _ = SetupBundle();
         }
-        private async Task SetupBundle()
+        private async Task SetupBundle(List<PropertyName> changedProperties)
         {
             if (isScene)
             {
@@ -95,7 +95,7 @@ namespace Banter.SDK
 #endif
             try
             {
-                await LoadBundle();
+                await LoadBundle(changedProperties);
                 if (isScene)
                 {
                     await SetupSceneBundle();
@@ -121,23 +121,51 @@ namespace Banter.SDK
             }
         }
 
-        public async Task LoadBundle()
+        internal async Task LoadBundle(List<PropertyName> changedProperties)
         {
-            isLoading = true;
+            if(isLoading)
+            {
+                LogLine.Do("Waiting for bundle to load before loading again...");
+                await new WaitUntil(() => !isLoading);
+            }
             try
             {
 #if UNITY_STANDALONE_WIN
-            assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.windowsUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+            }
 #elif UNITY_STANDALONE_OSX
-            assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.osxUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
+            }
 #elif UNITY_STANDALONE_LINUX
-            assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.linuxUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
+            }
 #elif UNITY_ANDROID
-            assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.androidUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
+            }
 #elif UNITY_VISIONOS
-            assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.vosUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
+            }
 #elif UNITY_IOS
-            assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.iosUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
+            }
 #endif      
             }
             catch (Exception e)
@@ -238,7 +266,7 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            _ = SetupBundle();
+            _ = SetupBundle(changedProperties);
         }
         // BANTER COMPILED CODE 
         public System.String WindowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
