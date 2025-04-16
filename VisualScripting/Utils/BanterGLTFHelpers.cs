@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Banter glTF is Loaded")]
     [UnitShortTitle("is glTF Loaded")]
     [UnitCategory("Banter/Components/Banter glTF")]
-    [Obsolete("Use BanterGLTF ModelLoaded instead")]
+    [Obsolete("Use BanterGLTF IsLoaded instead")]
     [TypeIcon(typeof(BanterGLTF))]
     public class BanterGLTFIsLoaded : Unit
     {
