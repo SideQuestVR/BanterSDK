@@ -22,6 +22,7 @@ namespace Banter.SDK
         [HideInInspector] internal UnityEvent<float> progress { get; private set; } = new UnityEvent<float>();
         [HideInInspector] internal UnityEvent<bool, string> loaded { get; private set; } = new UnityEvent<bool, string>();
         internal bool _loaded;
+        public bool IsLoaded => _loaded;
         internal float percentage;
         internal int oid;
         internal int cid;
