@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
         {
             isLoaded = ValueOutput<bool>("Is Loaded", (flow) => {
                 var gltfComp = flow.GetValue<BanterGLTF>(gltfObject);
-                return gltfComp.ModelLoaded;
+                return gltfComp.IsLoaded;
             });
 
             gltfObject = ValueInput<BanterGLTF>("BanterGltf", null);
