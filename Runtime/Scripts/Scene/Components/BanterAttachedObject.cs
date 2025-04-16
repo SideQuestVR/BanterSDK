@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
+#endif
 using UnityEngine;
 using UnityEngine.Serialization;
 
