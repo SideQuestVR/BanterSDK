@@ -1005,7 +1005,7 @@ public class BuilderWindow : EditorWindow
         long coverFileId = 0;
         long[] imageIds = new long[kitObjectList.Count];
         if(!skipUpload) {
-            yield return UploadFile("kitbundle_windows.banter", null, fileId => windowsFileId = fileId);
+            yield return UploadFile("kitbundle_standalonewindows.banter", null, fileId => windowsFileId = fileId);
             EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android.banter...", 0.5f);
             yield return UploadFile("kitbundle_android.banter", null, fileId => androidFileId = fileId);
             EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
