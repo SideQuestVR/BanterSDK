@@ -96,6 +96,17 @@ namespace Banter.SDK
             try
             {
                 await LoadBundle(changedProperties);
+                SetLoadedIfNot();
+            }
+            catch (Exception e)
+            {
+                SetLoadedIfNot(false, e.Message);
+                LogLine.Do(Color.red, LogTag.Banter, e.Message);
+            }
+        }
+
+        internal async Task AfterBundleLoad() {
+            
                 if (isScene)
                 {
                     await SetupSceneBundle();
@@ -112,13 +123,6 @@ namespace Banter.SDK
                         }
                     }
                 }
-                SetLoadedIfNot();
-            }
-            catch (Exception e)
-            {
-                SetLoadedIfNot(false, e.Message);
-                LogLine.Do(Color.red, LogTag.Banter, e.Message);
-            }
         }
 
         internal async Task LoadBundle(List<PropertyName> changedProperties)
@@ -135,36 +139,42 @@ namespace Banter.SDK
             {
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
             }
 #elif UNITY_STANDALONE_OSX
             if(changedProperties.Contains(PropertyName.osxUrl))
             {
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
             }
 #elif UNITY_STANDALONE_LINUX
             if(changedProperties.Contains(PropertyName.linuxUrl))
             {
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
             }
 #elif UNITY_ANDROID
             if(changedProperties.Contains(PropertyName.androidUrl))
             {
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
             }
 #elif UNITY_VISIONOS
             if(changedProperties.Contains(PropertyName.vosUrl))
             {
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
             }
 #elif UNITY_IOS
             if(changedProperties.Contains(PropertyName.iosUrl))
             {
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
             }
 #endif      
             }
