@@ -96,7 +96,6 @@ namespace Banter.SDK
             try
             {
                 await LoadBundle(changedProperties);
-                SetLoadedIfNot();
             }
             catch (Exception e)
             {
@@ -140,6 +139,7 @@ namespace Banter.SDK
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
+                SetLoadedIfNot();
             }
 #elif UNITY_STANDALONE_OSX
             if(changedProperties.Contains(PropertyName.osxUrl))
@@ -147,6 +147,7 @@ namespace Banter.SDK
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
+                SetLoadedIfNot();
             }
 #elif UNITY_STANDALONE_LINUX
             if(changedProperties.Contains(PropertyName.linuxUrl))
@@ -154,6 +155,7 @@ namespace Banter.SDK
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
+                SetLoadedIfNot();
             }
 #elif UNITY_ANDROID
             if(changedProperties.Contains(PropertyName.androidUrl))
@@ -161,6 +163,7 @@ namespace Banter.SDK
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
+                SetLoadedIfNot();
             }
 #elif UNITY_VISIONOS
             if(changedProperties.Contains(PropertyName.vosUrl))
@@ -168,6 +171,7 @@ namespace Banter.SDK
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
+                SetLoadedIfNot();
             }
 #elif UNITY_IOS
             if(changedProperties.Contains(PropertyName.iosUrl))
@@ -175,6 +179,7 @@ namespace Banter.SDK
                 isLoading = true;
                 assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
+                SetLoadedIfNot();
             }
 #endif      
             }
