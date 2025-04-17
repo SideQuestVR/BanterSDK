@@ -59,13 +59,13 @@ namespace Banter.SDK
             if (synced == null)
             {
                 synced = new BanterSynced();
-                synced.syncPosition = syncPosition;
-                synced.syncRotation = syncRotation;
-                synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
-                synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
-                synced.kinematicIfNotOwned = kinematicIfNotOwned;
-                scene.events.OnSyncedObject.Invoke(synced, this);
             }
+            synced.syncPosition = syncPosition;
+            synced.syncRotation = syncRotation;
+            synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
+            synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
+            synced.kinematicIfNotOwned = kinematicIfNotOwned;
+            scene.events.OnSyncedObject.Invoke(synced, this);
         }
         // BANTER COMPILED CODE 
         public System.Boolean SyncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
