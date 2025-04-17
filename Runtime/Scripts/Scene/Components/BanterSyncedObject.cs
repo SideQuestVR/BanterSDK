@@ -37,7 +37,7 @@ namespace Banter.SDK
         [Method]
         public void _TakeOwnership()
         {
-            scene.events.OnTakeOwnership.Invoke(synced, banterObjectId);
+            scene.events.OnTakeOwnership.Invoke(synced, this);
         }
         [Method]
         public bool _DoIOwn()
@@ -59,13 +59,13 @@ namespace Banter.SDK
             if (synced == null)
             {
                 synced = new BanterSynced();
-                synced.syncPosition = syncPosition;
-                synced.syncRotation = syncRotation;
-                synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
-                synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
-                synced.kinematicIfNotOwned = kinematicIfNotOwned;
-                scene.events.OnSyncedObject.Invoke(synced, banterObjectId);
             }
+            synced.syncPosition = syncPosition;
+            synced.syncRotation = syncRotation;
+            synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
+            synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
+            synced.kinematicIfNotOwned = kinematicIfNotOwned;
+            scene.events.OnSyncedObject.Invoke(synced, this);
         }
         // BANTER COMPILED CODE 
         public System.Boolean SyncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
@@ -74,7 +74,18 @@ namespace Banter.SDK
         public System.Boolean TakeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
         public System.Boolean KinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -90,7 +101,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterSyncedObject);

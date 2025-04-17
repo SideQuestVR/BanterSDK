@@ -19,9 +19,10 @@ namespace Banter.SDK
         internal abstract void StartStuff();
         internal abstract void DestroyStuff();
         internal abstract object CallMethod(string methodName, List<object> parameters);
-        [HideInInspector] internal UnityEvent<float> progress { get; private set; } = new UnityEvent<float>();
-        [HideInInspector] internal UnityEvent<bool, string> loaded { get; private set; } = new UnityEvent<bool, string>();
+        public UnityEvent<float> progress = new UnityEvent<float>();
+        public UnityEvent<bool, string> loaded = new UnityEvent<bool, string>();
         internal bool _loaded;
+        public bool IsLoaded => _loaded;
         internal float percentage;
         internal int oid;
         internal int cid;
