@@ -17,6 +17,10 @@ using UnityEngine.EventSystems;
 using System.Collections;
 using System.Collections.Specialized;
 
+#if BANTER_PICAVOXEL
+using PicaVoxel;
+#endif
+
 namespace Banter.SDKEditor
 {
     public static class VsNodeGeneration
@@ -141,6 +145,9 @@ namespace Banter.SDKEditor
             // Banter
             "Banter.SDK",
             "Banter.VisualScripting",
+            
+            // Picavoxel
+            "GarethIW.PicaVoxelInfinity"
         };
 
         public static readonly List<Type> typeAllowList = new List<Type>() {
@@ -364,7 +371,12 @@ namespace Banter.SDKEditor
             typeof(Banter.SDK.BanterUser),
             typeof(Banter.SDK.BanterAttachment),
 
-            typeof(Banter.SDK.Score)
+            typeof(Banter.SDK.Score),
+#if BANTER_PICAVOXEL
+            typeof(PicaVoxel.VoxelEditEventArgs),
+            typeof(PicaVoxel.VoxelDetectorEventArgs),
+            typeof(PicaVoxel.ChunkChangesEventArgs),
+#endif
         };
     }
 }

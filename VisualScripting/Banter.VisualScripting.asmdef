@@ -8,7 +8,8 @@
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:21b0c8d1703a94250bfac916590cea4f",
         "GUID:ea715009a4efd4c6cbc85be3ae097dd3",
-        "GUID:00a9e2367449a2e4d89a262276b0dac1"
+        "GUID:00a9e2367449a2e4d89a262276b0dac1",
+        "GUID:7cd3a65c85d0c264eb3581defd7f2c63"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -22,6 +23,11 @@
             "name": "com.unity.visualscripting",
             "expression": "1.7.8",
             "define": "BANTER_VISUAL_SCRIPTING"
+        },
+        {
+            "name": "com.garethiw.picavoxelinfinity",
+            "expression": "1.0.0",
+            "define": "BANTER_PICAVOXEL"
         }
     ],
     "noEngineReferences": false
