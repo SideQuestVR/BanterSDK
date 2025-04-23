@@ -33,7 +33,9 @@ namespace Banter.SDK
         public AssetBundle KitBundle;
         private async Task SetupKitItem()
         {
-            await new WaitUntil(() => scene.bundlesLoaded);
+            if(!scene.bundlesLoaded) {
+                await new WaitUntil(() => scene.bundlesLoaded);
+            }
             if (KitBundle == null)
             {
                 if (scene.settings.KitPaths.ContainsKey(path))
