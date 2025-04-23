@@ -83,6 +83,7 @@ namespace Banter.SDK
         }
         // BANTER COMPILED CODE 
         public System.String Path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
+        public System.Boolean ResetTransform { get { return resetTransform; } set { resetTransform = value; UpdateCallback(new List<PropertyName> { PropertyName.resetTransform }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -105,7 +106,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.path, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.path, PropertyName.resetTransform, };
             UpdateCallback(changedProperties);
         }
 
@@ -159,6 +160,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.path);
                     }
                 }
+                if (values[i] is BanterBool)
+                {
+                    var valresetTransform = (BanterBool)values[i];
+                    if (valresetTransform.n == PropertyName.resetTransform)
+                    {
+                        resetTransform = valresetTransform.x;
+                        changedProperties.Add(PropertyName.resetTransform);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -173,6 +183,18 @@ namespace Banter.SDK
                     name = PropertyName.path,
                     type = PropertyType.String,
                     value = path,
+                    componentType = ComponentType.BanterKitItem,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.resetTransform,
+                    type = PropertyType.Bool,
+                    value = resetTransform,
                     componentType = ComponentType.BanterKitItem,
                     oid = oid,
                     cid = cid
