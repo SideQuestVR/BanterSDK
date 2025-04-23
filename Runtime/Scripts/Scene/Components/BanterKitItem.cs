@@ -28,6 +28,7 @@ namespace Banter.SDK
     {
         [Tooltip("The location of the prefab in the kit object. Must match the path in the asset bundle (always lowercase).")]
         [See(initial = "")][SerializeField] internal string path = "";
+        [See(initial = "false")] public bool resetTransform = false;
 
         GameObject item;
         public AssetBundle KitBundle;
@@ -54,6 +55,10 @@ namespace Banter.SDK
             try
             {
                 GameObject asset = (GameObject)await KitBundle.LoadAssetAsync<GameObject>(path);
+                if(resetTransform) {
+                    asset.transform.localPosition = Vector3.zero;
+                    asset.transform.localRotation = Quaternion.identity;
+                }
                 item = Instantiate(asset, transform, false);
                 scene.kitItems.Add(item);
                 SetLoadedIfNot();
