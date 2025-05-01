@@ -14,6 +14,7 @@ using Unity.EditorCoroutines.Editor;
 using System.Collections;
 using UnityEngine.Networking;
 using UnityEditor.UIElements;
+using System.Text.RegularExpressions;
 
 public enum BanterBuilderBundleMode
 {
@@ -998,16 +999,20 @@ public class BuilderWindow : EditorWindow
         return readableText;
     }
 
+    private string GetKitName() {
+        return Regex.Replace(kitName.text, "[^A-Za-z0-9-]", "");
+    }
+
     private IEnumerator UploadKit(Action callback, bool skipUpload = false) {
-        EditorUtility.DisplayProgressBar("Banter Upload", skipUpload ? "Updating Kit details..." : "Uploading kitbundle_windows.banter...", 0.1f);
+        EditorUtility.DisplayProgressBar("Banter Upload", skipUpload ? "Updating Kit details..." : "Uploading kitbundle_standalonewindows_" + GetKitName() + ".banter...", 0.1f);
         long androidFileId = 0;
         long windowsFileId = 0;
         long coverFileId = 0;
         long[] imageIds = new long[kitObjectList.Count];
         if(!skipUpload) {
-            yield return UploadFile("kitbundle_standalonewindows.banter", null, fileId => windowsFileId = fileId);
-            EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android.banter...", 0.5f);
-            yield return UploadFile("kitbundle_android.banter", null, fileId => androidFileId = fileId);
+            yield return UploadFile("kitbundle_standalonewindows_" + GetKitName() + ".banter", null, fileId => windowsFileId = fileId);
+            EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android_" + GetKitName() + ".banter...", 0.5f);
+            yield return UploadFile("kitbundle_android_" + GetKitName() + ".banter", null, fileId => androidFileId = fileId);
             EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
         }
 
@@ -1030,8 +1035,8 @@ public class BuilderWindow : EditorWindow
             id = selectedKitId,
             access_token = sq.Data.Token.AccessToken,
             picture = "https://cdn.sidequestvr.com/file/" + coverFileId.ToString() + "/kitbundle_cover_image.png",
-            windows = skipUpload ? myKits[existingDropDown.index].windows : "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_windows.banter",
-            android = skipUpload ? myKits[existingDropDown.index].android : "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android.banter",
+            windows = skipUpload ? myKits[existingDropDown.index].windows : "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_standalonewindows_" + GetKitName() + ".banter",
+            android = skipUpload ? myKits[existingDropDown.index].android : "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android_" + GetKitName() + ".banter",
             items = kitObjectList.Select(ko => new KitItem{
                 name = ko.obj.name,
                 picture = "https://cdn.sidequestvr.com/file/" + imageIds[kitObjectList.IndexOf(ko)].ToString() + "/kitbundle_prefab_image.png",
@@ -1396,7 +1401,7 @@ public class BuilderWindow : EditorWindow
                         }
                         else if (mode == BanterBuilderBundleMode.Kit)
                         {
-                            newAssetBundleName = "kitbundle_" + platform + ".banter";
+                            newAssetBundleName = "kitbundle_" + platform + "_" + GetKitName() + ".banter";
                             AddStatus("Building: " + newAssetBundleName);
                             abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
                         }
