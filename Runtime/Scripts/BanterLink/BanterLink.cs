@@ -650,7 +650,9 @@ namespace Banter.SDK
 
         public void OnReceiveBrowserMessage(BanterBrowser browser, string message)
         {
+#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
+#endif
             Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + message);
         }
 

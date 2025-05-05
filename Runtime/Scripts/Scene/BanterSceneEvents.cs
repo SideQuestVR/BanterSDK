@@ -10,6 +10,7 @@ public class BanterSceneEvents
     public UnityEvent OnSceneReady = new UnityEvent();
     public UnityEvent<float> OnLookedAtMirror = new UnityEvent<float>();
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
+    public UnityEvent OnSpaceChanged = new UnityEvent();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
     public UnityEvent<string> OnPortalEnter = new UnityEvent<string>();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
