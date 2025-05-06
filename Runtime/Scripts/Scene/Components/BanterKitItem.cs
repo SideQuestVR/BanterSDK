@@ -54,7 +54,7 @@ namespace Banter.SDK
             }
             try
             {
-                GameObject asset = (GameObject)await KitBundle.LoadAssetAsync<GameObject>(path);
+                GameObject asset = KitBundle.LoadAsset<GameObject>(path);
                 if(resetTransform) {
                     asset.transform.localPosition = Vector3.zero;
                     asset.transform.localRotation = Quaternion.identity;
