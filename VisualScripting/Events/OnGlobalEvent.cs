@@ -8,8 +8,8 @@ using System.Collections.Generic;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Broadcast Event")]
-    [UnitShortTitle("On Broadcast Event")]
+    [UnitTitle("On Global Event")]
+    [UnitShortTitle("On Global Event")]
     [UnitCategory("Events\\Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnGlobalEvent : EventUnit<CustomEventArgs>

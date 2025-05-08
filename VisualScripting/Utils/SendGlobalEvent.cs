@@ -12,8 +12,8 @@ using System.Linq;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("Trigger Broadcast Event")]
-    [UnitShortTitle("Send Global Event")]
+    [UnitTitle("Trigger Global Event")]
+    [UnitShortTitle("Trigger Global Event")]
     [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SendGlobalEvent : Unit
