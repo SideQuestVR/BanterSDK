@@ -2,6 +2,8 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using System.Diagnostics;
+using UnityEngine;
+using System.Collections.Generic;
 
 namespace Banter.VisualScripting
 {
@@ -13,42 +15,67 @@ namespace Banter.VisualScripting
     public class OnGlobalEvent : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
-        //            EventBus.Trigger("OnAiImage", new CustomEventArgs(id, new object[] { data }));
-        //#endif
-        //
-        // [DoNotSerialize]
-        // [PortLabelHidden]
-        // public ValueInput id { get; private set; }
-
-        [DoNotSerialize]
-        public ValueOutput result;
-
-        protected override bool register => true;
+        //   public override Type MessageListenerType => null;
 
         public override EventHook GetHook(GraphReference reference)
         {
             return new EventHook("OnGlobalEvent");
         }
+        // protected override string hookName => EventHooks.Custom;
+
+        [SerializeAs(nameof(argumentCount))]
+        private int _argumentCount;
+
+        [DoNotSerialize]
+        [Inspectable, UnitHeaderInspectable("Arguments")]
+        public int argumentCount
+        {
+            get => _argumentCount;
+            set => _argumentCount = Mathf.Clamp(value, 0, 10);
+        }
+
+        /// <summary>
+        /// The name of the event.
+        /// </summary>
+        [DoNotSerialize]
+        [PortLabelHidden]
+        public ValueInput name { get; private set; }
+
+        [DoNotSerialize]
+        public List<ValueOutput> argumentPorts { get; } = new List<ValueOutput>();
+
+        protected override bool register => true;
 
         protected override void Definition()
         {
             base.Definition();
-            // Setting the value on our port.
-            // id = ValueInput("Return ID", string.Empty);
 
-            result = ValueOutput<object>("Data");
+            name = ValueInput(nameof(name), string.Empty);
+
+            argumentPorts.Clear();
+
+            for (var i = 0; i < argumentCount; i++)
+            {
+                argumentPorts.Add(ValueOutput<object>("argument_" + i));
+            }
         }
 
-        protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
+        protected override bool ShouldTrigger(Flow flow, CustomEventArgs args)
         {
-            return true; // data.name == flow.GetValue<string>(id)?.Trim();
+            return CompareNames(flow, name, args.name);
         }
 
-        // Setting the value on our port.
-        protected override void AssignArguments(Flow flow, CustomEventArgs data)
-        {   
-            flow.SetValue(result, data.arguments[0]);
+        protected override void AssignArguments(Flow flow, CustomEventArgs args)
+        {
+            for (var i = 0; i < argumentCount; i++)
+            {
+                flow.SetValue(argumentPorts[i], args.arguments[i]);
+            }
+        }
+
+        public static void Trigger(GameObject target, string name, params object[] args)
+        {
+            EventBus.Trigger(EventHooks.Custom, target, new CustomEventArgs(name, args));
         }
     }
 }
