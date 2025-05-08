@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("On Broadcast Event")]
     [UnitShortTitle("On Broadcast Event")]
-    [UnitCategory("Events\\Banter\\Utilities")]
+    [UnitCategory("Events\\Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnGlobalEvent : EventUnit<CustomEventArgs>
     {

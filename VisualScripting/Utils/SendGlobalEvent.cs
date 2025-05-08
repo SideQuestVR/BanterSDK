@@ -14,7 +14,7 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Trigger Broadcast Event")]
     [UnitShortTitle("Send Global Event")]
-    [UnitCategory("Banter\\Utilities")]
+    [UnitCategory("Banter\\Utils")]
     [TypeIcon(typeof(BanterObjectId))]
     public class SendGlobalEvent : Unit
     {        
