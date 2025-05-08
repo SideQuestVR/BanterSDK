@@ -72,11 +72,6 @@ namespace Banter.VisualScripting
                 flow.SetValue(argumentPorts[i], args.arguments[i]);
             }
         }
-
-        public static void Trigger(GameObject target, string name, params object[] args)
-        {
-            EventBus.Trigger(EventHooks.Custom, target, new CustomEventArgs(name, args));
-        }
     }
 }
 #endif
