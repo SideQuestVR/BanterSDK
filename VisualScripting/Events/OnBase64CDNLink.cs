@@ -5,7 +5,7 @@ using Banter.SDK;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Base64 CDN Link Callback Received")]
+    [UnitTitle("On Base64 CDN Link")]
     [UnitShortTitle("On Base64 CDN Link")]
     [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]

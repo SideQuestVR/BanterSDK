@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Camera Snap Callback Received")]
+    [UnitTitle("On Camera Snap")]
     [UnitShortTitle("On Camera Snap")]
     [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]

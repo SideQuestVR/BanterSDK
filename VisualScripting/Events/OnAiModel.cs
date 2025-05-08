@@ -5,7 +5,7 @@ using Banter.SDK;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Ai Model Callback Received")]
+    [UnitTitle("On Ai Model")]
     [UnitShortTitle("On Ai Model")]
     [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]

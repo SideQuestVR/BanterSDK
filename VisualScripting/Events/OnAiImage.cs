@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Ai Image Callback Received")]
+    [UnitTitle("On Ai Image")]
     [UnitShortTitle("On Ai Image")]
     [UnitCategory("Events\\Banter\\AI")]
     [TypeIcon(typeof(BanterObjectId))]
