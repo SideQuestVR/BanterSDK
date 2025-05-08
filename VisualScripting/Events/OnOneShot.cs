@@ -5,7 +5,7 @@ using Banter.SDK;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On One Shot Callback Received")]
+    [UnitTitle("On One Shot")]
     [UnitShortTitle("On One Shot")]
     [UnitCategory("Events\\Banter\\Networking")]
     [TypeIcon(typeof(BanterObjectId))]

@@ -8,9 +8,9 @@ using System.Collections.Generic;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Global Custom Event Callback Received")]
-    [UnitShortTitle("On Global Custom Event")]
-    [UnitCategory("Events\\Banter\\Utils")]
+    [UnitTitle("On Broadcast Event")]
+    [UnitShortTitle("On Broadcast Event")]
+    [UnitCategory("Events\\Banter\\Utilities")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnGlobalEvent : EventUnit<CustomEventArgs>
     {

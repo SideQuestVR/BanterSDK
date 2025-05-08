@@ -12,11 +12,11 @@ using System.Linq;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("Send a Global Custom Event")]
+    [UnitTitle("Trigger Broadcast Event")]
     [UnitShortTitle("Send Global Event")]
-    [UnitCategory("Banter")]
+    [UnitCategory("Banter\\Utilities")]
     [TypeIcon(typeof(BanterObjectId))]
-    public class SendGLobalEvent : Unit
+    public class SendGlobalEvent : Unit
     {        
          [SerializeAs(nameof(argumentCount))]
         private int _argumentCount;

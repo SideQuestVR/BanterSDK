@@ -6,7 +6,7 @@ using System.Diagnostics;
 namespace Banter.VisualScripting
 {
 
-    [UnitTitle("On Select File Callback Received")]
+    [UnitTitle("On Select File")]
     [UnitShortTitle("On Select File")]
     [UnitCategory("Events\\Banter\\Files")]
     [TypeIcon(typeof(BanterObjectId))]
