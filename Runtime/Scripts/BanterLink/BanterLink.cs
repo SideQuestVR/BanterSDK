@@ -20,7 +20,8 @@ namespace Banter.SDK
         public event EventHandler Connected;
         float timeoutDisplay = 0;
         BatchUpdater batchUpdater;
-        // public static string LOCAL_USER_ID;
+        
+        Dictionary<string, string> androidStats = new Dictionary<string, string>();
 
         void Start()
         {
@@ -44,7 +45,38 @@ namespace Banter.SDK
         }
         async void ParseCommand(string msg)
         {
-            if (msg.StartsWith(APICommands.ONLOAD))
+            if (msg.StartsWith(APICommands.LOG))
+            {
+                var logData = GetMsgData(msg, APICommands.LOG).Split("VrApi");
+                if(logData.Length > 1)
+                {
+                    var statsData = logData[1].Split(":");
+                    if (statsData.Length > 1)
+                    {
+                        var stats = statsData[1].Split(",");
+                        for (int i = 0; i < stats.Length; i++)
+                        {
+                            var stat = stats[i].Split("=");
+                            if (stat.Length > 1)
+                            {
+                                if (androidStats.ContainsKey(stat[0]))
+                                {
+                                    androidStats[stat[0]] = stat[1];
+                                }
+                                else
+                                {
+                                    androidStats.Add(stat[0], stat[1]);
+                                }
+                            }
+                        }
+                        if (int.TryParse(androidStats["Free"].Substring(0,androidStats["Free"].Length-2), out int memory))
+                        {
+                            scene.events.OnAndroidMemoryChanged.Invoke(memory);
+                        }
+                    }
+                }
+            }
+            else if (msg.StartsWith(APICommands.ONLOAD))
             {
                 _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
                 scene.SetLoaded();
