@@ -8353,6 +8353,7 @@ namespace Banter.SDKEditor
             "Banter.SDK.Score.id",
             "Banter.SDK.Score.name",
             "Banter.SDK.Score.score",
+            "Banter.SDK.Score.color",
             "Banter.SDK.BanterUser.Equals",
             "Banter.SDK.BanterUser.ToString",
             "Banter.SDK.BanterUser.ReferenceEquals",

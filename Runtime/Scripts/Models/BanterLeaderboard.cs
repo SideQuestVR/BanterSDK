@@ -3,10 +3,12 @@ using System;
 
 namespace Banter.SDK
 {
+    [Serializable]
     public class Score{
         public string id;
         public string name;
         public float score;
+        public string color;
     }
 
     [Serializable]
