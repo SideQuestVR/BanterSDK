@@ -4,6 +4,7 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
+using UnityEngine.Networking;
 
 namespace Banter.VisualScripting
 {
