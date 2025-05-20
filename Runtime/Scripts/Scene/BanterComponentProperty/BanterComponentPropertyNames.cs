@@ -100,6 +100,7 @@ namespace Banter.SDK
         blockLeftTrigger,
         blockRightTrigger,
         path,
+        resetTransform,
         shaderName,
         texture,
         color,

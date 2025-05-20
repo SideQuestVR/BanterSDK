@@ -10,7 +10,8 @@
         "GUID:315d634a9ac6d460a9515f5a56be6311",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:00a9e2367449a2e4d89a262276b0dac1",
-        "GUID:f06555f75b070af458a003d92f9efb00"
+        "GUID:f06555f75b070af458a003d92f9efb00",
+        "GUID:7cd3a65c85d0c264eb3581defd7f2c63"
     ],
     "includePlatforms": [
         "Editor"
@@ -31,6 +32,11 @@
             "name": "com.unity.timeline",
             "expression": "1.7.8",
             "define": "BANTER_VS_TIMELINE"
+        },
+        {
+            "name": "com.garethiw.picavoxelinfinity",
+            "expression": "1.0.0",
+            "define": "BANTER_PICAVOXEL"
         }
     ],
     "noEngineReferences": false

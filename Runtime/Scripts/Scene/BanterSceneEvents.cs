@@ -10,6 +10,8 @@ public class BanterSceneEvents
     public UnityEvent OnSceneReady = new UnityEvent();
     public UnityEvent<float> OnLookedAtMirror = new UnityEvent<float>();
     public UnityEvent<string> OnUnitySceneLoad = new UnityEvent<string>();
+    public UnityEvent OnSpaceChanged = new UnityEvent();
+    public UnityEvent<int> OnAndroidMemoryChanged = new UnityEvent<int>();
     public UnityEvent<Vector3, Vector3, bool, bool> OnTeleport = new UnityEvent<Vector3, Vector3, bool, bool>();
     public UnityEvent<string> OnPortalEnter = new UnityEvent<string>();
     public UnityEvent<bool> OnEnableDevToolsChanged = new UnityEvent<bool>();
@@ -29,8 +31,8 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<BanterSynced, BanterObjectId> OnSyncedObject = new UnityEvent<BanterSynced, BanterObjectId>();
-    public UnityEvent<BanterSynced, BanterObjectId> OnTakeOwnership = new UnityEvent<BanterSynced, BanterObjectId>();
+    public UnityEvent<BanterSynced, BanterSyncedObject> OnSyncedObject = new UnityEvent<BanterSynced, BanterSyncedObject>();
+    public UnityEvent<BanterSynced, BanterSyncedObject> OnTakeOwnership = new UnityEvent<BanterSynced, BanterSyncedObject>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();
@@ -51,6 +53,7 @@ public class BanterSceneEvents
     public UnityEvent<BanterWorldObject> OnWorldObject = new UnityEvent<BanterWorldObject>();
     public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
+    public UnityEvent<string, int, int, Color> OnToast = new UnityEvent<string, int, int, Color>();
 
     #region Physics Settings
     public UnityEvent<float> OnPhysicsMoveSpeedChanged = new UnityEvent<float>();

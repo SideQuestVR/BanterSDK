@@ -65,8 +65,6 @@ namespace Banter.SDK
         [See(initial = "false")][SerializeField] internal bool legacyRotate;
         bool loadStarted;
 
-        public bool ModelLoaded { get; private set; }
-
         internal override void StartStuff()
         {
             LogLine.Do("Warning: Using BanterGLTF is not recommended for production use. It is slow and not optimized.");
@@ -78,8 +76,8 @@ namespace Banter.SDK
             {
                 return;
             }
+            _loaded = false;
             loadStarted = true;
-            ModelLoaded = false;
             try
             {
                 Importer.ImportGLBAsync(await Get.Bytes(url), new ImportSettings(), (go, animations) =>
@@ -160,14 +158,12 @@ namespace Banter.SDK
                             }
                         }
                         SetLoadedIfNot();
-                        ModelLoaded = true;
                         loadStarted = false;
                     }
                     catch (Exception e)
                     {
                         SetLoadedIfNot(false, e.Message + " - " + url);
                         Destroy(go);
-                        ModelLoaded = false;
                         loadStarted = false;
                     }
                 });
@@ -176,7 +172,6 @@ namespace Banter.SDK
             {
                 Debug.LogError(e + " " + url);
                 SetLoadedIfNot(false, e.Message);
-                ModelLoaded = false;
                 loadStarted = false;
             }
         }
@@ -194,7 +189,18 @@ namespace Banter.SDK
         public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
         public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -210,7 +216,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterGLTF);

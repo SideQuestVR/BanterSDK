@@ -74,7 +74,7 @@ namespace Banter.SDK
         {
             // _ = SetupBundle();
         }
-        private async Task SetupBundle()
+        private async Task SetupBundle(List<PropertyName> changedProperties)
         {
             if (isScene)
             {
@@ -86,14 +86,6 @@ namespace Banter.SDK
                 }
                 scene.settings.SceneAssetBundle = this;
             }
-            else
-            {
-                if (scene.settings.KitBundles.Count > 2)
-                {
-                    SetLoadedIfNot(false, "Three kit bundles already registered!");
-                    return;
-                }
-            }
 #if !BANTER_EDITOR
             if (isScene)
             {
@@ -103,7 +95,17 @@ namespace Banter.SDK
 #endif
             try
             {
-                await LoadBundle();
+                await LoadBundle(changedProperties);
+            }
+            catch (Exception e)
+            {
+                SetLoadedIfNot(false, e.Message);
+                LogLine.Do(Color.red, LogTag.Banter, e.Message);
+            }
+        }
+
+        internal async Task AfterBundleLoad() {
+            
                 if (isScene)
                 {
                     await SetupSceneBundle();
@@ -120,32 +122,65 @@ namespace Banter.SDK
                         }
                     }
                 }
-                SetLoadedIfNot();
-            }
-            catch (Exception e)
-            {
-                SetLoadedIfNot(false, e.Message);
-                LogLine.Do(Color.red, LogTag.Banter, e.Message);
-            }
         }
 
-        public async Task LoadBundle()
+        internal async Task LoadBundle(List<PropertyName> changedProperties)
         {
-            isLoading = true;
+            if(isLoading)
+            {
+                LogLine.Do("Waiting for bundle to load before loading again...");
+                await new WaitUntil(() => !isLoading);
+            }
             try
             {
 #if UNITY_STANDALONE_WIN
-            assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.windowsUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
+                SetLoadedIfNot();
+            }
 #elif UNITY_STANDALONE_OSX
-            assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.osxUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
+                SetLoadedIfNot();
+            }
 #elif UNITY_STANDALONE_LINUX
-            assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.linuxUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
+                SetLoadedIfNot();
+            }
 #elif UNITY_ANDROID
-            assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.androidUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
+                SetLoadedIfNot();
+            }
 #elif UNITY_VISIONOS
-            assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.vosUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
+                SetLoadedIfNot();
+            }
 #elif UNITY_IOS
-            assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
+            if(changedProperties.Contains(PropertyName.iosUrl))
+            {
+                isLoading = true;
+                assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
+                await AfterBundleLoad();
+                SetLoadedIfNot();
+            }
 #endif      
             }
             catch (Exception e)
@@ -246,7 +281,7 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            _ = SetupBundle();
+            _ = SetupBundle(changedProperties);
         }
         // BANTER COMPILED CODE 
         public System.String WindowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
@@ -258,7 +293,18 @@ namespace Banter.SDK
         public System.Boolean IsScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
         public System.Boolean LegacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -274,7 +320,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterAssetBundle);

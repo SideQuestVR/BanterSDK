@@ -7,6 +7,7 @@ public class APICommands
     public const string LOAD_FAILED = "!lf!";
     public const string ONLOAD = "!ol!";
     public const string RELOAD = "!r!";
+    public const string LOG = "!l!";
     public const string SCENE_READY = "!sr!";
     public const string SCENE_START = "!sst!";
     public const string SCENE_SETTINGS = "!ss!";

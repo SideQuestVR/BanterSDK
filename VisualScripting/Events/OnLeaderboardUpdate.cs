@@ -3,29 +3,9 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using System;
 
+
 namespace Banter.VisualScripting
 {
-    
-[Serializable]
-public class Score{
-    public string id;
-    public string name;
-    public float score;
-}
-
-[Serializable]
-public class Board{
-    public Score[] scores;
-    public string sort;
-}
-
-
-[Serializable]
-public class UpdateScores{
-    public string board;
-    public Board scores;
-}
-
 
     [UnitTitle("On Leaderboard Update Received")]
     [UnitShortTitle("On Leaderboard Update")]

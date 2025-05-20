@@ -15,6 +15,14 @@
 }
 .unity-base-field__input{
     overflow: auto;
+    background-color: transparent;
+}
+
+.unity-object-field__input, .unity-object-field__selector{
+    background-color: black;
+}
+.unity-base-popup-field__text{
+    color: white;
 }
 .unity-foldout__toggle .unity-text-element{
     margin-left: 30px;

@@ -84,7 +84,18 @@ namespace Banter.SDK
         public System.Int32 CameraClear { get { return cameraClear; } set { cameraClear = value; UpdateCallback(new List<PropertyName> { PropertyName.cameraClear }); } }
         public System.String BackgroundColor { get { return backgroundColor; } set { backgroundColor = value; UpdateCallback(new List<PropertyName> { PropertyName.backgroundColor }); } }
 
-        BanterScene scene;
+        BanterScene _scene;
+        public BanterScene scene
+        {
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
+        }
         bool alreadyStarted = false;
         void Start()
         {
@@ -100,7 +111,6 @@ namespace Banter.SDK
 
         internal override void Init(List<object> constructorProperties = null)
         {
-            scene = BanterScene.Instance();
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterMirror);
