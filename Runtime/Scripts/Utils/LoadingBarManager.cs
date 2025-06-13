@@ -84,6 +84,7 @@ namespace Banter.SDK
         }
         public void SetLoadProgress(string loadingTitle, float percentage, string detailMessage, bool canCancel, Texture2D spaceImage = null)
         {
+            LogLine.Do($"[DGC] LoadingBarManager.SetLoadProgress {percentage} {detailMessage}");
             UnityMainThreadTaskScheduler.Default.Enqueue(() =>
             {
                 SetCanCancel(canCancel);
@@ -222,7 +223,7 @@ namespace Banter.SDK
 
         public async Task LoadOut()
         {
-            LogLine.Do($"[LOADING] LoadOut state={state} scene.state={scene.state}");
+            LogLine.Do($"[DGC][LOADING] LoadOut state={state} scene.state={scene.state}");
             if (state == LoadingState.Loading || scene.state==SceneState.LOAD_FAILED)
             {
                 return;

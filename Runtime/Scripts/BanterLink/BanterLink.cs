@@ -45,6 +45,7 @@ namespace Banter.SDK
         }
         async void ParseCommand(string msg)
         {
+            LogLine.Do($"[DGC] BanterLink.ParseCommand(): {msg}");
             if (msg.StartsWith(APICommands.LOG))
             {
                 var logData = GetMsgData(msg, APICommands.LOG).Split("VrApi");
@@ -167,6 +168,7 @@ namespace Banter.SDK
             {
                 return;
             }
+            LogLine.Do($"[DGC] JS msg rec: {msg}");
             // try{
             if (msg.StartsWith(APICommands.OBJECT_ADDED))
             {

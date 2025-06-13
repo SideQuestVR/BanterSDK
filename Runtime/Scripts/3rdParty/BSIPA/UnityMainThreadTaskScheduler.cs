@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 
 namespace Banter.Utilities.Async
@@ -78,6 +79,8 @@ namespace Banter.Utilities.Async
         /// <value><see langword="true"/> if the scheduler is running, <see langword="false"/> otherwise</value>
         public bool IsRunning { get; private set; } = false;
 
+        public int TaskCount => tasks.Count;
+        
         /// <summary>
         /// Gets whether or not this scheduler is in the process of shutting down.
         /// </summary>
@@ -137,7 +140,7 @@ namespace Banter.Utilities.Async
         /// <exception cref="InvalidOperationException">if the scheduler is already running</exception>
         public IEnumerator Coroutine()
         {
-            //UnityEngine.Debug.LogError("ENTERED THE COROUTINE");
+            UnityEngine.Debug.Log("[DGC] ENTERED THE COROUTINE");
             ThrowIfDisposed();
 
             if (IsRunning)
@@ -223,7 +226,7 @@ namespace Banter.Utilities.Async
             {
                 sw.Reset();
                 IsRunning = false;
-                UnityEngine.Debug.LogError("EXITED THE COROUTINE, BAD THING TO HAPPEN");
+                UnityEngine.Debug.LogError("[DGC] EXITED THE COROUTINE, BAD THING TO HAPPEN");
             }
 
         }
@@ -240,8 +243,9 @@ namespace Banter.Utilities.Async
         /// <exception cref="InvalidOperationException">if the scheduler is not running</exception>
         public void Cancel()
         {
+            Debug.Log("[DGC] UnityMainThreadTaskScheduler.Cancel()");
             ThrowIfDisposed();
-
+            
             if (!IsRunning) throw new InvalidOperationException("The scheduler is not running");
             Cancelling = true;
 #if UNITY_EDITOR
@@ -342,7 +346,10 @@ namespace Banter.Utilities.Async
         private void ThrowIfDisposed()
         {
             if (disposedValue)
+            {
+                Debug.Log("[DGC] UnityMainThreadTaskScheduler.ThrowIfDisposed()");
                 throw new ObjectDisposedException(nameof(SingleThreadTaskScheduler));
+            }
         }
 
         #region IDisposable Support
