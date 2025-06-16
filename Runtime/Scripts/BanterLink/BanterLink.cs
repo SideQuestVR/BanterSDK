@@ -79,25 +79,25 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.ONLOAD))
             {
-                _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
-                scene.SetLoaded();
+                // _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
+                // scene.SetLoaded();
             }
             else if (msg.StartsWith(APICommands.NOTHING_20S))
             {
-                scene.state = SceneState.NOTHING_20S;
-                LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 30 seconds...");
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => timeoutDisplay = Time.time);
-                scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
+                // scene.state = SceneState.NOTHING_20S;
+                // LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 20 seconds...");
+                // UnityMainThreadTaskScheduler.Default.Enqueue(() => timeoutDisplay = Time.time);
+                // scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
             }
             else if (msg.StartsWith(APICommands.NOTHING))
             {
-                scene.state = SceneState.LOAD_FAILED;
-                scene.Cancel("No objects yet after 4:20 seconds, failing...");
+                // scene.state = SceneState.LOAD_FAILED;
+                // scene.Cancel("No objects yet after 4:20 seconds, failing...");
             }
             else if (msg.StartsWith(APICommands.LOAD_FAILED))
             {
-                scene.state = SceneState.LOAD_FAILED;
-                scene.Cancel("The web page failed to load!");
+                // scene.state = SceneState.LOAD_FAILED;
+                // scene.Cancel("The web page failed to load!");
             }
             else if (msg.StartsWith(APICommands.ENABLE_LEGACY))
             {
@@ -137,20 +137,20 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.SCENE_READY))
             {
-                scene.state = SceneState.SCENE_READY;
-                scene.events.OnSceneReady.Invoke();
-                LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
-                await new WaitUntil(() =>
-                {
-                    scene.SetLoaded();
-                    return scene.loaded;
-                });
-                OnUnitySceneLoaded();
-                await Task.Delay(25000);
-                if (scene.state != SceneState.UNITY_READY)
-                {
-                    scene.LogMissing();
-                }
+                // scene.state = SceneState.SCENE_READY;
+                // scene.events.OnSceneReady.Invoke();
+                // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
+                // await new WaitUntil(() =>
+                // {
+                //     scene.SetLoaded();
+                //     return scene.loaded;
+                // });
+                // OnUnitySceneLoaded();
+                // await Task.Delay(25000);
+                // if (scene.state != SceneState.UNITY_READY)
+                // {
+                //     scene.LogMissing();
+                // }
             }
             else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
             {
