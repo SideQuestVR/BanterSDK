@@ -1499,7 +1499,7 @@ namespace Banter.SDK
             //         Debug.LogError(ex);
             //     }
             // });
-            // await loadUrlTaskCompletionSource.Task;
+            await loadUrlTaskCompletionSource.Task;
         }
         public async Task OnLoad(string instanceId)
         {
