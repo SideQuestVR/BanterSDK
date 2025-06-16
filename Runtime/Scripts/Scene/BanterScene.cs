@@ -1443,62 +1443,61 @@ namespace Banter.SDK
             this.isHome = url == CUSTOM_HOME_SPACE;
             this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
             loadingManager?.UpdateCancelText();
-            this.state = SceneState.NOTHING_20S;
-            // ResetLoadingProgress();
-            // UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
-            // {
-            //     try
-            //     {
-            //         if (!isLoadingOpen)
-            //         {
-            //             await this.OpenLoadingScreen(url);
-            //         }
+            ResetLoadingProgress();
+            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+            {
+                try
+                {
+                    if (!isLoadingOpen)
+                    {
+                        await this.OpenLoadingScreen(url);
+                    }
 
-            //         // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
-            //         if (!Application.isPlaying)
-            //         {
-            //             return;
-            //         }
+                    // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
+                    if (!Application.isPlaying)
+                    {
+                        return;
+                    }
 
-            //         LogLine.Do("[DGC][BanterScene] Loading ShowSpaceImage: " + url);
-            //         await ShowSpaceImage(url);
-            //         LogLine.Do("[DGC][BanterScene] Loading ResetScene: " + url);
-            //         await ResetScene();
-            //         LogLine.Do("[DGC][BanterScene] Loading LoadUrl: " + url);
-            //         await link.LoadUrl(url);
-            //         LogLine.Do("[DGC][BanterScene] Loading WaitUntil: " + url);
-            //         await new WaitUntil(() => loaded);
-            //         LogLine.Do("[DGC][BanterScene] Loading after WaitUntil: " + url);
-            //         LoadingStatus = "Please wait, loading live space...";
-            //         if (HasLoadFailed())
-            //         {
-            //             loading = false;
-            //             return;
-            //         }
+                    LogLine.Do("[DGC][BanterScene] Loading ShowSpaceImage: " + url);
+                    await ShowSpaceImage(url);
+                    LogLine.Do("[DGC][BanterScene] Loading ResetScene: " + url);
+                    await ResetScene();
+                    LogLine.Do("[DGC][BanterScene] Loading LoadUrl: " + url);
+                    await link.LoadUrl(url);
+                    LogLine.Do("[DGC][BanterScene] Loading WaitUntil: " + url);
+                    await new WaitUntil(() => loaded);
+                    LogLine.Do("[DGC][BanterScene] Loading after WaitUntil: " + url);
+                    LoadingStatus = "Please wait, loading live space...";
+                    if (HasLoadFailed())
+                    {
+                        loading = false;
+                        return;
+                    }
 
-            //         loadUrlTaskCompletionSource.SetResult(true);
-            //         UnityMainThreadTaskScheduler.Default.Enqueue(() => { events.OnUnitySceneLoad.Invoke(url); });
-            //         // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (1): " + url);
-            //         // await Task.Delay(500);
-            //         // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (2): " + url);
-            //         // await Task.Delay(500);
-            //         // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (3): " + url);
-            //         // await Task.Delay(500);
-            //         // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (4): " + url);
-            //         // await Task.Delay(500);
-            //         // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (5): " + url);
-            //         // await Task.Delay(500);
-            //         // Debug.Log("[DGC][BanterScene] After delay");
-            //         LogLine.Do("[DGC][BanterScene] Loading loadingManager?.LoadOut: " + url);
+                    loadUrlTaskCompletionSource.SetResult(true);
+                    UnityMainThreadTaskScheduler.Default.Enqueue(() => { events.OnUnitySceneLoad.Invoke(url); });
+                    // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (1): " + url);
+                    // await Task.Delay(500);
+                    // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (2): " + url);
+                    // await Task.Delay(500);
+                    // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (3): " + url);
+                    // await Task.Delay(500);
+                    // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (4): " + url);
+                    // await Task.Delay(500);
+                    // LogLine.Do("[DGC][BanterScene] Loading Task.Delay(500) (5): " + url);
+                    await Task.Delay(10000);
+                    // Debug.Log("[DGC][BanterScene] After delay");
+                    LogLine.Do("[DGC][BanterScene] Loading loadingManager?.LoadOut: " + url);
 
-            //         await loadingManager?.LoadOut();
-            //         loading = false;
-            //     }
-            //     catch (Exception ex)
-            //     {
-            //         Debug.LogError(ex);
-            //     }
-            // });
+                    await loadingManager?.LoadOut();
+                    loading = false;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError(ex);
+                }
+            });
             await loadUrlTaskCompletionSource.Task;
         }
         public async Task OnLoad(string instanceId)
