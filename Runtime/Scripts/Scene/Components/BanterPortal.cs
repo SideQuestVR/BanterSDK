@@ -85,11 +85,19 @@ namespace Banter.SDK
                 {
                     if (!string.IsNullOrEmpty(space.icon))
                     {
-                        await SetTexture(space.icon + "?size=2048", rend);
+#if UNITY_ANDROID
+                        await SetTexture(space.icon + "?size=512", rend);
+#else
+                        await SetTexture(space.icon + "?size=1024", rend);
+#endif
                     }
                     else
                     {
-                        await SetTexture(defaultTex + "?size=2048", rend);
+#if UNITY_ANDROID
+                        await SetTexture(defaultTex + "?size=512", rend);
+#else
+                        await SetTexture(defaultTex + "?size=1024", rend);
+#endif
                     }
                 }
                 catch (Exception e)
