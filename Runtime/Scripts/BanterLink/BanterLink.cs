@@ -514,6 +514,14 @@ namespace Banter.SDK
             }
         }
 
+        void OnApplicationQuit()
+        {
+            if (pipe != null)
+            {
+                pipe.Stop();
+            }
+        }
+
         List<string> messages = new List<string>();
         public void Send(string msg)
         {
