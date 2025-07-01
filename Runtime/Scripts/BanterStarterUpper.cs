@@ -37,13 +37,14 @@ namespace Banter.SDK
         {
             if (!initialized)
             {
-                UnityGame.SetMainThread();
-                var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
-                unitySched.SetMonoBehaviour(this);
-                if (!unitySched.IsRunning)
-                {
-                    currentCoroutine = StartCoroutine(unitySched.Coroutine());
-                }
+                // UnityGame.SetMainThread();
+                // var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
+                // unitySched.SetMonoBehaviour(this);
+                // if (!unitySched.IsRunning)
+                // {
+                //     currentCoroutine = StartCoroutine(unitySched.Coroutine());
+                // }
+                gameObject.AddComponent<UnityMainThreadTaskScheduler>();
                 initialized = true;
             }
 
@@ -154,8 +155,8 @@ namespace Banter.SDK
             scene.Destroy();
             try
             {
-                var unitySched = UnityMainThreadTaskScheduler.Default;
-                unitySched.Cancel();
+                // var unitySched = UnityMainThreadTaskScheduler.Default;
+                // unitySched.Cancel();
 #if UNITY_EDITOR
                 initialized = false;
                 if(currentCoroutine!=null)
