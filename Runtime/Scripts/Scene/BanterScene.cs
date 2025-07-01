@@ -285,7 +285,7 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
             {
                 await new WaitUntil(() => state == SceneState.UNITY_READY);
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
@@ -1431,7 +1431,7 @@ namespace Banter.SDK
             state = SceneState.NONE;
             loading = true;
             externalLoadFailed = false;
-            loadUrlTaskCompletionSource = new TaskCompletionSource<bool>();
+            loadUrlTaskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             CurrentUrl = url;
             this.isHome = url == CUSTOM_HOME_SPACE;
             this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
@@ -1463,16 +1463,21 @@ namespace Banter.SDK
                     loading = false;
                     return;
                 }
+                // LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
+                for(int i = 0; i < 50; i++)
+                {
+                    LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
+                    await Task.Delay(50);
+                }
+                // await Task.Delay(2500);
+
                 loadUrlTaskCompletionSource.SetResult(true);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
                 });
-                LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
 
-                await Task.Delay(2500);
                 LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
-
                 await loadingManager?.LoadOut();
                 loading = false;
             });
