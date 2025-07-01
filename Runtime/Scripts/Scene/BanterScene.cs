@@ -1463,21 +1463,20 @@ namespace Banter.SDK
                     loading = false;
                     return;
                 }
-                // LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
+                loadUrlTaskCompletionSource.SetResult(true);
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    events.OnUnitySceneLoad.Invoke(url);
+                });
+                 // LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
                 for(int i = 0; i < 50; i++)
                 {
                     LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
                     await Task.Delay(50);
                 }
                 // await Task.Delay(2500);
-
-                loadUrlTaskCompletionSource.SetResult(true);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                {
-                    events.OnUnitySceneLoad.Invoke(url);
-                });
-
                 LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
+
                 await loadingManager?.LoadOut();
                 loading = false;
             });
