@@ -270,7 +270,7 @@ namespace Banter.SDK
         }
         async Task KillBanterLink()
         {
-            await Task.Delay(100);
+            await new WaitForSeconds(0.1f);
             var processes = Process.GetProcessesByName("banter-link");
             var killedLogs = "";
             var failedLogs = "";

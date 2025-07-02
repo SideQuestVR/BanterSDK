@@ -1472,7 +1472,7 @@ namespace Banter.SDK
                 for(int i = 0; i < 50; i++)
                 {
                     LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
-                    await Task.Delay(50);
+                    await new WaitForSeconds(0.05f);
                 }
                 // await Task.Delay(2500);
                 LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
@@ -1501,7 +1501,7 @@ namespace Banter.SDK
             // failed at that level. Maybe it is because the other thread stuff above? I think so. 
             // Maybe it will fail on android? Or other slower computers? Making it 100 for good measure.
             // :thumbsup: :worksonmymachine: :sadcat:
-            await Task.Delay(100);
+            await new WaitForSeconds(0.1f);
             FlushAllSceneProps();
         }
 

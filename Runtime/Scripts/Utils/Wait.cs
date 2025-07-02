@@ -1,5 +1,6 @@
 using System;
 using System.Threading.Tasks;
+using UnityEngine;
 
 public class Wait
 {
@@ -11,7 +12,7 @@ public class Wait
             while (!condition())
             {
                 UnityEngine.Debug.Log("Wait.Until(() => condition())");
-                await Task.Delay(frequency);
+                await new WaitForSeconds(frequency/1000f);
             }
             UnityEngine.Debug.Log("Wait.Until(() => condition())");
         });

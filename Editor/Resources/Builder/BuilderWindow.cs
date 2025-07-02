@@ -1437,7 +1437,7 @@ public class BuilderWindow : EditorWindow
                 buildProgressBar.value = 100;
                 var task = new Task(async () =>
                 {
-                    await Task.Delay(5000);
+                    await new WaitForSeconds(5);
                     HideProgressBar();
                 });
                 task.Start();
