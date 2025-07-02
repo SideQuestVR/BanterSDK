@@ -180,11 +180,11 @@ namespace Banter.SDK
             }
             if (changedProperties?.Contains(PropertyName.drag) ?? false)
             {
-                _rigidbody.drag = drag;
+                _rigidbody.linearDamping = drag;
             }
             if (changedProperties?.Contains(PropertyName.angularDrag) ?? false)
             {
-                _rigidbody.angularDrag = angularDrag;
+                _rigidbody.angularDamping = angularDrag;
             }
             if (changedProperties?.Contains(PropertyName.isKinematic) ?? false)
             {
@@ -204,7 +204,7 @@ namespace Banter.SDK
             }
             if (changedProperties?.Contains(PropertyName.velocity) ?? false)
             {
-                _rigidbody.velocity = velocity;
+                _rigidbody.linearVelocity = velocity;
             }
             if (changedProperties?.Contains(PropertyName.velocity) ?? false)
             {

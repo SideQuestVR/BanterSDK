@@ -36,7 +36,7 @@ namespace Banter.SDK
         [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
         [See(initial = "1")][SerializeField] internal float staticFriction = 1;
 
-        PhysicMaterial _material;
+        PhysicsMaterial _material;
         Collider _collider;
         internal override void StartStuff()
         {
@@ -52,7 +52,7 @@ namespace Banter.SDK
             {
                 if (_material == null)
                 {
-                    _material = new PhysicMaterial();
+                    _material = new PhysicsMaterial();
                 }
                 if (_collider == null)
                 {
@@ -76,8 +76,8 @@ namespace Banter.SDK
                 {
                     _collider.material = _material;
                     _collider.material.bounciness = 0;
-                    _collider.material.frictionCombine = PhysicMaterialCombine.Minimum;
-                    _collider.material.bounceCombine = PhysicMaterialCombine.Minimum;
+                    _collider.material.frictionCombine = PhysicsMaterialCombine.Minimum;
+                    _collider.material.bounceCombine = PhysicsMaterialCombine.Minimum;
                 }
             }
             SetLoadedIfNot();
