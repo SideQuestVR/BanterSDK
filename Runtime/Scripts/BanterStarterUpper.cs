@@ -37,14 +37,13 @@ namespace Banter.SDK
         {
             if (!initialized)
             {
-                // UnityGame.SetMainThread();
-                // var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
-                // unitySched.SetMonoBehaviour(this);
-                // if (!unitySched.IsRunning)
-                // {
-                //     currentCoroutine = StartCoroutine(unitySched.Coroutine());
-                // }
-                gameObject.AddComponent<UnityMainThreadTaskScheduler>();
+                UnityGame.SetMainThread();
+                var unitySched = UnityMainThreadTaskScheduler.Default as UnityMainThreadTaskScheduler;
+                unitySched.SetMonoBehaviour(this);
+                if (!unitySched.IsRunning)
+                {
+                    currentCoroutine = StartCoroutine(unitySched.Coroutine());
+                }
                 initialized = true;
             }
 

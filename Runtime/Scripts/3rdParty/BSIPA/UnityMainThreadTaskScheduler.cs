@@ -1,21 +1,13 @@
-
-using UnityEngine;
-using System.Collections;
-using System.Collections.Generic;
+#nullable enable
 using System;
+using System.Collections;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
-using System.Net.NetworkInformation;
-
-// #nullable enable
-// using System;
-// using System.Collections;
-// using System.Collections.Concurrent;
-// using System.Collections.Generic;
-// using System.Diagnostics;
-// using System.Linq;
-// using System.Runtime.CompilerServices;
-// using System.Threading.Tasks;
-// using UnityEngine;
+using UnityEngine;
 
 
 namespace Banter.Utilities.Async
@@ -23,466 +15,366 @@ namespace Banter.Utilities.Async
     /// <summary>
     /// A task scheduler that runs tasks on the Unity main thread via coroutines.
     /// </summary>
-    public class UnityMainThreadTaskScheduler : MonoBehaviour 
+    public class UnityMainThreadTaskScheduler : TaskScheduler, IDisposable
     {
-        
-        
-	private static readonly Queue<Action> _executionQueue = new Queue<Action>();
-    
-    public static UnityMainThreadTaskScheduler Default { get { return Instance();  } }
+        /// <summary>
+        /// Gets the default main thread scheduler that is managed by BSIPA.
+        /// </summary>
+        /// <value>a scheduler that is managed by BSIPA</value>
+        public static new UnityMainThreadTaskScheduler Default { get; } = new UnityMainThreadTaskScheduler();
+        /// <summary>
+        /// Gets a factory for creating tasks on <see cref="Default"/>.
+        /// </summary>
+        /// <value>a factory for creating tasks on the default scheduler</value>
+        public static TaskFactory Factory { get; } = new TaskFactory(Default);
 
-	public void Update()
+        private readonly ConcurrentQueue<QueueItem> tasks = new();
+        private static readonly ConditionalWeakTable<Task, QueueItem> itemTable = new();
+
+        private class QueueItem : IEquatable<Task>, IEquatable<QueueItem>
         {
-            lock (_executionQueue)
+            private bool hasTask;
+            public bool HasTask
             {
-                while (_executionQueue.Count > 0)
+                get => hasTask;
+                set
                 {
-                    _executionQueue.Dequeue().Invoke();
+                    hasTask = value;
+                    if (!hasTask) Task = null;
                 }
+            }
+
+            public Task? Task { get; private set; }
+
+            public Action? Action { get; private set; }
+
+            public IEnumerator? Coroutine { get; private set; }
+
+            public QueueItem(Task task)
+            {
+                HasTask = true;
+                Task = task;
+            }
+
+            public QueueItem(Action action)
+            {
+                HasTask = true;
+                Action = action;
+            }
+
+            public QueueItem(IEnumerator coroutine)
+            {
+                HasTask = true;
+                Coroutine = coroutine;
+            }
+
+            public bool Equals(Task? other) => other is not null && HasTask && other.Equals(Task);
+            public bool Equals(QueueItem other) => other.HasTask == HasTask && Equals(other.Task);
+        }
+
+        /// <summary>
+        /// Gets whether or not this scheduler is currently executing tasks.
+        /// </summary>
+        /// <value><see langword="true"/> if the scheduler is running, <see langword="false"/> otherwise</value>
+        public bool IsRunning { get; private set; } = false;
+
+        /// <summary>
+        /// Gets whether or not this scheduler is in the process of shutting down.
+        /// </summary>
+        /// <value><see langword="true"/> if the scheduler is shutting down, <see langword="false"/> otherwise</value>
+        public bool Cancelling { get; private set; } = false;
+
+        private int yieldAfterTasks = 128;
+        /// <summary>
+        /// Gets or sets the number of tasks to execute before yielding back to Unity.
+        /// </summary>
+        /// <value>the number of tasks to execute per resume</value>
+        public int YieldAfterTasks
+        {
+            get => yieldAfterTasks;
+            set
+            {
+                ThrowIfDisposed();
+                if (value < 1)
+                    throw new ArgumentException("Value cannot be less than 1", nameof(value));
+                yieldAfterTasks = value;
             }
         }
 
-	/// <summary>
-	/// Locks the queue and adds the IEnumerator to the queue
-	/// </summary>
-	/// <param name="action">IEnumerator function that will be executed from the main thread.</param>
-	public void Enqueue(IEnumerator action) {
-		lock (_executionQueue) {
-			_executionQueue.Enqueue (() => {
-				StartCoroutine (action);
-			});
-		}
-	}
+        private TimeSpan yieldAfterTime = TimeSpan.FromMilliseconds(.5); // auto-yield if more than half a millis has passed by default
+        /// <summary>
+        /// Gets or sets the amount of time to execute tasks for before yielding back to Unity. Default is 0.5ms.
+        /// </summary>
+        /// <value>the amount of time to execute tasks for before yielding back to Unity</value>
+        public TimeSpan YieldAfterTime
+        {
+            get => yieldAfterTime;
+            set
+            {
+                ThrowIfDisposed();
+                if (value <= TimeSpan.Zero)
+                    throw new ArgumentException("Value must be greater than zero", nameof(value));
+                yieldAfterTime = value;
+            }
+        }
 
         /// <summary>
-        /// Locks the queue and adds the Action to the queue
-	/// </summary>
-	/// <param name="action">function that will be executed from the main thread.</param>
-	public void Enqueue(Action action)
-	{
-		Enqueue(ActionWrapper(action));
-	}
-	
-	/// <summary>
-	/// Locks the queue and adds the Action to the queue, returning a Task which is completed when the action completes
-	/// </summary>
-	/// <param name="action">function that will be executed from the main thread.</param>
-	/// <returns>A Task that can be awaited until the action completes</returns>
-	public Task EnqueueAsync(Action action)
-	{
-		var tcs = new TaskCompletionSource<bool>();
+        /// When used as a Unity coroutine, runs the scheduler. Otherwise, this is an invalid call.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Do not ever call <see cref="UnityEngine.MonoBehaviour.StopCoroutine(IEnumerator)"/> on this
+        /// coroutine, nor <see cref="UnityEngine.MonoBehaviour.StopAllCoroutines"/> on the behaviour hosting
+        /// this coroutine. This has no way to detect this, and this object will become invalid.
+        /// </para>
+        /// <para>
+        /// If you need to stop this coroutine, first call <see cref="Cancel"/>, then wait for it to
+        /// exit on its own.
+        /// </para>
+        /// </remarks>
+        /// <returns>a Unity coroutine</returns>
+        /// <exception cref="ObjectDisposedException">if this scheduler is disposed</exception>
+        /// <exception cref="InvalidOperationException">if the scheduler is already running</exception>
+        public IEnumerator Coroutine()
+        {
+            //UnityEngine.Debug.LogError("ENTERED THE COROUTINE");
+            ThrowIfDisposed();
 
-		void WrappedAction() {
-			try 
-			{
-				action();
-				tcs.TrySetResult(true);
-			} catch (Exception ex) 
-			{
-				tcs.TrySetException(ex);
-			}
-		}
+            if (IsRunning)
+                throw new InvalidOperationException("Scheduler already running");
 
-		Enqueue(ActionWrapper(WrappedAction));
-		return tcs.Task;
-	}
+            Cancelling = false;
+            IsRunning = true;
+            yield return null; // yield immediately
 
-	
-	IEnumerator ActionWrapper(Action a)
-	{
-		a();
-		yield return null;
-	}
+            var sw = new Stopwatch();
 
-	private static UnityMainThreadTaskScheduler _instance = null;
+            try
+            {
+                while (!Cancelling)
+                {
+                    if (!tasks.IsEmpty)
+                    {
+                        var yieldAfter = YieldAfterTasks;
+                        sw.Start();
+                        for (int i = 0; i < tasks.Count; i++)
+                        {
+                            QueueItem task;
+                            do if (!tasks.TryDequeue(out task)) goto exit; // try dequeue, if we can't exit
+                            while (!task.HasTask); // if the dequeued task is empty, try again
 
-	public static bool Exists() {
-		return _instance != null;
-	}
+                            try
+                            {
+                                if (task.Task is not null)
+                                {
+                                    if (!TryExecuteTask(task.Task))
+                                    {
 
-	public static UnityMainThreadTaskScheduler Instance() {
-		if (!Exists ()) {
-			throw new Exception ("UnityMainThreadDispatcher could not find the UnityMainThreadDispatcher object. Please ensure you have added the MainThreadExecutor Prefab to your scene.");
-		}
-		return _instance;
-	}
-    
+                                        if (task.Task?.Exception != null)
+                                        {
+                                            UnityEngine.Debug.LogError("TryExecuteTask failed with exception:");
+                                            UnityEngine.Debug.LogException(task.Task.Exception);
+                                        }
+                                        else
+                                        {
+                                            UnityEngine.Debug.LogError("TryExecuteTask failed without exception");
+                                        }
 
-	void Awake() {
-		if (_instance == null) {
-			_instance = this;
-			DontDestroyOnLoad(this.gameObject);
-			
-			// Fix for undisposed queued items in editor playmode
-			lock (_executionQueue)
-			{
-				if (_executionQueue.Count > 0)
-					_executionQueue.Clear();
-			}
-		}
-	}
+                                    }
+                                }
+                                if (task.Action is not null)
+                                {
+                                    try
+                                    {
+                                        task.Action.Invoke();
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        UnityEngine.Debug.LogError("task.Action exception occurred:");
+                                        UnityEngine.Debug.LogException(ex);
+                                    }
+                                }
+                                else if (task.Coroutine is not null)
+                                {
+                                    try
+                                    {
+                                        _monoBehaviour.StartCoroutine(task.Coroutine);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        UnityEngine.Debug.LogError("task.Coroutine exception occurred:");
+                                        UnityEngine.Debug.LogException(ex);
+                                    }
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                UnityEngine.Debug.LogError("Thread Scheduler unhandled exception dealing with task!");
+                                UnityEngine.Debug.LogException(ex);
+                            }
+                        }
+                        exit:
+                        sw.Reset();
+                    }
+                    yield return null;
+                }
+            }
+            finally
+            {
+                sw.Reset();
+                IsRunning = false;
+                UnityEngine.Debug.LogError("EXITED THE COROUTINE, BAD THING TO HAPPEN");
+            }
 
-	void OnDestroy() {
-			_instance = null;
-	}
-//         /// <summary>
-        //         /// Gets the default main thread scheduler that is managed by BSIPA.
-        //         /// </summary>
-        //         /// <value>a scheduler that is managed by BSIPA</value>
-        //         public static new UnityMainThreadTaskScheduler Default { get; } = new UnityMainThreadTaskScheduler();
-        //         /// <summary>
-        //         /// Gets a factory for creating tasks on <see cref="Default"/>.
-        //         /// </summary>
-        //         /// <value>a factory for creating tasks on the default scheduler</value>
-        //         public static TaskFactory Factory { get; } = new TaskFactory(Default);
+        }
 
-        //         private readonly ConcurrentQueue<QueueItem> tasks = new();
-        //         private static readonly ConditionalWeakTable<Task, QueueItem> itemTable = new();
+        private MonoBehaviour _monoBehaviour = null;
 
-        //         private class QueueItem : IEquatable<Task>, IEquatable<QueueItem>
-        //         {
-        //             private bool hasTask;
-        //             public bool HasTask
-        //             {
-        //                 get => hasTask;
-        //                 set
-        //                 {
-        //                     hasTask = value;
-        //                     if (!hasTask) Task = null;
-        //                 }
-        //             }
+        internal void SetMonoBehaviour(MonoBehaviour m) => _monoBehaviour = m;
 
-        //             public Task? Task { get; private set; }
+        /// <summary>
+        /// Cancels the scheduler. If the scheduler is currently executing tasks, that batch will finish first.
+        /// All remaining tasks will be left in the queue.
+        /// </summary>
+        /// <exception cref="ObjectDisposedException">if this scheduler is disposed</exception>
+        /// <exception cref="InvalidOperationException">if the scheduler is not running</exception>
+        public void Cancel()
+        {
+            ThrowIfDisposed();
 
-        //             public Action? Action { get; private set; }
+            if (!IsRunning) throw new InvalidOperationException("The scheduler is not running");
+            Cancelling = true;
+#if UNITY_EDITOR
+            IsRunning = false;
+#endif
+        }
 
-        //             public IEnumerator? Coroutine { get; private set; }
+        /// <summary>
+        /// Throws a <see cref="NotSupportedException"/>.
+        /// </summary>
+        /// <returns>nothing</returns>
+        /// <exception cref="NotSupportedException">Always.</exception>
+        protected override IEnumerable<Task> GetScheduledTasks()
+            => tasks.ToArray().Where(q => q.HasTask).Select(q => q.Task).NonNull().ToArray();
 
-        //             public QueueItem(Task task)
-        //             {
-        //                 HasTask = true;
-        //                 Task = task;
-        //             }
+        /// <summary>
+        /// Queues a given <see cref="Task"/> to this scheduler. The <see cref="Task"/> <i>must</i> be
+        /// scheduled for this <see cref="TaskScheduler"/> by the runtime.
+        /// </summary>
+        /// <param name="task">the <see cref="Task"/> to queue</param>
+        /// <exception cref="ObjectDisposedException">Thrown if this object has already been disposed.</exception>
+        protected override void QueueTask(Task task)
+        {
+            ThrowIfDisposed();
 
-        //             public QueueItem(Action action)
-        //             {
-        //                 HasTask = true;
-        //                 Action = action;
-        //             }
+            var item = new QueueItem(task);
+            itemTable.Add(task, item);
+            tasks.Enqueue(item);
+        }
 
-        //             public QueueItem(IEnumerator coroutine)
-        //             {
-        //                 HasTask = true;
-        //                 Coroutine = coroutine;
-        //             }
+        public void Enqueue(Action action)
+        {
+            ThrowIfDisposed();
 
-        //             public bool Equals(Task? other) => other is not null && HasTask && other.Equals(Task);
-        //             public bool Equals(QueueItem other) => other.HasTask == HasTask && Equals(other.Task);
-        //         }
+            tasks.Enqueue(new(action));
+        }
 
-        //         /// <summary>
-        //         /// Gets whether or not this scheduler is currently executing tasks.
-        //         /// </summary>
-        //         /// <value><see langword="true"/> if the scheduler is running, <see langword="false"/> otherwise</value>
-        //         public bool IsRunning { get; private set; } = false;
+        private IEnumerator ActionWrapper(Action a)
+        {
+            a();
+            yield return null;
+        }
 
-        //         /// <summary>
-        //         /// Gets whether or not this scheduler is in the process of shutting down.
-        //         /// </summary>
-        //         /// <value><see langword="true"/> if the scheduler is shutting down, <see langword="false"/> otherwise</value>
-        //         public bool Cancelling { get; private set; } = false;
+        public Task EnqueueAsync(Action action)
+        {
+            ThrowIfDisposed();
 
-        //         private int yieldAfterTasks = 128;
-        //         /// <summary>
-        //         /// Gets or sets the number of tasks to execute before yielding back to Unity.
-        //         /// </summary>
-        //         /// <value>the number of tasks to execute per resume</value>
-        //         public int YieldAfterTasks
-        //         {
-        //             get => yieldAfterTasks;
-        //             set
-        //             {
-        //                 ThrowIfDisposed();
-        //                 if (value < 1)
-        //                     throw new ArgumentException("Value cannot be less than 1", nameof(value));
-        //                 yieldAfterTasks = value;
-        //             }
-        //         }
-
-        //         private TimeSpan yieldAfterTime = TimeSpan.FromMilliseconds(.5); // auto-yield if more than half a millis has passed by default
-        //         /// <summary>
-        //         /// Gets or sets the amount of time to execute tasks for before yielding back to Unity. Default is 0.5ms.
-        //         /// </summary>
-        //         /// <value>the amount of time to execute tasks for before yielding back to Unity</value>
-        //         public TimeSpan YieldAfterTime
-        //         {
-        //             get => yieldAfterTime;
-        //             set
-        //             {
-        //                 ThrowIfDisposed();
-        //                 if (value <= TimeSpan.Zero)
-        //                     throw new ArgumentException("Value must be greater than zero", nameof(value));
-        //                 yieldAfterTime = value;
-        //             }
-        //         }
-
-        //         /// <summary>
-        //         /// When used as a Unity coroutine, runs the scheduler. Otherwise, this is an invalid call.
-        //         /// </summary>
-        //         /// <remarks>
-        //         /// <para>
-        //         /// Do not ever call <see cref="UnityEngine.MonoBehaviour.StopCoroutine(IEnumerator)"/> on this
-        //         /// coroutine, nor <see cref="UnityEngine.MonoBehaviour.StopAllCoroutines"/> on the behaviour hosting
-        //         /// this coroutine. This has no way to detect this, and this object will become invalid.
-        //         /// </para>
-        //         /// <para>
-        //         /// If you need to stop this coroutine, first call <see cref="Cancel"/>, then wait for it to
-        //         /// exit on its own.
-        //         /// </para>
-        //         /// </remarks>
-        //         /// <returns>a Unity coroutine</returns>
-        //         /// <exception cref="ObjectDisposedException">if this scheduler is disposed</exception>
-        //         /// <exception cref="InvalidOperationException">if the scheduler is already running</exception>
-        //         public IEnumerator Coroutine()
-        //         {
-        //             //UnityEngine.Debug.LogError("ENTERED THE COROUTINE");
-        //             ThrowIfDisposed();
-
-        //             if (IsRunning)
-        //                 throw new InvalidOperationException("Scheduler already running");
-
-        //             Cancelling = false;
-        //             IsRunning = true;
-        //             yield return null; // yield immediately
-
-        //             var sw = new Stopwatch();
-
-        //             try
-        //             {
-        //                 while (!Cancelling)
-        //                 {
-        //                     if (!tasks.IsEmpty)
-        //                     {
-        //                         var yieldAfter = YieldAfterTasks;
-        //                         sw.Start();
-        //                         for (int i = 0; i < tasks.Count; i++)
-        //                         {
-        //                             QueueItem task;
-        //                             do if (!tasks.TryDequeue(out task)) goto exit; // try dequeue, if we can't exit
-        //                             while (!task.HasTask); // if the dequeued task is empty, try again
-
-        //                             try
-        //                             {
-        //                                 if (task.Task is not null)
-        //                                 {
-        //                                     if (!TryExecuteTask(task.Task))
-        //                                     {
-
-        //                                         if (task.Task?.Exception != null)
-        //                                         {
-        //                                             UnityEngine.Debug.LogError("TryExecuteTask failed with exception:");
-        //                                             UnityEngine.Debug.LogException(task.Task.Exception);
-        //                                         }
-        //                                         else
-        //                                         {
-        //                                             UnityEngine.Debug.LogError("TryExecuteTask failed without exception");
-        //                                         }
-
-        //                                     }
-        //                                 }
-        //                                 if (task.Action is not null)
-        //                                 {
-        //                                     try
-        //                                     {
-        //                                         task.Action.Invoke();
-        //                                     }
-        //                                     catch (Exception ex)
-        //                                     {
-        //                                         UnityEngine.Debug.LogError("task.Action exception occurred:");
-        //                                         UnityEngine.Debug.LogException(ex);
-        //                                     }
-        //                                 }
-        //                                 else if (task.Coroutine is not null)
-        //                                 {
-        //                                     try
-        //                                     {
-        //                                         _monoBehaviour.StartCoroutine(task.Coroutine);
-        //                                     }
-        //                                     catch (Exception ex)
-        //                                     {
-        //                                         UnityEngine.Debug.LogError("task.Coroutine exception occurred:");
-        //                                         UnityEngine.Debug.LogException(ex);
-        //                                     }
-        //                                 }
-        //                             }
-        //                             catch (Exception ex)
-        //                             {
-        //                                 UnityEngine.Debug.LogError("Thread Scheduler unhandled exception dealing with task!");
-        //                                 UnityEngine.Debug.LogException(ex);
-        //                             }
-        //                         }
-        //                         exit:
-        //                         sw.Reset();
-        //                     }
-        //                     yield return null;
-        //                 }
-        //             }
-        //             finally
-        //             {
-        //                 sw.Reset();
-        //                 IsRunning = false;
-        //                 UnityEngine.Debug.LogError("EXITED THE COROUTINE, BAD THING TO HAPPEN");
-        //             }
-
-        //         }
-
-        //         private MonoBehaviour _monoBehaviour = null;
-
-        //         internal void SetMonoBehaviour(MonoBehaviour m) => _monoBehaviour = m;
-
-        //         /// <summary>
-        //         /// Cancels the scheduler. If the scheduler is currently executing tasks, that batch will finish first.
-        //         /// All remaining tasks will be left in the queue.
-        //         /// </summary>
-        //         /// <exception cref="ObjectDisposedException">if this scheduler is disposed</exception>
-        //         /// <exception cref="InvalidOperationException">if the scheduler is not running</exception>
-        //         public void Cancel()
-        //         {
-        //             ThrowIfDisposed();
-
-        //             if (!IsRunning) throw new InvalidOperationException("The scheduler is not running");
-        //             Cancelling = true;
-        // #if UNITY_EDITOR
-        //             IsRunning = false;
-        // #endif
-        //         }
-
-        //         /// <summary>
-        //         /// Throws a <see cref="NotSupportedException"/>.
-        //         /// </summary>
-        //         /// <returns>nothing</returns>
-        //         /// <exception cref="NotSupportedException">Always.</exception>
-        //         protected override IEnumerable<Task> GetScheduledTasks()
-        //             => tasks.ToArray().Where(q => q.HasTask).Select(q => q.Task).NonNull().ToArray();
-
-        //         /// <summary>
-        //         /// Queues a given <see cref="Task"/> to this scheduler. The <see cref="Task"/> <i>must</i> be
-        //         /// scheduled for this <see cref="TaskScheduler"/> by the runtime.
-        //         /// </summary>
-        //         /// <param name="task">the <see cref="Task"/> to queue</param>
-        //         /// <exception cref="ObjectDisposedException">Thrown if this object has already been disposed.</exception>
-        //         protected override void QueueTask(Task task)
-        //         {
-        //             ThrowIfDisposed();
-
-        //             var item = new QueueItem(task);
-        //             itemTable.Add(task, item);
-        //             tasks.Enqueue(item);
-        //         }
-
-        //         public void Enqueue(Action action)
-        //         {
-        //             ThrowIfDisposed();
-
-        //             tasks.Enqueue(new(action));
-        //         }
-
-        //         private IEnumerator ActionWrapper(Action a)
-        //         {
-        //             a();
-        //             yield return null;
-        //         }
-
-        //         public Task EnqueueAsync(Action action)
-        //         {
-        //             ThrowIfDisposed();
-
-        //             var tcs = new TaskCompletionSource<bool>();
-        //             Enqueue(() =>
-        //             {
-        //                 try
-        //                 {
-        //                     action();
-        //                     tcs.SetResult(true);
-        //                 }
-        //                 catch (Exception ex)
-        //                 {
-        //                     tcs.SetException(ex);
-        //                 }
-        //             });
-        //             return tcs.Task;
-        //         }
+            var tcs = new TaskCompletionSource<bool>();
+            Enqueue(() =>
+            {
+                try
+                {
+                    action();
+                    tcs.SetResult(true);
+                }
+                catch (Exception ex)
+                {
+                    tcs.SetException(ex);
+                }
+            });
+            return tcs.Task;
+        }
 
 
-        //         public void Enqueue(IEnumerator coroutine)
-        //         {
-        //             ThrowIfDisposed();
+        public void Enqueue(IEnumerator coroutine)
+        {
+            ThrowIfDisposed();
 
-        //             tasks.Enqueue(new(coroutine));
-        //         }
+            tasks.Enqueue(new(coroutine));
+        }
 
-        //         /// <summary>
-        //         /// Runs the task inline if the current thread is the Unity main thread.
-        //         /// </summary>
-        //         /// <param name="task">the task to attempt to execute</param>
-        //         /// <param name="taskWasPreviouslyQueued">whether the task was previously queued to this scheduler</param>
-        //         /// <returns><see langword="false"/> if the task could not be run, <see langword="true"/> if it was</returns>
-        //         /// <exception cref="ObjectDisposedException">Thrown if this object has already been disposed.</exception>
-        //         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
-        //         {
-        //             ThrowIfDisposed();
+        /// <summary>
+        /// Runs the task inline if the current thread is the Unity main thread.
+        /// </summary>
+        /// <param name="task">the task to attempt to execute</param>
+        /// <param name="taskWasPreviouslyQueued">whether the task was previously queued to this scheduler</param>
+        /// <returns><see langword="false"/> if the task could not be run, <see langword="true"/> if it was</returns>
+        /// <exception cref="ObjectDisposedException">Thrown if this object has already been disposed.</exception>
+        protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
+        {
+            ThrowIfDisposed();
 
-        //             if (!UnityGame.OnMainThread) return false;
+            if (!UnityGame.OnMainThread) return false;
 
-        //             if (taskWasPreviouslyQueued)
-        //             {
-        //                 if (itemTable.TryGetValue(task, out var item))
-        //                 {
-        //                     if (!item.HasTask) return false;
-        //                     item.HasTask = false;
-        //                 }
-        //                 else return false; // if we couldn't remove it, its not in our queue, so it already ran
-        //             }
+            if (taskWasPreviouslyQueued)
+            {
+                if (itemTable.TryGetValue(task, out var item))
+                {
+                    if (!item.HasTask) return false;
+                    item.HasTask = false;
+                }
+                else return false; // if we couldn't remove it, its not in our queue, so it already ran
+            }
 
-        //             return TryExecuteTask(task);
-        //         }
+            return TryExecuteTask(task);
+        }
 
-        //         private void ThrowIfDisposed()
-        //         {
-        //             if (disposedValue)
-        //                 throw new ObjectDisposedException(nameof(SingleThreadTaskScheduler));
-        //         }
+        private void ThrowIfDisposed()
+        {
+            if (disposedValue)
+                throw new ObjectDisposedException(nameof(SingleThreadTaskScheduler));
+        }
 
-        //         #region IDisposable Support
-        //         private bool disposedValue = false; // To detect redundant calls
+        #region IDisposable Support
+        private bool disposedValue = false; // To detect redundant calls
 
-        //         /// <summary>
-        //         /// Disposes this object.
-        //         /// </summary>
-        //         /// <param name="disposing">whether or not to dispose managed objects</param>
-        //         protected virtual void Dispose(bool disposing)
-        //         {
-        //             if (!disposedValue)
-        //             {
-        //                 if (disposing)
-        //                 {
+        /// <summary>
+        /// Disposes this object.
+        /// </summary>
+        /// <param name="disposing">whether or not to dispose managed objects</param>
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
 
-        //                 }
+                }
 
-        //                 disposedValue = true;
-        //             }
-        //         }
+                disposedValue = true;
+            }
+        }
 
-        //         /// <summary>
-        //         /// Disposes this object. This puts the object into an unusable state.
-        //         /// </summary>
-        //         // This code added to correctly implement the disposable pattern.
-        //         public void Dispose()
-        //         {
-        //             // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
-        //             Dispose(true);
-        //         }
-        //         #endregion
+        /// <summary>
+        /// Disposes this object. This puts the object into an unusable state.
+        /// </summary>
+        // This code added to correctly implement the disposable pattern.
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in Dispose(bool disposing) above.
+            Dispose(true);
+        }
+        #endregion
     }
 
 }
