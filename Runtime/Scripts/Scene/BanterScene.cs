@@ -1463,7 +1463,6 @@ namespace Banter.SDK
                     loading = false;
                     return;
                 }
-                loadUrlTaskCompletionSource.SetResult(true);
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
@@ -1474,6 +1473,7 @@ namespace Banter.SDK
                 LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
 
                 await loadingManager?.LoadOut();
+                loadUrlTaskCompletionSource.SetResult(true);
                 loading = false;
             });
             await loadUrlTaskCompletionSource.Task;
