@@ -42,7 +42,7 @@ namespace Banter.VisualScripting
                 XRNode handNode = flow.GetValue<XRNode>(hand);
 
                 // Enqueue on the main thread to ensure thread safety when accessing XR devices
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     InputDevice device = InputDevices.GetDeviceAtXRNode(handNode);
                     if (device.isValid)
@@ -61,7 +61,7 @@ namespace Banter.VisualScripting
                     {
                         Debug.LogWarning("Invalid XR device for node: " + handNode);
                     }
-                });
+                }, $"{nameof(SendHapticImpulse)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             

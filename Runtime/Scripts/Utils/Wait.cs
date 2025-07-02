@@ -7,7 +7,7 @@ public class Wait
     public static async Task Until(Func<bool> condition, int frequency = 25, int timeout = -1)
     {
         UnityEngine.Debug.Log("Wait.Until");
-        var waitTask = Task.Run(async () =>
+        var waitTask = Banter.SDK.TaskRunner.Run(async () =>
         {
             while (!condition())
             {
@@ -15,7 +15,7 @@ public class Wait
                 await new WaitForSeconds(frequency/1000f);
             }
             UnityEngine.Debug.Log("Wait.Until(() => condition())");
-        });
+        }, $"{nameof(Wait)}.{nameof(Until)}");
 
         if (waitTask != await Task.WhenAny(waitTask,
                 Task.Delay(timeout)))
@@ -25,10 +25,10 @@ public class Wait
     }
     public static async Task While(Func<bool> condition, int frequency = 1, int timeout = -1)
     {
-        var waitTask = Task.Run(async () =>
+        var waitTask = Banter.SDK.TaskRunner.Run(async () =>
         {
             while (condition()) await Task.Delay(frequency);
-        });
+        }, $"{nameof(Wait)}.{nameof(While)}");
 
         if (waitTask != await Task.WhenAny(waitTask, Task.Delay(timeout)))
             throw new TimeoutException();

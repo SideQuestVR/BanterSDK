@@ -41,10 +41,10 @@ namespace Banter.VisualScripting
                 var rotationVec = flow.GetValue<Vector3>(targetRotationVector);
                 var stop = flow.GetValue<bool>(stopVelocity);
                 var spawn = flow.GetValue<bool>(isSpawn);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     BanterScene.Instance().events.OnTeleport.Invoke(position, rotation > 0 ? new Vector3(0f, rotation, 0f) : rotationVec, stop, spawn);
-                });
+                }, $"{nameof(TeleportTo)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");

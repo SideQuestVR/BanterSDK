@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 using System.IO;
+using System.Text;
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -20,7 +21,7 @@ namespace Banter.SDK
         public event EventHandler Connected;
         float timeoutDisplay = 0;
         BatchUpdater batchUpdater;
-        
+
         Dictionary<string, string> androidStats = new Dictionary<string, string>();
 
         void Start()
@@ -30,12 +31,12 @@ namespace Banter.SDK
 
             scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
 #if BANTER_VISUAL_SCRIPTING
                     EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
 #endif
-                });
+                }, $"{nameof(BanterLink)}.{nameof(Start)}"));
             });
         }
 
@@ -48,7 +49,7 @@ namespace Banter.SDK
             if (msg.StartsWith(APICommands.LOG))
             {
                 var logData = GetMsgData(msg, APICommands.LOG).Split("VrApi");
-                if(logData.Length > 1)
+                if (logData.Length > 1)
                 {
                     var statsData = logData[1].Split(":");
                     if (statsData.Length > 1)
@@ -69,7 +70,7 @@ namespace Banter.SDK
                                 }
                             }
                         }
-                        if (int.TryParse(androidStats["Free"].Substring(0,androidStats["Free"].Length-2), out int memory))
+                        if (int.TryParse(androidStats["Free"].Substring(0, androidStats["Free"].Length - 2), out int memory))
                         {
                             scene.events.OnAndroidMemoryChanged.Invoke(memory);
                         }
@@ -85,7 +86,7 @@ namespace Banter.SDK
             {
                 scene.state = SceneState.NOTHING_20S;
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 30 seconds...");
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => timeoutDisplay = Time.time);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => timeoutDisplay = Time.time, $"{nameof(BanterLink)}.{nameof(ParseCommand)}.NOTHING_20S"));
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
             }
             else if (msg.StartsWith(APICommands.NOTHING))
@@ -145,11 +146,14 @@ namespace Banter.SDK
                     return scene.loaded;
                 });
                 OnUnitySceneLoaded();
-                await new WaitForSeconds(25);
-                if (scene.state != SceneState.UNITY_READY)
+                _ = TaskRunner.Run(async () =>
                 {
-                    scene.LogMissing();
-                }
+                    await Task.Delay(25000);
+                    if (scene.state != SceneState.UNITY_READY)
+                    {
+                        scene.LogMissing();
+                    }
+                }, $"{nameof(BanterLink)}.{nameof(ParseCommand)}.SCENE_READY Delay");
             }
             else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
             {
@@ -320,7 +324,7 @@ namespace Banter.SDK
             // if(msg.StartsWith(APICommands.LEGACY_SEND_TO_AFRAME)) {
             // scene.events.OnLegacySendToAframe.Invoke(GetMsgData(msg, APICommands.LEGACY_SEND_TO_AFRAME));
             // }else 
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
             {
                 UnityAndBanterObject lastSitObject = new UnityAndBanterObject();
                 if (msg.StartsWith(APICommands.LEGACY_LOCK_PLAYER))
@@ -408,7 +412,7 @@ namespace Banter.SDK
                 {
                     Debug.Log("[Banter] Unknown parse legacy message: " + msg);
                 }
-            });
+            }, $"{nameof(BanterLink)}.{nameof(ParseLegacy)}"));
         }
         void Update()
         {
@@ -417,8 +421,37 @@ namespace Banter.SDK
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😬", 0, $"No objects loaded yet, {Mathf.Round(260f - (Time.time - timeoutDisplay))} seconds left...", true);
             }
         }
+
+        //debugging, keep track of how many messages of each command type
+        Dictionary<string, int> linkCommandCounters = new Dictionary<string, int>();
+        DateTimeOffset lastCommandDebugLog = DateTimeOffset.MinValue;
+
         void HandleMessage(string msg)
         {
+            //this is debug stuff here, probably remove it at some point
+            var dbgcmd = msg.Split(MessageDelimiters.PRIMARY)[0];
+
+            if (!linkCommandCounters.TryAdd(dbgcmd, 1))
+            {
+                linkCommandCounters[dbgcmd]++;
+            }
+            if ((DateTimeOffset.Now - lastCommandDebugLog).TotalSeconds > 1)
+            {
+                lastCommandDebugLog = DateTimeOffset.Now;
+                StringBuilder sbLog = new StringBuilder();
+                sbLog.AppendLine("Msg cmd stats:");
+                foreach (var kvp in linkCommandCounters)
+                {
+                    sbLog.Append("\t");
+                    sbLog.Append(kvp.Key);
+                    sbLog.Append(": ");
+                    sbLog.Append((int)kvp.Value);
+                    sbLog.Append('\n');
+                }
+                Debug.Log(sbLog.ToString());
+            }
+            //end of debug stuff
+
             if (msg.StartsWith(APICommands.REQUEST_ID))
             {
                 var startLength = (APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID).Length;
