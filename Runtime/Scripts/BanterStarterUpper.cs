@@ -159,7 +159,7 @@ namespace Banter.SDK
                 // unitySched.Cancel();
 #if UNITY_EDITOR
                 initialized = false;
-                if(currentCoroutine!=null)
+                if (currentCoroutine != null)
                     StopCoroutine(currentCoroutine);
 #endif
             }
@@ -208,7 +208,7 @@ namespace Banter.SDK
             devToolsEnabled = !devToolsEnabled;
             UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
 
-            LogLine.Do($"Banter DevTools " + (devToolsEnabled?"enabled.":"disabled.") );
+            LogLine.Do($"Banter DevTools " + (devToolsEnabled ? "enabled." : "disabled."));
 #endif
             if (Application.isPlaying)
             {
@@ -224,8 +224,8 @@ namespace Banter.SDK
             var isProd = true;
 #endif
 #if UNITY_EDITOR
-            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt")+"\"";
-            processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"), 
+            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt") + "\"";
+            processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
                 (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
                 LogTag.BanterBrowser);
@@ -309,6 +309,21 @@ namespace Banter.SDK
         void FixedUpdate()
         {
             scene.FixedUpdate();
+        }
+
+
+        [RuntimeInitializeOnLoadMethod]
+        private static void OnLoad()
+        {
+            AppDomain.CurrentDomain.UnhandledException +=
+                (object sender, UnhandledExceptionEventArgs args) =>
+                    Debug.LogError("[AppDomain.CurrentDomain.UnhandledException]: " + (Exception)args.ExceptionObject);
+                    TaskScheduler.UnobservedTaskException +=
+                (object sender, UnobservedTaskExceptionEventArgs args) =>
+                    {
+                        Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
+                        args.SetObserved();
+                    };
         }
     }
 }
