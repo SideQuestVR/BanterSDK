@@ -1469,12 +1469,12 @@ namespace Banter.SDK
                     events.OnUnitySceneLoad.Invoke(url);
                 }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
                  // LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
-                for(int i = 0; i < 50; i++)
-                {
-                    LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
-                    await new WaitForSeconds(0.05f);
-                }
-                // await Task.Delay(2500);
+                // for(int i = 0; i < 50; i++)
+                // {
+                //     LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
+                //     await new WaitForSeconds(0.05f);
+                // }
+                await Task.Delay(2500);
                 LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
 
                 await loadingManager?.LoadOut();
