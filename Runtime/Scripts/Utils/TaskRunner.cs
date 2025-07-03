@@ -1,4 +1,5 @@
-﻿using System;
+﻿//#define TASK_DEBUG_LOGGING
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,27 +13,10 @@ namespace Banter.SDK
 {
     public static class TaskRunner
     {
+#if TASK_DEBUG_LOGGING
         private static Dictionary<string, int> counters = new Dictionary<string, int>();
         private static Dictionary<string, int> totals = new Dictionary<string, int>();
         private static object counterLock = new object();
-
-
-        //non debug version straight passthrough
-        /*
-         *     public static Task Track(this Task task, string tag)
-         {
-             return task;
-         }
-
-         public static Task<T> Track<T>(this Task<T> task, string tag)
-         {
-             return task;
-         }
-
-         public static Task Run(Action a, string tag = null, CancellationToken? cancelToken = null)
-         {
-             return Task.Run(a, cancelToken ?? CancellationToken.None);
-         }*/
         private static System.Threading.Timer dbgDump;
         private static void CheckRunning()
         {
@@ -45,7 +29,16 @@ namespace Banter.SDK
                 }, null, 5000, 5000);
             }
         }
-
+        private static void Decrement(string tag)
+        {
+            lock (counterLock)
+            {
+                if (counters.TryGetValue(tag, out var ctr))
+                {
+                    counters[tag] = ctr - 1;
+                }
+            }
+        }
 
         public static Task Track(this Task task, string tag)
         {
@@ -77,8 +70,6 @@ namespace Banter.SDK
                 return t;
             }, TaskContinuationOptions.ExecuteSynchronously).Unwrap();
         }
-
-
         public static IEnumerator Track(this IEnumerator coroutine, string tag)
         {
             CheckRunning();
@@ -259,17 +250,6 @@ namespace Banter.SDK
 
         }
 
-        private static void Decrement(string tag)
-        {
-            lock (counterLock)
-            {
-                if (counters.TryGetValue(tag, out var ctr))
-                {
-                    counters[tag] = ctr - 1;
-                }
-            }
-        }
-
         public static void Dump()
         {
             lock (counterLock)
@@ -296,5 +276,55 @@ namespace Banter.SDK
                 Debug.Log(sb.ToString());
             }
         }
+    
+#else
+        public static Task Track(this Task task, string tag)
+        {
+            return task;
+        }
+
+        public static IEnumerator Track(this IEnumerator coroutine, string tag)
+        {
+            return coroutine;
+        }
+
+        public static Action Track(this Action action, string tag)
+        {
+            return action;
+        }
+
+        public static Task<T> Track<T>(this Task<T> task, string tag)
+        {
+            return task;
+        }
+
+        public static Task Run(Action a, string tag = null, CancellationToken? cancelToken = null)
+        {
+            return Task.Run(a, cancelToken ?? CancellationToken.None);
+        }
+
+        public static void Dump()
+        {
+            // no-op
+        }
+#endif
+
+        //non debug version straight passthrough
+        /*
+         *     public static Task Track(this Task task, string tag)
+         {
+             return task;
+         }
+
+         public static Task<T> Track<T>(this Task<T> task, string tag)
+         {
+             return task;
+         }
+
+         public static Task Run(Action a, string tag = null, CancellationToken? cancelToken = null)
+         {
+             return Task.Run(a, cancelToken ?? CancellationToken.None);
+         }*/
+
     }
 }

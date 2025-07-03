@@ -1,3 +1,4 @@
+//#define BANTER_LINK_DEBUG_LOG
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -421,13 +422,14 @@ namespace Banter.SDK
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😬", 0, $"No objects loaded yet, {Mathf.Round(260f - (Time.time - timeoutDisplay))} seconds left...", true);
             }
         }
-
+#if BANTER_LINK_DEBUG_LOG
         //debugging, keep track of how many messages of each command type
         Dictionary<string, int> linkCommandCounters = new Dictionary<string, int>();
         DateTimeOffset lastCommandDebugLog = DateTimeOffset.MinValue;
-
+#endif
         void HandleMessage(string msg)
         {
+#if BANTER_LINK_DEBUG_LOG
             //this is debug stuff here, probably remove it at some point
             var dbgcmd = msg.Split(MessageDelimiters.PRIMARY)[0];
 
@@ -451,6 +453,7 @@ namespace Banter.SDK
                 Debug.Log(sbLog.ToString());
             }
             //end of debug stuff
+#endif
 
             if (msg.StartsWith(APICommands.REQUEST_ID))
             {
