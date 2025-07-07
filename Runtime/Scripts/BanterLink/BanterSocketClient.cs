@@ -41,7 +41,7 @@ public class BanterSocketClient
                 MessageReceived += onMessageReceived;
             }
 
-            _ = Task.Run(() => ListenForMessages());
+            _ = Banter.SDK.TaskRunner.Run(async () => await ListenForMessages(), $"{nameof(BanterSocketClient)}.{nameof(ConnectAsync)}");
         }
         catch (Exception ex)
         {

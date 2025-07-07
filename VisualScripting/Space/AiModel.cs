@@ -34,10 +34,10 @@ namespace Banter.VisualScripting
                 var _base64Image = flow.GetValue<string>(base64Image);
                 var _simplify = flow.GetValue<AiModelSimplify>(simplify);
                 var _textureSize = flow.GetValue<int>(textureSize);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     BanterScene.Instance().events.OnAiModel.Invoke(_base64Image, _simplify, _textureSize);
-                });
+                }, $"{nameof(AiModel)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");

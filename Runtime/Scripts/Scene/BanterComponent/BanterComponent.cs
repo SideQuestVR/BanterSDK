@@ -103,14 +103,14 @@ namespace Banter.SDK
 
         public Task ObjectOnMainThread(Action<BanterComponentBase> callback)
         {
-            return UnityMainThreadTaskScheduler.Default.EnqueueAsync(() =>
+            return UnityMainThreadTaskScheduler.Default.EnqueueAsync(TaskRunner.Track(() =>
             {
                 var ObjectId = banterObject.unityAndBanterObject.id;
                 if (ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component))
                 {
                     callback(component);
                 }
-            });
+            }, $"{nameof(BanterComponent)}.{nameof(ObjectOnMainThread)}"));
         }
 
         public void Dispose()

@@ -66,7 +66,7 @@ namespace Banter.SDK
                     {
                         await x;
                         UnityEngine.Debug.Log("BanterSocketClient connected");
-                        UnityMainThreadTaskScheduler.Default.Enqueue(() => { connectedCallback(); });
+                        UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => { connectedCallback(); }, $"{nameof(AndroidPipe)}.{nameof(Start)}"));
                     }
                     catch (Exception e)
                     {

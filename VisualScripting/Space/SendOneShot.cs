@@ -30,10 +30,10 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _allInstances = flow.GetValue<bool>(allInstances);
                 var _data = flow.GetValue<string>(data);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     BanterScene.Instance().events.OnOneShot.Invoke(_data, _allInstances);
-                });
+                }, $"{nameof(SendOneShot)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");

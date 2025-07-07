@@ -95,9 +95,9 @@ namespace Banter.VisualScripting
              inputTrigger = ControlInput("", (flow) => {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
                     BanterScene.Instance().events.OnGetUserState.Invoke(_key, _uid);
-                });
+                }, $"{nameof(GetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
@@ -135,9 +135,9 @@ namespace Banter.VisualScripting
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
                 var _value = flow.GetValue<string>(value);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
                     BanterScene.Instance().events.OnSetUserState.Invoke(_key, _uid, _value);
-                });
+                }, $"{nameof(SetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
@@ -173,9 +173,9 @@ namespace Banter.VisualScripting
              inputTrigger = ControlInput("", (flow) => {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
                     BanterScene.Instance().events.OnRemoveUserState.Invoke(_key, _uid);
-                });
+                }, $"{nameof(RemoveUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
