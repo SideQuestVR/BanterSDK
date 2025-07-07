@@ -2,9 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
+
 namespace Banter.SDK
 {
 
@@ -242,6 +244,18 @@ namespace Banter.SDK
                             if (canvas.renderMode == RenderMode.WorldSpace)
                             {
                                 canvas.worldCamera = Camera.main;
+                            }
+                        }
+
+                        // Replace font assets on TMP UI text
+                        var tmpmat = TMP_Settings.defaultFontAsset;
+                        var tmpui = transform.gameObject.GetComponent<TextMeshProUGUI>();
+                        {
+                            if (tmpui != null)
+                            {
+                                tmpui.font = tmpmat;
+                                tmpui.UpdateFontAsset();
+                                tmpui.ForceMeshUpdate();
                             }
                         }
                     }
