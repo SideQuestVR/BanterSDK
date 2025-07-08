@@ -258,6 +258,14 @@ namespace Banter.SDK
                                 tmpui.ForceMeshUpdate();
                             }
                         }
+                        var tmptext = transform.gameObject.GetComponent<TMP_Text>();
+                        {
+                            if (tmptext != null)
+                            {
+                                tmptext.font = tmpmat;
+                                tmptext.ForceMeshUpdate();
+                            }
+                        }
                     }
                 }
             }
