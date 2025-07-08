@@ -52,8 +52,8 @@ namespace Banter.SDK
 #if !BANTER_EDITOR
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
             SetupExtraEvents();
-            SetupCamera();
-            SpawnPlayers();
+            //SetupCamera();
+            //SpawnPlayers();
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
