@@ -72,7 +72,7 @@ public class ElectronPipe : BanterPipe
 
         var ctx = new CancellationTokenSource();
         ctx.CancelAfter(60000);
-        _ = Task.Run(() =>
+        _ = Banter.SDK.TaskRunner.Run(() =>
         {
             // Keep retrying pipe connection once every one seconds for 60 seconds (token timeout)
             while (!done)
@@ -106,7 +106,7 @@ public class ElectronPipe : BanterPipe
                     done = true;
                 }
             }
-        }, ctx.Token);
+        }, $"{nameof(ElectronPipe)}.{nameof(InitWait)}", ctx.Token);
 
         // Wait for the done signal from the task
         while (!done)

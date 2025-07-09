@@ -165,7 +165,7 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                activeTask = Task.Run(() =>
+                activeTask = Banter.SDK.TaskRunner.Run(() =>
                 {
                     SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref pendingQLocked, 1, 0) == 0));
                     var q = _pendingQueue;
@@ -191,7 +191,7 @@ namespace Banter.SDK
                             Debug.LogWarning("unlock failed on activeTaskLocked in activeTask!");
                         }
                     }
-                });
+                }, $"{nameof(BanterScene)}.{nameof(StartQ)}");
             }
             finally
             {
@@ -285,11 +285,11 @@ namespace Banter.SDK
             }
             link?.OnUserJoined(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 await new WaitUntil(() => state == SceneState.UNITY_READY);
                 EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
-            });
+            }, $"{nameof(BanterScene)}.{nameof(AddUser)}"));
 #endif
         }
         public void RemoveUser(UserData user)
@@ -300,10 +300,10 @@ namespace Banter.SDK
             }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
-           UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+           UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
-            });
+            }, $"{nameof(BanterScene)}.{nameof(RemoveUser)}"));
 #endif
         }
         public void LookedAtMirror()
@@ -313,17 +313,17 @@ namespace Banter.SDK
         }
         public void OpenPage(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnPageOpened.Invoke(msg));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnPageOpened.Invoke(msg), $"{nameof(BanterScene)}.{nameof(OpenPage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OPEN_PAGE);
         }
         public void StartTTS(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStarted.Invoke(msg == "1"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStarted.Invoke(msg == "1"), $"{nameof(BanterScene)}.{nameof(StartTTS)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.START_TTS);
         }
         public void StopTTS(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnTTsStoped.Invoke(msg));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStoped.Invoke(msg), $"{nameof(BanterScene)}.{nameof(StopTTS)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.STOP_TTS);
         }
         public void AiImage(string msg, int reqId)
@@ -336,7 +336,7 @@ namespace Banter.SDK
                     Debug.LogError("[Banter] AiImage message is malformed: " + msg);
                     return;
                 }
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])), $"{nameof(BanterScene)}.{nameof(AiImage)}"));
             }
             catch (Exception e)
             {
@@ -355,7 +355,7 @@ namespace Banter.SDK
                     return;
                 }
                 var force = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAddPlayerForce.Invoke(force, (ForceMode)int.Parse(parts[3])));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAddPlayerForce.Invoke(force, (ForceMode)int.Parse(parts[3])), $"{nameof(BanterScene)}.{nameof(AddPlayerForce)}"));
             }
             catch (Exception e)
             {
@@ -373,7 +373,7 @@ namespace Banter.SDK
                     Debug.LogError("[Banter] AiModel message is malformed: " + msg);
                     return;
                 }
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnAiModel.Invoke(parts[0], (AiModelSimplify)int.Parse(parts[1]), int.Parse(parts[2])));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiModel.Invoke(parts[0], (AiModelSimplify)int.Parse(parts[1]), int.Parse(parts[2])), $"{nameof(BanterScene)}.{nameof(AiModel)}"));
             }
             catch (Exception e)
             {
@@ -384,7 +384,7 @@ namespace Banter.SDK
         public void Base64ToCDN(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]), $"{nameof(BanterScene)}.{nameof(Base64ToCDN)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
         public string GameObjectTextureToBase64(GameObject obj, int materialIndex)
@@ -426,7 +426,7 @@ namespace Banter.SDK
         }
         public void SelectFile(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)), $"{nameof(BanterScene)}.{nameof(SelectFile)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SELECT_FILE);
         }
         public void Gravity(string msg, int reqId)
@@ -438,14 +438,14 @@ namespace Banter.SDK
                 return;
             }
             var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => Physics.gravity = gravity);
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Physics.gravity = gravity, $"{nameof(BanterScene)}.{nameof(Gravity)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = NumberFormat.Parse(msg);
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => Time.timeScale = timeScale);
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Time.timeScale = timeScale, $"{nameof(BanterScene)}.{nameof(TimeScale)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
         // public void PlayerSpeed(string msg, int reqId)
@@ -457,10 +457,10 @@ namespace Banter.SDK
 
         public void LockThing(int reqId, UnityEvent handler, string command)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  handler.Invoke();
-             });
+             }, $"{nameof(BanterScene)}.{nameof(LockThing)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + command);
         }
         public void Teleport(string msg, int reqId)
@@ -475,10 +475,10 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
                 return;
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
-             });
+             }, $"{nameof(BanterScene)}.{nameof(Teleport)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
         public void YtInfo(string youtubeId, int reqId)
@@ -487,7 +487,7 @@ namespace Banter.SDK
             {
                 { "Content-Type", "application/json" },
             };
-            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
              {
                  var videoInfo = await Post.Text(
                      "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
@@ -497,7 +497,7 @@ namespace Banter.SDK
                  var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
                  var cleanJson = JsonUtility.ToJson(responseContext);
                  link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
-             });
+             }, $"{nameof(BanterScene)}.{nameof(YtInfo)}"));
         }
         #endregion
 
@@ -620,14 +620,14 @@ namespace Banter.SDK
                 uBanterObject.banterObject.AddComponent(componetId, component);
                 banterComponents.TryAdd(componetId, component);
                 // Components added inside unity asset bundels load at weird times.
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      var banterComponent = uBanterObject.id.mainThreadComponentMap.FirstOrDefault(x => x.Key == componetId).Value;
                      if (banterComponent != null && banterComponent._loaded)
                      {
                          component.loaded = banterComponent._loaded;
                      }
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(AddBanterComponent)}"));
                 return component;
             }
             return null;
@@ -844,7 +844,7 @@ namespace Banter.SDK
                     Debug.LogError("[Banter] Error updating component offthread: " + e.Message + ": " + (gameObject.id == null) + ", " + msg);
                 }
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  for (int i = 0; i < sheetFerMainThread.Count; i++)
                  {
@@ -858,7 +858,7 @@ namespace Banter.SDK
                          Debug.LogError("[Banter] Error updating component: " + e.Message + ": " + msg);
                      }
                  }
-             });
+             }, $"{nameof(BanterScene)}.{nameof(UpdateJsComponent)}"));
         }
         public async void CallMethodOnJsComponent(string msg, int reqId, string full)
         {
@@ -982,11 +982,11 @@ namespace Banter.SDK
                 var banterObject = GetGameObject(int.Parse(msgParts[0]));
                 if (banterObject != null)
                 {
-                    UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                     {
                         banterObject.SetActive(int.Parse(msgParts[1]) == 1);
                         SendObjectUpdate(banterObject, reqId);
-                    });
+                    }, $"{nameof(BanterScene)}.{nameof(SetJsObjectActive)}"));
                 }
             }
             catch (Exception ex)
@@ -1006,11 +1006,11 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
             if (banterObject != null)
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      banterObject.layer = int.Parse(msgParts[1]);
                      SendObjectUpdate(banterObject, reqId);
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectLayer)}"));
             }
         }
         public void PhysicsRaycast(string msg, int reqId)
@@ -1025,7 +1025,7 @@ namespace Banter.SDK
             var direction = new Vector3(NumberFormat.Parse(msgParts[3]), NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]));
             var maxDistance = msgParts.Length > 6 ? NumberFormat.Parse(msgParts[6]) : -1;
             var layerMask = msgParts.Length > 7 ? int.Parse(msgParts[7]) : -1;
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  RaycastHit hit;
                  bool didHit = false;
@@ -1044,14 +1044,14 @@ namespace Banter.SDK
 
                  if (didHit)
                      link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
-             });
+             }, $"{nameof(BanterScene)}.{nameof(PhysicsRaycast)}"));
         }
         public void InstantiateJsObject(string msg, int reqId)
         {
             var gameObject = GetGameObject(int.Parse(msg));
             if (gameObject != null)
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
                  {
                      var newObject = GameObject.Instantiate(gameObject);
                      var objectId = newObject.GetComponent<BanterObjectId>();
@@ -1075,12 +1075,12 @@ namespace Banter.SDK
                      //dirty = true;
                      await new WaitForEndOfFrame();
                      SendObjectUpdate(newObject, reqId);
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(InstantiateJsObject)}"));
             }
         }
         public void SendBrowserMessage(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => events.OnMenuBrowserMessage.Invoke(msg));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnMenuBrowserMessage.Invoke(msg), $"{nameof(BanterScene)}.{nameof(SendBrowserMessage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SEND_MENU_BROWSER_MESSAGE);
         }
         public void AddJsComponent(string msg, int reqId)
@@ -1104,7 +1104,7 @@ namespace Banter.SDK
             }
             var linkId = parts[1];
             var componentType = (ComponentType)int.Parse(parts[2]);
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  if (!isReady)
                  {
@@ -1126,7 +1126,7 @@ namespace Banter.SDK
 
                  var constructorProps = SetComponentProperties(3, parts, banterComp, msg);
                  comp.Init(constructorProps);
-             });
+             }, $"{nameof(BanterScene)}.{nameof(AddJsComponent)}"));
         }
         private List<object> SetComponentProperties(int startIndex, string[] parts, BanterComponent banterComp, string msg = null)
         {
@@ -1217,11 +1217,11 @@ namespace Banter.SDK
             var banterObject = GetGameObject(int.Parse(msgParts[1]));
             if (banterObject != null && parentObject != null)
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
                      SendObjectUpdate(banterObject, reqId);
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(SetParent)}"));
             }
         }
         public async Task WaitForEndOfFrame(int reqId)
@@ -1231,7 +1231,7 @@ namespace Banter.SDK
         }
         public void UpdateJsObject(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() => SendObjectUpdate(int.Parse(msg), reqId));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => SendObjectUpdate(int.Parse(msg), reqId), $"{nameof(BanterScene)}.{nameof(UpdateJsObject)}"));
         }
         // TODO: Lets look at what this is doing and why, it could be better to propagate updates back to the object another way
         void SendObjectUpdate(int oid, int reqId)
@@ -1255,7 +1255,7 @@ namespace Banter.SDK
 
         public void DestroyJsObject(int oid, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  var gameObject = GetGameObject(oid);
                  if (gameObject != null)
@@ -1271,14 +1271,14 @@ namespace Banter.SDK
                      BanterScene.Instance().DestroyBanterObject(oid);
                  }
 
-             });
+             }, $"{nameof(BanterScene)}.{nameof(DestroyJsObject)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
         }
         public void DestroyJsComponent(int cid, int reqId)
         {
             if (banterComponents.TryGetValue(cid, out var comp))
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      var gameObject = GetObject(comp.banterObject.oid);
                      if (gameObject.id != null)
@@ -1300,7 +1300,7 @@ namespace Banter.SDK
                      {
                          DestroyBanterComponent(cid);
                      }
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(DestroyJsComponent)}"));
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
             }
         }
@@ -1319,7 +1319,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Add Object message is malformed: " + msg);
                 return;
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
              {
                  try
                  {
@@ -1338,16 +1338,16 @@ namespace Banter.SDK
                  {
                      Debug.LogError("[Banter] Add Object after act: " + msg);
                  }
-             });
+             }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
         }
         public void Cancel(string message, bool isUserCancel = false)
         {
             if (!UnityGame.OnMainThread)
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     Cancel(message, isUserCancel);
-                });
+                }, $"{nameof(BanterScene)}.{nameof(Cancel)}"));
                 return;
             }
             loaded = true;
@@ -1378,10 +1378,10 @@ namespace Banter.SDK
         }
         void ResetSceneAbilitySettings()
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  _ = settings.Reset();
-             });
+             }, $"{nameof(BanterScene)}.{nameof(ResetSceneAbilitySettings)}"));
         }
         public async Task ResetScene()
         {
@@ -1393,10 +1393,10 @@ namespace Banter.SDK
                 ResetSceneAbilitySettings();
                 ResetLoadingProgress();
                 bundlesLoaded = false;
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      events.OnSceneReset.Invoke();
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(ResetScene)}"));
                 // This seems to be a bug in 2022, hard crash without this line.
                 GameObject.FindObjectsOfType<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
                 await Resources.UnloadUnusedAssets();
@@ -1431,13 +1431,13 @@ namespace Banter.SDK
             state = SceneState.NONE;
             loading = true;
             externalLoadFailed = false;
-            loadUrlTaskCompletionSource = new TaskCompletionSource<bool>();
+            loadUrlTaskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
             CurrentUrl = url;
             this.isHome = url == CUSTOM_HOME_SPACE;
             this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
             loadingManager?.UpdateCancelText();
             ResetLoadingProgress();
-            UnityMainThreadTaskScheduler.Default.Enqueue(async () =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 if (!isLoadingOpen)
                 {
@@ -1464,18 +1464,22 @@ namespace Banter.SDK
                     return;
                 }
                 loadUrlTaskCompletionSource.SetResult(true);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
-                });
-                LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
-
+                }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
+                 // LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
+                // for(int i = 0; i < 50; i++)
+                // {
+                //     LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
+                //     await new WaitForSeconds(0.05f);
+                // }
                 await Task.Delay(2500);
                 LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
 
                 await loadingManager?.LoadOut();
                 loading = false;
-            });
+            }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}"));
             await loadUrlTaskCompletionSource.Task;
         }
         public async Task OnLoad(string instanceId)
@@ -1483,7 +1487,7 @@ namespace Banter.SDK
             // This is fired when the page loads or realods from the browser end, so it can be fired becuase 
             // we have explicitly naviagted the page, but also becuase someone hut f5 in the debugger. 
             state = SceneState.NONE;
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  if (settings != null)
                  {
@@ -1492,12 +1496,12 @@ namespace Banter.SDK
                  }
                  settings = new BanterSceneSettings(instanceId);
                  events.OnLoad.Invoke();
-             });
+             }, $"{nameof(BanterScene)}.{nameof(OnLoad)}"));
             // TODO: This wont work with 5 ms, but I tested it hundreds of times at 10ms and it never 
             // failed at that level. Maybe it is because the other thread stuff above? I think so. 
             // Maybe it will fail on android? Or other slower computers? Making it 100 for good measure.
             // :thumbsup: :worksonmymachine: :sadcat:
-            await Task.Delay(100);
+            await new WaitForSeconds(0.1f);
             FlushAllSceneProps();
         }
 
@@ -1644,11 +1648,11 @@ namespace Banter.SDK
             }
             if (toReenqueue?.Count > 0)
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      Debug.LogWarning($"Having to reenqueue {toReenqueue.Count}");
                      EnqueuePropertyUpdates(toReenqueue);
-                 });
+                 }, $"{nameof(BanterScene)}.{nameof(DoPropertyUpdateQueue)}"));
             }
         }
 
@@ -1726,7 +1730,7 @@ namespace Banter.SDK
         {
             
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  foreach (var part in settingsParts)
                  {
@@ -1846,7 +1850,7 @@ namespace Banter.SDK
                          }
                      }
                  }
-             });
+             }, $"{nameof(BanterScene)}.{nameof(SetSettings)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SCENE_SETTINGS);
         }
         public void FlushObjectToChanges(int oid, int cid = 0, ComponentType ct = 0)
@@ -1926,7 +1930,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] LegacySetChildColor message is malformed: " + msg);
                 return;
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  var obj = GetGameObject(int.Parse(msgParts[0]));
                  var color = new Color(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3]));
@@ -1945,11 +1949,11 @@ namespace Banter.SDK
                          Debug.LogError("[Banter] Error setting child color: " + path + " - " + e.Message);
                      }
                  }
-             });
+             }, $"{nameof(BanterScene)}.{nameof(LegacySetChildColor)}"));
         }
         public void LegacySetVideoUrl(GameObject gameObject, string url, string id)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  var video = gameObject.GetComponentInChildren<VideoPlayer>();
                  if (video != null)
@@ -1965,7 +1969,7 @@ namespace Banter.SDK
                      };
                      video.prepareCompleted += callback;
                  }
-             });
+             }, $"{nameof(BanterScene)}.{nameof(LegacySetVideoUrl)}"));
         }
         #endregion
 
