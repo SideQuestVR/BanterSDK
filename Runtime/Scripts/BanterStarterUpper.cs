@@ -154,8 +154,8 @@ namespace Banter.SDK
             scene.Destroy();
             try
             {
-                // var unitySched = UnityMainThreadTaskScheduler.Default;
-                // unitySched.Cancel();
+                var unitySched = UnityMainThreadTaskScheduler.Default;
+                unitySched.Cancel();
 #if UNITY_EDITOR
                 initialized = false;
                 if (currentCoroutine != null)
