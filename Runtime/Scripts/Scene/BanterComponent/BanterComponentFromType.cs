@@ -15,16 +15,24 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterAudioSource>();
                 case ComponentType.BanterBillboard:
                     return gameObject.AddComponent<BanterBillboard>();
+                case ComponentType.BanterBox:
+                    return gameObject.AddComponent<BanterBox>();
                 case ComponentType.BoxCollider:
                     return gameObject.AddComponent<BanterBoxCollider>();
                 case ComponentType.BanterBrowser:
                     return gameObject.AddComponent<BanterBrowser>();
                 case ComponentType.CapsuleCollider:
                     return gameObject.AddComponent<BanterCapsuleCollider>();
+                case ComponentType.BanterCircle:
+                    return gameObject.AddComponent<BanterCircle>();
                 case ComponentType.BanterColliderEvents:
                     return gameObject.AddComponent<BanterColliderEvents>();
+                case ComponentType.BanterCone:
+                    return gameObject.AddComponent<BanterCone>();
                 case ComponentType.ConfigurableJoint:
                     return gameObject.AddComponent<BanterConfigurableJoint>();
+                case ComponentType.BanterCylinder:
+                    return gameObject.AddComponent<BanterCylinder>();
                 case ComponentType.BanterGeometry:
                     return gameObject.AddComponent<BanterGeometry>();
                 case ComponentType.BanterGLTF:
@@ -45,10 +53,16 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterMirror>();
                 case ComponentType.BanterPhysicMaterial:
                     return gameObject.AddComponent<BanterPhysicMaterial>();
+                case ComponentType.BanterPlane:
+                    return gameObject.AddComponent<BanterPlane>();
                 case ComponentType.BanterPortal:
                     return gameObject.AddComponent<BanterPortal>();
                 case ComponentType.BanterRigidbody:
                     return gameObject.AddComponent<BanterRigidbody>();
+                case ComponentType.BanterRing:
+                    return gameObject.AddComponent<BanterRing>();
+                case ComponentType.BanterSphere:
+                    return gameObject.AddComponent<BanterSphere>();
                 case ComponentType.SphereCollider:
                     return gameObject.AddComponent<BanterSphereCollider>();
                 case ComponentType.BanterStreetView:
@@ -57,6 +71,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterSyncedObject>();
                 case ComponentType.BanterText:
                     return gameObject.AddComponent<BanterText>();
+                case ComponentType.BanterTorus:
+                    return gameObject.AddComponent<BanterTorus>();
                 case ComponentType.Transform:
                     return gameObject.AddComponent<BanterTransform>();
                 case ComponentType.BanterVideoPlayer:

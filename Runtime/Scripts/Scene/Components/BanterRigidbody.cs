@@ -174,76 +174,76 @@ namespace Banter.SDK
             {
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
             }
-            if (changedProperties?.Contains(PropertyName.mass) ?? false)
-            {
-                _rigidbody.mass = mass;
-            }
-            if (changedProperties?.Contains(PropertyName.drag) ?? false)
-            {
-                _rigidbody.drag = drag;
-            }
-            if (changedProperties?.Contains(PropertyName.angularDrag) ?? false)
-            {
-                _rigidbody.angularDrag = angularDrag;
-            }
-            if (changedProperties?.Contains(PropertyName.isKinematic) ?? false)
-            {
-                _rigidbody.isKinematic = isKinematic;
-            }
-            if (changedProperties?.Contains(PropertyName.useGravity) ?? false)
-            {
-                _rigidbody.useGravity = useGravity;
-            }
-            if (changedProperties?.Contains(PropertyName.centerOfMass) ?? false)
-            {
-                _rigidbody.centerOfMass = centerOfMass;
-            }
-            if (changedProperties?.Contains(PropertyName.collisionDetectionMode) ?? false)
-            {
-                _rigidbody.collisionDetectionMode = collisionDetectionMode;
-            }
-            if (changedProperties?.Contains(PropertyName.velocity) ?? false)
-            {
-                _rigidbody.velocity = velocity;
-            }
-            if (changedProperties?.Contains(PropertyName.velocity) ?? false)
-            {
-                _rigidbody.angularVelocity = angularVelocity;
-            }
-            if ((changedProperties?.Contains(PropertyName.freezePositionX) ?? false) ||
-                (changedProperties?.Contains(PropertyName.freezePositionY) ?? false) ||
-                (changedProperties?.Contains(PropertyName.freezePositionZ) ?? false) ||
-                (changedProperties?.Contains(PropertyName.freezeRotationX) ?? false) ||
-                (changedProperties?.Contains(PropertyName.freezeRotationY) ?? false) ||
-                (changedProperties?.Contains(PropertyName.freezeRotationZ) ?? false))
-            {
-                RigidbodyConstraints constraints = RigidbodyConstraints.None;
-                if (freezePositionX)
-                {
-                    constraints |= RigidbodyConstraints.FreezePositionX;
-                }
-                if (freezePositionY)
-                {
-                    constraints |= RigidbodyConstraints.FreezePositionY;
-                }
-                if (freezePositionZ)
-                {
-                    constraints |= RigidbodyConstraints.FreezePositionZ;
-                }
-                if (freezeRotationX)
-                {
-                    constraints |= RigidbodyConstraints.FreezeRotationX;
-                }
-                if (freezeRotationY)
-                {
-                    constraints |= RigidbodyConstraints.FreezeRotationY;
-                }
-                if (freezeRotationZ)
-                {
-                    constraints |= RigidbodyConstraints.FreezeRotationZ;
-                }
-                _rigidbody.constraints = constraints;
-            }
+            // if (changedProperties?.Contains(PropertyName.mass) ?? false)
+            // {
+            //     _rigidbody.mass = mass;
+            // }
+            // if (changedProperties?.Contains(PropertyName.drag) ?? false)
+            // {
+            //     _rigidbody.drag = drag;
+            // }
+            // if (changedProperties?.Contains(PropertyName.angularDrag) ?? false)
+            // {
+            //     _rigidbody.angularDrag = angularDrag;
+            // }
+            // if (changedProperties?.Contains(PropertyName.isKinematic) ?? false)
+            // {
+            //     _rigidbody.isKinematic = isKinematic;
+            // }
+            // if (changedProperties?.Contains(PropertyName.useGravity) ?? false)
+            // {
+            //     _rigidbody.useGravity = useGravity;
+            // }
+            // if (changedProperties?.Contains(PropertyName.centerOfMass) ?? false)
+            // {
+            //     _rigidbody.centerOfMass = centerOfMass;
+            // }
+            // if (changedProperties?.Contains(PropertyName.collisionDetectionMode) ?? false)
+            // {
+            //     _rigidbody.collisionDetectionMode = collisionDetectionMode;
+            // }
+            // if (changedProperties?.Contains(PropertyName.velocity) ?? false)
+            // {
+            //     _rigidbody.velocity = velocity;
+            // }
+            // if (changedProperties?.Contains(PropertyName.velocity) ?? false)
+            // {
+            //     _rigidbody.angularVelocity = angularVelocity;
+            // }
+            // if ((changedProperties?.Contains(PropertyName.freezePositionX) ?? false) ||
+            //     (changedProperties?.Contains(PropertyName.freezePositionY) ?? false) ||
+            //     (changedProperties?.Contains(PropertyName.freezePositionZ) ?? false) ||
+            //     (changedProperties?.Contains(PropertyName.freezeRotationX) ?? false) ||
+            //     (changedProperties?.Contains(PropertyName.freezeRotationY) ?? false) ||
+            //     (changedProperties?.Contains(PropertyName.freezeRotationZ) ?? false))
+            // {
+            //     RigidbodyConstraints constraints = RigidbodyConstraints.None;
+            //     if (freezePositionX)
+            //     {
+            //         constraints |= RigidbodyConstraints.FreezePositionX;
+            //     }
+            //     if (freezePositionY)
+            //     {
+            //         constraints |= RigidbodyConstraints.FreezePositionY;
+            //     }
+            //     if (freezePositionZ)
+            //     {
+            //         constraints |= RigidbodyConstraints.FreezePositionZ;
+            //     }
+            //     if (freezeRotationX)
+            //     {
+            //         constraints |= RigidbodyConstraints.FreezeRotationX;
+            //     }
+            //     if (freezeRotationY)
+            //     {
+            //         constraints |= RigidbodyConstraints.FreezeRotationY;
+            //     }
+            //     if (freezeRotationZ)
+            //     {
+            //         constraints |= RigidbodyConstraints.FreezeRotationZ;
+            //     }
+            //     _rigidbody.constraints = constraints;
+            // }
             SetLoadedIfNot();
         }
 
