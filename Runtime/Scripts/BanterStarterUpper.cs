@@ -21,6 +21,7 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
+        [SerializeField] bool openBrowser;
         [SerializeField] Transform _feetTransform;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
@@ -217,29 +218,29 @@ namespace Banter.SDK
 
         private void StartBrowser()
         {
+            Kill();
 #if !BANTER_EDITOR
             var isProd = false;
 #else
             var isProd = true;
 #endif
 
-        string[] args = System.Environment.GetCommandLineArgs();
-            string extraArgs = "";
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (args[i] == "-openbrowser" && (i + 1) < args.Length)
+            string[] args = System.Environment.GetCommandLineArgs();
+            string extraArgs = openBrowser ? " --openbrowser true" : "";
+            for (int i = 0; i < args.Length; i++)
             {
-                    extraArgs = " --openbrowser ";
+                if (args[i] == "-openbrowser" && (i + 1) < args.Length)
+                {
+                        extraArgs = " --openbrowser true";
+                }
             }
-        }
-        
-
 
 #if UNITY_EDITOR
             var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt") + "\"";
+            var Eargs = (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"" + extraArgs;
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"" + extraArgs,
+                Eargs,
                 LogTag.BanterBrowser);
 #else
             var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
