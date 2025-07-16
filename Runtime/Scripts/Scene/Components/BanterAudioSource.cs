@@ -132,26 +132,26 @@ namespace Banter.SDK
             {
                 _source = gameObject.AddComponent<AudioSource>();
             }
-            // if (changedProperties?.Contains(PropertyName.spatialBlend) ?? false)
-            // {
-            //     _source.spatialBlend = spatialBlend;
-            // }
-            // if (changedProperties?.Contains(PropertyName.loop) ?? false)
-            // {
-            //     _source.loop = loop;
-            // }
-            // if (changedProperties?.Contains(PropertyName.mute) ?? false)
-            // {
-            //     _source.mute = mute;
-            // }
-            // if (changedProperties?.Contains(PropertyName.volume) ?? false)
-            // {
-            //     _source.volume = volume;
-            // }
-            // if (changedProperties?.Contains(PropertyName.pitch) ?? false)
-            // {
-            //     _source.pitch = pitch;
-            // }
+            if (changedProperties?.Contains(PropertyName.spatialBlend) ?? false)
+            {
+                _source.spatialBlend = spatialBlend;
+            }
+            if (changedProperties?.Contains(PropertyName.loop) ?? false)
+            {
+                _source.loop = loop;
+            }
+            if (changedProperties?.Contains(PropertyName.mute) ?? false)
+            {
+                _source.mute = mute;
+            }
+            if (changedProperties?.Contains(PropertyName.volume) ?? false)
+            {
+                _source.volume = volume;
+            }
+            if (changedProperties?.Contains(PropertyName.pitch) ?? false)
+            {
+                _source.pitch = pitch;
+            }
             SetLoadedIfNot();
         }
 

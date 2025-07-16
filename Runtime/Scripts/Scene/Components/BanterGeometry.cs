@@ -251,12 +251,12 @@ namespace Banter.SDK
                     }
                     break;
             }
-            // if (changedProperties != null && changedProperties.Contains(PropertyName.parametricPoints)
-            // && geometryType == GeometryType.ParametricGeometry && parametricType == ParametricGeometryType.Custom)
-            // {
-            //     var pointsData = JsonUtility.FromJson<ParametricPoints>(parametricPoints);
-            //     _filter.sharedMesh = new ParametricGeometry(stacks, slices, null, pointsData.points).Generate();
-            // }
+            if (changedProperties != null && changedProperties.Contains(PropertyName.parametricPoints)
+            && geometryType == GeometryType.ParametricGeometry && parametricType == ParametricGeometryType.Custom)
+            {
+                var pointsData = JsonUtility.FromJson<ParametricPoints>(parametricPoints);
+                _filter.sharedMesh = new ParametricGeometry(stacks, slices, null, pointsData.points).Generate();
+            }
         }
 
         internal override void DestroyStuff()

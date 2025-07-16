@@ -85,23 +85,23 @@ namespace Banter.SDK
             {
                 _renderer = gameObject.AddComponent<MeshRenderer>();
             }
-            // if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
-            // {
-            //     var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
-            //     _renderer.sharedMaterial = material;
-            // }
-            // if (changedProperties?.Contains(PropertyName.texture) ?? false)
-            // {
-            //     await SetTexture(texture);
-            // }
-            // if (changedProperties?.Contains(PropertyName.color) ?? false)
-            // {
-            //     SetColor(new Color(color.x, color.y, color.z, color.w));
-            // }
-            // if (changedProperties?.Contains(PropertyName.side) ?? false)
-            // {
-            //     _renderer.sharedMaterial.SetFloat("_Cull", 2 - (int)side);
-            // }
+            if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
+            {
+                var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                _renderer.sharedMaterial = material;
+            }
+            if (changedProperties?.Contains(PropertyName.texture) ?? false)
+            {
+                await SetTexture(texture);
+            }
+            if (changedProperties?.Contains(PropertyName.color) ?? false)
+            {
+                SetColor(new Color(color.x, color.y, color.z, color.w));
+            }
+            if (changedProperties?.Contains(PropertyName.side) ?? false)
+            {
+                _renderer.sharedMaterial.SetFloat("_Cull", 2 - (int)side);
+            }
         }
 
         public void SetColor(Color color)
