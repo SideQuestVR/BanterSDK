@@ -15,6 +15,7 @@ using System.Collections;
 using UnityEngine.Networking;
 using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
+using UnityEditor.SceneManagement;
 
 public enum BanterBuilderBundleMode
 {
@@ -365,7 +366,6 @@ public class BuilderWindow : EditorWindow
             deleteCallback?.Invoke();
         });
         buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
-
 
         confirmBuild = rootVisualElement.Q<Label>("ConfirmBuild");
         cancelBuild = rootVisualElement.Q<Button>("CancelBuild");
@@ -1089,7 +1089,10 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("No objects selected...");
             return;
         }
-
+        if (!skipUpload && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        {
+            return;
+        }
         ShowBuildConfirm();
         confirmCallback = () => {
 #if BANTER_VISUAL_SCRIPTING
