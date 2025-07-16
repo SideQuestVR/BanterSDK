@@ -222,17 +222,30 @@ namespace Banter.SDK
 #else
             var isProd = true;
 #endif
+
+        string[] args = System.Environment.GetCommandLineArgs();
+            string extraArgs = "";
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "-openbrowser" && (i + 1) < args.Length)
+            {
+                    extraArgs = " --openbrowser ";
+            }
+        }
+        
+
+
 #if UNITY_EDITOR
             var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt") + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
+                (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"" + extraArgs,
                 LogTag.BanterBrowser);
 #else
             var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
-                "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile,
+                "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile + extraArgs,
                 LogTag.BanterBrowser);
 #endif
         }
