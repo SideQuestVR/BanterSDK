@@ -14,18 +14,24 @@ public class LoginManager
     Toggle autoUpload;
     Label buildButton;
     Label codeText;
+    VisualElement linkPage;
     VisualElement loggedInView;
     Label statusText;
     int codeCheckCount = 0;
-    event Action OnLoginCompleted;
-    public LoginManager(SqEditorAppApi sq, Toggle autoUpload, Label codeText, VisualElement loggedInView, Label statusText, Label buildButton, Label signOut)
+    public event Action OnLoginCompleted;
+    public event Action RefreshView;
+
+    VisualElement ExtraUploadButtons;
+    public LoginManager(SqEditorAppApi sq, Toggle autoUpload, Label codeText, VisualElement linkPage, VisualElement loggedInView, Label statusText, Label buildButton, VisualElement ExtraUploadButtons, Label signOut)
     {
         this.autoUpload = autoUpload;
         this.codeText = codeText;
+        this.linkPage = linkPage;
         this.loggedInView = loggedInView;
         this.statusText = statusText;
         this.sq = sq;
         this.buildButton = buildButton;
+        this.ExtraUploadButtons = ExtraUploadButtons;
 
         signOut.RegisterCallback<MouseUpEvent>((e) => LogOut());
         codeCheckCount = 0;
@@ -34,13 +40,16 @@ public class LoginManager
     {
         if (sq.User != null)
         {
+            ExtraUploadButtons.style.display = DisplayStyle.Flex;
             autoUpload.style.display = DisplayStyle.Flex;
         }
         else
         {
+            ExtraUploadButtons.style.display = DisplayStyle.None;
             autoUpload.style.display = DisplayStyle.None;
         }
         SetBuildButtonText();
+        RefreshView?.Invoke();
     }
     public void SetLoginState()
     {
@@ -51,6 +60,7 @@ public class LoginManager
         else
         {
             codeText.style.display = DisplayStyle.Flex;
+            linkPage.style.display = DisplayStyle.Flex;
             loggedInView.style.display = DisplayStyle.None;
             SetBuildButtonText();
         }
@@ -69,7 +79,8 @@ public class LoginManager
         {
             //When a code has been retrieved, the Code and the VerificationUrl returned from the API should
             //  be shown to the user
-            codeText.text = $"Go to {code.VerificationUrl}\nput in {code.Code}";
+            codeText.text = $"and put in {code.Code}";
+            linkPage.style.display = DisplayStyle.Flex;
             //begin polling for completion of the short code login using the interval returned from the API
             StartPolling(code.PollIntervalSeconds);
         }, (error) =>
@@ -164,7 +175,8 @@ public class LoginManager
     {
         loggedInView.style.display = DisplayStyle.Flex;
         codeText.style.display = DisplayStyle.None;
-        statusText.text = $"Logged in as: {sq.User.Name}";
+        linkPage.style.display = DisplayStyle.None;
+        statusText.text = $"Hi {sq.User.Name}!";
         autoUpload.style.display = DisplayStyle.Flex;
         SetBuildButtonText();
         OnLoginCompleted?.Invoke();
@@ -180,11 +192,12 @@ public class LoginManager
             EditorCoroutineUtility.StartCoroutine(sq.RefreshUserProfile((u) =>
             {
                 // AddStatus("User profile information has been refreshed from the API successfully");
-                statusText.text = $"Logged in as: {sq.User.Name}";
+                statusText.text = $"Hi {sq.User.Name}!";
             }, (e) =>
             {
                 Debug.LogError("Failed to refresh user");
                 Debug.LogException(e);
+                LogOut();
             }), this);
 
         }

@@ -1,3 +1,4 @@
+using UnityEditor;
 using UnityEngine.UIElements;
 
 public class TabsManager
@@ -10,13 +11,12 @@ public class TabsManager
     }
      public enum ActiveTab
     {
-        Build,
-        Upload,
-        Tools,
+        Space,
+        Avatar,
         Logs
     }
 
-    ActiveTab activeTabName = ActiveTab.Build;
+    ActiveTab activeTabName = ActiveTab.Space;
     float activeTabPosition = 0;
     private void SetupTabs()
     {
@@ -25,35 +25,30 @@ public class TabsManager
 
         var tabSections = rootVisualElement.Q<VisualElement>("TabSections");
 
-        var buildTab = rootVisualElement.Q<Label>("BuildTab");
-        var uploadTab = rootVisualElement.Q<Label>("UploadTab");
-        var toolsTab = rootVisualElement.Q<Label>("ToolsTab");
+        var spaceTab = rootVisualElement.Q<Label>("SpaceTab");
+        var avatarTab = rootVisualElement.Q<Label>("AvatarTab");
         var logsTab = rootVisualElement.Q<Label>("LogsTab");
 
-        var buildTabSection = rootVisualElement.Q<VisualElement>("BuildSection");
-        var uploadSection = rootVisualElement.Q<VisualElement>("UploadSection");
-        var toolsSection = rootVisualElement.Q<VisualElement>("ToolsSection");
+        var spaceSection = rootVisualElement.Q<VisualElement>("SpaceSection");
+        var avatarSection = rootVisualElement.Q<VisualElement>("AvatarSection");
         var logsSection = rootVisualElement.Q<VisualElement>("LogsSection");
 
-        buildTab.RegisterCallback<MouseUpEvent>((e) =>
+        if (EditorPrefs.HasKey("BanterBuilder_BanterActiveTab"))
         {
-            activeTabName = ActiveTab.Build;
+            activeTabName = (ActiveTab)System.Enum.Parse(typeof(ActiveTab), EditorPrefs.GetString("BanterBuilder_BanterActiveTab"));
+        }
+
+        spaceTab.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            activeTabName = ActiveTab.Space;
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
         });
 
-        uploadTab.RegisterCallback<MouseUpEvent>((e) =>
+        avatarTab.RegisterCallback<MouseUpEvent>((e) =>
         {
-            activeTabName = ActiveTab.Upload;
-            SetActivePosition();
-            activeTab.style.left = activeTabPosition;
-            MoveTabSections(tabSections);
-        });
-
-        toolsTab.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            activeTabName = ActiveTab.Tools;
+            activeTabName = ActiveTab.Avatar;
             SetActivePosition();
             activeTab.style.left = activeTabPosition;
             MoveTabSections(tabSections);
@@ -80,36 +75,32 @@ public class TabsManager
 
         switch (activeTabName)
         {
-            case ActiveTab.Build:
+            case ActiveTab.Space:
                 tabSections.style.left = 0;
                 break;
-            case ActiveTab.Upload:
+            case ActiveTab.Avatar:
                 tabSections.style.left = -rootVisualElement.resolvedStyle.width;
                 break;
-            case ActiveTab.Tools:
-                tabSections.style.left = -rootVisualElement.resolvedStyle.width * 2;
-                break;
             case ActiveTab.Logs:
-                tabSections.style.left = -rootVisualElement.resolvedStyle.width * 3;
+                tabSections.style.left = -rootVisualElement.resolvedStyle.width * 2;
                 break;
         }
     }
 
     void SetActivePosition()
     {
+        
+        EditorPrefs.SetString("BanterBuilder_BanterActiveTab", activeTabName.ToString());
         switch (activeTabName)
         {
-            case ActiveTab.Build:
-                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - (rootVisualElement.resolvedStyle.width * 0.3375f) - 45;
+            case ActiveTab.Space:
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - (rootVisualElement.resolvedStyle.width * 0.3f) - 45;
                 break;
-            case ActiveTab.Upload:
-                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - (rootVisualElement.resolvedStyle.width * 0.1125f) - 45;
-                break;
-            case ActiveTab.Tools:
-                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 + (rootVisualElement.resolvedStyle.width * 0.1125f) - 45;
+            case ActiveTab.Avatar:
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 - 45;
                 break;
             case ActiveTab.Logs:
-                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 + (rootVisualElement.resolvedStyle.width * 0.3375f) - 45;
+                activeTabPosition = rootVisualElement.resolvedStyle.width / 2 + (rootVisualElement.resolvedStyle.width * 0.3f) - 45;
                 break;
         }
     }

@@ -60,7 +60,18 @@ namespace Banter.SDKEditor
                 return Data.User;
             }
         }
-
+    public IEnumerator AttachAvatar(Action OnCompleted, Action<Exception> OnError, long highId, long lowId)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorUploadAvatars>($"/v2/users/me/avatar/files", new SqEditorUploadAvatars() { HighId = highId, LowId = lowId, Public = true, Version = 2 }, (u) =>
+            {
+                OnCompleted?.Invoke();
+            }, OnError, true, false, true);
+        }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
         /// </summary>
@@ -413,8 +424,9 @@ namespace Banter.SDKEditor
         public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError)
         {
             SqEditorCreateUpload _uploadRequest = null;
+            UnityEngine.Debug.Log("Before Upload");
             yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
-
+            UnityEngine.Debug.Log("After Upload");
             if (_uploadRequest == null)
             {
                 OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
@@ -672,7 +684,8 @@ namespace Banter.SDKEditor
         private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, bool isPut = false)
         {
             // The whole UnitytWebRequest.Put then changing method to POST thing is a janky workaround for JSON posting being broken in Unity...
-            using (UnityWebRequest req = UnityWebRequest.Put(new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath), JsonConvert.SerializeObject(data)))
+            var uri = new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath);
+            using (UnityWebRequest req = UnityWebRequest.Put(uri, JsonConvert.SerializeObject(data)))
             {
                 req.method = isPut ? "PUT" : "POST";
                 req.SetRequestHeader("Content-Type", "application/json");
@@ -699,12 +712,12 @@ namespace Banter.SDKEditor
                 {
                     if (req.responseCode == 401 || req.responseCode == 403)
                     {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error} {req.downloadHandler.text}"));
+                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {uri} {req.error} {req.downloadHandler.text}"));
                         yield break;
                     }
                     else
                     {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
+                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {uri} {req.error} {req.downloadHandler.text}"));
                         yield break;
                     }
                 }

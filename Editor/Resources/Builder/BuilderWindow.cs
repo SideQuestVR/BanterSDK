@@ -24,6 +24,13 @@ public enum BanterBuilderBundleMode
     Kit = 2
 }
 
+public enum PoseSelectionType
+{
+    CenterEye,
+    LeftFoot,
+    RightFoot
+}
+
 public class KitObjectAndPath
 {
     public UnityEngine.Object obj;
@@ -44,6 +51,10 @@ public class BuilderWindow : EditorWindow
 
     public const string SQ_API_CLIENT_ID = "client_0e4c67f9a6bbe12143870312";
 
+    public const string SQ_API_CLIENT_ID_TEST = "client_85b087d9975cb8ca5bb575a2";
+
+    public bool isTestEnvironment = true;
+
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
     public static UnityEvent OnVisualScript = new UnityEvent();
@@ -54,7 +65,8 @@ public class BuilderWindow : EditorWindow
     private bool[] buildTargetFlags = new bool[] { true, true };
     BanterBuilderBundleMode mode = BanterBuilderBundleMode.None;
     Label scenePathLabel;
-    Label mainTitle;
+    VisualElement scenePathParent;
+    // Label mainTitle;
     string scenePath;
     ListView kitListView;
     List<KitObjectAndPath> kitObjectList = new List<KitObjectAndPath>();
@@ -67,7 +79,7 @@ public class BuilderWindow : EditorWindow
     TextField spaceSlug;
     Label statusText;
     Button uploadWebOnly;
-    Label uploadEverything;
+    Button uploadEverything;
 
     Toggle autoUpload;
 
@@ -104,36 +116,132 @@ public class BuilderWindow : EditorWindow
     Label confirmDelete;
     Button cancelDelete;
 
+    GameObject avatarGameObject;
+    VisualElement dropAvatarContainer;
    
     Kit[] myKits; 
     string selectedKitId;
     string assetBundleRoot = "Assets";
     string assetBundleDirectory = "WebRoot";
-    List<string> statusMessages = new List<string>();
+    LoginManager loginManager;
+    Status status;
+    Label buildButton;
+    Label buildAvatarButton;
+    Action confirmCallback;
+    Action deleteCallback;
+    VisualElement linkPage;
+    VisualElement buildOptions;
+    VisualElement loggedInCTAScene;
+    VisualElement loggedInCTAKit;
+    VisualElement dropAreaContainer;
+    Label MainTitle;
 
-    [MenuItem("Banter/Build Space")]
+    PoseSelectionType poseSelectionType = PoseSelectionType.CenterEye;
+
+    Label CenterEyePoseLabel;
+    Button SelectCenterEye;
+    Label LeftFootPoseLabel;
+    Button SelectLeftFoot;
+    Label RightFootPoseLabel;
+    Button SelectRightFoot;
+
+    Pose centerEyePose;
+    Pose leftFootPose;
+    Pose rightFootPose;
+
+    VisualElement AvatarInfoCard;
+
+    Label SelectAvatar;
+    Button ShowAvatar;
+    
+    
+    private bool handleEnabled = false;
+    private bool handlePosition = false;
+    private Vector3 posePosition = new Vector3(0,1.6f,0);
+    private Quaternion poseRotation = Quaternion.identity;
+
+    Action OnPoseCallback;
+
+
+    [MenuItem("Banter/Banter Builder")]
     public static void ShowMainWindow()
     {
-        BuilderWindow window = GetWindow<BuilderWindow>();
+        Type inspectorType = Type.GetType("UnityEditor.InspectorWindow,UnityEditor.dll");
+        BuilderWindow window = EditorWindow.GetWindow<BuilderWindow>(new Type[] {inspectorType});
         window.minSize = new Vector2(450, 200);
-        window.titleContent = new GUIContent("Banter Space");
+        window.titleContent = new GUIContent("Banter Builder");
     }
 
-    [MenuItem("Banter/Build Avatar(Select Avatar GameObject)")]
-    public static void SetupAvatar()
+
+#if BANTER_EDITOR
+    [MenuItem("Banter/Tools/Compile Everything")]
+    public static void CompileEverything()
     {
-        BanterAvatar avatar = Selection.activeGameObject?.GetComponent<BanterAvatar>();
-        if (avatar == null)
-        {
-            Selection.activeGameObject?.AddComponent<BanterAvatar>();
-        }
+        OnCompileAll.Invoke();
+        OnCompileInjection.Invoke();
     }
+    [MenuItem("Banter/Tools/Compile C# Components")]
+    public static void CompileAllComponents()
+    {
+        OnCompileAll.Invoke();
+    }
+    [MenuItem("Banter/Tools/Clear C# Components")]
+    public static void ClearAllComponents()
+    {
+        OnClearAll.Invoke();
+    }
+    [MenuItem("Banter/Tools/Compile Electron")]
+    public static void CompileElectron()
+    {
+        OnCompileElectron.Invoke();
+    }
+    [MenuItem("Banter/Tools/Compile Injection")]
+    public static void CompileInjection()
+    {
+        OnCompileInjection.Invoke();
+    }
+
+#else
+    [MenuItem("Banter/Tools/Setup Layers")]
+    public static void CompileInjection()
+    {
+        InitialiseOnLoad.SetupLayersAndTags();
+    }
+#endif
+    [MenuItem("Banter/Tools/Toggle Dev Tools")]
+    public static void ToggleDevTools()
+    {
+        BanterStarterUpper.ToggleDevTools();
+    }
+
+#if BANTER_VISUAL_SCRIPTING
+
+#if BANTER_EDITOR
+    [MenuItem("Banter/Tools/Configure Visual Scripting")]
+    public static void VisualScript()
+    {
+        OnVisualScript.Invoke();
+    }
+        //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
+#else // BANTER_EDITOR
+    [MenuItem("Banter/Tools/Configure Visual Scripting")]
+    public static void VisualScript()
+    {
+        VsNodeGeneration.SetVSTypesAndAssemblies();
+    }
+    //         rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
+#endif // BANTER_EDITOR
+
+#else // BANTER_VISUAL_SCRIPTING
+    //         Remove(rootVisualElement.Q<Button>("visualScript"));
+#endif // BANTER_VISUAL_SCRIPTING
 
     private SqEditorAppApi sq;
 
     public void OnDisable()
     {
         loginManager?.StopPolling();
+        SceneView.duringSceneGui -= OnSceneGUI;
     }
 
     void ShowWebRoot()
@@ -147,22 +255,27 @@ public class BuilderWindow : EditorWindow
         EditorGUIUtility.PingObject(obj);
     }
 
-    LoginManager loginManager;
-
-    Status status;
-
     public void OnEnable()
     {
+        SceneView.duringSceneGui += OnSceneGUI;
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
         rootVisualElement.Add(content);
-        SqEditorAppApiConfig config = new SqEditorAppApiConfig(SQ_API_CLIENT_ID, Application.persistentDataPath, false);
+        SqEditorAppApiConfig config = new SqEditorAppApiConfig(isTestEnvironment ? SQ_API_CLIENT_ID_TEST : SQ_API_CLIENT_ID, Application.persistentDataPath, isTestEnvironment);
         sq = new SqEditorAppApi(config);
         SetupUI();
+        SetupAvatarUI();
         status = new Status(statusBar, buildProgress, buildProgressBar);
-        loginManager = new LoginManager(sq, autoUpload, codeText, loggedInView, statusText, buildButton, rootVisualElement.Q<Label>("SignOut"));
+        buildProgress.bindItem = (e, i) =>
+        {
+            (e as Label).text = status.statusMessages[i].ToLower();
+        };
+        buildProgress.itemsSource = status.statusMessages;
+        buildProgress.Rebuild();
+        loginManager = new LoginManager(sq, autoUpload, codeText, linkPage, loggedInView, statusText, buildButton, rootVisualElement.Q<VisualElement>("ExtraUploadButtons"), rootVisualElement.Q<Label>("SignOut"));
         loginManager.SetLoginState();
+        loginManager.RefreshView += () => RefreshView(true);
         loginManager.SetBuildButtonText();
         if (sq.User != null)
         {
@@ -172,6 +285,15 @@ public class BuilderWindow : EditorWindow
         {
             loginManager.GetCode();
         }
+        loginManager.OnLoginCompleted += () =>
+        {
+            EditorCoroutineUtility.StartCoroutine(CheckKitUserExists(), this);
+            RefreshView(true);
+            avatarGameObject = AvatarRef.Instance.avatarGameObject;
+            RefreshAvatarView();
+        };
+        avatarGameObject = AvatarRef.Instance.avatarGameObject;
+        RefreshAvatarView();
         RefreshView();
     }
 
@@ -217,27 +339,24 @@ public class BuilderWindow : EditorWindow
             buildButton.SetEnabled(true);
         }
     }
+    
 
-    // void SetBuildButtonText()
-    // {
-    //     buildButton.text = autoUpload.value && sq.User != null ? "Build & Upload it Now!" : "Build it Now!";
-    // }
 
-     public IEnumerator Texture(string url, Action<Texture2D> callback)
+    public IEnumerator Texture(string url, Action<Texture2D> callback)
+    {
+        using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
         {
-            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
+            yield return uwr.SendWebRequest();
+            if (uwr.result != UnityWebRequest.Result.Success)
             {
-                yield return uwr.SendWebRequest();
-                if (uwr.result != UnityWebRequest.Result.Success)
-                {
-                    throw new System.Exception(uwr.error);
-                }
-                else
-                {
-                    callback(DownloadHandlerTexture.GetContent(uwr));
-                }
+                throw new System.Exception(uwr.error);
+            }
+            else
+            {
+                callback(DownloadHandlerTexture.GetContent(uwr));
             }
         }
+    }
 
     void SelectKit(int selectedIndex) {
         if(myKits == null || myKits.Length == 0 || selectedIndex == myKits.Length) {
@@ -261,21 +380,217 @@ public class BuilderWindow : EditorWindow
             markitCoverImage.value = CopyIt(tex);
         }), this);
     }
-    Label buildButton;
-    Action confirmCallback;
-    Action deleteCallback;
+
+    private void OnSceneGUI(SceneView sceneView)
+    {
+        if (!handleEnabled)
+            return;
+
+        Handles.color = Color.green;
+
+        EditorGUI.BeginChangeCheck();
+        Vector3 newPos = Handles.PositionHandle(posePosition, poseRotation);
+        Quaternion newRot = poseRotation;
+        if (!handlePosition)
+        {
+            newRot = Handles.RotationHandle(poseRotation, newPos);
+        }
+        if (EditorGUI.EndChangeCheck())
+        {
+            posePosition = newPos;
+            poseRotation = newRot;
+            Repaint(); // update the inspector
+        }
+
+        // Optional: Draw a wireframe at the pose
+        Handles.color = Color.cyan;
+        Matrix4x4 matrix = Matrix4x4.TRS(posePosition, poseRotation, Vector3.one);
+        using (new Handles.DrawingScope(matrix))
+        {
+            Handles.DrawWireCube(Vector3.zero, Vector3.one * 0.2f);
+            Handles.ArrowHandleCap(0, Vector3.zero, Quaternion.LookRotation(Vector3.forward), 0.5f, EventType.Repaint);
+        }
+        OnPoseCallback?.Invoke();
+    }
+    private void SetupAvatarUI()
+    {
+        AvatarInfoCard = rootVisualElement.Q<VisualElement>("AvatarInfoCard");
+        ShowAvatar = rootVisualElement.Q<Button>("ShowAvatar");
+        ShowAvatar.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            if (avatarGameObject == null)
+            {
+                status.AddStatus("No avatar selected, please select an avatar.");
+                return;
+            }
+            EditorGUIUtility.PingObject(avatarGameObject);
+            
+        });
+        new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropAvatarArea"), DropGameObject);
+
+        buildAvatarButton = rootVisualElement.Q<Label>("buildAvatarButton");
+        buildAvatarButton.RegisterCallback<MouseUpEvent>(async (e) =>
+        {
+            EditorApplication.LockReloadAssemblies();
+            AssetDatabase.DisallowAutoRefresh();
+            await BuildAvatarAssetBundles();
+
+            EditorCoroutineUtility.StartCoroutine(UploadAvatar(() =>
+            {
+                AssetDatabase.AllowAutoRefresh();
+                EditorApplication.UnlockReloadAssemblies();
+            }), this);
+        });
+
+        var resetScreen = rootVisualElement.Q<Button>("resetAvatarScreen");
+        resetScreen.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            avatarGameObject = null;
+            RefreshAvatarView();
+        });
+
+        SelectAvatar = rootVisualElement.Q<Label>("SelectAvatar");
+
+        CenterEyePoseLabel = rootVisualElement.Q<Label>("CenterEyePoseLabel");
+        SelectCenterEye = rootVisualElement.Q<Button>("SelectCenterEye");
+        GetExistingPose(ref centerEyePose, "BanterBuilder_CenterEyePosePosition", "0,1.6,0;0,0,0,1");
+        CenterEyePoseLabel.text = $"Position: {centerEyePose.position}";
+        SelectCenterEye.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            SelectLeftFoot.text = "Change";
+            SelectRightFoot.text = "Change";
+            handleEnabled = !handleEnabled;
+            handlePosition = handleEnabled;
+            SelectCenterEye.text = handleEnabled ? "Done" : "Change";
+            poseSelectionType = PoseSelectionType.CenterEye;
+            if (!handleEnabled)
+            {
+                OnPoseCallback = null;
+                centerEyePose = new Pose(posePosition, Quaternion.identity);
+                EditorPrefs.SetString("BanterBuilder_CenterEyePosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z +
+                    ";" + poseRotation.x + "," + poseRotation.y + "," + poseRotation.z + "," + poseRotation.w);
+                CenterEyePoseLabel.text = $"Position: {posePosition}";
+            }
+            else
+            {
+                posePosition = centerEyePose.position;
+                poseRotation = centerEyePose.rotation;
+                OnPoseCallback = () =>
+                {
+                    centerEyePose = new Pose(posePosition, poseRotation);
+                    CenterEyePoseLabel.text = $"Position: {posePosition}";
+                };
+
+            }
+            SceneView.RepaintAll();
+        });
+
+        LeftFootPoseLabel = rootVisualElement.Q<Label>("LeftFootPoseLabel");
+        SelectLeftFoot = rootVisualElement.Q<Button>("SelectLeftFoot");
+        GetExistingPose(ref leftFootPose, "BanterBuilder_LeftFootPosePosition", "0,1.6,0;0,0,0,1");
+        LeftFootPoseLabel.text = $"Position: {leftFootPose.position}\nRotation: {leftFootPose.rotation.eulerAngles}";
+        SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            SelectCenterEye.text = "Change";
+            SelectRightFoot.text = "Change";
+            poseSelectionType = PoseSelectionType.LeftFoot;
+            handleEnabled = !handleEnabled;
+            handlePosition = false;
+            SelectLeftFoot.text = handleEnabled ? "Done" : "Change";
+            if (!handleEnabled)
+            {
+                OnPoseCallback = null;
+                leftFootPose = new Pose(posePosition, poseRotation);
+                EditorPrefs.SetString("BanterBuilder_LeftFootPosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z + 
+                    ";" + poseRotation.x + "," + poseRotation.y + "," + poseRotation.z + "," + poseRotation.w);
+                LeftFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
+            }
+            else
+            {
+                posePosition = leftFootPose.position;
+                poseRotation = leftFootPose.rotation;
+                OnPoseCallback = () =>
+                {
+                    leftFootPose = new Pose(posePosition, poseRotation);
+                    LeftFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
+                };
+                
+            }
+            SceneView.RepaintAll();
+        });
+
+        RightFootPoseLabel = rootVisualElement.Q<Label>("RightFootPoseLabel");
+        SelectRightFoot = rootVisualElement.Q<Button>("SelectRightFoot");
+        GetExistingPose(ref rightFootPose, "BanterBuilder_RightFootPosePosition", "0,1.6,0;0,0,0,1");
+        RightFootPoseLabel.text = $"Position: {rightFootPose.position}\nRotation: {rightFootPose.rotation.eulerAngles}";
+        SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            SelectCenterEye.text = "Change";
+            SelectLeftFoot.text = "Change";
+            poseSelectionType = PoseSelectionType.RightFoot;
+            handleEnabled = !handleEnabled;
+            handlePosition = false;
+            SelectRightFoot.text = handleEnabled ? "Done" : "Change";
+            if (!handleEnabled)
+            {
+                OnPoseCallback = null;
+                rightFootPose = new Pose(posePosition, poseRotation);
+                EditorPrefs.SetString("BanterBuilder_RightFootPosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z + 
+                    ";" + poseRotation.x + "," + poseRotation.y + "," + poseRotation.z + "," + poseRotation.w);
+                RightFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
+            }
+            else
+            {
+                posePosition = rightFootPose.position;
+                poseRotation = rightFootPose.rotation;
+                OnPoseCallback = () =>
+                {
+                    rightFootPose = new Pose(posePosition, poseRotation);
+                    RightFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
+                };
+                
+            }
+            SceneView.RepaintAll();
+        });
+        
+
+        // using (new EditorGUI.DisabledScope(true))
+        // {
+        //     EditorGUILayout.Vector3Field("Position", posePosition);
+        //     EditorGUILayout.Vector3Field("Rotation", poseRotation.eulerAngles);
+        // }
+    }
+
+    void GetExistingPose(ref Pose pose, string key, string defaults) {
+        var posePositionString = EditorPrefs.GetString(key, defaults);
+        var poseParts = posePositionString.Split(';');
+        if (poseParts.Length == 2)
+        {
+            var positionParts = poseParts[0].Split(',');
+            var rotationParts = poseParts[1].Split(',');
+            if (positionParts.Length == 3 && rotationParts.Length == 4)
+            {
+                pose.position = new Vector3(float.Parse(positionParts[0]), float.Parse(positionParts[1]), float.Parse(positionParts[2]));
+                pose.rotation = new Quaternion(float.Parse(rotationParts[0]), float.Parse(rotationParts[1]), float.Parse(rotationParts[2]), float.Parse(rotationParts[3]));
+            }
+        }
+    }
     private void SetupUI()
     {
         statusBar = rootVisualElement.Q<Label>("StatusBar");
         new TabsManager(rootVisualElement);
         buildButton = rootVisualElement.Q<Label>("buildButton");
-
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
+
+        MainTitle = rootVisualElement.Q<Label>("MainTitle");
+        linkPage = rootVisualElement.Q<VisualElement>("OpenLink");
+        linkPage.RegisterCallback<MouseUpEvent>((e) => OpenLinkPage());
 
         var createSpace = rootVisualElement.Q<Label>("CreateSpace");
         createSpace.RegisterCallback<MouseUpEvent>((e) => OpenSpaceCreation());
         var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
-
+        dropAreaContainer = rootVisualElement.Q<VisualElement>("dropAreaContainer");
+        dropAvatarContainer = rootVisualElement.Q<VisualElement>("dropAvatarContainer");
         openWebRoot.clicked += () => ShowWebRoot();
 
         var clearLogs = rootVisualElement.Q<Button>("clearLogs");
@@ -304,20 +619,38 @@ public class BuilderWindow : EditorWindow
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
         autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
-        
+
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
             EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
             loginManager.SetBuildButtonText();
         });
 
+        buildOptions = rootVisualElement.Q<VisualElement>("BuildOptions");
+
+        loggedInCTAScene = rootVisualElement.Q<VisualElement>("LoggedInCTAScene");
+
+        loggedInCTAKit = rootVisualElement.Q<VisualElement>("LoggedInCTAKit");
+
+        var resetScreen = rootVisualElement.Q<Button>("resetScreen");
+        resetScreen.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            mode = BanterBuilderBundleMode.None;
+            scenePath = "";
+            kitObjectList.Clear();
+            kitListView.Rebuild();
+            SaveKitList();
+            EditorPrefs.DeleteKey("BanterBuilder_ScenePath");
+            status.AddStatus("Scene removed from build.");
+            RefreshView();
+        });
         markitCoverImage = rootVisualElement.Q<ObjectField>("MarkitCoverImage");
         existingDropDown = rootVisualElement.Q<DropdownField>("ExistingDropDown");
         var kitSelectPlaceholder = rootVisualElement.Q<Label>("KitSelectPlaceholder");
         existingDropDown.RegisterValueChangedCallback((e) =>
         {
-           ShowSpaceSlugPlaceholder(kitSelectPlaceholder, e.newValue);
-           SelectKit(existingDropDown.index);
+            ShowSpaceSlugPlaceholder(kitSelectPlaceholder, e.newValue);
+            SelectKit(existingDropDown.index);
 
         });
 
@@ -328,12 +661,13 @@ public class BuilderWindow : EditorWindow
         {
             ShowSpaceSlugPlaceholder(kitCategoryPlaceholder, e.newValue);
         });
-        EditorCoroutineUtility.StartCoroutine(Json<KitCategoryRows>("https://screen.sdq.st:2096/kit/categories", categories => {
+        EditorCoroutineUtility.StartCoroutine(Json<KitCategoryRows>("https://screen.sdq.st:2096/kit/categories", categories =>
+        {
             kitCategories = categories.rows;
             kitCategoryDropDown.choices = categories.rows.Select(k => k.name).ToList();
         }), this);
         var spaceSlugPlaceholder = rootVisualElement.Q<Label>("SpaceSlugPlaceholder");
-        
+
         kitName = rootVisualElement.Q<TextField>("KitName");
         var kitNamePlaceholder = rootVisualElement.Q<Label>("KitNamePlaceholder");
         kitName.RegisterValueChangedCallback((e) =>
@@ -353,15 +687,16 @@ public class BuilderWindow : EditorWindow
         confirmKitBundleID = rootVisualElement.Q<Label>("ConfirmKitBundleID");
         confirmKitNumber = rootVisualElement.Q<Label>("ConfirmKitNumber");
 
-
         deleteConfirm = rootVisualElement.Q<VisualElement>("DeleteConfirm");
 
         confirmDelete = rootVisualElement.Q<Label>("ConfirmDelete");
         cancelDelete = rootVisualElement.Q<Button>("CancelDelete");
-        cancelDelete.RegisterCallback<MouseUpEvent>((e) => {
+        cancelDelete.RegisterCallback<MouseUpEvent>((e) =>
+        {
             deleteConfirm.style.display = DisplayStyle.None;
         });
-        confirmDelete.RegisterCallback<MouseUpEvent>((e) => {
+        confirmDelete.RegisterCallback<MouseUpEvent>((e) =>
+        {
             deleteConfirm.style.display = DisplayStyle.None;
             deleteCallback?.Invoke();
         });
@@ -369,15 +704,17 @@ public class BuilderWindow : EditorWindow
 
         confirmBuild = rootVisualElement.Q<Label>("ConfirmBuild");
         cancelBuild = rootVisualElement.Q<Button>("CancelBuild");
-        cancelBuild.RegisterCallback<MouseUpEvent>((e) => {
+        cancelBuild.RegisterCallback<MouseUpEvent>((e) =>
+        {
             buildConfirm.style.display = DisplayStyle.None;
         });
-        confirmBuild.RegisterCallback<MouseUpEvent>((e) => {
+        confirmBuild.RegisterCallback<MouseUpEvent>((e) =>
+        {
             buildConfirm.style.display = DisplayStyle.None;
             confirmCallback?.Invoke();
         });
 
-        
+
         EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
 
         codeText = rootVisualElement.Q<Label>("LoginCode");
@@ -386,7 +723,7 @@ public class BuilderWindow : EditorWindow
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
         uploadWebOnlyKit = rootVisualElement.Q<Button>("UploadWebOnlyKit");
         deleteKit = rootVisualElement.Q<Button>("DeleteKit");
-        uploadEverything = rootVisualElement.Q<Label>("UploadEverything");
+        uploadEverything = rootVisualElement.Q<Button>("UploadEverything");
         uploadEverythingKit = rootVisualElement.Q<Label>("UploadEverythingKit");
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
         loggedInViewScene = rootVisualElement.Q<VisualElement>("LoggedInViewScene");
@@ -402,12 +739,14 @@ public class BuilderWindow : EditorWindow
         ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, spaceSlug.value);
         uploadWebOnly.clicked += () =>
         {
-            if (string.IsNullOrEmpty(spaceSlug.text)){
+            if (string.IsNullOrEmpty(spaceSlug.text))
+            {
                 status.AddStatus("No space slug provided, please enter a slug.");
                 return;
             }
             ShowBuildConfirm();
-            confirmCallback = () => {
+            confirmCallback = () =>
+            {
                 uploadWebOnly.SetEnabled(false);
                 uploadEverything.SetEnabled(false);
                 EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() =>
@@ -421,12 +760,14 @@ public class BuilderWindow : EditorWindow
 
         uploadEverything.RegisterCallback<MouseUpEvent>((e) =>
         {
-            if (string.IsNullOrEmpty(spaceSlug.text)){
+            if (string.IsNullOrEmpty(spaceSlug.text))
+            {
                 status.AddStatus("No space slug provided, please enter a slug.");
                 return;
             }
             ShowBuildConfirm();
-            confirmCallback = () => {
+            confirmCallback = () =>
+            {
                 confirmCallback = null;
                 uploadWebOnly.SetEnabled(false);
                 uploadEverything.SetEnabled(false);
@@ -439,20 +780,25 @@ public class BuilderWindow : EditorWindow
             };
         });
 
-        uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) => {
+        uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) =>
+        {
             autoUpload.value = true;
             BuildAssetBundles();
         });
-        
-        uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) => {
+
+        uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) =>
+        {
             autoUpload.value = true;
             BuildAssetBundles(true);
         });
 
-        deleteKit.RegisterCallback<MouseUpEvent>((e) => {
+        deleteKit.RegisterCallback<MouseUpEvent>((e) =>
+        {
             deleteConfirm.style.display = DisplayStyle.Flex;
-            deleteCallback = () => {
-                if (string.IsNullOrEmpty(selectedKitId)){
+            deleteCallback = () =>
+            {
+                if (string.IsNullOrEmpty(selectedKitId))
+                {
                     status.AddStatus("No kit selected, please select a kit.");
                     return;
                 }
@@ -465,8 +811,9 @@ public class BuilderWindow : EditorWindow
             };
         });
 
-        mainTitle = rootVisualElement.Q<Label>("mainTitle");
+        // mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
+        scenePathParent = rootVisualElement.Q<VisualElement>("scenePathParent");
         buildProgress = rootVisualElement.Q<ListView>("buildProgress");
         buildProgress.makeItem = () =>
         {
@@ -474,12 +821,6 @@ public class BuilderWindow : EditorWindow
             label.AddToClassList("unity-label-margin");
             return label;
         };
-        buildProgress.bindItem = (e, i) =>
-        {
-            (e as Label).text = statusMessages[i].ToLower();
-        };
-        buildProgress.itemsSource = statusMessages;
-        buildProgress.Rebuild();
         buildProgress.selectionType = SelectionType.None;
         buildProgressBar = rootVisualElement.Q<ProgressBar>("buildProgressBar");
         removeSelected = rootVisualElement.Q<Button>("removeSelected");
@@ -510,15 +851,16 @@ public class BuilderWindow : EditorWindow
             label.style.textOverflow = TextOverflow.Ellipsis;
             label.style.fontSize = 16;
             label.style.unityTextAlign = TextAnchor.MiddleLeft;
-            
+
             label.style.width = new StyleLength(Length.Percent(100));
             label.style.flexShrink = 1;
-            button.style.paddingBottom = button.style.paddingTop = 0;
-            button.style.paddingLeft = button.style.paddingRight = 2;
-            button.style.borderTopRightRadius = button.style.borderBottomRightRadius = button.style.borderTopLeftRadius = button.style.borderBottomLeftRadius = 8;
-            button.style.marginTop = button.style.marginLeft = button.style.marginRight = 0;
+            button.style.paddingBottom = button.style.paddingTop = 5;
+            button.style.paddingLeft = button.style.paddingRight = 10;
+            button.style.borderTopRightRadius = button.style.borderBottomRightRadius = button.style.borderTopLeftRadius = button.style.borderBottomLeftRadius = 18;
+            button.style.marginTop = 10;
+            button.style.marginLeft = button.style.marginRight = 0;
             button.style.marginBottom = 2;
-            button.style.flexShrink = 0;
+            button.style.height = 30;
             ele.Add(image);
             ele.Add(label);
             ele.Add(button);
@@ -527,13 +869,15 @@ public class BuilderWindow : EditorWindow
         };
 
         SnapshotCamera snapshotCamera = FindAnyObjectByType<SnapshotCamera>();
-        
+
         kitListView.bindItem = (e, i) =>
         {
             var name = kitObjectList[i].path.ToLower();
-            if(kitObjectList[i].texture == null) {
-                
-                if(snapshotCamera == null) {
+            if (kitObjectList[i].texture == null)
+            {
+
+                if (snapshotCamera == null)
+                {
                     snapshotCamera = SnapshotCamera.MakeSnapshotCamera(0);
                 }
                 kitObjectList[i].texture = snapshotCamera.TakePrefabSnapshot((GameObject)kitObjectList[i].obj);
@@ -555,60 +899,21 @@ public class BuilderWindow : EditorWindow
         kitListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
         kitListView.reorderMode = ListViewReorderMode.Simple;
         new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
-        new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropRecordingArea"), DropRecordingFile);
+        // new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropRecordingArea"), DropRecordingFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
         LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
         {
             mode = BanterBuilderBundleMode.Scene;
-            loggedInViewPrefab.style.display = DisplayStyle.None;
-            loggedInViewScene.style.display = DisplayStyle.Flex;
         }
         else
         {
             if (kitObjectList.Count > 0)
             {
                 mode = BanterBuilderBundleMode.Kit;
-                loggedInViewPrefab.style.display = DisplayStyle.Flex;
-                loggedInViewScene.style.display = DisplayStyle.None;
             }
         }
 
-#if BANTER_EDITOR
-            rootVisualElement.Q<Button>("allAndInjection").clicked += () =>{
-                OnCompileAll.Invoke();
-                OnCompileInjection.Invoke();
-            };
-            rootVisualElement.Q<Button>("allOnly").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAllComponents();
-            rootVisualElement.Q<Button>("clearAll").clicked += () => OnClearAll.Invoke();// SDKCodeGen.ClearAllComponents();
-            rootVisualElement.Q<Button>("compileElectron").clicked += () => OnCompileElectron.Invoke();// SDKCodeGen.CompileElectron();
-            rootVisualElement.Q<Button>("compileInjection").clicked += () => OnCompileInjection.Invoke();// SDKCodeGen.CompileInjection();
-            rootVisualElement.Q<Button>("kitchenSink").clicked += () => OnCompileAll.Invoke();// SDKCodeGen.CompileAll();
-            Remove(rootVisualElement.Q<Button>("setupLayers"));
-
-#else
-        Remove(rootVisualElement.Q<Button>("allAndInjection"));
-        Remove(rootVisualElement.Q<Button>("allOnly"));
-        Remove(rootVisualElement.Q<Button>("clearAll"));
-        Remove(rootVisualElement.Q<Button>("compileElectron"));
-        Remove(rootVisualElement.Q<Button>("compileInjection"));
-        Remove(rootVisualElement.Q<Button>("kitchenSink"));
-
-        rootVisualElement.Q<Button>("setupLayers").clicked += () => InitialiseOnLoad.SetupLayersAndTags();
-#endif
-
-#if BANTER_VISUAL_SCRIPTING
-
-#if BANTER_EDITOR
-        rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
-#else // BANTER_EDITOR
-        rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
-#endif // BANTER_EDITOR
-
-#else // BANTER_VISUAL_SCRIPTING
-        Remove(rootVisualElement.Q<Button>("visualScript"));
-#endif // BANTER_VISUAL_SCRIPTING
-        rootVisualElement.Q<Button>("openDevTools").clicked += () => BanterStarterUpper.ToggleDevTools();
     }
     public IEnumerator Json<T>(string url, Action<T> callback)
     {
@@ -702,6 +1007,45 @@ public class BuilderWindow : EditorWindow
         {
             spaceSlugPlaceholder.style.display = DisplayStyle.Flex;
         }
+    }
+
+    private IEnumerator UploadAvatar(Action callback)
+    {
+        Debug.Log("Uploading avatar0...");
+        // EditorUtility.DisplayProgressBar("Banter Upload", "Uploading avatar...", 0.1f);
+        var path = "AssetBundles";
+        var files = Directory.GetFiles(path, "*.BEE", SearchOption.TopDirectoryOnly);
+        if (files.Length == 0)
+        {
+            Debug.Log("No avatar files found in " + path);
+            status.AddStatus("No avatar files found in " + path);
+            EditorUtility.ClearProgressBar();
+            callback();
+            yield break;
+        }
+        Debug.Log("Uploading avatar..." + files[0]);
+        long avatarFileId = -1;
+        yield return UploadFile(Path.GetFileName(files[0]), null, fileId => avatarFileId = fileId, files[0]);
+        Debug.Log("Avatar File ID: " + avatarFileId);
+        if (avatarFileId == -1)
+        {
+            status.AddStatus("Failed to upload avatar file.");
+            EditorUtility.ClearProgressBar();
+            callback();
+            yield break;
+        }
+        EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar(() =>
+        {
+            status.AddStatus("Avatar uploaded successfully.");
+            Debug.Log("Avatar uploaded successfully.");
+        }, e =>
+        {
+            status.AddStatus("Failed to upload avatar: " + e);
+            Debug.LogError("Failed to upload avatar: " + e);
+        }, avatarFileId, avatarFileId), this);
+        // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+        callback();
+        // EditorUtility.ClearProgressBar();
     }
 
     private IEnumerator UploadWebOnly(Action callback)
@@ -829,28 +1173,31 @@ public class BuilderWindow : EditorWindow
         EditorUtility.ClearProgressBar();
     }
 
-    private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null)
+    private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null)
     {
-        var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
+        var file = path == null ? (Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name) : path;
         if (File.Exists(file) || bytes != null)
         {
             status.AddStatus("Upload started: " + file + "...");
+            Debug.Log(  "Upload started: " + file);
         }
         else
         {
             status.AddStatus("File not found, skipping: " + file);
+            Debug.Log(  "File not found, skipping: " + file);
             yield break;
         }
         var data = bytes == null ? File.ReadAllBytes(file) : bytes;
         yield return sq.UploadFile(name, data, "", (text) =>
         {
             callback?.Invoke(text.FileId);
-            status.AddStatus("Uploaded " + name + " to Banter Markit");
+            status.AddStatus("Uploaded " + name);
         }, e =>
         {
-            status.AddStatus("FAILED UPLOADING " + name + " to Banter Markit");
+            status.AddStatus("FAILED UPLOADING " + name);
             Debug.LogException(e);
         });
+        Debug.Log("Uploading1: " + file);
     }
 
     private IEnumerator UploadFileToCommunity(string name, UploadAssetType type, UploadAssetTypePlatform platform)
@@ -875,23 +1222,6 @@ public class BuilderWindow : EditorWindow
             Debug.LogException(e);
         }, type, platform);
     }
-    // void ClearLogs()
-    // {
-    //     statusMessages.Clear();
-    //     buildProgress.Rebuild();
-    // }
-    // void AddStatus(string text)
-    // {
-    //     var val = "<color=\"orange\">" + DateTime.Now.ToString("HH:mm:ss") + ": <color=\"white\">" + text;
-    //     statusMessages.Insert(0, val);
-    //     statusBar.text = "STATUS: " + val;
-    //     if (statusMessages.Count > 300)
-    //     {
-    //         statusMessages = statusMessages.GetRange(0, 300);
-    //     }
-
-    //     buildProgress.Rebuild();
-    // }
 
     public void Remove(VisualElement element)
     {
@@ -925,37 +1255,40 @@ public class BuilderWindow : EditorWindow
         numberOfItems.text = "Number of items: " + kitObjectList.Count;
     }
 
-    private void DropRecordingFile(bool isScene, string sceneFile, string[] paths)
+    // private void DropRecordingFile(bool isScene, string sceneFile, string[] paths)
+    // {
+    //     string trackingData = null;
+    //     string prefab = null;
+    //     try
+    //     {
+    //         trackingData = paths.First(x => x.EndsWith(".trackingdata"));
+    //         prefab = paths.First(x => x.EndsWith(".prefab"));
+    //     }
+    //     catch
+    //     {
+    //         status.AddStatus("Tracking or prefab files not found in dropped files.");
+    //         return;
+    //     }
+    //     var avatar = AssetDatabase.LoadAssetAtPath<GameObject>(prefab);
+    //     var bytes = File.ReadAllBytes(trackingData);
+    //     AvatarUtilities.ParseAnimationCurves(bytes);
+    //     AvatarUtilities.SetBonePaths(avatar, (t) => { });
+    //     AvatarUtilities.SetAnimationCurves();
+    //     AssetDatabase.CreateAsset(AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim"));
+    //     status.AddStatus("Animation file generated at " + trackingData.Replace(".trackingdata", ".anim") + ".");
+    // }
+    private void DropGameObject(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
-        string trackingData = null;
-        string prefab = null;
-        try
-        {
-            trackingData = paths.First(x => x.EndsWith(".trackingdata"));
-            prefab = paths.First(x => x.EndsWith(".prefab"));
-        }
-        catch
-        {
-            status.AddStatus("Tracking or prefab files not found in dropped files.");
-            return;
-        }
-        var avatar = AssetDatabase.LoadAssetAtPath<GameObject>(prefab);
-        var bytes = File.ReadAllBytes(trackingData);
-        AvatarUtilities.ParseAnimationCurves(bytes);
-        AvatarUtilities.SetBonePaths(avatar, (t) => { });
-        AvatarUtilities.SetAnimationCurves();
-        AssetDatabase.CreateAsset(AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim"));
-        status.AddStatus("Animation file generated at " + trackingData.Replace(".trackingdata", ".anim") + ".");
+        Debug.Log("Dropped GameObject: " + gameObject.name);
+        avatarGameObject = gameObject;
+        RefreshAvatarView();
     }
-
-    private void DropFile(bool isScene, string sceneFile, string[] paths)
+    private void DropFile(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
         if (isScene)
         {
             scenePathLabel.text = scenePath = sceneFile;
             mode = BanterBuilderBundleMode.Scene;
-            loggedInViewPrefab.style.display = DisplayStyle.None;
-            loggedInViewScene.style.display = DisplayStyle.Flex;
         }
         else
         {
@@ -976,8 +1309,6 @@ public class BuilderWindow : EditorWindow
             if (kitObjectList.Count > 0)
             {
                 mode = BanterBuilderBundleMode.Kit;
-                loggedInViewPrefab.style.display = DisplayStyle.Flex;
-                loggedInViewScene.style.display = DisplayStyle.None;
             }
             numberOfItems.text = "Number of items: " + kitObjectList.Count;
         }
@@ -1015,50 +1346,88 @@ public class BuilderWindow : EditorWindow
     {
         removeSelected.style.display = kitListView.selectedIndices.Count() > 0 ? DisplayStyle.Flex : DisplayStyle.None;
     }
-    private void RefreshView()
+    private void RefreshAvatarView()
     {
-        scenePathLabel.style.display = DisplayStyle.None;
+        if (avatarGameObject == null)
+        {
+            dropAvatarContainer.style.display = DisplayStyle.Flex;
+            AvatarInfoCard.style.display = DisplayStyle.None;
+        }
+        else
+        {
+            dropAvatarContainer.style.display = DisplayStyle.None;
+            AvatarInfoCard.style.display = DisplayStyle.Flex;
+            SelectAvatar.text = avatarGameObject.name;
+        }
+        AvatarRef.Instance.SetAvatarGameObject(avatarGameObject);
+
+    }
+    private void RefreshView(bool skipLoginRefresh = false)
+    {
+        scenePathParent.style.display = DisplayStyle.None;
         kitListView.style.display = DisplayStyle.None;
         removeSelected.style.display = DisplayStyle.None;
-        mainTitle.style.display = DisplayStyle.None;
+        numberOfItems.style.display = DisplayStyle.None;
+        dropAreaContainer.style.display = DisplayStyle.None;
+        MainTitle.style.display = DisplayStyle.None;
         if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count > 0)
         {
-            mainTitle.text = "<color=\"white\">Build Mode:</color> Prefab Asset Bundle (Kit)";
-            mainTitle.style.display = DisplayStyle.Flex;
             removeSelected.style.display = DisplayStyle.Flex;
             kitListView.style.display = DisplayStyle.Flex;
 
             kitListView.itemsSource = kitObjectList;
             kitListView.Rebuild();
-            loggedInViewPrefab.style.display = DisplayStyle.Flex;
+            loggedInViewPrefab.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
             loggedInViewScene.style.display = DisplayStyle.None;
+            numberOfItems.style.display = DisplayStyle.Flex;
+            buildOptions.style.display = DisplayStyle.Flex;
+            loggedInCTAKit.style.display = DisplayStyle.Flex;
+            loggedInCTAScene.style.display = DisplayStyle.None;
+            MainTitle.text = "Kit Build";
+            MainTitle.style.display = DisplayStyle.Flex;
         }
         else if (mode == BanterBuilderBundleMode.Scene)
         {
-            mainTitle.text = "<color=\"white\">Build Mode:</color> Scene Asset Bundle";
-            mainTitle.style.display = DisplayStyle.Flex;
-            scenePathLabel.style.display = DisplayStyle.Flex;
-            scenePathLabel.text = "<color=\"white\">Scene Path:</color> " + scenePath;
+            scenePathParent.style.display = DisplayStyle.Flex;
+            scenePathLabel.text = "<color=\"white\">Scene:</color> " + scenePath;
             loggedInViewPrefab.style.display = DisplayStyle.None;
-            loggedInViewScene.style.display = DisplayStyle.Flex;
+            loggedInViewScene.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
+            numberOfItems.style.display = DisplayStyle.None;
+            buildOptions.style.display = DisplayStyle.Flex;
+            loggedInCTAScene.style.display = DisplayStyle.Flex;
+            loggedInCTAKit.style.display = DisplayStyle.None;
+            MainTitle.text = "Scene Build";
+            MainTitle.style.display = DisplayStyle.Flex;
             // button to open the webroot folder - highlight in unity.
         }
         else
         {
-            mainTitle.style.display = DisplayStyle.None;
-            mainTitle.text = "";
             loggedInViewPrefab.style.display = DisplayStyle.None;
-            loggedInViewScene.style.display = DisplayStyle.Flex;
+            loggedInViewScene.style.display = DisplayStyle.None;
+            numberOfItems.style.display = DisplayStyle.None;
+            buildOptions.style.display = DisplayStyle.None;
+            loggedInCTAScene.style.display = DisplayStyle.None;
+            loggedInCTAKit.style.display = DisplayStyle.None;
+            dropAreaContainer.style.display = DisplayStyle.Flex;
+            MainTitle.style.display = DisplayStyle.None;
         }
         ShowRemoveSelected();
-        loginManager.ShowUploadToggle();
+        if (!skipLoginRefresh)
+        {
+            loginManager.ShowUploadToggle();
+        }
     }
 
     public void OpenSpaceCreation()
     {
         Application.OpenURL("https://sidequestvr.com/account/create-space");
     }
-    private void ShowBuildConfirm() {
+    public void OpenLinkPage()
+    {
+        Application.OpenURL("https://sidequestvr.com/account/settings/link-sidequest");
+    }
+    private void ShowBuildConfirm()
+    {
         buildConfirm.style.display = DisplayStyle.Flex;
         confirmBuildMode.text = "<color=\"white\">Build Mode:</color> " + (mode == BanterBuilderBundleMode.Scene ? "Scene Bundle" : "Kit Bundle");
         confirmKitBundle.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
@@ -1070,7 +1439,39 @@ public class BuilderWindow : EditorWindow
         confirmSpaceCode.style.display = mode == BanterBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
         confirmSpaceCode.text = "<color=\"white\">Space:</color> https://" + spaceSlug.text + ".bant.ing";
         confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
-        confirmKitNumber.text =  "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
+        confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
+    }
+
+    private async Task BuildAvatarAssetBundles()
+    {
+        var basisProp = avatarGameObject.GetComponent<BasisProp>();
+        if (basisProp == null)
+        {
+            basisProp = avatarGameObject.AddComponent<BasisProp>();
+            return;
+        }
+        var avatarPoseMeta = avatarGameObject.GetComponent<FlexaPose>();
+        if (avatarPoseMeta == null)
+        {
+            avatarPoseMeta = avatarGameObject.AddComponent<FlexaPose>();
+            return;
+        }
+        avatarPoseMeta.centerEye = centerEyePose;
+        avatarPoseMeta.leftFoot = leftFootPose;
+        avatarPoseMeta.rightFoot = rightFootPose;
+        basisProp.BasisBundleDescription = new BasisBundleDescription
+        {
+            AssetBundleName = "BasisAvatar"
+        };
+        List<BuildTarget> buildTargets = new List<BuildTarget>
+        {
+            BuildTarget.Android,
+            BuildTarget.StandaloneWindows,
+        };
+        Debug.Log("Basis Build");
+        await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069");
+        Debug.Log("Basis Build After");
+
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
@@ -1106,7 +1507,7 @@ public class BuilderWindow : EditorWindow
                 status.AddStatus("Visual Scripting check passed!");
             }
 #endif
-            if(!skipUpload) {
+            if (!skipUpload) {
                 status.AddStatus("Build started...");
 
                 if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
@@ -1185,11 +1586,11 @@ public class BuilderWindow : EditorWindow
                 }
                 status.AddStatus("Build finished.");
             }
-            
+
             if (autoUpload.value && sq.User != null)
             {
-                if(mode == BanterBuilderBundleMode.Scene) {
-                    if (string.IsNullOrEmpty(spaceSlug.text)){
+                if (mode == BanterBuilderBundleMode.Scene) {
+                    if (string.IsNullOrEmpty(spaceSlug.text)) {
                         status.AddStatus("No space slug provided, please enter a slug to upload.");
                         return;
                     }
@@ -1201,8 +1602,8 @@ public class BuilderWindow : EditorWindow
                         uploadWebOnly.SetEnabled(true);
                         uploadEverything.SetEnabled(true);
                     }), this);
-                }else{
-                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1){
+                } else {
+                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1) {
                         status.AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
                         return;
                     }

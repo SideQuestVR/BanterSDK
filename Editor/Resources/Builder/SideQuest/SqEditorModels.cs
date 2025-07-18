@@ -450,4 +450,35 @@ namespace Banter.SDKEditor
         public DateTimeOffset AchievementCreatedAt { get; set; }
 
     }
+    
+/// <summary>
+/// Represents basic upload creation request
+/// </summary>
+public class SqEditorUploadAvatars
+{
+    /// <summary>
+    /// THe file unique id.
+    /// </summary>
+    [JsonProperty("high_avatar_files_id")]
+    public long HighId { get; set; }
+
+    /// <summary>
+    /// THe file unique id.
+    /// </summary>
+    [JsonProperty("version")]
+    public long Version { get; set; }
+
+    /// <summary>
+    /// THe file path
+    /// </summary>
+    [JsonProperty("low_avatar_files_id")]
+    public long LowId { get; set; }
+
+    /// <summary>
+    /// THe file path
+    /// </summary>
+    [JsonProperty("is_public")]
+    public bool Public { get; set; }
+
+}
 }
