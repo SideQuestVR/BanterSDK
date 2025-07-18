@@ -457,6 +457,10 @@ public class BuilderWindow : EditorWindow
         CenterEyePoseLabel.text = $"Position: {centerEyePose.position}";
         SelectCenterEye.RegisterCallback<MouseUpEvent>((e) =>
         {
+            if(handleEnabled && poseSelectionType != PoseSelectionType.CenterEye)
+            {
+                return;
+            }
             SelectLeftFoot.text = "Change";
             SelectRightFoot.text = "Change";
             handleEnabled = !handleEnabled;
@@ -491,6 +495,10 @@ public class BuilderWindow : EditorWindow
         LeftFootPoseLabel.text = $"Position: {leftFootPose.position}\nRotation: {leftFootPose.rotation.eulerAngles}";
         SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
+            if(handleEnabled && poseSelectionType != PoseSelectionType.LeftFoot)
+            {
+                return;
+            }
             SelectCenterEye.text = "Change";
             SelectRightFoot.text = "Change";
             poseSelectionType = PoseSelectionType.LeftFoot;
@@ -525,6 +533,10 @@ public class BuilderWindow : EditorWindow
         RightFootPoseLabel.text = $"Position: {rightFootPose.position}\nRotation: {rightFootPose.rotation.eulerAngles}";
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
+            if(handleEnabled && poseSelectionType != PoseSelectionType.RightFoot)
+            {
+                return;
+            }
             SelectCenterEye.text = "Change";
             SelectLeftFoot.text = "Change";
             poseSelectionType = PoseSelectionType.RightFoot;
@@ -899,7 +911,6 @@ public class BuilderWindow : EditorWindow
         kitListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
         kitListView.reorderMode = ListViewReorderMode.Simple;
         new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
-        // new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropRecordingArea"), DropRecordingFile);
         scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
         LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
@@ -1254,29 +1265,6 @@ public class BuilderWindow : EditorWindow
         }
         numberOfItems.text = "Number of items: " + kitObjectList.Count;
     }
-
-    // private void DropRecordingFile(bool isScene, string sceneFile, string[] paths)
-    // {
-    //     string trackingData = null;
-    //     string prefab = null;
-    //     try
-    //     {
-    //         trackingData = paths.First(x => x.EndsWith(".trackingdata"));
-    //         prefab = paths.First(x => x.EndsWith(".prefab"));
-    //     }
-    //     catch
-    //     {
-    //         status.AddStatus("Tracking or prefab files not found in dropped files.");
-    //         return;
-    //     }
-    //     var avatar = AssetDatabase.LoadAssetAtPath<GameObject>(prefab);
-    //     var bytes = File.ReadAllBytes(trackingData);
-    //     AvatarUtilities.ParseAnimationCurves(bytes);
-    //     AvatarUtilities.SetBonePaths(avatar, (t) => { });
-    //     AvatarUtilities.SetAnimationCurves();
-    //     AssetDatabase.CreateAsset(AvatarUtilities.clip, trackingData.Replace(".trackingdata", ".anim"));
-    //     status.AddStatus("Animation file generated at " + trackingData.Replace(".trackingdata", ".anim") + ".");
-    // }
     private void DropGameObject(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
         Debug.Log("Dropped GameObject: " + gameObject.name);
@@ -1469,7 +1457,7 @@ public class BuilderWindow : EditorWindow
             BuildTarget.StandaloneWindows,
         };
         Debug.Log("Basis Build");
-        await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069");
+        await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
         Debug.Log("Basis Build After");
 
     }

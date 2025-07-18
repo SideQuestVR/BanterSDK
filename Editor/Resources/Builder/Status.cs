@@ -49,6 +49,10 @@ public class Status
     }
     public void ClearLogs()
     {
+        if (File.Exists(logFile))
+        {
+            File.Delete(logFile);
+        }
         statusMessages.Clear();
         buildProgress.Rebuild();
     }
