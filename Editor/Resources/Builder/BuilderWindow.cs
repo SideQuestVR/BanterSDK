@@ -564,13 +564,6 @@ public class BuilderWindow : EditorWindow
             }
             SceneView.RepaintAll();
         });
-        
-
-        // using (new EditorGUI.DisabledScope(true))
-        // {
-        //     EditorGUILayout.Vector3Field("Position", posePosition);
-        //     EditorGUILayout.Vector3Field("Rotation", poseRotation.eulerAngles);
-        // }
     }
 
     void GetExistingPose(ref Pose pose, string key, string defaults) {
