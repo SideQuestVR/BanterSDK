@@ -419,7 +419,7 @@ public class BuilderWindow : EditorWindow
     private void SetupAvatarUI()
     {
         HeadObjectList = rootVisualElement.Q<VisualElement>("HeadObjectList");
-        DrawReorderableList(headGameObjects, HeadObjectList, false);
+        DrawReorderableList(headGameObjects, HeadObjectList, true);
         MissingBones = rootVisualElement.Q<Label>("MissingBones");
         AvatarInfoCard = rootVisualElement.Q<VisualElement>("AvatarInfoCard");
         ShowAvatar = rootVisualElement.Q<Button>("ShowAvatar");
@@ -1443,11 +1443,10 @@ public class BuilderWindow : EditorWindow
         var list = new ListView(sourceList)
         {
             virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
-            // showFoldoutHeader = true,
             showFoldoutHeader = true,
             headerTitle = " - Head Objects",
             showAddRemoveFooter = true,
-            // reorderMode = ListViewReorderMode.Animated,
+            reorderMode = ListViewReorderMode.Animated,
             makeItem = () => new ObjectField
             {
                 objectType = typeof(T),
