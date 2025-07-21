@@ -1436,6 +1436,12 @@ public class BuilderWindow : EditorWindow
 
     private async Task<bool> BuildAvatarAssetBundles()
     {
+        if (sq.User == null)
+        {
+            status.AddStatus("You need to be signed in to upload an avatar!");
+            MissingBones.text = "You need to be signed in to upload an avatar!";
+            return false;
+        }
         var basisProp = avatarGameObject.GetComponent<BasisProp>();
         if (basisProp == null)
         {
@@ -1453,7 +1459,14 @@ public class BuilderWindow : EditorWindow
         {
             if (bones.ContainsKey(bone.name))
             {
-                hasBones.Add(bones[bone.name], bone);
+                try
+                {
+                    hasBones.Add(bones[bone.name], bone);
+                }
+                catch
+                {
+                    Debug.LogWarning("Duplicate bone name found: " + bone.name + ", " + bones[bone.name] + " skipping.");
+                }
             }
         }
         bool hasAllBones = true;
@@ -1494,7 +1507,6 @@ public class BuilderWindow : EditorWindow
         catch (Exception e)
         {
             Debug.LogError("Failed to get avatar bones: " + e);
-            MissingBones.text = "Failed to get avatar bones: " + e.Message;
             return false;
         }
     }
