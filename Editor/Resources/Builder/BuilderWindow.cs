@@ -16,6 +16,7 @@ using UnityEngine.Networking;
 using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
+using Codice.CM.Common.Tree.Partial;
 
 public enum BanterBuilderBundleMode
 {
@@ -138,6 +139,7 @@ public class BuilderWindow : EditorWindow
 
     PoseSelectionType poseSelectionType = PoseSelectionType.CenterEye;
 
+    Label MissingBones;
     Label CenterEyePoseLabel;
     Button SelectCenterEye;
     Label LeftFootPoseLabel;
@@ -414,6 +416,7 @@ public class BuilderWindow : EditorWindow
     }
     private void SetupAvatarUI()
     {
+        MissingBones = rootVisualElement.Q<Label>("MissingBones");
         AvatarInfoCard = rootVisualElement.Q<VisualElement>("AvatarInfoCard");
         ShowAvatar = rootVisualElement.Q<Button>("ShowAvatar");
         ShowAvatar.RegisterCallback<MouseUpEvent>((e) =>
@@ -424,7 +427,7 @@ public class BuilderWindow : EditorWindow
                 return;
             }
             EditorGUIUtility.PingObject(avatarGameObject);
-            
+
         });
         new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropAvatarArea"), DropGameObject);
 
@@ -433,13 +436,21 @@ public class BuilderWindow : EditorWindow
         {
             EditorApplication.LockReloadAssemblies();
             AssetDatabase.DisallowAutoRefresh();
-            await BuildAvatarAssetBundles();
-
-            EditorCoroutineUtility.StartCoroutine(UploadAvatar(() =>
+            if (await BuildAvatarAssetBundles())
             {
+                EditorCoroutineUtility.StartCoroutine(UploadAvatar(() =>
+                {
+                    status.AddStatus("Avatar build completed successfully.");
+                    AssetDatabase.AllowAutoRefresh();
+                    EditorApplication.UnlockReloadAssemblies();
+                }), this);
+            }
+            else
+            {
+                status.AddStatus("Avatar build failed, please check the plugin for errors.");
                 AssetDatabase.AllowAutoRefresh();
                 EditorApplication.UnlockReloadAssemblies();
-            }), this);
+            }
         });
 
         var resetScreen = rootVisualElement.Q<Button>("resetAvatarScreen");
@@ -457,7 +468,7 @@ public class BuilderWindow : EditorWindow
         CenterEyePoseLabel.text = $"Position: {centerEyePose.position}";
         SelectCenterEye.RegisterCallback<MouseUpEvent>((e) =>
         {
-            if(handleEnabled && poseSelectionType != PoseSelectionType.CenterEye)
+            if (handleEnabled && poseSelectionType != PoseSelectionType.CenterEye)
             {
                 return;
             }
@@ -495,7 +506,7 @@ public class BuilderWindow : EditorWindow
         LeftFootPoseLabel.text = $"Position: {leftFootPose.position}\nRotation: {leftFootPose.rotation.eulerAngles}";
         SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
-            if(handleEnabled && poseSelectionType != PoseSelectionType.LeftFoot)
+            if (handleEnabled && poseSelectionType != PoseSelectionType.LeftFoot)
             {
                 return;
             }
@@ -509,7 +520,7 @@ public class BuilderWindow : EditorWindow
             {
                 OnPoseCallback = null;
                 leftFootPose = new Pose(posePosition, poseRotation);
-                EditorPrefs.SetString("BanterBuilder_LeftFootPosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z + 
+                EditorPrefs.SetString("BanterBuilder_LeftFootPosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z +
                     ";" + poseRotation.x + "," + poseRotation.y + "," + poseRotation.z + "," + poseRotation.w);
                 LeftFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
             }
@@ -522,7 +533,7 @@ public class BuilderWindow : EditorWindow
                     leftFootPose = new Pose(posePosition, poseRotation);
                     LeftFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
                 };
-                
+
             }
             SceneView.RepaintAll();
         });
@@ -533,7 +544,7 @@ public class BuilderWindow : EditorWindow
         RightFootPoseLabel.text = $"Position: {rightFootPose.position}\nRotation: {rightFootPose.rotation.eulerAngles}";
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
-            if(handleEnabled && poseSelectionType != PoseSelectionType.RightFoot)
+            if (handleEnabled && poseSelectionType != PoseSelectionType.RightFoot)
             {
                 return;
             }
@@ -547,7 +558,7 @@ public class BuilderWindow : EditorWindow
             {
                 OnPoseCallback = null;
                 rightFootPose = new Pose(posePosition, poseRotation);
-                EditorPrefs.SetString("BanterBuilder_RightFootPosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z + 
+                EditorPrefs.SetString("BanterBuilder_RightFootPosePosition", posePosition.x + "," + posePosition.y + "," + posePosition.z +
                     ";" + poseRotation.x + "," + poseRotation.y + "," + poseRotation.z + "," + poseRotation.w);
                 RightFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
             }
@@ -560,7 +571,7 @@ public class BuilderWindow : EditorWindow
                     rightFootPose = new Pose(posePosition, poseRotation);
                     RightFootPoseLabel.text = $"Position: {posePosition}\nRotation: {poseRotation.eulerAngles}";
                 };
-                
+
             }
             SceneView.RepaintAll();
         });
@@ -1423,36 +1434,69 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
 
-    private async Task BuildAvatarAssetBundles()
+    private async Task<bool> BuildAvatarAssetBundles()
     {
         var basisProp = avatarGameObject.GetComponent<BasisProp>();
         if (basisProp == null)
         {
             basisProp = avatarGameObject.AddComponent<BasisProp>();
-            return;
         }
         var avatarPoseMeta = avatarGameObject.GetComponent<FlexaPose>();
         if (avatarPoseMeta == null)
         {
             avatarPoseMeta = avatarGameObject.AddComponent<FlexaPose>();
-            return;
         }
-        avatarPoseMeta.centerEye = centerEyePose;
-        avatarPoseMeta.leftFoot = leftFootPose;
-        avatarPoseMeta.rightFoot = rightFootPose;
-        basisProp.BasisBundleDescription = new BasisBundleDescription
+        var bones = AvatarBoneNames.AvatarBoneNamesMapping;
+        var hasBones = new Dictionary<AvatarBoneName, Transform>();
+        
+        foreach (var bone in avatarGameObject.GetComponentsInChildren<Transform>())
         {
-            AssetBundleName = "BasisAvatar"
-        };
-        List<BuildTarget> buildTargets = new List<BuildTarget>
+            if (bones.ContainsKey(bone.name))
+            {
+                hasBones.Add(bones[bone.name], bone);
+            }
+        }
+        bool hasAllBones = true;
+        string missingBones = "";
+        foreach (var value in Enum.GetValues(typeof(AvatarBoneName)))
         {
-            BuildTarget.Android,
-            BuildTarget.StandaloneWindows,
-        };
-        Debug.Log("Basis Build");
-        await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
-        Debug.Log("Basis Build After");
+            if (!hasBones.ContainsKey((AvatarBoneName)value))
+            {
+                hasAllBones = false;
+                missingBones += ((AvatarBoneName)value) + ",\n";
 
+            }
+        }
+        if (!hasAllBones)
+        {
+            MissingBones.text = "These missing bones are required:\n" + missingBones;
+            return false;
+        }
+        try
+        {
+            avatarPoseMeta.centerEye = centerEyePose;
+            avatarPoseMeta.leftFoot = leftFootPose;
+            avatarPoseMeta.rightFoot = rightFootPose;
+            basisProp.BasisBundleDescription = new BasisBundleDescription
+            {
+                AssetBundleName = "BasisAvatar"
+            };
+            List<BuildTarget> buildTargets = new List<BuildTarget>
+            {
+                BuildTarget.Android,
+                BuildTarget.StandaloneWindows,
+            };
+            Debug.Log("Basis Build");
+            await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
+            Debug.Log("Basis Build After");
+            return true;
+        }
+        catch (Exception e)
+        {
+            Debug.LogError("Failed to get avatar bones: " + e);
+            MissingBones.text = "Failed to get avatar bones: " + e.Message;
+            return false;
+        }
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
