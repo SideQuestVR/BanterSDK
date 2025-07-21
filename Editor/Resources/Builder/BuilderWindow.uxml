@@ -135,6 +135,7 @@
                             </ui:VisualElement>
                             <ui:Button text="Show" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ShowAvatar" style="padding-right: 15px; padding-left: 15px; height: 30px;" />
                         </ui:VisualElement>
+                        <ui:VisualElement name="HeadObjectList" style="flex-grow: 1; flex-direction: column; justify-content: space-between; padding-right: 30px; padding-bottom: 10px; padding-left: 30px;" />
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 10px;">
                             <ui:VisualElement style="flex-grow: 1;">
                                 <ui:Label tabindex="-1" text="Center Eye Position" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px;" />

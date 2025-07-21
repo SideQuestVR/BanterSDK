@@ -139,6 +139,7 @@ public class BuilderWindow : EditorWindow
 
     PoseSelectionType poseSelectionType = PoseSelectionType.CenterEye;
 
+    VisualElement HeadObjectList;
     Label MissingBones;
     Label CenterEyePoseLabel;
     Button SelectCenterEye;
@@ -414,8 +415,11 @@ public class BuilderWindow : EditorWindow
         }
         OnPoseCallback?.Invoke();
     }
+    List<GameObject> headGameObjects = new List<GameObject>();
     private void SetupAvatarUI()
     {
+        HeadObjectList = rootVisualElement.Q<VisualElement>("HeadObjectList");
+        DrawReorderableList(headGameObjects, HeadObjectList, false);
         MissingBones = rootVisualElement.Q<Label>("MissingBones");
         AvatarInfoCard = rootVisualElement.Q<VisualElement>("AvatarInfoCard");
         ShowAvatar = rootVisualElement.Q<Button>("ShowAvatar");
@@ -1433,6 +1437,34 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
+    
+    public void DrawReorderableList<T>(List<T> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true) where T : UnityEngine.Object
+    {
+        var list = new ListView(sourceList)
+        {
+            virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
+            // showFoldoutHeader = true,
+            showFoldoutHeader = true,
+            headerTitle = " - Head Objects",
+            showAddRemoveFooter = true,
+            // reorderMode = ListViewReorderMode.Animated,
+            makeItem = () => new ObjectField
+            {
+                objectType = typeof(T),
+                allowSceneObjects = allowSceneObjects
+            },
+            bindItem = (element, i) =>
+            {
+                ((ObjectField)element).value = sourceList[i];
+                ((ObjectField)element).RegisterValueChangedCallback((value) =>
+                {
+                    sourceList[i] = (T)value.newValue;
+                });
+            }
+        };
+
+        rootVisualElement.Add(list);
+    }
 
     private async Task<bool> BuildAvatarAssetBundles()
     {
@@ -1454,7 +1486,16 @@ public class BuilderWindow : EditorWindow
         }
         var bones = AvatarBoneNames.AvatarBoneNamesMapping;
         var hasBones = new Dictionary<AvatarBoneName, Transform>();
-        
+
+        foreach (var headObj in headGameObjects)
+        {
+            var flexaHead = headObj.GetComponent<FlexaHead>();
+            if (flexaHead == null)
+            {
+                headObj.AddComponent<FlexaHead>();
+            }
+        }
+
         foreach (var bone in avatarGameObject.GetComponentsInChildren<Transform>())
         {
             if (bones.ContainsKey(bone.name))
