@@ -1057,13 +1057,14 @@ public class BuilderWindow : EditorWindow
         {
             status.AddStatus("Avatar uploaded successfully.");
             Debug.Log("Avatar uploaded successfully.");
+            callback();
         }, e =>
         {
             status.AddStatus("Failed to upload avatar: " + e);
             Debug.LogError("Failed to upload avatar: " + e);
+            callback();
         }, avatarFileId, avatarFileId), this);
         // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
-        callback();
         // EditorUtility.ClearProgressBar();
     }
 
