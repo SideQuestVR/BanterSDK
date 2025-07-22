@@ -70,6 +70,35 @@ namespace Banter.SDK
             LogLine.Do("Warning: Using BanterGLTF is not recommended for production use. It is slow and not optimized.");
             SetupGLTF();
         }
+        void KillGLTF(GameObject go)
+        {
+            foreach (Transform child in go.transform.GetComponentsInChildren<Transform>())
+            {
+                if (child != null && child.gameObject != null && child.gameObject != gameObject)
+                {
+                    var renderer = child.GetComponent<Renderer>();
+                    if (renderer != null)
+                    {
+                        if (renderer.sharedMaterial.HasTexture("_MainTex")) {
+                            var _MainTex = renderer.sharedMaterial.mainTexture;
+                            if (_MainTex != null)
+                            {
+                                DestroyImmediate(_MainTex);
+                            } 
+                        }
+                        DestroyImmediate(renderer.sharedMaterial);
+                        renderer.sharedMaterial = null;
+                    }
+                    var filter = child.GetComponent<MeshFilter>();
+                    if (filter != null && filter.sharedMesh != null)
+                    {
+                        DestroyImmediate(filter.sharedMesh);
+                        filter.sharedMesh = null;
+                    }
+                }
+            }
+            DestroyImmediate(go);
+        }
         async void SetupGLTF()
         {
             if (loadStarted)
@@ -84,16 +113,20 @@ namespace Banter.SDK
                 {
                     try
                     {
+                        foreach (var anim in animations)
+                        {
+                            DestroyImmediate(anim);
+                        }
                         var comp = this;
                         if (comp == null || gameObject == null)
                         {
                             LogLine.Do("GameObject/Component was destroyed before GLTF was loaded, killing the GLTF.");
-                            Destroy(go);
+                            KillGLTF(go);
                             return;
                         }
                         if (transform.childCount > 0)
                         {
-                            Destroy(transform.GetChild(0).gameObject);
+                            KillGLTF(transform.GetChild(0).gameObject);
                         }
                         go.transform.SetParent(transform, false);
                         go.transform.name = Path.GetFileNameWithoutExtension(url);
@@ -175,7 +208,10 @@ namespace Banter.SDK
                 loadStarted = false;
             }
         }
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            KillGLTF(gameObject);
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGLTF();

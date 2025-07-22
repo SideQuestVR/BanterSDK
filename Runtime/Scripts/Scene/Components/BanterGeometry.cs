@@ -263,6 +263,7 @@ namespace Banter.SDK
         {
             if (_filter != null)
             {
+                Destroy(_filter.sharedMesh);
                 Destroy(_filter);
             }
         }

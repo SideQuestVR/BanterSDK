@@ -36,6 +36,10 @@ namespace Banter.SDK
 
         void Awake()
         {
+#if BASIS_BUNDLE_MANAGEMENT
+            BasisLoadHandler.IsInitialized = false;
+            BasisLoadHandler.OnGameStart();
+#endif
             if (!initialized)
             {
                 UnityGame.SetMainThread();

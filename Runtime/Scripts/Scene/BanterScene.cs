@@ -1393,13 +1393,15 @@ namespace Banter.SDK
                 ResetSceneAbilitySettings();
                 ResetLoadingProgress();
                 bundlesLoaded = false;
+                MipMaps.Clear();
+                Get.Clear();
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
-                 {
-                     events.OnSceneReset.Invoke();
-                 }, $"{nameof(BanterScene)}.{nameof(ResetScene)}"));
+                {
+                    events.OnSceneReset.Invoke();
+                }, $"{nameof(BanterScene)}.{nameof(ResetScene)}"));
                 // This seems to be a bug in 2022, hard crash without this line.
                 GameObject.FindObjectsOfType<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
-                await Resources.UnloadUnusedAssets();
+                // await Resources.UnloadUnusedAssets();
             }
             catch (Exception e)
             {
