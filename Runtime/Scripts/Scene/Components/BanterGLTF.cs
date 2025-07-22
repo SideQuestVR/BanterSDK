@@ -97,7 +97,6 @@ namespace Banter.SDK
                     }
                 }
             }
-            DestroyImmediate(go);
         }
         async void SetupGLTF()
         {
@@ -122,11 +121,13 @@ namespace Banter.SDK
                         {
                             LogLine.Do("GameObject/Component was destroyed before GLTF was loaded, killing the GLTF.");
                             KillGLTF(go);
+                            Destroy(go);
                             return;
                         }
                         if (transform.childCount > 0)
                         {
                             KillGLTF(transform.GetChild(0).gameObject);
+                            Destroy(transform.GetChild(0).gameObject);
                         }
                         go.transform.SetParent(transform, false);
                         go.transform.name = Path.GetFileNameWithoutExtension(url);
