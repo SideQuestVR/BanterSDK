@@ -553,7 +553,7 @@ public class BuilderWindow : EditorWindow
             {
                 CenterEyePosReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.headTransform.TransformPoint(centerEyePose.position);
-                poseRotation = centerEyePose.rotation * Quaternion.Inverse(avatarPoseMeta.headTransform.rotation);
+                poseRotation = avatarPoseMeta.headTransform.rotation * centerEyePose.rotation;
                 OnPoseCallback = () =>
                 {
                     Handles.DrawLine(avatarPoseMeta.headTransform.position, posePosition);
@@ -615,7 +615,7 @@ public class BuilderWindow : EditorWindow
                 LeftFootPosReset.style.display = DisplayStyle.Flex;
                 LeftFootRotReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.leftFootTransform.TransformPoint(leftFootPose.position);
-                poseRotation = leftFootPose.rotation * Quaternion.Inverse(avatarPoseMeta.leftFootTransform.rotation);
+                poseRotation = avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation;
                 OnPoseCallback = () =>
                 {
                     Handles.DrawLine(avatarPoseMeta.leftFootTransform.position, posePosition);
@@ -677,7 +677,7 @@ public class BuilderWindow : EditorWindow
                 RightFootPosReset.style.display = DisplayStyle.Flex;
                 RightFootRotReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.rightFootTransform.TransformPoint(rightFootPose.position);
-                poseRotation = rightFootPose.rotation * Quaternion.Inverse(avatarPoseMeta.rightFootTransform.rotation);
+                poseRotation = avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation;
                 OnPoseCallback = () =>
                 {
                     Handles.DrawLine(avatarPoseMeta.rightFootTransform.position, posePosition);
