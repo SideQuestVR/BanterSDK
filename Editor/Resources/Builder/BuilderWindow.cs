@@ -613,6 +613,8 @@ public class BuilderWindow : EditorWindow
                     var pos = avatarPoseMeta.headTransform.InverseTransformPoint(posePosition);
                     var rot = Quaternion.Inverse(avatarPoseMeta.headTransform.rotation) * poseRotation;
                     centerEyePose = new Pose(pos, rot);
+                    avatarPoseMeta.centerEye = centerEyePose;
+                    EditorUtility.SetDirty(avatarPoseMeta);
                     CenterEyePoseLabel.text = $"Position: {pos}";
                 };
 
@@ -686,6 +688,8 @@ public class BuilderWindow : EditorWindow
                     var pos = avatarPoseMeta.leftFootTransform.InverseTransformPoint(posePosition);
                     var rot = Quaternion.Inverse(avatarPoseMeta.leftFootTransform.rotation) * poseRotation;
                     leftFootPose = new Pose(pos, rot);
+                    avatarPoseMeta.leftFoot = leftFootPose;
+                    EditorUtility.SetDirty(avatarPoseMeta);
                     LeftFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
                 };
 
@@ -759,6 +763,8 @@ public class BuilderWindow : EditorWindow
                     var pos = avatarPoseMeta.rightFootTransform.InverseTransformPoint(posePosition);
                     var rot = Quaternion.Inverse(avatarPoseMeta.rightFootTransform.rotation) * poseRotation;
                     rightFootPose = new Pose(pos, rot);
+                    avatarPoseMeta.rightFoot = rightFootPose;
+                    EditorUtility.SetDirty(avatarPoseMeta);
                     RightFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
                 };
 
@@ -1780,6 +1786,7 @@ public class BuilderWindow : EditorWindow
             avatarPoseMeta.centerEye = centerEyePose;
             avatarPoseMeta.leftFoot = leftFootPose;
             avatarPoseMeta.rightFoot = rightFootPose;
+            EditorUtility.SetDirty(avatarPoseMeta);
             basisProp.BasisBundleDescription = new BasisBundleDescription
             {
                 AssetBundleName = "BasisAvatar"
