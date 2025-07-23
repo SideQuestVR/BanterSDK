@@ -148,9 +148,9 @@ public class BuilderWindow : EditorWindow
     Label RightFootPoseLabel;
     Button SelectRightFoot;
 
-    Pose centerEyePose;
-    Pose leftFootPose;
-    Pose rightFootPose;
+    // Pose centerEyePose;
+    // Pose leftFootPose;
+    // Pose rightFootPose;
 
     VisualElement AvatarInfoCard;
 
@@ -164,6 +164,8 @@ public class BuilderWindow : EditorWindow
     private Quaternion poseRotation = Quaternion.identity;
 
     Action OnPoseCallback;
+
+    FlexaPose currentFlexaPose;
 
 
     [MenuItem("Banter/Banter Builder")]
@@ -261,7 +263,6 @@ public class BuilderWindow : EditorWindow
     public void OnEnable()
     {
         
-        Debug.Log("poseRotation OnEnable" + poseRotation);
         SceneView.duringSceneGui += OnSceneGUI;
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
@@ -398,7 +399,6 @@ public class BuilderWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         Vector3 newPos = Handles.PositionHandle(posePosition, poseRotation);
-        Debug.Log("poseRotation Quaternion newRot = poseRotation" + poseRotation);
         Quaternion newRot = poseRotation;
         if (!handlePosition)
         {
@@ -434,60 +434,12 @@ public class BuilderWindow : EditorWindow
         OnPoseCallback?.Invoke();
     }
     List<GameObject> headGameObjects = new List<GameObject>();
-    void SetupInitialCenterEyeValues()
-    {
-        if (avatarGameObject == null)
-        {
-            GetExistingPose(ref centerEyePose, "BanterBuilder_CenterEyePosePosition", "0,0,0;0,0,0,1");
-        }
-        else
-        {
-            var avatarPoseMeta = GetFlexaPose();
-            if (avatarPoseMeta != null)
-            {
-                centerEyePose.position = avatarPoseMeta.headTransform.position;
-                centerEyePose.rotation = avatarPoseMeta.headTransform.rotation;
-            }
-        }
-    }
-    void SetupInitialLeftFootValues()
-    {
-        if (avatarGameObject == null)
-        {
-            GetExistingPose(ref leftFootPose, "BanterBuilder_LeftFootPosePosition", "0,0,0;0,0,0,1");
-        }
-        else
-        {
-            var avatarPoseMeta = GetFlexaPose();
-            if (avatarPoseMeta != null)
-            {
-                leftFootPose.position = avatarPoseMeta.leftFootTransform.position;
-                leftFootPose.rotation = avatarPoseMeta.leftFootTransform.rotation;
-            }
-        }
-    }
-    void SetupInitialRightFootValues()
-    {
-        if (avatarGameObject == null)
-        {
-            GetExistingPose(ref rightFootPose, "BanterBuilder_RightFootPosePosition", "0,0,0;0,0,0,1");
-        }
-        else
-        {
-            var avatarPoseMeta = GetFlexaPose();
-            if (avatarPoseMeta != null)
-            {
-                rightFootPose.position = avatarPoseMeta.rightFootTransform.position;
-                rightFootPose.rotation = avatarPoseMeta.rightFootTransform.rotation;
-            }
-        }
-    }
     void SelectRightFootComplete(FlexaPose avatarPoseMeta)
     {
         OnPoseCallback = null;
         var pos = avatarPoseMeta.rightFootTransform.InverseTransformPoint(posePosition);
         var rot = Quaternion.Inverse(avatarPoseMeta.rightFootTransform.rotation) * poseRotation;
-        rightFootPose = new Pose(pos, rot);
+        avatarPoseMeta.rightFoot = new Pose(pos, rot);
         EditorPrefs.SetString("BanterBuilder_RightFootPosePosition", pos.x + "," + pos.y + "," + pos.z +
             ";" + rot.x + "," + rot.y + "," + rot.z + "," + rot.w);
         RightFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
@@ -497,7 +449,7 @@ public class BuilderWindow : EditorWindow
         OnPoseCallback = null;
         var pos = avatarPoseMeta.leftFootTransform.InverseTransformPoint(posePosition);
         var rot = Quaternion.Inverse(avatarPoseMeta.leftFootTransform.rotation) * poseRotation;
-        leftFootPose = new Pose(pos, rot);
+        avatarPoseMeta.leftFoot = new Pose(pos, rot);
         EditorPrefs.SetString("BanterBuilder_LeftFootPosePosition", pos.x + "," + pos.y + "," + pos.z +
             ";" + rot.x + "," + rot.y + "," + rot.z + "," + rot.w);
         LeftFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
@@ -507,13 +459,30 @@ public class BuilderWindow : EditorWindow
         OnPoseCallback = null;
         var pos = avatarPoseMeta.headTransform.InverseTransformPoint(posePosition);
         var rot = Quaternion.Inverse(avatarPoseMeta.headTransform.rotation) * poseRotation;
-        centerEyePose = new Pose(pos, rot);
+        avatarPoseMeta.centerEye = new Pose(pos, rot);
         EditorPrefs.SetString("BanterBuilder_CenterEyePosePosition", pos.x + "," + pos.y + "," + pos.z +
             ";" + rot.x + "," + rot.y + "," + rot.z + "," + rot.w);
         CenterEyePoseLabel.text = $"Position: {pos}";
     }
+
+    void SetCenterText()
+    {
+        CenterEyePoseLabel.text = $"Position: {currentFlexaPose.centerEye.position}";
+    }
+    void SetLeftText()
+    {
+        LeftFootPoseLabel.text = $"Position: {currentFlexaPose.leftFoot.position}\nRotation: {currentFlexaPose.leftFoot.rotation.eulerAngles}";
+    }
+    void SetRightText()
+    {
+        RightFootPoseLabel.text = $"Position: {currentFlexaPose.rightFoot.position}\nRotation: {currentFlexaPose.rightFoot.rotation.eulerAngles}";
+    }
     private void SetupAvatarUI()
     {
+        currentFlexaPose = GetFlexaPose();
+        CenterEyePoseLabel = rootVisualElement.Q<Label>("CenterEyePoseLabel");
+        LeftFootPoseLabel = rootVisualElement.Q<Label>("LeftFootPoseLabel");
+        RightFootPoseLabel = rootVisualElement.Q<Label>("RightFootPoseLabel");
         HeadObjectList = rootVisualElement.Q<VisualElement>("HeadObjectList");
         DrawReorderableList(headGameObjects, HeadObjectList, true);
         MissingBones = rootVisualElement.Q<Label>("MissingBones");
@@ -563,29 +532,45 @@ public class BuilderWindow : EditorWindow
             RefreshAvatarView(true);
         });
 
+        if (avatarGameObject != null)
+        {
+            SetCenterText();
+            SetLeftText();
+            SetRightText();
+        }
         SelectAvatar = rootVisualElement.Q<Label>("SelectAvatar");
-        SetupInitialCenterEyeValues();
-        CenterEyePoseLabel = rootVisualElement.Q<Label>("CenterEyePoseLabel");
         SelectCenterEye = rootVisualElement.Q<Button>("SelectCenterEye");
-        CenterEyePoseLabel.text = $"Position: {centerEyePose.position}";
         var CenterEyePosReset = rootVisualElement.Q<Button>("CenterEyePosReset");
+        var LeftFootPosReset = rootVisualElement.Q<Button>("LeftFootPosReset");
+        var LeftFootRotReset = rootVisualElement.Q<Button>("LeftFootRotReset");
+        var LeftFootRotWorldReset = rootVisualElement.Q<Button>("LeftFootRotWorldReset");
+        var RightFootPosReset = rootVisualElement.Q<Button>("RightFootPosReset");
+        var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
+        var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
         CenterEyePosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
-            posePosition = GetFlexaPose().headTransform.position;
+            posePosition = currentFlexaPose.headTransform.position;
             SceneView.RepaintAll();
         });
         SelectCenterEye.RegisterCallback<MouseUpEvent>((e) =>
         {
-            var avatarPoseMeta = GetFlexaPose();
+            currentFlexaPose = GetFlexaPose();
+            SetCenterText();
             if (handleEnabled && poseSelectionType != PoseSelectionType.CenterEye)
             {
                 if (poseSelectionType == PoseSelectionType.LeftFoot)
                 {
-                    SelectLeftFootComplete(avatarPoseMeta);
+                    SelectLeftFootComplete(currentFlexaPose);
+                    LeftFootPosReset.style.display = DisplayStyle.None;
+                    LeftFootRotReset.style.display = DisplayStyle.None;
+                    LeftFootRotWorldReset.style.display = DisplayStyle.None;
                 }
                 else
                 {
-                    SelectRightFootComplete(avatarPoseMeta);
+                    SelectRightFootComplete(currentFlexaPose);
+                    RightFootPosReset.style.display = DisplayStyle.None;
+                    RightFootRotReset.style.display = DisplayStyle.None;
+                    RightFootRotWorldReset.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -597,24 +582,21 @@ public class BuilderWindow : EditorWindow
             poseSelectionType = PoseSelectionType.CenterEye;
             if (!handleEnabled)
             {
-                SelectCenterEyeComplete(avatarPoseMeta);
+                SelectCenterEyeComplete(currentFlexaPose);
                 CenterEyePosReset.style.display = DisplayStyle.None;
             }
             else
             {
                 CenterEyePosReset.style.display = DisplayStyle.Flex;
-                posePosition = avatarPoseMeta.headTransform.TransformPoint(centerEyePose.position);
-                Debug.Log("poseRotation avatarPoseMeta.headTransform.rotation * centerEyePose.rotation" + poseRotation);
-                poseRotation = avatarPoseMeta.headTransform.rotation * centerEyePose.rotation;
-                Debug.Log("poseRotation avatarPoseMeta.headTransform.rotation * centerEyePose.rotation2" + poseRotation);
+                posePosition = currentFlexaPose.headTransform.TransformPoint(currentFlexaPose.centerEye.position);
+                poseRotation = currentFlexaPose.headTransform.rotation;
                 OnPoseCallback = () =>
                 {
-                    Handles.DrawLine(avatarPoseMeta.headTransform.position, posePosition);
-                    var pos = avatarPoseMeta.headTransform.InverseTransformPoint(posePosition);
-                    var rot = Quaternion.Inverse(avatarPoseMeta.headTransform.rotation) * poseRotation;
-                    centerEyePose = new Pose(pos, rot);
-                    avatarPoseMeta.centerEye = centerEyePose;
-                    EditorUtility.SetDirty(avatarPoseMeta);
+                    Handles.DrawLine(currentFlexaPose.headTransform.position, posePosition);
+                    var pos = currentFlexaPose.headTransform.InverseTransformPoint(posePosition);
+                    var rot = Quaternion.Inverse(currentFlexaPose.headTransform.rotation) * poseRotation;
+                    currentFlexaPose.centerEye = new Pose(pos, Quaternion.identity);
+                    EditorUtility.SetDirty(currentFlexaPose);
                     CenterEyePoseLabel.text = $"Position: {pos}";
                 };
 
@@ -622,41 +604,41 @@ public class BuilderWindow : EditorWindow
             SceneView.RepaintAll();
         });
 
-        LeftFootPoseLabel = rootVisualElement.Q<Label>("LeftFootPoseLabel");
         SelectLeftFoot = rootVisualElement.Q<Button>("SelectLeftFoot");
-        SetupInitialLeftFootValues();
-        LeftFootPoseLabel.text = $"Position: {leftFootPose.position}\nRotation: {leftFootPose.rotation.eulerAngles}";
-        
-        var LeftFootPosReset = rootVisualElement.Q<Button>("LeftFootPosReset");
-        var LeftFootRotReset = rootVisualElement.Q<Button>("LeftFootRotReset");
-        var LeftFootRotWorldReset = rootVisualElement.Q<Button>("LeftFootRotWorldReset");
-        LeftFootPosReset.RegisterCallback<MouseUpEvent>((e) => 
+
+        LeftFootPosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             posePosition = GetFlexaPose().leftFootTransform.position;
             SceneView.RepaintAll();
         });
-        LeftFootRotReset.RegisterCallback<MouseUpEvent>((e) => {
-            Debug.Log("poseRotation LeftFootRotReset" + poseRotation);
-            poseRotation = GetFlexaPose().leftFootTransform?.rotation??Quaternion.identity;
+        LeftFootRotReset.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            poseRotation = GetFlexaPose().leftFootTransform?.rotation ?? Quaternion.identity;
             SceneView.RepaintAll();
         });
-        LeftFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) => {
-            Debug.Log("poseRotation LeftFootRotWorldReset" + poseRotation);
+        LeftFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) =>
+        {
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
         SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
-            var avatarPoseMeta = GetFlexaPose();
+            currentFlexaPose = GetFlexaPose();
+            SetLeftText();
+
             if (handleEnabled && poseSelectionType != PoseSelectionType.LeftFoot)
             {
                 if (poseSelectionType == PoseSelectionType.CenterEye)
                 {
-                    SelectCenterEyeComplete(avatarPoseMeta);
+                    SelectCenterEyeComplete(currentFlexaPose);
+                    CenterEyePosReset.style.display = DisplayStyle.None;
                 }
                 else
                 {
-                    SelectRightFootComplete(avatarPoseMeta);
+                    SelectRightFootComplete(currentFlexaPose);
+                    RightFootPosReset.style.display = DisplayStyle.None;
+                    RightFootRotReset.style.display = DisplayStyle.None;
+                    RightFootRotWorldReset.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -668,7 +650,7 @@ public class BuilderWindow : EditorWindow
             SelectLeftFoot.text = handleEnabled ? "Done" : "Change";
             if (!handleEnabled)
             {
-                SelectLeftFootComplete(avatarPoseMeta);
+                SelectLeftFootComplete(currentFlexaPose);
                 LeftFootPosReset.style.display = DisplayStyle.None;
                 LeftFootRotReset.style.display = DisplayStyle.None;
                 LeftFootRotWorldReset.style.display = DisplayStyle.None;
@@ -678,18 +660,15 @@ public class BuilderWindow : EditorWindow
                 LeftFootPosReset.style.display = DisplayStyle.Flex;
                 LeftFootRotReset.style.display = DisplayStyle.Flex;
                 LeftFootRotWorldReset.style.display = DisplayStyle.Flex;
-                posePosition = avatarPoseMeta.leftFootTransform.TransformPoint(leftFootPose.position);
-                Debug.Log("poseRotation avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation" + poseRotation);
-                poseRotation = avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation;
-                Debug.Log("poseRotation avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation2" + poseRotation);
+                posePosition = currentFlexaPose.leftFootTransform.TransformPoint(currentFlexaPose.leftFoot.position);
+                poseRotation = currentFlexaPose.leftFootTransform.rotation * currentFlexaPose.leftFoot.rotation;
                 OnPoseCallback = () =>
                 {
-                    Handles.DrawLine(avatarPoseMeta.leftFootTransform.position, posePosition);
-                    var pos = avatarPoseMeta.leftFootTransform.InverseTransformPoint(posePosition);
-                    var rot = Quaternion.Inverse(avatarPoseMeta.leftFootTransform.rotation) * poseRotation;
-                    leftFootPose = new Pose(pos, rot);
-                    avatarPoseMeta.leftFoot = leftFootPose;
-                    EditorUtility.SetDirty(avatarPoseMeta);
+                    Handles.DrawLine(currentFlexaPose.leftFootTransform.position, posePosition);
+                    var pos = currentFlexaPose.leftFootTransform.InverseTransformPoint(posePosition);
+                    var rot = Quaternion.Inverse(currentFlexaPose.leftFootTransform.rotation) * poseRotation;
+                    currentFlexaPose.leftFoot = new Pose(pos, rot);
+                    EditorUtility.SetDirty(currentFlexaPose);
                     LeftFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
                 };
 
@@ -697,41 +676,42 @@ public class BuilderWindow : EditorWindow
             SceneView.RepaintAll();
         });
 
-        RightFootPoseLabel = rootVisualElement.Q<Label>("RightFootPoseLabel");
+
         SelectRightFoot = rootVisualElement.Q<Button>("SelectRightFoot");
-        SetupInitialRightFootValues();
-        RightFootPoseLabel.text = $"Position: {rightFootPose.position}\nRotation: {rightFootPose.rotation.eulerAngles}";
-        var RightFootPosReset = rootVisualElement.Q<Button>("RightFootPosReset");
-        var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
-        var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
-        RightFootPosReset.RegisterCallback<MouseUpEvent>((e) => 
+
+        RightFootPosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             posePosition = GetFlexaPose().rightFootTransform.position;
             SceneView.RepaintAll();
         });
-        RightFootRotReset.RegisterCallback<MouseUpEvent>((e) => 
+        RightFootRotReset.RegisterCallback<MouseUpEvent>((e) =>
         {
-            Debug.Log("poseRotation RightFootRotReset" + poseRotation);
             poseRotation = GetFlexaPose().rightFootTransform?.rotation ?? Quaternion.identity;
             SceneView.RepaintAll();
         });
-        RightFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) => {
-            Debug.Log("poseRotation RightFootRotWorldReset" + poseRotation);
+        RightFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) =>
+        {
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
-            var avatarPoseMeta = GetFlexaPose();
+            currentFlexaPose = GetFlexaPose();
+            SetRightText();
+
             if (handleEnabled && poseSelectionType != PoseSelectionType.RightFoot)
             {
                 if (poseSelectionType == PoseSelectionType.CenterEye)
                 {
-                    SelectCenterEyeComplete(avatarPoseMeta);
+                    SelectCenterEyeComplete(currentFlexaPose);
+                    CenterEyePosReset.style.display = DisplayStyle.None;
                 }
                 else
                 {
-                    SelectLeftFootComplete(avatarPoseMeta);
+                    SelectLeftFootComplete(currentFlexaPose);
+                    LeftFootPosReset.style.display = DisplayStyle.None;
+                    LeftFootRotReset.style.display = DisplayStyle.None;
+                    LeftFootRotWorldReset.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -743,7 +723,7 @@ public class BuilderWindow : EditorWindow
             SelectRightFoot.text = handleEnabled ? "Done" : "Change";
             if (!handleEnabled)
             {
-                SelectRightFootComplete(avatarPoseMeta);
+                SelectRightFootComplete(currentFlexaPose);
                 RightFootPosReset.style.display = DisplayStyle.None;
                 RightFootRotReset.style.display = DisplayStyle.None;
                 RightFootRotWorldReset.style.display = DisplayStyle.None;
@@ -753,18 +733,15 @@ public class BuilderWindow : EditorWindow
                 RightFootPosReset.style.display = DisplayStyle.Flex;
                 RightFootRotReset.style.display = DisplayStyle.Flex;
                 RightFootRotWorldReset.style.display = DisplayStyle.Flex;
-                posePosition = avatarPoseMeta.rightFootTransform.TransformPoint(rightFootPose.position);
-                Debug.Log("poseRotation avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation" + poseRotation);
-                poseRotation = avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation;
-                Debug.Log("poseRotation avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation2" + poseRotation);
+                posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
+                poseRotation = currentFlexaPose.rightFootTransform.rotation * currentFlexaPose.rightFoot.rotation;
                 OnPoseCallback = () =>
                 {
-                    Handles.DrawLine(avatarPoseMeta.rightFootTransform.position, posePosition);
-                    var pos = avatarPoseMeta.rightFootTransform.InverseTransformPoint(posePosition);
-                    var rot = Quaternion.Inverse(avatarPoseMeta.rightFootTransform.rotation) * poseRotation;
-                    rightFootPose = new Pose(pos, rot);
-                    avatarPoseMeta.rightFoot = rightFootPose;
-                    EditorUtility.SetDirty(avatarPoseMeta);
+                    Handles.DrawLine(currentFlexaPose.rightFootTransform.position, posePosition);
+                    var pos = currentFlexaPose.rightFootTransform.InverseTransformPoint(posePosition);
+                    var rot = Quaternion.Inverse(currentFlexaPose.rightFootTransform.rotation) * poseRotation;
+                    currentFlexaPose.rightFoot = new Pose(pos, rot);
+                    EditorUtility.SetDirty(currentFlexaPose);
                     RightFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
                 };
 
@@ -1468,6 +1445,10 @@ public class BuilderWindow : EditorWindow
     }
     FlexaPose GetFlexaPose()
     {
+        if(avatarGameObject == null)
+        {
+            return null;
+        }
         var avatarPoseMeta = avatarGameObject?.GetComponent<FlexaPose>();
         if (avatarPoseMeta == null)
         {
@@ -1483,9 +1464,10 @@ public class BuilderWindow : EditorWindow
             return;
         }
         avatarGameObject = gameObject;
-        SetupInitialCenterEyeValues();
-        SetupInitialRightFootValues();
-        SetupInitialLeftFootValues();
+        currentFlexaPose = GetFlexaPose();
+        SetCenterText();
+        SetLeftText();
+        SetRightText();
         RefreshAvatarView();
     }
     private void DropFile(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
@@ -1563,11 +1545,11 @@ public class BuilderWindow : EditorWindow
             dropAvatarContainer.style.display = DisplayStyle.None;
             AvatarInfoCard.style.display = DisplayStyle.Flex;
             SelectAvatar.text = avatarGameObject.name;
-            var avatarPoseMeta = GetFlexaPose();
             var bones = AvatarBoneNames.AvatarBoneNamesMapping;
+            currentFlexaPose = GetFlexaPose();            
             foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
             {
-                if(t.GetComponent<Renderer>() && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
+                if (t.GetComponent<Renderer>() && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
                 {
                     headGameObjects.Add(t.gameObject);
                     var list = (ListView)HeadObjectList.Children().First();
@@ -1578,13 +1560,13 @@ public class BuilderWindow : EditorWindow
                     switch (bones[t.name])
                     {
                         case AvatarBoneName.HEAD:
-                            avatarPoseMeta.headTransform = t;
+                            currentFlexaPose.headTransform = t;
                             break;
                         case AvatarBoneName.LEFTLEG_FOOT:
-                            avatarPoseMeta.leftFootTransform = t;
+                            currentFlexaPose.leftFootTransform = t;
                             break;
                         case AvatarBoneName.RIGHTLEG_FOOT:
-                            avatarPoseMeta.rightFootTransform = t;
+                            currentFlexaPose.rightFootTransform = t;
                             break;
 
                     }
@@ -1767,7 +1749,6 @@ public class BuilderWindow : EditorWindow
         {
             basisProp = avatarGameObject.AddComponent<BasisProp>();
         }
-        var avatarPoseMeta = GetFlexaPose();
 
         foreach (var headObj in headGameObjects)
         {
@@ -1783,10 +1764,6 @@ public class BuilderWindow : EditorWindow
         }
         try
         {
-            avatarPoseMeta.centerEye = centerEyePose;
-            avatarPoseMeta.leftFoot = leftFootPose;
-            avatarPoseMeta.rightFoot = rightFootPose;
-            EditorUtility.SetDirty(avatarPoseMeta);
             basisProp.BasisBundleDescription = new BasisBundleDescription
             {
                 AssetBundleName = "BasisAvatar"
