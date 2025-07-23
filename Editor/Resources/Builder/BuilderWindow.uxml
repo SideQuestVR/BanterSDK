@@ -174,7 +174,7 @@
                             <ui:Label text="Build &amp; Upload it Now!" display-tooltip-when-elided="true" name="buildAvatarButton" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label tabindex="-1" text="Click &quot;Build &amp; Upload it Now!&quot; to validate your avatar. " parse-escape-sequences="true" display-tooltip-when-elided="true" name="MissingBones" style="-unity-font-style: normal; font-size: 12px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end; padding-bottom: 10px; white-space: normal; color: rgb(255, 255, 255);" />
+                    <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MissingBones" style="-unity-font-style: normal; font-size: 12px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end; padding-bottom: 10px; white-space: normal; color: rgb(255, 255, 255);" />
                 </ui:ScrollView>
             </ui:VisualElement>
             <ui:VisualElement name="LogsSection" style="display: flex; width: 25%;">

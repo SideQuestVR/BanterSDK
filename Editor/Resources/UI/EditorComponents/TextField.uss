@@ -11,13 +11,48 @@
     padding: 3px;
     color: #fff;
     border-width: 0;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 .unity-base-field__input{
     overflow: auto;
     background-color: transparent;
 }
-
+.unity-list-view__size-field{
+    background-color: black;
+    border-radius: 10px;
+    width: 20px;
+    -unity-text-align: right;
+}
+.unity-list-view__size-field .unity-text-element{
+    -unity-text-align: middle-right;
+}
+.unity-object-field{
+    margin-left: 0;
+    margin-right: 0;
+    border-radius: 10px;
+}
+.unity-scroll-view{
+    border-radius: 10px;
+}
+.unity-list-view__footer{
+    margin-top: 10px;
+    background-color: transparent
+}
+.unity-list-view__footer .unity-button{
+    border-radius: 8px;
+    font-size: 28px;
+    padding: 0;
+    height: 16px;
+    -unity-font-style: italic;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+.unity-foldout__toggle{
+    margin-bottom: 15px;
+}
+.unity-foldout__input{
+    flex-direction: row;
+}
 .unity-object-field__input, .unity-object-field__selector{
     background-color: black;
 }

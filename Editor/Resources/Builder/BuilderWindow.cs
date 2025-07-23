@@ -538,6 +538,7 @@ public class BuilderWindow : EditorWindow
             SetLeftText();
             SetRightText();
         }
+        GetHeadObjects();
         SelectAvatar = rootVisualElement.Q<Label>("SelectAvatar");
         SelectCenterEye = rootVisualElement.Q<Button>("SelectCenterEye");
         var CenterEyePosReset = rootVisualElement.Q<Button>("CenterEyePosReset");
@@ -1443,6 +1444,26 @@ public class BuilderWindow : EditorWindow
         }
         numberOfItems.text = "Number of items: " + kitObjectList.Count;
     }
+    void GetHeadObjects()
+    {
+        if(avatarGameObject == null)
+        {
+            return;
+        }
+        foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
+        {
+            if (t.GetComponent<FlexaHead>())
+            {
+                if(!headGameObjects.Contains(t.gameObject))
+                {
+                    headGameObjects.Add(t.gameObject);
+                }
+            }
+        }
+        headGameObjects = headGameObjects.Distinct().ToList();
+        var list = (ListView)HeadObjectList.Children().First();
+        list.Rebuild();
+    }
     FlexaPose GetFlexaPose()
     {
         if(avatarGameObject == null)
@@ -1465,6 +1486,7 @@ public class BuilderWindow : EditorWindow
         }
         avatarGameObject = gameObject;
         currentFlexaPose = GetFlexaPose();
+        GetHeadObjects();
         SetCenterText();
         SetLeftText();
         SetRightText();
@@ -1664,7 +1686,7 @@ public class BuilderWindow : EditorWindow
         {
             virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight,
             showFoldoutHeader = true,
-            headerTitle = " - Head Objects",
+            headerTitle = "  Head Objects",
             showAddRemoveFooter = true,
             reorderMode = ListViewReorderMode.Animated,
             makeItem = () => new ObjectField
@@ -1764,6 +1786,9 @@ public class BuilderWindow : EditorWindow
         }
         try
         {
+            headGameObjects = headGameObjects.Distinct().ToList();
+            var list = (ListView)HeadObjectList.Children().First();
+            list.Rebuild();
             basisProp.BasisBundleDescription = new BasisBundleDescription
             {
                 AssetBundleName = "BasisAvatar"

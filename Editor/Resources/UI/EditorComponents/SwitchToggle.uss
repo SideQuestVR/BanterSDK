@@ -8,6 +8,9 @@
     color: #ffffff;
     cursor: link;
 }
+.unity-toggle:checked .unity-label {
+    margin-left: 26px;
+}
 .unity-toggle .unity-toggle__input {
     transition: all 0.6s;
     width: 50px;
