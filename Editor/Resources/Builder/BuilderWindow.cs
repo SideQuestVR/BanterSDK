@@ -1480,17 +1480,18 @@ public class BuilderWindow : EditorWindow
             var bones = AvatarBoneNames.AvatarBoneNamesMapping;
             foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
             {
+                if(t.GetComponent<Renderer>() && t.name.ToLower().Contains("head") && !headGameObjects.Contains(t.gameObject))
+                {
+                    headGameObjects.Add(t.gameObject);
+                    var list = (ListView)HeadObjectList.Children().First();
+                    list.Rebuild();
+                    
+                }
                 if (bones.ContainsKey(t.name))
                 {
                     switch (bones[t.name])
                     {
                         case AvatarBoneName.HEAD:
-                            if (!headGameObjects.Contains(t.gameObject))
-                            {
-                                headGameObjects.Add(t.gameObject);
-                                var list = (ListView)HeadObjectList.Children().First();
-                                list.Rebuild();
-                            }
                             avatarPoseMeta.headTransform = t;
                             break;
                         case AvatarBoneName.LEFTLEG_FOOT:
