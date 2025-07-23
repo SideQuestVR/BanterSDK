@@ -504,6 +504,9 @@ public class BuilderWindow : EditorWindow
         var resetScreen = rootVisualElement.Q<Button>("resetAvatarScreen");
         resetScreen.RegisterCallback<MouseUpEvent>((e) =>
         {
+            headGameObjects.Clear();
+            var list = (ListView)HeadObjectList.Children().First();
+            list.Rebuild();
             avatarGameObject = null;
             RefreshAvatarView(true);
         });
@@ -1485,7 +1488,6 @@ public class BuilderWindow : EditorWindow
                     headGameObjects.Add(t.gameObject);
                     var list = (ListView)HeadObjectList.Children().First();
                     list.Rebuild();
-                    
                 }
                 if (bones.ContainsKey(t.name))
                 {
