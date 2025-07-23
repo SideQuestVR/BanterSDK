@@ -268,6 +268,7 @@ public class BuilderWindow : EditorWindow
         SqEditorAppApiConfig config = new SqEditorAppApiConfig(isTestEnvironment ? SQ_API_CLIENT_ID_TEST : SQ_API_CLIENT_ID, Application.persistentDataPath, isTestEnvironment);
         sq = new SqEditorAppApi(config);
         SetupUI();
+        avatarGameObject = AvatarRef.Instance.avatarGameObject;
         SetupAvatarUI();
         status = new Status(statusBar, buildProgress, buildProgressBar);
         buildProgress.bindItem = (e, i) =>
@@ -295,7 +296,6 @@ public class BuilderWindow : EditorWindow
             avatarGameObject = AvatarRef.Instance.avatarGameObject;
             RefreshAvatarView(true);
         };
-        avatarGameObject = AvatarRef.Instance.avatarGameObject;
         if (avatarGameObject != null)
         { 
             RefreshAvatarView(); 
@@ -419,11 +419,13 @@ public class BuilderWindow : EditorWindow
         if (!handlePosition)
         {
             // Optional: Draw a wireframe at the pose
-            Handles.color = Color.cyan;
             Matrix4x4 matrix = Matrix4x4.TRS(posePosition, poseRotation, Vector3.one);
             using (new Handles.DrawingScope(matrix))
             {
+                Handles.color = Color.cyan;
                 Handles.ArrowHandleCap(0, Vector3.zero, Quaternion.LookRotation(Vector3.forward), 0.5f, EventType.Repaint);
+                Handles.color = Color.magenta;
+                Handles.ArrowHandleCap(0, Vector3.zero, Quaternion.LookRotation(Vector3.up), 0.5f, EventType.Repaint);
             }
         }
         OnPoseCallback?.Invoke();
@@ -515,7 +517,19 @@ public class BuilderWindow : EditorWindow
 
         CenterEyePoseLabel = rootVisualElement.Q<Label>("CenterEyePoseLabel");
         SelectCenterEye = rootVisualElement.Q<Button>("SelectCenterEye");
-        GetExistingPose(ref centerEyePose, "BanterBuilder_CenterEyePosePosition", "0,1.6,0;0,0,0,1");
+        if (avatarGameObject == null)
+        {
+            GetExistingPose(ref centerEyePose, "BanterBuilder_CenterEyePosePosition", "0,0,0;0,0,0,1");
+        }
+        else
+        {
+            var avatarPoseMeta = GetFlexaPose();
+            if (avatarPoseMeta != null)
+            {
+                centerEyePose.position = avatarPoseMeta.headTransform.position;
+                centerEyePose.rotation = avatarPoseMeta.headTransform.rotation;
+            }
+        }
         CenterEyePoseLabel.text = $"Position: {centerEyePose.position}";
         var CenterEyePosReset = rootVisualElement.Q<Button>("CenterEyePosReset");
         CenterEyePosReset.RegisterCallback<MouseUpEvent>((e) =>
@@ -569,11 +583,24 @@ public class BuilderWindow : EditorWindow
 
         LeftFootPoseLabel = rootVisualElement.Q<Label>("LeftFootPoseLabel");
         SelectLeftFoot = rootVisualElement.Q<Button>("SelectLeftFoot");
-        GetExistingPose(ref leftFootPose, "BanterBuilder_LeftFootPosePosition", "0,1.6,0;0,0,0,1");
+        if (avatarGameObject == null)
+        {
+            GetExistingPose(ref leftFootPose, "BanterBuilder_LeftFootPosePosition", "0,0,0;0,0,0,1");
+        }
+        else
+        {
+            var avatarPoseMeta = GetFlexaPose();
+            if (avatarPoseMeta != null)
+            {
+                leftFootPose.position = avatarPoseMeta.leftFootTransform.position;
+                leftFootPose.rotation = avatarPoseMeta.leftFootTransform.rotation;
+            }
+        }
         LeftFootPoseLabel.text = $"Position: {leftFootPose.position}\nRotation: {leftFootPose.rotation.eulerAngles}";
         
         var LeftFootPosReset = rootVisualElement.Q<Button>("LeftFootPosReset");
         var LeftFootRotReset = rootVisualElement.Q<Button>("LeftFootRotReset");
+        var LeftFootRotWorldReset = rootVisualElement.Q<Button>("LeftFootRotWorldReset");
         LeftFootPosReset.RegisterCallback<MouseUpEvent>((e) => 
         {
             posePosition = GetFlexaPose().leftFootTransform.position;
@@ -581,6 +608,10 @@ public class BuilderWindow : EditorWindow
         });
         LeftFootRotReset.RegisterCallback<MouseUpEvent>((e) => {
             poseRotation = GetFlexaPose().leftFootTransform.rotation;
+            SceneView.RepaintAll();
+        });
+        LeftFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) => {
+            poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
         SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
@@ -609,11 +640,13 @@ public class BuilderWindow : EditorWindow
                 SelectLeftFootComplete(avatarPoseMeta);
                 LeftFootPosReset.style.display = DisplayStyle.None;
                 LeftFootRotReset.style.display = DisplayStyle.None;
+                LeftFootRotWorldReset.style.display = DisplayStyle.None;
             }
             else
             {
                 LeftFootPosReset.style.display = DisplayStyle.Flex;
                 LeftFootRotReset.style.display = DisplayStyle.Flex;
+                LeftFootRotWorldReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.leftFootTransform.TransformPoint(leftFootPose.position);
                 poseRotation = avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation;
                 OnPoseCallback = () =>
@@ -631,10 +664,23 @@ public class BuilderWindow : EditorWindow
 
         RightFootPoseLabel = rootVisualElement.Q<Label>("RightFootPoseLabel");
         SelectRightFoot = rootVisualElement.Q<Button>("SelectRightFoot");
-        GetExistingPose(ref rightFootPose, "BanterBuilder_RightFootPosePosition", "0,1.6,0;0,0,0,1");
+        if (avatarGameObject == null)
+        {
+            GetExistingPose(ref rightFootPose, "BanterBuilder_RightFootPosePosition", "0,0,0;0,0,0,1");
+        }
+        else
+        {
+            var avatarPoseMeta = GetFlexaPose();
+            if (avatarPoseMeta != null)
+            {
+                rightFootPose.position = avatarPoseMeta.rightFootTransform.position;
+                rightFootPose.rotation = avatarPoseMeta.rightFootTransform.rotation;
+            }
+        }
         RightFootPoseLabel.text = $"Position: {rightFootPose.position}\nRotation: {rightFootPose.rotation.eulerAngles}";
         var RightFootPosReset = rootVisualElement.Q<Button>("RightFootPosReset");
         var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
+        var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
         RightFootPosReset.RegisterCallback<MouseUpEvent>((e) => 
         {
             posePosition = GetFlexaPose().rightFootTransform.position;
@@ -643,6 +689,10 @@ public class BuilderWindow : EditorWindow
         RightFootRotReset.RegisterCallback<MouseUpEvent>((e) => 
         {
             poseRotation = GetFlexaPose().rightFootTransform.rotation;
+            SceneView.RepaintAll();
+        });
+        RightFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) => {
+            poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
@@ -671,11 +721,13 @@ public class BuilderWindow : EditorWindow
                 SelectRightFootComplete(avatarPoseMeta);
                 RightFootPosReset.style.display = DisplayStyle.None;
                 RightFootRotReset.style.display = DisplayStyle.None;
+                RightFootRotWorldReset.style.display = DisplayStyle.None;
             }
             else
             {
                 RightFootPosReset.style.display = DisplayStyle.Flex;
                 RightFootRotReset.style.display = DisplayStyle.Flex;
+                RightFootRotWorldReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.rightFootTransform.TransformPoint(rightFootPose.position);
                 poseRotation = avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation;
                 OnPoseCallback = () =>
