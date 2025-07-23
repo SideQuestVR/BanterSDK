@@ -16,7 +16,7 @@ using UnityEngine.Networking;
 using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
-using Codice.CM.Common.Tree.Partial;
+using LongBunnyLabs;
 
 public enum BanterBuilderBundleMode
 {
@@ -440,7 +440,7 @@ public class BuilderWindow : EditorWindow
         var pos = avatarPoseMeta.rightFootTransform.InverseTransformPoint(posePosition);
         var rot = Quaternion.Inverse(avatarPoseMeta.rightFootTransform.rotation) * poseRotation;
         avatarPoseMeta.rightFoot = new Pose(pos, rot);
-        EditorPrefs.SetString("BanterBuilder_RightFootPosePosition", pos.x + "," + pos.y + "," + pos.z +
+        ProjectPrefs.SetString("BanterBuilder_RightFootPosePosition", pos.x + "," + pos.y + "," + pos.z +
             ";" + rot.x + "," + rot.y + "," + rot.z + "," + rot.w);
         RightFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
     }
@@ -450,7 +450,7 @@ public class BuilderWindow : EditorWindow
         var pos = avatarPoseMeta.leftFootTransform.InverseTransformPoint(posePosition);
         var rot = Quaternion.Inverse(avatarPoseMeta.leftFootTransform.rotation) * poseRotation;
         avatarPoseMeta.leftFoot = new Pose(pos, rot);
-        EditorPrefs.SetString("BanterBuilder_LeftFootPosePosition", pos.x + "," + pos.y + "," + pos.z +
+        ProjectPrefs.SetString("BanterBuilder_LeftFootPosePosition", pos.x + "," + pos.y + "," + pos.z +
             ";" + rot.x + "," + rot.y + "," + rot.z + "," + rot.w);
         LeftFootPoseLabel.text = $"Position: {pos}\nRotation: {rot.eulerAngles}";
     }
@@ -460,7 +460,7 @@ public class BuilderWindow : EditorWindow
         var pos = avatarPoseMeta.headTransform.InverseTransformPoint(posePosition);
         var rot = Quaternion.Inverse(avatarPoseMeta.headTransform.rotation) * poseRotation;
         avatarPoseMeta.centerEye = new Pose(pos, rot);
-        EditorPrefs.SetString("BanterBuilder_CenterEyePosePosition", pos.x + "," + pos.y + "," + pos.z +
+        ProjectPrefs.SetString("BanterBuilder_CenterEyePosePosition", pos.x + "," + pos.y + "," + pos.z +
             ";" + rot.x + "," + rot.y + "," + rot.z + "," + rot.w);
         CenterEyePoseLabel.text = $"Position: {pos}";
     }
@@ -752,7 +752,7 @@ public class BuilderWindow : EditorWindow
     }
 
     void GetExistingPose(ref Pose pose, string key, string defaults) {
-        var posePositionString = EditorPrefs.GetString(key, defaults);
+        var posePositionString = ProjectPrefs.GetString(key, defaults);
         var poseParts = posePositionString.Split(';');
         if (poseParts.Length == 2)
         {
@@ -788,19 +788,19 @@ public class BuilderWindow : EditorWindow
         clearLogs.clicked += () => status.ClearLogs();
 
         var buildForAndroid = rootVisualElement.Q<Toggle>("buildForAndroid");
-        buildTargetFlags[0] = buildForAndroid.value = EditorPrefs.GetBool("BanterBuilder_BuildTarget_Android", true);
+        buildTargetFlags[0] = buildForAndroid.value = ProjectPrefs.GetBool("BanterBuilder_BuildTarget_Android", true);
         buildForAndroid.RegisterCallback<MouseUpEvent>((e) =>
         {
-            EditorPrefs.SetBool("BanterBuilder_BuildTarget_Android", buildForAndroid.value);
+            ProjectPrefs.SetBool("BanterBuilder_BuildTarget_Android", buildForAndroid.value);
             buildTargetFlags[0] = buildForAndroid.value;
             ShowHideBuildButton();
         });
 
         var buildForWindows = rootVisualElement.Q<Toggle>("buildForWindows");
-        buildTargetFlags[1] = buildForWindows.value = EditorPrefs.GetBool("BanterBuilder_BuildTarget_Windows", true);
+        buildTargetFlags[1] = buildForWindows.value = ProjectPrefs.GetBool("BanterBuilder_BuildTarget_Windows", true);
         buildForWindows.RegisterCallback<MouseUpEvent>((e) =>
         {
-            EditorPrefs.SetBool("BanterBuilder_BuildTarget_Windows", buildForWindows.value);
+            ProjectPrefs.SetBool("BanterBuilder_BuildTarget_Windows", buildForWindows.value);
             buildTargetFlags[1] = buildForWindows.value;
             ShowHideBuildButton();
         });
@@ -808,11 +808,11 @@ public class BuilderWindow : EditorWindow
         ShowHideBuildButton();
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
-        autoUpload.value = EditorPrefs.GetBool("BanterBuilder_AutoUpload", false);
+        autoUpload.value = ProjectPrefs.GetBool("BanterBuilder_AutoUpload", false);
 
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {
-            EditorPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
+            ProjectPrefs.SetBool("BanterBuilder_AutoUpload", autoUpload.value);
             loginManager.SetBuildButtonText();
         });
 
@@ -830,7 +830,7 @@ public class BuilderWindow : EditorWindow
             kitObjectList.Clear();
             kitListView.Rebuild();
             SaveKitList();
-            EditorPrefs.DeleteKey("BanterBuilder_ScenePath");
+            ProjectPrefs.DeleteKey("BanterBuilder_ScenePath");
             status.AddStatus("Scene removed from build.");
             RefreshView();
         });
@@ -922,10 +922,10 @@ public class BuilderWindow : EditorWindow
         spaceSlug.RegisterValueChangedCallback((e) =>
         {
             ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, e.newValue);
-            EditorPrefs.SetString("BanterBuilder_spaceSlug", e.newValue);
+            ProjectPrefs.SetString("BanterBuilder_spaceSlug", e.newValue);
         });
 
-        spaceSlug.value = EditorPrefs.GetString("BanterBuilder_spaceSlug", "");
+        spaceSlug.value = ProjectPrefs.GetString("BanterBuilder_spaceSlug", "");
         ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, spaceSlug.value);
         uploadWebOnly.clicked += () =>
         {
@@ -1089,7 +1089,7 @@ public class BuilderWindow : EditorWindow
         kitListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
         kitListView.reorderMode = ListViewReorderMode.Simple;
         new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
-        scenePathLabel.text = scenePath = EditorPrefs.GetString("BanterBuilder_ScenePath", "");
+        scenePathLabel.text = scenePath = ProjectPrefs.GetString("BanterBuilder_ScenePath", "");
         LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
         {
@@ -1420,12 +1420,12 @@ public class BuilderWindow : EditorWindow
 
     private void SaveKitList()
     {
-        EditorPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
+        ProjectPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
     }
 
     private void LoadKitList()
     {
-        var paths = EditorPrefs.GetString("BanterBuilder_SelectedKitObjects", "").Split(',');
+        var paths = ProjectPrefs.GetString("BanterBuilder_SelectedKitObjects", "").Split(',');
         foreach (var path in paths)
         {
             if (string.IsNullOrEmpty(path))
@@ -1521,8 +1521,8 @@ public class BuilderWindow : EditorWindow
             }
             numberOfItems.text = "Number of items: " + kitObjectList.Count;
         }
-        EditorPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
-        EditorPrefs.SetString("BanterBuilder_ScenePath", scenePath);
+        ProjectPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
+        ProjectPrefs.SetString("BanterBuilder_ScenePath", scenePath);
         RefreshView();
     }
 
