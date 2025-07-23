@@ -170,7 +170,7 @@ public class BuilderWindow : EditorWindow
     public static void ShowMainWindow()
     {
         Type inspectorType = Type.GetType("UnityEditor.InspectorWindow,UnityEditor.dll");
-        BuilderWindow window = EditorWindow.GetWindow<BuilderWindow>(new Type[] {inspectorType});
+        BuilderWindow window = EditorWindow.GetWindow<BuilderWindow>(new Type[] { inspectorType });
         window.minSize = new Vector2(450, 200);
         window.titleContent = new GUIContent("Banter Builder");
     }
@@ -260,6 +260,8 @@ public class BuilderWindow : EditorWindow
 
     public void OnEnable()
     {
+        
+        Debug.Log("poseRotation OnEnable" + poseRotation);
         SceneView.duringSceneGui += OnSceneGUI;
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
@@ -396,6 +398,7 @@ public class BuilderWindow : EditorWindow
 
         EditorGUI.BeginChangeCheck();
         Vector3 newPos = Handles.PositionHandle(posePosition, poseRotation);
+        Debug.Log("poseRotation Quaternion newRot = poseRotation" + poseRotation);
         Quaternion newRot = poseRotation;
         if (!handlePosition)
         {
@@ -567,7 +570,9 @@ public class BuilderWindow : EditorWindow
             {
                 CenterEyePosReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.headTransform.TransformPoint(centerEyePose.position);
+                Debug.Log("poseRotation avatarPoseMeta.headTransform.rotation * centerEyePose.rotation" + poseRotation);
                 poseRotation = avatarPoseMeta.headTransform.rotation * centerEyePose.rotation;
+                Debug.Log("poseRotation avatarPoseMeta.headTransform.rotation * centerEyePose.rotation" + poseRotation);
                 OnPoseCallback = () =>
                 {
                     Handles.DrawLine(avatarPoseMeta.headTransform.position, posePosition);
@@ -607,10 +612,12 @@ public class BuilderWindow : EditorWindow
             SceneView.RepaintAll();
         });
         LeftFootRotReset.RegisterCallback<MouseUpEvent>((e) => {
-            poseRotation = GetFlexaPose().leftFootTransform.rotation;
+            Debug.Log("poseRotation LeftFootRotReset" + poseRotation);
+            poseRotation = GetFlexaPose().leftFootTransform?.rotation??Quaternion.identity;
             SceneView.RepaintAll();
         });
         LeftFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) => {
+            Debug.Log("poseRotation LeftFootRotWorldReset" + poseRotation);
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
@@ -648,7 +655,9 @@ public class BuilderWindow : EditorWindow
                 LeftFootRotReset.style.display = DisplayStyle.Flex;
                 LeftFootRotWorldReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.leftFootTransform.TransformPoint(leftFootPose.position);
+                Debug.Log("poseRotation avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation" + poseRotation);
                 poseRotation = avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation;
+                Debug.Log("poseRotation avatarPoseMeta.leftFootTransform.rotation * leftFootPose.rotation2" + poseRotation);
                 OnPoseCallback = () =>
                 {
                     Handles.DrawLine(avatarPoseMeta.leftFootTransform.position, posePosition);
@@ -688,10 +697,12 @@ public class BuilderWindow : EditorWindow
         });
         RightFootRotReset.RegisterCallback<MouseUpEvent>((e) => 
         {
-            poseRotation = GetFlexaPose().rightFootTransform.rotation;
+            Debug.Log("poseRotation RightFootRotReset" + poseRotation);
+            poseRotation = GetFlexaPose().rightFootTransform?.rotation ?? Quaternion.identity;
             SceneView.RepaintAll();
         });
         RightFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) => {
+            Debug.Log("poseRotation RightFootRotWorldReset" + poseRotation);
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
@@ -729,7 +740,9 @@ public class BuilderWindow : EditorWindow
                 RightFootRotReset.style.display = DisplayStyle.Flex;
                 RightFootRotWorldReset.style.display = DisplayStyle.Flex;
                 posePosition = avatarPoseMeta.rightFootTransform.TransformPoint(rightFootPose.position);
+                Debug.Log("poseRotation avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation" + poseRotation);
                 poseRotation = avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation;
+                Debug.Log("poseRotation avatarPoseMeta.rightFootTransform.rotation * rightFootPose.rotation2" + poseRotation);
                 OnPoseCallback = () =>
                 {
                     Handles.DrawLine(avatarPoseMeta.rightFootTransform.position, posePosition);
