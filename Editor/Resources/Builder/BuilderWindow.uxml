@@ -96,7 +96,7 @@
                         <ui:Toggle label="Windows:" value="true" name="buildForWindows" style="margin-bottom: 5px; justify-content: flex-start; margin-left: 5%; margin-right: 5%;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInCTAScene" style="display: flex; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
-                        <ui:VisualElement style="background-image: url(&quot;project://database/Assets/Menu/UIKit/Images/ButtonSmall.png?fileID=2800000&amp;guid=f462588209950444ba746f2e039cbe7d&amp;type=3#ButtonSmall&quot;); width: 244.5px; height: 94.5px; margin-left: 0; cursor: initial; margin-top: 0; padding-top: 2px; padding-bottom: 2px;">
+                        <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 244.5px; height: 94.5px; margin-left: 0; cursor: initial; margin-top: 0; padding-top: 2px; padding-bottom: 2px;">
                             <ui:Label text="Build it Now!" display-tooltip-when-elided="true" name="buildButton" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
                         </ui:VisualElement>
                         <ui:VisualElement name="ExtraUploadButtons" style="flex-grow: 1; flex-direction: row;">
