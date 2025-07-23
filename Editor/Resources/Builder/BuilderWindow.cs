@@ -404,11 +404,11 @@ public class BuilderWindow : EditorWindow
             Handles.color = Color.white;
             newRot = Handles.FreeRotateHandle(newRot, newPos, handleSize * 1.5f);
             Handles.color = Color.green;
-            newRot = Handles.Disc(newRot, newPos, new Vector3(0, 1, 0), handleSize * 1.5f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot * new Vector3(0, 1, 0), handleSize * 1.5f, false, 1);
             Handles.color = Color.red;
-            newRot = Handles.Disc(newRot, newPos, new Vector3(1, 0, 0), handleSize * 1.5f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(1, 0, 0), handleSize * 1.5f, false, 1);
             Handles.color = Color.blue;
-            newRot = Handles.Disc(newRot, newPos, new Vector3(0, 0, 1), handleSize * 1.5f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(0, 0, 1), handleSize * 1.5f, false, 1);
         }
         if (EditorGUI.EndChangeCheck())
         {
