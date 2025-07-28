@@ -54,7 +54,7 @@ public class BuilderWindow : EditorWindow
 
     public const string SQ_API_CLIENT_ID_TEST = "client_85b087d9975cb8ca5bb575a2";
 
-    public bool isTestEnvironment = true;
+    public bool isTestEnvironment = false;
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
