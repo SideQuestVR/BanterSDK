@@ -405,13 +405,13 @@ public class BuilderWindow : EditorWindow
             float handleSize = HandleUtility.GetHandleSize(newPos);
             // newRot = Handles.RotationHandle(poseRotation, newPos);
             Handles.color = Color.white;
-            newRot = Handles.FreeRotateHandle(newRot, newPos, handleSize * 1.5f);
+            newRot = Handles.FreeRotateHandle(newRot, newPos, handleSize * 0.7f);
             Handles.color = Color.green;
-            newRot = Handles.Disc(newRot, newPos, newRot * new Vector3(0, 1, 0), handleSize * 1.5f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot * new Vector3(0, 1, 0), handleSize * 0.7f, false, 1);
             Handles.color = Color.red;
-            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(1, 0, 0), handleSize * 1.5f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(1, 0, 0), handleSize * 0.7f, false, 1);
             Handles.color = Color.blue;
-            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(0, 0, 1), handleSize * 1.5f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(0, 0, 1), handleSize * 0.7f, false, 1);
         }
         if (EditorGUI.EndChangeCheck())
         {
