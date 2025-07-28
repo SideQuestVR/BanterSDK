@@ -1486,11 +1486,11 @@ public class BuilderWindow : EditorWindow
         }
         avatarGameObject = gameObject;
         currentFlexaPose = GetFlexaPose();
-        GetHeadObjects();
         SetCenterText();
         SetLeftText();
         SetRightText();
         RefreshAvatarView();
+        GetHeadObjects();
     }
     private void DropFile(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
@@ -1571,7 +1571,7 @@ public class BuilderWindow : EditorWindow
             currentFlexaPose = GetFlexaPose();            
             foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
             {
-                if (t.GetComponent<Renderer>() && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
+                if (t.GetComponent<Renderer>() != null && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
                 {
                     headGameObjects.Add(t.gameObject);
                     var list = (ListView)HeadObjectList.Children().First();
@@ -1709,9 +1709,7 @@ public class BuilderWindow : EditorWindow
     
     bool ValidateAvatarBones()
     {
-#if BANTER_EDITOR
-        return true;
-#endif
+
         if (avatarGameObject == null)
         {
             status.AddStatus("No avatar selected, please select an avatar.");
