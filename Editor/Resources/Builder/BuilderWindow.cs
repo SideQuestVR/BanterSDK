@@ -17,6 +17,8 @@ using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
 using LongBunnyLabs;
+using System.Text;
+using System.Security.Cryptography;
 
 public enum BanterBuilderBundleMode
 {
@@ -118,6 +120,7 @@ public class BuilderWindow : EditorWindow
     Button cancelDelete;
 
     GameObject avatarGameObject;
+    string avatarPath;
     VisualElement dropAvatarContainer;
    
     Kit[] myKits; 
@@ -260,9 +263,22 @@ public class BuilderWindow : EditorWindow
         EditorGUIUtility.PingObject(obj);
     }
 
+    void RestoreAvatar()
+    {
+        avatarPath = ProjectPrefs.GetString("BanterBuilder_AvatarPath", null);
+        if (!string.IsNullOrEmpty(avatarPath))
+        {
+            avatarGameObject = AssetDatabase.LoadAssetAtPath<GameObject>(avatarPath);
+            if(avatarGameObject == null)
+            {
+                avatarPath = null;
+            }
+        }
+    }
+
     public void OnEnable()
     {
-        
+
         SceneView.duringSceneGui += OnSceneGUI;
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
@@ -271,7 +287,7 @@ public class BuilderWindow : EditorWindow
         SqEditorAppApiConfig config = new SqEditorAppApiConfig(isTestEnvironment ? SQ_API_CLIENT_ID_TEST : SQ_API_CLIENT_ID, Application.persistentDataPath, isTestEnvironment);
         sq = new SqEditorAppApi(config);
         SetupUI();
-        avatarGameObject = AvatarRef.Instance.avatarGameObject;
+        RestoreAvatar();
         SetupAvatarUI();
         status = new Status(statusBar, buildProgress, buildProgressBar);
         buildProgress.bindItem = (e, i) =>
@@ -296,14 +312,14 @@ public class BuilderWindow : EditorWindow
         {
             EditorCoroutineUtility.StartCoroutine(CheckKitUserExists(), this);
             RefreshView(true);
-            avatarGameObject = AvatarRef.Instance.avatarGameObject;
+            RestoreAvatar();
             RefreshAvatarView(true);
         };
         if (avatarGameObject != null)
-        { 
-            RefreshAvatarView(); 
+        {
+            RefreshAvatarView();
         }
-        RefreshView(); 
+        RefreshView();
     }
 
     [MenuItem("Banter/Tools/Clear All Asset Bundles")]
@@ -395,7 +411,10 @@ public class BuilderWindow : EditorWindow
         if (!handleEnabled)
             return;
 
-        
+        if (new Vector4(poseRotation.x, poseRotation.y, poseRotation.z, poseRotation.w).magnitude == 0) // If the rotation is zero, reset it to identity
+        {
+            poseRotation = Quaternion.identity;
+        }
 
         EditorGUI.BeginChangeCheck();
         Vector3 newPos = Handles.PositionHandle(posePosition, poseRotation);
@@ -498,14 +517,14 @@ public class BuilderWindow : EditorWindow
             EditorGUIUtility.PingObject(avatarGameObject);
 
         });
-        new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropAvatarArea"), DropGameObject);
+        new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropAvatarArea"), DropAvatar);
 
         buildAvatarButton = rootVisualElement.Q<Label>("buildAvatarButton");
         buildAvatarButton.RegisterCallback<MouseUpEvent>(async (e) =>
         {
             EditorApplication.LockReloadAssemblies();
             AssetDatabase.DisallowAutoRefresh();
-            if (await BuildAvatarAssetBundles())
+            if (BuildAvatarAssetBundles())
             {
                 EditorCoroutineUtility.StartCoroutine(UploadAvatar(() =>
                 {
@@ -548,6 +567,16 @@ public class BuilderWindow : EditorWindow
         var RightFootPosReset = rootVisualElement.Q<Button>("RightFootPosReset");
         var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
         var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
+        var MirrorLeft = rootVisualElement.Q<Button>("MirrorLeft");
+        MirrorLeft.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.leftFoot.position);
+            poseRotation = currentFlexaPose.rightFootTransform.rotation * currentFlexaPose.leftFoot.rotation;
+            currentFlexaPose.rightFoot = new Pose(currentFlexaPose.leftFoot.position, currentFlexaPose.leftFoot.rotation);
+            
+            SetRightText();
+            RefreshAvatarView();
+        });
         CenterEyePosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             posePosition = currentFlexaPose.headTransform.position;
@@ -572,6 +601,7 @@ public class BuilderWindow : EditorWindow
                     RightFootPosReset.style.display = DisplayStyle.None;
                     RightFootRotReset.style.display = DisplayStyle.None;
                     RightFootRotWorldReset.style.display = DisplayStyle.None;
+                    MirrorLeft.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -640,6 +670,7 @@ public class BuilderWindow : EditorWindow
                     RightFootPosReset.style.display = DisplayStyle.None;
                     RightFootRotReset.style.display = DisplayStyle.None;
                     RightFootRotWorldReset.style.display = DisplayStyle.None;
+                    MirrorLeft.style.display = DisplayStyle.Flex;
                 }
                 handleEnabled = false;
             }
@@ -728,12 +759,14 @@ public class BuilderWindow : EditorWindow
                 RightFootPosReset.style.display = DisplayStyle.None;
                 RightFootRotReset.style.display = DisplayStyle.None;
                 RightFootRotWorldReset.style.display = DisplayStyle.None;
+                MirrorLeft.style.display = DisplayStyle.None;
             }
             else
             {
                 RightFootPosReset.style.display = DisplayStyle.Flex;
                 RightFootRotReset.style.display = DisplayStyle.Flex;
                 RightFootRotWorldReset.style.display = DisplayStyle.Flex;
+                MirrorLeft.style.display = DisplayStyle.Flex;
                 posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
                 poseRotation = currentFlexaPose.rightFootTransform.rotation * currentFlexaPose.rightFoot.rotation;
                 OnPoseCallback = () =>
@@ -1201,9 +1234,9 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadAvatar(Action callback)
     {
         Debug.Log("Uploading avatar0...");
-        // EditorUtility.DisplayProgressBar("Banter Upload", "Uploading avatar...", 0.1f);
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading avatar...", 0.1f);
         var path = "AssetBundles";
-        var files = Directory.GetFiles(path, "*.BEE", SearchOption.TopDirectoryOnly);
+        var files = Directory.GetFiles(path, "avatar.banter", SearchOption.TopDirectoryOnly);
         if (files.Length == 0)
         {
             Debug.Log("No avatar files found in " + path);
@@ -1234,8 +1267,8 @@ public class BuilderWindow : EditorWindow
             Debug.LogError("Failed to upload avatar: " + e);
             callback();
         }, avatarFileId, avatarFileId), this);
-        // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
-        // EditorUtility.ClearProgressBar();
+        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+        EditorUtility.ClearProgressBar();
     }
 
     private IEnumerator UploadWebOnly(Action callback)
@@ -1477,14 +1510,22 @@ public class BuilderWindow : EditorWindow
         }
         return avatarPoseMeta;
     }
-    private void DropGameObject(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
+    private void DropAvatar(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
-        if (PrefabUtility.IsPartOfModelPrefab(gameObject) || (PrefabUtility.IsPartOfPrefabAsset(gameObject) && !PrefabUtility.IsPartOfPrefabInstance(gameObject)))
+        var avatarFileDrop = paths.FirstOrDefault(x => x.EndsWith(".prefab"));
+        if (avatarFileDrop == null)
         {
-            status.AddStatus("You cannot drop a model/asset prefab, please add it to the scene and drag that over.");
+                status.AddStatus("Please drag a single prefab file for your avatar to begin");
+                return;
+        }
+        avatarGameObject = AssetDatabase.LoadAssetAtPath<GameObject>(avatarFileDrop);
+        if (!avatarGameObject)
+        {
+            status.AddStatus("Failed to load avatar prefab: " + avatarFileDrop);
             return;
         }
-        avatarGameObject = gameObject;
+        avatarPath = avatarFileDrop;
+        ProjectPrefs.SetString("BanterBuilder_AvatarPath", avatarFileDrop);
         currentFlexaPose = GetFlexaPose();
         SetCenterText();
         SetLeftText();
@@ -1596,8 +1637,6 @@ public class BuilderWindow : EditorWindow
             }
 
         }
-
-        AvatarRef.Instance.SetAvatarGameObject(avatarGameObject);
 
     }
     private void RefreshView(bool skipLoginRefresh = false)
@@ -1756,7 +1795,7 @@ public class BuilderWindow : EditorWindow
         return true;
     }
 
-    private async Task<bool> BuildAvatarAssetBundles()
+    private bool BuildAvatarAssetBundles()
     {
         if (sq.User == null)
         {
@@ -1764,12 +1803,6 @@ public class BuilderWindow : EditorWindow
             MissingBones.text = "You need to be signed in to upload an avatar!";
             return false;
         }
-        var basisProp = avatarGameObject.GetComponent<BasisProp>();
-        if (basisProp == null)
-        {
-            basisProp = avatarGameObject.AddComponent<BasisProp>();
-        }
-
         foreach (var headObj in headGameObjects)
         {
             var flexaHead = headObj.GetComponent<FlexaHead>();
@@ -1787,24 +1820,87 @@ public class BuilderWindow : EditorWindow
             headGameObjects = headGameObjects.Distinct().ToList();
             var list = (ListView)HeadObjectList.Children().First();
             list.Rebuild();
-            basisProp.BasisBundleDescription = new BasisBundleDescription
-            {
-                AssetBundleName = "BasisAvatar"
-            };
             List<BuildTarget> buildTargets = new List<BuildTarget>
             {
                 BuildTarget.Android,
                 BuildTarget.StandaloneWindows,
             };
-            Debug.Log("Basis Build");
-            await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
-            Debug.Log("Basis Build After");
+            Debug.Log("Banter Build");
+            Dictionary<BuildTarget, string> buildTargetPaths = new Dictionary<BuildTarget, string>();
+            foreach (var target in buildTargets)
+            {
+                if (!BuildPipeline.IsBuildTargetSupported(target == BuildTarget.Android ? BuildTargetGroup.Android : BuildTargetGroup.Standalone, target))
+                {
+                    status.AddStatus("Build target " + target + " is not supported, please install it in the Unity Hub.");
+                    return false;
+                }
+                status.AddStatus("Building avatar target " + target + "...");
+                var bundleName = "banteravatar_" + target.ToString().ToLower() + ".banter";
+                if(!Directory.Exists("AssetBundles"))
+                {
+                    Directory.CreateDirectory("AssetBundles");
+                }
+                AssetBundleBuild[] BundledData = new AssetBundleBuild[] {new AssetBundleBuild(){
+                    assetBundleName = bundleName,
+                    assetNames = new string[] { AssetDatabase.GetAssetPath(avatarGameObject) }}
+                };
+                BuildAssetBundlesParameters parameters = new BuildAssetBundlesParameters()
+                {
+                    outputPath = "AssetBundles",
+                    bundleDefinitions = BundledData,
+                    targetPlatform = target
+                };
+                AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(parameters);
+                if (manifest == null)
+                {
+                    status.AddStatus("Failed to build avatar target " + target + ", please check the console for errors.");
+                    return false;
+                }
+                try
+                {
+                    status.AddStatus("Built avatar target " + target + " successfully, encrypting...");
+                    var key = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes("42069"));
+                    var path = Path.Join("AssetBundles", bundleName);
+                    buildTargetPaths.Add(target, path + ".enc");
+                    AESCTRFileEncryptor.EncryptFileWithIV(path, path + ".enc", key);
+                    DeleteFile(path);
+                }
+                catch (Exception e)
+                {
+                    status.AddStatus("Failed to build avatar target " + target + ": " + e.Message);
+                    Debug.LogError("Failed to build avatar target " + target + ": " + e);
+                    return false;
+                }
+            }
+            if (buildTargetPaths.ContainsKey(BuildTarget.Android) && buildTargetPaths.ContainsKey(BuildTarget.StandaloneWindows))
+            {
+                FileConcatenator.Concatenate(buildTargetPaths[BuildTarget.Android], buildTargetPaths[BuildTarget.StandaloneWindows], Path.Join("AssetBundles", "avatar.banter"));
+                DeleteFile(buildTargetPaths[BuildTarget.Android]);
+                DeleteFile(buildTargetPaths[BuildTarget.Android] + ".manifest");
+                DeleteFile(buildTargetPaths[BuildTarget.StandaloneWindows]);
+                DeleteFile(buildTargetPaths[BuildTarget.StandaloneWindows] + ".manifest");
+                DeleteFile(Path.Join("AssetBundles", "AssetBundles"));
+                DeleteFile(Path.Join("AssetBundles", "AssetBundles.manifest"));
+                status.AddStatus("Avatar build completed successfully, saved to AssetBundles/avatar.banter");
+            }
+            else
+            {
+                status.AddStatus("Avatar build failed for one or more targets.");
+                return false;
+            }
             return true;
         }
         catch (Exception e)
         {
             Debug.LogError("Failed to get avatar bones: " + e);
             return false;
+        }
+    }
+    void DeleteFile(string path)
+    {
+        if(File.Exists(path))
+        {
+            File.Delete(path); // Delete the unencrypted file
         }
     }
     private void BuildAssetBundles(bool skipUpload = false)
@@ -1829,7 +1925,8 @@ public class BuilderWindow : EditorWindow
             return;
         }
         ShowBuildConfirm();
-        confirmCallback = () => {
+        confirmCallback = () =>
+        {
 #if BANTER_VISUAL_SCRIPTING
             if (!ValidateVisualScripting.CheckVsNodes())
             {
@@ -1841,7 +1938,8 @@ public class BuilderWindow : EditorWindow
                 status.AddStatus("Visual Scripting check passed!");
             }
 #endif
-            if (!skipUpload) {
+            if (!skipUpload)
+            {
                 status.AddStatus("Build started...");
 
                 if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
@@ -1886,22 +1984,11 @@ public class BuilderWindow : EditorWindow
                         BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
                         CustomSceneProcessor.isBuildingAssetBundles = false;
                         names.Add(newAssetBundleName);
-                        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
-                        {
-                            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
-                        }
-
+                        DeleteFile(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
                     }
                 }
-
-                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
-                {
-                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
-                }
-                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
-                {
-                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
-                }
+                DeleteFile(Path.Join(assetBundleRoot, assetBundleDirectory)+ "/" + assetBundleDirectory + ".manifest");
+                DeleteFile(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
                 if (names.Count > 0 && !autoUpload.value)
                 {
                     EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
@@ -1923,8 +2010,10 @@ public class BuilderWindow : EditorWindow
 
             if (autoUpload.value && sq.User != null)
             {
-                if (mode == BanterBuilderBundleMode.Scene) {
-                    if (string.IsNullOrEmpty(spaceSlug.text)) {
+                if (mode == BanterBuilderBundleMode.Scene)
+                {
+                    if (string.IsNullOrEmpty(spaceSlug.text))
+                    {
                         status.AddStatus("No space slug provided, please enter a slug to upload.");
                         return;
                     }
@@ -1936,8 +2025,11 @@ public class BuilderWindow : EditorWindow
                         uploadWebOnly.SetEnabled(true);
                         uploadEverything.SetEnabled(true);
                     }), this);
-                } else {
-                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1) {
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1)
+                    {
                         status.AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
                         return;
                     }

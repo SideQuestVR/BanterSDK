@@ -33,9 +33,10 @@ public class Status
     }
     public void AddStatus(string text, string dateString = null, bool skipWrite = false)
     {
-        var val = "<color=\"orange\">" + (dateString == null ? DateTime.Now.ToString("HH:mm:ss") : dateString) + ": <color=\"white\">" + text;
+        var val = "<color=\"orange\">" + (dateString == null ? DateTime.Now.ToString("HH:mm:ss") : dateString) + "</color>: <color=\"white\">" + text + "</color>";
         statusMessages.Insert(0, val);
         statusBar.text = "STATUS: " + val;
+        UnityEngine.Debug.Log(text);
         if (statusMessages.Count > 300)
         {
             statusMessages = statusMessages.GetRange(0, 300);
