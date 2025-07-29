@@ -1259,12 +1259,10 @@ public class BuilderWindow : EditorWindow
         EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar(() =>
         {
             status.AddStatus("Avatar uploaded successfully.");
-            Debug.Log("Avatar uploaded successfully.");
             callback();
         }, e =>
         {
             status.AddStatus("Failed to upload avatar: " + e);
-            Debug.LogError("Failed to upload avatar: " + e);
             callback();
         }, avatarFileId, avatarFileId), this);
         EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
@@ -1822,8 +1820,8 @@ public class BuilderWindow : EditorWindow
             list.Rebuild();
             List<BuildTarget> buildTargets = new List<BuildTarget>
             {
-                BuildTarget.Android,
                 BuildTarget.StandaloneWindows,
+                BuildTarget.Android,
             };
             Debug.Log("Banter Build");
             Dictionary<BuildTarget, string> buildTargetPaths = new Dictionary<BuildTarget, string>();
@@ -1848,7 +1846,8 @@ public class BuilderWindow : EditorWindow
                 {
                     outputPath = "AssetBundles",
                     bundleDefinitions = BundledData,
-                    targetPlatform = target
+                    targetPlatform = target,
+                    options = BuildAssetBundleOptions.ForceRebuildAssetBundle | BuildAssetBundleOptions.RecurseDependencies
                 };
                 AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(parameters);
                 if (manifest == null)
@@ -1858,12 +1857,13 @@ public class BuilderWindow : EditorWindow
                 }
                 try
                 {
-                    status.AddStatus("Built avatar target " + target + " successfully, encrypting...");
-                    var key = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes("42069"));
                     var path = Path.Join("AssetBundles", bundleName);
+                    status.AddStatus("Built avatar target " + target + " successfully, encrypting..." + File.Exists(path));
+                    var key = SHA256.Create().ComputeHash(Encoding.UTF8.GetBytes("42069"));
                     buildTargetPaths.Add(target, path + ".enc");
-                    AESCTRFileEncryptor.EncryptFileWithIV(path, path + ".enc", key);
-                    DeleteFile(path);
+                    // AESCTRFileEncryptor.EncryptFileWithIV(path, path + ".enc", key);
+                    File.Copy(path, path + ".enc", true); // Copy the encrypted file to the original path
+                    // DeleteFile(path);
                 }
                 catch (Exception e)
                 {
@@ -1875,12 +1875,12 @@ public class BuilderWindow : EditorWindow
             if (buildTargetPaths.ContainsKey(BuildTarget.Android) && buildTargetPaths.ContainsKey(BuildTarget.StandaloneWindows))
             {
                 FileConcatenator.Concatenate(buildTargetPaths[BuildTarget.Android], buildTargetPaths[BuildTarget.StandaloneWindows], Path.Join("AssetBundles", "avatar.banter"));
-                DeleteFile(buildTargetPaths[BuildTarget.Android]);
-                DeleteFile(buildTargetPaths[BuildTarget.Android] + ".manifest");
-                DeleteFile(buildTargetPaths[BuildTarget.StandaloneWindows]);
-                DeleteFile(buildTargetPaths[BuildTarget.StandaloneWindows] + ".manifest");
-                DeleteFile(Path.Join("AssetBundles", "AssetBundles"));
-                DeleteFile(Path.Join("AssetBundles", "AssetBundles.manifest"));
+                // DeleteFile(buildTargetPaths[BuildTarget.Android]);
+                // DeleteFile(buildTargetPaths[BuildTarget.Android] + ".manifest");
+                // DeleteFile(buildTargetPaths[BuildTarget.StandaloneWindows]);
+                // DeleteFile(buildTargetPaths[BuildTarget.StandaloneWindows] + ".manifest");
+                // DeleteFile(Path.Join("AssetBundles", "AssetBundles"));
+                // DeleteFile(Path.Join("AssetBundles", "AssetBundles.manifest"));
                 status.AddStatus("Avatar build completed successfully, saved to AssetBundles/avatar.banter");
             }
             else
@@ -1984,6 +1984,7 @@ public class BuilderWindow : EditorWindow
                         BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
                         CustomSceneProcessor.isBuildingAssetBundles = false;
                         names.Add(newAssetBundleName);
+
                         DeleteFile(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
                     }
                 }
