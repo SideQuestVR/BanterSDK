@@ -395,8 +395,6 @@ public class BuilderWindow : EditorWindow
         if (!handleEnabled)
             return;
 
-        
-
         EditorGUI.BeginChangeCheck();
         Vector3 newPos = Handles.PositionHandle(posePosition, poseRotation);
         Quaternion newRot = poseRotation;
@@ -1474,6 +1472,11 @@ public class BuilderWindow : EditorWindow
         if (avatarPoseMeta == null)
         {
             avatarPoseMeta = avatarGameObject?.AddComponent<FlexaPose>();
+            avatarPoseMeta.rightFoot.rotation = Quaternion.identity;
+            avatarPoseMeta.leftFoot.rotation = Quaternion.identity;
+            avatarPoseMeta.centerEye.rotation = Quaternion.identity;
+            poseRotation = Quaternion.identity;
+
         }
         return avatarPoseMeta;
     }
