@@ -1479,9 +1479,9 @@ public class BuilderWindow : EditorWindow
     }
     private void DropGameObject(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
-        if (PrefabUtility.IsPartOfModelPrefab(gameObject) || (PrefabUtility.IsPartOfPrefabAsset(gameObject) && !PrefabUtility.IsPartOfPrefabInstance(gameObject)))
+        if (!gameObject || PrefabUtility.IsPartOfModelPrefab(gameObject) || (PrefabUtility.IsPartOfPrefabAsset(gameObject) && !PrefabUtility.IsPartOfPrefabInstance(gameObject)))
         {
-            status.AddStatus("You cannot drop a model/asset prefab, please add it to the scene and drag that over.");
+            status.AddStatus("Add it to the hierarchy first, unpack it too if need be (FBX/GLB).");
             return;
         }
         avatarGameObject = gameObject;
