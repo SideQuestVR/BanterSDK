@@ -1798,6 +1798,12 @@ public class BuilderWindow : EditorWindow
             };
             Debug.Log("Basis Build");
             await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
+            var path = "AssetBundles";
+            var files = Directory.GetFiles(path, "*.txt", SearchOption.TopDirectoryOnly);
+            foreach (var file in files)
+            {
+                File.Delete(file);
+            }
             Debug.Log("Basis Build After");
             return true;
         }
