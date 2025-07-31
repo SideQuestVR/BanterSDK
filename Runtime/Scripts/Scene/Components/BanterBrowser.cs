@@ -117,6 +117,9 @@ namespace Banter.SDK
 
         internal override void StartStuff()
         {
+            if (BanterStarterUpper.SafeMode)
+                return;
+            
             SetupBrowser();
             OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
         }
