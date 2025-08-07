@@ -35,6 +35,7 @@ namespace Banter.SDKEditor
         }
         static void ImportBasisPackages()
         {
+            return;
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
 
