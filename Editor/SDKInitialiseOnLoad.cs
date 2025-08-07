@@ -36,6 +36,11 @@ namespace Banter.SDKEditor
         }
         static void SetApiCompatibilityLevel()
         {
+            var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
+            if( level == ApiCompatibilityLevel.NET_2_0)
+            {
+                return;
+            }
             if (!EditorUtility.DisplayDialog("Api Compatibility Level", "You need to use .NET 2.0, do you want to change it?", "Yes", "No"))
             {
                 return;
@@ -44,6 +49,12 @@ namespace Banter.SDKEditor
         }
         static void ImportBasisPackages()
         {
+            if(Directory.Exists("Packages/com.basis.bundlemanagement") && 
+               Directory.Exists("Packages/com.basis.sdk") && 
+               Directory.Exists("Packages/com.basis.odinserializer"))
+            {
+                return;
+            }
             if (!EditorUtility.DisplayDialog("Install Basis Packages", "Do you want to setup Basis packages for creating avatars?", "Yes", "No"))
             {
                 return;
