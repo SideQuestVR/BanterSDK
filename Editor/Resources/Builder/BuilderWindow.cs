@@ -700,7 +700,10 @@ public class BuilderWindow : EditorWindow
         
         RightFootMirror.RegisterCallback<MouseUpEvent>((e) =>
         {
-            currentFlexaPose.rightFoot.position = currentFlexaPose.leftFoot.position;
+            var offset = currentFlexaPose.leftFoot.InverseTransformDirection(currentFlexaPose.leftFoot.position);
+            offset.x *= -1f;
+            offset = currentFlexaPose.leftFoot.TransformDirection(offset);
+            currentFlexaPose.rightFoot.position = offset;
             posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
             SceneView.RepaintAll();
         });
