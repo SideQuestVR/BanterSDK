@@ -3,6 +3,8 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using Banter.SDK;
+using Newtonsoft.Json.Linq;
+using System.IO.Compression;
 
 namespace Banter.SDKEditor
 {
@@ -12,6 +14,7 @@ namespace Banter.SDKEditor
         static InitialiseOnLoad()
         {
 #if !BANTER_EDITOR
+            ImportBasisPackages();
             SetupLayersAndTags();
             CreateWebRoot();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -30,7 +33,46 @@ namespace Banter.SDKEditor
                 }
             }
         }
+        static void ImportBasisPackages()
+        {
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
 
+            string[] packages = new string[]
+            {
+                "com.basis.bundlemanagement",
+                "com.basis.odinserializer",
+                "com.basis.sdk"
+            };
+
+            foreach (string packageName in packages)
+            {
+                string zipPath = Path.Combine(zipDirectory, $"{packageName}.zip");
+                string extractPath = Path.Combine(projectRoot, "Packages", packageName);
+
+                if (Directory.Exists(extractPath))
+                    Directory.Delete(extractPath, true);
+
+                ZipFile.ExtractToDirectory(zipPath, extractPath);
+                Debug.Log($"Extracted {packageName} to {extractPath}");
+            }
+
+            // Modify manifest.json
+            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
+            string json = File.ReadAllText(manifestPath);
+
+            var jObject = JObject.Parse(json);
+            var dependencies = (JObject)jObject["dependencies"];
+
+            foreach (string packageName in packages)
+            {
+                dependencies[packageName] = $"file:{packageName}";
+            }
+
+            File.WriteAllText(manifestPath, jObject.ToString());
+            AssetDatabase.Refresh();
+            Debug.Log("All Basis packages installed and manifest.json updated.");
+        }
         static void CreateWebRoot()
         {
             // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
