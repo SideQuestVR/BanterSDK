@@ -15,6 +15,15 @@ namespace Banter.SDKEditor
     {
         static InitialiseOnLoad()
         {
+            var renderPipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+            if( renderPipeline != null)
+            {
+                if (EditorUtility.DisplayDialog("WRONG RENDER PIPELINE", "This project was created with URP but needs to use BiRP. Please select 3D(Built in Render Pipeline) in a new project and delete this one.", "OK"))
+                {
+                    EditorApplication.Exit(0);
+                    return;  
+                }
+            }
 #if !BANTER_EDITOR
             ImportBasisPackages();
             SetupLayersAndTags();
@@ -22,8 +31,9 @@ namespace Banter.SDKEditor
             CreateWebRoot();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-#endif
+
             
+#endif
         }
 
         private static void OnPlayModeStateChanged(PlayModeStateChange change)
