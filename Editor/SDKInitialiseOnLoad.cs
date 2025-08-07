@@ -14,9 +14,10 @@ namespace Banter.SDKEditor
         static InitialiseOnLoad()
         {
 #if !BANTER_EDITOR
+            SetApiCompatibilityLevel();
+            ImportBasisPackages();
             SetupLayersAndTags();
             CreateWebRoot();
-            ImportBasisPackages();
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
         }
@@ -33,8 +34,20 @@ namespace Banter.SDKEditor
                 }
             }
         }
+        static void SetApiCompatibilityLevel()
+        {
+            if (!EditorUtility.DisplayDialog("Api Compatibility Level", "You need to use .NET 2.0, do you want to change it?", "Yes", "No"))
+            {
+                return;
+            }
+            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_2_0);
+        }
         static void ImportBasisPackages()
         {
+            if (!EditorUtility.DisplayDialog("Install Basis Packages", "Do you want to setup Basis packages for creating avatars?", "Yes", "No"))
+            {
+                return;
+            }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
 
@@ -58,21 +71,21 @@ namespace Banter.SDKEditor
                 Debug.Log($"Extracted {packageName} to {extractPath}");
             }
 
-            // // Modify manifest.json
-            // string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
-            // string json = File.ReadAllText(manifestPath);
+            // Modify manifest.json
+            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
+            string json = File.ReadAllText(manifestPath);
 
-            // var jObject = JObject.Parse(json);
-            // var dependencies = (JObject)jObject["dependencies"];
+            var jObject = JObject.Parse(json);
+            var dependencies = (JObject)jObject["dependencies"];
 
-            // foreach (string packageName in packages)
-            // {
-            //     dependencies[packageName] = $"file:{packageName}";
-            // }
+            foreach (string packageName in packages)
+            {
+                dependencies[packageName] = $"file:{packageName}";
+            }
 
-            // File.WriteAllText(manifestPath, jObject.ToString());
-            // AssetDatabase.Refresh();
-            // Debug.Log("All Basis packages installed and manifest.json updated.");
+            File.WriteAllText(manifestPath, jObject.ToString());
+            AssetDatabase.Refresh();
+            Debug.Log("All Basis packages installed and manifest.json updated.");
         }
         static void CreateWebRoot()
         {
