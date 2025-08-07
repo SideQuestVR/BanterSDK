@@ -16,13 +16,6 @@ namespace Banter.SDKEditor
         static InitialiseOnLoad()
         {
 #if !BANTER_EDITOR
-            if (ProjectPrefs.GetBool("BanterSDKInitialised", false))
-            {
-                if (EditorUtility.DisplayDialog("Banter SDK Installer", "Welcome to the Banter Unity plugin SDK. Please follow the instructions to set it up. If you are not sure, just click Yes/OK.", "OK"))
-                {
-                    ProjectPrefs.SetBool("BanterSDKInitialised", true); // TODO: Add installation steps here
-                }
-            }
             SetApiCompatibilityLevel();
             ImportBasisPackages();
             SetupLayersAndTags();
@@ -49,10 +42,6 @@ namespace Banter.SDKEditor
         {
             var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
             if( level == ApiCompatibilityLevel.NET_2_0)
-            {
-                return;
-            }
-            if (!EditorUtility.DisplayDialog("Api Compatibility Level", "You need to use .NET 2.0, do you want to change it?", "Yes", "No"))
             {
                 return;
             }
