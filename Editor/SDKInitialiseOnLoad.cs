@@ -16,9 +16,9 @@ namespace Banter.SDKEditor
         static InitialiseOnLoad()
         {
 #if !BANTER_EDITOR
-            SetApiCompatibilityLevel();
             ImportBasisPackages();
             SetupLayersAndTags();
+            SetApiCompatibilityLevel();
             CreateWebRoot();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
@@ -41,11 +41,11 @@ namespace Banter.SDKEditor
         static void SetApiCompatibilityLevel()
         {
             var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
-            if( level == ApiCompatibilityLevel.NET_2_0)
+            if( level == ApiCompatibilityLevel.NET_Unity_4_8)
             {
                 return;
             }
-            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_2_0);
+            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
         }
         static void ImportBasisPackages()
         {
