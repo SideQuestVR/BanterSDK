@@ -1699,6 +1699,27 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
     
+    void AddRemoveFlexaHead(UnityEngine.Object obj, bool shouldAdd = true)
+    {
+        var go = (GameObject)obj;
+        if (shouldAdd)
+        {
+
+            if (!(go?.GetComponent<FlexaHead>()??true))
+            {
+                go.AddComponent<FlexaHead>();
+            }
+        }
+        else
+        {
+            var head = go?.GetComponent<FlexaHead>();
+
+            if (head)
+            {
+                DestroyImmediate(head);
+            } 
+        }
+    }
     public void DrawReorderableList<T>(List<T> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true) where T : UnityEngine.Object
     {
         var list = new ListView(sourceList)
@@ -1715,27 +1736,17 @@ public class BuilderWindow : EditorWindow
             },
             bindItem = (element, i) =>
             {
-                var go = (GameObject)(sourceList[i] as UnityEngine.Object);
-
-                if (!go.GetComponent<FlexaHead>())
-                {
-                    go.AddComponent<FlexaHead>();
-                }
+                AddRemoveFlexaHead(sourceList[i]);
                 ((ObjectField)element).value = sourceList[i];
                 ((ObjectField)element).RegisterValueChangedCallback((value) =>
                 {
+                    AddRemoveFlexaHead(value.newValue);
                     sourceList[i] = (T)value.newValue;
                 });
             },
             unbindItem = (element, i) =>
             {
-                var go = (GameObject)(sourceList[i] as UnityEngine.Object);
-                var head = go.GetComponent<FlexaHead>();
-
-                if (head)
-                {
-                    DestroyImmediate(head);
-                }
+                AddRemoveFlexaHead(sourceList[i], false);
             }
         };
 
