@@ -48,7 +48,7 @@ namespace Banter.SDKEditor
             foreach (string packageName in packages)
             {
                 string zipPath = Path.Combine(zipDirectory, $"{packageName}.zip");
-                string extractPath = Path.Combine(projectRoot, "Packages", packageName);
+                string extractPath = Path.Combine(projectRoot, "Packages");
 
                 if (Directory.Exists(extractPath))
                     Directory.Delete(extractPath, true);
