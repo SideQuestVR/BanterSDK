@@ -14,10 +14,10 @@ namespace Banter.SDKEditor
     {
         static InitialiseOnLoad()
         {
-            if (ProjectPrefs.GetBool("BanterSDKInitialised", false))
+            if (EditorPrefs.GetBool("BanterSDKInitialised", false))
             {
                 EditorUtility.DisplayDialog("Banter SDK Installer", "Welcome to the Banter Unity plugin SDK. Please follow the instructions to set it up. If you are not sure, just click Yes/OK.", "OK");
-                ProjectPrefs.SetBool("BanterSDKInitialised", true);
+                EditorPrefs.SetBool("BanterSDKInitialised", true);
             }
 #if !BANTER_EDITOR
             
