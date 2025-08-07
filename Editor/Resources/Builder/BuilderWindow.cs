@@ -701,6 +701,7 @@ public class BuilderWindow : EditorWindow
         RightFootMirror.RegisterCallback<MouseUpEvent>((e) =>
         {
             currentFlexaPose.rightFoot.position = currentFlexaPose.leftFoot.position;
+            posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
             SceneView.RepaintAll();
         });
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
