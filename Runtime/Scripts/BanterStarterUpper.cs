@@ -23,6 +23,7 @@ namespace Banter.SDK
         [SerializeField] float spawnRotation;
         [SerializeField] bool openBrowser;
         [SerializeField] Transform _feetTransform;
+        public static bool SafeMode = false;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
@@ -36,6 +37,19 @@ namespace Banter.SDK
 
         void Awake()
         {
+            // Safe mode?
+            if (PlayerPrefs.HasKey("SafeModeOff"))
+            {
+                PlayerPrefs.DeleteKey("SafeMode");
+                PlayerPrefs.DeleteKey("SafeModeOff");
+            }
+            else if (PlayerPrefs.HasKey("SafeMode"))
+            {
+                SafeMode = true;
+                LogLine.Do("SAFE MODE is set on");
+                PlayerPrefs.SetInt("SafeModeOff",1);
+            }
+            
 #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
             BasisLoadHandler.OnGameStart();
