@@ -5,6 +5,7 @@ using UnityEngine;
 using Banter.SDK;
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
+using LongBunnyLabs;
 
 namespace Banter.SDKEditor
 {
@@ -13,7 +14,14 @@ namespace Banter.SDKEditor
     {
         static InitialiseOnLoad()
         {
+            if (ProjectPrefs.GetBool("BanterSDKInitialised", false))
+            {
+                EditorUtility.DisplayDialog("Banter SDK Installer", "Welcome to the Banter Unity plugin SDK. Please follow the instructions to set it up. If you are not sure, just click Yes/OK.", "OK");
+                ProjectPrefs.SetBool("BanterSDKInitialised", true);
+            }
 #if !BANTER_EDITOR
+            
+            
             SetApiCompatibilityLevel();
             ImportBasisPackages();
             SetupLayersAndTags();
