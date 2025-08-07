@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
-using Banter.Utilities;
 using Debug = UnityEngine.Debug;
+using System.IO.MemoryMappedFiles;
+using TLab.WebView;
+using UnityEditor.Android;
+
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -28,12 +31,16 @@ namespace Banter.SDK
         private object process;
         public BanterScene scene;
         public static string WEB_ROOT = "WebRoot";
+        public static int mainWWindowId;
         private int processId;
         private static bool initialized = false;
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
 
+		MemoryMappedFile mmf;
+		MemoryMappedViewAccessor accessor;
+		IntPtr ptr;
         void Awake()
         {
 #if BASIS_BUNDLE_MANAGEMENT
@@ -68,6 +75,16 @@ namespace Banter.SDK
             StartBrowser();
 #endif
             SetupBrowserLink();
+
+#if UNITY_STANDALONE || UNITY_EDITOR
+            EventHandler args = null;
+            args = (arg0, arg1) =>
+            {
+                scene.link.Connected -= args;
+                StartBrowserWindow();
+            };
+            scene.link.Connected += args;
+#endif
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
 #endif
@@ -229,30 +246,57 @@ namespace Banter.SDK
             var isProd = true;
 #endif
 
-            string[] args = System.Environment.GetCommandLineArgs();
-            string extraArgs = openBrowser ? " --openbrowser true" : "";
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "-openbrowser" && (i + 1) < args.Length)
-                {
-                        extraArgs = " --openbrowser true";
-                }
-            }
-
 #if UNITY_EDITOR
-            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt") + "\"";
-            var Eargs = (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"" + extraArgs;
+            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\preload.js") + "\"";
+            var Eargs = (isProd ? "--prod true " : "") + "--bebug --pipename " + BanterLink.pipeName + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
                 Eargs,
                 LogTag.BanterBrowser);
 #else
-            var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
+            var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "preload.js") + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
-                "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile + extraArgs,
+                "--bebug --prod true --pipename " + BanterLink.pipeName,
                 LogTag.BanterBrowser);
 #endif
+                   
+        }
+
+        void StartBrowserWindow()
+        {
+#if UNITY_EDITOR
+            var injectFile = Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\preload.js");
+#else
+            var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "preload.js");
+#endif
+            scene.link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{1280}{MessageDelimiters.PRIMARY}{720}{MessageDelimiters.PRIMARY}https://youtube.com/{MessageDelimiters.PRIMARY}{injectFile}", msg => {
+                var parts = msg.Split(MessageDelimiters.PRIMARY, 3);
+                if (parts.Length < 2)
+                {
+                    Debug.LogError("Failed to create window: " + msg);
+                    return;
+                }
+                Debug.Log("Created main window with ID: " + parts[1]);
+                scene.link.Send($"{APICommands.TOGGLE_DEV_TOOLS}{MessageDelimiters.PRIMARY}{parts[1]}", _ => { });
+                mainWWindowId = int.Parse(parts[1]);
+                mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + parts[1], MemoryMappedFileRights.Read);
+                accessor = mmf.CreateViewAccessor();
+                ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    // if (m_contentView == null)
+                    // {
+                    // 	m_contentView = new Texture2D(m_texSize.x, m_texSize.y, TextureFormat.BGRA32, false, true);
+                    // }
+
+                    // if (m_rawImage != null)
+                    // {
+                    // 	m_rawImage.texture = m_contentView;
+                    // 	m_onCapture?.Invoke(m_contentView);
+                    // }
+                });
+            });
         }
 
         private void Kill(bool force = false)
@@ -326,6 +370,11 @@ namespace Banter.SDK
         void FixedUpdate()
         {
             scene.FixedUpdate();
+        }
+
+        void UUpdate()
+        {
+             FragmentCapture.GarbageCollect();
         }
 
 

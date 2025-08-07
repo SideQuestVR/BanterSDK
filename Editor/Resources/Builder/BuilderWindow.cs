@@ -182,8 +182,10 @@ public class BuilderWindow : EditorWindow
     [MenuItem("Banter/Tools/Compile Everything")]
     public static void CompileEverything()
     {
-        OnCompileAll.Invoke();
+        // OnCompileAll.Invoke();
+        // OnCompileInjection.Invoke();
         OnCompileInjection.Invoke();
+        OnCompileElectron.Invoke();
     }
     [MenuItem("Banter/Tools/Compile C# Components")]
     public static void CompileAllComponents()

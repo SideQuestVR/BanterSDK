@@ -1380,7 +1380,7 @@ namespace Banter.SDK
         {
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
-                 _ = settings.Reset();
+                 _ = settings?.Reset();
              }, $"{nameof(BanterScene)}.{nameof(ResetSceneAbilitySettings)}"));
         }
         public async Task ResetScene()
@@ -1859,7 +1859,7 @@ namespace Banter.SDK
         {
             // An empty update to trigger this object to be sent to JS
 
-            EnqueueChange($"{oid}|{cid}|{(int)ct}|{(int)PropertyName.hasUnity}~~{(int)PropertyType.Bool}~~1");
+            EnqueueChange($"{oid}|{cid}|{(int)ct}|{(int)PropertyName.hasUnity}§{(int)PropertyType.Bool}§1");
 
         }
         public void KillAllKitItemsBeforeLoad()

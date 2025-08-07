@@ -461,6 +461,10 @@ namespace Banter.SDK
                 var requestId = msg.Substring(startLength, msg.IndexOf(MessageDelimiters.PRIMARY, startLength) - startLength);
                 ParseRequest(msg.Substring(startLength + requestId.Length + 1), int.Parse(requestId), msg);
             }
+            else if (msg.StartsWith(APICommands.RESPONSE_ID))
+            {
+                ParseMessageResponse(msg.Substring(APICommands.RESPONSE_ID.Length));
+            }
             else if (msg.StartsWith(APICommands.LEGACY))
             {
                 ParseLegacy(msg.Substring(APICommands.LEGACY.Length));
@@ -472,7 +476,6 @@ namespace Banter.SDK
         }
         void SetupPipe()
         {
-            LogLine.Do("BanterLink.SetupPipe()");
 #if UNITY_ANDROID && !UNITY_EDITOR
             pipe = new AndroidPipe();
 #else
@@ -516,19 +519,6 @@ namespace Banter.SDK
                         Debug.LogException(ex);
                     }
                 }
-                // if(msg.StartsWith(APICommands.REQUEST_ID)) {
-                //     var startLength = (APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID).Length;
-                //     var requestId = msg.Substring(startLength, msg.IndexOf(MessageDelimiters.PRIMARY, startLength) - startLength);
-                //     ParseRequest(msg.Substring(startLength + requestId.Length + 1), int.Parse(requestId), msg);
-                // }else if(msg.StartsWith(APICommands.LEGACY)) {
-                //     ParseLegacy(msg.Substring(APICommands.LEGACY.Length));
-                // }else if(msg.StartsWith(MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY)) {
-                //     var delim = MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY;
-                //     var parts = msg.Substring(delim.Length).Split(delim);
-
-                // }else{
-                //     ParseCommand(msg);
-                // }
             });
         }
 
@@ -556,6 +546,30 @@ namespace Banter.SDK
             {
                 pipe.Stop();
             }
+        }
+
+        
+        Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
+        int msgCount;
+        private void ParseMessageResponse(string msg)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY, 2);
+            if (messageHandlers.TryGetValue(int.Parse(parts[0]), out var handler))
+            {
+                handler?.Invoke(parts[1]);
+            }
+        }
+
+        public void Send(string data, Action<string> callback = null)
+        {
+            var id = ++msgCount;
+            if(msgCount > 99999999)
+            {
+                msgCount = 0; // Reset to avoid overflow
+            }
+            var message = $"{APICommands.RESPONSE_ID}{id}{MessageDelimiters.PRIMARY}{data}";
+            messageHandlers[id] = callback;
+            pipe.Send(message);
         }
 
         List<string> messages = new List<string>();

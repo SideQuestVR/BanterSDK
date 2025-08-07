@@ -1,7 +1,12 @@
 [APICommands]
 public class APICommands
 {
+
+
+    public const string CREATE_WINDOW = "!cw!";
+    public const string KILL_WINDOW = "!kw!";
     public const string REQUEST_ID = "!i!";
+    public const string RESPONSE_ID = "!o!";
     public const string UPDATE = "!u!";
     public const string DOM_READY = "!dr!";
     public const string LOAD_FAILED = "!lf!";
