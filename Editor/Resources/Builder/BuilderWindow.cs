@@ -571,6 +571,7 @@ public class BuilderWindow : EditorWindow
                     RightFootPosReset.style.display = DisplayStyle.None;
                     RightFootRotReset.style.display = DisplayStyle.None;
                     RightFootRotWorldReset.style.display = DisplayStyle.None;
+                    RightFootMirror.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -639,6 +640,7 @@ public class BuilderWindow : EditorWindow
                     RightFootPosReset.style.display = DisplayStyle.None;
                     RightFootRotReset.style.display = DisplayStyle.None;
                     RightFootRotWorldReset.style.display = DisplayStyle.None;
+                    RightFootMirror.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -733,12 +735,14 @@ public class BuilderWindow : EditorWindow
                 RightFootPosReset.style.display = DisplayStyle.None;
                 RightFootRotReset.style.display = DisplayStyle.None;
                 RightFootRotWorldReset.style.display = DisplayStyle.None;
+                RightFootMirror.style.display = DisplayStyle.None;
             }
             else
             {
                 RightFootPosReset.style.display = DisplayStyle.Flex;
                 RightFootRotReset.style.display = DisplayStyle.Flex;
                 RightFootRotWorldReset.style.display = DisplayStyle.Flex;
+                RightFootMirror.style.display = DisplayStyle.Flex;
                 posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
                 poseRotation = currentFlexaPose.rightFootTransform.rotation * currentFlexaPose.rightFoot.rotation;
                 OnPoseCallback = () =>
