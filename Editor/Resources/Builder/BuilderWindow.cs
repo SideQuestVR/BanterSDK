@@ -1761,6 +1761,7 @@ public class BuilderWindow : EditorWindow
 
     private async Task<bool> BuildAvatarAssetBundles()
     {
+#if BASIS_BUNDLE_MANAGEMENT
         if (sq.User == null)
         {
             status.AddStatus("You need to be signed in to upload an avatar!");
@@ -1815,6 +1816,12 @@ public class BuilderWindow : EditorWindow
             Debug.LogError("Failed to get avatar bones: " + e);
             return false;
         }
+#else
+        await Task.Yield();
+        status.AddStatus("BASIS_BUNDLE_MANAGEMENT is not enabled, please enable it in the project settings.");
+        MissingBones.text = "BASIS_BUNDLE_MANAGEMENT is not enabled, please enable it in the project settings.";
+        return false;
+#endif
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
