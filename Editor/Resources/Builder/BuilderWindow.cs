@@ -17,6 +17,7 @@ using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
 using LongBunnyLabs;
+using System.Runtime.InteropServices;
 
 public enum BanterBuilderBundleMode
 {
@@ -699,9 +700,7 @@ public class BuilderWindow : EditorWindow
         
         RightFootMirror.RegisterCallback<MouseUpEvent>((e) =>
         {
-            currentFlexaPose.rightFoot = new Pose(currentFlexaPose.leftFoot.position + (Vector3.right * 0.2f), currentFlexaPose.leftFoot.rotation);
-            poseRotation = currentFlexaPose.rightFoot.rotation;
-            posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
+            currentFlexaPose.rightFoot.position = currentFlexaPose.leftFoot.position;
             SceneView.RepaintAll();
         });
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
