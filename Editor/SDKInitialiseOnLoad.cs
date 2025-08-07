@@ -41,19 +41,20 @@ namespace Banter.SDKEditor
             string[] packages = new string[]
             {
                 "com.basis.bundlemanagement",
-                "com.basis.odinserializer",
-                "com.basis.sdk"
+                "com.basis.sdk",
+                "com.basis.odinserializer"
             };
 
             foreach (string packageName in packages)
             {
                 string zipPath = Path.Combine(zipDirectory, $"{packageName}.zip");
-                string extractPath = Path.Combine(projectRoot, "Packages");
+                string extractRoot = Path.Combine(projectRoot, "Packages");
+                string extractPath = Path.Combine(extractRoot, packageName);
 
                 if (Directory.Exists(extractPath))
                     Directory.Delete(extractPath, true);
 
-                ZipFile.ExtractToDirectory(zipPath, extractPath);
+                ZipFile.ExtractToDirectory(zipPath, extractRoot);
                 Debug.Log($"Extracted {packageName} to {extractPath}");
             }
 
