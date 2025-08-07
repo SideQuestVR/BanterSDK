@@ -1715,11 +1715,27 @@ public class BuilderWindow : EditorWindow
             },
             bindItem = (element, i) =>
             {
+                var go = (GameObject)(sourceList[i] as UnityEngine.Object);
+
+                if (!go.GetComponent<FlexaHead>())
+                {
+                    go.AddComponent<FlexaHead>();
+                }
                 ((ObjectField)element).value = sourceList[i];
                 ((ObjectField)element).RegisterValueChangedCallback((value) =>
                 {
                     sourceList[i] = (T)value.newValue;
                 });
+            },
+            unbindItem = (element, i) =>
+            {
+                var go = (GameObject)(sourceList[i] as UnityEngine.Object);
+                var head = go.GetComponent<FlexaHead>();
+
+                if (head)
+                {
+                    DestroyImmediate(head);
+                }
             }
         };
 
