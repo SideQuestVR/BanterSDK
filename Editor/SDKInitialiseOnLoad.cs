@@ -63,10 +63,6 @@ namespace Banter.SDKEditor
             {
                 return;
             }
-            if (!EditorUtility.DisplayDialog("Install Basis Packages", "Do you want to setup Basis packages for creating avatars?", "Yes", "No"))
-            {
-                return;
-            }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
 
