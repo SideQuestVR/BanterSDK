@@ -546,6 +546,7 @@ public class BuilderWindow : EditorWindow
         var RightFootPosReset = rootVisualElement.Q<Button>("RightFootPosReset");
         var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
         var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
+        var RightFootMirror = rootVisualElement.Q<Button>("RightFootMirror");
         CenterEyePosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             posePosition = currentFlexaPose.headTransform.position;
@@ -691,6 +692,12 @@ public class BuilderWindow : EditorWindow
         RightFootRotWorldReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             poseRotation = Quaternion.identity;
+            SceneView.RepaintAll();
+        });
+        
+        RightFootMirror.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            currentFlexaPose.rightFoot = new Pose(currentFlexaPose.leftFoot.position + (Vector3.right * 0.2f), currentFlexaPose.leftFoot.rotation);
             SceneView.RepaintAll();
         });
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
