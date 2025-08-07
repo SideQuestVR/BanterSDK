@@ -15,6 +15,7 @@ namespace Banter.SDKEditor
     {
         static InitialiseOnLoad()
         {
+#if !BANTER_EDITOR
             if (ProjectPrefs.GetBool("BanterSDKInitialised", false))
             {
                 if (EditorUtility.DisplayDialog("Banter SDK Installer", "Welcome to the Banter Unity plugin SDK. Please follow the instructions to set it up. If you are not sure, just click Yes/OK.", "OK"))
@@ -28,7 +29,6 @@ namespace Banter.SDKEditor
             CreateWebRoot();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-#if !BANTER_EDITOR
 #endif
             
         }
