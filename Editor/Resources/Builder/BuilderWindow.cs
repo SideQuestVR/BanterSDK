@@ -1699,20 +1699,27 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
-    
+
     void AddRemoveFlexaHead()
     {
+        bool isDirty = false;
         foreach (var t in avatarGameObject?.GetComponentsInChildren<Transform>())
         {
             var flexaHead = t.GetComponent<FlexaHead>();
             if (headGameObjects.Contains(t.gameObject) && flexaHead == null)
             {
                 t.gameObject.AddComponent<FlexaHead>();
+                isDirty = true;
             }
             else if (flexaHead != null && !headGameObjects.Contains(t.gameObject))
             {
                 DestroyImmediate(flexaHead);
+                isDirty = true;
             }
+        }
+        if (isDirty)
+        {
+            EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
         }
     }
     public void DrawReorderableList(List<GameObject> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true)
@@ -1894,7 +1901,6 @@ public class BuilderWindow : EditorWindow
                 BuildTarget.Android,
                 BuildTarget.StandaloneWindows,
             };
-            Debug.Log("Basis Build");
             await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
             var path = "AssetBundles";
             var files = Directory.GetFiles(path, "*.txt", SearchOption.TopDirectoryOnly);
@@ -1902,7 +1908,6 @@ public class BuilderWindow : EditorWindow
             {
                 File.Delete(file);
             }
-            Debug.Log("Basis Build After");
             return true;
         }
         catch (Exception e)

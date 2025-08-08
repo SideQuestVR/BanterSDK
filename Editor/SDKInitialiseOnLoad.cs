@@ -7,6 +7,7 @@ using Newtonsoft.Json.Linq;
 using System.IO.Compression;
 using LongBunnyLabs;
 using Unity.EditorCoroutines.Editor;
+using UnityEditor.Build;
 
 namespace Banter.SDKEditor
 {
@@ -108,7 +109,7 @@ namespace Banter.SDKEditor
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
             Debug.Log("All Basis packages installed and manifest.json updated.");
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BASIS_BUNDLE_MANAGEMENT");
         }
         static void CreateWebRoot()
         {
