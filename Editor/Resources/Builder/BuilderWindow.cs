@@ -1655,6 +1655,7 @@ public class BuilderWindow : EditorWindow
             buildOptions.style.display = DisplayStyle.Flex;
             loggedInCTAKit.style.display = DisplayStyle.Flex;
             loggedInCTAScene.style.display = DisplayStyle.None;
+            dropAreaContainer.style.display = DisplayStyle.Flex;
             MainTitle.text = "Kit Build";
             MainTitle.style.display = DisplayStyle.Flex;
         }
