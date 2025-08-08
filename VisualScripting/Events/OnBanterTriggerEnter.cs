@@ -1,3 +1,4 @@
+#if BANTER_VISUAL_SCRIPTING
 using System;
 using Banter.SDK;
 using Unity.VisualScripting;
@@ -5,7 +6,6 @@ using UnityEngine;
 
 namespace Banter.VisualScripting
 {
-    // #if MODULE_PHYSICS_EXISTS
     /// <summary>
     /// Called when a collider enters the trigger.
     /// </summary>
@@ -39,5 +39,5 @@ namespace Banter.VisualScripting
             }
         }
     }
-    // #endif
 }
+#endif

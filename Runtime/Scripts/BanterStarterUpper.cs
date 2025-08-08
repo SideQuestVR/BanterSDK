@@ -26,6 +26,8 @@ namespace Banter.SDK
         [SerializeField] float spawnRotation;
         [SerializeField] bool openBrowser;
         [SerializeField] Transform _feetTransform;
+        [SerializeField] Renderer _browserRenderer;
+        public static bool SafeMode = false;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
@@ -40,9 +42,22 @@ namespace Banter.SDK
 
 		MemoryMappedFile mmf;
 		MemoryMappedViewAccessor accessor;
-		IntPtr ptr;
+		IntPtr browserTexturePtr;
         void Awake()
         {
+            // Safe mode?
+            if (PlayerPrefs.HasKey("SafeModeOff"))
+            {
+                PlayerPrefs.DeleteKey("SafeMode");
+                PlayerPrefs.DeleteKey("SafeModeOff");
+            }
+            else if (PlayerPrefs.HasKey("SafeMode"))
+            {
+                SafeMode = true;
+                LogLine.Do("SAFE MODE is set on");
+                PlayerPrefs.SetInt("SafeModeOff",1);
+            }
+            
 #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
             BasisLoadHandler.OnGameStart();
@@ -262,29 +277,34 @@ namespace Banter.SDK
 #endif
                    
         }
-
+        int spaceBrowserWidth = 1280;
+        int spaceBrowserHeight = 720;
+        public static Texture2D browserTexture;
         void StartBrowserWindow()
         {
 #if UNITY_EDITOR
-            var injectFile = Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\preload.js");
+            var injectFile = Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.js");
 #else
-            var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "preload.js");
+            var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.js");
 #endif
-            scene.link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{1280}{MessageDelimiters.PRIMARY}{720}{MessageDelimiters.PRIMARY}https://youtube.com/{MessageDelimiters.PRIMARY}{injectFile}", msg => {
+            scene.link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{spaceBrowserWidth}{MessageDelimiters.PRIMARY}{spaceBrowserHeight}{MessageDelimiters.PRIMARY}about:blank{MessageDelimiters.PRIMARY}{injectFile}", msg => {
                 var parts = msg.Split(MessageDelimiters.PRIMARY, 3);
                 if (parts.Length < 2)
                 {
                     Debug.LogError("Failed to create window: " + msg);
                     return;
                 }
-                Debug.Log("Created main window with ID: " + parts[1]);
-                scene.link.Send($"{APICommands.TOGGLE_DEV_TOOLS}{MessageDelimiters.PRIMARY}{parts[1]}", _ => { });
                 mainWWindowId = int.Parse(parts[1]);
                 mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + parts[1], MemoryMappedFileRights.Read);
                 accessor = mmf.CreateViewAccessor();
-                ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
+                browserTexturePtr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
                 UnityMainThreadTaskScheduler.Default.Enqueue(() =>
                 {
+                    browserTexture = new Texture2D(spaceBrowserWidth, spaceBrowserHeight, TextureFormat.BGRA32, false, true);
+                    if(_browserRenderer != null)
+                    {
+                        _browserRenderer.material.mainTexture = browserTexture;
+                    }
                     // if (m_contentView == null)
                     // {
                     // 	m_contentView = new Texture2D(m_texSize.x, m_texSize.y, TextureFormat.BGRA32, false, true);
@@ -372,9 +392,14 @@ namespace Banter.SDK
             scene.FixedUpdate();
         }
 
-        void UUpdate()
+        void Update()
         {
-             FragmentCapture.GarbageCollect();
+            FragmentCapture.GarbageCollect();
+            if (browserTexture != null && browserTexturePtr != IntPtr.Zero)
+			{
+				browserTexture.LoadRawTextureData(browserTexturePtr, spaceBrowserWidth * spaceBrowserHeight * 4);
+				browserTexture.Apply();
+			}
         }
 
 

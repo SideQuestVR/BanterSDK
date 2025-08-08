@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Unity.Collections;
-using Unity.VisualScripting;
-using UnityEditor;
 using UnityEngine;
 
 public class MipMaps

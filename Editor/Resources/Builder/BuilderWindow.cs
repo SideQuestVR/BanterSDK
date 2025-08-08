@@ -17,6 +17,8 @@ using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
 using LongBunnyLabs;
+using System.Runtime.InteropServices;
+using Unity.VisualScripting;
 
 public enum BanterBuilderBundleMode
 {
@@ -548,6 +550,8 @@ public class BuilderWindow : EditorWindow
         var RightFootPosReset = rootVisualElement.Q<Button>("RightFootPosReset");
         var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
         var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
+        var RightFootMirror = rootVisualElement.Q<Button>("RightFootMirror");
+        var LeftFootMirror = rootVisualElement.Q<Button>("LeftFootMirror");
         CenterEyePosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             posePosition = currentFlexaPose.headTransform.position;
@@ -565,6 +569,7 @@ public class BuilderWindow : EditorWindow
                     LeftFootPosReset.style.display = DisplayStyle.None;
                     LeftFootRotReset.style.display = DisplayStyle.None;
                     LeftFootRotWorldReset.style.display = DisplayStyle.None;
+                    LeftFootMirror.style.display = DisplayStyle.None;
                 }
                 else
                 {
@@ -572,6 +577,7 @@ public class BuilderWindow : EditorWindow
                     RightFootPosReset.style.display = DisplayStyle.None;
                     RightFootRotReset.style.display = DisplayStyle.None;
                     RightFootRotWorldReset.style.display = DisplayStyle.None;
+                    RightFootMirror.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -622,6 +628,15 @@ public class BuilderWindow : EditorWindow
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
+        LeftFootMirror.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            var offset = currentFlexaPose.rightFoot.InverseTransformDirection(currentFlexaPose.rightFoot.position);
+            offset.x *= -1f;
+            offset = currentFlexaPose.rightFoot.TransformDirection(offset);
+            currentFlexaPose.leftFoot.position = offset;
+            posePosition = currentFlexaPose.leftFootTransform.TransformPoint(currentFlexaPose.leftFoot.position);
+            SceneView.RepaintAll();
+        });
         SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
             currentFlexaPose = GetFlexaPose();
@@ -640,6 +655,7 @@ public class BuilderWindow : EditorWindow
                     RightFootPosReset.style.display = DisplayStyle.None;
                     RightFootRotReset.style.display = DisplayStyle.None;
                     RightFootRotWorldReset.style.display = DisplayStyle.None;
+                    RightFootMirror.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -655,12 +671,14 @@ public class BuilderWindow : EditorWindow
                 LeftFootPosReset.style.display = DisplayStyle.None;
                 LeftFootRotReset.style.display = DisplayStyle.None;
                 LeftFootRotWorldReset.style.display = DisplayStyle.None;
+                LeftFootMirror.style.display = DisplayStyle.None;
             }
             else
             {
                 LeftFootPosReset.style.display = DisplayStyle.Flex;
                 LeftFootRotReset.style.display = DisplayStyle.Flex;
                 LeftFootRotWorldReset.style.display = DisplayStyle.Flex;
+                LeftFootMirror.style.display = DisplayStyle.Flex;
                 posePosition = currentFlexaPose.leftFootTransform.TransformPoint(currentFlexaPose.leftFoot.position);
                 poseRotation = currentFlexaPose.leftFootTransform.rotation * currentFlexaPose.leftFoot.rotation;
                 OnPoseCallback = () =>
@@ -695,6 +713,16 @@ public class BuilderWindow : EditorWindow
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
+        
+        RightFootMirror.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            var offset = currentFlexaPose.leftFoot.InverseTransformDirection(currentFlexaPose.leftFoot.position);
+            offset.x *= -1f;
+            offset = currentFlexaPose.leftFoot.TransformDirection(offset);
+            currentFlexaPose.rightFoot.position = offset;
+            posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
+            SceneView.RepaintAll();
+        });
         SelectRightFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
             currentFlexaPose = GetFlexaPose();
@@ -713,6 +741,7 @@ public class BuilderWindow : EditorWindow
                     LeftFootPosReset.style.display = DisplayStyle.None;
                     LeftFootRotReset.style.display = DisplayStyle.None;
                     LeftFootRotWorldReset.style.display = DisplayStyle.None;
+                    LeftFootMirror.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
@@ -728,12 +757,14 @@ public class BuilderWindow : EditorWindow
                 RightFootPosReset.style.display = DisplayStyle.None;
                 RightFootRotReset.style.display = DisplayStyle.None;
                 RightFootRotWorldReset.style.display = DisplayStyle.None;
+                RightFootMirror.style.display = DisplayStyle.None;
             }
             else
             {
                 RightFootPosReset.style.display = DisplayStyle.Flex;
                 RightFootRotReset.style.display = DisplayStyle.Flex;
                 RightFootRotWorldReset.style.display = DisplayStyle.Flex;
+                RightFootMirror.style.display = DisplayStyle.Flex;
                 posePosition = currentFlexaPose.rightFootTransform.TransformPoint(currentFlexaPose.rightFoot.position);
                 poseRotation = currentFlexaPose.rightFootTransform.rotation * currentFlexaPose.rightFoot.rotation;
                 OnPoseCallback = () =>
@@ -1626,6 +1657,7 @@ public class BuilderWindow : EditorWindow
             buildOptions.style.display = DisplayStyle.Flex;
             loggedInCTAKit.style.display = DisplayStyle.Flex;
             loggedInCTAScene.style.display = DisplayStyle.None;
+            dropAreaContainer.style.display = DisplayStyle.Flex;
             MainTitle.text = "Kit Build";
             MainTitle.style.display = DisplayStyle.Flex;
         }
@@ -1684,8 +1716,35 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
-    
-    public void DrawReorderableList<T>(List<T> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true) where T : UnityEngine.Object
+   void AddRemoveFlexaHead()
+    {
+        bool isDirty = false;
+        try
+        {
+            foreach (var t in avatarGameObject?.GetComponentsInChildren<Transform>())
+            {
+                var flexaHead = t.GetComponent<FlexaHead>();
+                if (headGameObjects.Contains(t.gameObject) && flexaHead == null)
+                {
+                    t.gameObject.AddComponent<FlexaHead>();
+                    isDirty = true;
+                }
+                else if (flexaHead != null && !headGameObjects.Contains(t.gameObject))
+                {
+                    DestroyImmediate(flexaHead);
+                    isDirty = true;
+                }
+            }
+        }catch (Exception e)
+        {
+            Debug.LogWarning("Error occurred while adding/removing FlexaHead components: " + e);
+        }
+        if (isDirty)
+        {
+            EditorSceneManager.MarkSceneDirty(UnityEngine.SceneManagement.SceneManager.GetActiveScene());
+        }
+    }
+    public void DrawReorderableList(List<GameObject> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true)
     {
         var list = new ListView(sourceList)
         {
@@ -1694,19 +1753,36 @@ public class BuilderWindow : EditorWindow
             headerTitle = "  Head Objects",
             showAddRemoveFooter = true,
             reorderMode = ListViewReorderMode.Animated,
-            makeItem = () => new ObjectField
+            makeItem = () =>
             {
-                objectType = typeof(T),
-                allowSceneObjects = allowSceneObjects
+                return new ObjectField
+                {
+                    objectType = typeof(GameObject),
+                    allowSceneObjects = allowSceneObjects
+                };
             },
             bindItem = (element, i) =>
             {
+                AddRemoveFlexaHead();
                 ((ObjectField)element).value = sourceList[i];
                 ((ObjectField)element).RegisterValueChangedCallback((value) =>
                 {
-                    sourceList[i] = (T)value.newValue;
+                    try
+                    {
+                        // Debug.Log("replace...");
+                        sourceList[i] = (GameObject)value.newValue;
+                        // Debug.Log("Replaced item at index " + i + " with: " + value.newValue + " (" + sourceList.Count() + ")" + " (" + headGameObjects.Count() + ")");
+                        AddRemoveFlexaHead();
+                        headGameObjects = sourceList;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Failed to add item to list: " + e);
+                    }
                 });
-            }
+            },
+            unbindItem = (element, i) => AddRemoveFlexaHead(),
+            destroyItem = (element) => AddRemoveFlexaHead()
         };
 
         rootVisualElement.Add(list);
@@ -1734,7 +1810,7 @@ public class BuilderWindow : EditorWindow
                 }
                 catch
                 {
-                    Debug.LogWarning("Duplicate bone name found: " + bone.name + ", " + bones[bone.name] + " skipping.");
+                    // Debug.LogWarning("Duplicate bone name found: " + bone.name + ", " + bones[bone.name] + " skipping.");
                 }
             }
         }
@@ -1760,6 +1836,47 @@ public class BuilderWindow : EditorWindow
         MissingBones.text = "";
         return true;
     }
+    bool AnyBoneHasScale()
+    {
+        var renderers = avatarGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+        foreach (var renderer in renderers)
+        {
+            if (renderer.bones.Any(b => !IsIdentityScale(b.localScale)))
+            {
+                status.AddStatus("Avatar has bones with scale applied, this will cause issues in Banter.");
+                MissingBones.text = "Avatar has bones with scale applied, this will cause issues in Banter.";
+                return true;
+            }
+        }
+        return false;
+    }
+    bool IsIdentityScale(Vector3 scale, float tolerancePercent = 0.001f)
+    {
+        return Vector3.Distance(scale, Vector3.one) < tolerancePercent;
+    }
+    bool IsIdentityRotation(Quaternion q, float toleranceDegrees = 0.001f)
+    {
+        return Mathf.Abs(Quaternion.Angle(q, Quaternion.identity)) < toleranceDegrees;
+    }
+    bool RootHasRotation()
+    {
+        var renderers = avatarGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+        List<Transform> aboveRootBones = new List<Transform>();
+        foreach (var renderer in renderers)
+        {
+            aboveRootBones.AddRange(renderer.rootBone.parent.GetComponentsInParent<Transform>());
+        }
+        return aboveRootBones.Any(b => !IsIdentityRotation(b.rotation));
+    }
+
+    void RemoveCameras()
+    {
+        var cameras = avatarGameObject?.GetComponentsInChildren<Camera>();
+        foreach (var camera in cameras)
+        {
+            DestroyImmediate(camera);
+        }
+    }
 
     private async Task<bool> BuildAvatarAssetBundles()
     {
@@ -1769,6 +1886,23 @@ public class BuilderWindow : EditorWindow
             MissingBones.text = "You need to be signed in to upload an avatar!";
             return false;
         }
+
+        if (RootHasRotation())
+        {
+            if (!EditorUtility.DisplayDialog("ROOT ROTATED", "The root gameobject has rotation applied, this might be offset in the bones but will cause rotation problems in Banter.", "Continue", "Cancel"))
+            {
+                return false;
+            }
+        }
+        if (AnyBoneHasScale())
+        {
+            if (!EditorUtility.DisplayDialog("BONES SCALED", "The avatar has bones with scale applied, this might be offset in the bones but will cause scaling problems in Banter.", "Continue", "Cancel"))
+            {
+                return false;
+            }
+        }
+        RemoveCameras();
+#if BASIS_BUNDLE_MANAGEMENT
         var basisProp = avatarGameObject.GetComponent<BasisProp>();
         if (basisProp == null)
         {
@@ -1801,7 +1935,6 @@ public class BuilderWindow : EditorWindow
                 BuildTarget.Android,
                 BuildTarget.StandaloneWindows,
             };
-            Debug.Log("Basis Build");
             await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
             var path = "AssetBundles";
             var files = Directory.GetFiles(path, "*.txt", SearchOption.TopDirectoryOnly);
@@ -1809,7 +1942,6 @@ public class BuilderWindow : EditorWindow
             {
                 File.Delete(file);
             }
-            Debug.Log("Basis Build After");
             return true;
         }
         catch (Exception e)
@@ -1817,6 +1949,12 @@ public class BuilderWindow : EditorWindow
             Debug.LogError("Failed to get avatar bones: " + e);
             return false;
         }
+#else
+        await Task.Yield();
+        status.AddStatus("Basis packages missing, please reinstall.");
+        MissingBones.text = "Basis packages missing, please reinstall.";
+        return false;
+#endif
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
@@ -1966,5 +2104,4 @@ public class BuilderWindow : EditorWindow
     {
         buildProgressBar.style.display = DisplayStyle.None;
     }
-
 }

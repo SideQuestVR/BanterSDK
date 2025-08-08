@@ -1231,7 +1231,16 @@ namespace Banter.SDK
         }
         public void UpdateJsObject(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => SendObjectUpdate(int.Parse(msg), reqId), $"{nameof(BanterScene)}.{nameof(UpdateJsObject)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                try
+                {
+                    SendObjectUpdate(int.Parse(msg), reqId);
+                }catch (Exception e)
+                {
+                    Debug.LogError("[Banter] Error updating object: " + e.Message + ", " + msg);
+                }
+            }, $"{nameof(BanterScene)}.{nameof(UpdateJsObject)}"));
         }
         // TODO: Lets look at what this is doing and why, it could be better to propagate updates back to the object another way
         void SendObjectUpdate(int oid, int reqId)
@@ -1706,12 +1715,12 @@ namespace Banter.SDK
             if (returnValue == null)
             {
                 //todo: is this case needed/intended?
-                return $"{comp.banterObject.oid}|{comp.cid}|{(int)comp.type}|";
+                return $"{comp.banterObject.oid}¶{comp.cid}¶{(int)comp.type}¶";
 
             }
             else
             {
-                return $"{comp.banterObject.oid}|{comp.cid}|{(int)comp.type}|{returnValue}";
+                return $"{comp.banterObject.oid}¶{comp.cid}¶{(int)comp.type}¶{returnValue}";
             }
         }
         #endregion
@@ -1859,7 +1868,7 @@ namespace Banter.SDK
         {
             // An empty update to trigger this object to be sent to JS
 
-            EnqueueChange($"{oid}|{cid}|{(int)ct}|{(int)PropertyName.hasUnity}§{(int)PropertyType.Bool}§1");
+            EnqueueChange($"{oid}¶{cid}¶{(int)ct}¶{(int)PropertyName.hasUnity}§{(int)PropertyType.Bool}§1");
 
         }
         public void KillAllKitItemsBeforeLoad()

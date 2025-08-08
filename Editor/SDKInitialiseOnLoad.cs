@@ -3,6 +3,11 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using Banter.SDK;
+using Newtonsoft.Json.Linq;
+using System.IO.Compression;
+using LongBunnyLabs;
+using Unity.EditorCoroutines.Editor;
+using UnityEditor.Build;
 
 namespace Banter.SDKEditor
 {
@@ -11,10 +16,28 @@ namespace Banter.SDKEditor
     {
         static InitialiseOnLoad()
         {
+            var renderPipeline = UnityEngine.Rendering.GraphicsSettings.renderPipelineAsset;
+            if( renderPipeline != null)
+            {
+                if (!EditorUtility.DisplayDialog("WRONG RENDER PIPELINE", "This project was created with URP but needs to use BiRP. Please select 3D(Built in Render Pipeline) in a new project and discard this one.", "OK", "Close Unity"))
+                {
+                    EditorApplication.Exit(0);
+                    return;
+                }
+                else
+                {
+                    return;
+                }
+            }
 #if !BANTER_EDITOR
+            ImportBasisPackages();
             SetupLayersAndTags();
+            SetApiCompatibilityLevel();
             CreateWebRoot();
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+
+            
 #endif
         }
 
@@ -30,7 +53,64 @@ namespace Banter.SDKEditor
                 }
             }
         }
+        static void SetApiCompatibilityLevel()
+        {
+            var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
+            if( level == ApiCompatibilityLevel.NET_Unity_4_8)
+            {
+                return;
+            }
+            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
+        }
+        static void ImportBasisPackages()
+        {
+            if (Directory.Exists("Packages/com.basis.bundlemanagement") &&
+               Directory.Exists("Packages/com.basis.sdk") &&
+               Directory.Exists("Packages/com.basis.odinserializer"))
+            {
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
+                return;
+            }
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
 
+            string[] packages = new string[]
+            {
+                "com.basis.bundlemanagement",
+                "com.basis.sdk",
+                "com.basis.odinserializer"
+            };
+
+            foreach (string packageName in packages)
+            {
+                string zipPath = Path.Combine(zipDirectory, $"{packageName}.zip");
+                string extractRoot = Path.Combine(projectRoot, "Packages");
+                string extractPath = Path.Combine(extractRoot, packageName);
+
+                if (Directory.Exists(extractPath))
+                    Directory.Delete(extractPath, true);
+
+                ZipFile.ExtractToDirectory(zipPath, extractRoot);
+                Debug.Log($"Extracted {packageName} to {extractPath}");
+            }
+
+            // Modify manifest.json
+            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
+            string json = File.ReadAllText(manifestPath);
+
+            var jObject = JObject.Parse(json);
+            var dependencies = (JObject)jObject["dependencies"];
+
+            foreach (string packageName in packages)
+            {
+                dependencies[packageName] = $"file:{packageName}";
+            }
+
+            File.WriteAllText(manifestPath, jObject.ToString());
+            AssetDatabase.Refresh();
+            Debug.Log("All Basis packages installed and manifest.json updated.");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BASIS_BUNDLE_MANAGEMENT");
+        }
         static void CreateWebRoot()
         {
             // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
