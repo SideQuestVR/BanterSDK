@@ -1835,7 +1835,7 @@ public class BuilderWindow : EditorWindow
         List<Transform> aboveRootBones = new List<Transform>();
         foreach (var renderer in renderers)
         {
-            aboveRootBones.AddRange(renderer.rootBone.GetComponentsInParent<Transform>());
+            aboveRootBones.AddRange(renderer.rootBone.parent.GetComponentsInParent<Transform>());
         }
         return aboveRootBones.Any(b => !IsIdentityRotation(b.rotation));
     }

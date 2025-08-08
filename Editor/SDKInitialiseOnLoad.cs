@@ -63,8 +63,8 @@ namespace Banter.SDKEditor
         }
         static void ImportBasisPackages()
         {
-            if(Directory.Exists("Packages/com.basis.bundlemanagement") && 
-               Directory.Exists("Packages/com.basis.sdk") && 
+            if (Directory.Exists("Packages/com.basis.bundlemanagement") &&
+               Directory.Exists("Packages/com.basis.sdk") &&
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
                 return;
@@ -107,6 +107,7 @@ namespace Banter.SDKEditor
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
             Debug.Log("All Basis packages installed and manifest.json updated.");
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
         }
         static void CreateWebRoot()
         {
