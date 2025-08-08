@@ -18,6 +18,7 @@ using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
 using LongBunnyLabs;
 using System.Runtime.InteropServices;
+using Unity.VisualScripting;
 
 public enum BanterBuilderBundleMode
 {
@@ -1699,28 +1700,22 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
     
-    void AddRemoveFlexaHead(UnityEngine.Object obj, bool shouldAdd = true)
+    void AddRemoveFlexaHead()
     {
-        var go = (GameObject)obj;
-        if (shouldAdd)
+        foreach (var t in avatarGameObject?.GetComponentsInChildren<Transform>())
         {
-
-            if (!(go?.GetComponent<FlexaHead>()??true))
+            var flexaHead = t.GetComponent<FlexaHead>();
+            if (headGameObjects.Contains(t.gameObject) && flexaHead == null)
             {
-                go.AddComponent<FlexaHead>();
+                t.gameObject.AddComponent<FlexaHead>();
+            }
+            else if (flexaHead != null && !headGameObjects.Contains(t.gameObject))
+            {
+                DestroyImmediate(flexaHead);
             }
         }
-        else
-        {
-            var head = go?.GetComponent<FlexaHead>();
-
-            if (head)
-            {
-                DestroyImmediate(head);
-            } 
-        }
     }
-    public void DrawReorderableList<T>(List<T> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true) where T : UnityEngine.Object
+    public void DrawReorderableList(List<GameObject> sourceList, VisualElement rootVisualElement, bool allowSceneObjects = true)
     {
         var list = new ListView(sourceList)
         {
@@ -1729,25 +1724,36 @@ public class BuilderWindow : EditorWindow
             headerTitle = "  Head Objects",
             showAddRemoveFooter = true,
             reorderMode = ListViewReorderMode.Animated,
-            makeItem = () => new ObjectField
+            makeItem = () =>
             {
-                objectType = typeof(T),
-                allowSceneObjects = allowSceneObjects
+                return new ObjectField
+                {
+                    objectType = typeof(GameObject),
+                    allowSceneObjects = allowSceneObjects
+                };
             },
             bindItem = (element, i) =>
             {
-                AddRemoveFlexaHead(sourceList[i]);
+                AddRemoveFlexaHead();
                 ((ObjectField)element).value = sourceList[i];
                 ((ObjectField)element).RegisterValueChangedCallback((value) =>
                 {
-                    AddRemoveFlexaHead(value.newValue);
-                    sourceList[i] = (T)value.newValue;
+                    try
+                    {
+                        // Debug.Log("replace...");
+                        sourceList[i] = (GameObject)value.newValue;
+                        // Debug.Log("Replaced item at index " + i + " with: " + value.newValue + " (" + sourceList.Count() + ")" + " (" + headGameObjects.Count() + ")");
+                        AddRemoveFlexaHead();
+                        headGameObjects = sourceList;
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Failed to add item to list: " + e);
+                    }
                 });
             },
-            unbindItem = (element, i) =>
-            {
-                AddRemoveFlexaHead(sourceList[i], false);
-            }
+            unbindItem = (element, i) => AddRemoveFlexaHead(),
+            destroyItem = (element) => AddRemoveFlexaHead()
         };
 
         rootVisualElement.Add(list);
@@ -1775,7 +1781,7 @@ public class BuilderWindow : EditorWindow
                 }
                 catch
                 {
-                    Debug.LogWarning("Duplicate bone name found: " + bone.name + ", " + bones[bone.name] + " skipping.");
+                    // Debug.LogWarning("Duplicate bone name found: " + bone.name + ", " + bones[bone.name] + " skipping.");
                 }
             }
         }
@@ -1801,16 +1807,61 @@ public class BuilderWindow : EditorWindow
         MissingBones.text = "";
         return true;
     }
+    bool AnyBoneHasScale()
+    {
+        var renderers = avatarGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+        foreach (var renderer in renderers)
+        {
+            if (renderer.bones.Any(b => !IsIdentityScale(b.localScale)))
+            {
+                status.AddStatus("Avatar has bones with scale applied, this will cause issues in Banter.");
+                MissingBones.text = "Avatar has bones with scale applied, this will cause issues in Banter.";
+                return true;
+            }
+        }
+        return false;
+    }
+    bool IsIdentityScale(Vector3 scale, float tolerancePercent = 0.001f)
+    {
+        return Vector3.Distance(scale, Vector3.one) < tolerancePercent;
+    }
+    bool IsIdentityRotation(Quaternion q, float toleranceDegrees = 0.001f)
+    {
+        return Mathf.Abs(Quaternion.Angle(q, Quaternion.identity)) < toleranceDegrees;
+    }
+    bool RootHasRotation()
+    {
+        var renderers = avatarGameObject.GetComponentsInChildren<SkinnedMeshRenderer>();
+        List<Transform> aboveRootBones = new List<Transform>();
+        foreach (var renderer in renderers)
+        {
+            aboveRootBones.AddRange(renderer.rootBone.GetComponentsInParent<Transform>());
+        }
+        return aboveRootBones.Any(b => !IsIdentityRotation(b.rotation));
+    }
 
     private async Task<bool> BuildAvatarAssetBundles()
     {
-#if BASIS_BUNDLE_MANAGEMENT
         if (sq.User == null)
         {
             status.AddStatus("You need to be signed in to upload an avatar!");
             MissingBones.text = "You need to be signed in to upload an avatar!";
             return false;
         }
+
+        if(RootHasRotation()) {
+            if (!EditorUtility.DisplayDialog("ROOT ROTATED", "The root gameobject has rotation applied, this might be offset in the bones but will cause rotation problems in Banter.", "Continue", "Cancel"))
+            {
+                return false;
+            }
+        }
+        if(AnyBoneHasScale()) {
+            if (!EditorUtility.DisplayDialog("BONES SCALED", "The avatar has bones with scale applied, this might be offset in the bones but will cause scaling problems in Banter.", "Continue", "Cancel"))
+            {
+                return false;
+            }
+        }
+#if BASIS_BUNDLE_MANAGEMENT
         var basisProp = avatarGameObject.GetComponent<BasisProp>();
         if (basisProp == null)
         {
@@ -1861,8 +1912,8 @@ public class BuilderWindow : EditorWindow
         }
 #else
         await Task.Yield();
-        status.AddStatus("BASIS_BUNDLE_MANAGEMENT is not enabled, please enable it in the project settings.");
-        MissingBones.text = "BASIS_BUNDLE_MANAGEMENT is not enabled, please enable it in the project settings.";
+        status.AddStatus("Basis packages missing, please reinstall.");
+        MissingBones.text = "Basis packages missing, please reinstall.";
         return false;
 #endif
     }
@@ -2014,5 +2065,4 @@ public class BuilderWindow : EditorWindow
     {
         buildProgressBar.style.display = DisplayStyle.None;
     }
-
 }
