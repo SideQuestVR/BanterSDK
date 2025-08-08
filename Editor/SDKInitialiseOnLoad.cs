@@ -67,6 +67,7 @@ namespace Banter.SDKEditor
                Directory.Exists("Packages/com.basis.sdk") &&
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
                 return;
             }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
