@@ -549,6 +549,7 @@ public class BuilderWindow : EditorWindow
         var RightFootRotReset = rootVisualElement.Q<Button>("RightFootRotReset");
         var RightFootRotWorldReset = rootVisualElement.Q<Button>("RightFootRotWorldReset");
         var RightFootMirror = rootVisualElement.Q<Button>("RightFootMirror");
+        var LeftFootMirror = rootVisualElement.Q<Button>("LeftFootMirror");
         CenterEyePosReset.RegisterCallback<MouseUpEvent>((e) =>
         {
             posePosition = currentFlexaPose.headTransform.position;
@@ -566,6 +567,7 @@ public class BuilderWindow : EditorWindow
                     LeftFootPosReset.style.display = DisplayStyle.None;
                     LeftFootRotReset.style.display = DisplayStyle.None;
                     LeftFootRotWorldReset.style.display = DisplayStyle.None;
+                    LeftFootMirror.style.display = DisplayStyle.None;
                 }
                 else
                 {
@@ -624,6 +626,15 @@ public class BuilderWindow : EditorWindow
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
+        LeftFootMirror.RegisterCallback<MouseUpEvent>((e) =>
+        {
+            var offset = currentFlexaPose.rightFoot.InverseTransformDirection(currentFlexaPose.rightFoot.position);
+            offset.x *= -1f;
+            offset = currentFlexaPose.rightFoot.TransformDirection(offset);
+            currentFlexaPose.leftFoot.position = offset;
+            posePosition = currentFlexaPose.leftFootTransform.TransformPoint(currentFlexaPose.leftFoot.position);
+            SceneView.RepaintAll();
+        });
         SelectLeftFoot.RegisterCallback<MouseUpEvent>((e) =>
         {
             currentFlexaPose = GetFlexaPose();
@@ -658,12 +669,14 @@ public class BuilderWindow : EditorWindow
                 LeftFootPosReset.style.display = DisplayStyle.None;
                 LeftFootRotReset.style.display = DisplayStyle.None;
                 LeftFootRotWorldReset.style.display = DisplayStyle.None;
+                LeftFootMirror.style.display = DisplayStyle.None;
             }
             else
             {
                 LeftFootPosReset.style.display = DisplayStyle.Flex;
                 LeftFootRotReset.style.display = DisplayStyle.Flex;
                 LeftFootRotWorldReset.style.display = DisplayStyle.Flex;
+                LeftFootMirror.style.display = DisplayStyle.Flex;
                 posePosition = currentFlexaPose.leftFootTransform.TransformPoint(currentFlexaPose.leftFoot.position);
                 poseRotation = currentFlexaPose.leftFootTransform.rotation * currentFlexaPose.leftFoot.rotation;
                 OnPoseCallback = () =>
@@ -726,6 +739,7 @@ public class BuilderWindow : EditorWindow
                     LeftFootPosReset.style.display = DisplayStyle.None;
                     LeftFootRotReset.style.display = DisplayStyle.None;
                     LeftFootRotWorldReset.style.display = DisplayStyle.None;
+                    LeftFootMirror.style.display = DisplayStyle.None;
                 }
                 handleEnabled = false;
             }
