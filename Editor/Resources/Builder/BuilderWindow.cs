@@ -1871,7 +1871,7 @@ public class BuilderWindow : EditorWindow
         var cameras = avatarGameObject?.GetComponentsInChildren<Camera>();
         foreach (var camera in cameras)
         {
-            DestroyImmediate(camera.gameObject);
+            DestroyImmediate(camera);
         }
     }
 
