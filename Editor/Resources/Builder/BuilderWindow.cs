@@ -1713,23 +1713,28 @@ public class BuilderWindow : EditorWindow
         confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
-
-    void AddRemoveFlexaHead()
+   void AddRemoveFlexaHead()
     {
         bool isDirty = false;
-        foreach (var t in avatarGameObject?.GetComponentsInChildren<Transform>())
+        try
         {
-            var flexaHead = t.GetComponent<FlexaHead>();
-            if (headGameObjects.Contains(t.gameObject) && flexaHead == null)
+            foreach (var t in avatarGameObject?.GetComponentsInChildren<Transform>())
             {
-                t.gameObject.AddComponent<FlexaHead>();
-                isDirty = true;
+                var flexaHead = t.GetComponent<FlexaHead>();
+                if (headGameObjects.Contains(t.gameObject) && flexaHead == null)
+                {
+                    t.gameObject.AddComponent<FlexaHead>();
+                    isDirty = true;
+                }
+                else if (flexaHead != null && !headGameObjects.Contains(t.gameObject))
+                {
+                    DestroyImmediate(flexaHead);
+                    isDirty = true;
+                }
             }
-            else if (flexaHead != null && !headGameObjects.Contains(t.gameObject))
-            {
-                DestroyImmediate(flexaHead);
-                isDirty = true;
-            }
+        }catch (Exception e)
+        {
+            Debug.LogWarning("Error occurred while adding/removing FlexaHead components: " + e);
         }
         if (isDirty)
         {
