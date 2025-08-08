@@ -1866,6 +1866,15 @@ public class BuilderWindow : EditorWindow
         return aboveRootBones.Any(b => !IsIdentityRotation(b.rotation));
     }
 
+    void RemoveCameras()
+    {
+        var cameras = avatarGameObject?.GetComponentsInChildren<Camera>();
+        foreach (var camera in cameras)
+        {
+            DestroyImmediate(camera.gameObject);
+        }
+    }
+
     private async Task<bool> BuildAvatarAssetBundles()
     {
         if (sq.User == null)
@@ -1875,18 +1884,21 @@ public class BuilderWindow : EditorWindow
             return false;
         }
 
-        if(RootHasRotation()) {
+        if (RootHasRotation())
+        {
             if (!EditorUtility.DisplayDialog("ROOT ROTATED", "The root gameobject has rotation applied, this might be offset in the bones but will cause rotation problems in Banter.", "Continue", "Cancel"))
             {
                 return false;
             }
         }
-        if(AnyBoneHasScale()) {
+        if (AnyBoneHasScale())
+        {
             if (!EditorUtility.DisplayDialog("BONES SCALED", "The avatar has bones with scale applied, this might be offset in the bones but will cause scaling problems in Banter.", "Continue", "Cancel"))
             {
                 return false;
             }
         }
+        RemoveCameras();
 #if BASIS_BUNDLE_MANAGEMENT
         var basisProp = avatarGameObject.GetComponent<BasisProp>();
         if (basisProp == null)
