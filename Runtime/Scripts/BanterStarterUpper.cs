@@ -7,9 +7,7 @@ using UnityEngine;
 using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Debug = UnityEngine.Debug;
-using System.IO.MemoryMappedFiles;
 using TLab.WebView;
-using UnityEditor.Android;
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -40,9 +38,7 @@ namespace Banter.SDK
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
 
-		MemoryMappedFile mmf;
-		MemoryMappedViewAccessor accessor;
-		IntPtr browserTexturePtr;
+        Browser browser;
         void Awake()
         {
             // Safe mode?
@@ -87,11 +83,11 @@ namespace Banter.SDK
 #endif
 #if UNITY_STANDALONE || UNITY_EDITOR
             Kill();
-            StartBrowser();
+            StartElectronBrowser();
 #endif
             SetupBrowserLink();
 
-#if UNITY_STANDALONE || UNITY_EDITOR
+// #if UNITY_STANDALONE || UNITY_EDITOR
             EventHandler args = null;
             args = (arg0, arg1) =>
             {
@@ -99,7 +95,7 @@ namespace Banter.SDK
                 StartBrowserWindow();
             };
             scene.link.Connected += args;
-#endif
+// #endif
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
 #endif
@@ -252,7 +248,7 @@ namespace Banter.SDK
             }
         }
 
-        private void StartBrowser()
+        private void StartElectronBrowser()
         {
             Kill();
 #if !BANTER_EDITOR
@@ -262,14 +258,13 @@ namespace Banter.SDK
 #endif
 
 #if UNITY_EDITOR
-            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\preload.js") + "\"";
-            var Eargs = (isProd ? "--prod true " : "") + "--bebug --pipename " + BanterLink.pipeName + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"";
+            var Eargs = (isProd ? "--prod true " : "") + "--bebug --pipename " +
+                BanterLink.pipeName + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
                 Eargs,
                 LogTag.BanterBrowser);
 #else
-            var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "preload.js") + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
                 "--bebug --prod true --pipename " + BanterLink.pipeName,
@@ -287,35 +282,32 @@ namespace Banter.SDK
 #else
             var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.js");
 #endif
-            scene.link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{spaceBrowserWidth}{MessageDelimiters.PRIMARY}{spaceBrowserHeight}{MessageDelimiters.PRIMARY}about:blank{MessageDelimiters.PRIMARY}{injectFile}", msg => {
-                var parts = msg.Split(MessageDelimiters.PRIMARY, 3);
-                if (parts.Length < 2)
+            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            {
+#if UNITY_ANDROID
+                browser = gameObject.AddComponent<WebView>();
+                // browser.LoadUrl("https://youtube.com");
+#else
+                browser = gameObject.AddComponent<ElectronView>();
+#endif
+                browser.texSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+                browser.viewSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+                browser.fps = 30;
+                browser.preloadScript = injectFile;
+                browser.captureMode = CaptureMode.HardwareBuffer;
+                var downloadOption = new Download.Option();
+                downloadOption.Update(Download.Directory.Download, "BanterLink");
+                browser.downloadOption = downloadOption;
+                browser.onCapture.AddListener((tex) =>
                 {
-                    Debug.LogError("Failed to create window: " + msg);
-                    return;
-                }
-                mainWWindowId = int.Parse(parts[1]);
-                mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + parts[1], MemoryMappedFileRights.Read);
-                accessor = mmf.CreateViewAccessor();
-                browserTexturePtr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                {
-                    browserTexture = new Texture2D(spaceBrowserWidth, spaceBrowserHeight, TextureFormat.BGRA32, false, true);
-                    if(_browserRenderer != null)
+                    mainWWindowId = browser.winId;
+                    browserTexture = tex;
+                    if (_browserRenderer != null)
                     {
                         _browserRenderer.material.mainTexture = browserTexture;
                     }
-                    // if (m_contentView == null)
-                    // {
-                    // 	m_contentView = new Texture2D(m_texSize.x, m_texSize.y, TextureFormat.BGRA32, false, true);
-                    // }
-
-                    // if (m_rawImage != null)
-                    // {
-                    // 	m_rawImage.texture = m_contentView;
-                    // 	m_onCapture?.Invoke(m_contentView);
-                    // }
                 });
+                browser.Init();
             });
         }
 
@@ -394,12 +386,9 @@ namespace Banter.SDK
 
         void Update()
         {
+            browser?.UpdateFrame();
+            // browser?.DispatchMessageQueue();
             FragmentCapture.GarbageCollect();
-            if (browserTexture != null && browserTexturePtr != IntPtr.Zero)
-			{
-				browserTexture.LoadRawTextureData(browserTexturePtr, spaceBrowserWidth * spaceBrowserHeight * 4);
-				browserTexture.Apply();
-			}
         }
 
 

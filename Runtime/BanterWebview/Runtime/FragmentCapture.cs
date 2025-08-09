@@ -30,8 +30,9 @@ namespace TLab.WebView
 
 		[Header("Capture Settings")]
 		[SerializeField] protected RawImage m_rawImage;
-		[SerializeField] protected UnityEvent<Texture2D> m_onCapture;
-		[SerializeField] protected UnityEvent m_onLoading;
+		[SerializeField] protected UnityEvent<Texture2D> m_onCapture = new UnityEvent<Texture2D>();
+		[SerializeField] protected UnityEvent m_onLoading = new UnityEvent();
+		[SerializeField] protected string m_preloadScript;
 		[SerializeField] protected Vector2Int m_viewSize = new Vector2Int(1024, 1024);
 		[SerializeField] protected Vector2Int m_texSize = new Vector2Int(512, 512);
 		[SerializeField, Min(1)] protected int m_fps = 30;
@@ -41,17 +42,23 @@ namespace TLab.WebView
 
 		private string THIS_NAME => "[" + this.GetType() + "] ";
 
-		public Vector2Int viewSize => m_viewSize;
+		public Vector2Int viewSize { get => m_viewSize; set => m_viewSize = value; }
 
-		public Vector2Int texSize => m_texSize;
+		public Vector2Int texSize { get => m_texSize; set => m_texSize = value; }
 
-		public RawImage rawImage => m_rawImage;
+		public RawImage rawImage { get => m_rawImage; set => m_rawImage = value; }
 
-		public int fps => m_fps;
+		public UnityEvent<Texture2D> onCapture { get => m_onCapture; set => m_onCapture = value; }
 
-		int winId = 0;
+		public string preloadScript { get => m_preloadScript; set => m_preloadScript = value; }
 
-		public CaptureMode captureMode => m_captureMode;
+
+
+		public int fps { get => m_fps; set => m_fps = value; }
+
+		public int winId = 0;
+
+		public CaptureMode captureMode { get => m_captureMode; set => m_captureMode = value; }
 
 		protected State m_state = State.None;
 
@@ -148,7 +155,7 @@ namespace TLab.WebView
 		public virtual IEnumerator InitTask()
 		{
 			// var browserManager = BrowserManager.Instance;
-				m_state = State.Initialising;
+			m_state = State.Initialising;
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 			// I cannot find the way to preload (load on startup)
 			// jni shared library. so call library function and
@@ -170,7 +177,8 @@ namespace TLab.WebView
 				// m_onLoading?.Invoke();
 				try
 				{
-					BanterScene.Instance().link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}{MessageDelimiters.PRIMARY}https://youtube.com/{MessageDelimiters.PRIMARY}", msg => {
+					BanterScene.Instance().link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}{MessageDelimiters.PRIMARY}about:blank{MessageDelimiters.PRIMARY}{m_preloadScript}", msg => {
+							
 						var parts = msg.Split(MessageDelimiters.PRIMARY, 3);
 						if (parts.Length < 2)
 						{
@@ -178,6 +186,7 @@ namespace TLab.WebView
 							return;
 						}
 						winId = int.Parse(parts[1]);
+						Debug.Log("[Banter] Created window with ID: " + winId);
 						mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + parts[1], MemoryMappedFileRights.Read);
 						accessor = mmf.CreateViewAccessor();
 						ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
@@ -191,8 +200,8 @@ namespace TLab.WebView
 							if (m_rawImage != null)
 							{
 								m_rawImage.texture = m_contentView;
-								m_onCapture?.Invoke(m_contentView);
 							}
+							m_onCapture?.Invoke(m_contentView);
 						});
 					});
 
@@ -236,6 +245,7 @@ namespace TLab.WebView
 			m_isVulkan = (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Vulkan);
 
 			m_NativePlugin = new AndroidJavaObject(package);
+			Debug.Log("" + THIS_NAME + ": NativePlugin created: " + m_NativePlugin.GetRawObject());
 
 			switch (m_captureMode)
 			{
@@ -401,10 +411,11 @@ namespace TLab.WebView
 			// this processing is too heavy)
 
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
-			if (SystemInfo.renderingThreadingMode == UnityEngine.Rendering.RenderingThreadingMode.MultiThreaded)
+			if (SystemInfo.renderingThreadingMode == UnityEngine.Rendering.RenderingThreadingMode.MultiThreaded){
 				GL.IssuePluginEvent(NativePlugin.UpdateSharedTextureFunc(), (int)m_NativePlugin.GetRawObject());
-			else
+			}else{
 				NativePlugin.UpdateSharedTexture((int)m_NativePlugin.GetRawObject());
+			}
 #endif
 		}
 

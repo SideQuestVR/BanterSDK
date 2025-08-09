@@ -10,14 +10,14 @@ namespace TLab.WebView
 	public abstract class Browser : FragmentCapture, IBrowser
 	{
 		[Header("Web Settings")]
-		[SerializeField] private string m_url = "https://youtube.com";
+		[SerializeField] private string m_url = "https://crystal-ice.bant.ing";
 		[SerializeField] private Download.Option m_downloadOption;
 		[SerializeField] private EventCallback m_eventCallback;
 		[SerializeField] private string[] m_intentFilters;
 
 		public string url => m_url;
 
-		public Download.Option downloadOption => m_downloadOption;
+		public Download.Option downloadOption {get { return m_downloadOption; } set { m_downloadOption = value; } }
 
 		public string[] intentFilters => m_intentFilters;
 
@@ -328,8 +328,9 @@ Debug.Log("" + THIS_NAME + "InitNativePlugin: " + m_viewSize + ", " + m_texSize 
 		public void SetDownloadOption(Download.Option downloadOption)
 		{
 			m_downloadOption = downloadOption;
-
+			
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
+			Debug.Log("" + THIS_NAME + ": SetDownloadOption: " + (m_downloadOption == null) + ", :" + (m_NativePlugin == null));
 			m_NativePlugin.Call(nameof(SetDownloadOption), (int)m_downloadOption.directory, m_downloadOption.subDirectory);
 #endif
 		}
