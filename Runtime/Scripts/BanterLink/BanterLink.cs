@@ -80,6 +80,7 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.ONLOAD))
             {
+                LogLine.Do("HERER - APICommands.ONLOAD");
                 _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
                 scene.SetLoaded();
             }
@@ -92,11 +93,13 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.NOTHING))
             {
+                LogLine.Do("HERER - APICommands.NOTHING");
                 scene.state = SceneState.LOAD_FAILED;
                 scene.Cancel("No objects yet after 4:20 seconds, failing...");
             }
             else if (msg.StartsWith(APICommands.LOAD_FAILED))
             {
+                LogLine.Do("HERER - APICommands.LOAD_FAILED");
                 scene.state = SceneState.LOAD_FAILED;
                 scene.Cancel("The web page failed to load!");
             }
@@ -128,16 +131,19 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.SCENE_START))
             {
+                LogLine.Do("HERER - APICommands.SCENE_START");
                 scene.state = SceneState.SCENE_START;
             }
             else if (msg.StartsWith(APICommands.DOM_READY))
             {
+                LogLine.Do("HERER - APICommands.DOM_READY");
                 scene.state = SceneState.DOM_READY;
                 scene.events.OnDomReady.Invoke();
                 scene.SetLoaded();
             }
             else if (msg.StartsWith(APICommands.SCENE_READY))
             {
+                LogLine.Do("HERER - APICommands.SCENE_READY");
                 scene.state = SceneState.SCENE_READY;
                 scene.events.OnSceneReady.Invoke();
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
@@ -184,6 +190,7 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
             {
+                Debug.Log("[Banter] Scene settings request: " + msg);
                 scene.SetSettings(GetMsgData(msg, APICommands.SCENE_SETTINGS), id);
             }
             else if (msg.StartsWith(APICommands.START_TTS))

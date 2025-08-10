@@ -32,6 +32,7 @@ namespace TLab.WebView
 		[SerializeField] protected RawImage m_rawImage;
 		[SerializeField] protected UnityEvent<Texture2D> m_onCapture = new UnityEvent<Texture2D>();
 		[SerializeField] protected UnityEvent m_onLoading = new UnityEvent();
+		[SerializeField] protected UnityEvent m_onNativeReady = new UnityEvent();
 		[SerializeField] protected string m_preloadScript;
 		[SerializeField] protected Vector2Int m_viewSize = new Vector2Int(1024, 1024);
 		[SerializeField] protected Vector2Int m_texSize = new Vector2Int(512, 512);
@@ -49,6 +50,10 @@ namespace TLab.WebView
 		public RawImage rawImage { get => m_rawImage; set => m_rawImage = value; }
 
 		public UnityEvent<Texture2D> onCapture { get => m_onCapture; set => m_onCapture = value; }
+
+		public UnityEvent onLoading { get => m_onLoading; set => m_onLoading = value; }
+
+		public UnityEvent onNativeReady { get => m_onNativeReady; set => m_onNativeReady = value; }
 
 		public string preloadScript { get => m_preloadScript; set => m_preloadScript = value; }
 
@@ -245,7 +250,6 @@ namespace TLab.WebView
 			m_isVulkan = (SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Vulkan);
 
 			m_NativePlugin = new AndroidJavaObject(package);
-			Debug.Log("" + THIS_NAME + ": NativePlugin created: " + m_NativePlugin.GetRawObject());
 
 			switch (m_captureMode)
 			{
@@ -260,7 +264,10 @@ namespace TLab.WebView
 					break;
 			}
 
-			if (m_NativePlugin != null) InitNativePlugin();
+			if (m_NativePlugin != null) {		
+				InitNativePlugin();
+				m_onNativeReady?.Invoke();
+			}
 
 			while (!IsInitialized())
 				yield return new WaitForEndOfFrame();
@@ -591,7 +598,36 @@ namespace TLab.WebView
 #endif
 			// BrowserManager.Instance.UnregisterBrowser(GetInstanceId());
 		}
+		/// <summary>
+		/// Test function of <see cref="SendMsg">SetSurface</see>
+		/// </summary>
+		public void SendMsg(string msg)
+		{
+			if (string.IsNullOrEmpty(m_preloadScript))
+			{
+				return;
+			}
 
+#if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
+			m_NativePlugin.Call(nameof(SendMsg), msg);
+#endif
+		}
+		/// <summary>
+		/// Test function of <see cref="StartSocketServer">SetSurface</see>
+		/// </summary>
+		public int StartSocketServer()
+		{
+			if (string.IsNullOrEmpty(m_preloadScript))
+			{
+				return -2;
+			}
+
+#if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
+			return m_NativePlugin.Call<int>(nameof(StartSocketServer));
+#else
+			return -2;
+#endif
+		}
 #if TEST
 		/// <summary>
 		/// Test function of <see cref="SetSurface">SetSurface</see>

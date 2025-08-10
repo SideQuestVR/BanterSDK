@@ -10,7 +10,7 @@ namespace TLab.WebView
 	public abstract class Browser : FragmentCapture, IBrowser
 	{
 		[Header("Web Settings")]
-		[SerializeField] private string m_url = "https://crystal-ice.bant.ing";
+		[SerializeField] private string m_url = "about:blank";
 		[SerializeField] private Download.Option m_downloadOption;
 		[SerializeField] private EventCallback m_eventCallback;
 		[SerializeField] private string[] m_intentFilters;
@@ -67,7 +67,7 @@ Debug.Log("" + THIS_NAME + "InitNativePlugin: " + m_viewSize + ", " + m_texSize 
 				m_viewSize.x, m_viewSize.y,
 				m_texSize.x, m_texSize.y,
 				m_screenFullRes.x, m_screenFullRes.y,
-				m_url, m_isVulkan, (int)m_captureMode);
+				m_url, !string.IsNullOrEmpty(m_preloadScript), m_isVulkan, (int)m_captureMode);
 #endif
 		}
 

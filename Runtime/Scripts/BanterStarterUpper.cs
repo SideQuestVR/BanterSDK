@@ -32,13 +32,14 @@ namespace Banter.SDK
         public BanterScene scene;
         public static string WEB_ROOT = "WebRoot";
         public static int mainWWindowId;
+        public static int mainWWindowPort = -2;
         private int processId;
         private static bool initialized = false;
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-
-        Browser browser;
+        
+        public static Browser browser;
         void Awake()
         {
             // Safe mode?
@@ -51,7 +52,7 @@ namespace Banter.SDK
             {
                 SafeMode = true;
                 LogLine.Do("SAFE MODE is set on");
-                PlayerPrefs.SetInt("SafeModeOff",1);
+                PlayerPrefs.SetInt("SafeModeOff", 1);
             }
             
 #if BASIS_BUNDLE_MANAGEMENT
@@ -84,18 +85,21 @@ namespace Banter.SDK
 #if UNITY_STANDALONE || UNITY_EDITOR
             Kill();
             StartElectronBrowser();
-#endif
-            SetupBrowserLink();
-
-// #if UNITY_STANDALONE || UNITY_EDITOR
             EventHandler args = null;
             args = (arg0, arg1) =>
             {
                 scene.link.Connected -= args;
-                StartBrowserWindow();
+                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                {
+                    StartBrowserWindow();
+                });
             };
             scene.link.Connected += args;
-// #endif
+#else
+            StartBrowserWindow();
+#endif
+            SetupBrowserLink();
+
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
 #endif
@@ -282,32 +286,41 @@ namespace Banter.SDK
 #else
             var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.js");
 #endif
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-            {
+           
 #if UNITY_ANDROID
-                browser = gameObject.AddComponent<WebView>();
-                // browser.LoadUrl("https://youtube.com");
+            browser = gameObject.AddComponent<WebView>();
 #else
-                browser = gameObject.AddComponent<ElectronView>();
+            browser = gameObject.AddComponent<ElectronView>();
 #endif
-                browser.texSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
-                browser.viewSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
-                browser.fps = 30;
-                browser.preloadScript = injectFile;
-                browser.captureMode = CaptureMode.HardwareBuffer;
-                var downloadOption = new Download.Option();
-                downloadOption.Update(Download.Directory.Download, "BanterLink");
-                browser.downloadOption = downloadOption;
-                browser.onCapture.AddListener((tex) =>
+            browser.texSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+            browser.viewSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+            browser.fps = 30;
+            browser.preloadScript = injectFile;
+            browser.captureMode = CaptureMode.HardwareBuffer;
+            var downloadOption = new Download.Option();
+            downloadOption.Update(Download.Directory.Download, "BanterLink");
+            browser.downloadOption = downloadOption;
+            browser.onCapture.AddListener((tex) =>
+            {
+                mainWWindowId = browser.winId;
+                browserTexture = tex;
+                if (_browserRenderer != null)
                 {
-                    mainWWindowId = browser.winId;
-                    browserTexture = tex;
-                    if (_browserRenderer != null)
-                    {
-                        _browserRenderer.material.mainTexture = browserTexture;
-                    }
-                });
-                browser.Init();
+                    _browserRenderer.material.mainTexture = browserTexture;
+                }
+            });
+            browser.Init();
+        }
+
+        public static async Task SetMainWindowPort(Action<int> portCallback)
+        {
+            if (browser == null)
+            {
+                await new WaitUntil(() => browser != null);
+            }
+            browser.onNativeReady.AddListener(() => {
+                mainWWindowPort = browser.StartSocketServer();
+                portCallback?.Invoke(mainWWindowPort);
             });
         }
 

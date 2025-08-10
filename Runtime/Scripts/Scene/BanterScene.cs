@@ -1343,9 +1343,9 @@ namespace Banter.SDK
                          go.SetActive(false);
                      }
                  }
-                 catch (Exception)
+                 catch (Exception e)
                  {
-                     Debug.LogError("[Banter] Add Object after act: " + msg);
+                     Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
                  }
              }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
         }
@@ -1459,15 +1459,15 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                LogLine.Do("[BanterScene] Loading ShowSpaceImage: " + url);
+                LogLine.Do("HERER - [BanterScene] Loading ShowSpaceImage: " + url);
                 await ShowSpaceImage(url);
-                LogLine.Do("[BanterScene] Loading ResetScene: " + url);
+                LogLine.Do("HERER - [BanterScene] Loading ResetScene: " + url);
                 await ResetScene();
-                LogLine.Do("[BanterScene] Loading LoadUrl: " + url);
+                LogLine.Do("HERER - [BanterScene] Loading LoadUrl: " + url);
                 await link.LoadUrl(url);
-                LogLine.Do("[BanterScene] Loading WaitUntil: " + url);
+                LogLine.Do("HERER - [BanterScene] Loading WaitUntil: " + url);
                 await new WaitUntil(() => loaded);
-                LogLine.Do("[BanterScene] Loading after WaitUntil: " + url);
+                LogLine.Do("HERER - [BanterScene] Loading after WaitUntil: " + url);
                 LoadingStatus = "Please wait, loading live space...";
                 if (HasLoadFailed())
                 {
@@ -1486,7 +1486,7 @@ namespace Banter.SDK
                 //     await new WaitForSeconds(0.05f);
                 // }
                 await Task.Delay(2500);
-                LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
+                LogLine.Do("HERER - [BanterScene] Loading loadingManager?.LoadOut: " + url);
 
                 await loadingManager?.LoadOut();
                 loading = false;
