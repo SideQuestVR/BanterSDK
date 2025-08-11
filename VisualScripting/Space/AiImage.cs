@@ -30,10 +30,10 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _prompt = flow.GetValue<string>(prompt);
                 var _ratio = flow.GetValue<AiImageRatio>(ratio);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     BanterScene.Instance().events.OnAiImage.Invoke(_prompt, _ratio);
-                });
+                }, $"{nameof(AiImage)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");

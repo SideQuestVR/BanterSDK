@@ -63,8 +63,179 @@ namespace Banter.SDK
         RIGHTARM_HAND_THUMB3 = 50,
     }
 
+    /*
+    {"Neck", AvatarBoneName.NECK },
+            {"Hips", AvatarBoneName.HIPS },
+            {"Spine1", AvatarBoneName.SPINE },
+            {"Spine2", AvatarBoneName.CHEST },
+
+            {"LeftShoulder", AvatarBoneName.LEFTARM_SHOULDER },
+            {"LeftArm", AvatarBoneName.LEFTARM_UPPER },
+            {"LeftForeArm", AvatarBoneName.LEFTARM_LOWER },
+            {"LeftHand", AvatarBoneName.LEFTARM_HAND },
+            {"LeftUpLeg", AvatarBoneName.LEFTLEG_UPPER },
+            {"LeftLeg", AvatarBoneName.LEFTLEG_LOWER },
+            {"LeftFoot", AvatarBoneName.LEFTLEG_FOOT },
+            {"LeftToeBase", AvatarBoneName.LEFTLEG_TOES },
+
+            {"RightShoulder", AvatarBoneName.RIGHTARM_SHOULDER },
+            {"RightArm", AvatarBoneName.RIGHTARM_UPPER },
+            {"RightForeArm", AvatarBoneName.RIGHTARM_LOWER },
+            {"RightHand", AvatarBoneName.RIGHTARM_HAND },
+            {"RightUpLeg", AvatarBoneName.RIGHTLEG_UPPER },
+            {"RightLeg", AvatarBoneName.RIGHTLEG_LOWER },
+            {"RightFoot", AvatarBoneName.RIGHTLEG_FOOT },
+            {"RightToeBase", AvatarBoneName.RIGHTLEG_TOES },
+            
+            //{"LeftEye", UnityAvatarBoneNames.LEFT_EYE},
+            //{"RightEye", UnityAvatarBoneNames.RIGHT_EYE},
+
+            {"LeftHandPinky1", AvatarBoneName.LEFTARM_HAND_PINKY1 },
+            {"LeftHandPinky2", AvatarBoneName.LEFTARM_HAND_PINKY2 },
+            {"LeftHandPinky3", AvatarBoneName.LEFTARM_HAND_PINKY3 },
+            {"LeftHandRing1", AvatarBoneName.LEFTARM_HAND_RING1 },
+            {"LeftHandRing2", AvatarBoneName.LEFTARM_HAND_RING2 },
+            {"LeftHandRing3", AvatarBoneName.LEFTARM_HAND_RING3 },
+            {"LeftHandMiddle1", AvatarBoneName.LEFTARM_HAND_MIDDLE1 },
+            {"LeftHandMiddle2", AvatarBoneName.LEFTARM_HAND_MIDDLE2 },
+            {"LeftHandMiddle3", AvatarBoneName.LEFTARM_HAND_MIDDLE3 },
+            {"LeftHandIndex1", AvatarBoneName.LEFTARM_HAND_INDEX1},
+            {"LeftHandIndex2", AvatarBoneName.LEFTARM_HAND_INDEX2 },
+            {"LeftHandIndex3", AvatarBoneName.LEFTARM_HAND_INDEX3 },
+            {"LeftHandThumb1", AvatarBoneName.LEFTARM_HAND_THUMB1 },
+            {"LeftHandThumb2", AvatarBoneName.LEFTARM_HAND_THUMB2 },
+            {"LeftHandThumb3", AvatarBoneName.LEFTARM_HAND_THUMB3 },
+            {"RightHandPinky1", AvatarBoneName.RIGHTARM_HAND_PINKY1 },
+            {"RightHandPinky2", AvatarBoneName.RIGHTARM_HAND_PINKY2 },
+            {"RightHandPinky3", AvatarBoneName.RIGHTARM_HAND_PINKY3 },
+            {"RightHandRing1", AvatarBoneName.RIGHTARM_HAND_RING1 },
+            {"RightHandRing2", AvatarBoneName.RIGHTARM_HAND_RING2 },
+            {"RightHandRing3", AvatarBoneName.RIGHTARM_HAND_RING3 },
+            {"RightHandMiddle1", AvatarBoneName.RIGHTARM_HAND_MIDDLE1 },
+            {"RightHandMiddle2", AvatarBoneName.RIGHTARM_HAND_MIDDLE2 },
+            {"RightHandMiddle3", AvatarBoneName.RIGHTARM_HAND_MIDDLE3 },
+            {"RightHandIndex1", AvatarBoneName.RIGHTARM_HAND_INDEX1 },
+            {"RightHandIndex2", AvatarBoneName.RIGHTARM_HAND_INDEX2 },
+            {"RightHandIndex3", AvatarBoneName.RIGHTARM_HAND_INDEX3 },
+            {"RightHandThumb1", AvatarBoneName.RIGHTARM_HAND_THUMB1 },
+            {"RightHandThumb2", AvatarBoneName.RIGHTARM_HAND_THUMB2 },
+            {"RightHandThumb3", AvatarBoneName.RIGHTARM_HAND_THUMB3 },
+            */
+
+    public class AvatarBoneStringName
+    {
+        public const string HEAD = "Head";
+        public const string NECK = "Neck";
+        public const string HIPS = "Hips";
+        public const string SPINE = "Spine1";
+        public const string CHEST = "Spine2";
+        public const string LEFTARM_SHOULDER = "LeftShoulder";
+        public const string LEFTARM_UPPER = "LeftArm";
+        public const string LEFTARM_LOWER = "LeftForeArm";
+        public const string LEFTARM_HAND = "LeftHand";
+        public const string RIGHTARM_SHOULDER = "RightShoulder";
+        public const string RIGHTARM_UPPER = "RightArm";
+        public const string RIGHTARM_LOWER = "RightForeArm";
+        public const string RIGHTARM_HAND = "RightHand";
+        public const string LEFTLEG_UPPER = "LeftUpLeg";
+        public const string LEFTLEG_LOWER = "LeftLeg";
+        public const string LEFTLEG_FOOT = "LeftFoot";
+        public const string LEFTLEG_TOES = "LeftToeBase";
+        public const string RIGHTLEG_UPPER = "RightUpLeg";
+        public const string RIGHTLEG_LOWER = "RightLeg";
+        public const string RIGHTLEG_FOOT = "RightFoot";
+        public const string RIGHTLEG_TOES = "RightToeBase";
+        public const string LEFTARM_HAND_PINKY1 = "LeftHandPinky1";
+        public const string LEFTARM_HAND_PINKY2 = "LeftHandPinky2";
+        public const string LEFTARM_HAND_PINKY3 = "LeftHandPinky3";
+        public const string LEFTARM_HAND_RING1 = "LeftHandRing1";
+        public const string LEFTARM_HAND_RING2 = "LeftHandRing2";
+        public const string LEFTARM_HAND_RING3 = "LeftHandRing3";
+        public const string LEFTARM_HAND_MIDDLE1 = "LeftHandMiddle1";
+        public const string LEFTARM_HAND_MIDDLE2 = "LeftHandMiddle2";
+        public const string LEFTARM_HAND_MIDDLE3 = "LeftHandMiddle3";
+        public const string LEFTARM_HAND_INDEX1 = "LeftHandIndex1";
+        public const string LEFTARM_HAND_INDEX2 = "LeftHandIndex2";
+        public const string LEFTARM_HAND_INDEX3 = "LeftHandIndex3";
+        public const string LEFTARM_HAND_THUMB1 = "LeftHandThumb1";
+        public const string LEFTARM_HAND_THUMB2 = "LeftHandThumb2";
+        public const string LEFTARM_HAND_THUMB3 = "LeftHandThumb3";
+        public const string RIGHTARM_HAND_PINKY1 = "RightHandPinky1";
+        public const string RIGHTARM_HAND_PINKY2 = "RightHandPinky2";
+        public const string RIGHTARM_HAND_PINKY3 = "RightHandPinky3";
+        public const string RIGHTARM_HAND_RING1 = "RightHandRing1";
+        public const string RIGHTARM_HAND_RING2 = "RightHandRing2";
+        public const string RIGHTARM_HAND_RING3 = "RightHandRing3";
+        public const string RIGHTARM_HAND_MIDDLE1 = "RightHandMiddle1";
+        public const string RIGHTARM_HAND_MIDDLE2 = "RightHandMiddle2";
+        public const string RIGHTARM_HAND_MIDDLE3 = "RightHandMiddle3";
+        public const string RIGHTARM_HAND_INDEX1 = "RightHandIndex1";
+        public const string RIGHTARM_HAND_INDEX2 = "RightHandIndex2";
+        public const string RIGHTARM_HAND_INDEX3 = "RightHandIndex3";
+        public const string RIGHTARM_HAND_THUMB1 = "RightHandThumb1";
+        public const string RIGHTARM_HAND_THUMB2 = "RightHandThumb2";
+        public const string RIGHTARM_HAND_THUMB3 = "RightHandThumb3";
+
+    }
+
     public class AvatarBoneNames
     {
+        public static Dictionary<AvatarBoneName, string> AvatarBoneNamesReverseMapping = new Dictionary<AvatarBoneName, string>()
+        {
+            {AvatarBoneName.HEAD, AvatarBoneStringName.HEAD },
+            {AvatarBoneName.NECK, AvatarBoneStringName.NECK },
+            {AvatarBoneName.HIPS, AvatarBoneStringName.HIPS },
+            {AvatarBoneName.SPINE, AvatarBoneStringName.SPINE },
+            {AvatarBoneName.CHEST, AvatarBoneStringName.CHEST },
+            {AvatarBoneName.LEFTARM_SHOULDER, AvatarBoneStringName.LEFTARM_SHOULDER },
+            {AvatarBoneName.LEFTARM_UPPER, AvatarBoneStringName.LEFTARM_UPPER },
+            {AvatarBoneName.LEFTARM_LOWER, AvatarBoneStringName.LEFTARM_LOWER },
+            {AvatarBoneName.LEFTARM_HAND, AvatarBoneStringName.LEFTARM_HAND },
+            {AvatarBoneName.LEFTLEG_UPPER, AvatarBoneStringName.LEFTLEG_UPPER },
+            {AvatarBoneName.LEFTLEG_LOWER, AvatarBoneStringName.LEFTLEG_LOWER },
+            {AvatarBoneName.LEFTLEG_FOOT, AvatarBoneStringName.LEFTLEG_FOOT },
+            {AvatarBoneName.LEFTLEG_TOES, AvatarBoneStringName.LEFTLEG_TOES },
+            {AvatarBoneName.RIGHTARM_SHOULDER, AvatarBoneStringName.RIGHTARM_SHOULDER },
+            {AvatarBoneName.RIGHTARM_UPPER, AvatarBoneStringName.RIGHTARM_UPPER },
+            {AvatarBoneName.RIGHTARM_LOWER, AvatarBoneStringName.RIGHTARM_LOWER },
+            {AvatarBoneName.RIGHTARM_HAND, AvatarBoneStringName.RIGHTARM_HAND },
+            {AvatarBoneName.RIGHTLEG_UPPER, AvatarBoneStringName.RIGHTLEG_UPPER },
+            {AvatarBoneName.RIGHTLEG_LOWER, AvatarBoneStringName.RIGHTLEG_LOWER },
+            {AvatarBoneName.RIGHTLEG_FOOT, AvatarBoneStringName.RIGHTLEG_FOOT },
+            {AvatarBoneName.RIGHTLEG_TOES, AvatarBoneStringName.RIGHTLEG_TOES },
+            {AvatarBoneName.LEFTARM_HAND_PINKY1, AvatarBoneStringName.LEFTARM_HAND_PINKY1 },
+            {AvatarBoneName.LEFTARM_HAND_PINKY2, AvatarBoneStringName.LEFTARM_HAND_PINKY2 },
+            {AvatarBoneName.LEFTARM_HAND_PINKY3, AvatarBoneStringName.LEFTARM_HAND_PINKY3 },
+            {AvatarBoneName.LEFTARM_HAND_RING1, AvatarBoneStringName.LEFTARM_HAND_RING1 },
+            {AvatarBoneName.LEFTARM_HAND_RING2, AvatarBoneStringName.LEFTARM_HAND_RING2 },
+            {AvatarBoneName.LEFTARM_HAND_RING3, AvatarBoneStringName.LEFTARM_HAND_RING3 },
+            {AvatarBoneName.LEFTARM_HAND_MIDDLE1, AvatarBoneStringName.LEFTARM_HAND_MIDDLE1 },
+            {AvatarBoneName.LEFTARM_HAND_MIDDLE2, AvatarBoneStringName.LEFTARM_HAND_MIDDLE2 },
+            {AvatarBoneName.LEFTARM_HAND_MIDDLE3, AvatarBoneStringName.LEFTARM_HAND_MIDDLE3 },
+            {AvatarBoneName.LEFTARM_HAND_INDEX1, AvatarBoneStringName.LEFTARM_HAND_INDEX1 },
+            {AvatarBoneName.LEFTARM_HAND_INDEX2, AvatarBoneStringName.LEFTARM_HAND_INDEX2 },
+            {AvatarBoneName.LEFTARM_HAND_INDEX3, AvatarBoneStringName.LEFTARM_HAND_INDEX3 },
+            {AvatarBoneName.LEFTARM_HAND_THUMB1, AvatarBoneStringName.LEFTARM_HAND_THUMB1 },
+            {AvatarBoneName.LEFTARM_HAND_THUMB2, AvatarBoneStringName.LEFTARM_HAND_THUMB2 },
+            {AvatarBoneName.LEFTARM_HAND_THUMB3, AvatarBoneStringName.LEFTARM_HAND_THUMB3 },
+            {AvatarBoneName.RIGHTARM_HAND_PINKY1, AvatarBoneStringName.RIGHTARM_HAND_PINKY1 },
+            {AvatarBoneName.RIGHTARM_HAND_PINKY2, AvatarBoneStringName.RIGHTARM_HAND_PINKY2 },
+            {AvatarBoneName.RIGHTARM_HAND_PINKY3, AvatarBoneStringName.RIGHTARM_HAND_PINKY3 },
+            {AvatarBoneName.RIGHTARM_HAND_RING1, AvatarBoneStringName.RIGHTARM_HAND_RING1 },
+
+            {AvatarBoneName.RIGHTARM_HAND_RING2, AvatarBoneStringName.RIGHTARM_HAND_RING2 },
+            {AvatarBoneName.RIGHTARM_HAND_RING3, AvatarBoneStringName.RIGHTARM_HAND_RING3 },
+            {AvatarBoneName.RIGHTARM_HAND_MIDDLE1, AvatarBoneStringName.RIGHTARM_HAND_MIDDLE1 },
+            {AvatarBoneName.RIGHTARM_HAND_MIDDLE2, AvatarBoneStringName.RIGHTARM_HAND_MIDDLE2 },
+            {AvatarBoneName.RIGHTARM_HAND_MIDDLE3, AvatarBoneStringName.RIGHTARM_HAND_MIDDLE3 },
+            {AvatarBoneName.RIGHTARM_HAND_INDEX1, AvatarBoneStringName.RIGHTARM_HAND_INDEX1 },
+
+            {AvatarBoneName.RIGHTARM_HAND_INDEX2, AvatarBoneStringName.RIGHTARM_HAND_INDEX2 },
+            {AvatarBoneName.RIGHTARM_HAND_INDEX3, AvatarBoneStringName.RIGHTARM_HAND_INDEX3 },
+            {AvatarBoneName.RIGHTARM_HAND_THUMB1, AvatarBoneStringName.RIGHTARM_HAND_THUMB1 },
+            {AvatarBoneName.RIGHTARM_HAND_THUMB2, AvatarBoneStringName.RIGHTARM_HAND_THUMB2 },
+            {AvatarBoneName.RIGHTARM_HAND_THUMB3, AvatarBoneStringName.RIGHTARM_HAND_THUMB3 },
+        };
         public static Dictionary<string, AvatarBoneName> AvatarBoneNamesMapping = new Dictionary<string, AvatarBoneName>()
         {
             // Unity
@@ -94,7 +265,7 @@ namespace Banter.SDK
             {"RightToes", AvatarBoneName.RIGHTLEG_TOES },
 
             // {"Neck", AvatarBoneName.NECK },
-            {"Head", AvatarBoneName.HEAD },
+            {AvatarBoneStringName.HEAD, AvatarBoneName.HEAD },
             //{"LeftEye", AvatarBoneName.HEAD_LEFTEYE },
             //{"RightEye", AvatarBoneName.HEAD_RIGHTEYE },
             //{"Jaw", AvatarBoneName.JAW },
@@ -189,62 +360,62 @@ namespace Banter.SDK
 
 
             //RPM
-            {"Neck", AvatarBoneName.NECK },
-            {"Hips", AvatarBoneName.HIPS },
-            {"Spine1", AvatarBoneName.SPINE },
-            {"Spine2", AvatarBoneName.CHEST },
+            {AvatarBoneStringName.NECK, AvatarBoneName.NECK },
+            {AvatarBoneStringName.HIPS, AvatarBoneName.HIPS },
+            {AvatarBoneStringName.SPINE, AvatarBoneName.SPINE },
+            {AvatarBoneStringName.CHEST, AvatarBoneName.CHEST },
 
-            {"LeftShoulder", AvatarBoneName.LEFTARM_SHOULDER },
-            {"LeftArm", AvatarBoneName.LEFTARM_UPPER },
-            {"LeftForeArm", AvatarBoneName.LEFTARM_LOWER },
-            {"LeftHand", AvatarBoneName.LEFTARM_HAND },
-            {"LeftUpLeg", AvatarBoneName.LEFTLEG_UPPER },
-            {"LeftLeg", AvatarBoneName.LEFTLEG_LOWER },
-            {"LeftFoot", AvatarBoneName.LEFTLEG_FOOT },
-            {"LeftToeBase", AvatarBoneName.LEFTLEG_TOES },
+            {AvatarBoneStringName.LEFTARM_SHOULDER, AvatarBoneName.LEFTARM_SHOULDER },
+            {AvatarBoneStringName.LEFTARM_UPPER, AvatarBoneName.LEFTARM_UPPER },
+            {AvatarBoneStringName.LEFTARM_LOWER, AvatarBoneName.LEFTARM_LOWER },
+            {AvatarBoneStringName.LEFTARM_HAND, AvatarBoneName.LEFTARM_HAND },
+            {AvatarBoneStringName.LEFTLEG_UPPER, AvatarBoneName.LEFTLEG_UPPER },
+            {AvatarBoneStringName.LEFTLEG_LOWER, AvatarBoneName.LEFTLEG_LOWER },
+            {AvatarBoneStringName.LEFTLEG_FOOT, AvatarBoneName.LEFTLEG_FOOT },
+            {AvatarBoneStringName.LEFTLEG_TOES, AvatarBoneName.LEFTLEG_TOES },
 
-            {"RightShoulder", AvatarBoneName.RIGHTARM_SHOULDER },
-            {"RightArm", AvatarBoneName.RIGHTARM_UPPER },
-            {"RightForeArm", AvatarBoneName.RIGHTARM_LOWER },
-            {"RightHand", AvatarBoneName.RIGHTARM_HAND },
-            {"RightUpLeg", AvatarBoneName.RIGHTLEG_UPPER },
-            {"RightLeg", AvatarBoneName.RIGHTLEG_LOWER },
-            {"RightFoot", AvatarBoneName.RIGHTLEG_FOOT },
-            {"RightToeBase", AvatarBoneName.RIGHTLEG_TOES },
-            
+            {AvatarBoneStringName.RIGHTARM_SHOULDER, AvatarBoneName.RIGHTARM_SHOULDER },
+            {AvatarBoneStringName.RIGHTARM_UPPER, AvatarBoneName.RIGHTARM_UPPER },
+            {AvatarBoneStringName.RIGHTARM_LOWER, AvatarBoneName.RIGHTARM_LOWER },
+            {AvatarBoneStringName.RIGHTARM_HAND, AvatarBoneName.RIGHTARM_HAND },
+            {AvatarBoneStringName.RIGHTLEG_UPPER, AvatarBoneName.RIGHTLEG_UPPER },
+            {AvatarBoneStringName.RIGHTLEG_LOWER, AvatarBoneName.RIGHTLEG_LOWER },
+            {AvatarBoneStringName.RIGHTLEG_FOOT, AvatarBoneName.RIGHTLEG_FOOT },
+            {AvatarBoneStringName.RIGHTLEG_TOES, AvatarBoneName.RIGHTLEG_TOES },
+
             //{"LeftEye", UnityAvatarBoneNames.LEFT_EYE},
             //{"RightEye", UnityAvatarBoneNames.RIGHT_EYE},
 
-            {"LeftHandPinky1", AvatarBoneName.LEFTARM_HAND_PINKY1 },
-            {"LeftHandPinky2", AvatarBoneName.LEFTARM_HAND_PINKY2 },
-            {"LeftHandPinky3", AvatarBoneName.LEFTARM_HAND_PINKY3 },
-            {"LeftHandRing1", AvatarBoneName.LEFTARM_HAND_RING1 },
-            {"LeftHandRing2", AvatarBoneName.LEFTARM_HAND_RING2 },
-            {"LeftHandRing3", AvatarBoneName.LEFTARM_HAND_RING3 },
-            {"LeftHandMiddle1", AvatarBoneName.LEFTARM_HAND_MIDDLE1 },
-            {"LeftHandMiddle2", AvatarBoneName.LEFTARM_HAND_MIDDLE2 },
-            {"LeftHandMiddle3", AvatarBoneName.LEFTARM_HAND_MIDDLE3 },
-            {"LeftHandIndex1", AvatarBoneName.LEFTARM_HAND_INDEX1},
-            {"LeftHandIndex2", AvatarBoneName.LEFTARM_HAND_INDEX2 },
-            {"LeftHandIndex3", AvatarBoneName.LEFTARM_HAND_INDEX3 },
-            {"LeftHandThumb1", AvatarBoneName.LEFTARM_HAND_THUMB1 },
-            {"LeftHandThumb2", AvatarBoneName.LEFTARM_HAND_THUMB2 },
-            {"LeftHandThumb3", AvatarBoneName.LEFTARM_HAND_THUMB3 },
-            {"RightHandPinky1", AvatarBoneName.RIGHTARM_HAND_PINKY1 },
-            {"RightHandPinky2", AvatarBoneName.RIGHTARM_HAND_PINKY2 },
-            {"RightHandPinky3", AvatarBoneName.RIGHTARM_HAND_PINKY3 },
-            {"RightHandRing1", AvatarBoneName.RIGHTARM_HAND_RING1 },
-            {"RightHandRing2", AvatarBoneName.RIGHTARM_HAND_RING2 },
-            {"RightHandRing3", AvatarBoneName.RIGHTARM_HAND_RING3 },
-            {"RightHandMiddle1", AvatarBoneName.RIGHTARM_HAND_MIDDLE1 },
-            {"RightHandMiddle2", AvatarBoneName.RIGHTARM_HAND_MIDDLE2 },
-            {"RightHandMiddle3", AvatarBoneName.RIGHTARM_HAND_MIDDLE3 },
-            {"RightHandIndex1", AvatarBoneName.RIGHTARM_HAND_INDEX1 },
-            {"RightHandIndex2", AvatarBoneName.RIGHTARM_HAND_INDEX2 },
-            {"RightHandIndex3", AvatarBoneName.RIGHTARM_HAND_INDEX3 },
-            {"RightHandThumb1", AvatarBoneName.RIGHTARM_HAND_THUMB1 },
-            {"RightHandThumb2", AvatarBoneName.RIGHTARM_HAND_THUMB2 },
-            {"RightHandThumb3", AvatarBoneName.RIGHTARM_HAND_THUMB3 },
+            {AvatarBoneStringName.LEFTARM_HAND_PINKY1, AvatarBoneName.LEFTARM_HAND_PINKY1 },
+            {AvatarBoneStringName.LEFTARM_HAND_PINKY2, AvatarBoneName.LEFTARM_HAND_PINKY2 },
+            {AvatarBoneStringName.LEFTARM_HAND_PINKY3, AvatarBoneName.LEFTARM_HAND_PINKY3 },
+            {AvatarBoneStringName.LEFTARM_HAND_RING1, AvatarBoneName.LEFTARM_HAND_RING1 },
+            {AvatarBoneStringName.LEFTARM_HAND_RING2, AvatarBoneName.LEFTARM_HAND_RING2 },
+            {AvatarBoneStringName.LEFTARM_HAND_RING3, AvatarBoneName.LEFTARM_HAND_RING3 },
+            {AvatarBoneStringName.LEFTARM_HAND_MIDDLE1, AvatarBoneName.LEFTARM_HAND_MIDDLE1 },
+            {AvatarBoneStringName.LEFTARM_HAND_MIDDLE2, AvatarBoneName.LEFTARM_HAND_MIDDLE2 },
+            {AvatarBoneStringName.LEFTARM_HAND_MIDDLE3, AvatarBoneName.LEFTARM_HAND_MIDDLE3 },
+            {AvatarBoneStringName.LEFTARM_HAND_INDEX1, AvatarBoneName.LEFTARM_HAND_INDEX1 },
+            {AvatarBoneStringName.LEFTARM_HAND_INDEX2, AvatarBoneName.LEFTARM_HAND_INDEX2 },
+            {AvatarBoneStringName.LEFTARM_HAND_INDEX3, AvatarBoneName.LEFTARM_HAND_INDEX3 },
+            {AvatarBoneStringName.LEFTARM_HAND_THUMB1, AvatarBoneName.LEFTARM_HAND_THUMB1 },
+            {AvatarBoneStringName.LEFTARM_HAND_THUMB2, AvatarBoneName.LEFTARM_HAND_THUMB2 },
+            {AvatarBoneStringName.LEFTARM_HAND_THUMB3, AvatarBoneName.LEFTARM_HAND_THUMB3 },
+            {AvatarBoneStringName.RIGHTARM_HAND_PINKY1, AvatarBoneName.RIGHTARM_HAND_PINKY1 },
+            {AvatarBoneStringName.RIGHTARM_HAND_PINKY2, AvatarBoneName.RIGHTARM_HAND_PINKY2 },
+            {AvatarBoneStringName.RIGHTARM_HAND_PINKY3, AvatarBoneName.RIGHTARM_HAND_PINKY3 },
+            {AvatarBoneStringName.RIGHTARM_HAND_RING1, AvatarBoneName.RIGHTARM_HAND_RING1 },
+            {AvatarBoneStringName.RIGHTARM_HAND_RING2, AvatarBoneName.RIGHTARM_HAND_RING2 },
+            {AvatarBoneStringName.RIGHTARM_HAND_RING3, AvatarBoneName.RIGHTARM_HAND_RING3 },
+            {AvatarBoneStringName.RIGHTARM_HAND_MIDDLE1, AvatarBoneName.RIGHTARM_HAND_MIDDLE1 },
+            {AvatarBoneStringName.RIGHTARM_HAND_MIDDLE2, AvatarBoneName.RIGHTARM_HAND_MIDDLE2 },
+            {AvatarBoneStringName.RIGHTARM_HAND_MIDDLE3, AvatarBoneName.RIGHTARM_HAND_MIDDLE3 },
+            {AvatarBoneStringName.RIGHTARM_HAND_INDEX1, AvatarBoneName.RIGHTARM_HAND_INDEX1 },
+            {AvatarBoneStringName.RIGHTARM_HAND_INDEX2, AvatarBoneName.RIGHTARM_HAND_INDEX2 },
+            {AvatarBoneStringName.RIGHTARM_HAND_INDEX3, AvatarBoneName.RIGHTARM_HAND_INDEX3 },
+            {AvatarBoneStringName.RIGHTARM_HAND_THUMB1, AvatarBoneName.RIGHTARM_HAND_THUMB1 },
+            {AvatarBoneStringName.RIGHTARM_HAND_THUMB2, AvatarBoneName.RIGHTARM_HAND_THUMB2 },
+            {AvatarBoneStringName.RIGHTARM_HAND_THUMB3, AvatarBoneName.RIGHTARM_HAND_THUMB3 },
         };
     }
 }

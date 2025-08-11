@@ -166,7 +166,7 @@ namespace Banter.SDK
         {
             SetGeometry(changedProperties);
         }
-        void SetGeometry(List<PropertyName> changedProperties = null)
+        public void SetGeometry(List<PropertyName> changedProperties = null)
         {
             SetLoadedIfNot();
             _filter = GetComponent<MeshFilter>();
@@ -263,6 +263,7 @@ namespace Banter.SDK
         {
             if (_filter != null)
             {
+                Destroy(_filter.sharedMesh);
                 Destroy(_filter);
             }
         }

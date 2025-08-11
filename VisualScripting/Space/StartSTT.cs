@@ -26,10 +26,10 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var _detectSpeech = flow.GetValue<bool>(detectSpeech);
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     BanterScene.Instance().events.OnTTsStarted.Invoke(_detectSpeech);
-                });
+                }, $"{nameof(StartSTT)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");

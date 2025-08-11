@@ -21,7 +21,9 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
+        [SerializeField] bool openBrowser;
         [SerializeField] Transform _feetTransform;
+        public static bool SafeMode = false;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
@@ -35,6 +37,23 @@ namespace Banter.SDK
 
         void Awake()
         {
+            // Safe mode?
+            if (PlayerPrefs.HasKey("SafeModeOff"))
+            {
+                PlayerPrefs.DeleteKey("SafeMode");
+                PlayerPrefs.DeleteKey("SafeModeOff");
+            }
+            else if (PlayerPrefs.HasKey("SafeMode"))
+            {
+                SafeMode = true;
+                LogLine.Do("SAFE MODE is set on");
+                PlayerPrefs.SetInt("SafeModeOff",1);
+            }
+            
+#if BASIS_BUNDLE_MANAGEMENT
+            BasisLoadHandler.IsInitialized = false;
+            BasisLoadHandler.OnGameStart();
+#endif
             if (!initialized)
             {
                 UnityGame.SetMainThread();
@@ -158,7 +177,7 @@ namespace Banter.SDK
                 unitySched.Cancel();
 #if UNITY_EDITOR
                 initialized = false;
-                if(currentCoroutine!=null)
+                if (currentCoroutine != null)
                     StopCoroutine(currentCoroutine);
 #endif
             }
@@ -169,14 +188,14 @@ namespace Banter.SDK
         private void SetupBrowserLink()
         {
             scene.link = gameObject.AddComponent<BanterLink>();
-            scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(() => scene.LoadSpaceState());
+            scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BanterStarterUpper)}.{nameof(SetupBrowserLink)}"));
         }
         public void CancelLoading()
         {
             if (scene.HasLoadFailed())
             {
                 scene.LoadingStatus = "Couldn't load home space, loading fallback...";
-                UnityMainThreadTaskScheduler.Default.Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BanterStarterUpper)}.{nameof(CancelLoading)}.Failed"));
             }
             else
             {
@@ -186,7 +205,7 @@ namespace Banter.SDK
                     scene.LoadingStatus = "Loading canceled, falling back to lobby";
                     LogLine.Do("Taking you to your home...");
                     scene.Cancel("User cancelled loading", true);
-                    UnityMainThreadTaskScheduler.Default.Enqueue(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE));
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BanterStarterUpper)}.{nameof(CancelLoading)}.LoadingCanceled"));
                 }
 
                 // The below allows canceling from outside loading screen
@@ -207,7 +226,7 @@ namespace Banter.SDK
             devToolsEnabled = !devToolsEnabled;
             UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
 
-            LogLine.Do($"Banter DevTools " + (devToolsEnabled?"enabled.":"disabled.") );
+            LogLine.Do($"Banter DevTools " + (devToolsEnabled ? "enabled." : "disabled."));
 #endif
             if (Application.isPlaying)
             {
@@ -217,22 +236,35 @@ namespace Banter.SDK
 
         private void StartBrowser()
         {
+            Kill();
 #if !BANTER_EDITOR
             var isProd = false;
 #else
             var isProd = true;
 #endif
+
+            string[] args = System.Environment.GetCommandLineArgs();
+            string extraArgs = openBrowser ? " --openbrowser true" : "";
+            for (int i = 0; i < args.Length; i++)
+            {
+                if (args[i] == "-openbrowser" && (i + 1) < args.Length)
+                {
+                        extraArgs = " --openbrowser true";
+                }
+            }
+
 #if UNITY_EDITOR
-            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt")+"\"";
-            processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"), 
+            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt") + "\"";
+            var Eargs = (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"" + extraArgs;
+            processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"",
+                Eargs,
                 LogTag.BanterBrowser);
 #else
             var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
-                "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile,
+                "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile + extraArgs,
                 LogTag.BanterBrowser);
 #endif
         }
@@ -269,7 +301,7 @@ namespace Banter.SDK
         }
         async Task KillBanterLink()
         {
-            await Task.Delay(100);
+            await new WaitForSeconds(0.1f);
             var processes = Process.GetProcessesByName("banter-link");
             var killedLogs = "";
             var failedLogs = "";
@@ -308,6 +340,21 @@ namespace Banter.SDK
         void FixedUpdate()
         {
             scene.FixedUpdate();
+        }
+
+
+        [RuntimeInitializeOnLoadMethod]
+        private static void OnLoad()
+        {
+            AppDomain.CurrentDomain.UnhandledException +=
+                (object sender, UnhandledExceptionEventArgs args) =>
+                    Debug.LogError("[AppDomain.CurrentDomain.UnhandledException]: " + (Exception)args.ExceptionObject);
+                    TaskScheduler.UnobservedTaskException +=
+                (object sender, UnobservedTaskExceptionEventArgs args) =>
+                    {
+                        Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
+                        args.SetObserved();
+                    };
         }
     }
 }

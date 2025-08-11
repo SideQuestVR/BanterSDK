@@ -97,6 +97,19 @@ namespace Banter.SDK
             return null;
         }
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
+        static List<UnityEngine.Object> objectCache = new List<UnityEngine.Object>();
+
+        public static void Clear()
+        {
+            foreach (var obj in objectCache)
+            {
+                if (obj != null)
+                {
+                    GameObject.Destroy(obj);
+                }
+            }
+            objectCache.Clear();
+        }
         public static async Task<Texture2D> Texture(string url)
         {
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
@@ -108,7 +121,9 @@ namespace Banter.SDK
                 }
                 else
                 {
-                    return DownloadHandlerTexture.GetContent(uwr);
+                    var texture = DownloadHandlerTexture.GetContent(uwr);
+                    objectCache.Add(texture);
+                    return texture;
                 }
             }
         }
@@ -267,6 +282,7 @@ namespace Banter.SDK
                     var clip = DownloadHandlerAudioClip.GetContent(web);
                     if (clip != null)
                     {
+                        objectCache.Add(clip);
                         return clip;
                     }
                     else

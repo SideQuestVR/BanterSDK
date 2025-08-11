@@ -32,6 +32,9 @@ public class FollowConstraintCollider : MonoBehaviour
             return;
         }
 
+        if (!heightTopTransform || !_collider || !heightTopTransform || !heightBottomTransform)
+            return;
+
         if (_collider is SphereCollider)
         {
             ((SphereCollider)_collider).center = _collider.transform.InverseTransformPoint(followTransform.position) + offset;

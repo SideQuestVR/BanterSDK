@@ -84,7 +84,7 @@ namespace Banter.SDK
         }
         public void SetLoadProgress(string loadingTitle, float percentage, string detailMessage, bool canCancel, Texture2D spaceImage = null)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
             {
                 SetCanCancel(canCancel);
                 if (spaceImage != null)
@@ -128,7 +128,7 @@ namespace Banter.SDK
                         titleText.text = loadingTitle ?? "Loading...";
                     }
                 }
-            });
+            }, $"{nameof(LoadingBarManager)}.{nameof(SetLoadProgress)}"));
         }
 
         public string GetCancelButtonText()
