@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using TLab.WebView.Widget;
+using Banter.SDK;
 
 namespace TLab.WebView
 {
@@ -291,11 +292,12 @@ Debug.Log("" + THIS_NAME + "InitNativePlugin: " + m_viewSize + ", " + m_texSize 
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 			return m_NativePlugin.Call<long>(nameof(TouchEvent), x, y, action, downTime);
 #else
-			return 0;
+			BanterScene.Instance().link.pipe.Send($"{APICommands.TOUCH_EVENT}{MessageDelimiters.PRIMARY}{x}{MessageDelimiters.PRIMARY}{y}{MessageDelimiters.PRIMARY}{action}{MessageDelimiters.PRIMARY}{downTime}");
+			return 1;		
 #endif
 		}
 
-		public void KeyEvent(char key)
+			public void KeyEvent(char key)
 		{
 			if (m_state != State.Initialized)
 				return;

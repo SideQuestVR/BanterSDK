@@ -8,6 +8,8 @@ using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Debug = UnityEngine.Debug;
 using TLab.WebView;
+using UnityEngine.UI;
+
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -24,7 +26,7 @@ namespace Banter.SDK
         [SerializeField] float spawnRotation;
         [SerializeField] bool openBrowser;
         [SerializeField] Transform _feetTransform;
-        [SerializeField] Renderer _browserRenderer;
+        [SerializeField] RawImage _browserRenderer;
         public static bool SafeMode = false;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
@@ -85,20 +87,22 @@ namespace Banter.SDK
 #if UNITY_STANDALONE || UNITY_EDITOR
             Kill();
             StartElectronBrowser();
-            EventHandler args = null;
-            args = (arg0, arg1) =>
-            {
-                scene.link.Connected -= args;
-                UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-                {
-                    StartBrowserWindow();
-                });
-            };
-            scene.link.Connected += args;
 #else
             StartBrowserWindow();
 #endif
             SetupBrowserLink();
+#if UNITY_STANDALONE || UNITY_EDITOR
+    EventHandler args = null;
+    args = (arg0, arg1) =>
+    {
+        scene.link.Connected -= args;
+        UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+        {
+            StartBrowserWindow();
+        });
+    };
+    scene.link.Connected += args;
+#endif
 
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
@@ -306,8 +310,15 @@ namespace Banter.SDK
                 browserTexture = tex;
                 if (_browserRenderer != null)
                 {
-                    _browserRenderer.material.mainTexture = browserTexture;
+                    _browserRenderer.texture = browserTexture;
+                    var inputlistener = _browserRenderer.gameObject.GetComponent<BrowserInputListener>();
+                    if( inputlistener)
+                        inputlistener.browser = browser;
+                    
                 }
+#if BANTER_VISUAL_SCRIPTING
+                EventBus.Trigger("OnSpaceBrowserTexture", new CustomEventArgs(null, new object[] { tex }));
+#endif
             });
             browser.Init();
         }
