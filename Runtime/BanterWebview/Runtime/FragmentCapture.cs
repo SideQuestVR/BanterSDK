@@ -15,6 +15,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 using Banter.SDK;
 using Banter.Utilities.Async;
+using UnityEngine.Experimental.Rendering;
 
 namespace TLab.WebView
 {
@@ -199,7 +200,8 @@ namespace TLab.WebView
 						{
 							if (m_contentView == null)
 							{
-								m_contentView = new Texture2D(m_texSize.x, m_texSize.y, TextureFormat.BGRA32, false, true);
+								TextureCreationFlags flags = TextureCreationFlags.None;
+								m_contentView = new Texture2D(m_texSize.x, m_texSize.y, GraphicsFormat.B8G8R8A8_SRGB, flags);
 							}
 
 							if (m_rawImage != null)
