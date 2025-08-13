@@ -17,10 +17,8 @@ namespace Banter.SDK
 
             try
             {
-                UnityEngine.Debug.Log("HERER - Before SetMainWindowPort");
                 _ = BanterStarterUpper.SetMainWindowPort(port =>
                 { 
-                    UnityEngine.Debug.Log("HERER - After SetMainWindowPort");
                     UnityEngine.Debug.Log("BanterSocketClient gonna connect to port " + port);
                     if (port <= 0)
                     {
