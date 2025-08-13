@@ -73,7 +73,7 @@ namespace Banter.SDK
 
         public override bool GetIsConnected()
         {
-            return socketClient.IsConnected;
+            return socketClient?.IsConnected ?? false;
         }
 
         public override object GetActivity()
