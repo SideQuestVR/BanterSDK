@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TLab.WebView.Widget;
 using Banter.SDK;
+using NativeInputBridge;
 
 namespace TLab.WebView
 {
@@ -296,17 +297,19 @@ Debug.Log("" + THIS_NAME + "InitNativePlugin: " + m_viewSize + ", " + m_texSize 
 			return 1;		
 #endif
 		}
-
-			public void KeyEvent(string key)
+		public void KeyEvent(string key)
 		{
-			Debug.Log("" + THIS_NAME + ": KeyEvent: " + key);
+			KeyEvent(key, KeyFlags.None);
+		}
+		public void KeyEvent(string key, KeyFlags keyFlags)
+		{
 			if (m_state != State.Initialized)
 				return;
-			Debug.Log("" + THIS_NAME + ": KeyEvent2: " + key);
+			// Debug.Log("" + THIS_NAME + ": KeyEvent: " + $"{APICommands.KEY_EVENT}{MessageDelimiters.PRIMARY}{key}{MessageDelimiters.PRIMARY}{(int)keyFlags}");
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 			m_NativePlugin.Call(nameof(KeyEvent), key);
 #else
-            BanterScene.Instance().link.pipe.Send($"{APICommands.KEY_EVENT}{MessageDelimiters.PRIMARY}{key}");
+			BanterScene.Instance().link.pipe.Send($"{APICommands.KEY_EVENT}{MessageDelimiters.PRIMARY}{key}{MessageDelimiters.PRIMARY}{(int)keyFlags}");
 #endif
 		}
 
