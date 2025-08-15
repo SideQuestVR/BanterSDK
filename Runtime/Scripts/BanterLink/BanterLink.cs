@@ -161,6 +161,9 @@ namespace Banter.SDK
                 var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
                 scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], true);
             }
+            else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS)) {
+                    scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
+            }
             else
             {
                 LogLine.Do(Color.red, LogTag.Banter, "Unknown parse message: " + msg);

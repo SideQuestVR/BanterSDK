@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 public class BanterSceneEvents
 {
+    public UnityEvent<string> KeyboardFocus = new UnityEvent<string>();
     public UnityEvent OnLoad = new UnityEvent();
     public UnityEvent OnDomReady = new UnityEvent();
     public UnityEvent OnSceneReady = new UnityEvent();
