@@ -1,7 +1,7 @@
 [APICommands]
 public class APICommands
 {
-
+    public const string KEY_EVENT = "!ke!";
     public const string TOUCH_EVENT = "!te!";
     public const string CREATE_WINDOW = "!cw!";
     public const string KILL_WINDOW = "!kw!";

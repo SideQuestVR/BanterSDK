@@ -297,13 +297,16 @@ Debug.Log("" + THIS_NAME + "InitNativePlugin: " + m_viewSize + ", " + m_texSize 
 #endif
 		}
 
-			public void KeyEvent(char key)
+			public void KeyEvent(string key)
 		{
+			Debug.Log("" + THIS_NAME + ": KeyEvent: " + key);
 			if (m_state != State.Initialized)
 				return;
-
+			Debug.Log("" + THIS_NAME + ": KeyEvent2: " + key);
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 			m_NativePlugin.Call(nameof(KeyEvent), key);
+#else
+            BanterScene.Instance().link.pipe.Send($"{APICommands.KEY_EVENT}{MessageDelimiters.PRIMARY}{key}");
 #endif
 		}
 

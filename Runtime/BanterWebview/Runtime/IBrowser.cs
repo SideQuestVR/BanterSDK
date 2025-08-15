@@ -106,7 +106,7 @@ namespace TLab.WebView
         /// Dispatch of a basic keycode event.
         /// </summary>
         /// <param name="key">'a', 'b', 'A' ....</param>
-        void KeyEvent(char key);
+        void KeyEvent(string key);
 
         void KeyEvent(int keyCode);
 
