@@ -30,7 +30,9 @@ namespace Banter.SDKEditor
                 }
             }
 #if !BANTER_EDITOR
+#if !UNITY_2022
             ImportBasisPackages();
+#endif
             SetupLayersAndTags();
             SetApiCompatibilityLevel();
             CreateWebRoot();
