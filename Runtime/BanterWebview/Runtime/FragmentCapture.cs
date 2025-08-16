@@ -185,14 +185,17 @@ namespace TLab.WebView
 				{
 					BanterScene.Instance().link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}{MessageDelimiters.PRIMARY}about:blank{MessageDelimiters.PRIMARY}{m_preloadScript}", msg => {
 							
-						var parts = msg.Split(MessageDelimiters.PRIMARY, 3);
-						if (parts.Length < 2)
+						var parts = msg.Split(MessageDelimiters.PRIMARY, 5);
+						if (parts.Length < 4)
 						{
 							Debug.LogError("Failed to create window: " + msg);
 							return;
 						}
 						winId = int.Parse(parts[1]);
-						Debug.Log("[Banter] Created window with ID: " + winId);
+						
+						m_texSize.x = int.Parse(parts[2]);
+						m_texSize.y = int.Parse(parts[3]);
+						Debug.Log("[Banter] Created window with ID: " + winId + $" | Size: {m_texSize.x}x{m_texSize.y}");
 						mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + parts[1], MemoryMappedFileRights.Read);
 						accessor = mmf.CreateViewAccessor();
 						ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
@@ -385,6 +388,28 @@ namespace TLab.WebView
 
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 			m_NativePlugin.Call(nameof(Resize), texSize.x, texSize.y, viewSize.x, viewSize.y);
+#else
+			Destroy(m_contentView);
+			m_contentView = null;
+			BanterScene.Instance().link.Send($"{APICommands.RESIZE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}", msg => {
+				var parts = msg.Split(MessageDelimiters.PRIMARY, 4);
+				if (parts.Length < 3)
+				{
+					Debug.LogError("Failed to resize window: " + msg);
+					return;
+				}
+				m_texSize.x = int.Parse(parts[1]);
+				m_texSize.y = int.Parse(parts[2]);
+				UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+				{
+					if (m_contentView == null)
+						m_contentView = new Texture2D(m_texSize.x, m_texSize.y, TextureFormat.RGBA32, false, true);
+					
+					if (m_rawImage != null)
+						m_rawImage.texture = m_contentView;
+					onCapture?.Invoke(m_contentView);
+				});
+			});
 #endif
 		}
 

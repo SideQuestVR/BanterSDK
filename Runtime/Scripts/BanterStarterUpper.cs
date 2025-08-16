@@ -280,8 +280,10 @@ namespace Banter.SDK
 #endif
                    
         }
-        int spaceBrowserWidth = 1280;
-        int spaceBrowserHeight = 720;
+        public static int spaceBrowserWidth = 320;
+        public static int spaceBrowserHeight = 240;
+
+        Vector2Int lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
         public static Texture2D browserTexture;
         void StartBrowserWindow()
         {
@@ -410,8 +412,13 @@ namespace Banter.SDK
 
         void Update()
         {
+            if (spaceBrowserWidth != lastSize.x || spaceBrowserHeight != lastSize.y)
+            {
+                lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+                browser.Resize(lastSize, lastSize);
+            }
             browser?.UpdateFrame();
-            // browser?.DispatchMessageQueue();
+            browser?.DispatchMessageQueue();
             FragmentCapture.GarbageCollect();
         }
 
