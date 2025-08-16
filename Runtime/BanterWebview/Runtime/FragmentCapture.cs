@@ -581,8 +581,15 @@ namespace TLab.WebView
 #else
 			if (m_contentView != null && ptr != IntPtr.Zero)
 			{
-				m_contentView.LoadRawTextureData(ptr, m_texSize.x * m_texSize.y * 4);
-				m_contentView.Apply();
+				try
+				{
+					m_contentView.LoadRawTextureData(ptr, m_texSize.x * m_texSize.y * 4);
+					m_contentView.Apply();
+				}
+				catch (Exception e)
+				{
+					Debug.LogError(THIS_NAME + "update frame error. " + winId + ", " + e);
+				}
 				// Debug.Log(THIS_NAME + "update frame. " + winId);
 			}
 			else

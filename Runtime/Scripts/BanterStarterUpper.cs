@@ -280,8 +280,8 @@ namespace Banter.SDK
 #endif
                    
         }
-        public static int spaceBrowserWidth = 320;
-        public static int spaceBrowserHeight = 240;
+        public static int spaceBrowserWidth = 1024;
+        public static int spaceBrowserHeight = 768;
 
         Vector2Int lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
         public static Texture2D browserTexture;
