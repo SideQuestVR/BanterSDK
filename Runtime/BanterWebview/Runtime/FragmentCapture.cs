@@ -158,7 +158,10 @@ namespace TLab.WebView
 		}
 		public virtual string package => "";
 		void CreateElectronTexture()
-		{		
+		{
+
+#if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
+#else
 			Debug.Log("[BanterElectron] Created window with ID: BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y);
 			mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y, MemoryMappedFileRights.Read);
 			accessor = mmf.CreateViewAccessor();
@@ -176,6 +179,7 @@ namespace TLab.WebView
 				}
 				m_onCapture?.Invoke(m_contentView);
 			});
+#endif
 		}
 		public virtual IEnumerator InitTask()
 		{
