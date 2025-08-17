@@ -157,7 +157,26 @@ namespace TLab.WebView
 			Init();
 		}
 		public virtual string package => "";
+		void CreateElectronTexture()
+		{		
+			Debug.Log("[BanterElectron] Created window with ID: BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y);
+			mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y, MemoryMappedFileRights.Read);
+			accessor = mmf.CreateViewAccessor();
+			ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
+			UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+			{
+				if (m_contentView == null)
+				{
+					m_contentView = new Texture2D(m_texSize.x, m_texSize.y, GraphicsFormat.B8G8R8A8_SRGB, TextureCreationFlags.None);
+				}
 
+				if (m_rawImage != null)
+				{
+					m_rawImage.texture = m_contentView;
+				}
+				m_onCapture?.Invoke(m_contentView);
+			});
+		}
 		public virtual IEnumerator InitTask()
 		{
 			// var browserManager = BrowserManager.Instance;
@@ -192,27 +211,9 @@ namespace TLab.WebView
 							return;
 						}
 						winId = int.Parse(parts[1]);
-						
 						m_texSize.x = int.Parse(parts[2]);
 						m_texSize.y = int.Parse(parts[3]);
-						Debug.Log("[Banter] Created window with ID: " + winId + $" | Size: {m_texSize.x}x{m_texSize.y}");
-						mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + parts[1], MemoryMappedFileRights.Read);
-						accessor = mmf.CreateViewAccessor();
-						ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
-						UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-						{
-							if (m_contentView == null)
-							{
-								TextureCreationFlags flags = TextureCreationFlags.None;
-								m_contentView = new Texture2D(m_texSize.x, m_texSize.y, GraphicsFormat.B8G8R8A8_SRGB, flags);
-							}
-
-							if (m_rawImage != null)
-							{
-								m_rawImage.texture = m_contentView;
-							}
-							m_onCapture?.Invoke(m_contentView);
-						});
+						CreateElectronTexture();
 					});
 
 				}
@@ -391,24 +392,19 @@ namespace TLab.WebView
 #else
 			Destroy(m_contentView);
 			m_contentView = null;
+			accessor?.Dispose();
+			mmf?.Dispose();
+			ptr = IntPtr.Zero;
 			BanterScene.Instance().link.Send($"{APICommands.RESIZE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}", msg => {
 				var parts = msg.Split(MessageDelimiters.PRIMARY, 4);
 				if (parts.Length < 3)
 				{
-					Debug.LogError("Failed to resize window: " + msg);
+					Debug.LogError("[BanterElectron] Failed to resize window: " + msg);
 					return;
 				}
 				m_texSize.x = int.Parse(parts[1]);
 				m_texSize.y = int.Parse(parts[2]);
-				UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-				{
-					if (m_contentView == null)
-						m_contentView = new Texture2D(m_texSize.x, m_texSize.y, TextureFormat.RGBA32, false, true);
-					
-					if (m_rawImage != null)
-						m_rawImage.texture = m_contentView;
-					onCapture?.Invoke(m_contentView);
-				});
+				CreateElectronTexture();
 			});
 #endif
 		}
