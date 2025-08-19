@@ -1,5 +1,4 @@
 ﻿#nullable enable
-using Banter.Utilities.Async;
 using System;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
@@ -12,7 +11,7 @@ using UnityEngine;
 using Path = Net3_Proxy.Path;
 #endif
 
-namespace Banter.Utilities
+namespace Banter.Utilities.Async
 {
     /// <summary>
     /// Provides some basic utility methods and properties of Beat Saber

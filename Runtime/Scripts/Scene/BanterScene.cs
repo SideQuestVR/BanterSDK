@@ -1231,7 +1231,16 @@ namespace Banter.SDK
         }
         public void UpdateJsObject(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => SendObjectUpdate(int.Parse(msg), reqId), $"{nameof(BanterScene)}.{nameof(UpdateJsObject)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                try
+                {
+                    SendObjectUpdate(int.Parse(msg), reqId);
+                }catch (Exception e)
+                {
+                    Debug.LogError("[Banter] Error updating object: " + e.Message + ", " + msg);
+                }
+            }, $"{nameof(BanterScene)}.{nameof(UpdateJsObject)}"));
         }
         // TODO: Lets look at what this is doing and why, it could be better to propagate updates back to the object another way
         void SendObjectUpdate(int oid, int reqId)
@@ -1334,9 +1343,9 @@ namespace Banter.SDK
                          go.SetActive(false);
                      }
                  }
-                 catch (Exception)
+                 catch (Exception e)
                  {
-                     Debug.LogError("[Banter] Add Object after act: " + msg);
+                     Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
                  }
              }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
         }
@@ -1380,7 +1389,7 @@ namespace Banter.SDK
         {
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
-                 _ = settings.Reset();
+                 _ = settings?.Reset();
              }, $"{nameof(BanterScene)}.{nameof(ResetSceneAbilitySettings)}"));
         }
         public async Task ResetScene()
@@ -1450,15 +1459,10 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                LogLine.Do("[BanterScene] Loading ShowSpaceImage: " + url);
                 await ShowSpaceImage(url);
-                LogLine.Do("[BanterScene] Loading ResetScene: " + url);
                 await ResetScene();
-                LogLine.Do("[BanterScene] Loading LoadUrl: " + url);
                 await link.LoadUrl(url);
-                LogLine.Do("[BanterScene] Loading WaitUntil: " + url);
                 await new WaitUntil(() => loaded);
-                LogLine.Do("[BanterScene] Loading after WaitUntil: " + url);
                 LoadingStatus = "Please wait, loading live space...";
                 if (HasLoadFailed())
                 {
@@ -1470,14 +1474,7 @@ namespace Banter.SDK
                 {
                     events.OnUnitySceneLoad.Invoke(url);
                 }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
-                 // LogLine.Do("[BanterScene] Loading Task.Delay(2500): " + url);
-                // for(int i = 0; i < 50; i++)
-                // {
-                //     LogLine.Do("[BanterScene] Loading Task.Delay(" + (i * 50) + "): " + url);
-                //     await new WaitForSeconds(0.05f);
-                // }
                 await Task.Delay(2500);
-                LogLine.Do("[BanterScene] Loading loadingManager?.LoadOut: " + url);
 
                 await loadingManager?.LoadOut();
                 loading = false;
@@ -1706,12 +1703,12 @@ namespace Banter.SDK
             if (returnValue == null)
             {
                 //todo: is this case needed/intended?
-                return $"{comp.banterObject.oid}|{comp.cid}|{(int)comp.type}|";
+                return $"{comp.banterObject.oid}¶{comp.cid}¶{(int)comp.type}¶";
 
             }
             else
             {
-                return $"{comp.banterObject.oid}|{comp.cid}|{(int)comp.type}|{returnValue}";
+                return $"{comp.banterObject.oid}¶{comp.cid}¶{(int)comp.type}¶{returnValue}";
             }
         }
         #endregion
@@ -1859,7 +1856,7 @@ namespace Banter.SDK
         {
             // An empty update to trigger this object to be sent to JS
 
-            EnqueueChange($"{oid}|{cid}|{(int)ct}|{(int)PropertyName.hasUnity}~~{(int)PropertyType.Bool}~~1");
+            EnqueueChange($"{oid}¶{cid}¶{(int)ct}¶{(int)PropertyName.hasUnity}§{(int)PropertyType.Bool}§1");
 
         }
         public void KillAllKitItemsBeforeLoad()

@@ -6,8 +6,11 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
-using Banter.Utilities;
 using Debug = UnityEngine.Debug;
+using TLab.WebView;
+using UnityEngine.UI;
+
+
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
@@ -23,18 +26,22 @@ namespace Banter.SDK
         [SerializeField] float spawnRotation;
         [SerializeField] bool openBrowser;
         [SerializeField] Transform _feetTransform;
+        [SerializeField] RawImage _browserRenderer;
         public static bool SafeMode = false;
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
         public BanterScene scene;
         public static string WEB_ROOT = "WebRoot";
+        public static int mainWWindowId;
+        public static int mainWWindowPort = -2;
         private int processId;
         private static bool initialized = false;
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-
+        
+        public static Browser browser;
         void Awake()
         {
             // Safe mode?
@@ -47,7 +54,7 @@ namespace Banter.SDK
             {
                 SafeMode = true;
                 LogLine.Do("SAFE MODE is set on");
-                PlayerPrefs.SetInt("SafeModeOff",1);
+                PlayerPrefs.SetInt("SafeModeOff", 1);
             }
             
 #if BASIS_BUNDLE_MANAGEMENT
@@ -79,9 +86,24 @@ namespace Banter.SDK
 #endif
 #if UNITY_STANDALONE || UNITY_EDITOR
             Kill();
-            StartBrowser();
+            StartElectronBrowser();
+#else
+            StartBrowserWindow();
 #endif
             SetupBrowserLink();
+#if UNITY_STANDALONE || UNITY_EDITOR
+    EventHandler args = null;
+    args = (arg0, arg1) =>
+    {
+        scene.link.Connected -= args;
+        UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+        {
+            StartBrowserWindow();
+        });
+    };
+    scene.link.Connected += args;
+#endif
+
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
 #endif
@@ -234,7 +256,7 @@ namespace Banter.SDK
             }
         }
 
-        private void StartBrowser()
+        private void StartElectronBrowser()
         {
             Kill();
 #if !BANTER_EDITOR
@@ -243,30 +265,76 @@ namespace Banter.SDK
             var isProd = true;
 #endif
 
-            string[] args = System.Environment.GetCommandLineArgs();
-            string extraArgs = openBrowser ? " --openbrowser true" : "";
-            for (int i = 0; i < args.Length; i++)
-            {
-                if (args[i] == "-openbrowser" && (i + 1) < args.Length)
-                {
-                        extraArgs = " --openbrowser true";
-                }
-            }
-
 #if UNITY_EDITOR
-            var injectFile = "\"" + Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.txt") + "\"";
-            var Eargs = (isProd ? "--prod true " : "") + "--bebug" + (UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false) ? " --devtools" : "") + " --pipename " + BanterLink.pipeName + " --inject " + injectFile + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"" + extraArgs;
+            var Eargs = (isProd ? "--prod true " : "") + "--bebug --pipename " +
+                BanterLink.pipeName + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
                 Eargs,
                 LogTag.BanterBrowser);
 #else
-            var injectFile = "\"" + Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.txt") + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
-                "--bebug --prod true --pipename " + BanterLink.pipeName + " --inject " + injectFile + extraArgs,
+                "--bebug --prod true --pipename " + BanterLink.pipeName,
                 LogTag.BanterBrowser);
 #endif
+                   
+        }
+        public static int spaceBrowserWidth = 1024;
+        public static int spaceBrowserHeight = 768;
+
+        Vector2Int lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+        public static Texture2D browserTexture;
+        void StartBrowserWindow()
+        {
+#if UNITY_EDITOR
+            var injectFile = Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.js");
+#else
+            var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.js");
+#endif
+           
+#if UNITY_ANDROID
+            browser = gameObject.AddComponent<WebView>();
+#else
+            browser = gameObject.AddComponent<ElectronView>();
+#endif
+            browser.texSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+            browser.viewSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+            browser.fps = 30;
+            browser.preloadScript = injectFile;
+            browser.captureMode = CaptureMode.HardwareBuffer;
+            var downloadOption = new Download.Option();
+            downloadOption.Update(Download.Directory.Download, "BanterLink");
+            browser.downloadOption = downloadOption;
+            browser.onCapture.AddListener((tex) =>
+            {
+                mainWWindowId = browser.winId;
+                browserTexture = tex;
+                if (_browserRenderer != null)
+                {
+                    _browserRenderer.texture = browserTexture;
+                    var inputlistener = _browserRenderer.gameObject.GetComponent<BrowserInputListener>();
+                    if( inputlistener)
+                        inputlistener.browser = browser;
+                    
+                }
+#if BANTER_VISUAL_SCRIPTING
+                EventBus.Trigger("OnSpaceBrowserTexture", new CustomEventArgs(null, new object[] { tex }));
+#endif
+            });
+            browser.Init();
+        }
+
+        public static async Task SetMainWindowPort(Action<int> portCallback)
+        {
+            if (browser == null)
+            {
+                await new WaitUntil(() => browser != null);
+            }
+            browser.onNativeReady.AddListener(() => {
+                mainWWindowPort = browser.StartSocketServer();
+                portCallback?.Invoke(mainWWindowPort);
+            });
         }
 
         private void Kill(bool force = false)
@@ -340,6 +408,18 @@ namespace Banter.SDK
         void FixedUpdate()
         {
             scene.FixedUpdate();
+        }
+
+        void Update()
+        {
+            if (spaceBrowserWidth != lastSize.x || spaceBrowserHeight != lastSize.y)
+            {
+                lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
+                browser.Resize(lastSize, lastSize);
+            }
+            browser?.UpdateFrame();
+            browser?.DispatchMessageQueue();
+            FragmentCapture.GarbageCollect();
         }
 
 

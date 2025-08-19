@@ -1,7 +1,14 @@
 [APICommands]
 public class APICommands
 {
+    public const string KEYBOARD_FOCUS = "!kf!";
+    public const string KEY_EVENT = "!ke!";
+    public const string TOUCH_EVENT = "!te!";
+    public const string CREATE_WINDOW = "!cw!";
+    public const string RESIZE_WINDOW = "!rw!";
+    public const string KILL_WINDOW = "!kw!";
     public const string REQUEST_ID = "!i!";
+    public const string RESPONSE_ID = "!o!";
     public const string UPDATE = "!u!";
     public const string DOM_READY = "!dr!";
     public const string LOAD_FAILED = "!lf!";

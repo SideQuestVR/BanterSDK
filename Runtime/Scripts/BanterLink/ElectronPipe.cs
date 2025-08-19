@@ -17,6 +17,7 @@ public class ElectronPipe : BanterPipe
     public string PipeName { get; private set; }
     public int headerSize = 4;
     Thread readThread;
+    bool IsConnected;
     private NamedPipeClientStream rendererClient;
 
     public ElectronPipe(string pipeName)
@@ -35,6 +36,7 @@ public class ElectronPipe : BanterPipe
                 throw new Exception("Named pipe failed connect before timeout");
             }
             connectedCallback();
+            IsConnected = true;
             StartReadThread(msgCallback);
         });
     }
@@ -189,6 +191,7 @@ public class ElectronPipe : BanterPipe
                         {
                             if (toSendQueue.TryDequeue(out var data))
                             {
+                                data = BanterStarterUpper.mainWWindowId > 0 ? BanterStarterUpper.mainWWindowId + MessageDelimiters.WINDOW + data: data;
                                 byte[] b = Encoding.UTF8.GetBytes(data);
                                 byte[] blen = BitConverter.GetBytes(b.Length);
                                 byte[] concat = new byte[b.Length + blen.Length];
@@ -253,7 +256,7 @@ public class ElectronPipe : BanterPipe
 
     public override bool GetIsConnected()
     {
-        return true;
+        return IsConnected;
     }
 
     public override object GetActivity()
