@@ -1459,8 +1459,8 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                await ShowSpaceImage(url);
                 await ResetScene();
+                await ShowSpaceImage(url);
                 await link.LoadUrl(url);
                 await new WaitUntil(() => loaded);
                 LoadingStatus = "Please wait, loading live space...";
