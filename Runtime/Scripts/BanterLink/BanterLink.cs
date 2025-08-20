@@ -264,6 +264,14 @@ namespace Banter.SDK
             {
                 scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
             }
+            else if (msg.StartsWith(APICommands.SET_NAME))
+            {
+                scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
+            }
+            else if (msg.StartsWith(APICommands.SET_NETWORK_ID))
+            {
+                scene.SetJsObjectNetworkId(GetMsgData(msg, APICommands.SET_NETWORK_ID), id);
+            }
             else if (msg.StartsWith(APICommands.SET_LAYER))
             {
                 scene.SetJsObjectLayer(GetMsgData(msg, APICommands.SET_LAYER), id);

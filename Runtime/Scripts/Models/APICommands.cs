@@ -7,6 +7,8 @@ public class APICommands
     public const string CREATE_WINDOW = "!cw!";
     public const string RESIZE_WINDOW = "!rw!";
     public const string KILL_WINDOW = "!kw!";
+    public const string SET_NETWORK_ID = "!sni!";
+    public const string SET_NAME = "!sn!";
     public const string REQUEST_ID = "!i!";
     public const string RESPONSE_ID = "!o!";
     public const string UPDATE = "!u!";

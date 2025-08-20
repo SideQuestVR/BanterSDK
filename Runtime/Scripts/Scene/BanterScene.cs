@@ -995,6 +995,45 @@ namespace Banter.SDK
                 Debug.LogException(ex);
             }
         }
+        
+        public void SetJsObjectNetworkId(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetObject(int.Parse(msgParts[0]));
+            if (banterObject.id != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
+                    banterObject.id.Id = msgParts[1];
+                    SendObjectUpdate(banterObject.gameObject, reqId);
+                }, $"{nameof(BanterScene)}.{nameof(SetJsObjectNetworkId)}"));
+            }
+        }
+        
+        public void SetJsObjectName(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+            if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                 {
+                     banterObject.name = msgParts[1];
+                     SendObjectUpdate(banterObject, reqId);
+                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
+            }
+        }
+        
         public void SetJsObjectLayer(string msg, int reqId)
         {
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
@@ -1008,9 +1047,11 @@ namespace Banter.SDK
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
+
                      banterObject.layer = int.Parse(msgParts[1]);
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(SetJsObjectLayer)}"));
+
             }
         }
         public void PhysicsRaycast(string msg, int reqId)
@@ -1335,6 +1376,7 @@ namespace Banter.SDK
                      var go = new GameObject(parts[2]);
                      go.transform.parent = settings.parentTransform;
                      AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
+                     Debug.Log("HERERER: "+ parts[0]);
                      link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                      await new WaitForSeconds(2);
                      if (parts[1] == "0")
