@@ -1376,7 +1376,6 @@ namespace Banter.SDK
                      var go = new GameObject(parts[2]);
                      go.transform.parent = settings.parentTransform;
                      AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
-                     Debug.Log("HERERER: "+ parts[0]);
                      link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                      await new WaitForSeconds(2);
                      if (parts[1] == "0")
