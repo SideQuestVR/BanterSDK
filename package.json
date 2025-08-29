@@ -14,7 +14,8 @@
     "com.unity.inputsystem": "1.4.4",
     "com.unity.xr.legacyinputhelpers": "1.4.4",
     "com.unity.xr.management": "4.2.0",
-    "com.unity.xr.openxr": "1.8.2"
+    "com.unity.xr.openxr": "1.8.2",
+    "com.gator-dragon-games.jigglephysics": "12.1.0"
   },
   "keywords": [
     "world-building",
