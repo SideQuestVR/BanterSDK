@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using System.IO;
 using System.Text;
+using Banter.UI.Bridge;
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -45,6 +46,7 @@ namespace Banter.SDK
         {
             return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
         }
+        
         async void ParseCommand(string msg)
         {
             if (msg.StartsWith(APICommands.LOG))
@@ -163,6 +165,11 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS)) {
                     scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
+            }
+            else if (UIElementBridge.IsUICommand(msg))
+            {
+                // Handle UI commands through UIElementBridge
+                UIElementBridge.Instance.HandleMessage(msg);
             }
             else
             {

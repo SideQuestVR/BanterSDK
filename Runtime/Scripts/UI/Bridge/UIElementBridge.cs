@@ -27,6 +27,40 @@ namespace Banter.UI.Bridge
         private Dictionary<string, VisualElement> _elements = new Dictionary<string, VisualElement>();
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
         private UIDocument _mainDocument;
+        private BanterLink _banterLink;
+        
+        // Static HashSet for efficient UI command checking
+        private static readonly HashSet<string> _uiCommandPrefixes = new HashSet<string>
+        {
+            UICommands.CREATE_UI_ELEMENT,
+            UICommands.DESTROY_UI_ELEMENT,
+            UICommands.ATTACH_UI_CHILD,
+            UICommands.DETACH_UI_CHILD,
+            UICommands.SET_UI_PROPERTY,
+            UICommands.GET_UI_PROPERTY,
+            UICommands.SET_UI_STYLE,
+            UICommands.GET_UI_STYLE,
+            UICommands.BATCH_UI_UPDATE,
+            UICommands.UI_EVENT,
+            UICommands.REGISTER_UI_EVENT,
+            UICommands.UNREGISTER_UI_EVENT,
+            UICommands.CALL_UI_METHOD,
+            UICommands.UI_METHOD_RETURN,
+            UICommands.INSTANTIATE_UXML,
+            UICommands.QUERY_UI_ELEMENT,
+            UICommands.GET_UI_SLOT,
+            UICommands.BIND_UI_DATA,
+            UICommands.UNBIND_UI_DATA,
+            UICommands.UPDATE_UI_BINDING,
+            UICommands.SET_UI_PARENT,
+            UICommands.GET_UI_CHILDREN,
+            UICommands.SET_UI_VISIBLE,
+            UICommands.SET_UI_ENABLED,
+            UICommands.SET_UI_FOCUS,
+            UICommands.CLEAR_UI_FOCUS,
+            UICommands.FORCE_UI_LAYOUT,
+            UICommands.MEASURE_UI_ELEMENT
+        };
         
         // Message delimiters (matching TypeScript)
         private const char PRIMARY_DELIMITER = '¶';
@@ -42,6 +76,13 @@ namespace Banter.UI.Bridge
             }
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            
+            // Cache BanterLink reference
+            _banterLink = FindObjectOfType<BanterLink>();
+            if (_banterLink == null)
+            {
+                Debug.LogWarning("[UIElementBridge] BanterLink not found on Awake, will retry on first message");
+            }
             
             InitializeMainDocument();
         }
@@ -67,6 +108,19 @@ namespace Banter.UI.Bridge
             }
         }
         
+        /// <summary>
+        /// Check if a message is a UI command
+        /// </summary>
+        /// <param name="message">The message to check</param>
+        /// <returns>True if the message is a UI command</returns>
+        public static bool IsUICommand(string message)
+        {
+            // Extract command from message (everything before first delimiter)
+            int delimiterIndex = message.IndexOf(PRIMARY_DELIMITER);
+            string command = delimiterIndex > 0 ? message.Substring(0, delimiterIndex) : message;
+            return _uiCommandPrefixes.Contains(command);
+        }
+        
         public void HandleMessage(string message)
         {
             try
@@ -89,51 +143,51 @@ namespace Banter.UI.Bridge
         {
             switch (command)
             {
-                case "!cui!": // CREATE_UI_ELEMENT
+                case UICommands.CREATE_UI_ELEMENT:
                     CreateUIElement(data);
                     break;
                     
-                case "!dui!": // DESTROY_UI_ELEMENT
+                case UICommands.DESTROY_UI_ELEMENT:
                     DestroyUIElement(data);
                     break;
                     
-                case "!auc!": // ATTACH_UI_CHILD
+                case UICommands.ATTACH_UI_CHILD:
                     AttachChild(data);
                     break;
                     
-                case "!duc!": // DETACH_UI_CHILD
+                case UICommands.DETACH_UI_CHILD:
                     DetachChild(data);
                     break;
                     
-                case "!sup!": // SET_UI_PROPERTY
+                case UICommands.SET_UI_PROPERTY:
                     SetProperty(data);
                     break;
                     
-                case "!sus!": // SET_UI_STYLE
+                case UICommands.SET_UI_STYLE:
                     SetStyle(data);
                     break;
                     
-                case "!cum!": // CALL_UI_METHOD
+                case UICommands.CALL_UI_METHOD:
                     CallMethod(data);
                     break;
                     
-                case "!rue!": // REGISTER_UI_EVENT
+                case UICommands.REGISTER_UI_EVENT:
                     RegisterEvent(data);
                     break;
                     
-                case "!uue!": // UNREGISTER_UI_EVENT
+                case UICommands.UNREGISTER_UI_EVENT:
                     UnregisterEvent(data);
                     break;
                     
-                case "!sfc!": // SET_UI_FOCUS
+                case UICommands.SET_UI_FOCUS:
                     SetFocus(data);
                     break;
                     
-                case "!cfc!": // CLEAR_UI_FOCUS
+                case UICommands.CLEAR_UI_FOCUS:
                     ClearFocus(data);
                     break;
                     
-                case "!buu!": // BATCH_UI_UPDATE
+                case UICommands.BATCH_UI_UPDATE:
                     ProcessBatchUpdate(data);
                     break;
                     
@@ -502,7 +556,7 @@ namespace Banter.UI.Bridge
         private void SendUIEvent(string elementId, string eventType, EventBase evt)
         {
             // Send event back to TypeScript
-            var message = $"!uie!{PRIMARY_DELIMITER}{elementId}{SECONDARY_DELIMITER}{eventType}";
+            var message = $"{UICommands.UI_EVENT}{PRIMARY_DELIMITER}{elementId}{SECONDARY_DELIMITER}{eventType}";
             
             // Add event data if needed
             if (evt is ChangeEvent<string> changeEvt)
@@ -516,9 +570,21 @@ namespace Banter.UI.Bridge
         
         private void SendToJavaScript(string message)
         {
-            // TODO: Integrate with existing Banter bridge system
-            // This would use the same mechanism as BanterBridge
-            Debug.Log($"[UIElementBridge] Sending to JS: {message}");
+            // Use cached BanterLink reference, with fallback
+            if (_banterLink == null)
+            {
+                _banterLink = FindObjectOfType<BanterLink>();
+            }
+            
+            if (_banterLink != null)
+            {
+                _banterLink.Send(message);
+                Debug.Log($"[UIElementBridge] Sent to JS: {message}");
+            }
+            else
+            {
+                Debug.LogWarning($"[UIElementBridge] BanterLink not found, cannot send: {message}");
+            }
         }
         
         // Public API for other systems
