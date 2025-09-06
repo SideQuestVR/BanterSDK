@@ -168,8 +168,7 @@ namespace Banter.SDK
             }
             else if (UIElementBridge.IsUICommand(msg))
             {
-                // Handle UI commands through UIElementBridge
-                UIElementBridge.Instance.HandleMessage(msg);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => UIElementBridge.HandleMessage(msg), $"{nameof(BanterLink)}.{nameof(ParseCommand)}.UIElementBridge.IsUICommand"));
             }
             else
             {
@@ -182,160 +181,155 @@ namespace Banter.SDK
             {
                 return;
             }
-            // try{
-            if (msg.StartsWith(APICommands.OBJECT_ADDED))
-            {
-                scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
+            try{
+                if (msg.StartsWith(APICommands.OBJECT_ADDED))
+                {
+                    scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
+                }
+                else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+                {
+                    var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                    scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], false);
+                }
+                else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
+                {
+                    scene.SetSettings(GetMsgData(msg, APICommands.SCENE_SETTINGS), id);
+                }
+                else if (msg.StartsWith(APICommands.START_TTS))
+                {
+                    scene.StartTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
+                }
+                else if (msg.StartsWith(APICommands.WAIT_FOR_END_OF_FRAME))
+                {
+                    _ = scene.WaitForEndOfFrame(id);
+                }
+                else if (msg.StartsWith(APICommands.STOP_TTS))
+                {
+                    scene.StopTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
+                }
+                else if (msg.StartsWith(APICommands.AI_IMAGE))
+                {
+                    scene.AiImage(GetMsgData(msg, APICommands.AI_IMAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.AI_MODEL))
+                {
+                    scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
+                {
+                    scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
+                }
+                else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
+                {
+                    scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
+                }
+                else if (msg.StartsWith(APICommands.SELECT_FILE))
+                {
+                    scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
+                }
+                else if (msg.StartsWith(APICommands.GRAVITY))
+                {
+                    scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);
+                }
+                else if (msg.StartsWith(APICommands.TIME_SCALE))
+                {
+                    scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
+                }
+                else if (msg.StartsWith(APICommands.DEEP_LINK))
+                {
+                    var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.events.OnDeepLink.Invoke(parts[0], parts[1]);
+                }
+                else if (msg.StartsWith(APICommands.ONE_SHOT))
+                {
+                    var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
+                }
+                else if (msg.StartsWith(APICommands.YT_INFO))
+                {
+                    scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
+                }
+                else if (msg.StartsWith(APICommands.OPEN_PAGE))
+                {
+                    scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.TELEPORT))
+                {
+                    scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);
+                }
+                else if (msg.StartsWith(APICommands.CALL_METHOD))
+                {
+                    scene.CallMethodOnJsComponent(GetMsgData(msg, APICommands.CALL_METHOD), id, full);
+                }
+                else if (msg.StartsWith(APICommands.INSTANTIATE))
+                {
+                    scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_NAME))
+                {
+                    scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_NETWORK_ID))
+                {
+                    scene.SetJsObjectNetworkId(GetMsgData(msg, APICommands.SET_NETWORK_ID), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_LAYER))
+                {
+                    scene.SetJsObjectLayer(GetMsgData(msg, APICommands.SET_LAYER), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_ACTIVE))
+                {
+                    scene.SetJsObjectActive(GetMsgData(msg, APICommands.SET_ACTIVE), id);
+                }
+                else if (msg.StartsWith(APICommands.SEND_MENU_BROWSER_MESSAGE))
+                {
+                    scene.SendBrowserMessage(GetMsgData(msg, APICommands.SEND_MENU_BROWSER_MESSAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.RAYCAST))
+                {
+                    scene.PhysicsRaycast(GetMsgData(msg, APICommands.RAYCAST), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_UPDATE_REQUEST))
+                {
+                    scene.UpdateJsObject(GetMsgData(msg, APICommands.OBJECT_UPDATE_REQUEST), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_PARENT))
+                {
+                    scene.SetParent(GetMsgData(msg, APICommands.SET_PARENT), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_REMOVED))
+                {
+                    scene.DestroyJsComponent(int.Parse(GetMsgData(msg, APICommands.COMPONENT_REMOVED)), id);
+                }
+                else if (msg.StartsWith(APICommands.WATCH_PROPERTIES))
+                {
+                    _ = scene.WatchProperties(GetMsgData(msg, APICommands.WATCH_PROPERTIES), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_REMOVED))
+                {
+                    scene.DestroyJsObject(int.Parse(GetMsgData(msg, APICommands.OBJECT_REMOVED)), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_UPDATED))
+                {
+                    scene.UpdateJsComponent(GetMsgData(msg, APICommands.COMPONENT_UPDATED), id);
+                    // }else if(msg.StartsWith(APICommands.ATTACH)) {
+                    //     scene.Attach(GetMsgData(msg, APICommands.ATTACH), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_ADDED))
+                {
+                    scene.AddJsComponent(GetMsgData(msg, APICommands.COMPONENT_ADDED), id);
+                }
+                else if (msg.StartsWith(APICommands.QUERY_COMPONENTS))
+                {
+                    _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
+                }
+                else
+                {
+                    Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
+                }
+            }catch(Exception e){
+                Debug.Log("[Banter] Error parsing request: " + e.Message);
             }
-            else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
-            {
-                var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
-                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], false);
-            }
-            else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
-            {
-                scene.SetSettings(GetMsgData(msg, APICommands.SCENE_SETTINGS), id);
-            }
-            else if (msg.StartsWith(APICommands.START_TTS))
-            {
-                scene.StartTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
-            }
-            else if (msg.StartsWith(APICommands.WAIT_FOR_END_OF_FRAME))
-            {
-                _ = scene.WaitForEndOfFrame(id);
-            }
-            else if (msg.StartsWith(APICommands.STOP_TTS))
-            {
-                scene.StopTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
-            }
-            else if (msg.StartsWith(APICommands.AI_IMAGE))
-            {
-                scene.AiImage(GetMsgData(msg, APICommands.AI_IMAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.AI_MODEL))
-            {
-                scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
-            }
-            else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
-            {
-                scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
-            }
-            else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
-            {
-                scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
-            }
-            else if (msg.StartsWith(APICommands.SELECT_FILE))
-            {
-                scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
-            }
-            else if (msg.StartsWith(APICommands.GRAVITY))
-            {
-                scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);
-            }
-            else if (msg.StartsWith(APICommands.TIME_SCALE))
-            {
-                scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
-            }
-            // else if (msg.StartsWith(APICommands.PLAYER_SPEED))
-            // {
-            //     scene.PlayerSpeed(GetMsgData(msg, APICommands.PLAYER_SPEED), id);
-            // } //OnPlayerSpeedChanged was never re-implemented for Flexa, and will now be superceded by physics settings/move speed
-            else if (msg.StartsWith(APICommands.DEEP_LINK))
-            {
-                var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
-                Debug.Log(parts[0] + " : " + parts[1]);
-                scene.events.OnDeepLink.Invoke(parts[0], parts[1]);
-            }
-            else if (msg.StartsWith(APICommands.ONE_SHOT))
-            {
-                var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
-                scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
-            }
-            else if (msg.StartsWith(APICommands.YT_INFO))
-            {
-                scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
-            }
-            else if (msg.StartsWith(APICommands.OPEN_PAGE))
-            {
-                scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.TELEPORT))
-            {
-                scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);
-            }
-            else if (msg.StartsWith(APICommands.CALL_METHOD))
-            {
-                scene.CallMethodOnJsComponent(GetMsgData(msg, APICommands.CALL_METHOD), id, full);
-            }
-            else if (msg.StartsWith(APICommands.INSTANTIATE))
-            {
-                scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_NAME))
-            {
-                scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_NETWORK_ID))
-            {
-                scene.SetJsObjectNetworkId(GetMsgData(msg, APICommands.SET_NETWORK_ID), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_LAYER))
-            {
-                scene.SetJsObjectLayer(GetMsgData(msg, APICommands.SET_LAYER), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_ACTIVE))
-            {
-                scene.SetJsObjectActive(GetMsgData(msg, APICommands.SET_ACTIVE), id);
-            }
-            else if (msg.StartsWith(APICommands.SEND_MENU_BROWSER_MESSAGE))
-            {
-                scene.SendBrowserMessage(GetMsgData(msg, APICommands.SEND_MENU_BROWSER_MESSAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.RAYCAST))
-            {
-                scene.PhysicsRaycast(GetMsgData(msg, APICommands.RAYCAST), id);
-            }
-            else if (msg.StartsWith(APICommands.OBJECT_UPDATE_REQUEST))
-            {
-                scene.UpdateJsObject(GetMsgData(msg, APICommands.OBJECT_UPDATE_REQUEST), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_PARENT))
-            {
-                scene.SetParent(GetMsgData(msg, APICommands.SET_PARENT), id);
-            }
-            else if (msg.StartsWith(APICommands.COMPONENT_REMOVED))
-            {
-                scene.DestroyJsComponent(int.Parse(GetMsgData(msg, APICommands.COMPONENT_REMOVED)), id);
-            }
-            else if (msg.StartsWith(APICommands.WATCH_PROPERTIES))
-            {
-                _ = scene.WatchProperties(GetMsgData(msg, APICommands.WATCH_PROPERTIES), id);
-            }
-            else if (msg.StartsWith(APICommands.OBJECT_REMOVED))
-            {
-                scene.DestroyJsObject(int.Parse(GetMsgData(msg, APICommands.OBJECT_REMOVED)), id);
-            }
-            else if (msg.StartsWith(APICommands.COMPONENT_UPDATED))
-            {
-                scene.UpdateJsComponent(GetMsgData(msg, APICommands.COMPONENT_UPDATED), id);
-                // }else if(msg.StartsWith(APICommands.ATTACH)) {
-                //     scene.Attach(GetMsgData(msg, APICommands.ATTACH), id);
-            }
-            else if (msg.StartsWith(APICommands.COMPONENT_ADDED))
-            {
-                scene.AddJsComponent(GetMsgData(msg, APICommands.COMPONENT_ADDED), id);
-            }
-            else if (msg.StartsWith(APICommands.QUERY_COMPONENTS))
-            {
-                _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
-            }
-            else
-            {
-                Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
-            }
-            // }catch(Exception e){
-            //     Debug.Log("[Banter] Error parsing request: " + e.Message);
-            // }
         }
         void ParseLegacy(string msg)
         {

@@ -154,6 +154,7 @@ namespace Banter.SDK
         up,
         forward,
         right,
+        resolution,
         skipOnDrop,
         waitForFirstFrame,
         isPlaying,

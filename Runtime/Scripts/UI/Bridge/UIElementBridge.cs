@@ -1,33 +1,61 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Banter.SDK;
+using Banter.UI.Elements;
 
 namespace Banter.UI.Bridge
 {
     public class UIElementBridge : MonoBehaviour
     {
-        private static UIElementBridge _instance;
-        public static UIElementBridge Instance
+        
+        // Registry for multiple panel instances
+        private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
+        
+        [SerializeField] public string panelId;
+        
+        public static UIElementBridge GetPanelInstance(string panelId)
         {
-            get
+            _panelInstances.TryGetValue(panelId, out var instance);
+            return instance;
+        }
+        
+        public static void RegisterPanelInstance(string panelId, UIElementBridge instance)
+        {
+            if (string.IsNullOrEmpty(panelId))
             {
-                if (_instance == null)
-                {
-                    var go = new GameObject("UIElementBridge");
-                    _instance = go.AddComponent<UIElementBridge>();
-                    DontDestroyOnLoad(go);
-                }
-                return _instance;
+                Debug.LogWarning("[UIElementBridge] Attempting to register panel with null/empty ID");
+                return;
+            }
+            
+            _panelInstances[panelId] = instance;
+            instance.panelId = panelId;
+            Debug.Log($"[UIElementBridge] Registered panel instance: {panelId}");
+        }
+        
+        public static void UnregisterPanelInstance(string panelId)
+        {
+            if (_panelInstances.ContainsKey(panelId))
+            {
+                _panelInstances.Remove(panelId);
+                Debug.Log($"[UIElementBridge] Unregistered panel instance: {panelId}");
             }
         }
         
         private Dictionary<string, VisualElement> _elements = new Dictionary<string, VisualElement>();
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
-        private UIDocument _mainDocument;
-        private BanterLink _banterLink;
+        public UIDocument mainDocument;
+        public BanterLink banterLink;
+        
+        // Store event callbacks for unregistration
+        private Dictionary<(string elementId, UIEventType eventType), object> _registeredCallbacks = new Dictionary<(string, UIEventType), object>();
+        
+        // Texture cache for background images
+        private static Dictionary<string, Texture2D> _textureCache = new Dictionary<string, Texture2D>();
+        private static Dictionary<string, Task<Texture2D>> _downloadingTextures = new Dictionary<string, Task<Texture2D>>();
         
         // Static HashSet for efficient UI command checking
         private static readonly HashSet<string> _uiCommandPrefixes = new HashSet<string>
@@ -61,50 +89,21 @@ namespace Banter.UI.Bridge
             UICommands.FORCE_UI_LAYOUT,
             UICommands.MEASURE_UI_ELEMENT
         };
-        
-        // Message delimiters (matching TypeScript)
-        private const char PRIMARY_DELIMITER = '¶';
-        private const char SECONDARY_DELIMITER = '§';
-        private const char TERTIARY_DELIMITER = '|';
-        
-        private void Awake()
+                
+        private void Start()
         {
-            if (_instance != null && _instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-            _instance = this;
-            DontDestroyOnLoad(gameObject);
-            
-            // Cache BanterLink reference
-            _banterLink = FindObjectOfType<BanterLink>();
-            if (_banterLink == null)
-            {
-                Debug.LogWarning("[UIElementBridge] BanterLink not found on Awake, will retry on first message");
-            }
-            
             InitializeMainDocument();
         }
         
         private void InitializeMainDocument()
         {
-            // Create main UI document if it doesn't exist
-            var uiDocumentGO = GameObject.Find("UIDocument");
-            if (uiDocumentGO == null)
-            {
-                uiDocumentGO = new GameObject("UIDocument");
-                _mainDocument = uiDocumentGO.AddComponent<UIDocument>();
-            }
-            else
-            {
-                _mainDocument = uiDocumentGO.GetComponent<UIDocument>();
-            }
-            
+            Debug.Log("[UIElementBridge] Registered root visual element." + (mainDocument != null ? " Using assigned mainDocument." : " mainDocument is null."));
             // Register root element
-            if (_mainDocument != null && _mainDocument.rootVisualElement != null)
+            if (mainDocument != null && mainDocument.rootVisualElement != null)
             {
-                _elements["root"] = _mainDocument.rootVisualElement;
+                _elements["root"] = mainDocument.rootVisualElement;
+                
+                mainDocument.rootVisualElement.style.backgroundColor = new StyleColor(new Color(0, 0, 0, 1)); // Opaque background
             }
         }
         
@@ -115,23 +114,40 @@ namespace Banter.UI.Bridge
         /// <returns>True if the message is a UI command</returns>
         public static bool IsUICommand(string message)
         {
-            // Extract command from message (everything before first delimiter)
-            int delimiterIndex = message.IndexOf(PRIMARY_DELIMITER);
-            string command = delimiterIndex > 0 ? message.Substring(0, delimiterIndex) : message;
+            // With panel targeting, format is: panelId|command|data
+            // So we need to check the second part for the UI command
+            var parts = message.Split(MessageDelimiters.PRIMARY);
+            if (parts.Length < 2) return false;
+            
+            string command = parts[1]; // Second part is the command
             return _uiCommandPrefixes.Contains(command);
         }
         
-        public void HandleMessage(string message)
+        // Handle all UI messages with required panel targeting
+        public static void HandleMessage(string message)
         {
             try
             {
-                var parts = message.Split(PRIMARY_DELIMITER);
-                if (parts.Length < 1) return;
+                var parts = message.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length < 2) 
+                {
+                    Debug.LogError($"[UIElementBridge] Invalid message format, expected panelId|command|data: {message}");
+                    return;
+                }
                 
-                var command = parts[0];
-                var data = parts.Length > 1 ? parts.Skip(1).ToArray() : new string[0];
+                var panelId = parts[0];
+                var command = parts[1];
+                var data = parts.Length > 2 ? parts[2].Split(MessageDelimiters.SECONDARY) : new string[0];
                 
-                ProcessCommand(command, data);
+                var targetBridge = GetPanelInstance(panelId);
+                if (targetBridge != null)
+                {
+                    targetBridge.ProcessCommand(command, data);
+                }
+                else
+                {
+                    Debug.LogWarning($"[UIElementBridge] No panel found with ID: {panelId}");
+                }
             }
             catch (Exception e)
             {
@@ -199,23 +215,34 @@ namespace Banter.UI.Bridge
         
         private void CreateUIElement(string[] data)
         {
+            Debug.Log("[UIElementBridge] Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
             
             var elementId = data[0];
             var elementType = data[1];
             var parentId = data[2];
-            
+            Debug.Log("[UIElementBridge] Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
             // Create the appropriate VisualElement based on type
             VisualElement element = CreateElementByType(elementType);
             
             if (element != null)
             {
                 _elements[elementId] = element;
-                
+
                 // Attach to parent if specified
                 if (parentId != "null" && _elements.TryGetValue(parentId, out var parent))
                 {
+                    Debug.Log("[UIElementBridge] Attaching to parent element: " + parentId);
                     parent.Add(element);
+                }
+                else
+                {
+                    // If no valid parent, attach to root
+                    if (_elements.TryGetValue("root", out var root))
+                    {
+                        Debug.Log("[UIElementBridge] Attaching to root element.");
+                        root.Add(element);
+                    }
                 }
                 
                 Debug.Log($"[UIElementBridge] Created element: {elementId} of type {elementType}");
@@ -232,8 +259,8 @@ namespace Banter.UI.Bridge
                     0 => new VisualElement(), // VisualElement
                     1 => new ScrollView(), // ScrollView
                     2 => new ListView(), // ListView
-                    10 => new Button(), // Button
-                    11 => new Label(), // Label
+                    10 => new BanterUIButton(), // Button -> BanterUIButton
+                    11 => new BanterUILabel(), // Label -> BanterUILabel
                     12 => new TextField(), // TextField
                     13 => new Toggle(), // Toggle
                     14 => new Slider(), // Slider
@@ -257,10 +284,20 @@ namespace Banter.UI.Bridge
             
             if (_elements.TryGetValue(elementId, out var element))
             {
+                // Clean up any registered event callbacks for this element
+                var callbacksToRemove = _registeredCallbacks.Keys
+                    .Where(key => key.elementId == elementId)
+                    .ToList();
+                    
+                foreach (var key in callbacksToRemove)
+                {
+                    _registeredCallbacks.Remove(key);
+                }
+                
                 element.RemoveFromHierarchy();
                 _elements.Remove(elementId);
                 
-                Debug.Log($"[UIElementBridge] Destroyed element: {elementId}");
+                Debug.Log($"[UIElementBridge] Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
             }
         }
         
@@ -370,93 +407,766 @@ namespace Banter.UI.Bridge
             if (data.Length < 3) return;
             
             var elementId = data[0];
-            var styleName = data[1];
+            var styleNameString = data[1];
             var value = data[2];
             
             if (!_elements.TryGetValue(elementId, out var element)) return;
             
-            // Apply style based on property name
-            switch (styleName)
+            // Convert string to enum
+            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
+            
+            // Apply style based on property enum
+            switch (styleProperty)
             {
-                case "width":
+                // Layout Properties (Flexbox)
+                case UIStyleProperty.AlignContent:
+                    element.style.alignContent = ParseEnum<Align>(value);
+                    break;
+                case UIStyleProperty.AlignItems:
+                    element.style.alignItems = ParseEnum<Align>(value);
+                    break;
+                case UIStyleProperty.AlignSelf:
+                    element.style.alignSelf = ParseEnum<Align>(value);
+                    break;
+                case UIStyleProperty.FlexBasis:
+                    element.style.flexBasis = ParseLength(value);
+                    break;
+                case UIStyleProperty.FlexDirection:
+                    element.style.flexDirection = ParseEnum<FlexDirection>(value);
+                    break;
+                case UIStyleProperty.FlexGrow:
+                    element.style.flexGrow = ParseFloat(value);
+                    break;
+                case UIStyleProperty.FlexShrink:
+                    element.style.flexShrink = ParseFloat(value);
+                    break;
+                case UIStyleProperty.FlexWrap:
+                    element.style.flexWrap = ParseEnum<Wrap>(value);
+                    break;
+                case UIStyleProperty.JustifyContent:
+                    element.style.justifyContent = ParseEnum<Justify>(value);
+                    break;
+                    
+                // Size Properties
+                case UIStyleProperty.Width:
                     element.style.width = ParseLength(value);
                     break;
-                case "height":
+                case UIStyleProperty.Height:
                     element.style.height = ParseLength(value);
                     break;
-                case "backgroundColor":
-                    element.style.backgroundColor = ParseColor(value);
+                case UIStyleProperty.MinWidth:
+                    element.style.minWidth = ParseLength(value);
                     break;
-                case "color":
-                    element.style.color = ParseColor(value);
+                case UIStyleProperty.MinHeight:
+                    element.style.minHeight = ParseLength(value);
                     break;
-                case "fontSize":
-                    element.style.fontSize = float.Parse(value);
+                case UIStyleProperty.MaxWidth:
+                    element.style.maxWidth = ParseLength(value);
                     break;
-                case "margin":
+                case UIStyleProperty.MaxHeight:
+                    element.style.maxHeight = ParseLength(value);
+                    break;
+                    
+                // Position Properties
+                case UIStyleProperty.Position:
+                    element.style.position = ParseEnum<Position>(value);
+                    break;
+                case UIStyleProperty.Left:
+                    element.style.left = ParseLength(value);
+                    break;
+                case UIStyleProperty.Top:
+                    element.style.top = ParseLength(value);
+                    break;
+                case UIStyleProperty.Right:
+                    element.style.right = ParseLength(value);
+                    break;
+                case UIStyleProperty.Bottom:
+                    element.style.bottom = ParseLength(value);
+                    break;
+                    
+                // Margin Properties
+                case UIStyleProperty.Margin:
                     var margin = ParseSpacing(value);
                     element.style.marginTop = margin[0];
                     element.style.marginRight = margin[1];
                     element.style.marginBottom = margin[2];
                     element.style.marginLeft = margin[3];
                     break;
-                case "padding":
+                case UIStyleProperty.MarginTop:
+                    element.style.marginTop = ParseLength(value);
+                    break;
+                case UIStyleProperty.MarginRight:
+                    element.style.marginRight = ParseLength(value);
+                    break;
+                case UIStyleProperty.MarginBottom:
+                    element.style.marginBottom = ParseLength(value);
+                    break;
+                case UIStyleProperty.MarginLeft:
+                    element.style.marginLeft = ParseLength(value);
+                    break;
+                    
+                // Padding Properties
+                case UIStyleProperty.Padding:
                     var padding = ParseSpacing(value);
                     element.style.paddingTop = padding[0];
                     element.style.paddingRight = padding[1];
                     element.style.paddingBottom = padding[2];
                     element.style.paddingLeft = padding[3];
                     break;
+                case UIStyleProperty.PaddingTop:
+                    element.style.paddingTop = ParseLength(value);
+                    break;
+                case UIStyleProperty.PaddingRight:
+                    element.style.paddingRight = ParseLength(value);
+                    break;
+                case UIStyleProperty.PaddingBottom:
+                    element.style.paddingBottom = ParseLength(value);
+                    break;
+                case UIStyleProperty.PaddingLeft:
+                    element.style.paddingLeft = ParseLength(value);
+                    break;
+                    
+                // Border Properties
+                case UIStyleProperty.BorderWidth:
+                    var borderWidth = ParseFloat(value);
+                    element.style.borderTopWidth = borderWidth;
+                    element.style.borderRightWidth = borderWidth;
+                    element.style.borderBottomWidth = borderWidth;
+                    element.style.borderLeftWidth = borderWidth;
+                    break;
+                case UIStyleProperty.BorderTopWidth:
+                    element.style.borderTopWidth = ParseFloat(value);
+                    break;
+                case UIStyleProperty.BorderRightWidth:
+                    element.style.borderRightWidth = ParseFloat(value);
+                    break;
+                case UIStyleProperty.BorderBottomWidth:
+                    element.style.borderBottomWidth = ParseFloat(value);
+                    break;
+                case UIStyleProperty.BorderLeftWidth:
+                    element.style.borderLeftWidth = ParseFloat(value);
+                    break;
+                case UIStyleProperty.BorderRadius:
+                    var radius = ParseLength(value);
+                    element.style.borderTopLeftRadius = radius;
+                    element.style.borderTopRightRadius = radius;
+                    element.style.borderBottomLeftRadius = radius;
+                    element.style.borderBottomRightRadius = radius;
+                    break;
+                case UIStyleProperty.BorderTopLeftRadius:
+                    element.style.borderTopLeftRadius = ParseLength(value);
+                    break;
+                case UIStyleProperty.BorderTopRightRadius:
+                    element.style.borderTopRightRadius = ParseLength(value);
+                    break;
+                case UIStyleProperty.BorderBottomLeftRadius:
+                    element.style.borderBottomLeftRadius = ParseLength(value);
+                    break;
+                case UIStyleProperty.BorderBottomRightRadius:
+                    element.style.borderBottomRightRadius = ParseLength(value);
+                    break;
+                    
+                // Border Color Properties
+                case UIStyleProperty.BorderColor:
+                    var borderColor = ParseColor(value);
+                    element.style.borderTopColor = borderColor;
+                    element.style.borderRightColor = borderColor;
+                    element.style.borderBottomColor = borderColor;
+                    element.style.borderLeftColor = borderColor;
+                    break;
+                case UIStyleProperty.BorderTopColor:
+                    element.style.borderTopColor = ParseColor(value);
+                    break;
+                case UIStyleProperty.BorderRightColor:
+                    element.style.borderRightColor = ParseColor(value);
+                    break;
+                case UIStyleProperty.BorderBottomColor:
+                    element.style.borderBottomColor = ParseColor(value);
+                    break;
+                case UIStyleProperty.BorderLeftColor:
+                    element.style.borderLeftColor = ParseColor(value);
+                    break;
+                    
+                // Background Properties
+                case UIStyleProperty.BackgroundColor:
+                    element.style.backgroundColor = ParseColor(value);
+                    break;
+                case UIStyleProperty.BackgroundImage:
+                    Debug.Log("[UIElementBridge] Setting background image: " + value);
+                    SetBackgroundImage(element, value);
+                    break;
+                    
+                // Color Properties
+                case UIStyleProperty.Color:
+                    element.style.color = ParseColor(value);
+                    break;
+                case UIStyleProperty.Opacity:
+                    element.style.opacity = ParseFloat(value);
+                    break;
+                    
+                // Text Properties
+                case UIStyleProperty.FontSize:
+                    element.style.fontSize = ParseLength(value);
+                    break;
+                case UIStyleProperty.FontStyle:
+                    element.style.unityFontStyleAndWeight = ParseEnum<FontStyle>(value);
+                    break;
+                case UIStyleProperty.TextAlign:
+                    element.style.unityTextAlign = ParseEnum<TextAnchor>(value);
+                    break;
+                case UIStyleProperty.WhiteSpace:
+                    element.style.whiteSpace = ParseEnum<WhiteSpace>(value);
+                    break;
+                case UIStyleProperty.TextOverflow:
+                    element.style.textOverflow = ParseEnum<TextOverflow>(value);
+                    break;
+                    
+                // Display Properties
+                case UIStyleProperty.Display:
+                    element.style.display = ParseEnum<DisplayStyle>(value);
+                    break;
+                case UIStyleProperty.Visibility:
+                    element.style.visibility = ParseEnum<Visibility>(value);
+                    break;
+                case UIStyleProperty.Overflow:
+                    element.style.overflow = ParseEnum<Overflow>(value);
+                    break;
+                    
+                // Unity-specific Text Properties
+                case UIStyleProperty.UnityTextAlign:
+                    element.style.unityTextAlign = ParseEnum<TextAnchor>(value);
+                    break;
+                case UIStyleProperty.UnityTextOutlineColor:
+                    element.style.unityTextOutlineColor = ParseColor(value);
+                    break;
+                case UIStyleProperty.UnityTextOutlineWidth:
+                    element.style.unityTextOutlineWidth = ParseFloat(value);
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"[UIElementBridge] Unsupported style property: {styleProperty} ({styleNameString})");
+                    break;
             }
+            
+            Debug.Log($"[UIElementBridge] Set style {styleProperty} = '{value}' on element {elementId}");
         }
         
         private StyleLength ParseLength(string value)
         {
-            if (value.EndsWith("px"))
+            if (string.IsNullOrEmpty(value))
+                return new StyleLength(StyleKeyword.Initial);
+            
+            value = value.Trim().ToLower();
+            
+            // Handle CSS keywords (only those supported by Unity)
+            switch (value)
             {
-                return float.Parse(value.Replace("px", ""));
-            }
-            else if (value.EndsWith("%"))
-            {
-                return Length.Percent(float.Parse(value.Replace("%", "")));
-            }
-            else if (value == "auto")
-            {
-                return StyleKeyword.Auto;
+                case "auto":
+                    return new StyleLength(StyleKeyword.Auto);
+                case "initial":
+                    return new StyleLength(StyleKeyword.Initial);
+                case "inherit":
+                    // Unity doesn't support inherit, fallback to initial
+                    return new StyleLength(StyleKeyword.Initial);
+                case "none":
+                    return new StyleLength(StyleKeyword.None);
+                case "max-content":
+                case "min-content":
+                case "fit-content":
+                    // Unity doesn't directly support these, fallback to auto
+                    return new StyleLength(StyleKeyword.Auto);
             }
             
-            return float.Parse(value);
+            // Parse numeric values with units
+            var match = System.Text.RegularExpressions.Regex.Match(value, @"^(-?\d*\.?\d+)(px|%|em|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc)?$");
+            if (match.Success)
+            {
+                var numericValue = float.Parse(match.Groups[1].Value);
+                var unit = match.Groups[2].Value;
+                
+                switch (unit)
+                {
+                    case "":
+                    case "px":
+                        return new StyleLength(numericValue);
+                    
+                    case "%":
+                        return new StyleLength(Length.Percent(numericValue));
+                    
+                    case "em":
+                    case "rem":
+                        // Convert em/rem to pixels (assuming 16px base font size)
+                        return new StyleLength(numericValue * 16f);
+                    
+                    case "vw":
+                        // Viewport width percentage (assuming 1920px viewport)
+                        return new StyleLength(numericValue * 1920f / 100f);
+                    
+                    case "vh":
+                        // Viewport height percentage (assuming 1080px viewport)
+                        return new StyleLength(numericValue * 1080f / 100f);
+                    
+                    case "vmin":
+                        // Smaller of vw or vh
+                        var minViewport = Mathf.Min(1920f, 1080f);
+                        return new StyleLength(numericValue * minViewport / 100f);
+                    
+                    case "vmax":
+                        // Larger of vw or vh
+                        var maxViewport = Mathf.Max(1920f, 1080f);
+                        return new StyleLength(numericValue * maxViewport / 100f);
+                    
+                    case "cm":
+                        // Centimeters to pixels (96 DPI)
+                        return new StyleLength(numericValue * 37.795f);
+                    
+                    case "mm":
+                        // Millimeters to pixels
+                        return new StyleLength(numericValue * 3.7795f);
+                    
+                    case "in":
+                        // Inches to pixels
+                        return new StyleLength(numericValue * 96f);
+                    
+                    case "pt":
+                        // Points to pixels
+                        return new StyleLength(numericValue * 1.333f);
+                    
+                    case "pc":
+                        // Picas to pixels
+                        return new StyleLength(numericValue * 16f);
+                    
+                    default:
+                        return new StyleLength(numericValue);
+                }
+            }
+            
+            // Fallback: try to parse as float
+            if (float.TryParse(value, out float fallbackValue))
+            {
+                return new StyleLength(fallbackValue);
+            }
+            
+            return new StyleLength(StyleKeyword.Initial);
         }
         
         private StyleColor ParseColor(string value)
         {
-            if (ColorUtility.TryParseHtmlString(value, out Color color))
+            if (string.IsNullOrEmpty(value))
+                return new StyleColor(StyleKeyword.Initial);
+            
+            value = value.Trim().ToLower();
+            
+            // Handle CSS keywords (only those supported by Unity)
+            switch (value)
             {
-                return color;
+                case "transparent":
+                    return new StyleColor(new Color(0, 0, 0, 0));
+                case "initial":
+                    return new StyleColor(StyleKeyword.Initial);
+                case "inherit":
+                    // Unity doesn't support inherit, fallback to initial
+                    return new StyleColor(StyleKeyword.Initial);
+                case "currentcolor":
+                    return new StyleColor(StyleKeyword.Initial); // Fallback
             }
-            return Color.white;
+            
+            // Handle named colors
+            Color namedColor = ParseNamedColor(value);
+            if (namedColor != Color.clear)
+            {
+                return new StyleColor(namedColor);
+            }
+            
+            // Handle hex colors (#RGB, #RRGGBB)
+            if (ColorUtility.TryParseHtmlString(value, out Color hexColor))
+            {
+                return new StyleColor(hexColor);
+            }
+            
+            // Handle rgba() format
+            var rgbaMatch = System.Text.RegularExpressions.Regex.Match(value, @"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)");
+            if (rgbaMatch.Success)
+            {
+                var r = int.Parse(rgbaMatch.Groups[1].Value) / 255f;
+                var g = int.Parse(rgbaMatch.Groups[2].Value) / 255f;
+                var b = int.Parse(rgbaMatch.Groups[3].Value) / 255f;
+                var a = rgbaMatch.Groups[4].Success ? float.Parse(rgbaMatch.Groups[4].Value) : 1f;
+                return new StyleColor(new Color(r, g, b, a));
+            }
+            
+            // Handle hsla() format (basic conversion)
+            var hslaMatch = System.Text.RegularExpressions.Regex.Match(value, @"hsla?\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*(?:,\s*([\d.]+))?\s*\)");
+            if (hslaMatch.Success)
+            {
+                var h = int.Parse(hslaMatch.Groups[1].Value) / 360f;
+                var s = int.Parse(hslaMatch.Groups[2].Value) / 100f;
+                var l = int.Parse(hslaMatch.Groups[3].Value) / 100f;
+                var a = hslaMatch.Groups[4].Success ? float.Parse(hslaMatch.Groups[4].Value) : 1f;
+                
+                // Convert HSL to RGB
+                var rgbColor = HSLToRGB(h, s, l);
+                rgbColor.a = a;
+                return new StyleColor(rgbColor);
+            }
+            
+            // Fallback to white
+            return new StyleColor(Color.white);
+        }
+        
+        private Color ParseNamedColor(string colorName)
+        {
+            return colorName switch
+            {
+                "red" => Color.red,
+                "green" => Color.green,
+                "blue" => Color.blue,
+                "white" => Color.white,
+                "black" => Color.black,
+                "yellow" => Color.yellow,
+                "cyan" => Color.cyan,
+                "magenta" => Color.magenta,
+                "orange" => new Color(1f, 0.5f, 0f, 1f),
+                "purple" => new Color(0.5f, 0f, 0.5f, 1f),
+                "pink" => new Color(1f, 0.75f, 0.8f, 1f),
+                "brown" => new Color(0.6f, 0.3f, 0f, 1f),
+                "gray" or "grey" => Color.gray,
+                "silver" => new Color(0.75f, 0.75f, 0.75f, 1f),
+                "gold" => new Color(1f, 0.84f, 0f, 1f),
+                _ => Color.clear // Indicates not found
+            };
+        }
+        
+        private Color HSLToRGB(float h, float s, float l)
+        {
+            float r, g, b;
+            
+            if (s == 0f)
+            {
+                r = g = b = l; // Achromatic
+            }
+            else
+            {
+                float hue2rgb(float p, float q, float t)
+                {
+                    if (t < 0f) t += 1f;
+                    if (t > 1f) t -= 1f;
+                    if (t < 1f/6f) return p + (q - p) * 6f * t;
+                    if (t < 1f/2f) return q;
+                    if (t < 2f/3f) return p + (q - p) * (2f/3f - t) * 6f;
+                    return p;
+                }
+                
+                var q = l < 0.5f ? l * (1f + s) : l + s - l * s;
+                var p = 2f * l - q;
+                r = hue2rgb(p, q, h + 1f/3f);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1f/3f);
+            }
+            
+            return new Color(r, g, b, 1f);
+        }
+        
+        /// <summary>
+        /// Sets background image from URL or CSS value
+        /// </summary>
+        private async void SetBackgroundImage(VisualElement element, string value)
+        {
+            if (string.IsNullOrEmpty(value) || value.ToLower() == "none")
+            {
+                // Clear background image
+                element.style.backgroundImage = new StyleBackground(StyleKeyword.None);
+                return;
+            }
+            
+            // Parse CSS url() format: url("https://example.com/image.png")
+            string imageUrl = ParseBackgroundImageUrl(value);
+            if (string.IsNullOrEmpty(imageUrl))
+            {
+                Debug.LogWarning($"[UIElementBridge] Invalid background-image value: {value}");
+                return;
+            }
+            
+            try
+            {
+                var texture = await GetOrDownloadTexture(imageUrl);
+                if (texture != null)
+                {
+                    element.style.backgroundImage = new StyleBackground(texture);
+                    Debug.Log($"[UIElementBridge] Set background image from URL: {imageUrl}");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UIElementBridge] Failed to load background image from {imageUrl}: {e.Message}");
+            }
+        }
+        
+        /// <summary>
+        /// Parses background-image CSS value to extract URL
+        /// </summary>
+        private string ParseBackgroundImageUrl(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return null;
+            
+            // Handle url("...") format
+            var urlMatch = System.Text.RegularExpressions.Regex.Match(value, @"url\s*\(\s*['""]?([^'""()]+)['""]?\s*\)");
+            if (urlMatch.Success)
+            {
+                return urlMatch.Groups[1].Value.Trim();
+            }
+            
+            // Handle direct URL (fallback)
+            if (value.StartsWith("http://") || value.StartsWith("https://") || value.StartsWith("data:"))
+            {
+                return value.Trim();
+            }
+            
+            return null;
+        }
+        
+        /// <summary>
+        /// Gets texture from cache or downloads it using Get.Texture
+        /// </summary>
+        private static async Task<Texture2D> GetOrDownloadTexture(string url)
+        {
+            // Check cache first
+            if (_textureCache.TryGetValue(url, out var cachedTexture))
+            {
+                return cachedTexture;
+            }
+            
+            // Check if already downloading
+            if (_downloadingTextures.TryGetValue(url, out var downloadingTask))
+            {
+                return await downloadingTask;
+            }
+            
+            // Start download
+            var downloadTask = DownloadTexture(url);
+            _downloadingTextures[url] = downloadTask;
+            
+            try
+            {
+                var texture = await downloadTask;
+                
+                // Cache the result
+                if (texture != null)
+                {
+                    _textureCache[url] = texture;
+                }
+                
+                return texture;
+            }
+            finally
+            {
+                // Remove from downloading queue
+                _downloadingTextures.Remove(url);
+            }
+        }
+        
+        /// <summary>
+        /// Downloads texture using the existing Get.Texture method
+        /// </summary>
+        private static async Task<Texture2D> DownloadTexture(string url)
+        {
+            try
+            {
+                Debug.Log($"[UIElementBridge] Downloading texture from: {url}");
+                var texture = await Get.Texture(url);
+                return texture;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UIElementBridge] Failed to download texture from {url}: {e.Message}");
+                return null;
+            }
+        }
+        
+        /// <summary>
+        /// Clears the texture cache to free memory
+        /// </summary>
+        public static void ClearTextureCache()
+        {
+            foreach (var texture in _textureCache.Values)
+            {
+                if (texture != null)
+                {
+                    UnityEngine.Object.Destroy(texture);
+                }
+            }
+            _textureCache.Clear();
+            _downloadingTextures.Clear();
+            Debug.Log("[UIElementBridge] Cleared texture cache");
         }
         
         private float[] ParseSpacing(string value)
         {
-            var parts = value.Split(' ');
-            if (parts.Length == 1)
+            if (string.IsNullOrEmpty(value))
+                return new float[] { 0, 0, 0, 0 };
+            
+            var parts = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            
+            // Parse each part as a length and extract the numeric value
+            float[] ParsedValues = new float[parts.Length];
+            for (int i = 0; i < parts.Length; i++)
             {
-                var v = float.Parse(parts[0].Replace("px", ""));
+                var styleLength = ParseLength(parts[i]);
+                // Extract the float value from StyleLength
+                if (styleLength.keyword == StyleKeyword.Auto || 
+                    styleLength.keyword == StyleKeyword.Initial)
+                {
+                    ParsedValues[i] = 0f;
+                }
+                else
+                {
+                    ParsedValues[i] = styleLength.value.value;
+                }
+            }
+            
+            // Apply CSS shorthand rules: top, right, bottom, left
+            if (ParsedValues.Length == 1)
+            {
+                // All sides the same
+                var v = ParsedValues[0];
                 return new[] { v, v, v, v };
             }
-            else if (parts.Length == 2)
+            else if (ParsedValues.Length == 2)
             {
-                var v = float.Parse(parts[0].Replace("px", ""));
-                var h = float.Parse(parts[1].Replace("px", ""));
-                return new[] { v, h, v, h };
+                // Vertical | Horizontal
+                var vertical = ParsedValues[0];
+                var horizontal = ParsedValues[1];
+                return new[] { vertical, horizontal, vertical, horizontal };
             }
-            else if (parts.Length == 4)
+            else if (ParsedValues.Length == 3)
             {
-                return parts.Select(p => float.Parse(p.Replace("px", ""))).ToArray();
+                // Top | Horizontal | Bottom
+                var top = ParsedValues[0];
+                var horizontal = ParsedValues[1];
+                var bottom = ParsedValues[2];
+                return new[] { top, horizontal, bottom, horizontal };
+            }
+            else if (ParsedValues.Length == 4)
+            {
+                // Top | Right | Bottom | Left
+                return new[] { ParsedValues[0], ParsedValues[1], ParsedValues[2], ParsedValues[3] };
             }
             
             return new float[] { 0, 0, 0, 0 };
+        }
+        
+        private float ParseFloat(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return 0f;
+            
+            // Remove common units
+            value = value.Replace("px", "").Replace("em", "").Replace("rem", "");
+            
+            if (float.TryParse(value, out float result))
+                return result;
+                
+            return 0f;
+        }
+        
+        private StyleEnum<T> ParseEnum<T>(string value) where T : struct, System.Enum
+        {
+            if (string.IsNullOrEmpty(value))
+                return new StyleEnum<T>(StyleKeyword.Initial);
+                
+            // Handle CSS keywords (only those supported by Unity)
+            switch (value.ToLower())
+            {
+                case "auto":
+                    return new StyleEnum<T>(StyleKeyword.Auto);
+                case "initial":
+                    return new StyleEnum<T>(StyleKeyword.Initial);
+                case "none":
+                    return new StyleEnum<T>(StyleKeyword.None);
+                case "inherit":
+                    // Unity doesn't support inherit, fallback to initial
+                    return new StyleEnum<T>(StyleKeyword.Initial);
+            }
+            
+            // Try to parse as enum
+            if (System.Enum.TryParse<T>(value, true, out T enumValue))
+            {
+                return new StyleEnum<T>(enumValue);
+            }
+            
+            // Handle specific enum conversions
+            if (typeof(T) == typeof(Align))
+            {
+                return value.ToLower() switch
+                {
+                    "flex-start" => new StyleEnum<T>((T)(object)Align.FlexStart),
+                    "flex-end" => new StyleEnum<T>((T)(object)Align.FlexEnd),
+                    "center" => new StyleEnum<T>((T)(object)Align.Center),
+                    "stretch" => new StyleEnum<T>((T)(object)Align.Stretch),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            else if (typeof(T) == typeof(FlexDirection))
+            {
+                return value.ToLower() switch
+                {
+                    "row" => new StyleEnum<T>((T)(object)FlexDirection.Row),
+                    "row-reverse" => new StyleEnum<T>((T)(object)FlexDirection.RowReverse),
+                    "column" => new StyleEnum<T>((T)(object)FlexDirection.Column),
+                    "column-reverse" => new StyleEnum<T>((T)(object)FlexDirection.ColumnReverse),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            else if (typeof(T) == typeof(Justify))
+            {
+                return value.ToLower() switch
+                {
+                    "flex-start" => new StyleEnum<T>((T)(object)Justify.FlexStart),
+                    "flex-end" => new StyleEnum<T>((T)(object)Justify.FlexEnd),
+                    "center" => new StyleEnum<T>((T)(object)Justify.Center),
+                    "space-between" => new StyleEnum<T>((T)(object)Justify.SpaceBetween),
+                    "space-around" => new StyleEnum<T>((T)(object)Justify.SpaceAround),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            else if (typeof(T) == typeof(Position))
+            {
+                return value.ToLower() switch
+                {
+                    "relative" => new StyleEnum<T>((T)(object)Position.Relative),
+                    "absolute" => new StyleEnum<T>((T)(object)Position.Absolute),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            else if (typeof(T) == typeof(DisplayStyle))
+            {
+                return value.ToLower() switch
+                {
+                    "flex" => new StyleEnum<T>((T)(object)DisplayStyle.Flex),
+                    "none" => new StyleEnum<T>((T)(object)DisplayStyle.None),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            else if (typeof(T) == typeof(Visibility))
+            {
+                return value.ToLower() switch
+                {
+                    "visible" => new StyleEnum<T>((T)(object)Visibility.Visible),
+                    "hidden" => new StyleEnum<T>((T)(object)Visibility.Hidden),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            else if (typeof(T) == typeof(TextAnchor))
+            {
+                return value.ToLower() switch
+                {
+                    "left" => new StyleEnum<T>((T)(object)TextAnchor.UpperLeft),
+                    "center" => new StyleEnum<T>((T)(object)TextAnchor.MiddleCenter),
+                    "right" => new StyleEnum<T>((T)(object)TextAnchor.UpperRight),
+                    _ => new StyleEnum<T>(StyleKeyword.Initial)
+                };
+            }
+            
+            return new StyleEnum<T>(StyleKeyword.Initial);
         }
         
         private void CallMethod(string[] data)
@@ -469,20 +1179,22 @@ namespace Banter.UI.Bridge
             
             if (!_elements.TryGetValue(elementId, out var element)) return;
             
-            switch (methodName)
+            // Try to use the generated method dispatcher first
+            if (element is IUIMethodDispatcher dispatcher)
             {
-                case "Focus":
-                    element.Focus();
-                    break;
-                case "Blur":
-                    element.Blur();
-                    break;
-                case "ScrollTo":
-                    if (element is ScrollView scrollView && args.Length >= 1)
+                try
+                {
+                    if (dispatcher.DispatchMethod(methodName, args))
                     {
-                        scrollView.scrollOffset = new Vector2(0, float.Parse(args[0]));
+                        Debug.Log($"[UIElementBridge] Dispatched method: {methodName} on {elementId}");
+                        return; // Method was handled by the dispatcher
                     }
-                    break;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[UIElementBridge] Error dispatching method {methodName} on {elementId}: {e.Message}");
+                    return;
+                }
             }
         }
         
@@ -491,31 +1203,296 @@ namespace Banter.UI.Bridge
             if (data.Length < 2) return;
             
             var elementId = data[0];
-            var eventType = data[1];
+            var eventTypeString = data[1];
             
             if (!_elements.TryGetValue(elementId, out var element)) return;
+            
+            // Convert string to enum
+            var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
+            var callbackKey = (elementId, eventType);
+            
+            // Check if callback is already registered
+            if (_registeredCallbacks.ContainsKey(callbackKey))
+            {
+                Debug.LogWarning($"[UIElementBridge] Event {eventType} already registered for element {elementId}");
+                return;
+            }
             
             // Register Unity event callbacks that will send messages back to TypeScript
             switch (eventType)
             {
-                case "click":
-                    element.RegisterCallback<ClickEvent>(evt => SendUIEvent(elementId, "click", evt));
+                // Basic events
+                case UIEventType.Click:
+                    {
+                        EventCallback<ClickEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
                     break;
-                case "change":
-                    element.RegisterCallback<ChangeEvent<string>>(evt => SendUIEvent(elementId, "change", evt));
+                    
+                // Mouse events
+                case UIEventType.MouseDown:
+                    {
+                        EventCallback<MouseDownEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
                     break;
-                case "focus":
-                    element.RegisterCallback<FocusEvent>(evt => SendUIEvent(elementId, "focus", evt));
+                case UIEventType.MouseUp:
+                    {
+                        EventCallback<MouseUpEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
                     break;
-                case "blur":
-                    element.RegisterCallback<BlurEvent>(evt => SendUIEvent(elementId, "blur", evt));
+                case UIEventType.MouseEnter:
+                    {
+                        EventCallback<MouseEnterEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.MouseLeave:
+                    {
+                        EventCallback<MouseLeaveEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.MouseMove:
+                    {
+                        EventCallback<MouseMoveEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.MouseOver:
+                    {
+                        EventCallback<MouseOverEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.MouseOut:
+                    {
+                        EventCallback<MouseOutEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.Wheel:
+                    {
+                        EventCallback<WheelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                    
+                // Keyboard events
+                case UIEventType.KeyDown:
+                    {
+                        EventCallback<KeyDownEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.KeyUp:
+                    {
+                        EventCallback<KeyUpEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                    
+                // Focus events
+                case UIEventType.Focus:
+                    {
+                        EventCallback<FocusEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.Blur:
+                    {
+                        EventCallback<BlurEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.FocusIn:
+                    {
+                        EventCallback<FocusInEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.FocusOut:
+                    {
+                        EventCallback<FocusOutEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                    
+                // Input events
+                case UIEventType.Change:
+                    {
+                        EventCallback<ChangeEvent<string>> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                    
+                // Layout events
+                case UIEventType.GeometryChange:
+                    {
+                        EventCallback<GeometryChangedEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.AttachToPanel:
+                    {
+                        EventCallback<AttachToPanelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                case UIEventType.DetachFromPanel:
+                    {
+                        EventCallback<DetachFromPanelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
+                        element.RegisterCallback(callback);
+                        _registeredCallbacks[callbackKey] = callback;
+                    }
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"[UIElementBridge] Unsupported event type: {eventType}");
                     break;
             }
+            
+            Debug.Log($"[UIElementBridge] Registered {eventType} event for element {elementId}");
         }
         
         private void UnregisterEvent(string[] data)
         {
-            // TODO: Implement event unregistration (requires storing callbacks)
+            if (data.Length < 2) return;
+            
+            var elementId = data[0];
+            var eventTypeString = data[1];
+            
+            if (!_elements.TryGetValue(elementId, out var element)) return;
+            
+            // Convert string to enum
+            var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
+            var callbackKey = (elementId, eventType);
+            
+            // Check if callback is registered
+            if (!_registeredCallbacks.TryGetValue(callbackKey, out var callback))
+            {
+                Debug.LogWarning($"[UIElementBridge] No registered callback found for {eventType} event on element {elementId}");
+                return;
+            }
+            
+            // Unregister Unity event callbacks based on event type
+            switch (eventType)
+            {
+                // Basic events
+                case UIEventType.Click:
+                    if (callback is EventCallback<ClickEvent> clickCallback)
+                        element.UnregisterCallback(clickCallback);
+                    break;
+                    
+                // Mouse events
+                case UIEventType.MouseDown:
+                    if (callback is EventCallback<MouseDownEvent> mouseDownCallback)
+                        element.UnregisterCallback(mouseDownCallback);
+                    break;
+                case UIEventType.MouseUp:
+                    if (callback is EventCallback<MouseUpEvent> mouseUpCallback)
+                        element.UnregisterCallback(mouseUpCallback);
+                    break;
+                case UIEventType.MouseEnter:
+                    if (callback is EventCallback<MouseEnterEvent> mouseEnterCallback)
+                        element.UnregisterCallback(mouseEnterCallback);
+                    break;
+                case UIEventType.MouseLeave:
+                    if (callback is EventCallback<MouseLeaveEvent> mouseLeaveCallback)
+                        element.UnregisterCallback(mouseLeaveCallback);
+                    break;
+                case UIEventType.MouseMove:
+                    if (callback is EventCallback<MouseMoveEvent> mouseMoveCallback)
+                        element.UnregisterCallback(mouseMoveCallback);
+                    break;
+                case UIEventType.MouseOver:
+                    if (callback is EventCallback<MouseOverEvent> mouseOverCallback)
+                        element.UnregisterCallback(mouseOverCallback);
+                    break;
+                case UIEventType.MouseOut:
+                    if (callback is EventCallback<MouseOutEvent> mouseOutCallback)
+                        element.UnregisterCallback(mouseOutCallback);
+                    break;
+                case UIEventType.Wheel:
+                    if (callback is EventCallback<WheelEvent> wheelCallback)
+                        element.UnregisterCallback(wheelCallback);
+                    break;
+                    
+                // Keyboard events
+                case UIEventType.KeyDown:
+                    if (callback is EventCallback<KeyDownEvent> keyDownCallback)
+                        element.UnregisterCallback(keyDownCallback);
+                    break;
+                case UIEventType.KeyUp:
+                    if (callback is EventCallback<KeyUpEvent> keyUpCallback)
+                        element.UnregisterCallback(keyUpCallback);
+                    break;
+                    
+                // Focus events
+                case UIEventType.Focus:
+                    if (callback is EventCallback<FocusEvent> focusCallback)
+                        element.UnregisterCallback(focusCallback);
+                    break;
+                case UIEventType.Blur:
+                    if (callback is EventCallback<BlurEvent> blurCallback)
+                        element.UnregisterCallback(blurCallback);
+                    break;
+                case UIEventType.FocusIn:
+                    if (callback is EventCallback<FocusInEvent> focusInCallback)
+                        element.UnregisterCallback(focusInCallback);
+                    break;
+                case UIEventType.FocusOut:
+                    if (callback is EventCallback<FocusOutEvent> focusOutCallback)
+                        element.UnregisterCallback(focusOutCallback);
+                    break;
+                    
+                // Input events
+                case UIEventType.Change:
+                    if (callback is EventCallback<ChangeEvent<string>> changeCallback)
+                        element.UnregisterCallback(changeCallback);
+                    break;
+                    
+                // Layout events
+                case UIEventType.GeometryChange:
+                    if (callback is EventCallback<GeometryChangedEvent> geometryCallback)
+                        element.UnregisterCallback(geometryCallback);
+                    break;
+                case UIEventType.AttachToPanel:
+                    if (callback is EventCallback<AttachToPanelEvent> attachCallback)
+                        element.UnregisterCallback(attachCallback);
+                    break;
+                case UIEventType.DetachFromPanel:
+                    if (callback is EventCallback<DetachFromPanelEvent> detachCallback)
+                        element.UnregisterCallback(detachCallback);
+                    break;
+                    
+                default:
+                    Debug.LogWarning($"[UIElementBridge] Unsupported event type for unregistration: {eventType}");
+                    break;
+            }
+            
+            // Remove from stored callbacks
+            _registeredCallbacks.Remove(callbackKey);
+            Debug.Log($"[UIElementBridge] Unregistered {eventType} event for element {elementId}");
         }
         
         private void SetFocus(string[] data)
@@ -545,7 +1522,7 @@ namespace Banter.UI.Bridge
             // Process multiple updates in a single frame
             foreach (var update in data)
             {
-                var updateParts = update.Split(TERTIARY_DELIMITER);
+                var updateParts = update.Split(MessageDelimiters.TERTIARY);
                 if (updateParts.Length >= 2)
                 {
                     ProcessCommand(updateParts[0], updateParts.Skip(1).ToArray());
@@ -553,15 +1530,36 @@ namespace Banter.UI.Bridge
             }
         }
         
-        private void SendUIEvent(string elementId, string eventType, EventBase evt)
+        private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
             // Send event back to TypeScript
-            var message = $"{UICommands.UI_EVENT}{PRIMARY_DELIMITER}{elementId}{SECONDARY_DELIMITER}{eventType}";
-            
-            // Add event data if needed
-            if (evt is ChangeEvent<string> changeEvt)
+            var eventTypeName = eventType.ToEventName();
+            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.SECONDARY}{eventTypeName}";
+
+            // Add event data based on event type
+            switch (evt)
             {
-                message += $"{SECONDARY_DELIMITER}{changeEvt.newValue}";
+                case ChangeEvent<string> changeEvt:
+                    message += $"{MessageDelimiters.SECONDARY}{changeEvt.newValue}";
+                    break;
+                case KeyDownEvent keyDown:
+                    message += $"{MessageDelimiters.SECONDARY}{keyDown.keyCode}{MessageDelimiters.SECONDARY}{keyDown.character}";
+                    break;
+                case KeyUpEvent keyUp:
+                    message += $"{MessageDelimiters.SECONDARY}{keyUp.keyCode}{MessageDelimiters.SECONDARY}{keyUp.character}";
+                    break;
+                case MouseDownEvent mouseDown:
+                    message += $"{MessageDelimiters.SECONDARY}{mouseDown.localMousePosition.x}{MessageDelimiters.SECONDARY}{mouseDown.localMousePosition.y}{MessageDelimiters.SECONDARY}{mouseDown.button}";
+                    break;
+                case MouseUpEvent mouseUp:
+                    message += $"{MessageDelimiters.SECONDARY}{mouseUp.localMousePosition.x}{MessageDelimiters.SECONDARY}{mouseUp.localMousePosition.y}{MessageDelimiters.SECONDARY}{mouseUp.button}";
+                    break;
+                case MouseMoveEvent mouseMove:
+                    message += $"{MessageDelimiters.SECONDARY}{mouseMove.localMousePosition.x}{MessageDelimiters.SECONDARY}{mouseMove.localMousePosition.y}";
+                    break;
+                case WheelEvent wheel:
+                    message += $"{MessageDelimiters.SECONDARY}{wheel.delta.x}{MessageDelimiters.SECONDARY}{wheel.delta.y}";
+                    break;
             }
             
             // Send via BanterBridge or similar mechanism
@@ -570,15 +1568,9 @@ namespace Banter.UI.Bridge
         
         private void SendToJavaScript(string message)
         {
-            // Use cached BanterLink reference, with fallback
-            if (_banterLink == null)
+            if (banterLink != null)
             {
-                _banterLink = FindObjectOfType<BanterLink>();
-            }
-            
-            if (_banterLink != null)
-            {
-                _banterLink.Send(message);
+                banterLink.Send(message);
                 Debug.Log($"[UIElementBridge] Sent to JS: {message}");
             }
             else

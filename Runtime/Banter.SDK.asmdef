@@ -33,7 +33,7 @@
         },
         {
             "name": "com.gator-dragon-games.jigglephysics",
-            "expression": "12.1.0",
+            "expression": "13.0.0",
             "define": "UNITY_JIGGLE_PHYSICS"
         }
     ],

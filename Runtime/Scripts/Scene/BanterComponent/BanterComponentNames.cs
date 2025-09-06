@@ -36,6 +36,7 @@ namespace Banter.SDK
         BanterText,
         BanterTorus,
         Transform,
+        BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,
     }

@@ -10,7 +10,7 @@ namespace Banter.UI.Elements
     /// This demonstrates how to create a UI element that can be controlled from TypeScript.
     /// </summary>
     [UIElement(typeof(Button), "UIButton")]
-    public class BanterUIButton : Button
+    public partial class BanterUIButton : Button
     {
         [UIProperty(propertyName: "text")]
         public string Text
@@ -228,7 +228,7 @@ namespace Banter.UI.Elements
     /// Example UI Label element for displaying text.
     /// </summary>
     [UIElement(typeof(Label), "UILabel")]
-    public class BanterUILabel : Label
+    public partial class BanterUILabel : Label
     {
         [UIProperty(propertyName: "text")]
         public string Text
@@ -261,6 +261,7 @@ namespace Banter.UI.Elements
         [UIMethod(methodName: "setText")]
         public void SetText(string newText)
         {
+            Debug.Log("[BanterUILabel] SetText called with: " + newText);
             text = newText;
         }
         
