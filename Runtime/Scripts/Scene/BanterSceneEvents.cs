@@ -80,6 +80,7 @@ public class BanterSceneEvents
     public UnityEvent<string, string, string> OnSetUserState = new UnityEvent<string, string, string>();
     public UnityEvent<string, string> OnRemoveUserState = new UnityEvent<string, string>();
 
+    public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
 

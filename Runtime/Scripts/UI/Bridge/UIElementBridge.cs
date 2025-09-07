@@ -102,8 +102,6 @@ namespace Banter.UI.Bridge
             if (mainDocument != null && mainDocument.rootVisualElement != null)
             {
                 _elements["root"] = mainDocument.rootVisualElement;
-                
-                mainDocument.rootVisualElement.style.backgroundColor = new StyleColor(new Color(0, 0, 0, 1)); // Opaque background
             }
         }
         
@@ -128,6 +126,7 @@ namespace Banter.UI.Bridge
         {
             try
             {
+                Debug.Log($"[UIElementBridge] Handling message: {message}");
                 var parts = message.Split(MessageDelimiters.PRIMARY);
                 if (parts.Length < 2) 
                 {
@@ -242,6 +241,10 @@ namespace Banter.UI.Bridge
                     {
                         Debug.Log("[UIElementBridge] Attaching to root element.");
                         root.Add(element);
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[UIElementBridge] No valid parent found and root element is missing.");
                     }
                 }
                 
@@ -1534,36 +1537,129 @@ namespace Banter.UI.Bridge
         {
             // Send event back to TypeScript
             var eventTypeName = eventType.ToEventName();
-            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.SECONDARY}{eventTypeName}";
-
-            // Add event data based on event type
+            
+            // Build event data as JSON object based on event type
+            var eventDataJson = BuildEventDataJson(evt);
+            
+            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{eventDataJson}";
+            
+            // Send UI events directly to TypeScript without panel ID prefix
+            // TypeScript doesn't need panel ID for element routing
+            SendToJavaScript(message);
+        }
+        
+        private string BuildEventDataJson(EventBase evt)
+        {
+            // Build JSON manually for better control and Unity compatibility
+            var jsonBuilder = new System.Text.StringBuilder();
+            jsonBuilder.Append("{");
+            
+            // Add common event properties
+            jsonBuilder.Append($"\"timestamp\":{evt.timestamp},");
+            jsonBuilder.Append($"\"eventTypeId\":{evt.eventTypeId}");
+            
+            // Add event-specific data based on event type
             switch (evt)
             {
                 case ChangeEvent<string> changeEvt:
-                    message += $"{MessageDelimiters.SECONDARY}{changeEvt.newValue}";
+                    jsonBuilder.Append($",\"newValue\":\"{EscapeJsonString(changeEvt.newValue)}\"");
+                    jsonBuilder.Append($",\"previousValue\":\"{EscapeJsonString(changeEvt.previousValue)}\"");
                     break;
+                    
                 case KeyDownEvent keyDown:
-                    message += $"{MessageDelimiters.SECONDARY}{keyDown.keyCode}{MessageDelimiters.SECONDARY}{keyDown.character}";
+                    jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
+                    jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");
+                    jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLower()}");
                     break;
+                    
                 case KeyUpEvent keyUp:
-                    message += $"{MessageDelimiters.SECONDARY}{keyUp.keyCode}{MessageDelimiters.SECONDARY}{keyUp.character}";
+                    jsonBuilder.Append($",\"keyCode\":{(int)keyUp.keyCode}");
+                    jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyUp.character.ToString())}\"");
+                    jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLower()}");
                     break;
+                    
                 case MouseDownEvent mouseDown:
-                    message += $"{MessageDelimiters.SECONDARY}{mouseDown.localMousePosition.x}{MessageDelimiters.SECONDARY}{mouseDown.localMousePosition.y}{MessageDelimiters.SECONDARY}{mouseDown.button}";
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseDown.localMousePosition.x},\"y\":{mouseDown.localMousePosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseDown.mousePosition.x},\"y\":{mouseDown.mousePosition.y}}}");
+                    jsonBuilder.Append($",\"button\":{mouseDown.button}");
+                    jsonBuilder.Append($",\"clickCount\":{mouseDown.clickCount}");
+                    jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLower()}");
                     break;
+                    
                 case MouseUpEvent mouseUp:
-                    message += $"{MessageDelimiters.SECONDARY}{mouseUp.localMousePosition.x}{MessageDelimiters.SECONDARY}{mouseUp.localMousePosition.y}{MessageDelimiters.SECONDARY}{mouseUp.button}";
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseUp.localMousePosition.x},\"y\":{mouseUp.localMousePosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseUp.mousePosition.x},\"y\":{mouseUp.mousePosition.y}}}");
+                    jsonBuilder.Append($",\"button\":{mouseUp.button}");
+                    jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLower()}");
                     break;
+                    
+                case ClickEvent click:
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{click.localPosition.x},\"y\":{click.localPosition.y}}}");
+                    jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{click.deltaPosition.x},\"y\":{click.deltaPosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{click.position.x},\"y\":{click.position.y}}}");
+                    jsonBuilder.Append($",\"button\":{click.button}");
+                    jsonBuilder.Append($",\"clickCount\":{click.clickCount}");
+                    jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLower()}");
+                    break;
+                    
                 case MouseMoveEvent mouseMove:
-                    message += $"{MessageDelimiters.SECONDARY}{mouseMove.localMousePosition.x}{MessageDelimiters.SECONDARY}{mouseMove.localMousePosition.y}";
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseMove.localMousePosition.x},\"y\":{mouseMove.localMousePosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseMove.mousePosition.x},\"y\":{mouseMove.mousePosition.y}}}");
+                    jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{mouseMove.mouseDelta.x},\"y\":{mouseMove.mouseDelta.y}}}");
                     break;
+                    
+                case MouseEnterEvent mouseEnter:
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseEnter.localMousePosition.x},\"y\":{mouseEnter.localMousePosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseEnter.mousePosition.x},\"y\":{mouseEnter.mousePosition.y}}}");
+                    break;
+                    
+                case MouseLeaveEvent mouseLeave:
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseLeave.localMousePosition.x},\"y\":{mouseLeave.localMousePosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseLeave.mousePosition.x},\"y\":{mouseLeave.mousePosition.y}}}");
+                    break;
+                    
                 case WheelEvent wheel:
-                    message += $"{MessageDelimiters.SECONDARY}{wheel.delta.x}{MessageDelimiters.SECONDARY}{wheel.delta.y}";
+                    jsonBuilder.Append($",\"delta\":{{\"x\":{wheel.delta.x},\"y\":{wheel.delta.y}}}");
+                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{wheel.localMousePosition.x},\"y\":{wheel.localMousePosition.y}}}");
+                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{wheel.mousePosition.x},\"y\":{wheel.mousePosition.y}}}");
+                    jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLower()}");
+                    break;
+                    
+                case FocusEvent focusEvt:
+                    jsonBuilder.Append($",\"direction\":\"{focusEvt.direction.ToString()}\"");
+                    break;
+                    
+                case BlurEvent blurEvt:
+                    jsonBuilder.Append($",\"direction\":\"{blurEvt.direction.ToString()}\"");
                     break;
             }
             
-            // Send via BanterBridge or similar mechanism
-            SendToJavaScript(message);
+            jsonBuilder.Append("}");
+            return jsonBuilder.ToString();
+        }
+        
+        private string EscapeJsonString(string str)
+        {
+            if (string.IsNullOrEmpty(str)) return "";
+            return str.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
         }
         
         private void SendToJavaScript(string message)

@@ -17,17 +17,76 @@ namespace Banter.SDK
         UIDocument uiDocument;
         RenderTexture renderTexture;
         UIElementBridge uiElementBridge;
+
+        [See(initial = "-1")][HideInInspector][SerializeField] internal int panelId = -1;
         [See(initial = "512,512")][HideInInspector][SerializeField] internal Vector2 resolution = new Vector2(512,512);
-        
+        [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
+
+
+        [Method]
+        public void _SetBackgroundColor(Vector4 color)
+        {
+            if (uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                uiDocument.rootVisualElement.style.backgroundColor = new StyleColor(new Color(color.x, color.y, color.z, color.w));
+            }
+        }
         // Flags to track what we created
         private bool createdMeshRenderer = false;
         private bool createdMeshFilter = false;
         private bool createdUIDocument = false;
 
-        [Method]
-        public void _SetDirty()
+        public static bool IsScreenSpaceActive = false;
+        
+        // Static tracking of screenSpace panels
+        private static readonly HashSet<BanterUIPanel> screenSpacePanels = new HashSet<BanterUIPanel>();
+        private static readonly object screenSpaceLock = new object();
+        
+        /// <summary>
+        /// Register or unregister a panel as screenSpace and update the global flag
+        /// </summary>
+        private static void UpdateScreenSpaceTracking(BanterUIPanel panel, bool isScreenSpace)
         {
-            
+            lock (screenSpaceLock)
+            {
+                if (isScreenSpace)
+                {
+                    screenSpacePanels.Add(panel);
+                }
+                else
+                {
+                    screenSpacePanels.Remove(panel);
+                }
+                
+                // Update the global flag based on whether any panels are screenSpace
+                bool wasActive = IsScreenSpaceActive;
+                IsScreenSpaceActive = screenSpacePanels.Count > 0;
+                
+                if (wasActive != IsScreenSpaceActive)
+                {
+                    Debug.Log($"[BanterUIPanel] IsScreenSpaceActive changed to: {IsScreenSpaceActive} (Active panels: {screenSpacePanels.Count})");
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Remove a panel from screenSpace tracking when it's destroyed
+        /// </summary>
+        private static void RemovePanelFromTracking(BanterUIPanel panel)
+        {
+            lock (screenSpaceLock)
+            {
+                if (screenSpacePanels.Remove(panel))
+                {
+                    bool wasActive = IsScreenSpaceActive;
+                    IsScreenSpaceActive = screenSpacePanels.Count > 0;
+                    
+                    if (wasActive != IsScreenSpaceActive)
+                    {
+                        Debug.Log($"[BanterUIPanel] IsScreenSpaceActive changed to: {IsScreenSpaceActive} (Active panels: {screenSpacePanels.Count})");
+                    }
+                }
+            }
         }
 
         private Mesh CreateQuadMesh()
@@ -71,15 +130,18 @@ namespace Banter.SDK
 
         internal override void DestroyStuff()
         {
+            // Remove from screenSpace tracking
+            RemovePanelFromTracking(this);
+
             // Unregister this panel instance
             if (uiElementBridge != null)
             {
-                var panelId = $"panel_{oid}_{cid}";
-                UIElementBridge.UnregisterPanelInstance(panelId);
+                var registrationId = panelId >= 0 ? $"PanelSettings {panelId}" : $"panel_{oid}_{cid}";
+                UIElementBridge.UnregisterPanelInstance(registrationId);
                 Destroy(uiElementBridge);
                 uiElementBridge = null;
             }
-            
+
             // Clean up render texture
             if (renderTexture != null)
             {
@@ -87,14 +149,14 @@ namespace Banter.SDK
                 Destroy(renderTexture);
                 renderTexture = null;
             }
-            
+
             // Destroy UIDocument if we created it
             if (createdUIDocument && uiDocument != null)
             {
                 Destroy(uiDocument);
                 uiDocument = null;
             }
-            
+
             // Destroy mesh components if we created them
             if (createdMeshRenderer)
             {
@@ -104,7 +166,7 @@ namespace Banter.SDK
                     Destroy(renderer);
                 }
             }
-            
+
             if (createdMeshFilter)
             {
                 var filter = gameObject.GetComponent<MeshFilter>();
@@ -113,11 +175,15 @@ namespace Banter.SDK
                     Destroy(filter);
                 }
             }
-            
+
             // Reset flags
             createdUIDocument = false;
             createdMeshRenderer = false;
             createdMeshFilter = false;
+
+            
+            UpdateScreenSpaceTracking(this, screenSpace);
+            scene.events.OnBanterUiPanelActiveChanged?.Invoke();
         }
 
         internal override void StartStuff()
@@ -126,8 +192,14 @@ namespace Banter.SDK
         }
         void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (changedProperties.Contains(PropertyName.resolution))
+            if (changedProperties.Contains(PropertyName.panelId) && uiElementBridge == null)
             {
+                if (panelId < 0 || panelId >= 20)
+                {
+                    Debug.LogWarning($"[BanterUIPanel] Invalid panel ID: {panelId}. Panel ID should be 0-19.");
+                    return;
+                }
+
                 if (renderTexture != null)
                 {
                     renderTexture.Release();
@@ -135,50 +207,94 @@ namespace Banter.SDK
                 }
                 renderTexture = new RenderTexture((int)resolution.x, (int)resolution.y, 16, RenderTextureFormat.ARGB32);
                 renderTexture.Create();
+
+                // Load the specific panel settings from resources using the panel ID
+                var panelSettingsName = $"PanelSettings {panelId}";
                 if (panelSettings == null)
                 {
-                    panelSettings = Resources.Load<PanelSettings>("TemplatePanelSettings");
+                    panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
+                    if (panelSettings == null)
+                    {
+                        Debug.LogError($"[BanterUIPanel] Failed to load PanelSettings: {panelSettingsName}. Make sure the asset exists in Resources/UI/ folder.");
+                        return;
+                    }
+                    Debug.Log($"[BanterUIPanel] Loaded PanelSettings: {panelSettingsName}");
                 }
+
                 if (uiDocument == null)
                 {
                     uiDocument = gameObject.AddComponent<UIDocument>();
-                    uiDocument.panelSettings = ScriptableObject.Instantiate(panelSettings);
+                    // Use the panel settings directly instead of instantiating
+                    uiDocument.panelSettings = panelSettings;
                     createdUIDocument = true;
                 }
-                uiDocument.panelSettings.targetTexture = renderTexture;
+
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
-                uiDocument.panelSettings.referenceResolution = new Vector2Int((int)resolution.x, (int)resolution.y);
-                uiDocument.panelSettings.clearColor = true;
-                var renderer = gameObject.GetComponent<Renderer>();
-                if (renderer == null)
-                {
-                    var filter = gameObject.GetComponent<MeshFilter>();
-                    if (filter == null)
-                    {
-                        filter = gameObject.AddComponent<MeshFilter>();
-                        filter.mesh = CreateQuadMesh();
-                        createdMeshFilter = true;
-                    }
-                    renderer = gameObject.AddComponent<MeshRenderer>();
-                    renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
-                    createdMeshRenderer = true;
-                }
-                renderer.sharedMaterial.mainTexture = renderTexture;
+
                 if (uiElementBridge == null)
                 {
                     uiElementBridge = gameObject.AddComponent<UIElementBridge>();
                     uiElementBridge.banterLink = scene.link;
                     uiElementBridge.mainDocument = uiDocument;
                 }
-                gameObject.layer = LayerMask.NameToLayer("Menu");
-                gameObject.AddComponent<BoxCollider>();
-                // Register this panel instance with a unique ID
-                var panelId = $"panel_{oid}_{cid}";
-                UIElementBridge.RegisterPanelInstance(panelId, uiElementBridge);
+
+                // Register this panel instance using the PanelSettings name as ID
+                UIElementBridge.RegisterPanelInstance(panelSettingsName, uiElementBridge);
+
+                Debug.Log($"[BanterUIPanel] Successfully initialized panel with ID: {panelSettingsName}");
             }
+            if (changedProperties.Contains(PropertyName.resolution))
+            {
+                if (!screenSpace)
+                {
+                    if (renderTexture != null)
+                    {
+                        renderTexture.Release();
+                        Destroy(renderTexture);
+                    }
+                    renderTexture = new RenderTexture((int)resolution.x, (int)resolution.y, 16, RenderTextureFormat.ARGB32);
+                    renderTexture.Create();
+                }
+
+
+                if (uiDocument != null)
+                {
+                    if (!screenSpace)
+                    {
+                        uiDocument.panelSettings.targetTexture = renderTexture;
+                    }
+                    uiDocument.panelSettings.referenceResolution = new Vector2Int((int)resolution.x, (int)resolution.y);
+                }
+
+                gameObject.layer = LayerMask.NameToLayer("Menu");
+                if (!screenSpace)
+                {
+                    var renderer = gameObject.GetComponent<Renderer>();
+                    if (renderer == null)
+                    {
+                        var filter = gameObject.GetComponent<MeshFilter>();
+                        if (filter == null)
+                        {
+                            filter = gameObject.AddComponent<MeshFilter>();
+                            filter.mesh = CreateQuadMesh();
+                            createdMeshFilter = true;
+                        }
+                        renderer = gameObject.AddComponent<MeshRenderer>();
+                        renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
+                        createdMeshRenderer = true;
+                        gameObject.AddComponent<BoxCollider>();
+                    }
+                    renderer.sharedMaterial.mainTexture = renderTexture;
+                }
+            }
+
+            UpdateScreenSpaceTracking(this, screenSpace);
+            scene.events.OnBanterUiPanelActiveChanged?.Invoke();
         }
         // BANTER COMPILED CODE 
+        public System.Int32 PanelId { get { return panelId; } set { panelId = value; UpdateCallback(new List<PropertyName> { PropertyName.panelId }); } }
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
+        public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -201,7 +317,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.panelId, PropertyName.resolution, PropertyName.screenSpace, };
             UpdateCallback(changedProperties);
         }
 
@@ -236,16 +352,17 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        void SetDirty()
+        void SetBackgroundColor(Vector4 color)
         {
-            _SetDirty();
+            _SetBackgroundColor(color);
         }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
 
-            if (methodName == "SetDirty" && parameters.Count == 0)
+            if (methodName == "SetBackgroundColor" && parameters.Count == 1 && parameters[0] is Vector4)
             {
-                SetDirty();
+                var color = (Vector4)parameters[0];
+                SetBackgroundColor(color);
                 return null;
             }
             else
@@ -259,6 +376,15 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
+                if (values[i] is BanterInt)
+                {
+                    var valpanelId = (BanterInt)values[i];
+                    if (valpanelId.n == PropertyName.panelId)
+                    {
+                        panelId = valpanelId.x;
+                        changedProperties.Add(PropertyName.panelId);
+                    }
+                }
                 if (values[i] is BanterVector2)
                 {
                     var valresolution = (BanterVector2)values[i];
@@ -266,6 +392,15 @@ namespace Banter.SDK
                     {
                         resolution = new Vector2(valresolution.x, valresolution.y);
                         changedProperties.Add(PropertyName.resolution);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valscreenSpace = (BanterBool)values[i];
+                    if (valscreenSpace.n == PropertyName.screenSpace)
+                    {
+                        screenSpace = valscreenSpace.x;
+                        changedProperties.Add(PropertyName.screenSpace);
                     }
                 }
             }
@@ -279,9 +414,33 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
+                    name = PropertyName.panelId,
+                    type = PropertyType.Int,
+                    value = panelId,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
                     name = PropertyName.resolution,
                     type = PropertyType.Vector2,
                     value = resolution,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.screenSpace,
+                    type = PropertyType.Bool,
+                    value = screenSpace,
                     componentType = ComponentType.BanterUIPanel,
                     oid = oid,
                     cid = cid
