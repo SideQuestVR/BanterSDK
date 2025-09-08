@@ -17,6 +17,7 @@ namespace Banter.SDK
         UIDocument uiDocument;
         RenderTexture renderTexture;
         UIElementBridge uiElementBridge;
+        WorldSpaceUIDocument worldSpaceUIDocument;
 
         [See(initial = "-1")][HideInInspector][SerializeField] internal int panelId = -1;
         [See(initial = "512,512")][HideInInspector][SerializeField] internal Vector2 resolution = new Vector2(512,512);
@@ -78,13 +79,7 @@ namespace Banter.SDK
             {
                 if (screenSpacePanels.Remove(panel))
                 {
-                    bool wasActive = IsScreenSpaceActive;
                     IsScreenSpaceActive = screenSpacePanels.Count > 0;
-                    
-                    if (wasActive != IsScreenSpaceActive)
-                    {
-                        Debug.Log($"[BanterUIPanel] IsScreenSpaceActive changed to: {IsScreenSpaceActive} (Active panels: {screenSpacePanels.Count})");
-                    }
                 }
             }
         }
@@ -136,7 +131,7 @@ namespace Banter.SDK
             // Unregister this panel instance
             if (uiElementBridge != null)
             {
-                var registrationId = panelId >= 0 ? $"PanelSettings {panelId}" : $"panel_{oid}_{cid}";
+                var registrationId = $"PanelSettings {panelId}";
                 UIElementBridge.UnregisterPanelInstance(registrationId);
                 Destroy(uiElementBridge);
                 uiElementBridge = null;
@@ -157,15 +152,22 @@ namespace Banter.SDK
                 uiDocument = null;
             }
 
-            // Destroy mesh components if we created them
-            if (createdMeshRenderer)
+            // Destroy WorldSpaceUIDocument if we created it
+            if (worldSpaceUIDocument != null)
             {
-                var renderer = gameObject.GetComponent<MeshRenderer>();
-                if (renderer != null)
-                {
-                    Destroy(renderer);
-                }
+                Destroy(worldSpaceUIDocument);
+                worldSpaceUIDocument = null;
             }
+
+            // Destroy mesh components if we created them
+                if (createdMeshRenderer)
+                {
+                    var renderer = gameObject.GetComponent<MeshRenderer>();
+                    if (renderer != null)
+                    {
+                        Destroy(renderer);
+                    }
+                }
 
             if (createdMeshFilter)
             {
@@ -264,27 +266,84 @@ namespace Banter.SDK
                         uiDocument.panelSettings.targetTexture = renderTexture;
                     }
                     uiDocument.panelSettings.referenceResolution = new Vector2Int((int)resolution.x, (int)resolution.y);
+                    
                 }
 
                 gameObject.layer = LayerMask.NameToLayer("Menu");
-                if (!screenSpace)
+                var renderer = gameObject.GetComponent<Renderer>();
+                if (renderer == null)
                 {
-                    var renderer = gameObject.GetComponent<Renderer>();
-                    if (renderer == null)
+                    var filter = gameObject.GetComponent<MeshFilter>();
+                    if (filter == null)
                     {
-                        var filter = gameObject.GetComponent<MeshFilter>();
-                        if (filter == null)
-                        {
-                            filter = gameObject.AddComponent<MeshFilter>();
-                            filter.mesh = CreateQuadMesh();
-                            createdMeshFilter = true;
-                        }
-                        renderer = gameObject.AddComponent<MeshRenderer>();
-                        renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
-                        createdMeshRenderer = true;
-                        gameObject.AddComponent<BoxCollider>();
+                        filter = gameObject.AddComponent<MeshFilter>();
+                        filter.mesh = CreateQuadMesh();
+                        createdMeshFilter = true;
                     }
+                    renderer = gameObject.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
+                    createdMeshRenderer = true;
+                    var col = gameObject.AddComponent<BoxCollider>();
+                    if (worldSpaceUIDocument == null)
+                    {
+                        worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                        worldSpaceUIDocument._uiDocument = uiDocument;
+                        worldSpaceUIDocument._collider = col;
+                    }
+                }
+                if (screenSpace)
+                {
+                    renderer.enabled = false;
+                }
+                else
+                {
                     renderer.sharedMaterial.mainTexture = renderTexture;
+                }
+            }
+
+            if (changedProperties.Contains(PropertyName.screenSpace))
+            {
+                var renderer = gameObject.GetComponent<MeshRenderer>();
+                if (screenSpace)
+                {
+                    if (renderTexture != null)
+                    {
+                        renderTexture.Release();
+                        Destroy(renderTexture);
+                        if (renderer)
+                        {
+                            renderer.enabled = false;
+                        }
+                        if (uiDocument)
+                        {
+                            uiDocument.panelSettings.targetTexture = null;
+                        }
+                        if (worldSpaceUIDocument)
+                        {
+                            worldSpaceUIDocument.enabled = false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (renderTexture == null)
+                    {
+                        renderTexture = new RenderTexture((int)resolution.x, (int)resolution.y, 16, RenderTextureFormat.ARGB32);
+                        renderTexture.Create();
+                        if (renderer)
+                        {
+                            renderer.enabled = true;
+                            renderer.sharedMaterial.mainTexture = renderTexture;
+                        }
+                        if (uiDocument != null)
+                        {
+                            uiDocument.panelSettings.targetTexture = renderTexture;
+                        }
+                        if (worldSpaceUIDocument)
+                        {
+                            worldSpaceUIDocument.enabled = true;
+                        }
+                    }
                 }
             }
 
