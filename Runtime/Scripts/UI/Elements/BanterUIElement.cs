@@ -6,18 +6,12 @@ using Banter.UICodeGen;
 namespace Banter.UI.Elements
 {
     /// <summary>
-    /// Example UI Button element with code generation attributes.
-    /// This demonstrates how to create a UI element that can be controlled from TypeScript.
+    /// Generic UI element component that extends VisualElement.
+    /// Provides common functionality and properties for custom UI components.
     /// </summary>
-    [UIElement(typeof(Button), "UIButton")]
-    public partial class BanterUIButton : Button
+    [UIElement(typeof(VisualElement), "UIVisualElement")]
+    public partial class BanterUIElement : VisualElement
     {
-        [UIProperty(propertyName: "text")]
-        public string Text
-        {
-            get => text;
-            set => text = value;
-        }
         
         [UIProperty(propertyName: "enabled")]
         public bool IsEnabled
@@ -58,6 +52,6 @@ namespace Banter.UI.Elements
         {
             base.Blur();
         }
+
     }
-    
 }

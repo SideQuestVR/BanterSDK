@@ -352,38 +352,15 @@ namespace Banter.UI.Bridge
             
             if (!_elements.TryGetValue(elementId, out var element)) return;
             
-            // Parse property enum value
-            if (int.TryParse(propertyName, out int propValue))
+            // Try to use the generated SetProperty method if the element supports it
+            if (element is IUIPropertySetter propertySetter)
             {
-                switch (propValue)
-                {
-                    case 0: // name
-                        element.name = value;
-                        break;
-                    case 1: // text
-                        if (element is TextElement textElement)
-                            textElement.text = value;
-                        break;
-                    case 2: // tooltip
-                        element.tooltip = value;
-                        break;
-                    case 3: // value
-                        SetElementValue(element, value);
-                        break;
-                    case 4: // enabled
-                        element.SetEnabled(value == "1");
-                        break;
-                    case 5: // visible
-                        element.visible = value == "1";
-                        break;
-                    case 6: // focusable
-                        element.focusable = value == "1";
-                        break;
-                    case 7: // tabIndex
-                        element.tabIndex = int.Parse(value);
-                        break;
-                }
+                if (propertySetter.SetProperty(propertyName, value))
+                    return; // Property was handled by the generated method
             }
+            
+            // If we get here, the property wasn't handled by any generated SetProperty method
+            Debug.LogWarning($"[UIElementBridge] Unhandled property '{propertyName}' for element type '{element.GetType().Name}' with value '{value}'");
         }
         
         private void SetElementValue(VisualElement element, string value)

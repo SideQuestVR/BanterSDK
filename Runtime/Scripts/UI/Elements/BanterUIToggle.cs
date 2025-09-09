@@ -6,19 +6,20 @@ using Banter.UICodeGen;
 namespace Banter.UI.Elements
 {
     /// <summary>
-    /// Example UI Button element with code generation attributes.
-    /// This demonstrates how to create a UI element that can be controlled from TypeScript.
+    /// Custom styled toggle/switch component.
+    /// Based on the UIKit SwitchToggle styles.
     /// </summary>
-    [UIElement(typeof(Button), "UIButton")]
-    public partial class BanterUIButton : Button
+    [UIElement(typeof(Toggle), "UIToggle")]
+    public partial class BanterUIToggle : Toggle
     {
-        [UIProperty(propertyName: "text")]
-        public string Text
+        [UIProperty(propertyName: "checked")]
+        public new bool value
         {
-            get => text;
-            set => text = value;
+            get => base.value;
+            set => base.value = value;
         }
-        
+
+
         [UIProperty(propertyName: "enabled")]
         public bool IsEnabled
         {
@@ -58,6 +59,6 @@ namespace Banter.UI.Elements
         {
             base.Blur();
         }
+
     }
-    
 }

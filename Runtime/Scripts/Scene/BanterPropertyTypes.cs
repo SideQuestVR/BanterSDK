@@ -40,6 +40,14 @@ public struct BanterVector4
     {
         return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
+    public static explicit operator Vector4(BanterVector4 v)
+    {
+        return new Vector4() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
+    public static explicit operator Quaternion(BanterVector4 v)
+    {
+        return new Quaternion() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
 }
 
 
@@ -74,6 +82,10 @@ public struct BanterVector2
     public static explicit operator BanterVector2(Vector2 v)
     {
         return new BanterVector2() { x = v.x, y = v.y };
+    }
+    public static explicit operator Vector2(BanterVector2 v)
+    {
+        return new Vector2() { x = v.x, y = v.y };
     }
 }
 
@@ -111,6 +123,11 @@ public struct BanterVector3
     {
         return new BanterVector3() { x = v.x, y = v.y, z = v.z };
     }
+
+    public static explicit operator Vector3(BanterVector3 v)
+    {
+        return new Vector3() { x = v.x, y = v.y, z = v.z };
+    }
 }
 
 [Serializable]
@@ -143,6 +160,13 @@ public struct BanterFloat
     {
         return new BanterFloat() { x = v };
     }
+
+    public static explicit operator float(BanterFloat v)
+    {
+        return v.x;
+    }
+
+    
 }
 
 [Serializable]
@@ -175,6 +199,10 @@ public struct BanterInt
     {
         return new BanterInt() { x = v };
     }
+    public static explicit operator int(BanterInt v)
+    {
+        return v.x;
+    }
 }
 
 [Serializable]
@@ -206,6 +234,10 @@ public struct BanterBool
     {
         return new BanterBool() { x = v };
     }
+    public static explicit operator bool(BanterBool v)
+    {
+        return v.x;
+    }
 }
 [Serializable]
 public struct BanterString
@@ -236,6 +268,10 @@ public struct BanterString
     public static explicit operator BanterString(string v)
     {
         return new BanterString() { x = v };
+    }
+    public static explicit operator string(BanterString v)
+    {
+        return v.x;
     }
 }
 

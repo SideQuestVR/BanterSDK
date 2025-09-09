@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Banter.UI.Elements
 {
-    public partial class BanterUIButton : IUIMethodDispatcher
+    public partial class BanterUIButton : IUIMethodDispatcher, IUIPropertySetter
     {
         public string GetUIElementTypeName()
         {
@@ -15,6 +15,14 @@ namespace Banter.UI.Elements
         {
             switch (methodName)
             {
+                case "hasClass":
+                    if (parameters == null || parameters.Length != 1)
+                        throw new ArgumentException($"Method hasClass expects 1 parameters, got {parameters?.Length ?? 0}");
+
+                    var className = parameters[0];
+                    HasClass(className);
+                    return true;
+
                 case "focus":
                     Focus();
                     return true;
@@ -23,16 +31,29 @@ namespace Banter.UI.Elements
                     Blur();
                     return true;
 
-                case "click":
-                    SimulateClick();
+                default:
+                    return false;
+            }
+        }
+
+        public bool SetProperty(string propertyName, string propertyValue)
+        {
+            switch (propertyName)
+            {
+                case "text":
+                    Text = propertyValue;
                     return true;
 
-                case "setVariant":
-                    if (parameters == null || parameters.Length != 1)
-                        throw new ArgumentException($"Method setVariant expects 1 parameters, got {parameters?.Length ?? 0}");
+                case "enabled":
+                    IsEnabled = propertyValue == "1" || propertyValue.ToLower() == "true";
+                    return true;
 
-                    var variant = parameters[0];
-                    SetVariant(variant);
+                case "tooltip":
+                    TooltipText = propertyValue;
+                    return true;
+
+                case "name":
+                    ElementName = propertyValue;
                     return true;
 
                 default:

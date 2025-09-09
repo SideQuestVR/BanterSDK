@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Banter.UI.Elements
 {
-    public partial class BanterUILabel : IUIMethodDispatcher, IUIPropertySetter
+    public partial class BanterUIScrollView : IUIMethodDispatcher, IUIPropertySetter
     {
         public string GetUIElementTypeName()
         {
-            return "UILabel";
+            return "UIScrollView";
         }
 
         public bool DispatchMethod(string methodName, string[] parameters)
@@ -40,8 +40,26 @@ namespace Banter.UI.Elements
         {
             switch (propertyName)
             {
-                case "text":
-                    Text = propertyValue;
+                case "scrollPosition":
+                    var bVec = new BanterVector2();
+                    bVec.Deserialise(propertyValue);
+                    ScrollPosition = (Vector2)bVec;
+                    return true;
+
+                case "horizontalScrolling":
+                    HorizontalScrolling = propertyValue == "1" || propertyValue.ToLower() == "true";
+                    return true;
+
+                case "verticalScrolling":
+                    VerticalScrolling = propertyValue == "1" || propertyValue.ToLower() == "true";
+                    return true;
+
+                case "scrollDecelerationRate":
+                    ScrollDecelerationRate = float.Parse(propertyValue);
+                    return true;
+
+                case "elasticity":
+                    Elasticity = float.Parse(propertyValue);
                     return true;
 
                 case "enabled":

@@ -41,22 +41,6 @@ namespace Banter.UICodeGen
         }
     }
 
-    /// <summary>
-    /// Marks a style property for USS synchronization.
-    /// Style properties will be synchronized through the style system.
-    /// </summary>
-    [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
-    public class UIStyleAttribute : Attribute
-    {
-        public string StyleName { get; }
-        public bool Inherited { get; }
-
-        public UIStyleAttribute(string styleName = null, bool inherited = false)
-        {
-            StyleName = styleName;
-            Inherited = inherited;
-        }
-    }
 
     // /// <summary>
     // /// Marks an event for binding between Unity and TypeScript.

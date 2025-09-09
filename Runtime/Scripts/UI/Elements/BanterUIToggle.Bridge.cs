@@ -4,11 +4,11 @@ using UnityEngine;
 
 namespace Banter.UI.Elements
 {
-    public partial class BanterUILabel : IUIMethodDispatcher, IUIPropertySetter
+    public partial class BanterUIToggle : IUIMethodDispatcher, IUIPropertySetter
     {
         public string GetUIElementTypeName()
         {
-            return "UILabel";
+            return "UIToggle";
         }
 
         public bool DispatchMethod(string methodName, string[] parameters)
@@ -40,8 +40,8 @@ namespace Banter.UI.Elements
         {
             switch (propertyName)
             {
-                case "text":
-                    Text = propertyValue;
+                case "checked":
+                    value = propertyValue == "1" || propertyValue.ToLower() == "true";
                     return true;
 
                 case "enabled":
