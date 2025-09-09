@@ -1,0 +1,227 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1860555917886549872
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 5759521670099021027}
+  - component: {fileID: 4378766828012166355}
+  - component: {fileID: 8007023167292401925}
+  m_Layer: 0
+  m_Name: TeamIndicator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &5759521670099021027
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860555917886549872}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0.082, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 2459299233752860282}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!114 &4378766828012166355
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860555917886549872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d36262f06c874844aa31142292ca911, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Id: JHgJ_YFwF0qKsodOptn_eA
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &8007023167292401925
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1860555917886549872}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43227c1879ae19b4191caeebdfff2eec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  progress:
+    m_PersistentCalls:
+      m_Calls: []
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  uid: 
+  attachmentPosition: {x: 0, y: 0, z: 0}
+  attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachmentType: 1
+  avatarAttachmentType: 0
+  avatarAttachmentPoint: 2
+  attachmentPoint: 0
+  autoSync: 0
+  jointAvatar: 0
+  attachment:
+    uid: 
+    attachmentPosition: {x: 0, y: 0, z: 0}
+    attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+    attachmentType: 0
+    avatarAttachmentType: 0
+    avatarAttachmentPoint: 0
+    physicsAttachmentPoint: 0
+    autoSync: 0
+    jointAvatar: 1
+--- !u!1 &8932115558758638637
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2459299233752860282}
+  - component: {fileID: 6513282256240470489}
+  - component: {fileID: 3343891058410977683}
+  - component: {fileID: 3149301163090708540}
+  - component: {fileID: 4287463214455235074}
+  m_Layer: 0
+  m_Name: TeamIndicator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2459299233752860282
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8932115558758638637}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.7071068, y: 0, z: 0, w: 0.7071068}
+  m_LocalPosition: {x: 0, y: 0.03, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 5759521670099021027}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: 0}
+--- !u!33 &6513282256240470489
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8932115558758638637}
+  m_Mesh: {fileID: 10210, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!23 &3343891058410977683
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8932115558758638637}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 2100000, guid: 0f3aad5dd7e9f91428e1a97ba5342853, type: 2}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 0
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &3149301163090708540
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8932115558758638637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d36262f06c874844aa31142292ca911, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Id: JHgJ_YFwF0qKsodOptn_eA
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4287463214455235074
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8932115558758638637}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43227c1879ae19b4191caeebdfff2eec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  progress:
+    m_PersistentCalls:
+      m_Calls: []
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  uid: 
+  attachmentPosition: {x: 0, y: 0, z: 0}
+  attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachmentType: 0
+  avatarAttachmentType: 0
+  avatarAttachmentPoint: 0
+  attachmentPoint: 0
+  autoSync: 1
+  jointAvatar: 1
+  attachment:
+    uid: 
+    attachmentPosition: {x: 0, y: 0, z: 0}
+    attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+    attachmentType: 0
+    avatarAttachmentType: 0
+    avatarAttachmentPoint: 0
+    physicsAttachmentPoint: 0
+    autoSync: 0
+    jointAvatar: 1
