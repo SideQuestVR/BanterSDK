@@ -266,7 +266,7 @@ namespace Banter.SDK
                         uiDocument.panelSettings.targetTexture = renderTexture;
                     }
                     uiDocument.panelSettings.referenceResolution = new Vector2Int((int)resolution.x, (int)resolution.y);
-                    
+
                 }
 
                 gameObject.layer = LayerMask.NameToLayer("Menu");
@@ -287,7 +287,11 @@ namespace Banter.SDK
                     if (worldSpaceUIDocument == null)
                     {
                         worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                        worldSpaceUIDocument.enabled = false;
+                        Debug.Log("Panel Settings Initialized bef: " + (uiDocument == null));
+
                         worldSpaceUIDocument._uiDocument = uiDocument;
+                        Debug.Log("Panel Settings Initialized bef aft: " + (uiDocument == null));
                         worldSpaceUIDocument._collider = col;
                     }
                 }
@@ -349,6 +353,7 @@ namespace Banter.SDK
 
             UpdateScreenSpaceTracking(this, screenSpace);
             scene.events.OnBanterUiPanelActiveChanged?.Invoke();
+            SetLoadedIfNot();
         }
         // BANTER COMPILED CODE 
         public System.Int32 PanelId { get { return panelId; } set { panelId = value; UpdateCallback(new List<PropertyName> { PropertyName.panelId }); } }

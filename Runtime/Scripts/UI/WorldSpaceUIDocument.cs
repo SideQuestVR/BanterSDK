@@ -32,7 +32,7 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
 
     private PanelEventHandler _panelEventHandler;
     
-    private PanelSettings _panelSettings;
+    // private PanelSettings _panelSettings;
     private RenderTexture _renderTexture;
     private Material _material;
     private Vector3[] _linePoints = new Vector3[10];
@@ -41,7 +41,6 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
 
     private void OnEnable ()
     {
-        _panelSettings = _uiDocument.panelSettings;
         Invoke(nameof(SetupClickAway), 0.25f);  
     }
 
@@ -283,7 +282,7 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
                     position.y = position.y;
                     // compute a fake pointer screen position so it results in the proper panel position when projected from the camera by the PanelEventHandler
                     position.x += 0.5f; position.y -= 0.5f;
-                    position = Vector3.Scale(position, new Vector3(_uiDocument.rootVisualElement.layout.width, _uiDocument.rootVisualElement.layout.height, 1.0f)*_panelSettings.scale);
+                    position = Vector3.Scale(position, new Vector3(_uiDocument.rootVisualElement.layout.width, _uiDocument.rootVisualElement.layout.height, 1.0f)*_uiDocument.panelSettings.scale);
                     position.y += Screen.height;
                     
                     // print(new Vector2(position.x, Screen.height - position.y)); // print actual computed position in panel UIToolkit coords
