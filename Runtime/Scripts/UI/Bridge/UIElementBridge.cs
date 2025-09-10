@@ -349,8 +349,12 @@ namespace Banter.UI.Bridge
             var elementId = data[0];
             var propertyName = data[1];
             var value = data[2];
-            
-            if (!_elements.TryGetValue(elementId, out var element)) return;
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            { 
+                Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to set property '{propertyName}'");
+                return;
+            }
             
             // Try to use the generated SetProperty method if the element supports it
             if (element is IUIPropertySetter propertySetter)
