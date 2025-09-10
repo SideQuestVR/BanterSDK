@@ -1,0 +1,57 @@
+.unity-button {
+    display: flex;
+    color: white;
+    padding: 11px 31px;
+    align-items: flex-start;
+    border-radius: 25px;
+    border-width: 1px;
+    border-color: rgb(255, 255, 255);
+    font-size: 16px;
+    background-color: transparent;
+    background-image: url("project://database/Assets/Menu/UIKit/Images/ButtonSecondary.png?fileID=2800000&guid=a8b574945a292504db9456e515db9bab&type=3#ButtonSecondary");
+    border-top-width: 0;
+    border-right-width: 0;
+    border-bottom-width: 0;
+    border-left-width: 0;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    -unity-slice-left: 100;
+    -unity-slice-top: 50;
+    -unity-slice-right: 100;
+    -unity-slice-bottom: 50;
+    -unity-slice-scale: 0.5px;
+    height: 60px;
+    top: -10px;
+    max-height: 60px;
+    min-width: 150px;
+    -unity-background-scale-mode: stretch-to-fill;
+}
+
+.unity-button-disabled {
+    color: rgb(85, 85, 85);
+    -unity-background-image-tint-color: rgb(85, 85, 85);
+}
+
+.unity-button:disabled {
+    /*border-color: rgb(85, 85, 85);*/
+    color: rgb(85, 85, 85);
+    -unity-background-image-tint-color: rgb(85, 85, 85);
+}
+
+/*
+.button-disabled:hover {
+    background-image: url("project://database/Assets/Menu/UIKit/Images/ButtonSecondary.png");
+}
+*/
+
+.unity-button:hover:enabled {
+    background-image: url("project://database/Assets/Menu/UIKit/Images/ButtonPrimary.png?fileID=21300000&guid=fb5edd020a068434bb4e116817931b5b&type=3#ButtonPrimary");
+    transition-duration: 100ms;
+}
+
+.unity-button-highlighted {
+    background-image: url("project://database/Assets/Menu/UIKit/Images/ButtonPrimary.png?fileID=21300000&guid=fb5edd020a068434bb4e116817931b5b&type=3#ButtonPrimary");
+    -unity-background-scale-mode: stretch-to-fill;
+}

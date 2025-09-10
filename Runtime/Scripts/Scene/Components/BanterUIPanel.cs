@@ -222,14 +222,18 @@ namespace Banter.SDK
                     }
                     Debug.Log($"[BanterUIPanel] Loaded PanelSettings: {panelSettingsName}");
                 }
-
+                uiDocument = gameObject.GetComponent<UIDocument>();
                 if (uiDocument == null)
                 {
                     uiDocument = gameObject.AddComponent<UIDocument>();
                     // Use the panel settings directly instead of instantiating
-                    uiDocument.panelSettings = panelSettings;
                     createdUIDocument = true;
                 }
+
+                uiDocument.panelSettings = panelSettings;
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));   
 
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
 
@@ -287,6 +291,7 @@ namespace Banter.SDK
                     if (worldSpaceUIDocument == null)
                     {
                         worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                        worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
                         worldSpaceUIDocument.enabled = false;
                         Debug.Log("Panel Settings Initialized bef: " + (uiDocument == null));
 
@@ -318,14 +323,14 @@ namespace Banter.SDK
                         {
                             renderer.enabled = false;
                         }
-                        if (uiDocument)
-                        {
-                            uiDocument.panelSettings.targetTexture = null;
-                        }
-                        if (worldSpaceUIDocument)
-                        {
-                            worldSpaceUIDocument.enabled = false;
-                        }
+                    }
+                    if (uiDocument)
+                    {
+                        uiDocument.panelSettings.targetTexture = null;
+                    }
+                    if (worldSpaceUIDocument)
+                    {
+                        worldSpaceUIDocument.enabled = false;
                     }
                 }
                 else
@@ -343,10 +348,10 @@ namespace Banter.SDK
                         {
                             uiDocument.panelSettings.targetTexture = renderTexture;
                         }
-                        if (worldSpaceUIDocument)
-                        {
-                            worldSpaceUIDocument.enabled = true;
-                        }
+                    }
+                    if (worldSpaceUIDocument)
+                    {
+                        worldSpaceUIDocument.enabled = true;
                     }
                 }
             }
