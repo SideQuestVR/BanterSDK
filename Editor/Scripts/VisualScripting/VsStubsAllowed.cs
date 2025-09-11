@@ -7302,6 +7302,7 @@ namespace Banter.SDKEditor
             "UnityEngine.UIElements.ListView.selectionType",
             "UnityEngine.UIElements.ListView.selectedItem",
             "UnityEngine.UIElements.ListView.selectedItems",
+            "UnityEngine.UIElements.ListView.selectedIds",
             "UnityEngine.UIElements.ListView.selectedIndex",
             "UnityEngine.UIElements.ListView.selectedIndices",
             "UnityEngine.UIElements.ListView.showBorder",

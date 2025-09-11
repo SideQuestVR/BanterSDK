@@ -1,0 +1,86 @@
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+using Banter.SDK;
+using Banter.UI.Bridge;
+using Banter.UI.Core;
+using UnityEngine;
+
+namespace Banter.VisualScripting
+{
+    [UnitTitle("Set UI Style")]
+    [UnitShortTitle("Set UI Style")]
+    [UnitCategory("Banter\\UI\\Styles")]
+    [TypeIcon(typeof(BanterObjectId))]
+    public class SetUIStyle : Unit
+    {
+        [DoNotSerialize]
+        public ControlInput inputTrigger;
+
+        [DoNotSerialize]
+        public ControlOutput outputTrigger;
+
+        [DoNotSerialize]
+        public ValueInput elementId;
+
+        [DoNotSerialize]
+        public ValueInput styleProperty;
+
+        [DoNotSerialize]
+        public ValueInput styleValue;
+
+        [DoNotSerialize]
+        public ValueOutput success;
+
+        protected override void Definition()
+        {
+            inputTrigger = ControlInput("", (flow) => {
+                var elemId = flow.GetValue<string>(elementId);
+                var property = flow.GetValue<UIStyleProperty>(styleProperty);
+                var value = flow.GetValue<string>(styleValue);
+
+                if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIStyle"))
+                {
+                    flow.SetValue(success, false);
+                    return outputTrigger;
+                }
+
+                try
+                {
+                    var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
+                    if (panelId == null)
+                    {
+                        Debug.LogError($"[SetUIStyle] Could not resolve panel for element '{elemId}'");
+                        flow.SetValue(success, false);
+                        return outputTrigger;
+                    }
+                    
+                    // Convert the UIStyleProperty enum to its USS property name
+                    var propertyName = property.ToUSSName();
+                    
+                    // Format: panelId|SET_UI_STYLE|elementId§styleName§value
+                    var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}{MessageDelimiters.SECONDARY}{value ?? ""}";
+                    
+                    // Send command through UIElementBridge
+                    UIElementBridge.HandleMessage(message);
+
+                    Debug.Log($"[SetUIStyle] Set style '{propertyName}' = '{value}' on element '{elemId}'");
+                    flow.SetValue(success, true);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[SetUIStyle] Failed to set UI style: {e.Message}");
+                    flow.SetValue(success, false);
+                }
+
+                return outputTrigger;
+            });
+
+            outputTrigger = ControlOutput("");
+            elementId = ValueInput<string>("Element ID");
+            styleProperty = ValueInput("Style Property", UIStyleProperty.BackgroundColor);
+            styleValue = ValueInput("Style Value", "");
+            success = ValueOutput<bool>("Success");
+        }
+    }
+}
+#endif

@@ -89,21 +89,6 @@ namespace Banter.UI.Bridge
             UICommands.FORCE_UI_LAYOUT,
             UICommands.MEASURE_UI_ELEMENT
         };
-                
-        private void Start()
-        {
-            InitializeMainDocument();
-        }
-        
-        private void InitializeMainDocument()
-        {
-            Debug.Log("[UIElementBridge] Registered root visual element." + (mainDocument != null ? " Using assigned mainDocument." : " mainDocument is null."));
-            // Register root element
-            if (mainDocument != null && mainDocument.rootVisualElement != null)
-            {
-                _elements["root"] = mainDocument.rootVisualElement;
-            }
-        }
         
         /// <summary>
         /// Check if a message is a UI command
@@ -128,16 +113,16 @@ namespace Banter.UI.Bridge
             {
                 Debug.Log($"[UIElementBridge] Handling message: {message}");
                 var parts = message.Split(MessageDelimiters.PRIMARY);
-                if (parts.Length < 2) 
+                if (parts.Length < 2)
                 {
                     Debug.LogError($"[UIElementBridge] Invalid message format, expected panelId|command|data: {message}");
                     return;
                 }
-                
+
                 var panelId = parts[0];
                 var command = parts[1];
                 var data = parts.Length > 2 ? parts[2].Split(MessageDelimiters.SECONDARY) : new string[0];
-                
+
                 var targetBridge = GetPanelInstance(panelId);
                 if (targetBridge != null)
                 {
@@ -178,6 +163,10 @@ namespace Banter.UI.Bridge
                     SetProperty(data);
                     break;
                     
+                case UICommands.GET_UI_PROPERTY:
+                    GetProperty(data);
+                    break;
+                    
                 case UICommands.SET_UI_STYLE:
                     SetStyle(data);
                     break;
@@ -214,6 +203,11 @@ namespace Banter.UI.Bridge
         
         private void CreateUIElement(string[] data)
         {
+
+            if (mainDocument != null && mainDocument.rootVisualElement != null && !_elements.ContainsKey("root"))
+            {
+                _elements["root"] = mainDocument.rootVisualElement;
+            }
             Debug.Log("[UIElementBridge] Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
             
@@ -365,6 +359,79 @@ namespace Banter.UI.Bridge
             
             // If we get here, the property wasn't handled by any generated SetProperty method
             Debug.LogWarning($"[UIElementBridge] Unhandled property '{propertyName}' for element type '{element.GetType().Name}' with value '{value}'");
+        }
+        
+        private void GetProperty(string[] data)
+        {
+            if (data.Length < 2) return;
+            
+            var elementId = data[0];
+            var propertyName = data[1];
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            { 
+                Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get property '{propertyName}'");
+                return;
+            }
+            
+            // Get the property value based on property name and element type
+            var propertyValue = GetElementProperty(element, propertyName);
+            
+            // Trigger EventBus event for Visual Scripting to receive the value
+            // Format: UIProperty_{elementId}_{propertyName} with the property value
+            var eventName = $"UIProperty_{elementId}_{propertyName}";
+            Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { propertyValue }));
+            
+            Debug.Log($"[UIElementBridge] Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
+        }
+        
+        private object GetElementProperty(VisualElement element, string propertyName)
+        {
+            // Handle common UI properties
+            switch (propertyName.ToLower())
+            {
+                case "text":
+                    if (element is UnityEngine.UIElements.Label label)
+                        return label.text ?? "";
+                    if (element is TextField textField)
+                        return textField.value ?? "";
+                    break;
+                    
+                case "value":
+                    if (element is Slider slider)
+                        return slider.value;
+                    if (element is Toggle toggle)
+                        return toggle.value ? "1" : "0";
+                    if (element is TextField textFieldValue)
+                        return textFieldValue.value ?? "";
+                    if (element is DropdownField dropdown)
+                        return dropdown.value ?? "";
+                    break;
+                    
+                case "enabled":
+                    return element.enabledSelf ? "1" : "0";
+                    
+                case "visible":
+                    return element.style.display == UnityEngine.UIElements.DisplayStyle.Flex ? "1" : "0";
+                    
+                case "checked":
+                    if (element is Toggle toggleChecked)
+                        return toggleChecked.value ? "1" : "0";
+                    break;
+                    
+                case "name":
+                    return element.name ?? "";
+                    
+                case "tooltip":
+                    return element.tooltip ?? "";
+                    
+                // Add more properties as needed
+                default:
+                    Debug.LogWarning($"[UIElementBridge] Unhandled get property '{propertyName}' for element type '{element.GetType().Name}'");
+                    return null;
+            }
+            
+            return null;
         }
         
         private void SetElementValue(VisualElement element, string value)
@@ -1321,35 +1388,35 @@ namespace Banter.UI.Bridge
                 // Input events
                 case UIEventType.Change:
                     {
-                        EventCallback<ChangeEvent<string>> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
+                        // Register multiple change event types based on element type
+                        if (element is TextField || element is DropdownField)
+                        {
+                            EventCallback<ChangeEvent<string>> stringCallback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(stringCallback);
+                            _registeredCallbacks[callbackKey] = stringCallback;
+                        }
+                        else if (element is Slider)
+                        {
+                            EventCallback<ChangeEvent<float>> floatCallback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(floatCallback);
+                            _registeredCallbacks[callbackKey] = floatCallback;
+                        }
+                        else if (element is Toggle)
+                        {
+                            EventCallback<ChangeEvent<bool>> boolCallback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(boolCallback);
+                            _registeredCallbacks[callbackKey] = boolCallback;
+                        }
+                        else
+                        {
+                            // Fallback to string type for unknown elements
+                            EventCallback<ChangeEvent<string>> callback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(callback);
+                            _registeredCallbacks[callbackKey] = callback;
+                        }
                     }
                     break;
-                    
-                // Layout events
-                case UIEventType.GeometryChange:
-                    {
-                        EventCallback<GeometryChangedEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.AttachToPanel:
-                    {
-                        EventCallback<AttachToPanelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.DetachFromPanel:
-                    {
-                        EventCallback<DetachFromPanelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                 
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported event type: {eventType}");
                     break;
@@ -1451,23 +1518,15 @@ namespace Banter.UI.Bridge
                     
                 // Input events
                 case UIEventType.Change:
-                    if (callback is EventCallback<ChangeEvent<string>> changeCallback)
-                        element.UnregisterCallback(changeCallback);
+                    // Try to unregister different change event types
+                    if (callback is EventCallback<ChangeEvent<string>> stringChangeCallback)
+                        element.UnregisterCallback(stringChangeCallback);
+                    else if (callback is EventCallback<ChangeEvent<float>> floatChangeCallback)
+                        element.UnregisterCallback(floatChangeCallback);
+                    else if (callback is EventCallback<ChangeEvent<bool>> boolChangeCallback)
+                        element.UnregisterCallback(boolChangeCallback);
                     break;
                     
-                // Layout events
-                case UIEventType.GeometryChange:
-                    if (callback is EventCallback<GeometryChangedEvent> geometryCallback)
-                        element.UnregisterCallback(geometryCallback);
-                    break;
-                case UIEventType.AttachToPanel:
-                    if (callback is EventCallback<AttachToPanelEvent> attachCallback)
-                        element.UnregisterCallback(attachCallback);
-                    break;
-                case UIEventType.DetachFromPanel:
-                    if (callback is EventCallback<DetachFromPanelEvent> detachCallback)
-                        element.UnregisterCallback(detachCallback);
-                    break;
                     
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported event type for unregistration: {eventType}");
@@ -1527,6 +1586,67 @@ namespace Banter.UI.Bridge
             // Send UI events directly to TypeScript without panel ID prefix
             // TypeScript doesn't need panel ID for element routing
             SendToJavaScript(message);
+            
+            // Also trigger EventBus events for Visual Scripting
+            TriggerVisualScriptingEvent(elementId, eventType, evt);
+        }
+        
+        private void TriggerVisualScriptingEvent(string elementId, UIEventType eventType, EventBase evt)
+        {
+            switch (eventType)
+            {
+                case UIEventType.Click:
+                    if (evt is ClickEvent clickEvt)
+                    {
+                        var eventName = $"UIClick_{elementId}";
+                        var mousePosition = new UnityEngine.Vector2(clickEvt.localPosition.x, clickEvt.localPosition.y);
+                        var mouseButton = clickEvt.button;
+                        
+                        Unity.VisualScripting.EventBus.Trigger("OnUIClick", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+                        
+                        Debug.Log($"[UIElementBridge] Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
+                    }
+                    break;
+                    
+                case UIEventType.Change:
+                    if (evt is ChangeEvent<string> changeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = changeEvt.newValue;
+                        var oldValue = changeEvt.previousValue;
+                        
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+                        
+                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: '{oldValue}' -> '{newValue}'");
+                    }
+                    // Handle other change event types
+                    else if (evt is ChangeEvent<float> floatChangeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = floatChangeEvt.newValue.ToString();
+                        var oldValue = floatChangeEvt.previousValue.ToString();
+                        
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+                        
+                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                    }
+                    else if (evt is ChangeEvent<bool> boolChangeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = boolChangeEvt.newValue ? "1" : "0";
+                        var oldValue = boolChangeEvt.previousValue ? "1" : "0";
+                        
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+                        
+                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                    }
+                    break;
+                    
+                // Add more event types as needed
+                default:
+                    // Don't trigger Visual Scripting events for unsupported types
+                    break;
+            }
         }
         
         private string BuildEventDataJson(EventBase evt)
@@ -1660,6 +1780,11 @@ namespace Banter.UI.Bridge
         public VisualElement GetElement(string elementId)
         {
             return _elements.TryGetValue(elementId, out var element) ? element : null;
+        }
+        
+        public bool HasElement(string elementId)
+        {
+            return !string.IsNullOrEmpty(elementId) && _elements.ContainsKey(elementId);
         }
         
         public void RegisterDocument(string name, UIDocument document)
