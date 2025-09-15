@@ -2858,7 +2858,6 @@ namespace Banter.SDKEditor
             "UnityEngine.MeshRenderer.additionalVertexStreams",
             "UnityEngine.MeshRenderer.enlightenVertexStream",
             "UnityEngine.MeshRenderer.subMeshStartIndex",
-            "UnityEngine.MeshRenderer.globalIlluminationMeshLod",
             "UnityEngine.MeshRenderer.bounds",
             "UnityEngine.MeshRenderer.localBounds",
             "UnityEngine.MeshRenderer.enabled",
