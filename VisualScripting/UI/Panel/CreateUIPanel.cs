@@ -44,8 +44,15 @@ namespace Banter.VisualScripting
                 Debug.Log("[CreateUIPanel] Attempting to create UI Panel...");
                 try
                 {
-                    // Acquire panel ID from pool
-                    int acquiredPanelId = UIPanelPool.AcquirePanel();
+                    // Get or add BanterUIPanel component
+                    var panel = target.GetComponent<BanterUIPanel>();
+                    if (panel == null)
+                    {
+                        panel = target.AddComponent<BanterUIPanel>();
+                    }
+
+                    // Use the new AcquirePanelId method which handles pool management internally
+                    int acquiredPanelId = panel.AcquirePanelId();
                     if (acquiredPanelId == -1)
                     {
                         Debug.LogError("[CreateUIPanel] Failed to acquire panel ID from pool. All panels in use.");
@@ -54,15 +61,7 @@ namespace Banter.VisualScripting
                         return outputTrigger;
                     }
 
-                    // Get or add BanterUIPanel component
-                    var panel = target.GetComponent<BanterUIPanel>();
-                    if (panel == null)
-                    {
-                        panel = target.AddComponent<BanterUIPanel>();
-                    }
-
-                    // Set panel properties with acquired ID
-                    panel.PanelId = acquiredPanelId;
+                    // Set other panel properties
                     panel.Resolution = res;
                     panel.ScreenSpace = isScreenSpace;
 

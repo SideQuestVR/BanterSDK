@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -32,10 +33,207 @@ namespace Banter.SDK
                 uiDocument.rootVisualElement.style.backgroundColor = new StyleColor(new Color(color.x, color.y, color.z, color.w));
             }
         }
+
+        /// <summary>
+        /// Acquire a panel ID from the pool and set it on this panel
+        /// Used by Visual Scripting nodes to automatically manage panel IDs
+        /// </summary>
+        /// <returns>The acquired panel ID, or -1 if no panels available</returns>
+        public int AcquirePanelId()
+        {
+            // Release current panel if we have one
+            if (acquiredPanelFromPool && lastAcquiredPanelId >= 0)
+            {
+                UIPanelPool.ReleasePanel(lastAcquiredPanelId);
+            }
+
+            // Acquire new panel ID
+            int newPanelId = UIPanelPool.AcquirePanel();
+            if (newPanelId >= 0)
+            {
+                panelId = newPanelId;
+                acquiredPanelFromPool = true;
+                lastAcquiredPanelId = newPanelId;
+                Debug.Log($"[BanterUIPanel] Acquired panel ID {newPanelId} from pool");
+                
+                // Trigger update callback to initialize the panel
+                UpdateCallback(new List<PropertyName> { PropertyName.panelId });
+            }
+            else
+            {
+                Debug.LogError($"[BanterUIPanel] No available panel IDs! Maximum of {UIPanelPool.MaxPanels} panels allowed.");
+            }
+
+            return newPanelId;
+        }
+
+        /// <summary>
+        /// Get the current panel pool status for debugging
+        /// </summary>
+        /// <returns>Pool status information</returns>
+        public static PoolStatus GetPoolStatus()
+        {
+            return UIPanelPool.GetPoolStatus();
+        }
+
+        /// <summary>
+        /// Initialize panel using existing UIDocument and its panel settings
+        /// This bypasses the pool system and uses the document's existing configuration
+        /// </summary>
+        /// <param name="document">UIDocument with existing panel settings</param>
+        /// <returns>True if initialization was successful</returns>
+        public bool InitializeWithExistingDocument(UIDocument document)
+        {
+            if (document?.panelSettings == null)
+            {
+                Debug.LogError("[BanterUIPanel] Cannot initialize with UIDocument - document or panel settings is null");
+                return false;
+            }
+
+            try
+            {
+                // Use the existing panel settings without loading from resources
+                panelSettings = document.panelSettings;
+                uiDocument = document;
+                
+                // Set a special panel ID to indicate this doesn't use the pool
+                panelId = -99; // Special value for UXML-based panels
+                acquiredPanelFromPool = false; // We didn't acquire from pool
+                lastAcquiredPanelId = -1; // No pool ID to track
+                
+                Debug.Log($"[BanterUIPanel] Initialized with existing UIDocument and panel settings: {panelSettings.name}");
+
+                // Set up the UI document
+                if (!createdUIDocument)
+                {
+                    createdUIDocument = false; // We didn't create it, so don't destroy it
+                }
+
+                // Add stylesheets
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
+
+                // Configure panel settings
+                uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
+
+                // Set up the bridge
+                if (uiElementBridge == null)
+                {
+                    uiElementBridge = gameObject.AddComponent<UIElementBridge>();
+                    uiElementBridge.banterLink = scene.link;
+                    uiElementBridge.mainDocument = uiDocument;
+                }
+
+                // Register with a special identifier for UXML panels
+                var registrationId = $"UXML_Panel_{gameObject.GetInstanceID()}";
+                UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge);
+
+                Debug.Log($"[BanterUIPanel] Successfully initialized UXML panel with registration ID: {registrationId}");
+
+                // Handle screen space vs world space setup
+                SetupRenderingMode();
+
+                // Update tracking
+                UpdateScreenSpaceTracking(this, screenSpace);
+                scene.events.OnBanterUiPanelActiveChanged?.Invoke();
+                SetLoadedIfNot();
+
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogError($"[BanterUIPanel] Failed to initialize with existing document: {e.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sets up rendering mode based on screenSpace setting
+        /// </summary>
+        private void SetupRenderingMode()
+        {
+            gameObject.layer = LayerMask.NameToLayer("Menu");
+            
+            if (!screenSpace)
+            {
+                // World space setup - create render texture and mesh
+                if (renderTexture == null)
+                {
+                    renderTexture = new RenderTexture((int)resolution.x, (int)resolution.y, 16, RenderTextureFormat.ARGB32);
+                    renderTexture.Create();
+                }
+
+                var renderer = gameObject.GetComponent<Renderer>();
+                if (renderer == null)
+                {
+                    var filter = gameObject.GetComponent<MeshFilter>();
+                    if (filter == null)
+                    {
+                        filter = gameObject.AddComponent<MeshFilter>();
+                        filter.mesh = CreateQuadMesh();
+                        createdMeshFilter = true;
+                    }
+                    renderer = gameObject.AddComponent<MeshRenderer>();
+                    renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
+                    createdMeshRenderer = true;
+                    
+                    var col = gameObject.AddComponent<BoxCollider>();
+                    if (worldSpaceUIDocument == null)
+                    {
+                        worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                        worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
+                        worldSpaceUIDocument._uiDocument = uiDocument;
+                        worldSpaceUIDocument._collider = col;
+                        worldSpaceUIDocument.enabled = true;
+                    }
+                }
+
+                if (uiDocument != null)
+                {
+                    uiDocument.panelSettings.targetTexture = renderTexture;
+                }
+                
+                if (renderer != null)
+                {
+                    renderer.enabled = true;
+                    renderer.sharedMaterial.mainTexture = renderTexture;
+                }
+            }
+            else
+            {
+                // Screen space setup - no render texture needed
+                if (renderTexture != null)
+                {
+                    renderTexture.Release();
+                    Destroy(renderTexture);
+                    renderTexture = null;
+                }
+                
+                if (uiDocument != null)
+                {
+                    uiDocument.panelSettings.targetTexture = null;
+                }
+                
+                var renderer = gameObject.GetComponent<MeshRenderer>();
+                if (renderer != null)
+                {
+                    renderer.enabled = false;
+                }
+                
+                if (worldSpaceUIDocument != null)
+                {
+                    worldSpaceUIDocument.enabled = false;
+                }
+            }
+        }
+
         // Flags to track what we created
         private bool createdMeshRenderer = false;
         private bool createdMeshFilter = false;
         private bool createdUIDocument = false;
+        private bool acquiredPanelFromPool = false;
+        private int lastAcquiredPanelId = -1; // Track the last panel ID we acquired
 
         public static bool IsScreenSpaceActive = false;
         
@@ -178,6 +376,15 @@ namespace Banter.SDK
                 }
             }
 
+            // Release panel ID if we acquired it from the pool
+            if (acquiredPanelFromPool && lastAcquiredPanelId >= 0)
+            {
+                UIPanelPool.ReleasePanel(lastAcquiredPanelId);
+                acquiredPanelFromPool = false;
+                lastAcquiredPanelId = -1;
+                Debug.Log($"[BanterUIPanel] Released panel ID {lastAcquiredPanelId} back to pool");
+            }
+
             // Reset flags
             createdUIDocument = false;
             createdMeshRenderer = false;
@@ -196,11 +403,29 @@ namespace Banter.SDK
         {
             if (changedProperties.Contains(PropertyName.panelId) && uiElementBridge == null)
             {
-                if (panelId < 0 || panelId >= 20)
+                // Validate panel ID range
+                if (!UIPanelPool.IsValidPanelId(panelId))
                 {
-                    Debug.LogWarning($"[BanterUIPanel] Invalid panel ID: {panelId}. Panel ID should be 0-19.");
+                    Debug.LogWarning($"[BanterUIPanel] Invalid panel ID: {panelId}. Panel ID should be 0-{UIPanelPool.MaxPanels - 1}.");
                     return;
                 }
+
+                // If we had a previous panel ID that we acquired, release it first
+                if (acquiredPanelFromPool && lastAcquiredPanelId >= 0 && lastAcquiredPanelId != panelId)
+                {
+                    UIPanelPool.ReleasePanel(lastAcquiredPanelId);
+                    Debug.Log($"[BanterUIPanel] Released previous panel ID {lastAcquiredPanelId} when changing to {panelId}");
+                }
+
+                // Try to acquire the specific panel ID to prevent conflicts
+                if (!UIPanelPool.AcquireSpecificPanel(panelId))
+                {
+                    Debug.LogError($"[BanterUIPanel] Panel ID {panelId} is already in use! This could cause conflicts between TypeScript and Visual Scripting setup.");
+                    return;
+                }
+                
+                acquiredPanelFromPool = true; // We acquired it through the pool system
+                lastAcquiredPanelId = panelId; // Track this panel ID
 
                 if (renderTexture != null)
                 {

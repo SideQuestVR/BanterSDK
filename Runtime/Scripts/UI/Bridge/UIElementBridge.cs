@@ -1795,5 +1795,56 @@ namespace Banter.UI.Bridge
                 _elements[$"doc_{name}"] = document.rootVisualElement;
             }
         }
+
+        /// <summary>
+        /// Processes a UXML document tree and registers all elements for code access
+        /// This allows using prefabbed UXML files while maintaining full element access
+        /// </summary>
+        /// <param name="document">The UIDocument containing the UXML tree</param>
+        /// <param name="prefix">Optional prefix for auto-generated element IDs</param>
+        /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
+        public Dictionary<VisualElement, string> ProcessUXMLTree(UIDocument document, string prefix = "uxml")
+        {
+            return Banter.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+        }
+
+        /// <summary>
+        /// Processes a visual element tree and registers all elements for code access
+        /// </summary>
+        /// <param name="rootElement">The root visual element to start processing from</param>
+        /// <param name="prefix">Optional prefix for auto-generated element IDs</param>
+        /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
+        public Dictionary<VisualElement, string> ProcessVisualElementTree(VisualElement rootElement, string prefix = "uxml")
+        {
+            return Banter.UI.Core.UIXMLTreeProcessor.ProcessTree(this, rootElement, prefix);
+        }
+
+        /// <summary>
+        /// Gets a summary of all currently registered elements
+        /// </summary>
+        /// <returns>Summary containing element counts and types</returns>
+        public string GetRegisteredElementsSummary()
+        {
+            var summary = new System.Text.StringBuilder();
+            summary.AppendLine($"Registered Elements: {_elements.Count}");
+            
+            var typeCounts = new Dictionary<string, int>();
+            foreach (var element in _elements.Values)
+            {
+                if (element != null)
+                {
+                    var typeName = element.GetType().Name;
+                    typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
+                }
+            }
+            
+            summary.AppendLine("Element Types:");
+            foreach (var kvp in typeCounts.OrderByDescending(x => x.Value))
+            {
+                summary.AppendLine($"  {kvp.Key}: {kvp.Value}");
+            }
+            
+            return summary.ToString();
+        }
     }
 }

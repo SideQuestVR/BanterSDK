@@ -65,6 +65,35 @@ namespace Banter.UI.Core
         }
         
         /// <summary>
+        /// Acquire a specific panel ID (used when manually assigning panel IDs)
+        /// </summary>
+        /// <param name="panelId">The specific panel ID to acquire (0-19)</param>
+        /// <returns>true if successfully acquired, false if already in use or invalid</returns>
+        public static bool AcquireSpecificPanel(int panelId)
+        {
+            if (!IsValidPanelId(panelId))
+            {
+                Debug.LogWarning($"[UIPanelPool] Invalid panel ID: {panelId}. Must be 0-{MAX_PANELS - 1}");
+                return false;
+            }
+            
+            Initialize();
+            
+            lock (lockObject)
+            {
+                if (panelPool[panelId])
+                {
+                    Debug.LogWarning($"[UIPanelPool] Panel {panelId} is already in use");
+                    return false;
+                }
+                
+                panelPool[panelId] = true; // Mark as used
+                Debug.Log($"[UIPanelPool] Acquired specific panel: {panelId}");
+                return true;
+            }
+        }
+        
+        /// <summary>
         /// Release a panel back to the pool
         /// </summary>
         /// <param name="panelId">The panel ID to release (0-19)</param>

@@ -10,10 +10,10 @@ namespace Banter.UI.Core
     {
         /// <summary>
         /// Get the formatted panel settings name for this panel
-        /// Uses UIPanelPool for consistent formatting
+        /// Uses UIPanelPool for pooled panels or special format for UXML panels
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
-        /// <returns>Formatted panel settings name (e.g., "PanelSettings 5")</returns>
+        /// <returns>Formatted panel settings name (e.g., "PanelSettings 5" or "UXML_Panel_123")</returns>
         public static string GetFormattedPanelId(this BanterUIPanel panel)
         {
             if (panel == null)
@@ -22,29 +22,44 @@ namespace Banter.UI.Core
                 return UIPanelPool.GetPanelSettingsName(0);
             }
             
+            // Check if this is a UXML panel (panelId = -99)
+            if (panel.PanelId == -99)
+            {
+                return $"UXML_Panel_{panel.gameObject.GetInstanceID()}";
+            }
+            
             return UIPanelPool.GetPanelSettingsName(panel.PanelId);
         }
         
         /// <summary>
-        /// Check if this panel's ID is valid according to the panel pool
+        /// Check if this panel's ID is valid (either pooled or UXML)
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
         /// <returns>true if panel ID is valid, false otherwise</returns>
         public static bool HasValidPanelId(this BanterUIPanel panel)
         {
             if (panel == null) return false;
+            
+            // UXML panels use special ID -99
+            if (panel.PanelId == -99) return true;
+            
             return UIPanelPool.IsValidPanelId(panel.PanelId);
         }
         
         /// <summary>
         /// Check if this panel's ID is currently marked as in use in the pool
         /// Note: This doesn't guarantee the panel is properly configured, just that the ID is allocated
+        /// UXML panels are considered always "in use" since they don't use the pool
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
         /// <returns>true if panel ID is marked as in use, false otherwise</returns>
         public static bool IsPanelIdInUse(this BanterUIPanel panel)
         {
             if (panel == null) return false;
+            
+            // UXML panels are always considered "in use"
+            if (panel.PanelId == -99) return true;
+            
             return UIPanelPool.IsPanelInUse(panel.PanelId);
         }
         
@@ -65,7 +80,8 @@ namespace Banter.UI.Core
             
             if (!panel.HasValidPanelId())
             {
-                Debug.LogWarning($"[UIPanelExtensions] Invalid panel ID {panel.PanelId} for {operationName}. Must be 0-{UIPanelPool.MaxPanels - 1}");
+                var validRange = panel.PanelId == -99 ? "UXML panel" : $"0-{UIPanelPool.MaxPanels - 1}";
+                Debug.LogWarning($"[UIPanelExtensions] Invalid panel ID {panel.PanelId} for {operationName}. Must be {validRange}");
                 return false;
             }
             
