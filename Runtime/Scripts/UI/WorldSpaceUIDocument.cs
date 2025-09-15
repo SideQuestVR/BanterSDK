@@ -31,6 +31,7 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
     public Action OnClickAway;
 
     private PanelEventHandler _panelEventHandler;
+    private PanelRaycaster _panelRaycaster;
     
     // private PanelSettings _panelSettings;
     private RenderTexture _renderTexture;
@@ -86,9 +87,9 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
             if (handler.panel == _uiDocument.rootVisualElement.panel)
             {
                 _panelEventHandler = handler;
-                PanelRaycaster panelRaycaster = _panelEventHandler.GetComponent<PanelRaycaster>();
-                if (panelRaycaster != null)
-                    panelRaycaster.enabled = false;
+                _panelRaycaster = _panelEventHandler.GetComponent<PanelRaycaster>();
+                if (_panelRaycaster != null)
+                    _panelRaycaster.enabled = false;
             
                 break;
             }
@@ -114,6 +115,8 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
     void LateUpdate ()
     {
         _eventsProcessedInThisFrame.Clear();
+        if(_panelRaycaster)
+            _panelRaycaster.enabled = false;
     }
 
     public void OnPointerMove (PointerEventData eventData)
