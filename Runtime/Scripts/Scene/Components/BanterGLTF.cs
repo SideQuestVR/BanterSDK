@@ -63,6 +63,9 @@ namespace Banter.SDK
         // this to true automaticaly.
         [Tooltip("Enable to rotate the model for compatibility with legacy GLTF forward direction.")]
         [See(initial = "false")][SerializeField] internal bool legacyRotate;
+
+        [Tooltip("Set child objects to a specific layer - 0 to disable.")]
+        [See(initial = "0")][SerializeField] internal int childrenLayer;
         bool loadStarted;
 
         internal override void StartStuff()
@@ -136,6 +139,7 @@ namespace Banter.SDK
                         {
                             var collider = t.name.Contains("sq-collider");
                             var nonconvexcollider = t.name.Contains("sq-nonconvexcollider");
+                            t.gameObject.layer = childrenLayer;
                             if (collider || nonconvexcollider && (t.gameObject.GetComponent<Renderer>() != null))
                             {
                                 t.gameObject.AddComponent<BanterObjectId>();
@@ -225,6 +229,7 @@ namespace Banter.SDK
         public System.Boolean Slippery { get { return slippery; } set { slippery = value; UpdateCallback(new List<PropertyName> { PropertyName.slippery }); } }
         public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
         public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
+        public System.Int32 ChildrenLayer { get { return childrenLayer; } set { childrenLayer = value; UpdateCallback(new List<PropertyName> { PropertyName.childrenLayer }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -247,7 +252,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.generateMipMaps, PropertyName.addColliders, PropertyName.nonConvexColliders, PropertyName.slippery, PropertyName.climbable, PropertyName.legacyRotate, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.generateMipMaps, PropertyName.addColliders, PropertyName.nonConvexColliders, PropertyName.slippery, PropertyName.climbable, PropertyName.legacyRotate, PropertyName.childrenLayer, };
             UpdateCallback(changedProperties);
         }
 
@@ -355,6 +360,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.legacyRotate);
                     }
                 }
+                if (values[i] is BanterInt)
+                {
+                    var valchildrenLayer = (BanterInt)values[i];
+                    if (valchildrenLayer.n == PropertyName.childrenLayer)
+                    {
+                        childrenLayer = valchildrenLayer.x;
+                        changedProperties.Add(PropertyName.childrenLayer);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -441,6 +455,18 @@ namespace Banter.SDK
                     name = PropertyName.legacyRotate,
                     type = PropertyType.Bool,
                     value = legacyRotate,
+                    componentType = ComponentType.BanterGLTF,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.childrenLayer,
+                    type = PropertyType.Int,
+                    value = childrenLayer,
                     componentType = ComponentType.BanterGLTF,
                     oid = oid,
                     cid = cid

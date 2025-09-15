@@ -86,6 +86,7 @@ namespace Banter.SDK
         slippery,
         climbable,
         legacyRotate,
+        childrenLayer,
         grabType,
         grabRadius,
         sensitivity,
