@@ -8693,6 +8693,7 @@ namespace Banter.SDKEditor
             "Banter.SDK.BanterGLTF.Slippery",
             "Banter.SDK.BanterGLTF.Climbable",
             "Banter.SDK.BanterGLTF.LegacyRotate",
+            "Banter.SDK.BanterGLTF.ChildrenLayer",
             "Banter.SDK.BanterGLTF.IsLoaded",
             "Banter.SDK.BanterGLTF.destroyCancellationToken",
             "Banter.SDK.BanterGLTF.useGUILayout",
