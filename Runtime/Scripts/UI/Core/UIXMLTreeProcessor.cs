@@ -247,7 +247,7 @@ namespace Banter.UI.Core
         /// </summary>
         public static ElementSummary GetElementSummary(Dictionary<VisualElement, string> elementMap)
         {
-            var summary = new ElementSummary();
+            var summary = ElementSummary.Create();
             var typeCounts = new Dictionary<string, int>();
             
             foreach (var kvp in elementMap)
@@ -307,16 +307,19 @@ namespace Banter.UI.Core
         public Dictionary<string, int> TypeCounts;
         public int TotalElements;
         
-        public ElementSummary()
+        public static ElementSummary Create()
         {
-            Elements = new List<ElementInfo>();
-            TypeCounts = new Dictionary<string, int>();
-            TotalElements = 0;
+            return new ElementSummary
+            {
+                Elements = new List<ElementInfo>(),
+                TypeCounts = new Dictionary<string, int>(),
+                TotalElements = 0
+            };
         }
         
         public override string ToString()
         {
-            var typeInfo = string.Join(", ", TypeCounts.Select(kvp => $"{kvp.Key}: {kvp.Value}"));
+            var typeInfo = string.Join(", ", TypeCounts?.Select(kvp => $"{kvp.Key}: {kvp.Value}") ?? new string[0]);
             return $"Total Elements: {TotalElements}\nTypes: {typeInfo}";
         }
     }
