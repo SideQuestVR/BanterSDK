@@ -68,7 +68,7 @@ namespace Banter.VisualScripting
                     var labelElementId = string.IsNullOrEmpty(elemId) ? $"ui_label_{System.Guid.NewGuid().ToString("N")[..8]}" : elemId;
                     
                     // Use UICommands to send CREATE_UI_ELEMENT command
-                    var panelId = $"PanelSettings {panel.PanelId}";
+                    var panelId = panel.GetFormattedPanelId();
                     var elementType = "11"; // UIElementType.Label = 11
                     var parentElementId = string.IsNullOrEmpty(parentId) ? "root" : parentId;
                     

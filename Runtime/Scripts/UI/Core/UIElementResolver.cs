@@ -60,7 +60,7 @@ namespace Banter.UI.Core
                 // Cache the result
                 lock (_cacheLock)
                 {
-                    var panelId = UIPanelPool.GetPanelSettingsName(panel.PanelId);
+                    var panelId = panel.GetFormattedPanelId();
                     _elementToPanelCache[elementId] = panelId;
                     _panelInstanceCache[panelId] = panel;
                 }

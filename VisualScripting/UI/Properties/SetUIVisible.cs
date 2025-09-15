@@ -54,7 +54,7 @@ namespace Banter.VisualScripting
                 try
                 {
                     // Get the panel ID for message routing
-                    var panelId = $"PanelSettings {panel.PanelId}";
+                    var panelId = panel.GetFormattedPanelId();
                     
                     // Format: panelId|SET_UI_PROPERTY|elementId§propertyName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}visible{MessageDelimiters.SECONDARY}{(visibleValue ? "1" : "0")}";

@@ -1,11 +1,11 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.UI.Core;
 using Banter.UI.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
+using Banter.UI.Core;
 
 namespace Banter.VisualScripting
 {
@@ -63,109 +63,43 @@ namespace Banter.VisualScripting
                         Debug.Log("[ProcessUXMLTree] Created BanterUIPanel component");
                     }
 
-                    // Check for existing UIDocument on the GameObject
-                    var existingDocument = target.GetComponent<UIDocument>();
-                    
                     UIElementBridge bridge;
                     Dictionary<VisualElement, string> elementMap;
 
-                    // Determine the best approach based on what's available
-                    if (existingDocument?.panelSettings != null && document == null)
+                    // Check for existing UIDocument on the GameObject or use provided one
+                    var documentToUse = document ?? target.GetComponent<UIDocument>();
+                    
+                    if (documentToUse != null)
                     {
-                        // Use existing UIDocument with its own panel settings
-                        Debug.Log("[ProcessUXMLTree] Found existing UIDocument with panel settings, using UXML approach");
+                        // Initialize panel with the UIDocument
+                        Debug.Log("[ProcessUXMLTree] Initializing panel with UIDocument");
                         
-                        if (panel.InitializeWithExistingDocument(existingDocument))
+                        if (panel.InitializeWithExistingDocument(documentToUse))
                         {
                             bridge = GetUIElementBridge(panel);
-                            elementMap = bridge.ProcessUXMLTree(existingDocument, prefix);
-                            Debug.Log($"[ProcessUXMLTree] Processed existing UIDocument with {elementMap.Count} elements");
+                            elementMap = bridge.ProcessUXMLTree(documentToUse, prefix);
+                            Debug.Log($"[ProcessUXMLTree] Processed UIDocument with {elementMap.Count} elements");
                         }
                         else
                         {
-                            Debug.LogError("[ProcessUXMLTree] Failed to initialize panel with existing UIDocument");
+                            Debug.LogError("[ProcessUXMLTree] Failed to initialize panel with UIDocument");
                             flow.SetValue(elementCount, 0);
-                            flow.SetValue(elementSummary, "Error: Failed to initialize with existing UIDocument");
+                            flow.SetValue(elementSummary, "Error: Failed to initialize with UIDocument");
                             flow.SetValue(success, false);
                             return outputTrigger;
                         }
                     }
-                    else if (document != null)
-                    {
-                        // Use provided UIDocument - check if it has panel settings
-                        if (document.panelSettings != null)
-                        {
-                            // UIDocument has its own panel settings
-                            Debug.Log("[ProcessUXMLTree] Provided UIDocument has panel settings, using UXML approach");
-                            
-                            if (panel.InitializeWithExistingDocument(document))
-                            {
-                                bridge = GetUIElementBridge(panel);
-                                elementMap = bridge.ProcessUXMLTree(document, prefix);
-                                Debug.Log($"[ProcessUXMLTree] Processed provided UIDocument with {elementMap.Count} elements");
-                            }
-                            else
-                            {
-                                Debug.LogError("[ProcessUXMLTree] Failed to initialize panel with provided UIDocument");
-                                flow.SetValue(elementCount, 0);
-                                flow.SetValue(elementSummary, "Error: Failed to initialize with provided UIDocument");
-                                flow.SetValue(success, false);
-                                return outputTrigger;
-                            }
-                        }
-                        else
-                        {
-                            // UIDocument doesn't have panel settings, use traditional pool approach
-                            Debug.Log("[ProcessUXMLTree] UIDocument has no panel settings, using pool approach");
-                            
-                            // Acquire panel ID from pool if not already set
-                            if (panel.PanelId < 0)
-                            {
-                                var acquiredPanelId = panel.AcquirePanelId();
-                                if (acquiredPanelId < 0)
-                                {
-                                    Debug.LogError("[ProcessUXMLTree] Failed to acquire panel ID from pool");
-                                    flow.SetValue(elementCount, 0);
-                                    flow.SetValue(elementSummary, "Error: No panel IDs available");
-                                    flow.SetValue(success, false);
-                                    return outputTrigger;
-                                }
-                            }
-                            
-                            bridge = GetUIElementBridge(panel);
-                            if (bridge == null)
-                            {
-                                Debug.LogError("[ProcessUXMLTree] UIElementBridge not found after panel initialization");
-                                flow.SetValue(elementCount, 0);
-                                flow.SetValue(elementSummary, "Error: UIElementBridge not found");
-                                flow.SetValue(success, false);
-                                return outputTrigger;
-                            }
-                            
-                            elementMap = bridge.ProcessUXMLTree(document, prefix);
-                            Debug.Log($"[ProcessUXMLTree] Processed UIDocument via pool approach with {elementMap.Count} elements");
-                        }
-                    }
                     else
                     {
-                        // No UIDocument provided, check if panel is already initialized
+                        // No UIDocument available, process from panel's existing setup
                         bridge = GetUIElementBridge(panel);
                         if (bridge == null)
                         {
-                            // Panel not initialized, use pool approach
-                            Debug.Log("[ProcessUXMLTree] No UIDocument provided, using pool approach");
-                            
-                            var acquiredPanelId = panel.AcquirePanelId();
-                            if (acquiredPanelId < 0)
-                            {
-                                Debug.LogError("[ProcessUXMLTree] Failed to acquire panel ID from pool");
-                                flow.SetValue(elementCount, 0);
-                                flow.SetValue(elementSummary, "Error: No panel IDs available");
-                                flow.SetValue(success, false);
-                                return outputTrigger;
-                            }
-                            
-                            bridge = GetUIElementBridge(panel);
+                            Debug.LogError("[ProcessUXMLTree] No UIDocument provided and panel not initialized");
+                            flow.SetValue(elementCount, 0);
+                            flow.SetValue(elementSummary, "Error: No UIDocument available");
+                            flow.SetValue(success, false);
+                            return outputTrigger;
                         }
                         
                         // Process from panel's main document

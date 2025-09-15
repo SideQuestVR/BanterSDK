@@ -1,7 +1,6 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.UI.Core;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -51,21 +50,11 @@ namespace Banter.VisualScripting
                         panel = target.AddComponent<BanterUIPanel>();
                     }
 
-                    // Use the new AcquirePanelId method which handles pool management internally
-                    int acquiredPanelId = panel.AcquirePanelId();
-                    if (acquiredPanelId == -1)
-                    {
-                        Debug.LogError("[CreateUIPanel] Failed to acquire panel ID from pool. All panels in use.");
-                        flow.SetValue(panelReference, null);
-                        flow.SetValue(success, false);
-                        return outputTrigger;
-                    }
-
-                    // Set other panel properties
+                    // Set panel properties - panel IDs are managed internally
                     panel.Resolution = res;
                     panel.ScreenSpace = isScreenSpace;
 
-                    Debug.Log($"[CreateUIPanel] Created panel with auto-acquired ID: {acquiredPanelId}");
+                    Debug.Log($"[CreateUIPanel] Created panel successfully");
                     
                     flow.SetValue(panelReference, panel);
                     flow.SetValue(success, true);

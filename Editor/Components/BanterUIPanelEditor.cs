@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("panelId, resolution, screenSpace, ");
+            var seeFields = new Label("resolution, screenSpace, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

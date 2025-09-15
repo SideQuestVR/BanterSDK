@@ -62,7 +62,7 @@ namespace Banter.VisualScripting
                     CleanupCallback();
                     
                     // Get the panel ID for message routing
-                    var panelId = $"PanelSettings {panel.PanelId}";
+                    var panelId = panel.GetFormattedPanelId();
                     
                     // Set up callback to receive the value
                     _currentEventName = $"UIProperty_{elemId}_text";

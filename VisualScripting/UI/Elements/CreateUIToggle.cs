@@ -68,7 +68,7 @@ namespace Banter.VisualScripting
                     var toggleElementId = string.IsNullOrEmpty(elemId) ? $"ui_toggle_{System.Guid.NewGuid().ToString("N")[..8]}" : elemId;
                     
                     // Use UICommands to send CREATE_UI_ELEMENT command
-                    var panelId = $"PanelSettings {panel.PanelId}";
+                    var panelId = panel.GetFormattedPanelId();
                     var elementType = "13"; // UIElementType.Toggle = 13
                     var parentElementId = string.IsNullOrEmpty(parentId) ? "root" : parentId;
                     

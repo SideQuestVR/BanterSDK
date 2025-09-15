@@ -67,7 +67,7 @@ namespace Banter.VisualScripting
                     CleanupCallback();
                     
                     // Get the panel ID for message routing
-                    var panelId = $"PanelSettings {panel.PanelId}";
+                    var panelId = panel.GetFormattedPanelId();
                     
                     // Convert enum to property name
                     var propNameStr = GetPropertyName(propName);

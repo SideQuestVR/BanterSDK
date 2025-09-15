@@ -18,7 +18,7 @@ namespace Banter.VisualScripting
         public ControlOutput outputTrigger;
 
         [DoNotSerialize]
-        public ValueInput panelId;
+        public ValueInput gameObjectRef;
 
         [DoNotSerialize]
         public ValueOutput panelReference;
@@ -29,19 +29,19 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var id = flow.GetValue<int>(panelId);
+                var gameObj = flow.GetValue<GameObject>(gameObjectRef);
 
-                // Find panel with matching ID in the scene
-                var allPanels = Object.FindObjectsOfType<BanterUIPanel>();
                 BanterUIPanel foundPanel = null;
-
-                foreach (var panel in allPanels)
+                
+                if (gameObj != null)
                 {
-                    if (panel.PanelId == id)
-                    {
-                        foundPanel = panel;
-                        break;
-                    }
+                    // Try to get the panel component from the GameObject
+                    foundPanel = gameObj.GetComponent<BanterUIPanel>();
+                }
+                else
+                {
+                    // If no GameObject specified, get the first panel in the scene
+                    foundPanel = Object.FindObjectOfType<BanterUIPanel>();
                 }
 
                 flow.SetValue(panelReference, foundPanel);
@@ -49,14 +49,14 @@ namespace Banter.VisualScripting
 
                 if (foundPanel == null)
                 {
-                    Debug.LogWarning($"[GetUIPanel] No UI Panel found with ID: {id}");
+                    Debug.LogWarning($"[GetUIPanel] No UI Panel found on GameObject: {(gameObj?.name ?? "null")}");
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            panelId = ValueInput("Panel ID", 0);
+            gameObjectRef = ValueInput<GameObject>("GameObject", null);
             panelReference = ValueOutput<BanterUIPanel>("Panel");
             success = ValueOutput<bool>("Found");
         }

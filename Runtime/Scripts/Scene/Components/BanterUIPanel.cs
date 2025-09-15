@@ -2,7 +2,6 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Banter.UI.Bridge;
-using Banter.UI.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -20,9 +19,12 @@ namespace Banter.SDK
         UIElementBridge uiElementBridge;
         WorldSpaceUIDocument worldSpaceUIDocument;
 
-        [See(initial = "-1")][HideInInspector][SerializeField] internal int panelId = -1;
         [See(initial = "512,512")][HideInInspector][SerializeField] internal Vector2 resolution = new Vector2(512,512);
         [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
+        
+        // Internal panel management
+        private static int nextPanelId = 0;
+        private int internalPanelId = -1;
 
 
         [Method]
@@ -35,71 +37,95 @@ namespace Banter.SDK
         }
 
         /// <summary>
-        /// Acquire a panel ID from the pool and set it on this panel
-        /// Used by Visual Scripting nodes to automatically manage panel IDs
+        /// Gets the formatted panel ID for UI commands - used by Visual Scripting nodes
+        /// Uses object ID and component ID for consistency with TypeScript side
         /// </summary>
-        /// <returns>The acquired panel ID, or -1 if no panels available</returns>
-        public int AcquirePanelId()
+        /// <returns>Formatted panel ID string</returns>
+        public string GetFormattedPanelId()
         {
-            // Release current panel if we have one
-            if (acquiredPanelFromPool && lastAcquiredPanelId >= 0)
-            {
-                UIPanelPool.ReleasePanel(lastAcquiredPanelId);
-            }
-
-            // Acquire new panel ID
-            int newPanelId = UIPanelPool.AcquirePanel();
-            if (newPanelId >= 0)
-            {
-                panelId = newPanelId;
-                acquiredPanelFromPool = true;
-                lastAcquiredPanelId = newPanelId;
-                Debug.Log($"[BanterUIPanel] Acquired panel ID {newPanelId} from pool");
-                
-                // Trigger update callback to initialize the panel
-                UpdateCallback(new List<PropertyName> { PropertyName.panelId });
-            }
-            else
-            {
-                Debug.LogError($"[BanterUIPanel] No available panel IDs! Maximum of {UIPanelPool.MaxPanels} panels allowed.");
-            }
-
-            return newPanelId;
+            return $"panel_{oid}_{cid}";
         }
 
         /// <summary>
-        /// Get the current panel pool status for debugging
+        /// Gets the internal panel settings name based on internal panel ID
+        /// This is used internally to determine which PanelSettings resource to load
         /// </summary>
-        /// <returns>Pool status information</returns>
-        public static PoolStatus GetPoolStatus()
+        /// <returns>Panel settings resource name</returns>
+        private string GetPanelSettingsName()
         {
-            return UIPanelPool.GetPoolStatus();
+            return $"PanelSettings {internalPanelId}";
         }
 
         /// <summary>
-        /// Initialize panel using existing UIDocument and its panel settings
-        /// This bypasses the pool system and uses the document's existing configuration
+        /// Validates that the panel is ready for UI operations - used by Visual Scripting nodes
         /// </summary>
-        /// <param name="document">UIDocument with existing panel settings</param>
-        /// <returns>True if initialization was successful</returns>
-        public bool InitializeWithExistingDocument(UIDocument document)
+        /// <param name="operationName">Name of the operation for logging</param>
+        /// <returns>True if panel is ready for UI operations</returns>
+        public bool ValidateForUIOperation(string operationName)
         {
-            if (document?.panelSettings == null)
+            // Initialize panel if not already initialized
+            if (uiElementBridge == null && uiDocument == null)
             {
-                Debug.LogError("[BanterUIPanel] Cannot initialize with UIDocument - document or panel settings is null");
+                if (!InitializePanel())
+                {
+                    Debug.LogWarning($"[{operationName}] Failed to initialize panel.");
+                    return false;
+                }
+            }
+
+            if (uiElementBridge == null)
+            {
+                Debug.LogWarning($"[{operationName}] UI Element Bridge is not initialized. Make sure the panel is properly set up.");
                 return false;
             }
 
+            if (internalPanelId == -1)
+            {
+                Debug.LogWarning($"[{operationName}] Panel ID is not assigned. Panel may not be initialized.");
+                return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Initialize panel - creates UIDocument if needed or uses existing one
+        /// </summary>
+        /// <param name="document">Optional UIDocument with existing panel settings</param>
+        /// <returns>True if initialization was successful</returns>
+        public bool InitializePanel(UIDocument document = null)
+        {
             try
             {
-                // Use the existing panel settings without loading from resources
-                panelSettings = document.panelSettings;
-                uiDocument = document;
-                
-                // Set a special panel ID to indicate this doesn't use the pool
-                panelId = -99; // Special value for UXML-based panels
-                acquiredPanelFromPool = false; // We didn't acquire from pool
-                lastAcquiredPanelId = -1; // No pool ID to track
+                if (document != null && document.panelSettings != null)
+                {
+                    // Use the existing UIDocument and its panel settings
+                    panelSettings = document.panelSettings;
+                    uiDocument = document;
+                    Debug.Log($"[BanterUIPanel] Using existing UIDocument with panel settings: {panelSettings.name}");
+                }
+                else
+                {
+                    // Create or get UIDocument and load panel settings from resources
+                    uiDocument = gameObject.GetComponent<UIDocument>();
+                    if (uiDocument == null)
+                    {
+                        uiDocument = gameObject.AddComponent<UIDocument>();
+                        createdUIDocument = true;
+                    }
+                    
+                    // Load panel settings from resources using internal panel ID
+                    var panelSettingsName = GetPanelSettingsName();
+                    panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
+                    if (panelSettings == null)
+                    {
+                        Debug.LogError($"[BanterUIPanel] Failed to load PanelSettings: {panelSettingsName}. Make sure the asset exists in Resources/UI/ folder.");
+                        return false;
+                    }
+                    
+                    uiDocument.panelSettings = panelSettings;
+                    Debug.Log($"[BanterUIPanel] Created UIDocument with loaded panel settings: {panelSettingsName}");
+                }
                 
                 Debug.Log($"[BanterUIPanel] Initialized with existing UIDocument and panel settings: {panelSettings.name}");
 
@@ -125,11 +151,11 @@ namespace Banter.SDK
                     uiElementBridge.mainDocument = uiDocument;
                 }
 
-                // Register with a special identifier for UXML panels
-                var registrationId = $"UXML_Panel_{gameObject.GetInstanceID()}";
+                // Register with object and component ID for consistency
+                var registrationId = GetFormattedPanelId();
                 UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge);
 
-                Debug.Log($"[BanterUIPanel] Successfully initialized UXML panel with registration ID: {registrationId}");
+                Debug.Log($"[BanterUIPanel] Successfully initialized panel with ID: {registrationId}");
 
                 // Handle screen space vs world space setup
                 SetupRenderingMode();
@@ -146,6 +172,16 @@ namespace Banter.SDK
                 Debug.LogError($"[BanterUIPanel] Failed to initialize with existing document: {e.Message}");
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Initialize panel using existing UIDocument and its panel settings (legacy method for backward compatibility)
+        /// </summary>
+        /// <param name="document">UIDocument with existing panel settings</param>
+        /// <returns>True if initialization was successful</returns>
+        public bool InitializeWithExistingDocument(UIDocument document)
+        {
+            return InitializePanel(document);
         }
 
         /// <summary>
@@ -232,8 +268,6 @@ namespace Banter.SDK
         private bool createdMeshRenderer = false;
         private bool createdMeshFilter = false;
         private bool createdUIDocument = false;
-        private bool acquiredPanelFromPool = false;
-        private int lastAcquiredPanelId = -1; // Track the last panel ID we acquired
 
         public static bool IsScreenSpaceActive = false;
         
@@ -329,7 +363,7 @@ namespace Banter.SDK
             // Unregister this panel instance
             if (uiElementBridge != null)
             {
-                var registrationId = $"PanelSettings {panelId}";
+                var registrationId = GetFormattedPanelId();
                 UIElementBridge.UnregisterPanelInstance(registrationId);
                 Destroy(uiElementBridge);
                 uiElementBridge = null;
@@ -376,15 +410,6 @@ namespace Banter.SDK
                 }
             }
 
-            // Release panel ID if we acquired it from the pool
-            if (acquiredPanelFromPool && lastAcquiredPanelId >= 0)
-            {
-                UIPanelPool.ReleasePanel(lastAcquiredPanelId);
-                acquiredPanelFromPool = false;
-                lastAcquiredPanelId = -1;
-                Debug.Log($"[BanterUIPanel] Released panel ID {lastAcquiredPanelId} back to pool");
-            }
-
             // Reset flags
             createdUIDocument = false;
             createdMeshRenderer = false;
@@ -397,83 +422,19 @@ namespace Banter.SDK
 
         internal override void StartStuff()
         {
-            // throw new NotImplementedException();
+            if (internalPanelId == -1)
+            {
+                internalPanelId = nextPanelId++;
+            }
+            
+            // Initialize panel if not already initialized
+            if (uiDocument == null && uiElementBridge == null)
+            {
+                InitializePanel();
+            }
         }
         void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (changedProperties.Contains(PropertyName.panelId) && uiElementBridge == null)
-            {
-                // Validate panel ID range
-                if (!UIPanelPool.IsValidPanelId(panelId))
-                {
-                    Debug.LogWarning($"[BanterUIPanel] Invalid panel ID: {panelId}. Panel ID should be 0-{UIPanelPool.MaxPanels - 1}.");
-                    return;
-                }
-
-                // If we had a previous panel ID that we acquired, release it first
-                if (acquiredPanelFromPool && lastAcquiredPanelId >= 0 && lastAcquiredPanelId != panelId)
-                {
-                    UIPanelPool.ReleasePanel(lastAcquiredPanelId);
-                    Debug.Log($"[BanterUIPanel] Released previous panel ID {lastAcquiredPanelId} when changing to {panelId}");
-                }
-
-                // Try to acquire the specific panel ID to prevent conflicts
-                if (!UIPanelPool.AcquireSpecificPanel(panelId))
-                {
-                    Debug.LogError($"[BanterUIPanel] Panel ID {panelId} is already in use! This could cause conflicts between TypeScript and Visual Scripting setup.");
-                    return;
-                }
-                
-                acquiredPanelFromPool = true; // We acquired it through the pool system
-                lastAcquiredPanelId = panelId; // Track this panel ID
-
-                if (renderTexture != null)
-                {
-                    renderTexture.Release();
-                    Destroy(renderTexture);
-                }
-                renderTexture = new RenderTexture((int)resolution.x, (int)resolution.y, 16, RenderTextureFormat.ARGB32);
-                renderTexture.Create();
-
-                // Load the specific panel settings from resources using the panel ID
-                var panelSettingsName = $"PanelSettings {panelId}";
-                if (panelSettings == null)
-                {
-                    panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
-                    if (panelSettings == null)
-                    {
-                        Debug.LogError($"[BanterUIPanel] Failed to load PanelSettings: {panelSettingsName}. Make sure the asset exists in Resources/UI/ folder.");
-                        return;
-                    }
-                    Debug.Log($"[BanterUIPanel] Loaded PanelSettings: {panelSettingsName}");
-                }
-                uiDocument = gameObject.GetComponent<UIDocument>();
-                if (uiDocument == null)
-                {
-                    uiDocument = gameObject.AddComponent<UIDocument>();
-                    // Use the panel settings directly instead of instantiating
-                    createdUIDocument = true;
-                }
-
-                uiDocument.panelSettings = panelSettings;
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));   
-
-                uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
-
-                if (uiElementBridge == null)
-                {
-                    uiElementBridge = gameObject.AddComponent<UIElementBridge>();
-                    uiElementBridge.banterLink = scene.link;
-                    uiElementBridge.mainDocument = uiDocument;
-                }
-
-                // Register this panel instance using the PanelSettings name as ID
-                UIElementBridge.RegisterPanelInstance(panelSettingsName, uiElementBridge);
-
-                Debug.Log($"[BanterUIPanel] Successfully initialized panel with ID: {panelSettingsName}");
-            }
             if (changedProperties.Contains(PropertyName.resolution))
             {
                 if (!screenSpace)
@@ -518,10 +479,7 @@ namespace Banter.SDK
                         worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
                         worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
                         worldSpaceUIDocument.enabled = false;
-                        Debug.Log("Panel Settings Initialized bef: " + (uiDocument == null));
-
                         worldSpaceUIDocument._uiDocument = uiDocument;
-                        Debug.Log("Panel Settings Initialized bef aft: " + (uiDocument == null));
                         worldSpaceUIDocument._collider = col;
                     }
                 }
@@ -586,7 +544,6 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
         // BANTER COMPILED CODE 
-        public System.Int32 PanelId { get { return panelId; } set { panelId = value; UpdateCallback(new List<PropertyName> { PropertyName.panelId }); } }
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
         public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
 
@@ -611,7 +568,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.panelId, PropertyName.resolution, PropertyName.screenSpace, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, };
             UpdateCallback(changedProperties);
         }
 
@@ -670,15 +627,6 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
-                {
-                    var valpanelId = (BanterInt)values[i];
-                    if (valpanelId.n == PropertyName.panelId)
-                    {
-                        panelId = valpanelId.x;
-                        changedProperties.Add(PropertyName.panelId);
-                    }
-                }
                 if (values[i] is BanterVector2)
                 {
                     var valresolution = (BanterVector2)values[i];
@@ -704,18 +652,6 @@ namespace Banter.SDK
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
-                    name = PropertyName.panelId,
-                    type = PropertyType.Int,
-                    value = panelId,
-                    componentType = ComponentType.BanterUIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
             if (force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()

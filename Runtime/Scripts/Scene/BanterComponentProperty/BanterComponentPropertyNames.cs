@@ -155,7 +155,6 @@ namespace Banter.SDK
         up,
         forward,
         right,
-        panelId,
         resolution,
         screenSpace,
         skipOnDrop,

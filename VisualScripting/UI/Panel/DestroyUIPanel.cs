@@ -1,7 +1,6 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.UI.Core;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -38,14 +37,10 @@ namespace Banter.VisualScripting
 
                 try
                 {
-                    // Release panel ID back to pool before destroying
-                    int panelId = panel.PanelId;
-                    UIPanelPool.ReleasePanel(panelId);
-                    
-                    // Destroy the panel component
+                    // Destroy the panel component (panel IDs are handled internally)
                     Object.Destroy(panel);
                     
-                    Debug.Log($"[DestroyUIPanel] Released panel ID {panelId} and destroyed panel component");
+                    Debug.Log($"[DestroyUIPanel] Destroyed panel component");
                     flow.SetValue(success, true);
                 }
                 catch (System.Exception e)

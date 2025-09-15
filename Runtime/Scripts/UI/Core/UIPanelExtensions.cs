@@ -9,30 +9,24 @@ namespace Banter.UI.Core
     public static class UIPanelExtensions
     {
         /// <summary>
-        /// Get the formatted panel settings name for this panel
-        /// Uses UIPanelPool for pooled panels or special format for UXML panels
+        /// Get the formatted panel ID for this panel
+        /// Uses internal panel ID management
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
-        /// <returns>Formatted panel settings name (e.g., "PanelSettings 5" or "UXML_Panel_123")</returns>
+        /// <returns>Formatted panel ID string (e.g., "Panel_0")</returns>
         public static string GetFormattedPanelId(this BanterUIPanel panel)
         {
             if (panel == null)
             {
-                Debug.LogWarning("[UIPanelExtensions] Panel reference is null, using fallback panel ID 0");
-                return UIPanelPool.GetPanelSettingsName(0);
+                Debug.LogWarning("[UIPanelExtensions] Panel reference is null, using fallback panel ID");
+                return "Panel_0";
             }
             
-            // Check if this is a UXML panel (panelId = -99)
-            if (panel.PanelId == -99)
-            {
-                return $"UXML_Panel_{panel.gameObject.GetInstanceID()}";
-            }
-            
-            return UIPanelPool.GetPanelSettingsName(panel.PanelId);
+            return panel.GetFormattedPanelId();
         }
         
         /// <summary>
-        /// Check if this panel's ID is valid (either pooled or UXML)
+        /// Check if this panel's ID is valid
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
         /// <returns>true if panel ID is valid, false otherwise</returns>
@@ -40,32 +34,26 @@ namespace Banter.UI.Core
         {
             if (panel == null) return false;
             
-            // UXML panels use special ID -99
-            if (panel.PanelId == -99) return true;
-            
-            return UIPanelPool.IsValidPanelId(panel.PanelId);
+            // Panel is valid if it has been initialized (internal ID >= 0)
+            return panel.ValidateForUIOperation("HasValidPanelId");
         }
         
         /// <summary>
-        /// Check if this panel's ID is currently marked as in use in the pool
-        /// Note: This doesn't guarantee the panel is properly configured, just that the ID is allocated
-        /// UXML panels are considered always "in use" since they don't use the pool
+        /// Check if this panel is currently in use (i.e., properly initialized)
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
-        /// <returns>true if panel ID is marked as in use, false otherwise</returns>
+        /// <returns>true if panel is initialized and in use, false otherwise</returns>
         public static bool IsPanelIdInUse(this BanterUIPanel panel)
         {
             if (panel == null) return false;
             
-            // UXML panels are always considered "in use"
-            if (panel.PanelId == -99) return true;
-            
-            return UIPanelPool.IsPanelInUse(panel.PanelId);
+            // Panel is in use if it's been properly initialized
+            return panel.ValidateForUIOperation("IsPanelIdInUse");
         }
         
         /// <summary>
         /// Validate that this panel is ready for UI operations
-        /// Checks for null panel, valid panel ID, and required components
+        /// Checks for null panel and required components
         /// </summary>
         /// <param name="panel">The BanterUIPanel instance</param>
         /// <param name="operationName">Name of the operation being performed (for error logging)</param>
@@ -78,22 +66,8 @@ namespace Banter.UI.Core
                 return false;
             }
             
-            if (!panel.HasValidPanelId())
-            {
-                var validRange = panel.PanelId == -99 ? "UXML panel" : $"0-{UIPanelPool.MaxPanels - 1}";
-                Debug.LogWarning($"[UIPanelExtensions] Invalid panel ID {panel.PanelId} for {operationName}. Must be {validRange}");
-                return false;
-            }
-            
-            // Check for required UIElementBridge component
-            var bridge = panel.GetComponent<Banter.UI.Bridge.UIElementBridge>();
-            if (bridge == null)
-            {
-                Debug.LogError($"[UIPanelExtensions] UIElementBridge not found on panel for {operationName}");
-                return false;
-            }
-            
-            return true;
+            // Use the panel's own validation method
+            return panel.ValidateForUIOperation(operationName);
         }
         
         /// <summary>
