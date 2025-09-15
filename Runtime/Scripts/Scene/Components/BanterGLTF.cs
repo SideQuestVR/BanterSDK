@@ -182,7 +182,7 @@ namespace Banter.SDK
                                 }
                                 if (slippery)
                                 {
-                                    collider.material = new PhysicMaterial()
+                                    collider.material = new PhysicsMaterial()
                                     {
                                         dynamicFriction = 0,
                                         staticFriction = 0
