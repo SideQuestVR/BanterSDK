@@ -47,6 +47,24 @@ namespace Banter.UI.Elements
             return !string.IsNullOrEmpty(className) && ClassListContains(className);
         }
 
+        [UIMethod(methodName: "AddClass")]
+        public void AddClass(string className)
+        {
+            if (!string.IsNullOrEmpty(className) && !ClassListContains(className))
+            {
+                AddToClassList(className);
+            }
+        }
+
+        [UIMethod(methodName: "RemoveClass")]
+        public void RemoveClass(string className)
+        {
+            if (!string.IsNullOrEmpty(className) && ClassListContains(className))
+            {
+                RemoveFromClassList(className);
+            }
+        }
+
         [UIMethod(methodName: "Focus")]
         public new void Focus()
         {
