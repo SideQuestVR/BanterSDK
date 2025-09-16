@@ -19,8 +19,24 @@ namespace Banter.UI.Elements
                     if (parameters == null || parameters.Length != 1)
                         throw new ArgumentException($"Method HasClass expects 1 parameters, got {parameters?.Length ?? 0}");
 
-                    var className = parameters[0];
-                    HasClass(className);
+                    var hasClassClassName = parameters[0];
+                    HasClass(hasClassClassName);
+                    return true;
+
+                case "AddClass":
+                    if (parameters == null || parameters.Length != 1)
+                        throw new ArgumentException($"Method AddClass expects 1 parameters, got {parameters?.Length ?? 0}");
+
+                    var addClassClassName = parameters[0];
+                    AddClass(addClassClassName);
+                    return true;
+
+                case "RemoveClass":
+                    if (parameters == null || parameters.Length != 1)
+                        throw new ArgumentException($"Method RemoveClass expects 1 parameters, got {parameters?.Length ?? 0}");
+
+                    var removeClassClassName = parameters[0];
+                    RemoveClass(removeClassClassName);
                     return true;
 
                 case "Focus":

@@ -19,17 +19,17 @@ namespace Banter.UI.Elements
                     if (parameters == null || parameters.Length != 1)
                         throw new ArgumentException($"Method SetValue expects 1 parameters, got {parameters?.Length ?? 0}");
 
-                    var newValue = float.Parse(parameters[0]);
-                    SetValue(newValue);
+                    var setValueNewValue = float.Parse(parameters[0]);
+                    SetValue(setValueNewValue);
                     return true;
 
                 case "SetRange":
                     if (parameters == null || parameters.Length != 2)
                         throw new ArgumentException($"Method SetRange expects 2 parameters, got {parameters?.Length ?? 0}");
 
-                    var min = float.Parse(parameters[0]);
-                    var max = float.Parse(parameters[1]);
-                    SetRange(min, max);
+                    var setRangeMin = float.Parse(parameters[0]);
+                    var setRangeMax = float.Parse(parameters[1]);
+                    SetRange(setRangeMin, setRangeMax);
                     return true;
 
                 case "Reset":
@@ -40,8 +40,24 @@ namespace Banter.UI.Elements
                     if (parameters == null || parameters.Length != 1)
                         throw new ArgumentException($"Method HasClass expects 1 parameters, got {parameters?.Length ?? 0}");
 
-                    var className = parameters[0];
-                    HasClass(className);
+                    var hasClassClassName = parameters[0];
+                    HasClass(hasClassClassName);
+                    return true;
+
+                case "AddClass":
+                    if (parameters == null || parameters.Length != 1)
+                        throw new ArgumentException($"Method AddClass expects 1 parameters, got {parameters?.Length ?? 0}");
+
+                    var addClassClassName = parameters[0];
+                    AddClass(addClassClassName);
+                    return true;
+
+                case "RemoveClass":
+                    if (parameters == null || parameters.Length != 1)
+                        throw new ArgumentException($"Method RemoveClass expects 1 parameters, got {parameters?.Length ?? 0}");
+
+                    var removeClassClassName = parameters[0];
+                    RemoveClass(removeClassClassName);
                     return true;
 
                 case "Focus":
