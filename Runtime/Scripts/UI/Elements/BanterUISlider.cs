@@ -33,13 +33,13 @@ namespace Banter.UI.Elements
             set => base.value = value;
         }
 
-        [UIMethod(methodName: "setValue")]
+        [UIMethod(methodName: "SetValue")]
         public void SetValue(float newValue)
         {
             value = Mathf.Clamp(newValue, lowValue, highValue);
         }
 
-        [UIMethod(methodName: "setRange")]
+        [UIMethod(methodName: "SetRange")]
         public void SetRange(float min, float max)
         {
             lowValue = min;
@@ -47,7 +47,7 @@ namespace Banter.UI.Elements
             value = Mathf.Clamp(value, min, max);
         }
 
-        [UIMethod(methodName: "reset")]
+        [UIMethod(methodName: "Reset")]
         public void Reset()
         {
             value = (lowValue + highValue) * 0.5f;
@@ -75,19 +75,19 @@ namespace Banter.UI.Elements
         }
 
         // Methods for common operations
-        [UIMethod(methodName: "hasClass")]
+        [UIMethod(methodName: "HasClass")]
         public bool HasClass(string className)
         {
             return !string.IsNullOrEmpty(className) && ClassListContains(className);
         }
 
-        [UIMethod(methodName: "focus")]
+        [UIMethod(methodName: "Focus")]
         public new void Focus()
         {
             base.Focus();
         }
 
-        [UIMethod(methodName: "blur")]
+        [UIMethod(methodName: "Blur")]
         public new void Blur()
         {
             base.Blur();

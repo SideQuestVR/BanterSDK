@@ -15,40 +15,40 @@ namespace Banter.UI.Elements
         {
             switch (methodName)
             {
-                case "setValue":
+                case "SetValue":
                     if (parameters == null || parameters.Length != 1)
-                        throw new ArgumentException($"Method setValue expects 1 parameters, got {parameters?.Length ?? 0}");
+                        throw new ArgumentException($"Method SetValue expects 1 parameters, got {parameters?.Length ?? 0}");
 
                     var newValue = float.Parse(parameters[0]);
                     SetValue(newValue);
                     return true;
 
-                case "setRange":
+                case "SetRange":
                     if (parameters == null || parameters.Length != 2)
-                        throw new ArgumentException($"Method setRange expects 2 parameters, got {parameters?.Length ?? 0}");
+                        throw new ArgumentException($"Method SetRange expects 2 parameters, got {parameters?.Length ?? 0}");
 
                     var min = float.Parse(parameters[0]);
                     var max = float.Parse(parameters[1]);
                     SetRange(min, max);
                     return true;
 
-                case "reset":
+                case "Reset":
                     Reset();
                     return true;
 
-                case "hasClass":
+                case "HasClass":
                     if (parameters == null || parameters.Length != 1)
-                        throw new ArgumentException($"Method hasClass expects 1 parameters, got {parameters?.Length ?? 0}");
+                        throw new ArgumentException($"Method HasClass expects 1 parameters, got {parameters?.Length ?? 0}");
 
                     var className = parameters[0];
                     HasClass(className);
                     return true;
 
-                case "focus":
+                case "Focus":
                     Focus();
                     return true;
 
-                case "blur":
+                case "Blur":
                     Blur();
                     return true;
 

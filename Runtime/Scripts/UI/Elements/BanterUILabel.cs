@@ -39,19 +39,19 @@ namespace Banter.UI.Elements
         }
 
         // Methods for common operations
-        [UIMethod(methodName: "hasClass")]
+        [UIMethod(methodName: "HasClass")]
         public bool HasClass(string className)
         {
             return !string.IsNullOrEmpty(className) && ClassListContains(className);
         }
 
-        [UIMethod(methodName: "focus")]
+        [UIMethod(methodName: "Focus")]
         public new void Focus()
         {
             base.Focus();
         }
 
-        [UIMethod(methodName: "blur")]
+        [UIMethod(methodName: "Blur")]
         public new void Blur()
         {
             base.Blur();
