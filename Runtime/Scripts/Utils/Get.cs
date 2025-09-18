@@ -30,6 +30,7 @@ namespace Banter.SDK
         public string url;
     }
 
+    [Serializable]
     public class UserAvatar
     {
         public long user_avatars_id;
