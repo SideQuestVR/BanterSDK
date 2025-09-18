@@ -60,17 +60,18 @@ namespace Banter.SDKEditor
                 return Data.User;
             }
         }
-    public IEnumerator AttachAvatar(Action OnCompleted, Action<Exception> OnError, long highId, long lowId)
+         public IEnumerator AttachAvatar(Action OnCompleted, Action<Exception> OnError, long highId, long lowId, string name)
         {
+            yield return new WaitForSeconds(5);
             if (Data.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorUploadAvatars>($"/v2/users/me/avatar/files", new SqEditorUploadAvatars() { HighId = highId, LowId = lowId, Public = true, Version = 2 }, (u) =>
+            yield return JsonPost<SqEditorUploadAvatars>($"/v2/users/me/avatars", new SqEditorUploadAvatars() { HighId = highId, LowId = lowId, Public = true, Version = 2, IsSelected = true, Name = name, PreviewImage=highId}, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false, true);
+            }, OnError, true, false, false);
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements

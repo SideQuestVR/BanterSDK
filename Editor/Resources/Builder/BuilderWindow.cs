@@ -1264,7 +1264,7 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("Failed to upload avatar: " + e);
             Debug.LogError("Failed to upload avatar: " + e);
             callback();
-        }, avatarFileId, avatarFileId), this);
+        }, avatarFileId, avatarFileId, avatarGameObject.name), this);
         // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
         // EditorUtility.ClearProgressBar();
     }

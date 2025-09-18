@@ -479,6 +479,14 @@ public class SqEditorUploadAvatars
     /// </summary>
     [JsonProperty("is_public")]
     public bool Public { get; set; }
+    
+    [JsonProperty("is_selected")]
+    public bool IsSelected { get; set; }
+    
+    [JsonProperty("name")] 
+    public string Name { get; set; }
 
+    [JsonProperty("preview_image")]
+    public long PreviewImage { get; set; }
 }
 }
