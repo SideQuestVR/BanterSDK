@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -176,7 +177,7 @@ namespace Banter.SDK
             try
             {
                 var text = await Text(GetUrl(EnvType.TEST, UrlType.API) + $"/v2/users/{userId}/avatars");
-                List<UserAvatar> avatars = JsonUtility.FromJson<List<UserAvatar>>(text);
+                List<UserAvatar> avatars = JsonConvert.DeserializeObject<List<UserAvatar>>(text);
                 foreach (UserAvatar a in avatars)
                 {
                     if (a.user_avatars_id == userAvatarId)
