@@ -14,5 +14,7 @@ namespace Banter.SDK
 
         public Action<BanterAttachment> AttachObject = _ => { };
         public Action<BanterAttachment> DetachObject = _ => { };
+
+        public Action<(long userId, long userAvatarId)> CloneAvatar = _ => { };
     }
 }

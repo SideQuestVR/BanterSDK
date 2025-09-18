@@ -56,16 +56,16 @@ namespace Banter.SDK
                             var _MainTex = renderer.sharedMaterial.mainTexture;
                             if (_MainTex != null)
                             {
-                                DestroyImmediate(_MainTex);
+                                DestroyImmediate(_MainTex, true);
                             } 
                         }
-                        DestroyImmediate(renderer.sharedMaterial);
+                        DestroyImmediate(renderer.sharedMaterial, true);
                         renderer.sharedMaterial = null;
                     }
                     var filter = child.GetComponent<MeshFilter>();
                     if (filter != null && filter.sharedMesh != null)
                     {
-                        DestroyImmediate(filter.sharedMesh);
+                        DestroyImmediate(filter.sharedMesh, true);
                         filter.sharedMesh = null;
                     }
                 }
@@ -85,6 +85,12 @@ namespace Banter.SDK
                 
                 try
                 {
+                    if (transform.childCount > 0)
+                    {
+                        //KillAvatar(transform.GetChild(0).gameObject);
+                        Destroy(transform.GetChild(0).gameObject);
+                    }
+                    
                     UserAvatar a = await Get.UserAvatar(userId, userAvatarId);
                     if (a == null)
                     {
@@ -93,26 +99,21 @@ namespace Banter.SDK
                     }
                     _loadableBundle = new BasisLoadableBundle();
                     _loadableBundle.UnlockPassword = authorId + "42069";
+                    a.high_avatar_files_id = 1617717;
                     _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"https://cdn.sidetestvr.com/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
                     BasisProgressReport BeeProgressReport = new BasisProgressReport();
                     BundledContentHolder.Selector PoliceMode = BundledContentHolder.Selector.Avatar;
-                    go = await BasisLoadHandler.LoadGameObjectBundle(_loadableBundle, false, BeeProgressReport, cancellationToken, Vector3.zero, Quaternion.identity, Vector3.one, false, PoliceMode, transform, false);
+                    go = await BasisLoadHandler.LoadGameObjectBundle(_loadableBundle, false, BeeProgressReport, cancellationToken, transform.position, transform.rotation, Vector3.one, false, PoliceMode, transform, false);
 
                     var comp = this;
                     if (comp == null || gameObject == null)
                     {
                         LogLine.Do("GameObject/Component was destroyed before avatar was loaded, killing the avatar.");
-                        KillAvatar(go);
+                        //KillAvatar(go);
                         Destroy(go);
                         return;
                     }
-                    if (transform.childCount > 0)
-                    {
-                        KillAvatar(transform.GetChild(0).gameObject);
-                        Destroy(transform.GetChild(0).gameObject);
-                    }
-                    
                    
                     SetLoadedIfNot();
                     _loadStarted = false;
@@ -131,6 +132,13 @@ namespace Banter.SDK
                 _loadStarted = false;
             }
         }
+
+        public void CloneAvatar()
+        {
+            LogLine.Do("Cloning avatar!");
+            BanterScene.Instance().data.CloneAvatar?.Invoke((userId, userAvatarId));
+        }
+        
         internal override void DestroyStuff()
         {
             KillAvatar(gameObject);
