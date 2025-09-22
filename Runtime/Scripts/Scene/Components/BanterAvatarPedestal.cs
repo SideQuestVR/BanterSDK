@@ -1,10 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Threading;
-using PlasticGui;
 using UnityEngine;
-using Siccity.GLTFUtility;
 
 namespace Banter.SDK
 {
@@ -89,7 +86,7 @@ namespace Banter.SDK
                     SqAvatar a = await Get.AvatarDetails(avatarId);
                     if (a == null)
                     {
-                        LogLine.Do("Invalid userId or avatarUserId");
+                        LogLine.Do("Invalid uavatarId");
                         return;
                     }
                     _loadableBundle = new BasisLoadableBundle();
