@@ -451,42 +451,42 @@ namespace Banter.SDKEditor
 
     }
     
-/// <summary>
-/// Represents basic upload creation request
-/// </summary>
-public class SqEditorUploadAvatars
-{
     /// <summary>
-    /// THe file unique id.
+    /// Represents basic upload creation request
     /// </summary>
-    [JsonProperty("high_avatar_files_id")]
-    public long HighId { get; set; }
+    public class SqEditorUploadAvatar
+    {
+        [JsonProperty("avatars_id")]
+        public long AvatarId { get; set; }
+        
+        [JsonProperty("high_avatar_files_id")]
+        public long HighId { get; set; }
 
-    /// <summary>
-    /// THe file unique id.
-    /// </summary>
-    [JsonProperty("version")]
-    public long Version { get; set; }
+        [JsonProperty("version")]
+        public long Version { get; set; }
 
-    /// <summary>
-    /// THe file path
-    /// </summary>
-    [JsonProperty("low_avatar_files_id")]
-    public long LowId { get; set; }
+        [JsonProperty("low_avatar_files_id")]
+        public long LowId { get; set; }
 
-    /// <summary>
-    /// THe file path
-    /// </summary>
-    [JsonProperty("is_public")]
-    public bool Public { get; set; }
+        [JsonProperty("is_public")]
+        public bool Public { get; set; }
+        
+        [JsonProperty("name")] 
+        public string Name { get; set; }
+
+        [JsonProperty("preview_image")]
+        public long PreviewImage { get; set; }
+    }
     
-    [JsonProperty("is_selected")]
-    public bool IsSelected { get; set; }
-    
-    [JsonProperty("name")] 
-    public string Name { get; set; }
-
-    [JsonProperty("preview_image")]
-    public long PreviewImage { get; set; }
-}
+    /// <summary>
+    /// Create avatar slot
+    /// </summary>
+    public class SqAvatarSlot
+    {
+        [JsonProperty("avatars_id")]
+        public long AvatarId { get; set; }
+        
+        [JsonProperty("is_selected")]
+        public bool IsSelected { get; set; }
+    }
 }

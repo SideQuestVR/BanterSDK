@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Networking;
 using Debug = System.Diagnostics.Debug;
@@ -60,7 +61,7 @@ namespace Banter.SDKEditor
                 return Data.User;
             }
         }
-         public IEnumerator AttachAvatar(Action OnCompleted, Action<Exception> OnError, long highId, long lowId, string name)
+        public IEnumerator PostAvatar(Action<SqEditorUploadAvatar> OnCompleted, Action<Exception> OnError, long highId, long lowId, string name)
         {
             yield return new WaitForSeconds(5);
             if (Data.Token == null)
@@ -68,7 +69,19 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorUploadAvatars>($"/v2/users/me/avatars", new SqEditorUploadAvatars() { HighId = highId, LowId = lowId, Public = true, Version = 2, IsSelected = true, Name = name, PreviewImage=highId}, (u) =>
+            yield return JsonPost<SqEditorUploadAvatar>($"/v2/avatars", new SqEditorUploadAvatar() { HighId = highId, LowId = lowId, Public = true, Version = 2, Name = name, PreviewImage=highId}, (av) =>
+            {
+                OnCompleted?.Invoke(av);
+            }, OnError, true, false, false);
+        }
+         public IEnumerator AttachAvatar(Action OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true}, (u) =>
             {
                 OnCompleted?.Invoke();
             }, OnError, true, false, false);

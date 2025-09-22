@@ -1254,17 +1254,29 @@ public class BuilderWindow : EditorWindow
             callback();
             yield break;
         }
-        EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar(() =>
+        EditorCoroutineUtility.StartCoroutine(sq.PostAvatar((av) =>
         {
-            status.AddStatus("Avatar uploaded successfully.");
-            Debug.Log("Avatar uploaded successfully.");
+            status.AddStatus("Posted avatar successfully.");
+            Debug.Log("Posted avatar successfully.");
             callback();
+            EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar(() =>
+            {
+                status.AddStatus("Avatar attached successfully.");
+                Debug.Log("Avatar attached successfully.");
+                callback();
+            }, e =>
+            {
+                status.AddStatus("Failed to attach avatar: " + e);
+                Debug.LogError("Failed to attach avatar: " + e);
+                callback();
+            }, av.AvatarId, true), this);
         }, e =>
         {
-            status.AddStatus("Failed to upload avatar: " + e);
-            Debug.LogError("Failed to upload avatar: " + e);
+            status.AddStatus("Failed to post avatar: " + e);
+            Debug.LogError("Failed to post avatar: " + e);
             callback();
         }, avatarFileId, avatarFileId, avatarGameObject.name), this);
+        
         // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
         // EditorUtility.ClearProgressBar();
     }

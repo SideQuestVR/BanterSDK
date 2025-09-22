@@ -27,14 +27,9 @@ namespace Banter.SDK
 
     public class BanterAvatarPedestal : BanterComponentBase
     {
-        [Tooltip("The The ID of the user the avatar belongs to.")]
-        [See(initial = "0")][SerializeField] internal long userId;
 
-        [Tooltip("The ID of the avatar \"slot\".")]
-        [See(initial = "0")][SerializeField] internal long userAvatarId;
-        
-        [Tooltip("The ID of the avatar's author.")]
-        [See(initial = "0")][SerializeField] internal long authorId;
+        [Tooltip("The ID of the avatar")]
+        [See(initial = "0")][SerializeField] internal long avatarId;
 
         BasisLoadableBundle _loadableBundle;
         private bool _loadStarted;
@@ -50,9 +45,9 @@ namespace Banter.SDK
                 if (child != null && child.gameObject != null && child.gameObject != gameObject)
                 {
                     var renderer = child.GetComponent<Renderer>();
-                    if (renderer != null)
+                    if (renderer)
                     {
-                        if (renderer.sharedMaterial.HasTexture("_MainTex")) {
+                        if (renderer.sharedMaterial?.HasTexture("_MainTex")??false) {
                             var _MainTex = renderer.sharedMaterial.mainTexture;
                             if (_MainTex != null)
                             {
@@ -91,14 +86,14 @@ namespace Banter.SDK
                         Destroy(transform.GetChild(0).gameObject);
                     }
                     
-                    UserAvatar a = await Get.UserAvatar(userId, userAvatarId);
+                    SqAvatar a = await Get.AvatarDetails(avatarId);
                     if (a == null)
                     {
                         LogLine.Do("Invalid userId or avatarUserId");
                         return;
                     }
                     _loadableBundle = new BasisLoadableBundle();
-                    _loadableBundle.UnlockPassword = authorId + "42069";
+                    _loadableBundle.UnlockPassword = a.author_users_id + "42069";
                     a.high_avatar_files_id = 1617717;
                     _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"https://cdn.sidetestvr.com/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
@@ -136,24 +131,21 @@ namespace Banter.SDK
         public void CloneAvatar()
         {
             LogLine.Do("Cloning avatar!");
-            BanterScene.Instance().data.CloneAvatar?.Invoke((userId, userAvatarId));
+            BanterScene.Instance().data.CloneAvatar?.Invoke(avatarId);
         }
         
         internal override void DestroyStuff()
         {
             KillAvatar(gameObject);
         }
-        
+
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             LoadAvatar();
         }
-        
         // BANTER COMPILED CODE 
-        public System.Int64 UserId { get { return userId; } set { userId = value; UpdateCallback(new List<PropertyName> { PropertyName.userId }); } }
-        public System.Int64 UserAvatarId { get { return userAvatarId; } set { userAvatarId = value; UpdateCallback(new List<PropertyName> { PropertyName.userAvatarId }); } }
-        public System.Int64 AuthorId { get { return authorId; } set { authorId = value; UpdateCallback(new List<PropertyName> { PropertyName.authorId }); } }
+        public System.Int64 AvatarId { get { return avatarId; } set { avatarId = value; UpdateCallback(new List<PropertyName> { PropertyName.avatarId }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -176,7 +168,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.userId, PropertyName.userAvatarId, PropertyName.authorId, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.avatarId, };
             UpdateCallback(changedProperties);
         }
 
@@ -223,29 +215,11 @@ namespace Banter.SDK
             {
                 if (values[i] is BanterInt)
                 {
-                    var valuserId = (BanterInt)values[i];
-                    if (valuserId.n == PropertyName.userId)
+                    var valavatarId = (BanterInt)values[i];
+                    if (valavatarId.n == PropertyName.avatarId)
                     {
-                        userId = valuserId.x;
-                        changedProperties.Add(PropertyName.userId);
-                    }
-                }
-                if (values[i] is BanterInt)
-                {
-                    var valuserAvatarId = (BanterInt)values[i];
-                    if (valuserAvatarId.n == PropertyName.userAvatarId)
-                    {
-                        userAvatarId = valuserAvatarId.x;
-                        changedProperties.Add(PropertyName.userAvatarId);
-                    }
-                }
-                if (values[i] is BanterInt)
-                {
-                    var valauthorId = (BanterInt)values[i];
-                    if (valauthorId.n == PropertyName.authorId)
-                    {
-                        authorId = valauthorId.x;
-                        changedProperties.Add(PropertyName.authorId);
+                        avatarId = valavatarId.x;
+                        changedProperties.Add(PropertyName.avatarId);
                     }
                 }
             }
@@ -259,33 +233,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.userId,
+                    name = PropertyName.avatarId,
                     type = PropertyType.Int,
-                    value = userId,
-                    componentType = ComponentType.BanterAvatarPedestal,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
-                    name = PropertyName.userAvatarId,
-                    type = PropertyType.Int,
-                    value = userAvatarId,
-                    componentType = ComponentType.BanterAvatarPedestal,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
-                    name = PropertyName.authorId,
-                    type = PropertyType.Int,
-                    value = authorId,
+                    value = avatarId,
                     componentType = ComponentType.BanterAvatarPedestal,
                     oid = oid,
                     cid = cid

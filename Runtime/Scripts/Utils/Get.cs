@@ -32,9 +32,27 @@ namespace Banter.SDK
     }
 
     [Serializable]
+    public class SqAvatar
+    {
+        public long avatars_id;
+        public long high_avatar_files_id;
+        public long low_avatar_files_id;
+        public string created_at;
+        public string last_modified;
+        public string version;
+        public bool is_public;
+        public long? preview_image;
+        public bool is_selected;
+        public long author_users_id;
+        public string name;
+    }
+    
+    [Serializable]
     public class UserAvatar
     {
         public long user_avatars_id;
+        public long avatars_id;
+        public long clone_from_user_id;
         public long high_avatar_files_id;
         public long low_avatar_files_id;
         public string created_at;
@@ -170,6 +188,18 @@ namespace Banter.SDK
                 {
                     return null;
                 }
+            }
+        }
+        public static async Task<SqAvatar> AvatarDetails(long avatarId)
+        {
+            try
+            {
+                var text = await Text(GetUrl(EnvType.TEST, UrlType.API) + $"/v2/avatars/{avatarId}");
+                return JsonConvert.DeserializeObject<SqAvatar>(text);
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
         public static async Task<UserAvatar> UserAvatar(long userId, long userAvatarId)
