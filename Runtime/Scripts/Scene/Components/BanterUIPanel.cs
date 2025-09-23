@@ -53,7 +53,7 @@ namespace Banter.SDK
         /// <returns>Panel settings resource name</returns>
         private string GetPanelSettingsName()
         {
-            return $"PanelSettings {internalPanelId}";
+            return $"PanelSettings {(internalPanelId > 19 ? 19 : internalPanelId)}";
         }
 
         /// <summary>
@@ -117,6 +117,11 @@ namespace Banter.SDK
                     // Load panel settings from resources using internal panel ID
                     var panelSettingsName = GetPanelSettingsName();
                     panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
+                    if (internalPanelId > 19)
+                    {
+                        Debug.LogWarning($"[BanterUIPanel] Internal panel ID {internalPanelId} exceeds maximum of 19. Using panel settings for ID 19.");
+                        panelSettings = Instantiate(panelSettings);
+                    }
                     if (panelSettings == null)
                     {
                         Debug.LogError($"[BanterUIPanel] Failed to load PanelSettings: {panelSettingsName}. Make sure the asset exists in Resources/UI/ folder.");
