@@ -91,7 +91,6 @@ namespace Banter.SDK
                     }
                     _loadableBundle = new BasisLoadableBundle();
                     _loadableBundle.UnlockPassword = a.author_users_id + "42069";
-                    a.high_avatar_files_id = 1617717;
                     _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"https://cdn.sidetestvr.com/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
                     BasisProgressReport BeeProgressReport = new BasisProgressReport();
@@ -127,13 +126,12 @@ namespace Banter.SDK
 
         public void CloneAvatar()
         {
-            LogLine.Do("Cloning avatar!");
             BanterScene.Instance().data.CloneAvatar?.Invoke(avatarId);
         }
         
         internal override void DestroyStuff()
         {
-            KillAvatar(gameObject);
+            //KillAvatar(gameObject);
         }
 
 
