@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Banter.UI.Bridge;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -425,21 +426,36 @@ namespace Banter.SDK
             scene.events.OnBanterUiPanelActiveChanged?.Invoke();
         }
 
+        /// <summary>
+        /// Ensures the panel is initialized before any operations
+        /// </summary>
+        /// <returns>True if initialization is successful or already initialized</returns>
+        private bool EnsureInitialized()
+        {
+            if (uiDocument == null || uiElementBridge == null)
+            {
+                if (internalPanelId == -1)
+                {
+                    internalPanelId = nextPanelId++;
+                }
+                return InitializePanel();
+            }
+            return true;
+        }
+
         internal override void StartStuff()
         {
-            if (internalPanelId == -1)
-            {
-                internalPanelId = nextPanelId++;
-            }
-            
-            // Initialize panel if not already initialized
-            if (uiDocument == null && uiElementBridge == null)
-            {
-                InitializePanel();
-            }
+            EnsureInitialized();
         }
         void UpdateCallback(List<PropertyName> changedProperties)
         {
+            // Ensure panel is initialized before processing updates
+            if (!EnsureInitialized())
+            {
+                // If initialization fails, we can't process updates yet
+                return;
+            }
+
             if (changedProperties.Contains(PropertyName.resolution))
             {
                 if (!screenSpace)
@@ -452,7 +468,6 @@ namespace Banter.SDK
                     renderTexture = new RenderTexture((int)resolution.x, (int)resolution.y, 16, RenderTextureFormat.ARGB32);
                     renderTexture.Create();
                 }
-
 
                 if (uiDocument != null)
                 {
@@ -478,15 +493,15 @@ namespace Banter.SDK
                     renderer = gameObject.AddComponent<MeshRenderer>();
                     renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
                     createdMeshRenderer = true;
-                    var col = gameObject.AddComponent<BoxCollider>();
-                    if (worldSpaceUIDocument == null)
-                    {
-                        worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
-                        worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
-                        worldSpaceUIDocument.enabled = false;
-                        worldSpaceUIDocument._uiDocument = uiDocument;
-                        worldSpaceUIDocument._collider = col;
-                    }
+                    
+                }
+                var col = gameObject.AddComponent<BoxCollider>();
+                if (worldSpaceUIDocument == null){
+                    worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                    worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
+                    worldSpaceUIDocument.enabled = false;
+                    worldSpaceUIDocument._uiDocument = uiDocument;
+                    worldSpaceUIDocument._collider = col;
                 }
                 if (screenSpace)
                 {

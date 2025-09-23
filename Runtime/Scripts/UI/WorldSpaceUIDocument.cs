@@ -33,7 +33,7 @@ using UnityEngine.UIElements;
 
         private PanelEventHandler _panelEventHandler;
         
-        private PanelSettings _panelSettings;
+        // private PanelSettings _panelSettings;
         private RenderTexture _renderTexture;
         private Material _material;
         private Vector3[] _linePoints = new Vector3[10];
@@ -42,7 +42,7 @@ using UnityEngine.UIElements;
     
         private void OnEnable ()
         {
-            _panelSettings = _uiDocument.panelSettings;
+            // _panelSettings = _uiDocument.panelSettings;
             Invoke(nameof(SetupClickAway), 0.25f);  
         }
 
@@ -129,19 +129,22 @@ using UnityEngine.UIElements;
             TransformPointerEventForUIToolkit(eventData);
             //LogLine.Do($"Pointer move: {eventData.position}");
             //Debug.Log("OnPointerMoveAfter" + eventData.position);
-
+            // var existingRaycaster = _panelEventHandler?.GetComponent<PanelRaycaster>();
             if (!_panelEventHandler)
             {
                 //LogLine.Do($"[Pn] PEH became null");
                 RebuildPanel();
             }
-            else if(_panelEventHandler.enabled==false)
+            else if (_panelEventHandler.enabled == false)
                 LogLine.Do($"PEH {_panelEventHandler.gameObject.name} is disabled");
-            else if(_panelEventHandler.GetComponent<PanelRaycaster>().enabled==true)
-                LogLine.Do($"PEH {_panelEventHandler.gameObject.name} raycaster is enabled");
+            // else if (existingRaycaster?.enabled == true)
+            // {
+            //     // LogLine.Do($"PEH {_panelEventHandler.gameObject.name} raycaster is enabled");
+            //     // existingRaycaster.enabled = false;
+            // }
             _panelEventHandler?.OnPointerMove(eventData);
-        
-            //if (!_onlyShowPointerOverElement)
+            
+                //if (!_onlyShowPointerOverElement)
                 //_pointerLineRenderer.enabled = true;
         }
 
@@ -287,7 +290,7 @@ using UnityEngine.UIElements;
                         position.y = position.y;
                         // compute a fake pointer screen position so it results in the proper panel position when projected from the camera by the PanelEventHandler
                         position.x += 0.5f; position.y -= 0.5f;
-                        position = Vector3.Scale(position, new Vector3(_uiDocument.rootVisualElement.layout.width, _uiDocument.rootVisualElement.layout.height, 1.0f)*_panelSettings.scale);
+                        position = Vector3.Scale(position, new Vector3(_uiDocument.rootVisualElement.layout.width, _uiDocument.rootVisualElement.layout.height, 1.0f)*_uiDocument.panelSettings.scale);
                         position.y += Screen.height;
                         
                         // print(new Vector2(position.x, Screen.height - position.y)); // print actual computed position in panel UIToolkit coords
