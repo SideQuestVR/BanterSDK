@@ -261,18 +261,18 @@ using UnityEngine.UIElements;
         }
 
         private Vector2 lastPointerPos;
-
+        
         protected void TransformPointerEventForUIToolkit (PointerEventData eventData)
         {
             var eventKey = (eventData, eventData.pointerId);
-
+            
             if (!_eventsProcessedInThisFrame.Contains(eventKey))
             {
                 _eventsProcessedInThisFrame.Add(eventKey);
                 Camera eventCamera = eventData.enterEventCamera ?? eventData.pressEventCamera;
 
                 if (eventCamera != null)
-                {
+                {                    
                     // get current event position and create the ray from the event camera
                     Vector3 position = eventData.position;
                     position.z = eventCamera.nearClipPlane;
@@ -291,6 +291,7 @@ using UnityEngine.UIElements;
                         // compute a fake pointer screen position so it results in the proper panel position when projected from the camera by the PanelEventHandler
                         position.x += 0.5f; position.y -= 0.5f;
                         position = Vector3.Scale(position, new Vector3(_uiDocument.rootVisualElement.layout.width, _uiDocument.rootVisualElement.layout.height, 1.0f)*_uiDocument.panelSettings.scale);
+
                         position.y += Screen.height;
                         
                         // print(new Vector2(position.x, Screen.height - position.y)); // print actual computed position in panel UIToolkit coords
