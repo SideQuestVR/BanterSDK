@@ -85,7 +85,6 @@ namespace Banter.SDKEditor
                 OnCompleted?.Invoke(av);
             }, OnError, true, false, "PATCH");
         }
-
         public IEnumerator GetAvatars(Action<List<SqEditorAvatar>> OnCompleted, Action<Exception> OnError)
         {
             if (Data.Token == null)
@@ -93,8 +92,9 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonGet<List<SqEditorAvatar>>($"/v2/users/me/avatars", OnCompleted, OnError, true);
+            yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars?author_id=me", OnCompleted, OnError, true);
         }
+        
          public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
         {
             if (Data.Token == null)
