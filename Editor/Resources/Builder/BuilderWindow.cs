@@ -56,7 +56,7 @@ public class BuilderWindow : EditorWindow
 
     public const string SQ_API_CLIENT_ID_TEST = "client_85b087d9975cb8ca5bb575a2";
 
-    public bool isTestEnvironment = false;
+    public bool isTestEnvironment = true;
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
@@ -149,6 +149,11 @@ public class BuilderWindow : EditorWindow
     Button SelectLeftFoot;
     Label RightFootPoseLabel;
     Button SelectRightFoot;
+
+    private DropdownField avatarIdDropdown;
+    private List<SqEditorAvatar> myAvatars;
+    private SqEditorAvatar selectedExistingAvatar;
+    private Toggle avatarIsPublicToggle;
 
     // Pose centerEyePose;
     // Pose leftFootPose;
@@ -302,6 +307,7 @@ public class BuilderWindow : EditorWindow
             RefreshView(true);
             avatarGameObject = AvatarRef.Instance.avatarGameObject;
             RefreshAvatarView(true);
+            SetupExistingAvatars();
         };
         if (avatarGameObject != null)
         { 
@@ -501,6 +507,25 @@ public class BuilderWindow : EditorWindow
 
         });
         new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropAvatarArea"), DropGameObject);
+
+        avatarIdDropdown = rootVisualElement.Q<DropdownField>("ddlAvatarId");
+        avatarIsPublicToggle = rootVisualElement.Q<Toggle>("togAvatarIsPublic");
+
+        avatarIdDropdown.RegisterCallback<ChangeEvent<string>>(evt =>
+        {
+            if (avatarIdDropdown.choices.IndexOf(evt.newValue) == 0)
+            {
+                selectedExistingAvatar = null;
+                avatarIsPublicToggle.value = true;
+            }
+            else
+            {
+                selectedExistingAvatar = myAvatars[avatarIdDropdown.choices.IndexOf(evt.newValue) - 1];
+                avatarIsPublicToggle.value = selectedExistingAvatar.Public;
+            }
+        });
+        
+        SetupExistingAvatars();
 
         buildAvatarButton = rootVisualElement.Q<Label>("buildAvatarButton");
         buildAvatarButton.RegisterCallback<MouseUpEvent>(async (e) =>
@@ -780,6 +805,26 @@ public class BuilderWindow : EditorWindow
             }
             SceneView.RepaintAll();
         });
+    }
+
+    private void SetupExistingAvatars()
+    {
+        avatarIdDropdown.choices = new List<string>();
+        avatarIdDropdown.choices.Add("<New Avatar>");
+        avatarIdDropdown.SetValueWithoutNotify(avatarIdDropdown.choices[0]);
+        
+        EditorCoroutineUtility.StartCoroutine(sq.GetAvatars(list =>
+        {
+            myAvatars = list;
+            foreach (SqEditorAvatar av in list)
+            {
+                avatarIdDropdown.choices.Add($"{av.Name} (ID: {av.AvatarId})");
+                if(selectedExistingAvatar?.AvatarId==av.AvatarId)
+                    avatarIdDropdown.SetValueWithoutNotify(avatarIdDropdown.choices[^1]);
+            }
+        }, Debug.LogException), this);
+
+        avatarIsPublicToggle.value = selectedExistingAvatar?.Public ?? true;
     }
 
     void GetExistingPose(ref Pose pose, string key, string defaults) {
@@ -1254,29 +1299,61 @@ public class BuilderWindow : EditorWindow
             callback();
             yield break;
         }
-        EditorCoroutineUtility.StartCoroutine(sq.PostAvatar((av) =>
+        Debug.Log("Taking screenshot...");
+        string screenpath = Path.Combine(Application.temporaryCachePath, avatarGameObject.name + ".png");
+        ObjectScreenshotter.CaptureGameObject(avatarGameObject, screenpath, 512, true, 1, 31);
+        Debug.Log("Uploading screenshot...");
+        long screenshotfileid = -1;
+        yield return UploadFile(Path.GetFileName(screenpath), null, fileId => screenshotfileid = fileId, screenpath);
+        Debug.Log($"Screenshot uploaded as {screenshotfileid}");
+
+        if (selectedExistingAvatar == null)
         {
-            status.AddStatus("Posted avatar successfully.");
-            Debug.Log("Posted avatar successfully.");
-            callback();
-            EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar(() =>
-            {
-                status.AddStatus("Avatar attached successfully.");
-                Debug.Log("Avatar attached successfully.");
-                callback();
-            }, e =>
-            {
-                status.AddStatus("Failed to attach avatar: " + e);
-                Debug.LogError("Failed to attach avatar: " + e);
-                callback();
-            }, av.AvatarId, true), this);
-        }, e =>
+            // Upload new avatar
+            EditorCoroutineUtility.StartCoroutine(sq.PostAvatar((av) =>
+                {
+                    status.AddStatus("Posted avatar successfully.");
+                    Debug.Log("Posted avatar successfully.");
+                    callback();
+                    selectedExistingAvatar = av;
+                    SetupExistingAvatars();
+                    EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar((slot) =>
+                    {
+                        status.AddStatus("Avatar attached successfully.");
+                        Debug.Log("Avatar attached successfully.");
+                        callback();
+                        EditorCoroutineUtility.StartCoroutine(
+                            sq.SelectAvatar(() => { }, Debug.LogException, slot.UserAvatarId), this);
+                    }, e =>
+                    {
+                        status.AddStatus("Failed to attach avatar: " + e);
+                        Debug.LogError("Failed to attach avatar: " + e);
+                        callback();
+                    }, av.AvatarId, true), this);
+                }, e =>
+                {
+                    status.AddStatus("Failed to post avatar: " + e);
+                    Debug.LogError("Failed to post avatar: " + e);
+                    callback();
+                }, avatarFileId, avatarFileId, screenshotfileid == -1 ? 0 : screenshotfileid, avatarGameObject.name,
+                avatarIsPublicToggle.value), this);
+        }
+        else
         {
-            status.AddStatus("Failed to post avatar: " + e);
-            Debug.LogError("Failed to post avatar: " + e);
-            callback();
-        }, avatarFileId, avatarFileId, avatarGameObject.name), this);
-        
+            // Upload to existing avatar
+            EditorCoroutineUtility.StartCoroutine(sq.UpdateAvatar((av) =>
+                {
+                    status.AddStatus("Updated avatar successfully.");
+                    Debug.Log("Updated avatar successfully.");
+                    callback();
+                }, e =>
+                {
+                    status.AddStatus("Failed to update avatar: " + e);
+                    Debug.LogError("Failed to update avatar: " + e);
+                    callback();
+                }, selectedExistingAvatar.AvatarId, avatarFileId, avatarFileId, screenshotfileid == -1 ? 0 : screenshotfileid, avatarGameObject.name,
+                avatarIsPublicToggle.value), this);
+        }
         // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
         // EditorUtility.ClearProgressBar();
     }

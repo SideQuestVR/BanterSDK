@@ -454,7 +454,7 @@ namespace Banter.SDKEditor
     /// <summary>
     /// Represents basic upload creation request
     /// </summary>
-    public class SqEditorUploadAvatar
+    public class SqEditorAvatar
     {
         [JsonProperty("avatars_id")]
         public long AvatarId { get; set; }
@@ -462,7 +462,7 @@ namespace Banter.SDKEditor
         [JsonProperty("high_avatar_files_id")]
         public long HighId { get; set; }
 
-        [JsonProperty("version")]
+        [JsonProperty("version",NullValueHandling = NullValueHandling.Ignore)]
         public long Version { get; set; }
 
         [JsonProperty("low_avatar_files_id")]
@@ -474,7 +474,7 @@ namespace Banter.SDKEditor
         [JsonProperty("name")] 
         public string Name { get; set; }
 
-        [JsonProperty("preview_image")]
+        [JsonProperty("preview_image",NullValueHandling = NullValueHandling.Ignore)]
         public long PreviewImage { get; set; }
     }
     
@@ -483,8 +483,21 @@ namespace Banter.SDKEditor
     /// </summary>
     public class SqAvatarSlot
     {
+        [JsonProperty("user_avatars_id")]
+        public long UserAvatarId { get; set; }
+        [JsonProperty("users_id")]
+        public long UsersID { get; set; }
         [JsonProperty("avatars_id")]
         public long AvatarId { get; set; }
+        
+        [JsonProperty("is_selected")]
+        public bool IsSelected { get; set; }
+    }
+    
+    public class SqAvatarSlotSelect
+    {
+        [JsonProperty("user_avatars_id")]
+        public long UserAvatarId { get; set; }
         
         [JsonProperty("is_selected")]
         public bool IsSelected { get; set; }
