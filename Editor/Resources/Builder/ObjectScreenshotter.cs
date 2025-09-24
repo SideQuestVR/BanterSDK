@@ -58,7 +58,11 @@ public class ObjectScreenshotter
             ? Quaternion.AngleAxis(-45f, target.transform.up) * forwardDir
             : forwardDir;
 
-        Vector3 camPos = center + camDir.normalized * (radius * 2f);
+        // Estimate distance from bounds size
+        float objectRadius = bounds.extents.magnitude;
+        float distance = objectRadius * 1.2f; // start a little out
+
+        Vector3 camPos = center + camDir.normalized * distance;
         cam.transform.position = camPos;
         cam.transform.LookAt(center, target.transform.up);
 
@@ -72,13 +76,11 @@ public class ObjectScreenshotter
             spot.spotAngle = 60f;
         }
 
-        // --- Adjust FOV to fit bounds ---
-        float distance = Vector3.Distance(cam.transform.position, center);
-        float fov = cam.fieldOfView;
-        float frustumHeight = 2.0f * distance * Mathf.Tan(fov * 0.5f * Mathf.Deg2Rad);
-        float scale = bounds.size.magnitude / frustumHeight;
-        if (scale > 1f)
-            cam.fieldOfView *= scale;
+        // --- Adjust FOV to fit bounds tightly ---
+        Vector3 extents = bounds.extents;
+        float maxSize = Mathf.Max(extents.x, extents.y, extents.z);
+        float requiredFov = 2f * Mathf.Atan((maxSize * (1.1f)) / distance) * Mathf.Rad2Deg;
+        cam.fieldOfView = Mathf.Max(requiredFov, 1f);
 
         // --- Render to texture ---
         RenderTexture rt = new RenderTexture(resolution, resolution, 24, RenderTextureFormat.ARGB32);
