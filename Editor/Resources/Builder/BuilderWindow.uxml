@@ -174,8 +174,8 @@
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 30px;">
                             <ui:VisualElement style="flex-grow: 1;">
-                                <ui:Label tabindex="-1" text="Create new Avatar or Upload to Existing" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px;" />
-                                <ui:DropdownField name="ddlAvatarId" style="margin-left: 30px;" />
+                                <ui:Label tabindex="-1" text="Create new Avatar or Upload to Existing" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px; display: none;" />
+                                <ui:DropdownField name="ddlAvatarId" style="margin-left: 30px; display: none;" />
                                 <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                                     <ui:Toggle name="togAvatarIsPublic" style="height: 22px; margin-left: 30px;" />
                                     <ui:Label tabindex="-1" text="Avatar is Public (other users can clone)" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 10px; margin-top: 5px;" />
