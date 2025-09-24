@@ -1322,8 +1322,7 @@ public class BuilderWindow : EditorWindow
                         status.AddStatus("Avatar attached successfully.");
                         Debug.Log("Avatar attached successfully.");
                         callback();
-                        EditorCoroutineUtility.StartCoroutine(
-                            sq.SelectAvatar(() => { }, Debug.LogException, slot.UserAvatarId), this);
+                        EditorCoroutineUtility.StartCoroutine(sq.SelectAvatar(() => { }, Debug.LogException, slot.UserAvatarId), this);
                     }, e =>
                     {
                         status.AddStatus("Failed to attach avatar: " + e);

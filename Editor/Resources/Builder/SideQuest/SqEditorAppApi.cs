@@ -114,7 +114,7 @@ namespace Banter.SDKEditor
             yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true}, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false,"PUT");
+            }, OnError, true, false,"PATCH");
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
