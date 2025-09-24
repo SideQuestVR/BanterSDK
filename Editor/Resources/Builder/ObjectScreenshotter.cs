@@ -120,13 +120,32 @@ public class ObjectScreenshotter
 
     private static Bounds CalculateObjectBounds(GameObject go)
     {
+        // disabledParticles = new List<ParticleSystem>();
+        //
+        // // Temporarily disable all ParticleSystems so they don't affect bounds
+        // foreach (var ps in go.GetComponentsInChildren<ParticleSystem>())
+        // {
+        //     if (ps.gameObject.activeInHierarchy && ps.GetComponent<Renderer>() != null)
+        //     {
+        //         if (ps.enableEmission) // legacy check for emission module
+        //         {
+        //             disabledParticles.Add(ps);
+        //             ps.gameObject.SetActive(false);
+        //         }
+        //     }
+        // }
+
         Renderer[] renderers = go.GetComponentsInChildren<Renderer>();
         if (renderers.Length == 0)
             return new Bounds(go.transform.position, Vector3.zero);
 
         Bounds bounds = renderers[0].bounds;
         foreach (Renderer r in renderers)
+        {
+            // Skip particle system renderers completely
+            if (r is ParticleSystemRenderer) continue;
             bounds.Encapsulate(r.bounds);
+        }
 
         return bounds;
     }
