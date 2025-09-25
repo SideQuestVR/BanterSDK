@@ -54,7 +54,7 @@ namespace Banter.SDK
         /// <returns>Panel settings resource name</returns>
         private string GetPanelSettingsName()
         {
-            return $"PanelSettings {(internalPanelId > 19 ? 19 : internalPanelId)}";
+            return screenSpace ? "ScreenSpace" : "WorldSpace";
         }
 
         /// <summary>
@@ -112,16 +112,20 @@ namespace Banter.SDK
                     if (uiDocument == null)
                     {
                         uiDocument = gameObject.AddComponent<UIDocument>();
+                        gameObject.AddComponent<PanelRaycaster>();
+                        gameObject.AddComponent<PanelEventHandler>();
+                        gameObject.AddComponent<AddPanelStuff>();
                         createdUIDocument = true;
                     }
                     
                     // Load panel settings from resources using internal panel ID
                     var panelSettingsName = GetPanelSettingsName();
                     panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
+                    panelSettings = Instantiate(panelSettings);
                     if (internalPanelId > 19)
                     {
                         Debug.LogWarning($"[BanterUIPanel] Internal panel ID {internalPanelId} exceeds maximum of 19. Using panel settings for ID 19.");
-                        panelSettings = Instantiate(panelSettings);
+
                     }
                     if (panelSettings == null)
                     {
@@ -130,21 +134,19 @@ namespace Banter.SDK
                     }
                     
                     uiDocument.panelSettings = panelSettings;
+                    uiDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Fixed;
+                    uiDocument.worldSpaceSize = new Vector2(100, 100);
+                    uiDocument.panelSettings.referenceSpritePixelsPerUnit = 500;
+                    uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPhysicalSize;
                     Debug.Log($"[BanterUIPanel] Created UIDocument with loaded panel settings: {panelSettingsName}");
                 }
                 
                 Debug.Log($"[BanterUIPanel] Initialized with existing UIDocument and panel settings: {panelSettings.name}");
 
-                // Set up the UI document
-                if (!createdUIDocument)
-                {
-                    createdUIDocument = false; // We didn't create it, so don't destroy it
-                }
-
                 // Add stylesheets
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
+                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
+                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
+                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
 
                 // Configure panel settings
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
@@ -159,7 +161,7 @@ namespace Banter.SDK
 
                 // Register with object and component ID for consistency
                 var registrationId = GetFormattedPanelId();
-                UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge);
+                UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge, this);
 
                 Debug.Log($"[BanterUIPanel] Successfully initialized panel with ID: {registrationId}");
 
@@ -206,41 +208,55 @@ namespace Banter.SDK
                     renderTexture.Create();
                 }
 
-                var renderer = gameObject.GetComponent<Renderer>();
-                if (renderer == null)
-                {
-                    var filter = gameObject.GetComponent<MeshFilter>();
-                    if (filter == null)
-                    {
-                        filter = gameObject.AddComponent<MeshFilter>();
-                        filter.mesh = CreateQuadMesh();
-                        createdMeshFilter = true;
-                    }
-                    renderer = gameObject.AddComponent<MeshRenderer>();
-                    renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
-                    createdMeshRenderer = true;
-                    
-                    var col = gameObject.AddComponent<BoxCollider>();
-                    if (worldSpaceUIDocument == null)
-                    {
-                        worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
-                        worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
-                        worldSpaceUIDocument._uiDocument = uiDocument;
-                        worldSpaceUIDocument._collider = col;
-                        worldSpaceUIDocument.enabled = true;
-                    }
-                }
+
+                
+                // var renderer = gameObject.GetComponent<UIRenderer>();
+                // if (renderer == null)
+                // {
+                //     gameObject.AddComponent<UIRenderer>();
+                //     createdMeshRenderer = true;
+                // }
+                createdMeshRenderer = true;
+                // var renderer = gameObject.GetComponent<Renderer>();
+                // if (renderer == null)
+                // {
+                //     var filter = gameObject.GetComponent<MeshFilter>();
+                //     if (filter == null)
+                //     {
+                //         filter = gameObject.AddComponent<MeshFilter>();
+                //         filter.mesh = CreateQuadMesh();
+                //         createdMeshFilter = true;
+                //     }
+                //     renderer = gameObject.AddComponent<MeshRenderer>();
+                //     renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
+                //     createdMeshRenderer = true;
+
+                // }
+
+                // var col = gameObject.GetComponent<BoxCollider>();
+                // if (col == null)
+                // {
+                //     col = gameObject.AddComponent<BoxCollider>();
+                // }
+                // if (worldSpaceUIDocument == null)
+                // {
+                //     worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                //     worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
+                //     worldSpaceUIDocument._uiDocument = uiDocument;
+                //     worldSpaceUIDocument._collider = col;
+                //     worldSpaceUIDocument.enabled = true;
+                // }
 
                 if (uiDocument != null)
                 {
                     uiDocument.panelSettings.targetTexture = renderTexture;
                 }
                 
-                if (renderer != null)
-                {
-                    renderer.enabled = true;
-                    renderer.sharedMaterial.mainTexture = renderTexture;
-                }
+                // if (renderer != null)
+                // {
+                //     renderer.enabled = true;
+                //     renderer.sharedMaterial.mainTexture = renderTexture;
+                // }
             }
             else
             {
@@ -480,37 +496,43 @@ namespace Banter.SDK
                 }
 
                 gameObject.layer = LayerMask.NameToLayer("Menu");
-                var renderer = gameObject.GetComponent<Renderer>();
-                if (renderer == null)
-                {
-                    var filter = gameObject.GetComponent<MeshFilter>();
-                    if (filter == null)
-                    {
-                        filter = gameObject.AddComponent<MeshFilter>();
-                        filter.mesh = CreateQuadMesh();
-                        createdMeshFilter = true;
-                    }
-                    renderer = gameObject.AddComponent<MeshRenderer>();
-                    renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
-                    createdMeshRenderer = true;
+                // var renderer = gameObject.GetComponent<Renderer>();
+                // if (renderer == null)
+                // {
+                //     var filter = gameObject.GetComponent<MeshFilter>();
+                //     if (filter == null)
+                //     {
+                //         filter = gameObject.AddComponent<MeshFilter>();
+                //         filter.mesh = CreateQuadMesh();
+                //         createdMeshFilter = true;
+                //     }
+                //     renderer = gameObject.AddComponent<MeshRenderer>();
+                //     renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
+                //     createdMeshRenderer = true;
                     
-                }
-                var col = gameObject.AddComponent<BoxCollider>();
-                if (worldSpaceUIDocument == null){
-                    worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
-                    worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
-                    worldSpaceUIDocument.enabled = false;
-                    worldSpaceUIDocument._uiDocument = uiDocument;
-                    worldSpaceUIDocument._collider = col;
-                }
-                if (screenSpace)
-                {
-                    renderer.enabled = false;
-                }
-                else
-                {
-                    renderer.sharedMaterial.mainTexture = renderTexture;
-                }
+                // }
+                
+                // var col = gameObject.GetComponent<BoxCollider>();
+                // if (col == null)
+                // {
+                //     col = gameObject.AddComponent<BoxCollider>();
+                // }
+                // if (worldSpaceUIDocument == null)
+                // {
+                //     worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
+                //     worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
+                //     worldSpaceUIDocument.enabled = false;
+                //     worldSpaceUIDocument._uiDocument = uiDocument;
+                //     worldSpaceUIDocument._collider = col;
+                // }
+                // if (screenSpace)
+                // {
+                //     renderer.enabled = false;
+                // }
+                // else
+                // {
+                //     renderer.sharedMaterial.mainTexture = renderTexture;
+                // }
             }
 
             if (changedProperties.Contains(PropertyName.screenSpace))

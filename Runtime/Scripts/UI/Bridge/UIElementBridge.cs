@@ -15,24 +15,38 @@ namespace Banter.UI.Bridge
         // Registry for multiple panel instances
         private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
         
-        [SerializeField] public string panelId;
+        public string panelId;
+        public BanterUIPanel banterUiPanel;
         
         public static UIElementBridge GetPanelInstance(string panelId)
         {
             _panelInstances.TryGetValue(panelId, out var instance);
             return instance;
         }
+
+        public static bool IsWorldSpaceUIPanel(IPanel panel)
+        {
+            foreach (var instance in _panelInstances.Values)
+            {
+                if (instance.mainDocument.runtimePanel == panel && !instance.banterUiPanel.ScreenSpace)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         
-        public static void RegisterPanelInstance(string panelId, UIElementBridge instance)
+        public static void RegisterPanelInstance(string panelId, UIElementBridge instance, BanterUIPanel banterUIPanel)
         {
             if (string.IsNullOrEmpty(panelId))
             {
                 Debug.LogWarning("[UIElementBridge] Attempting to register panel with null/empty ID");
                 return;
             }
-            
+
             _panelInstances[panelId] = instance;
             instance.panelId = panelId;
+            instance.banterUiPanel = banterUIPanel;
             Debug.Log($"[UIElementBridge] Registered panel instance: {panelId}");
         }
         
