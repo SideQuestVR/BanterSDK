@@ -128,7 +128,7 @@ public class APICommands
     public const string LEGACY_ATTACH_OBJECT = "ao!";
     #endregion
 
-    
+
     public const string SET_CAN_MOVE = "!scm!";
     public const string SET_CAN_ROTATE = "!scr!";
     public const string SET_CAN_CROUCH = "!scc!";
@@ -149,4 +149,6 @@ public class APICommands
 
     // Platform detection command
     public const string GET_PLATFORM = "!gp!";
+
+    public const string GET_BOUNDS = "!gb!";
 }
