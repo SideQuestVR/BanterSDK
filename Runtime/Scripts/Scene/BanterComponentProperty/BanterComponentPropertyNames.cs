@@ -20,6 +20,7 @@ namespace Banter.SDK
         attachmentPoint,
         autoSync,
         jointAvatar,
+        autoAttach,
         volume,
         pitch,
         mute,
