@@ -323,6 +323,74 @@ namespace Banter.SDK
                 {
                     _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
                 }
+                else if (msg.StartsWith(APICommands.SET_CAN_MOVE))
+                {
+                    scene.SetActionsSystemCanMove(GetMsgData(msg, APICommands.SET_CAN_MOVE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_ROTATE))
+                {
+                    scene.SetActionsSystemCanRotate(GetMsgData(msg, APICommands.SET_CAN_ROTATE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_CROUCH))
+                {
+                    scene.SetActionsSystemCanCrouch(GetMsgData(msg, APICommands.SET_CAN_CROUCH) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_TELEPORT))
+                {
+                    scene.SetActionsSystemCanTeleport(GetMsgData(msg, APICommands.SET_CAN_TELEPORT) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAPPLE))
+                {
+                    scene.SetActionsSystemCanGrapple(GetMsgData(msg, APICommands.SET_CAN_GRAPPLE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_JUMP))
+                {
+                    scene.SetActionsSystemCanJump(GetMsgData(msg, APICommands.SET_CAN_JUMP) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAB))
+                {
+                    scene.SetActionsSystemCanGrab(GetMsgData(msg, APICommands.SET_CAN_GRAB) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockLeftPrimary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockRightPrimary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockLeftSecondary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockRightSecondary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockLeftTrigger(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockRightTrigger(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_TRIGGER) == "1", id);
+                }
                 else
                 {
                     Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);

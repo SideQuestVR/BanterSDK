@@ -128,4 +128,23 @@ public class APICommands
     public const string LEGACY_ATTACH_OBJECT = "ao!";
     #endregion
 
+    
+    public const string SET_CAN_MOVE = "!scm!";
+    public const string SET_CAN_ROTATE = "!scr!";
+    public const string SET_CAN_CROUCH = "!scc!";
+    public const string SET_CAN_TELEPORT = "!sct!";
+    public const string SET_CAN_GRAPPLE = "!scg!";
+    public const string SET_CAN_JUMP = "!scj!";
+    public const string SET_CAN_GRAB = "!scgr!";
+    public const string SET_BLOCK_LEFT_THUMBSTICK = "!sblt!";
+    public const string SET_BLOCK_RIGHT_THUMBSTICK = "!sbrt!";
+    public const string SET_BLOCK_LEFT_PRIMARY = "!sblp!";
+    public const string SET_BLOCK_RIGHT_PRIMARY = "!sbrp!";
+    public const string SET_BLOCK_LEFT_SECONDARY = "!sbls!";
+    public const string SET_BLOCK_RIGHT_SECONDARY = "!sbrs!";
+    public const string SET_BLOCK_LEFT_THUMBSTICK_CLICK = "!sbltc!";
+    public const string SET_BLOCK_RIGHT_THUMBSTICK_CLICK = "!sbrtc!";
+    public const string SET_BLOCK_LEFT_TRIGGER = "!sbltr!";
+    public const string SET_BLOCK_RIGHT_TRIGGER = "!sbrtr!";
+
 }

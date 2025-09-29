@@ -11,6 +11,7 @@ using UnityEngine.Video;
 using UnityEngine.Events;
 using Banter.Utilities.Async;
 using Banter.Utilities;
+using Banter.FlexaBody;
 
 
 
@@ -2011,6 +2012,111 @@ namespace Banter.SDK
                  }
              }, $"{nameof(BanterScene)}.{nameof(LegacySetVideoUrl)}"));
         }
+
+        #region ActionsSystem Control Methods
+        public void SetActionsSystemCanMove(bool value, int reqId)
+        {
+            ActionsSystem.canMove = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanRotate(bool value, int reqId)
+        {
+            ActionsSystem.canRotate = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanCrouch(bool value, int reqId)
+        {
+            ActionsSystem.canCrouch = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanTeleport(bool value, int reqId)
+        {
+            ActionsSystem.canTeleport = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanGrapple(bool value, int reqId)
+        {
+            ActionsSystem.canGrapple = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanJump(bool value, int reqId)
+        {
+            ActionsSystem.canJump = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanGrab(bool value, int reqId)
+        {
+            ActionsSystem.canGrab = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftThumbstick(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftThumbstick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightThumbstick(bool value, int reqId)
+        {
+            ActionsSystem.blockRightThumbstick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftPrimary(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftPrimary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightPrimary(bool value, int reqId)
+        {
+            ActionsSystem.blockRightPrimary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftSecondary(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftSecondary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightSecondary(bool value, int reqId)
+        {
+            ActionsSystem.blockRightSecondary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftThumbstickClick(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftThumbstickClick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightThumbstickClick(bool value, int reqId)
+        {
+            ActionsSystem.blockRightThumbstickClick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftTrigger(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftTrigger = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightTrigger(bool value, int reqId)
+        {
+            ActionsSystem.blockRightTrigger = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+        #endregion
+
         #endregion
 
     }
