@@ -30,6 +30,7 @@ namespace Banter.SDK
         bypassReverbZones,
         playOnAwake,
         spatialBlend,
+        avatarId,
         smoothing,
         enableXAxis,
         enableYAxis,

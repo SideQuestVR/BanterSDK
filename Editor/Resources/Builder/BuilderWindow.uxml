@@ -124,7 +124,7 @@
                             <ui:Label text="Drop an avatar GameObject &#10;from the hierarchy to start." display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="AvatarInfoCard" style="flex-grow: 1; display: none;">
+                    <ui:VisualElement name="AvatarInfoCard" style="flex-grow: 1; display: flex;">
                         <ui:Label tabindex="-1" text="Avatar Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitleAvatar" style="-unity-font-style: bold; font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
                             <ui:Button text="Reset" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetAvatarScreen" style="height: 30px; padding-left: 15px; padding-right: 15px; margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
                         </ui:Label>
@@ -171,6 +171,16 @@
                                 <ui:Button text="Mirror Left Pos" display-tooltip-when-elided="true" name="RightFootMirror" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 30px; margin-right: 0; max-height: 24px; max-width: 105px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
                             </ui:VisualElement>
                             <ui:Button text="Change" display-tooltip-when-elided="true" name="SelectRightFoot" style="padding-top: 5px; padding-bottom: 5px; margin-top: 10px; margin-bottom: 10px; padding-left: 15px; padding-right: 15px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 0; margin-right: 0; max-height: 36px;" />
+                        </ui:VisualElement>
+                        <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 30px;">
+                            <ui:VisualElement style="flex-grow: 1;">
+                                <ui:Label tabindex="-1" text="Create new Avatar or Upload to Existing" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px; display: none;" />
+                                <ui:DropdownField name="ddlAvatarId" style="margin-left: 30px; display: none;" />
+                                <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
+                                    <ui:Toggle name="togAvatarIsPublic" style="height: 22px; margin-left: 30px;" />
+                                    <ui:Label tabindex="-1" text="Avatar is Public (other users can clone)" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 10px; margin-top: 5px;" />
+                                </ui:VisualElement>
+                            </ui:VisualElement>
                         </ui:VisualElement>
                         <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 244.5px; height: 94.5px; margin-left: 30px; cursor: initial; margin-top: 0; padding-top: 2px; padding-bottom: 2px;">
                             <ui:Label text="Build &amp; Upload it Now!" display-tooltip-when-elided="true" name="buildAvatarButton" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />

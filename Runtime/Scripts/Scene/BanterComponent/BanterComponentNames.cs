@@ -5,6 +5,7 @@ namespace Banter.SDK
         BanterAssetBundle,
         BanterAttachedObject,
         BanterAudioSource,
+        BanterAvatarPedestal,
         BanterBillboard,
         BanterBox,
         BoxCollider,

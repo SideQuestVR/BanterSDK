@@ -451,34 +451,55 @@ namespace Banter.SDKEditor
 
     }
     
-/// <summary>
-/// Represents basic upload creation request
-/// </summary>
-public class SqEditorUploadAvatars
-{
     /// <summary>
-    /// THe file unique id.
+    /// Represents basic upload creation request
     /// </summary>
-    [JsonProperty("high_avatar_files_id")]
-    public long HighId { get; set; }
+    public class SqEditorAvatar
+    {
+        [JsonProperty("avatars_id")]
+        public long AvatarId { get; set; }
+        
+        [JsonProperty("high_avatar_files_id")]
+        public long HighId { get; set; }
 
+        [JsonProperty("version",NullValueHandling = NullValueHandling.Ignore)]
+        public long Version { get; set; }
+
+        [JsonProperty("low_avatar_files_id")]
+        public long LowId { get; set; }
+
+        [JsonProperty("is_public")]
+        public bool Public { get; set; }
+        
+        [JsonProperty("name")] 
+        public string Name { get; set; }
+
+        [JsonProperty("preview_image",NullValueHandling = NullValueHandling.Ignore)]
+        public long PreviewImage { get; set; }
+    }
+    
     /// <summary>
-    /// THe file unique id.
+    /// Create avatar slot
     /// </summary>
-    [JsonProperty("version")]
-    public long Version { get; set; }
-
-    /// <summary>
-    /// THe file path
-    /// </summary>
-    [JsonProperty("low_avatar_files_id")]
-    public long LowId { get; set; }
-
-    /// <summary>
-    /// THe file path
-    /// </summary>
-    [JsonProperty("is_public")]
-    public bool Public { get; set; }
-
-}
+    public class SqAvatarSlot
+    {
+        [JsonProperty("user_avatars_id")]
+        public long UserAvatarId { get; set; }
+        [JsonProperty("users_id")]
+        public long UsersID { get; set; }
+        [JsonProperty("avatars_id")]
+        public long AvatarId { get; set; }
+        
+        [JsonProperty("is_selected")]
+        public bool IsSelected { get; set; }
+    }
+    
+    public class SqAvatarSlotSelect
+    {
+        [JsonProperty("user_avatars_id")]
+        public long UserAvatarId { get; set; }
+        
+        [JsonProperty("is_selected")]
+        public bool IsSelected { get; set; }
+    }
 }
