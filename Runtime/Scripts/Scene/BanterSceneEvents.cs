@@ -83,6 +83,7 @@ public class BanterSceneEvents
     public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
+    public Func<string> GetPlatform = new Func<string>(() => { return ""; });
 
     #endregion
 

@@ -391,6 +391,10 @@ namespace Banter.SDK
                 {
                     scene.SetActionsSystemBlockRightTrigger(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_TRIGGER) == "1", id);
                 }
+                else if (msg.StartsWith(APICommands.GET_PLATFORM))
+                {
+                    scene.GetPlatform(id);
+                }
                 else
                 {
                     Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);

@@ -147,4 +147,6 @@ public class APICommands
     public const string SET_BLOCK_LEFT_TRIGGER = "!sbltr!";
     public const string SET_BLOCK_RIGHT_TRIGGER = "!sbrtr!";
 
+    // Platform detection command
+    public const string GET_PLATFORM = "!gp!";
 }

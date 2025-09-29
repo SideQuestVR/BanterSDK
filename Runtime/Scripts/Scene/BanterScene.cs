@@ -2117,6 +2117,14 @@ namespace Banter.SDK
         }
         #endregion
 
+        #region Platform Detection
+        public void GetPlatform(int reqId)
+        {
+            string platform = events.GetPlatform?.Invoke() ?? "";
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + platform);
+        }
+        #endregion
+
         #endregion
 
     }
