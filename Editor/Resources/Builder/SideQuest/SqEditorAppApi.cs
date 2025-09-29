@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using UnityEngine;
 using UnityEngine.Networking;
 using Debug = System.Diagnostics.Debug;
@@ -60,17 +61,60 @@ namespace Banter.SDKEditor
                 return Data.User;
             }
         }
-    public IEnumerator AttachAvatar(Action OnCompleted, Action<Exception> OnError, long highId, long lowId)
+        public IEnumerator PostAvatar(Action<SqEditorAvatar> OnCompleted, Action<Exception> OnError, long highId, long lowId, long screenshotId, string name, bool ispublic)
         {
             if (Data.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorUploadAvatars>($"/v2/users/me/avatar/files", new SqEditorUploadAvatars() { HighId = highId, LowId = lowId, Public = true, Version = 2 }, (u) =>
+            yield return JsonPost<SqEditorAvatar>($"/v2/avatars", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
+            {
+                OnCompleted?.Invoke(av);
+            }, OnError, true, false);
+        }
+        public IEnumerator UpdateAvatar(Action<SqEditorAvatar> OnCompleted, Action<Exception> OnError, long avatarId, long highId, long lowId, long screenshotId, string name, bool ispublic)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
+            {
+                OnCompleted?.Invoke(av);
+            }, OnError, true, false, "PATCH");
+        }
+        public IEnumerator GetAvatars(Action<List<SqEditorAvatar>> OnCompleted, Action<Exception> OnError)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars?author_id=me", OnCompleted, OnError, true);
+        }
+        
+         public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true}, OnCompleted, OnError, true, false);
+        }
+        public IEnumerator SelectAvatar(Action OnCompleted, Action<Exception> OnError, long userAvatarId)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true}, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false, true);
+            }, OnError, true, false,"PATCH");
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
@@ -492,7 +536,7 @@ namespace Banter.SDKEditor
                     return;
                 }
                 OnCompleted?.Invoke();
-            }, OnError, true, false, true);
+            }, OnError, true, false, "PUT");
         }
 
         private IEnumerator GetUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string spaceSlug)
@@ -680,14 +724,15 @@ namespace Banter.SDKEditor
                 }
             }
         }
-
-        private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, bool isPut = false)
+        
+        
+        private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, string method = "POST")
         {
             // The whole UnitytWebRequest.Put then changing method to POST thing is a janky workaround for JSON posting being broken in Unity...
             var uri = new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath);
             using (UnityWebRequest req = UnityWebRequest.Put(uri, JsonConvert.SerializeObject(data)))
             {
-                req.method = isPut ? "PUT" : "POST";
+                req.method = method;
                 req.SetRequestHeader("Content-Type", "application/json");
                 if (Data?.Token != null && withAuth)
                 {
