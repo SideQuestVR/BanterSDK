@@ -20,7 +20,7 @@ namespace Banter.SDK
         {
             try
             {
-                GenerateId();
+                GenerateId(IsDuplicateId(Id));
                 BanterScene.Instance().AddBanterObject(gameObject, this);
             }
             catch (Exception)
@@ -28,6 +28,22 @@ namespace Banter.SDK
                 // Debug.LogError("BanterObjectId: " + e.Message);
             }
         }
+
+#if UNITY_EDITOR
+        void OnValidate()
+        {
+            GenerateId(IsDuplicateId(Id));
+        }
+
+        private bool IsDuplicateId(string id)
+        {
+            var all = GameObject.FindObjectsOfType<BanterObjectId>();
+            foreach (var u in all)
+                if (u != this && u.Id == id)
+                    return true;
+            return false;
+        }
+#endif
         public void GenerateId(bool force = false)
         {
             if (string.IsNullOrEmpty(Id) || force)
