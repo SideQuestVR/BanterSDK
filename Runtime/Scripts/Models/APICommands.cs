@@ -73,6 +73,7 @@ public class APICommands
 
     #region Events
     public const string EVENT = "!e!";
+    public const string POSE_UPDATE = "pu!";
     public const string LOADED = "l!";
     public const string UNITY_LOADED = "ulo!";
     public const string CLICKED = "c!";

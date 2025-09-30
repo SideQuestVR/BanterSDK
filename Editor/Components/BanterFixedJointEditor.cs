@@ -5,14 +5,14 @@ using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
-    [CustomEditor(typeof(BanterConfigurableJoint))]
-    public class BanterConfigurableJointEditor : Editor
+    [CustomEditor(typeof(BanterFixedJoint))]
+    public class BanterFixedJointEditor : Editor
     {
         void OnEnable()
         {
-            if (target is BanterConfigurableJoint)
+            if (target is BanterFixedJoint)
             {
-                var script = (BanterConfigurableJoint)target;
+                var script = (BanterFixedJoint)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
@@ -20,7 +20,7 @@ namespace Banter.SDKEditor
         public override bool UseDefaultMargins() => false;
         public override VisualElement CreateInspectorGUI()
         {
-            var script = (BanterConfigurableJoint)target;
+            var script = (BanterFixedJoint)target;
             Editor editor = Editor.CreateEditor(script);
             // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("targetPosition, autoConfigureConnectedAnchor, xMotion, yMotion, zMotion, angularXMotion, angularYMotion, angularZMotion, anchor, axis, secondaryAxis, connectedAnchor, targetRotation, targetVelocity, targetAngularVelocity, enableCollision, enablePreprocessing, breakForce, breakTorque, connectedMassScale, massScale, rotationDriveMode, configuredInWorldSpace, swapBodies, ");
+            var seeFields = new Label("anchor, connectedAnchor, autoConfigureConnectedAnchor, breakForce, breakTorque, enableCollision, enablePreprocessing, connectedMassScale, massScale, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

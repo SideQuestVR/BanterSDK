@@ -823,6 +823,16 @@ namespace Banter.SDK
             Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + x.ToString("F3") + MessageDelimiters.SECONDARY + y.ToString("F3"));
         }
 
+        public void OnPoseUpdate(Transform head, Transform leftHand, Transform rightHand)
+        {
+            Send(APICommands.EVENT + APICommands.POSE_UPDATE + MessageDelimiters.PRIMARY +
+            head.position.x + MessageDelimiters.SECONDARY + head.position.y + MessageDelimiters.SECONDARY + head.position.z + MessageDelimiters.SECONDARY +
+            head.rotation.x + MessageDelimiters.SECONDARY + head.rotation.y + MessageDelimiters.SECONDARY + head.rotation.z + MessageDelimiters.SECONDARY + head.rotation.w + MessageDelimiters.SECONDARY +
+            leftHand.position.x + MessageDelimiters.SECONDARY + leftHand.position.y + MessageDelimiters.SECONDARY + leftHand.position.z + MessageDelimiters.SECONDARY +
+            leftHand.rotation.x + MessageDelimiters.SECONDARY + leftHand.rotation.y + MessageDelimiters.SECONDARY + leftHand.rotation.z + MessageDelimiters.SECONDARY + leftHand.rotation.w + MessageDelimiters.SECONDARY +
+            rightHand.position.x + MessageDelimiters.SECONDARY + rightHand.position.y + MessageDelimiters.SECONDARY + rightHand.position.z + MessageDelimiters.SECONDARY +
+            rightHand.rotation.x + MessageDelimiters.SECONDARY + rightHand.rotation.y + MessageDelimiters.SECONDARY + rightHand.rotation.z + MessageDelimiters.SECONDARY + rightHand.rotation.w);
+        }
         public void OnTriggerAxisUpdate(HandSide hand, float value)
         {
             Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + value.ToString("F3"));
