@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
+using UnityEngine.XR;
 using Banter.Utilities.Async;
 using Banter.Utilities;
 using Banter.FlexaBody;
@@ -2157,6 +2158,44 @@ namespace Banter.SDK
         {
             string platform = events.GetPlatform?.Invoke() ?? "";
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + platform);
+        }
+        #endregion
+
+        #region Haptic Feedback
+        public void SendHapticImpulse(string msg, int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                var parts = msg.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length >= 3)
+                {
+                    if (float.TryParse(parts[0], out float amplitude) &&
+                        float.TryParse(parts[1], out float duration) &&
+                        int.TryParse(parts[2], out int handInt))
+                    {
+                        HandSide hand = (HandSide)handInt;
+                        XRNode xrNode = hand == HandSide.LEFT ? XRNode.LeftHand : XRNode.RightHand;
+
+                        UnityEngine.XR.InputDevice device = InputDevices.GetDeviceAtXRNode(xrNode);
+                        if (device.isValid)
+                        {
+                            if (device.TryGetHapticCapabilities(out HapticCapabilities capabilities) && capabilities.supportsImpulse)
+                            {
+                                device.SendHapticImpulse(0, amplitude, duration);
+                            }
+                            else
+                            {
+                                Debug.LogWarning("The device does not support haptic impulses.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Invalid XR device for node: " + xrNode);
+                        }
+                    }
+                }
+                link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            }, $"{nameof(BanterScene)}.{nameof(SendHapticImpulse)}"));
         }
         #endregion
 

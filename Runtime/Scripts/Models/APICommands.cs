@@ -151,4 +151,11 @@ public class APICommands
     public const string GET_PLATFORM = "!gp!";
 
     public const string GET_BOUNDS = "!gb!";
+
+    // Haptic feedback command
+    public const string SEND_HAPTIC_IMPULSE = "!shi!";
+
+    // Controller input events
+    public const string CONTROLLER_AXIS_UPDATE = "ca!";
+    public const string TRIGGER_AXIS_UPDATE = "ta!";
 }

@@ -395,6 +395,10 @@ namespace Banter.SDK
                 {
                     scene.GetPlatform(id);
                 }
+                else if (msg.StartsWith(APICommands.SEND_HAPTIC_IMPULSE))
+                {
+                    scene.SendHapticImpulse(GetMsgData(msg, APICommands.SEND_HAPTIC_IMPULSE), id);
+                }
                 else
                 {
                     Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
@@ -812,6 +816,16 @@ namespace Banter.SDK
         public void OnButtonReleased(ButtonType button, HandSide side)
         {
             Send(APICommands.EVENT + APICommands.BUTTON_RELEASED + MessageDelimiters.PRIMARY + (int)button + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnControllerAxisUpdate(HandSide hand, float x, float y)
+        {
+            Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + x.ToString("F3") + MessageDelimiters.SECONDARY + y.ToString("F3"));
+        }
+
+        public void OnTriggerAxisUpdate(HandSide hand, float value)
+        {
+            Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + value.ToString("F3"));
         }
         public void OnAframeTrigger(string data)
         {
