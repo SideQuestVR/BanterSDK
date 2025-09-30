@@ -25,6 +25,7 @@ namespace Banter.SDK
         public PhysicsAttachmentPoint physicsAttachmentPoint = PhysicsAttachmentPoint.Head;
         public bool autoSync = false;
         public bool jointAvatar = true;
+        public bool autoAttach = false;
 
         public UnityAndBanterObject attachedObject;
     }
@@ -60,6 +61,9 @@ namespace Banter.SDK
         [Tooltip("Indicates whether this attachment is jointed to the avatar.")]
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
 
+        [Tooltip("Automatically attach the object to the avatar.")]
+        [See(initial = "false")][SerializeField] internal bool autoAttach = false;
+
 
         [SerializeField] [HideInInspector] BanterAttachment attachment = new BanterAttachment();
 
@@ -81,6 +85,12 @@ namespace Banter.SDK
 
         internal override void StartStuff()
         {
+            UpdateCallback(null);
+            if (attachment.autoAttach)
+            {
+                _Attach(attachment.uid);
+                Debug.Log("Auto-attaching object to uid: " + attachment.uid + " with attachment oid: " + oid + " " + BanterScene.Instance().GetObject(oid) + " go: " + BanterScene.Instance().GetGameObject(oid));
+            }
             SetLoadedIfNot();
         }
 
@@ -124,6 +134,10 @@ namespace Banter.SDK
             {
                 attachment.jointAvatar = jointAvatar;
             }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.autoAttach))
+            {
+                attachment.autoAttach = autoAttach;
+            }
         }
         // BANTER COMPILED CODE 
         public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
@@ -135,6 +149,7 @@ namespace Banter.SDK
         public PhysicsAttachmentPoint AttachmentPoint { get { return attachmentPoint; } set { attachmentPoint = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPoint }); } }
         public System.Boolean AutoSync { get { return autoSync; } set { autoSync = value; UpdateCallback(new List<PropertyName> { PropertyName.autoSync }); } }
         public System.Boolean JointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
+        public System.Boolean AutoAttach { get { return autoAttach; } set { autoAttach = value; UpdateCallback(new List<PropertyName> { PropertyName.autoAttach }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -157,7 +172,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, PropertyName.autoAttach, };
             UpdateCallback(changedProperties);
         }
 
@@ -307,6 +322,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.jointAvatar);
                     }
                 }
+                if (values[i] is BanterBool)
+                {
+                    var valautoAttach = (BanterBool)values[i];
+                    if (valautoAttach.n == PropertyName.autoAttach)
+                    {
+                        autoAttach = valautoAttach.x;
+                        changedProperties.Add(PropertyName.autoAttach);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -417,6 +441,18 @@ namespace Banter.SDK
                     name = PropertyName.jointAvatar,
                     type = PropertyType.Bool,
                     value = jointAvatar,
+                    componentType = ComponentType.BanterAttachedObject,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.autoAttach,
+                    type = PropertyType.Bool,
+                    value = autoAttach,
                     componentType = ComponentType.BanterAttachedObject,
                     oid = oid,
                     cid = cid

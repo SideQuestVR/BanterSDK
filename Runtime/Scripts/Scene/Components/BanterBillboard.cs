@@ -50,7 +50,14 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            if (lookAt != null)
+            {
+                Destroy(lookAt);
+                lookAt = null;
+            }
+        }
         FaceTarget lookAt;
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {

@@ -9,8 +9,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
+using UnityEngine.XR;
 using Banter.Utilities.Async;
 using Banter.Utilities;
+using Banter.FlexaBody;
 
 
 
@@ -1014,6 +1016,41 @@ namespace Banter.SDK
                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectNetworkId)}"));
             }
         }
+
+        public void GetJsBounds(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] GetJsBounds message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+            var isCollider = msgParts[1] == "1";
+            if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                 {
+                    object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
+                    if (renderers.Length > 0)
+                    {
+                        var bounds = ((Collider)renderers[0]).bounds;
+                        for (int i = 1; i < renderers.Length; i++)
+                        {
+                            bounds.Encapsulate(((Collider)renderers[i]).bounds);
+                        }
+                        var center = bounds.center;
+                        var extents = bounds.extents;
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
+                    }
+                    else
+                    {
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
+                    }
+                     
+                 }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+            }
+        }
         
         public void SetJsObjectName(string msg, int reqId)
         {
@@ -2011,6 +2048,157 @@ namespace Banter.SDK
                  }
              }, $"{nameof(BanterScene)}.{nameof(LegacySetVideoUrl)}"));
         }
+
+        #region ActionsSystem Control Methods
+        public void SetActionsSystemCanMove(bool value, int reqId)
+        {
+            ActionsSystem.canMove = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanRotate(bool value, int reqId)
+        {
+            ActionsSystem.canRotate = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanCrouch(bool value, int reqId)
+        {
+            ActionsSystem.canCrouch = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanTeleport(bool value, int reqId)
+        {
+            ActionsSystem.canTeleport = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanGrapple(bool value, int reqId)
+        {
+            ActionsSystem.canGrapple = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanJump(bool value, int reqId)
+        {
+            ActionsSystem.canJump = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanGrab(bool value, int reqId)
+        {
+            ActionsSystem.canGrab = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftThumbstick(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftThumbstick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightThumbstick(bool value, int reqId)
+        {
+            ActionsSystem.blockRightThumbstick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftPrimary(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftPrimary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightPrimary(bool value, int reqId)
+        {
+            ActionsSystem.blockRightPrimary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftSecondary(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftSecondary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightSecondary(bool value, int reqId)
+        {
+            ActionsSystem.blockRightSecondary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftThumbstickClick(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftThumbstickClick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightThumbstickClick(bool value, int reqId)
+        {
+            ActionsSystem.blockRightThumbstickClick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftTrigger(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftTrigger = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightTrigger(bool value, int reqId)
+        {
+            ActionsSystem.blockRightTrigger = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+        #endregion
+
+        #region Platform Detection
+        public void GetPlatform(int reqId)
+        {
+            string platform = events.GetPlatform?.Invoke() ?? "";
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + platform);
+        }
+        #endregion
+
+        #region Haptic Feedback
+        public void SendHapticImpulse(string msg, int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                var parts = msg.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length >= 3)
+                {
+                    if (float.TryParse(parts[0], out float amplitude) &&
+                        float.TryParse(parts[1], out float duration) &&
+                        int.TryParse(parts[2], out int handInt))
+                    {
+                        HandSide hand = (HandSide)handInt;
+                        XRNode xrNode = hand == HandSide.LEFT ? XRNode.LeftHand : XRNode.RightHand;
+
+                        UnityEngine.XR.InputDevice device = InputDevices.GetDeviceAtXRNode(xrNode);
+                        if (device.isValid)
+                        {
+                            if (device.TryGetHapticCapabilities(out HapticCapabilities capabilities) && capabilities.supportsImpulse)
+                            {
+                                device.SendHapticImpulse(0, amplitude, duration);
+                            }
+                            else
+                            {
+                                Debug.LogWarning("The device does not support haptic impulses.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Invalid XR device for node: " + xrNode);
+                        }
+                    }
+                }
+                link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            }, $"{nameof(BanterScene)}.{nameof(SendHapticImpulse)}"));
+        }
+        #endregion
+
         #endregion
 
     }

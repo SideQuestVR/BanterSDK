@@ -114,7 +114,14 @@ namespace Banter.SDK
             }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            if (portal != null)
+            {
+                Destroy(portal);
+                portal = null;
+            }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties = null)
         {
             _ = SetupPortal();

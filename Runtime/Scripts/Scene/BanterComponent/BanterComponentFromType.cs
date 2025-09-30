@@ -25,6 +25,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterBrowser>();
                 case ComponentType.CapsuleCollider:
                     return gameObject.AddComponent<BanterCapsuleCollider>();
+                case ComponentType.CharacterJoint:
+                    return gameObject.AddComponent<BanterCharacterJoint>();
                 case ComponentType.BanterCircle:
                     return gameObject.AddComponent<BanterCircle>();
                 case ComponentType.BanterColliderEvents:
@@ -35,6 +37,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterConfigurableJoint>();
                 case ComponentType.BanterCylinder:
                     return gameObject.AddComponent<BanterCylinder>();
+                case ComponentType.FixedJoint:
+                    return gameObject.AddComponent<BanterFixedJoint>();
                 case ComponentType.BanterGeometry:
                     return gameObject.AddComponent<BanterGeometry>();
                 case ComponentType.BanterGLTF:
@@ -43,6 +47,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterGrabHandle>();
                 case ComponentType.BanterHeldEvents:
                     return gameObject.AddComponent<BanterHeldEvents>();
+                case ComponentType.HingeJoint:
+                    return gameObject.AddComponent<BanterHingeJoint>();
                 case ComponentType.BanterInvertedMesh:
                     return gameObject.AddComponent<BanterInvertedMesh>();
                 case ComponentType.BanterKitItem:
@@ -67,6 +73,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterSphere>();
                 case ComponentType.SphereCollider:
                     return gameObject.AddComponent<BanterSphereCollider>();
+                case ComponentType.SpringJoint:
+                    return gameObject.AddComponent<BanterSpringJoint>();
                 case ComponentType.BanterStreetView:
                     return gameObject.AddComponent<BanterStreetView>();
                 case ComponentType.BanterSyncedObject:

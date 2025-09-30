@@ -1,0 +1,36 @@
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+using Banter.SDK;
+using Banter.FlexaBody;
+
+namespace Banter.VisualScripting
+{
+    [UnitTitle("Set Block Right Primary")]
+    [UnitShortTitle("Block Right Primary")]
+    [UnitCategory("Banter\\Player\\Input")]
+    [TypeIcon(typeof(BanterObjectId))]
+    public class SetBlockRightPrimary : Unit
+    {
+        [DoNotSerialize]
+        public ControlInput inputTrigger;
+
+        [DoNotSerialize]
+        public ControlOutput outputTrigger;
+
+        [DoNotSerialize]
+        public ValueInput blockInput;
+
+        protected override void Definition()
+        {
+            inputTrigger = ControlInput("", (flow) => {
+                var value = flow.GetValue<bool>(blockInput);
+                ActionsSystem.blockRightPrimary = value;
+                return outputTrigger;
+            });
+
+            outputTrigger = ControlOutput("");
+            blockInput = ValueInput("Block Right Primary", false);
+        }
+    }
+}
+#endif

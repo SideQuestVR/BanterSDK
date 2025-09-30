@@ -300,7 +300,10 @@ namespace Banter.SDK
             }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            _ = Unload();
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             _ = SetupBundle(changedProperties);
