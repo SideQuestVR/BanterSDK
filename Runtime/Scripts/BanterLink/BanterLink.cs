@@ -12,6 +12,7 @@ using Banter.UI.Bridge;
 using Unity.VisualScripting;
 #endif
 using Banter.Utilities.Async;
+using NUnit.Framework;
 
 namespace Banter.SDK
 {
@@ -165,6 +166,18 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS)) {
                     scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
+            }
+            else if (msg.StartsWith(APICommands.TELEMETRY))
+            {
+                string[] data = GetMsgData(msg, APICommands.TELEMETRY).Split(MessageDelimiters.PRIMARY);
+                var propsplit = data[1].Split(MessageDelimiters.SECONDARY);
+                List<KeyValuePair<string, string>> kvps = new();
+                foreach (var d in propsplit)
+                {
+                    var split = d.Split(MessageDelimiters.TERTIARY);
+                    kvps.Add(new KeyValuePair<string, string>(split[0], split[1]));
+                }
+                scene.data.SendTelemetry((data[0], kvps.ToArray()));
             }
             else if (UIElementBridge.IsUICommand(msg))
             {
