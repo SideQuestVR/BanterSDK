@@ -198,6 +198,7 @@ namespace Banter.SDK
                     _filter.sharedMesh = new Sphere(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength).Generate();
                     break;
                 case GeometryType.TorusGeometry:
+                    Debug.Log("radius, tube, radialSegments, tubularSegments, arc" + radius + " - " + tube + " - " + radialSegments + " - " + tubularSegments + " - " + arc);
                     _filter.sharedMesh = new Torus(radius, tube, radialSegments, tubularSegments, arc).Generate();
                     break;
                 case GeometryType.TorusKnotGeometry:

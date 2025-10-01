@@ -85,7 +85,7 @@ using UnityEngine.UIElements;
 
             foreach (PanelEventHandler handler in handlers)
             {
-                if (handler.panel == _uiDocument.rootVisualElement.panel)
+                if (handler?.panel == _uiDocument?.rootVisualElement.panel)
                 {
                     _panelEventHandler = handler;
                     PanelRaycaster panelRaycaster = _panelEventHandler.GetComponent<PanelRaycaster>();

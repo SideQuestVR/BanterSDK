@@ -53,6 +53,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterInvertedMesh>();
                 case ComponentType.BanterKitItem:
                     return gameObject.AddComponent<BanterKitItem>();
+                case ComponentType.Light:
+                    return gameObject.AddComponent<BanterLight>();
                 case ComponentType.BanterMaterial:
                     return gameObject.AddComponent<BanterMaterial>();
                 case ComponentType.MeshCollider:

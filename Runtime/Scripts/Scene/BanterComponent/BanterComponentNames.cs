@@ -25,6 +25,7 @@ namespace Banter.SDK
         HingeJoint,
         BanterInvertedMesh,
         BanterKitItem,
+        Light,
         BanterMaterial,
         MeshCollider,
         BanterMirror,
