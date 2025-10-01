@@ -18,11 +18,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput eventType;
         
-        [DoNotSerialize]
-        public ValueOutput triggeredElementId;
-
-        [DoNotSerialize]
-        public ValueOutput triggeredEventType;
 
         [DoNotSerialize]
         public ValueOutput eventData;
@@ -39,8 +34,7 @@ namespace Banter.VisualScripting
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
             eventType = ValueInput("Event Type", UIEventType.Click);
-            triggeredElementId = ValueOutput<string>("Element ID");
-            triggeredEventType = ValueOutput<string>("Event Type");
+
             eventData = ValueOutput<object>("Event Data");
         }
 
@@ -53,11 +47,11 @@ namespace Banter.VisualScripting
             // Parse the event name format: UIClick_elementId, UIChange_elementId, etc.
             if (!data.name.Contains("_"))
                 return false;
-                
-            var parts = data.name.Split('_');
+
+            var parts = data.name.Split('_',2);
             if (parts.Length != 2)
                 return false;
-                
+            
             var eventPrefix = parts[0];
             var eventElementId = parts[1];
             
@@ -83,7 +77,6 @@ namespace Banter.VisualScripting
             
             // Check if event type matches
             bool eventMatches = eventName == targetEventName;
-            
             return elementMatches && eventMatches;
         }
 
@@ -112,15 +105,10 @@ namespace Banter.VisualScripting
                     _ => eventPrefix.ToLower().Replace("ui", "")
                 };
                 
-                flow.SetValue(triggeredElementId, eventElementId);
-                flow.SetValue(triggeredEventType, eventName);
+                
+                
             }
-            else
-            {
-                flow.SetValue(triggeredElementId, "");
-                flow.SetValue(triggeredEventType, "");
-            }
-            
+                       
             // Pass through the event arguments as event data
             flow.SetValue(eventData, data.arguments);
         }

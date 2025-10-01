@@ -165,6 +165,14 @@ namespace Banter.SDK
 
                 Debug.Log($"[BanterUIPanel] Successfully initialized panel with ID: {registrationId}");
 
+                // Auto-register UXML elements if the UIDocument has a visual tree asset
+                if (uiDocument.visualTreeAsset != null && uiDocument.rootVisualElement != null)
+                {
+                    Debug.Log($"[BanterUIPanel] Auto-registering UXML elements from visual tree asset");
+                    var elementMap = uiElementBridge.ProcessUXMLTree(uiDocument, "uxml");
+                    Debug.Log($"[BanterUIPanel] Auto-registered {elementMap.Count} elements from UXML");
+                }
+
                 // Handle screen space vs world space setup
                 SetupRenderingMode();
 
