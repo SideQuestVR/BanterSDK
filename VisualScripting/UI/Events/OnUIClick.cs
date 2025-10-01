@@ -1,6 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -13,7 +14,10 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         public ValueInput elementId;
-        
+
+        [DoNotSerialize]
+        public ValueInput elementName;
+
         [DoNotSerialize]
         public ValueOutput clickedElementId;
 
@@ -34,6 +38,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             clickedElementId = ValueOutput<string>("Clicked Element ID");
             mousePosition = ValueOutput<Vector2>("Mouse Position");
             mouseButton = ValueOutput<int>("Mouse Button");
@@ -41,16 +46,20 @@ namespace Banter.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            var targetElementId = flow.GetValue<string>(elementId);
-            
-            // If no specific element ID is provided, trigger for any UI click
-            if (string.IsNullOrEmpty(targetElementId))
+            var targetId = flow.GetValue<string>(elementId);
+            var targetName = flow.GetValue<string>(elementName);
+
+            // Priority: Element ID first, then Element Name
+            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+            // If no specific element is provided, trigger for any UI click
+            if (string.IsNullOrEmpty(resolvedTarget))
             {
                 return data.name.StartsWith("UIClick_");
             }
-            
+
             // Otherwise, only trigger for the specific element
-            return data.name == $"UIClick_{targetElementId}";
+            return data.name == $"UIClick_{resolvedTarget}";
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)

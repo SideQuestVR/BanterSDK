@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -14,10 +15,13 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         public ValueInput elementId;
-        
+
+        [DoNotSerialize]
+        public ValueInput elementName;
+
         [DoNotSerialize]
         public ValueInput eventType;
-        
+
 
         [DoNotSerialize]
         public ValueOutput eventData;
@@ -33,6 +37,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             eventType = ValueInput("Event Type", UIEventType.Click);
 
             eventData = ValueOutput<object>("Event Data");
@@ -40,10 +45,11 @@ namespace Banter.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            var targetElementId = flow.GetValue<string>(elementId);
+            var targetId = flow.GetValue<string>(elementId);
+            var targetName = flow.GetValue<string>(elementName);
             var targetEventType = flow.GetValue<UIEventType>(eventType);
             var targetEventName = targetEventType.ToEventName();
-            
+
             // Parse the event name format: UIClick_elementId, UIChange_elementId, etc.
             if (!data.name.Contains("_"))
                 return false;
@@ -51,10 +57,10 @@ namespace Banter.VisualScripting
             var parts = data.name.Split('_',2);
             if (parts.Length != 2)
                 return false;
-            
+
             var eventPrefix = parts[0];
             var eventElementId = parts[1];
-            
+
             // Extract event type from prefix (e.g., "UIClick" -> "click")
             string eventName = eventPrefix switch
             {
@@ -71,13 +77,19 @@ namespace Banter.VisualScripting
                 "UIKeyUp" => "keyup",
                 _ => eventPrefix.ToLower().Replace("ui", "")
             };
-            
-            // Check if element ID matches (empty means any element)
-            bool elementMatches = string.IsNullOrEmpty(targetElementId) || targetElementId == eventElementId;
-            
+
             // Check if event type matches
             bool eventMatches = eventName == targetEventName;
-            return elementMatches && eventMatches;
+            if (!eventMatches)
+                return false;
+
+            // Priority: Element ID first, then Element Name
+            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+            // Check if element matches (empty means any element)
+            bool elementMatches = string.IsNullOrEmpty(resolvedTarget) || resolvedTarget == eventElementId;
+
+            return elementMatches;
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)

@@ -23,6 +23,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput eventType;
 
         [DoNotSerialize]
@@ -31,8 +34,28 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var eventTypeValue = flow.GetValue<UIEventType>(eventType);
+
+                // Priority: Element ID first, then Element Name
+                string elemId = null;
+                if (!string.IsNullOrEmpty(targetId))
+                {
+                    elemId = targetId; // Use ID directly
+                }
+                else if (!string.IsNullOrEmpty(targetName))
+                {
+                    // Resolve name to ID using panels
+                    elemId = ResolveElementNameToId(targetName);
+                }
+
+                if (string.IsNullOrEmpty(elemId))
+                {
+                    Debug.LogError("[RegisterUIEvent] No element ID or name provided");
+                    flow.SetValue(success, false);
+                    return outputTrigger;
+                }
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "RegisterUIEvent"))
                 {
@@ -73,9 +96,58 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             eventType = ValueInput("Event Type", UIEventType.Click);
             success = ValueOutput<bool>("Success");
+        }
+
+        /// <summary>
+        /// Resolves an element name to its registered ID by searching all panels
+        /// </summary>
+        private string ResolveElementNameToId(string elementName)
+        {
+            if (string.IsNullOrEmpty(elementName))
+                return elementName;
+
+            // Try to find the element in any registered panel
+            var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+            foreach (var panel in allPanels)
+            {
+                try
+                {
+                    var bridge = GetUIElementBridge(panel);
+                    if (bridge != null)
+                    {
+                        var resolvedId = bridge.ResolveElementIdOrName(elementName);
+                        if (!string.IsNullOrEmpty(resolvedId) && resolvedId != elementName)
+                        {
+                            // Successfully resolved
+                            return resolvedId;
+                        }
+                    }
+                }
+                catch { /* Continue to next panel */ }
+            }
+
+            return elementName; // Fallback
+        }
+
+        /// <summary>
+        /// Gets the UIElementBridge from a BanterUIPanel using reflection
+        /// </summary>
+        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
+        {
+            try
+            {
+                var panelType = typeof(BanterUIPanel);
+                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                return bridgeField?.GetValue(panel) as UIElementBridge;
+            }
+            catch
+            {
+                return null;
+            }
         }
     }
 }
