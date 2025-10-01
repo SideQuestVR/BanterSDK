@@ -146,18 +146,21 @@ namespace Banter.UI.Core
         {
             try
             {
-                // Use reflection to access the private _elements dictionary
+                // Use reflection to access the private dictionaries
                 var bridgeType = typeof(UIElementBridge);
                 var elementsField = bridgeType.GetField("_elements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-                if (elementsField?.GetValue(bridge) is Dictionary<string, VisualElement> elementsDict)
+                var elementToIdField = bridgeType.GetField("_elementToId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                if (elementsField?.GetValue(bridge) is Dictionary<string, VisualElement> elementsDict &&
+                    elementToIdField?.GetValue(bridge) is Dictionary<VisualElement, string> elementToIdDict)
                 {
                     elementsDict[elementId] = element;
+                    elementToIdDict[element] = elementId;
                     Debug.Log($"[UIXMLTreeProcessor] Successfully registered element '{elementId}' with bridge");
                 }
                 else
                 {
-                    Debug.LogError("[UIXMLTreeProcessor] Could not access _elements dictionary in UIElementBridge");
+                    Debug.LogError("[UIXMLTreeProcessor] Could not access _elements or _elementToId dictionary in UIElementBridge");
                 }
             }
             catch (Exception e)
@@ -231,9 +234,16 @@ namespace Banter.UI.Core
             {
                 var bridgeType = typeof(UIElementBridge);
                 var elementsField = bridgeType.GetField("_elements", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-                if (elementsField?.GetValue(bridge) is Dictionary<string, VisualElement> elementsDict)
+                var elementToIdField = bridgeType.GetField("_elementToId", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                if (elementsField?.GetValue(bridge) is Dictionary<string, VisualElement> elementsDict &&
+                    elementToIdField?.GetValue(bridge) is Dictionary<VisualElement, string> elementToIdDict)
                 {
+                    // Get the element before removing it so we can remove from reverse dictionary
+                    if (elementsDict.TryGetValue(elementId, out var element))
+                    {
+                        elementToIdDict.Remove(element);
+                    }
                     elementsDict.Remove(elementId);
                 }
             }

@@ -60,6 +60,7 @@ namespace Banter.UI.Bridge
         }
         
         private Dictionary<string, VisualElement> _elements = new Dictionary<string, VisualElement>();
+        private Dictionary<VisualElement, string> _elementToId = new Dictionary<VisualElement, string>(); // Reverse lookup for O(1) element ID retrieval
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
         public UIDocument mainDocument;
         public BanterLink banterLink;
@@ -221,6 +222,7 @@ namespace Banter.UI.Bridge
             if (mainDocument != null && mainDocument.rootVisualElement != null && !_elements.ContainsKey("root"))
             {
                 _elements["root"] = mainDocument.rootVisualElement;
+                _elementToId[mainDocument.rootVisualElement] = "root";
             }
             Debug.Log("[UIElementBridge] Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
@@ -235,6 +237,7 @@ namespace Banter.UI.Bridge
             if (element != null)
             {
                 _elements[elementId] = element;
+                _elementToId[element] = elementId;
 
                 // Attach to parent if specified
                 if (parentId != "null" && _elements.TryGetValue(parentId, out var parent))
@@ -307,7 +310,8 @@ namespace Banter.UI.Bridge
                 
                 element.RemoveFromHierarchy();
                 _elements.Remove(elementId);
-                
+                _elementToId.Remove(element);
+
                 Debug.Log($"[UIElementBridge] Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
             }
         }
@@ -1591,18 +1595,45 @@ namespace Banter.UI.Bridge
         {
             // Send event back to TypeScript
             var eventTypeName = eventType.ToEventName();
-            
+
             // Build event data as JSON object based on event type
             var eventDataJson = BuildEventDataJson(evt);
-            
+
             var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{eventDataJson}";
-            
+
             // Send UI events directly to TypeScript without panel ID prefix
             // TypeScript doesn't need panel ID for element routing
             SendToJavaScript(message);
-            
-            // Also trigger EventBus events for Visual Scripting
+
+            // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
+            var eventPrefix = ConvertEventTypeToPrefix(eventType);
+            var genericEventName = $"{eventPrefix}_{elementId}";
+            Unity.VisualScripting.EventBus.Trigger("OnUIEvent", new Unity.VisualScripting.CustomEventArgs(genericEventName, new object[] { evt }));
+
+            // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
             TriggerVisualScriptingEvent(elementId, eventType, evt);
+        }
+
+        /// <summary>
+        /// Converts UIEventType to the event prefix format used in event names (e.g., Click -> UIClick)
+        /// </summary>
+        private string ConvertEventTypeToPrefix(UIEventType eventType)
+        {
+            return eventType switch
+            {
+                UIEventType.Click => "UIClick",
+                UIEventType.Change => "UIChange",
+                UIEventType.MouseDown => "UIMouseDown",
+                UIEventType.MouseUp => "UIMouseUp",
+                UIEventType.MouseMove => "UIMouseMove",
+                UIEventType.MouseEnter => "UIMouseEnter",
+                UIEventType.MouseLeave => "UIMouseLeave",
+                UIEventType.Focus => "UIFocus",
+                UIEventType.Blur => "UIBlur",
+                UIEventType.KeyDown => "UIKeyDown",
+                UIEventType.KeyUp => "UIKeyUp",
+                _ => $"UI{eventType}"
+            };
         }
         
         private void TriggerVisualScriptingEvent(string elementId, UIEventType eventType, EventBase evt)
@@ -1795,7 +1826,17 @@ namespace Banter.UI.Bridge
         {
             return _elements.TryGetValue(elementId, out var element) ? element : null;
         }
-        
+
+        /// <summary>
+        /// Gets the registered element ID for a given VisualElement using reverse lookup
+        /// </summary>
+        /// <param name="element">The VisualElement to find the ID for</param>
+        /// <returns>The registered element ID, or null if not found</returns>
+        public string GetElementId(VisualElement element)
+        {
+            return element != null && _elementToId.TryGetValue(element, out var id) ? id : null;
+        }
+
         public bool HasElement(string elementId)
         {
             return !string.IsNullOrEmpty(elementId) && _elements.ContainsKey(elementId);
@@ -1806,7 +1847,9 @@ namespace Banter.UI.Bridge
             _documents[name] = document;
             if (document.rootVisualElement != null)
             {
-                _elements[$"doc_{name}"] = document.rootVisualElement;
+                var docId = $"doc_{name}";
+                _elements[docId] = document.rootVisualElement;
+                _elementToId[document.rootVisualElement] = docId;
             }
         }
 
