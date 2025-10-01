@@ -68,6 +68,7 @@ public class APICommands
     public const string YT_INFO = "!yti!";
     public const string LOCK_TELEPORT = "!lt!";
     public const string LOCK_SPIDERMAN = "!ls!";
+    public const string TELEMETRY = "!tel!";
 
 
 
