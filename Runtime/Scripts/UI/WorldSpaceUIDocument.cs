@@ -76,7 +76,7 @@ using UnityEngine.UIElements;
         {
             RebuildPanel();
             //_pointerLineRenderer.enabled = false;
-            _uiDocument.rootVisualElement.RegisterCallback<PointerMoveEvent>(OnUIRootPointerMove);
+            _uiDocument?.rootVisualElement.RegisterCallback<PointerMoveEvent>(OnUIRootPointerMove);
         }
         
         public void RebuildPanel ()
