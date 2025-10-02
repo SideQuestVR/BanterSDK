@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Radio Button Changed")]
     [UnitShortTitle("On Radio Button Changed")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnRadioButtonChanged : EventUnit<CustomEventArgs>
     {

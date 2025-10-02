@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On UI Click")]
     [UnitShortTitle("On UI Click")]
-    [UnitCategory("Events\\Banter\\UI\\Mouse")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnUIClick : EventUnit<CustomEventArgs>
     {

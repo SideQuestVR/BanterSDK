@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On UI Keyboard Event")]
     [UnitShortTitle("On UI Keyboard Event")]
-    [UnitCategory("Events\\Banter\\UI\\Keyboard")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnUIKeyboardEvent : EventUnit<CustomEventArgs>
     {

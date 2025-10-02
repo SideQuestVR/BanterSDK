@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On UI Change")]
     [UnitShortTitle("On UI Change")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnUIChange : EventUnit<CustomEventArgs>
     {

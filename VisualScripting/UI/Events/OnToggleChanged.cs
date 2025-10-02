@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Toggle Changed")]
     [UnitShortTitle("On Toggle Changed")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnToggleChanged : EventUnit<CustomEventArgs>
     {

@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Slider Int Changed")]
     [UnitShortTitle("On Slider Int Changed")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnSliderIntChanged : EventUnit<CustomEventArgs>
     {

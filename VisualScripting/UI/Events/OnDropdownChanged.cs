@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Dropdown Changed")]
     [UnitShortTitle("On Dropdown Changed")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnDropdownChanged : EventUnit<CustomEventArgs>
     {

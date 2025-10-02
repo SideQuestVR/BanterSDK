@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Int Field Changed")]
     [UnitShortTitle("On Int Field Changed")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnIntFieldChanged : EventUnit<CustomEventArgs>
     {

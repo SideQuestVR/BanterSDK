@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On Text Field Changed")]
     [UnitShortTitle("On Text Field Changed")]
-    [UnitCategory("Events\\Banter\\UI\\Input")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnTextFieldChanged : EventUnit<CustomEventArgs>
     {
