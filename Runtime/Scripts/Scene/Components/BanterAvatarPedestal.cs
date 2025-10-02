@@ -93,10 +93,11 @@ namespace Banter.SDK
                     _loadableBundle.UnlockPassword = a.author_users_id + "42069";
                     _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"https://cdn.sidetestvr.com/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
+#if BASIS_BUNDLE_MANAGEMENT
                     BasisProgressReport BeeProgressReport = new BasisProgressReport();
                     BundledContentHolder.Selector PoliceMode = BundledContentHolder.Selector.Avatar;
                     go = await BasisLoadHandler.LoadGameObjectBundle(_loadableBundle, false, BeeProgressReport, cancellationToken, transform.position, transform.rotation, Vector3.one, false, PoliceMode, transform, false);
-
+#endif
                     var comp = this;
                     if (comp == null || gameObject == null)
                     {
