@@ -1126,33 +1126,68 @@ namespace Banter.SDK
         }
         public void InstantiateJsObject(string msg, int reqId)
         {
-            var gameObject = GetGameObject(int.Parse(msg));
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            var gameObject = GetGameObject(int.Parse(msgParts[0]));
+            var hasParent = msgParts.Length == 2;
+            var hasParentAndWorldPosStays = msgParts.Length == 3;
+            var hasPose = msgParts.Length == 8;
+            var hasPoseAndParent = msgParts.Length == 9;
             if (gameObject != null)
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
-                 {
-                     var newObject = GameObject.Instantiate(gameObject);
-                     var objectId = newObject.GetComponent<BanterObjectId>();
-                     objectId.GenerateId(true);
-                     newObject.transform.parent = settings.parentTransform;
-                     AddBanterObject(newObject, objectId);
-                     var banterObject = GetBanterObject(newObject.GetInstanceID());
-                     await new WaitForEndOfFrame();
-                     foreach (var comp in banterObject.banterComponents)
-                     {
-                         await comp.Value.GetProperties();
-                         foreach (var prop in comp.Value.componentProperties)
-                         {
-                             string change = Serialise(prop.Value, comp.Value);
-                             if (change != null)
-                             {
-                                 EnqueueChange(change);
-                             }
-                         }
-                     }
-                     //dirty = true;
-                     await new WaitForEndOfFrame();
-                     SendObjectUpdate(newObject, reqId);
+                {
+                    GameObject newObject;
+                    if (hasParent)
+                    {
+                        var parentObject = GetGameObject(int.Parse(msgParts[1]));
+                        newObject = GameObject.Instantiate(gameObject, parentObject.transform);
+                    }
+                    else if (hasParentAndWorldPosStays)
+                    {
+                        var parentObject = GetGameObject(int.Parse(msgParts[1]));
+                        newObject = GameObject.Instantiate(gameObject,parentObject.transform, msgParts[2] == "1");
+                    }
+                    else if (hasPose)
+                    {
+                        newObject = GameObject.Instantiate(gameObject,
+                            new Vector3(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3])),
+                            new Quaternion(NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]), NumberFormat.Parse(msgParts[6]), NumberFormat.Parse(msgParts[7]))
+                        );
+                    }
+                    else if (hasPoseAndParent)
+                    {
+                        var parentObject = GetGameObject(int.Parse(msgParts[8]));
+                        newObject = GameObject.Instantiate(gameObject,
+                            new Vector3(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3])),
+                            new Quaternion(NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]), NumberFormat.Parse(msgParts[6]), NumberFormat.Parse(msgParts[7])),
+                            parentObject.transform
+                        );
+                    }
+                    else
+                    {
+                        newObject = GameObject.Instantiate(gameObject);
+                    }
+                    
+                    var objectId = newObject.GetComponent<BanterObjectId>();
+                    objectId.GenerateId(true);
+                    newObject.transform.parent = settings.parentTransform;
+                    AddBanterObject(newObject, objectId);
+                    var banterObject = GetBanterObject(newObject.GetInstanceID());
+                    await new WaitForEndOfFrame();
+                    foreach (var comp in banterObject.banterComponents)
+                    {
+                        await comp.Value.GetProperties();
+                        foreach (var prop in comp.Value.componentProperties)
+                        {
+                            string change = Serialise(prop.Value, comp.Value);
+                            if (change != null)
+                            {
+                                EnqueueChange(change);
+                            }
+                        }
+                    }
+                    await new WaitForEndOfFrame();
+                    SendObjectUpdate(newObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(InstantiateJsObject)}"));
             }
         }
