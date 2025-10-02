@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -27,6 +28,9 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueInput elementId;
+
+        [DoNotSerialize]
+        public ValueInput elementName;
 
         [DoNotSerialize]
         public ValueInput positionType;
@@ -61,7 +65,8 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var posType = flow.GetValue<UIPositionType>(positionType);
                 var leftVal = flow.GetValue<float>(left);
                 var topVal = flow.GetValue<float>(top);
@@ -71,6 +76,9 @@ namespace Banter.VisualScripting
                 var topUnitVal = flow.GetValue<LengthUnit>(topUnit);
                 var rightUnitVal = flow.GetValue<LengthUnit>(rightUnit);
                 var bottomUnitVal = flow.GetValue<LengthUnit>(bottomUnit);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIPosition"))
                 {
@@ -110,7 +118,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             positionType = ValueInput("Position", UIPositionType.Relative);
             left = ValueInput("Left", 0f);
             top = ValueInput("Top", 0f);

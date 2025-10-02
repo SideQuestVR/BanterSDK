@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Core;
 using Banter.UI.Bridge;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -22,6 +23,9 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueInput elementId;
+
+        [DoNotSerialize]
+        public ValueInput elementNameInput;
 
         [DoNotSerialize]
         [PortLabelHidden]
@@ -52,12 +56,16 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementNameInput);
                 var target = flow.GetValue<GameObject>(gameObject);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
                 if (string.IsNullOrEmpty(elemId))
                 {
-                    Debug.LogWarning("[QueryUXMLElement] Element ID cannot be empty");
+                    Debug.LogWarning("[QueryUXMLElement] Element ID/Name cannot be empty");
                     flow.SetValue(elementFound, false);
                     flow.SetValue(success, false);
                     return outputTrigger;
@@ -125,7 +133,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementNameInput = ValueInput<string>("Element Name", "");
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             elementFound = ValueOutput<bool>("Element Found");
             elementType = ValueOutput<string>("Element Type");

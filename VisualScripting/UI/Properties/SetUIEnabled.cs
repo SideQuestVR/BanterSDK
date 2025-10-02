@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -22,6 +23,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput enabled;
 
         [DoNotSerialize]
@@ -33,13 +37,17 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var enabledValue = flow.GetValue<bool>(enabled);
                 var panel = flow.GetValue<BanterUIPanel>(panelReference);
 
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
                 if (string.IsNullOrEmpty(elemId))
                 {
-                    Debug.LogWarning("[SetUIEnabled] Element ID is null or empty.");
+                    Debug.LogWarning("[SetUIEnabled] Element ID/Name is null or empty.");
                     flow.SetValue(success, false);
                     return outputTrigger;
                 }
@@ -74,7 +82,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             enabled = ValueInput("Enabled", true);
             panelReference = ValueInput<BanterUIPanel>("Panel");
             success = ValueOutput<bool>("Success");

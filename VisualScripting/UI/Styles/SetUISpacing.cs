@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -21,6 +22,9 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueInput elementId;
+
+        [DoNotSerialize]
+        public ValueInput elementName;
 
         [DoNotSerialize]
         public ValueInput marginTop;
@@ -55,7 +59,11 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var mTop = flow.GetValue<float>(marginTop);
                 var mRight = flow.GetValue<float>(marginRight);
                 var mBottom = flow.GetValue<float>(marginBottom);
@@ -106,7 +114,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             marginTop = ValueInput("Margin Top", 0f);
             marginRight = ValueInput("Margin Right", 0f);
             marginBottom = ValueInput("Margin Bottom", 0f);
