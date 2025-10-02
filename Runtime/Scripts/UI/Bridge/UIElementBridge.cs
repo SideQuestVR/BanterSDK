@@ -1419,11 +1419,23 @@ namespace Banter.UI.Bridge
                             element.RegisterCallback(floatCallback);
                             _registeredCallbacks[callbackKey] = floatCallback;
                         }
-                        else if (element is Toggle)
+                        else if (element is Toggle || element is RadioButton)
                         {
                             EventCallback<ChangeEvent<bool>> boolCallback = evt => SendUIEvent(elementId, eventType, evt);
                             element.RegisterCallback(boolCallback);
                             _registeredCallbacks[callbackKey] = boolCallback;
+                        }
+                        else if (element is SliderInt || element is RadioButtonGroup)
+                        {
+                            EventCallback<ChangeEvent<int>> intCallback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(intCallback);
+                            _registeredCallbacks[callbackKey] = intCallback;
+                        }
+                        else if (element is MinMaxSlider)
+                        {
+                            EventCallback<ChangeEvent<Vector2>> vector2Callback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(vector2Callback);
+                            _registeredCallbacks[callbackKey] = vector2Callback;
                         }
                         else
                         {
@@ -1543,6 +1555,10 @@ namespace Banter.UI.Bridge
                         element.UnregisterCallback(floatChangeCallback);
                     else if (callback is EventCallback<ChangeEvent<bool>> boolChangeCallback)
                         element.UnregisterCallback(boolChangeCallback);
+                    else if (callback is EventCallback<ChangeEvent<int>> intChangeCallback)
+                        element.UnregisterCallback(intChangeCallback);
+                    else if (callback is EventCallback<ChangeEvent<Vector2>> vector2ChangeCallback)
+                        element.UnregisterCallback(vector2ChangeCallback);
                     break;
                     
                     
@@ -1659,20 +1675,20 @@ namespace Banter.UI.Bridge
                         var eventName = $"UIChange_{elementId}";
                         var newValue = changeEvt.newValue;
                         var oldValue = changeEvt.previousValue;
-                        
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        
+
                         Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: '{oldValue}' -> '{newValue}'");
                     }
                     // Handle other change event types
                     else if (evt is ChangeEvent<float> floatChangeEvt)
                     {
                         var eventName = $"UIChange_{elementId}";
-                        var newValue = floatChangeEvt.newValue.ToString();
-                        var oldValue = floatChangeEvt.previousValue.ToString();
-                        
+                        var newValue = floatChangeEvt.newValue;
+                        var oldValue = floatChangeEvt.previousValue;
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        
+
                         Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
                     }
                     else if (evt is ChangeEvent<bool> boolChangeEvt)
@@ -1680,13 +1696,132 @@ namespace Banter.UI.Bridge
                         var eventName = $"UIChange_{elementId}";
                         var newValue = boolChangeEvt.newValue ? "1" : "0";
                         var oldValue = boolChangeEvt.previousValue ? "1" : "0";
-                        
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        
+
                         Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
                     }
+                    else if (evt is ChangeEvent<int> intChangeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = intChangeEvt.newValue;
+                        var oldValue = intChangeEvt.previousValue;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                    }
+                    else if (evt is ChangeEvent<Vector2> vector2ChangeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = vector2ChangeEvt.newValue;
+                        var oldValue = vector2ChangeEvt.previousValue;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: ({oldValue.x},{oldValue.y}) -> ({newValue.x},{newValue.y})");
+                    }
                     break;
-                    
+
+                // Mouse events
+                case UIEventType.MouseDown:
+                    if (evt is MouseDownEvent mouseDownEvt)
+                    {
+                        var eventName = $"UIMouseDown_{elementId}";
+                        var mousePosition = new Vector2(mouseDownEvt.localMousePosition.x, mouseDownEvt.localMousePosition.y);
+                        var mouseButton = mouseDownEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseDown) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseUp:
+                    if (evt is MouseUpEvent mouseUpEvt)
+                    {
+                        var eventName = $"UIMouseUp_{elementId}";
+                        var mousePosition = new Vector2(mouseUpEvt.localMousePosition.x, mouseUpEvt.localMousePosition.y);
+                        var mouseButton = mouseUpEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseUp) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseMove:
+                    if (evt is MouseMoveEvent mouseMoveEvt)
+                    {
+                        var eventName = $"UIMouseMove_{elementId}";
+                        var mousePosition = new Vector2(mouseMoveEvt.localMousePosition.x, mouseMoveEvt.localMousePosition.y);
+                        var mouseButton = mouseMoveEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseMove) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseEnter:
+                    if (evt is MouseEnterEvent mouseEnterEvt)
+                    {
+                        var eventName = $"UIMouseEnter_{elementId}";
+                        var mousePosition = new Vector2(mouseEnterEvt.localMousePosition.x, mouseEnterEvt.localMousePosition.y);
+                        var mouseButton = mouseEnterEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseEnter) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseLeave:
+                    if (evt is MouseLeaveEvent mouseLeaveEvt)
+                    {
+                        var eventName = $"UIMouseLeave_{elementId}";
+                        var mousePosition = new Vector2(mouseLeaveEvt.localMousePosition.x, mouseLeaveEvt.localMousePosition.y);
+                        var mouseButton = mouseLeaveEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseLeave) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseOver:
+                    if (evt is MouseOverEvent mouseOverEvt)
+                    {
+                        var eventName = $"UIMouseOver_{elementId}";
+                        var mousePosition = new Vector2(mouseOverEvt.localMousePosition.x, mouseOverEvt.localMousePosition.y);
+                        var mouseButton = mouseOverEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseOver) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseOut:
+                    if (evt is MouseOutEvent mouseOutEvt)
+                    {
+                        var eventName = $"UIMouseOut_{elementId}";
+                        var mousePosition = new Vector2(mouseOutEvt.localMousePosition.x, mouseOutEvt.localMousePosition.y);
+                        var mouseButton = mouseOutEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseOut) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
                 // Add more event types as needed
                 default:
                     // Don't trigger Visual Scripting events for unsupported types
