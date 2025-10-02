@@ -26,7 +26,8 @@ namespace Banter.SDKEditor
     {
         AssetBundle = 1,
         Index = 2,
-        Js = 3
+        Js = 3,
+        Extra = 99
     }
 
     public enum UploadAssetTypePlatform
@@ -449,10 +450,10 @@ namespace Banter.SDKEditor
             }
         }
 
-        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, string mimeType="banter")
         {
             SqEditorCreateUpload _uploadRequest = null;
-            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
+            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug, mimeType);
 
             if (_uploadRequest == null)
             {
@@ -539,7 +540,7 @@ namespace Banter.SDKEditor
             }, OnError, true, false, "PUT");
         }
 
-        private IEnumerator GetUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string spaceSlug)
+        private IEnumerator GetUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string spaceSlug, string mimeType="banter")
         {
             if (Data.Token == null)
             {
@@ -547,7 +548,7 @@ namespace Banter.SDKEditor
                 yield break;
             }
 
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = "banter", Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = mimeType, Name = name }, (u) =>
             {
                 if (u == null)
                 {
