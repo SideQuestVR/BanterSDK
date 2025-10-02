@@ -28,7 +28,9 @@ namespace Banter.SDK
         [Tooltip("The ID of the avatar")]
         [See(initial = "0")][SerializeField] internal long avatarId;
 
+#if BASIS_BUNDLE_MANAGEMENT
         BasisLoadableBundle _loadableBundle;
+#endif
         private bool _loadStarted;
 
         internal override void StartStuff()
