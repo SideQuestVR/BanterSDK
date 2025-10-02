@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -14,10 +15,13 @@ namespace Banter.VisualScripting
     {
         [DoNotSerialize]
         public ValueInput elementId;
-        
+
+        [DoNotSerialize]
+        public ValueInput elementName;
+
         [DoNotSerialize]
         public ValueInput keyboardEventType;
-        
+
         [DoNotSerialize]
         public ValueOutput triggeredElementId;
 
@@ -41,6 +45,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             keyboardEventType = ValueInput("Keyboard Event", UIKeyboardEventType.KeyDown);
             triggeredElementId = ValueOutput<string>("Element ID");
             key = ValueOutput<string>("Key");
@@ -50,9 +55,10 @@ namespace Banter.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            var targetElementId = flow.GetValue<string>(elementId);
+            var targetId = flow.GetValue<string>(elementId);
+            var targetName = flow.GetValue<string>(elementName);
             var targetKeyEvent = flow.GetValue<UIKeyboardEventType>(keyboardEventType);
-            
+
             // Map keyboard event type to event name
             string expectedEventName = targetKeyEvent switch
             {
@@ -61,19 +67,22 @@ namespace Banter.VisualScripting
                 UIKeyboardEventType.KeyPress => "UIKeyPress",
                 _ => "UIKeyDown"
             };
-            
+
             // Check if event matches expected pattern
             if (!data.name.StartsWith(expectedEventName + "_"))
                 return false;
-            
-            // If no specific element ID is provided, trigger for any element
-            if (string.IsNullOrEmpty(targetElementId))
+
+            // Priority: Element ID first, then Element Name
+            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+            // If no specific element is provided, trigger for any element
+            if (string.IsNullOrEmpty(resolvedTarget))
             {
                 return true;
             }
-            
+
             // Otherwise, only trigger for the specific element
-            return data.name == $"{expectedEventName}_{targetElementId}";
+            return data.name == $"{expectedEventName}_{resolvedTarget}";
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)

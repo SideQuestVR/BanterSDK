@@ -1837,6 +1837,35 @@ namespace Banter.UI.Bridge
             return element != null && _elementToId.TryGetValue(element, out var id) ? id : null;
         }
 
+        /// <summary>
+        /// Resolves an element identifier (either ID or name) to a registered element ID
+        /// Priority: If it's already a registered ID, return it. Otherwise try to resolve as a name.
+        /// </summary>
+        /// <param name="elementIdOrName">Either an element ID or an element name</param>
+        /// <returns>The registered element ID, or the input value if not found</returns>
+        public string ResolveElementIdOrName(string elementIdOrName)
+        {
+            if (string.IsNullOrEmpty(elementIdOrName))
+                return elementIdOrName;
+
+            // Check if it's already a registered ID (O(1))
+            if (HasElement(elementIdOrName))
+                return elementIdOrName;
+
+            // Try to find by name in the visual tree
+            var element = mainDocument?.rootVisualElement?.Q(elementIdOrName);
+            if (element != null)
+            {
+                // Get the registered ID for this element
+                var registeredId = GetElementId(element);
+                if (!string.IsNullOrEmpty(registeredId))
+                    return registeredId;
+            }
+
+            // Fallback: return input as-is
+            return elementIdOrName;
+        }
+
         public bool HasElement(string elementId)
         {
             return !string.IsNullOrEmpty(elementId) && _elements.ContainsKey(elementId);
