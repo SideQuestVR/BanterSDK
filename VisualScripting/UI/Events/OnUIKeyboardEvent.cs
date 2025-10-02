@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
 using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
@@ -23,6 +24,9 @@ namespace Banter.VisualScripting
         public ValueInput keyboardEventType;
 
         [DoNotSerialize]
+        public ValueInput autoRegister;
+
+        [DoNotSerialize]
         public ValueOutput triggeredElementId;
 
         [DoNotSerialize]
@@ -33,6 +37,8 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueOutput modifierKeys;
+
+        private bool _eventRegistered = false;
 
         protected override bool register => true;
 
@@ -47,10 +53,47 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             keyboardEventType = ValueInput("Keyboard Event", UIKeyboardEventType.KeyDown);
+            autoRegister = ValueInput<bool>("Auto Register", true);
             triggeredElementId = ValueOutput<string>("Element ID");
             key = ValueOutput<string>("Key");
             keyCode = ValueOutput<int>("Key Code");
             modifierKeys = ValueOutput<string>("Modifier Keys");
+        }
+
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            // Auto-register when graph starts
+            if (!_eventRegistered)
+            {
+                var flow = Flow.New(stack.ToReference());
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+
+                if (shouldAutoRegister)
+                {
+                    var targetId = flow.GetValue<string>(elementId);
+                    var targetName = flow.GetValue<string>(elementName);
+                    var targetKeyEvent = flow.GetValue<UIKeyboardEventType>(keyboardEventType);
+
+                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    {
+                        // Map keyboard event type to UIEventType
+                        UIEventType eventType = targetKeyEvent switch
+                        {
+                            UIKeyboardEventType.KeyDown => UIEventType.KeyDown,
+                            UIKeyboardEventType.KeyUp => UIEventType.KeyUp,
+                            UIKeyboardEventType.KeyPress => UIEventType.KeyPress,
+                            _ => UIEventType.KeyDown
+                        };
+
+                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIKeyboardEvent");
+                        _eventRegistered = true;
+                    }
+                }
+            }
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)

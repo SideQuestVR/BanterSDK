@@ -19,6 +19,9 @@ namespace Banter.VisualScripting
         public ValueInput elementName;
 
         [DoNotSerialize]
+        public ValueInput autoRegister;
+
+        [DoNotSerialize]
         public ValueOutput changedElementId;
 
         [DoNotSerialize]
@@ -28,6 +31,9 @@ namespace Banter.VisualScripting
         public ValueOutput delta;
 
         protected override bool register => true;
+
+        private bool _eventRegistered = false;
+        private float lastValue = 0f;
 
         public override EventHook GetHook(GraphReference reference)
         {
@@ -39,9 +45,36 @@ namespace Banter.VisualScripting
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
+            autoRegister = ValueInput<bool>("Auto Register", true);
             changedElementId = ValueOutput<string>("Element ID");
             value = ValueOutput<float>("Value");
             delta = ValueOutput<float>("Delta");
+        }
+
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            // Auto-register when graph starts, not when event arrives
+            if (!_eventRegistered)
+            {
+                var flow = Flow.New(stack.ToReference());
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+
+                if (shouldAutoRegister)
+                {
+                    var targetId = flow.GetValue<string>(elementId);
+                    var targetName = flow.GetValue<string>(elementName);
+                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    {
+                        
+                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnSliderChanged");
+                        _eventRegistered = true;
+                    }
+                }
+            }
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -54,13 +87,13 @@ namespace Banter.VisualScripting
                 return false;
 
             // Priority: Element ID first, then Element Name
-            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+            string resolvedTarget2 = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
             // Extract element ID from event name
             var eventElementId = data.name.Replace("UIChange_", "");
 
             // If no specific element is provided, trigger for any float change
-            if (string.IsNullOrEmpty(resolvedTarget))
+            if (string.IsNullOrEmpty(resolvedTarget2))
             {
                 // Only trigger if it's a float/numeric change event
                 return data.arguments != null && data.arguments.Length >= 1 &&
@@ -69,7 +102,7 @@ namespace Banter.VisualScripting
             }
 
             // Otherwise, only trigger for the specific element with float values
-            return eventElementId == resolvedTarget &&
+            return eventElementId == resolvedTarget2 &&
                    data.arguments != null && data.arguments.Length >= 1 &&
                    (data.arguments[0] is float ||
                     (data.arguments[0] is string strVal2 && float.TryParse(strVal2, out _)));

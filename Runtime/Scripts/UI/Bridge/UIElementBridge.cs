@@ -1270,11 +1270,24 @@ namespace Banter.UI.Bridge
         private void RegisterEvent(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var eventTypeString = data[1];
-            
-            if (!_elements.TryGetValue(elementId, out var element)) return;
+
+            Debug.Log($"[UIElementBridge] RegisterEvent called with elementId='{elementId}', eventType='{eventTypeString}'");
+
+            // Resolve element name to ID if needed
+            var originalElementId = elementId;
+            elementId = ResolveElementIdOrName(elementId);
+            Debug.Log($"[UIElementBridge] After resolution: '{originalElementId}' -> '{elementId}'");
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            {
+                Debug.LogWarning($"[UIElementBridge] Element '{elementId}' not found in _elements dictionary. Available elements: {string.Join(", ", _elements.Keys)}");
+                return;
+            }
+
+            Debug.Log($"[UIElementBridge] Found element '{elementId}' of type {element.GetType().Name}");
             
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
@@ -1609,6 +1622,8 @@ namespace Banter.UI.Bridge
         
         private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
+            Debug.Log($"[UIElementBridge] SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
+
             // Send event back to TypeScript
             var eventTypeName = eventType.ToEventName();
 
@@ -1624,6 +1639,7 @@ namespace Banter.UI.Bridge
             // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
             var eventPrefix = ConvertEventTypeToPrefix(eventType);
             var genericEventName = $"{eventPrefix}_{elementId}";
+            Debug.Log($"[UIElementBridge] Triggering generic OnUIEvent with name '{genericEventName}'");
             Unity.VisualScripting.EventBus.Trigger("OnUIEvent", new Unity.VisualScripting.CustomEventArgs(genericEventName, new object[] { evt }));
 
             // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
@@ -1697,9 +1713,9 @@ namespace Banter.UI.Bridge
                         var newValue = boolChangeEvt.newValue ? "1" : "0";
                         var oldValue = boolChangeEvt.previousValue ? "1" : "0";
 
+                        Debug.Log($"[UIElementBridge] About to trigger OnUIChange event for bool element {elementId}: {oldValue} -> {newValue}, eventName: '{eventName}'");
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                        Debug.Log($"[UIElementBridge] EventBus.Trigger completed for OnUIChange event");
                     }
                     else if (evt is ChangeEvent<int> intChangeEvt)
                     {

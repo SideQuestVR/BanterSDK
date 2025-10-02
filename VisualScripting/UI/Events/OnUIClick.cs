@@ -2,6 +2,8 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.VisualScripting.UI.Helpers;
+using Banter.UI.Core;
+using Banter.UI.Bridge;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -19,6 +21,9 @@ namespace Banter.VisualScripting
         public ValueInput elementName;
 
         [DoNotSerialize]
+        public ValueInput autoRegister;
+
+        [DoNotSerialize]
         public ValueOutput clickedElementId;
 
         [DoNotSerialize]
@@ -26,6 +31,8 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueOutput mouseButton;
+
+        private bool _eventRegistered = false;
 
         protected override bool register => true;
 
@@ -39,9 +46,36 @@ namespace Banter.VisualScripting
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
+            autoRegister = ValueInput<bool>("Auto Register", true);
             clickedElementId = ValueOutput<string>("Clicked Element ID");
             mousePosition = ValueOutput<Vector2>("Mouse Position");
             mouseButton = ValueOutput<int>("Mouse Button");
+        }
+
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            // Auto-register when graph starts
+            if (!_eventRegistered)
+            {
+                var flow = Flow.New(stack.ToReference());
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+
+                if (shouldAutoRegister)
+                {
+                    var targetId = flow.GetValue<string>(elementId);
+                    var targetName = flow.GetValue<string>(elementName);
+
+                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    {
+                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, UIEventType.Click, "OnUIClick");
+                        _eventRegistered = true;
+                    }
+                }
+            }
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
