@@ -20,7 +20,7 @@ namespace Banter.SDK
         UIElementBridge uiElementBridge;
         WorldSpaceUIDocument worldSpaceUIDocument;
 
-        [See(initial = "512,512")][HideInInspector][SerializeField] internal Vector2 resolution = new Vector2(512,512);
+        [See(initial = "512,512")][SerializeField] internal Vector2 resolution = new Vector2(512,512);
         [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
         
         // Internal panel management
@@ -135,7 +135,7 @@ namespace Banter.SDK
                     
                     uiDocument.panelSettings = panelSettings;
                     uiDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Fixed;
-                    uiDocument.worldSpaceSize = new Vector2(100, 100);
+                    uiDocument.worldSpaceSize = new Vector2(resolution.x, resolution.y); // Convert pixels to meters
                     uiDocument.panelSettings.referenceSpritePixelsPerUnit = 500;
                     uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPhysicalSize;
                     Debug.Log($"[BanterUIPanel] Created UIDocument with loaded panel settings: {panelSettingsName}");
