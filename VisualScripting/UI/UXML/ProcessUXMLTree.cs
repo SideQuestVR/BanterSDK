@@ -38,9 +38,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput elementSummary;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -85,7 +82,6 @@ namespace Banter.VisualScripting
                             Debug.LogError("[ProcessUXMLTree] Failed to initialize panel with UIDocument");
                             flow.SetValue(elementCount, 0);
                             flow.SetValue(elementSummary, "Error: Failed to initialize with UIDocument");
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                     }
@@ -98,7 +94,6 @@ namespace Banter.VisualScripting
                             Debug.LogError("[ProcessUXMLTree] No UIDocument provided and panel not initialized");
                             flow.SetValue(elementCount, 0);
                             flow.SetValue(elementSummary, "Error: No UIDocument available");
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                         
@@ -114,7 +109,6 @@ namespace Banter.VisualScripting
                             Debug.LogError("[ProcessUXMLTree] No document available for processing");
                             flow.SetValue(elementCount, 0);
                             flow.SetValue(elementSummary, "Error: No document available");
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                     }
@@ -132,14 +126,12 @@ namespace Banter.VisualScripting
 
                     flow.SetValue(elementCount, elementMap.Count);
                     flow.SetValue(elementSummary, summaryText);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
                     flow.SetValue(elementCount, 0);
                     flow.SetValue(elementSummary, $"Error: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -151,7 +143,6 @@ namespace Banter.VisualScripting
             elementPrefix = ValueInput("Element Prefix", "uxml");
             elementCount = ValueOutput<int>("Element Count");
             elementSummary = ValueOutput<string>("Summary");
-            success = ValueOutput<bool>("Success");
         }
 
         /// <summary>

@@ -20,9 +20,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput panelReference;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -31,7 +28,6 @@ namespace Banter.VisualScripting
                 if (panel == null)
                 {
                     Debug.LogWarning("[DestroyUIPanel] Panel reference is null.");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -39,14 +35,12 @@ namespace Banter.VisualScripting
                 {
                     // Destroy the panel component (panel IDs are handled internally)
                     Object.Destroy(panel);
-                    
+
                     Debug.Log($"[DestroyUIPanel] Destroyed panel component");
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[DestroyUIPanel] Failed to destroy UI Panel: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -54,7 +48,6 @@ namespace Banter.VisualScripting
 
             outputTrigger = ControlOutput("");
             panelReference = ValueInput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

@@ -32,9 +32,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput styleValue;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -48,7 +45,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIStyle"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -58,7 +54,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIStyle] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -72,12 +67,10 @@ namespace Banter.VisualScripting
                     UIElementBridge.HandleMessage(message);
 
                     Debug.Log($"[SetUIStyle] Set style '{propertyName}' = '{value}' on element '{elemId}'");
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIStyle] Failed to set UI style: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -88,7 +81,6 @@ namespace Banter.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             styleProperty = ValueInput("Style Property", UIStyleProperty.BackgroundColor);
             styleValue = ValueInput("Style Value", "");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

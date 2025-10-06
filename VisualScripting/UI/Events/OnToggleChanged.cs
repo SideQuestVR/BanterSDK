@@ -86,6 +86,13 @@ namespace Banter.VisualScripting
             }
         }
 
+        public override void StopListening(GraphStack stack)
+        {
+            base.StopListening(stack);
+            // Reset flag so auto-registration works on next play session
+            _eventRegistered = false;
+        }
+
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
             Debug.Log($"[OnToggleChanged] ShouldTrigger called with event name: '{data.name}'");

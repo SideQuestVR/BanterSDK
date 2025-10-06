@@ -12,31 +12,26 @@ namespace Banter.VisualScripting
     public class GetUIPanel : Unit
     {
         [DoNotSerialize]
-        public ControlInput inputTrigger;
+        [PortLabelHidden]
+        [NullMeansSelf]
+        public ValueInput gameObject;
 
         [DoNotSerialize]
-        public ControlOutput outputTrigger;
-
-        [DoNotSerialize]
-        public ValueInput gameObjectRef;
-
-        [DoNotSerialize]
-        public ValueOutput panelReference;
-
-        [DoNotSerialize]
-        public ValueOutput success;
+        public ValueOutput panel;
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
-                var gameObj = flow.GetValue<GameObject>(gameObjectRef);
+            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
+
+            panel = ValueOutput<BanterUIPanel>("Panel", (flow) => {
+                var target = flow.GetValue<GameObject>(gameObject);
 
                 BanterUIPanel foundPanel = null;
-                
-                if (gameObj != null)
+
+                if (target != null)
                 {
                     // Try to get the panel component from the GameObject
-                    foundPanel = gameObj.GetComponent<BanterUIPanel>();
+                    foundPanel = target.GetComponent<BanterUIPanel>();
                 }
                 else
                 {
@@ -44,21 +39,13 @@ namespace Banter.VisualScripting
                     foundPanel = Object.FindObjectOfType<BanterUIPanel>();
                 }
 
-                flow.SetValue(panelReference, foundPanel);
-                flow.SetValue(success, foundPanel != null);
-
                 if (foundPanel == null)
                 {
-                    Debug.LogWarning($"[GetUIPanel] No UI Panel found on GameObject: {(gameObj?.name ?? "null")}");
+                    Debug.LogWarning($"[GetUIPanel] No UI Panel found on GameObject: {(target?.name ?? "null")}");
                 }
 
-                return outputTrigger;
+                return foundPanel;
             });
-
-            outputTrigger = ControlOutput("");
-            gameObjectRef = ValueInput<GameObject>("GameObject", null);
-            panelReference = ValueOutput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Found");
         }
     }
 }

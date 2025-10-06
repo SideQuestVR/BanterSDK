@@ -79,9 +79,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput whiteSpace;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -101,7 +98,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUITypography"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -111,7 +107,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUITypography] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -170,13 +165,10 @@ namespace Banter.VisualScripting
                         _ => "normal"
                     };
                     SendStyleCommand(panelId, elemId, "white-space", whiteSpaceValue);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUITypography] Failed to set UI typography: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -193,7 +185,6 @@ namespace Banter.VisualScripting
             lineHeight = ValueInput("Line Height", 0f);
             letterSpacing = ValueInput("Letter Spacing", 0f);
             whiteSpace = ValueInput("White Space", UIWhiteSpace.Normal);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

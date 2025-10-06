@@ -25,9 +25,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput elementName;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -49,13 +46,11 @@ namespace Banter.VisualScripting
                 if (string.IsNullOrEmpty(elemId))
                 {
                     Debug.LogError("[RegisterUIClick] No element ID or name provided");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "RegisterUIClick"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -66,7 +61,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[RegisterUIClick] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -75,13 +69,10 @@ namespace Banter.VisualScripting
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[RegisterUIClick] Failed to register UI click event: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -90,7 +81,6 @@ namespace Banter.VisualScripting
             outputTrigger = ControlOutput("");
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
-            success = ValueOutput<bool>("Success");
         }
 
         /// <summary>

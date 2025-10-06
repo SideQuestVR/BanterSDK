@@ -59,9 +59,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput bottomUnit;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -82,7 +79,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIPosition"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -92,7 +88,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIPosition] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -105,13 +100,10 @@ namespace Banter.VisualScripting
                     SendStyleCommand(panelId, elemId, "top", FormatLength(topVal, topUnitVal));
                     SendStyleCommand(panelId, elemId, "right", FormatLength(rightVal, rightUnitVal));
                     SendStyleCommand(panelId, elemId, "bottom", FormatLength(bottomVal, bottomUnitVal));
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIPosition] Failed to set UI position: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -129,7 +121,6 @@ namespace Banter.VisualScripting
             topUnit = ValueInput("Top Unit", LengthUnit.Pixel);
             rightUnit = ValueInput("Right Unit", LengthUnit.Pixel);
             bottomUnit = ValueInput("Bottom Unit", LengthUnit.Pixel);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

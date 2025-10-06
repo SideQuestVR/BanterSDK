@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -20,10 +21,15 @@ namespace Banter.VisualScripting
         public ControlOutput outputTrigger;
 
         [DoNotSerialize]
-        public ValueInput panelReference;
+        [PortLabelHidden]
+        [NullMeansSelf]
+        public ValueInput gameObject;
 
         [DoNotSerialize]
         public ValueInput parentElementId;
+
+        [DoNotSerialize]
+        public ValueInput parentElementName;
 
         [DoNotSerialize]
         public ValueInput text;
@@ -32,23 +38,32 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
-        public ValueOutput buttonId;
+        public ValueInput elementName;
 
         [DoNotSerialize]
-        public ValueOutput success;
+        public ValueOutput buttonId;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
+                var target = flow.GetValue<GameObject>(gameObject);
+                var panel = target?.GetComponent<BanterUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
+                var parentName = flow.GetValue<string>(parentElementName);
                 var buttonText = flow.GetValue<string>(text);
                 var elemId = flow.GetValue<string>(elementId);
+                var elemName = flow.GetValue<string>(elementName);
+
+                if (panel == null)
+                {
+                    Debug.LogWarning("[CreateUIButton] BanterUIPanel component not found on GameObject.");
+                    flow.SetValue(buttonId, "");
+                    return outputTrigger;
+                }
 
                 if (!panel.ValidateForUIOperation("CreateUIButton"))
                 {
                     flow.SetValue(buttonId, "");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -60,13 +75,21 @@ namespace Banter.VisualScripting
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementType = "10"; // UIElementType.Button = 10
-                    var parentElementId = string.IsNullOrEmpty(parentId) ? "root" : parentId;
+                    string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
+                    var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
                     
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{buttonElementId}{MessageDelimiters.SECONDARY}{elementType}{MessageDelimiters.SECONDARY}{parentElementId}";
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
+
+                    // Set element name if provided
+                    if (!string.IsNullOrEmpty(elemName))
+                    {
+                        var nameMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{buttonElementId}{MessageDelimiters.SECONDARY}name{MessageDelimiters.SECONDARY}{elemName}";
+                        UIElementBridge.HandleMessage(nameMessage);
+                    }
 
                     // Set text property if provided
                     if (!string.IsNullOrEmpty(buttonText))
@@ -76,25 +99,24 @@ namespace Banter.VisualScripting
                     }
 
                     flow.SetValue(buttonId, buttonElementId);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[CreateUIButton] Failed to create UI button: {e.Message}");
                     flow.SetValue(buttonId, "");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            panelReference = ValueInput<BanterUIPanel>("Panel");
+            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             parentElementId = ValueInput("Parent Element ID", "");
+            parentElementName = ValueInput("Parent Element Name", "");
             text = ValueInput("Text", "Button");
             elementId = ValueInput("Element ID", "");
-            buttonId = ValueOutput<string>("Button ID");
-            success = ValueOutput<bool>("Success");
+            elementName = ValueInput("Element Name", "");
+            buttonId = ValueOutput<string>("Element ID");
         }
     }
 }

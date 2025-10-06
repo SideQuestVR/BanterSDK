@@ -77,9 +77,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput flexShrink;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -97,7 +94,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIFlexbox"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -107,7 +103,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIFlexbox] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -159,13 +154,10 @@ namespace Banter.VisualScripting
                     // Set flex-grow and flex-shrink
                     SendStyleCommand(panelId, elemId, "flex-grow", flexGrowVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     SendStyleCommand(panelId, elemId, "flex-shrink", flexShrinkVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIFlexbox] Failed to set UI flexbox: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -180,7 +172,6 @@ namespace Banter.VisualScripting
             flexWrap = ValueInput("Flex Wrap", UIFlexWrap.NoWrap);
             flexGrow = ValueInput("Flex Grow", 0f);
             flexShrink = ValueInput("Flex Shrink", 1f);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

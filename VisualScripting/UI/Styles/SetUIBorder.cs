@@ -47,9 +47,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput borderBottomRightRadius;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -68,7 +65,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIBorder"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -78,7 +74,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIBorder] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -101,13 +96,10 @@ namespace Banter.VisualScripting
                         SendStyleCommand(panelId, elemId, "border-bottom-left-radius", $"{bottomLeftRadius}px");
                         SendStyleCommand(panelId, elemId, "border-bottom-right-radius", $"{bottomRightRadius}px");
                     }
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIBorder] Failed to set UI border: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -123,7 +115,6 @@ namespace Banter.VisualScripting
             borderTopRightRadius = ValueInput("Top Right Radius", 0f);
             borderBottomLeftRadius = ValueInput("Bottom Left Radius", 0f);
             borderBottomRightRadius = ValueInput("Bottom Right Radius", 0f);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

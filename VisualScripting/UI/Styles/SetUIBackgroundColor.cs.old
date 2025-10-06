@@ -32,9 +32,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput panelReference;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -49,13 +46,11 @@ namespace Banter.VisualScripting
                 if (string.IsNullOrEmpty(elemId))
                 {
                     Debug.LogWarning("[SetUIBackgroundColor] Element ID is null or empty.");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIBackgroundColor"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -66,7 +61,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIBackgroundColor] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -78,13 +72,10 @@ namespace Banter.VisualScripting
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIBackgroundColor] Failed to set UI background color: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -95,7 +86,6 @@ namespace Banter.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             panelReference = ValueInput<BanterUIPanel>("Panel Reference", null);
             color = ValueInput("Color", Color.white);
-            success = ValueOutput<bool>("Success");
         }
     }
 }

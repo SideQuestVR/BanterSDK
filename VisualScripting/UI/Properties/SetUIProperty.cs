@@ -50,9 +50,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput propertyValue;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -66,7 +63,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIProperty"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -77,7 +73,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIProperty] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -90,13 +85,10 @@ namespace Banter.VisualScripting
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIProperty] Failed to set UI property: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -107,7 +99,6 @@ namespace Banter.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             propertyName = ValueInput("Property", UIPropertyNameVS.Text);
             propertyValue = ValueInput<object>("Value");
-            success = ValueOutput<bool>("Success");
         }
 
         private string GetPropertyName(UIPropertyNameVS propName)
