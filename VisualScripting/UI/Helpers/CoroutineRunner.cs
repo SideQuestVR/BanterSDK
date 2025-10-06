@@ -23,7 +23,9 @@ namespace Banter.VisualScripting.UI.Helpers
                     var go = new GameObject("UIEventCoroutineRunner");
                     _instance = go.AddComponent<CoroutineRunner>();
                     DontDestroyOnLoad(go);
+#if BANTER_UI_DEBUG
                     Debug.Log("[CoroutineRunner] Created singleton instance");
+#endif
                 }
                 return _instance;
             }

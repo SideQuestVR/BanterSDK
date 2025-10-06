@@ -61,6 +61,8 @@ namespace Banter.VisualScripting
                 // Set element ID output for chaining
                 flow.SetValue(elementIdOutput, elemId);
 
+                var graphReference = flow.stack.ToReference();
+
                 try
                 {
                     // Clean up any existing callback
@@ -77,18 +79,28 @@ namespace Banter.VisualScripting
                     
                     // Convert enum to property name
                     var propNameStr = GetPropertyName(propName);
-                    
+
                     // Set up callback to receive the value
                     _currentEventName = $"UIProperty_{elemId}_{propNameStr}";
                     _currentCallback = (CustomEventArgs args) => {
+                        if (!graphReference.isValid)
+                        {
+                            CleanupCallback();
+                            return;
+                        }
+
+                        var callbackFlow = Flow.New(graphReference);
+
                         if (args.arguments != null && args.arguments.Length > 0)
                         {
-                            flow.SetValue(propertyValue, args.arguments[0]);
+                            callbackFlow.SetValue(propertyValue, args.arguments[0]);
+#if BANTER_UI_DEBUG
                             Debug.Log($"[GetUIProperty] Received property value: {args.arguments[0]} for {_currentEventName}");
+#endif
                         }
                         else
                         {
-                            flow.SetValue(propertyValue, null);
+                            callbackFlow.SetValue(propertyValue, null);
                         }
 
                         // Clean up callback after use
@@ -104,7 +116,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[GetUIProperty] Requested property '{propNameStr}' for element {elemId}, waiting for callback on {_currentEventName}");
+#endif
                 }
                 catch (System.Exception e)
                 {

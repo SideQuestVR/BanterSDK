@@ -74,7 +74,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[SetUIParent] Set parent of '{elemId}' to '{parentElemId}'");
+#endif
                 }
                 catch (System.Exception e)
                 {

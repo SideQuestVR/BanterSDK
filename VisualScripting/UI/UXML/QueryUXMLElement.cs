@@ -15,6 +15,8 @@ namespace Banter.VisualScripting
     [TypeIcon(typeof(BanterObjectId))]
     public class QueryUXMLElement : Unit
     {
+        private const string LogPrefix = "[QueryUXMLElement]";
+
         [DoNotSerialize]
         public ControlInput inputTrigger;
 
@@ -79,7 +81,7 @@ namespace Banter.VisualScripting
                     }
 
                     // Get the UIElementBridge from the panel
-                    var bridge = GetUIElementBridge(panel);
+                    var bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                     if (bridge == null)
                     {
                         Debug.LogError("[QueryUXMLElement] UIElementBridge not found");
@@ -99,7 +101,9 @@ namespace Banter.VisualScripting
                         flow.SetValue(childCount, element.childCount);
                         flow.SetValue(isVisible, element.style.display != DisplayStyle.None && element.style.visibility != Visibility.Hidden);
 
-                        Debug.Log($"[QueryUXMLElement] Found element '{elemId}' (type: {element.GetType().Name}, children: {element.childCount})");
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} Found element '{elemId}' (type: {element.GetType().Name}, children: {element.childCount})");
+#endif
                     }
                     else
                     {
@@ -135,24 +139,6 @@ namespace Banter.VisualScripting
             isVisible = ValueOutput<bool>("Is Visible");
         }
 
-        /// <summary>
-        /// Gets the UIElementBridge from a BanterUIPanel using reflection
-        /// </summary>
-        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
-        {
-            try
-            {
-                var panelType = typeof(BanterUIPanel);
-                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-                return bridgeField?.GetValue(panel) as UIElementBridge;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[QueryUXMLElement] Failed to get UIElementBridge: {e.Message}");
-                return null;
-            }
-        }
     }
 }
 #endif

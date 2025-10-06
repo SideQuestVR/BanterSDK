@@ -11,7 +11,14 @@ namespace Banter.UI.Bridge
 {
     public class UIElementBridge : MonoBehaviour
     {
-        
+        private const string LogPrefix = "[UIElementBridge]";
+
+        [System.Diagnostics.Conditional("BANTER_UI_DEBUG")]
+        private static void LogVerbose(string message)
+        {
+            Debug.Log($"{LogPrefix} {message}");
+        }
+
         // Registry for multiple panel instances
         private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
         
@@ -47,7 +54,7 @@ namespace Banter.UI.Bridge
             _panelInstances[panelId] = instance;
             instance.panelId = panelId;
             instance.banterUiPanel = banterUIPanel;
-            Debug.Log($"[UIElementBridge] Registered panel instance: {panelId}");
+            LogVerbose($"Registered panel instance: {panelId}");
         }
         
         public static void UnregisterPanelInstance(string panelId)
@@ -55,7 +62,7 @@ namespace Banter.UI.Bridge
             if (_panelInstances.ContainsKey(panelId))
             {
                 _panelInstances.Remove(panelId);
-                Debug.Log($"[UIElementBridge] Unregistered panel instance: {panelId}");
+                LogVerbose($"Unregistered panel instance: {panelId}");
             }
         }
         
@@ -126,7 +133,7 @@ namespace Banter.UI.Bridge
         {
             try
             {
-                Debug.Log($"[UIElementBridge] Handling message: {message}");
+                LogVerbose($"Handling message: {message}");
                 var parts = message.Split(MessageDelimiters.PRIMARY);
                 if (parts.Length < 2)
                 {
@@ -228,13 +235,13 @@ namespace Banter.UI.Bridge
                 _elements["root"] = mainDocument.rootVisualElement;
                 _elementToId[mainDocument.rootVisualElement] = "root";
             }
-            Debug.Log("[UIElementBridge] Creating element" + string.Join(",", data));
+            LogVerbose("Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
             
             var elementId = data[0];
             var elementType = data[1];
             var parentId = data[2];
-            Debug.Log("[UIElementBridge] Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
+            LogVerbose("Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
             // Create the appropriate VisualElement based on type
             VisualElement element = CreateElementByType(elementType);
             
@@ -246,7 +253,7 @@ namespace Banter.UI.Bridge
                 // Attach to parent if specified
                 if (parentId != "null" && _elements.TryGetValue(parentId, out var parent))
                 {
-                    Debug.Log("[UIElementBridge] Attaching to parent element: " + parentId);
+                    LogVerbose("Attaching to parent element: " + parentId);
                     parent.Add(element);
                 }
                 else
@@ -254,7 +261,7 @@ namespace Banter.UI.Bridge
                     // If no valid parent, attach to root
                     if (_elements.TryGetValue("root", out var root))
                     {
-                        Debug.Log("[UIElementBridge] Attaching to root element.");
+                        LogVerbose("Attaching to root element.");
                         root.Add(element);
                     }
                     else
@@ -263,7 +270,7 @@ namespace Banter.UI.Bridge
                     }
                 }
                 
-                Debug.Log($"[UIElementBridge] Created element: {elementId} of type {elementType}");
+                LogVerbose($"Created element: {elementId} of type {elementType}");
             }
         }
         
@@ -316,7 +323,7 @@ namespace Banter.UI.Bridge
                 _elements.Remove(elementId);
                 _elementToId.Remove(element);
 
-                Debug.Log($"[UIElementBridge] Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
+                LogVerbose($"Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
             }
         }
         
@@ -340,7 +347,7 @@ namespace Banter.UI.Bridge
                     parent.Add(child);
                 }
                 
-                Debug.Log($"[UIElementBridge] Attached {childId} to {parentId}");
+                LogVerbose($"Attached {childId} to {parentId}");
             }
         }
         
@@ -354,7 +361,7 @@ namespace Banter.UI.Bridge
             if (_elements.TryGetValue(childId, out var child))
             {
                 child.RemoveFromHierarchy();
-                Debug.Log($"[UIElementBridge] Detached {childId} from {parentId}");
+                LogVerbose($"Detached {childId} from {parentId}");
             }
         }
         
@@ -497,7 +504,7 @@ namespace Banter.UI.Bridge
             var eventName = $"UIProperty_{elementId}_{propertyName}";
             Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { propertyValue }));
             
-            Debug.Log($"[UIElementBridge] Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
+            LogVerbose($"Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
         }
         
         private object GetElementProperty(VisualElement element, string propertyName)
@@ -758,7 +765,7 @@ namespace Banter.UI.Bridge
                     element.style.backgroundColor = ParseColor(value);
                     break;
                 case UIStyleProperty.BackgroundImage:
-                    Debug.Log("[UIElementBridge] Setting background image: " + value);
+                    LogVerbose("Setting background image: " + value);
                     SetBackgroundImage(element, value);
                     break;
                     
@@ -814,7 +821,7 @@ namespace Banter.UI.Bridge
                     break;
             }
             
-            Debug.Log($"[UIElementBridge] Set style {styleProperty} = '{value}' on element {elementId}");
+            LogVerbose($"Set style {styleProperty} = '{value}' on element {elementId}");
         }
 
         private void GetStyle(string[] data)
@@ -841,7 +848,7 @@ namespace Banter.UI.Bridge
             var eventName = $"UIStyle_{elementId}_{styleNameString}";
             Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { styleValue }));
 
-            Debug.Log($"[UIElementBridge] Got style '{styleNameString}' = '{styleValue}' from element {elementId}, triggered event {eventName}");
+            LogVerbose($"Got style '{styleNameString}' = '{styleValue}' from element {elementId}, triggered event {eventName}");
         }
 
         private string GetStyleValue(VisualElement element, UIStyleProperty property)
@@ -1299,7 +1306,7 @@ namespace Banter.UI.Bridge
                 if (texture != null)
                 {
                     element.style.backgroundImage = new StyleBackground(texture);
-                    Debug.Log($"[UIElementBridge] Set background image from URL: {imageUrl}");
+                    LogVerbose($"Set background image from URL: {imageUrl}");
                 }
             }
             catch (Exception e)
@@ -1378,7 +1385,7 @@ namespace Banter.UI.Bridge
         {
             try
             {
-                Debug.Log($"[UIElementBridge] Downloading texture from: {url}");
+                LogVerbose($"Downloading texture from: {url}");
                 var texture = await Get.Texture(url);
                 return texture;
             }
@@ -1403,7 +1410,7 @@ namespace Banter.UI.Bridge
             }
             _textureCache.Clear();
             _downloadingTextures.Clear();
-            Debug.Log("[UIElementBridge] Cleared texture cache");
+            LogVerbose("Cleared texture cache");
         }
         
         private float[] ParseSpacing(string value)
@@ -1592,7 +1599,7 @@ namespace Banter.UI.Bridge
                 {
                     if (dispatcher.DispatchMethod(methodName, args))
                     {
-                        Debug.Log($"[UIElementBridge] Dispatched method: {methodName} on {elementId}");
+                        LogVerbose($"Dispatched method: {methodName} on {elementId}");
                         return; // Method was handled by the dispatcher
                     }
                 }
@@ -1611,12 +1618,12 @@ namespace Banter.UI.Bridge
             var elementId = data[0];
             var eventTypeString = data[1];
 
-            Debug.Log($"[UIElementBridge] RegisterEvent called with elementId='{elementId}', eventType='{eventTypeString}'");
+            LogVerbose($"RegisterEvent called with elementId='{elementId}', eventType='{eventTypeString}'");
 
             // Resolve element name to ID if needed
             var originalElementId = elementId;
             elementId = ResolveElementIdOrName(elementId);
-            Debug.Log($"[UIElementBridge] After resolution: '{originalElementId}' -> '{elementId}'");
+            LogVerbose($"After resolution: '{originalElementId}' -> '{elementId}'");
 
             if (!_elements.TryGetValue(elementId, out var element))
             {
@@ -1624,7 +1631,7 @@ namespace Banter.UI.Bridge
                 return;
             }
 
-            Debug.Log($"[UIElementBridge] Found element '{elementId}' of type {element.GetType().Name}");
+            LogVerbose($"Found element '{elementId}' of type {element.GetType().Name}");
             
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
@@ -1802,7 +1809,7 @@ namespace Banter.UI.Bridge
                     break;
             }
             
-            Debug.Log($"[UIElementBridge] Registered {eventType} event for element {elementId}");
+            LogVerbose($"Registered {eventType} event for element {elementId}");
         }
         
         private void UnregisterEvent(string[] data)
@@ -1919,7 +1926,7 @@ namespace Banter.UI.Bridge
             
             // Remove from stored callbacks
             _registeredCallbacks.Remove(callbackKey);
-            Debug.Log($"[UIElementBridge] Unregistered {eventType} event for element {elementId}");
+            LogVerbose($"Unregistered {eventType} event for element {elementId}");
         }
         
         private void SetFocus(string[] data)
@@ -1959,7 +1966,7 @@ namespace Banter.UI.Bridge
         
         private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
-            Debug.Log($"[UIElementBridge] SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
+            LogVerbose($"SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
 
             // Send event back to TypeScript
             var eventTypeName = eventType.ToEventName();
@@ -1976,7 +1983,7 @@ namespace Banter.UI.Bridge
             // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
             var eventPrefix = ConvertEventTypeToPrefix(eventType);
             var genericEventName = $"{eventPrefix}_{elementId}";
-            Debug.Log($"[UIElementBridge] Triggering generic OnUIEvent with name '{genericEventName}'");
+            LogVerbose($"Triggering generic OnUIEvent with name '{genericEventName}'");
             Unity.VisualScripting.EventBus.Trigger("OnUIEvent", new Unity.VisualScripting.CustomEventArgs(genericEventName, new object[] { evt }));
 
             // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
@@ -2018,7 +2025,7 @@ namespace Banter.UI.Bridge
                         
                         Unity.VisualScripting.EventBus.Trigger("OnUIClick", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
                         
-                        Debug.Log($"[UIElementBridge] Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
+                        LogVerbose($"Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
                     }
                     break;
                     
@@ -2031,7 +2038,7 @@ namespace Banter.UI.Bridge
 
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: '{oldValue}' -> '{newValue}'");
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: '{oldValue}' -> '{newValue}'");
                     }
                     // Handle other change event types
                     else if (evt is ChangeEvent<float> floatChangeEvt)
@@ -2042,7 +2049,7 @@ namespace Banter.UI.Bridge
 
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
                     }
                     else if (evt is ChangeEvent<bool> boolChangeEvt)
                     {
@@ -2050,9 +2057,9 @@ namespace Banter.UI.Bridge
                         var newValue = boolChangeEvt.newValue ? "1" : "0";
                         var oldValue = boolChangeEvt.previousValue ? "1" : "0";
 
-                        Debug.Log($"[UIElementBridge] About to trigger OnUIChange event for bool element {elementId}: {oldValue} -> {newValue}, eventName: '{eventName}'");
+                        LogVerbose($"About to trigger OnUIChange event for bool element {elementId}: {oldValue} -> {newValue}, eventName: '{eventName}'");
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        Debug.Log($"[UIElementBridge] EventBus.Trigger completed for OnUIChange event");
+                        LogVerbose($"EventBus.Trigger completed for OnUIChange event");
                     }
                     else if (evt is ChangeEvent<int> intChangeEvt)
                     {
@@ -2062,7 +2069,7 @@ namespace Banter.UI.Bridge
 
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
                     }
                     else if (evt is ChangeEvent<Vector2> vector2ChangeEvt)
                     {
@@ -2072,7 +2079,7 @@ namespace Banter.UI.Bridge
 
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: ({oldValue.x},{oldValue.y}) -> ({newValue.x},{newValue.y})");
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: ({oldValue.x},{oldValue.y}) -> ({newValue.x},{newValue.y})");
                     }
                     break;
 
@@ -2087,7 +2094,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseDown) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseDown) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2101,7 +2108,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseUp) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseUp) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2115,7 +2122,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseMove) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseMove) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2129,7 +2136,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseEnter) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseEnter) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2143,7 +2150,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseLeave) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseLeave) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2157,7 +2164,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseOver) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseOver) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2171,7 +2178,7 @@ namespace Banter.UI.Bridge
                         Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
                             new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
 
-                        Debug.Log($"[UIElementBridge] Triggered OnUIMouseEvent (MouseOut) for element {elementId} at position {mousePosition}");
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseOut) for element {elementId} at position {mousePosition}");
                     }
                     break;
 
@@ -2301,7 +2308,7 @@ namespace Banter.UI.Bridge
             if (banterLink != null)
             {
                 banterLink.Send(message);
-                Debug.Log($"[UIElementBridge] Sent to JS: {message}");
+                LogVerbose($"Sent to JS: {message}");
             }
             else
             {
@@ -2474,3 +2481,4 @@ namespace Banter.UI.Bridge
         }
     }
 }
+

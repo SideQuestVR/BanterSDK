@@ -37,7 +37,9 @@ namespace Banter.VisualScripting
                 var target = flow.GetValue<GameObject>(gameObject);
                 var res = flow.GetValue<Vector2>(resolution);
                 var isScreenSpace = flow.GetValue<bool>(screenSpace);
+                #if BANTER_UI_DEBUG
                 Debug.Log("[CreateUIPanel] Attempting to create UI Panel...");
+                #endif
                 try
                 {
                     // Get or add BanterUIPanel component
@@ -51,7 +53,9 @@ namespace Banter.VisualScripting
                     panel.Resolution = res;
                     panel.ScreenSpace = isScreenSpace;
 
+                    #if BANTER_UI_DEBUG
                     Debug.Log($"[CreateUIPanel] Created panel successfully");
+                    #endif
 
                     flow.SetValue(panelReference, panel);
                 }

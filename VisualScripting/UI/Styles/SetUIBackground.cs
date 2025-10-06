@@ -82,7 +82,7 @@ namespace Banter.VisualScripting
                         return outputTrigger;
                     }
 
-                    var bridge = GetUIElementBridge(panel);
+                    var bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                     if (bridge == null)
                     {
                         Debug.LogError($"[SetUIBackground] Could not get UIElementBridge from panel");
@@ -102,7 +102,9 @@ namespace Banter.VisualScripting
                         case BackgroundType.Color:
                             var colorValue = flow.GetValue<Color>(color);
                             element.style.backgroundColor = colorValue;
+#if BANTER_UI_DEBUG
                             Debug.Log($"[SetUIBackground] Set background color for element '{elemId}'");
+#endif
                             break;
 
                         case BackgroundType.Texture2D:
@@ -111,7 +113,9 @@ namespace Banter.VisualScripting
                             {
                                 element.style.backgroundImage = new StyleBackground(tex2D);
                                 ApplyTintColor(element, flow);
+#if BANTER_UI_DEBUG
                                 Debug.Log($"[SetUIBackground] Set Texture2D background for element '{elemId}'");
+#endif
                             }
                             else
                             {
@@ -125,7 +129,9 @@ namespace Banter.VisualScripting
                             {
                                 element.style.backgroundImage = Background.FromRenderTexture(renderTex);
                                 ApplyTintColor(element, flow);
+#if BANTER_UI_DEBUG
                                 Debug.Log($"[SetUIBackground] Set RenderTexture background for element '{elemId}'");
+#endif
                             }
                             else
                             {
@@ -139,7 +145,9 @@ namespace Banter.VisualScripting
                             {
                                 element.style.backgroundImage = new StyleBackground(spriteValue);
                                 ApplyTintColor(element, flow);
+#if BANTER_UI_DEBUG
                                 Debug.Log($"[SetUIBackground] Set Sprite background for element '{elemId}'");
+#endif
                             }
                             else
                             {
@@ -153,7 +161,9 @@ namespace Banter.VisualScripting
                             {
                                 element.style.backgroundImage = new StyleBackground(vectorImg);
                                 ApplyTintColor(element, flow);
+#if BANTER_UI_DEBUG
                                 Debug.Log($"[SetUIBackground] Set VectorImage background for element '{elemId}'");
+#endif
                             }
                             else
                             {
@@ -188,22 +198,6 @@ namespace Banter.VisualScripting
             element.style.unityBackgroundImageTintColor = tint;
         }
 
-        /// <summary>
-        /// Gets the UIElementBridge from a BanterUIPanel using reflection
-        /// </summary>
-        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
-        {
-            try
-            {
-                var panelType = typeof(BanterUIPanel);
-                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                return bridgeField?.GetValue(panel) as UIElementBridge;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }
 #endif

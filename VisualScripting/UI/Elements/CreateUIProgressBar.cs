@@ -136,7 +136,9 @@ namespace Banter.VisualScripting
                         UIElementBridge.HandleMessage(titleMessage);
                     }
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[CreateUIProgressBar] Created progress bar '{progressBarElementId}' (using Slider base, readonly)");
+#endif
 
                     flow.SetValue(progressBarId, progressBarElementId);
                 }

@@ -56,7 +56,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[DestroyUIElement] Destroyed element '{elemId}'");
+#endif
                 }
                 catch (System.Exception e)
                 {

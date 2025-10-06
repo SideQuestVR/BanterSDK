@@ -13,6 +13,12 @@ namespace Banter.UI.Core
     /// </summary>
     public static class UIXMLTreeProcessor
     {
+        [System.Diagnostics.Conditional("BANTER_UI_DEBUG")]
+        private static void LogVerbose(string message)
+        {
+            Debug.Log($"[UIXMLTreeProcessor] {message}");
+        }
+
         /// <summary>
         /// Traverses a visual element tree and registers all elements with the UIElementBridge
         /// </summary>
@@ -43,7 +49,7 @@ namespace Banter.UI.Core
             // Second pass: assign IDs and register elements
             ProcessElementRecursive(bridge, rootElement, elementMap, usedIds, prefix, 0);
             
-            Debug.Log($"[UIXMLTreeProcessor] Processed {elementMap.Count} elements from UXML tree");
+            LogVerbose($"Processed {elementMap.Count} elements from UXML tree");
             
             return elementMap;
         }
@@ -79,7 +85,7 @@ namespace Banter.UI.Core
             // Track the mapping
             elementMap[element] = elementId;
             
-            Debug.Log($"[UIXMLTreeProcessor] Registered element '{elementId}' (type: {element.GetType().Name}, depth: {depth})");
+            LogVerbose($"Registered element '{elementId}' (type: {element.GetType().Name}, depth: {depth})");
 
             // Process children recursively
             for (int i = 0; i < element.childCount; i++)
@@ -156,7 +162,7 @@ namespace Banter.UI.Core
                 {
                     elementsDict[elementId] = element;
                     elementToIdDict[element] = elementId;
-                    Debug.Log($"[UIXMLTreeProcessor] Successfully registered element '{elementId}' with bridge");
+                    LogVerbose($"Successfully registered element '{elementId}' with bridge");
                 }
                 else
                 {
@@ -203,7 +209,7 @@ namespace Banter.UI.Core
                     UnregisterElementFromBridge(bridge, oldId);
                     RegisterElementWithBridge(bridge, newId, element);
                     
-                    Debug.Log($"[UIXMLTreeProcessor] Updated element ID: '{oldId}' -> '{newId}'");
+                    LogVerbose($"Updated element ID: '{oldId}' -> '{newId}'");
                 }
             }
         }
@@ -335,3 +341,4 @@ namespace Banter.UI.Core
         }
     }
 }
+
