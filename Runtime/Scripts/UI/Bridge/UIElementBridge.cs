@@ -419,6 +419,14 @@ namespace Banter.UI.Bridge
                         slider.value = float.Parse(value);
                         return;
 
+                    case Slider slider when propertyName == "minvalue":
+                        slider.lowValue = float.Parse(value);
+                        return;
+
+                    case Slider slider when propertyName == "maxvalue":
+                        slider.highValue = float.Parse(value);
+                        return;
+
                     case SliderInt sliderInt when propertyName == "value":
                         sliderInt.value = int.Parse(value);
                         return;
