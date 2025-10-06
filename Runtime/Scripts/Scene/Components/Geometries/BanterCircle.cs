@@ -24,6 +24,7 @@ namespace Banter.SDK
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
         }
 
         void SetupGeometry()
@@ -52,7 +53,20 @@ namespace Banter.SDK
             }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+            var material = GetComponent<BanterMaterial>();
+            if (material)
+            {
+                Destroy(material);
+            }
+
+         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();

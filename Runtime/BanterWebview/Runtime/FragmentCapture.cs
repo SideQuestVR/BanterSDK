@@ -32,6 +32,7 @@ namespace TLab.WebView
 		[Header("Capture Settings")]
 		[SerializeField] protected RawImage m_rawImage;
 		[SerializeField] protected UnityEvent<Texture2D> m_onCapture = new UnityEvent<Texture2D>();
+
 		[SerializeField] protected UnityEvent m_onLoading = new UnityEvent();
 		[SerializeField] protected UnityEvent m_onNativeReady = new UnityEvent();
 		[SerializeField] protected string m_preloadScript;
@@ -162,10 +163,6 @@ namespace TLab.WebView
 
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 #else
-			Debug.Log("[BanterElectron] Created window with ID: BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y);
-			mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y, MemoryMappedFileRights.Read);
-			accessor = mmf.CreateViewAccessor();
-			ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
 			UnityMainThreadTaskScheduler.Default.Enqueue(() =>
 			{
 				if (m_contentView == null)
@@ -179,6 +176,12 @@ namespace TLab.WebView
 				}
 				m_onCapture?.Invoke(m_contentView);
 			});
+			Debug.Log("[BanterElectron] Created window with ID: BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y);
+			mmf = MemoryMappedFile.OpenExisting("BanterPixelBuffer" + winId + "_" + m_texSize.x + "x" + m_texSize.y, MemoryMappedFileRights.Read);
+			accessor = mmf.CreateViewAccessor();
+			ptr = accessor.SafeMemoryMappedViewHandle.DangerousGetHandle();
+			
+			
 #endif
 		}
 		public virtual IEnumerator InitTask()
@@ -203,29 +206,28 @@ namespace TLab.WebView
 			Action InitFunc = () =>
 			{
 				m_state = State.Initialized;
-				// m_onLoading?.Invoke();
-				try
-				{
-					BanterScene.Instance().link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}{MessageDelimiters.PRIMARY}about:blank{MessageDelimiters.PRIMARY}{m_preloadScript}", msg => {
-							
-						var parts = msg.Split(MessageDelimiters.PRIMARY, 5);
-						if (parts.Length < 4)
-						{
-							Debug.LogError("Failed to create window: " + msg);
-							return;
-						}
-						winId = int.Parse(parts[1]);
+				Debug.Log("HERERER: Win id before after? ");
+				BanterScene.Instance().link.Send($"{APICommands.CREATE_WINDOW}{MessageDelimiters.PRIMARY}{m_texSize.x}{MessageDelimiters.PRIMARY}{m_texSize.y}{MessageDelimiters.PRIMARY}about:blank{MessageDelimiters.PRIMARY}{m_preloadScript}", msg => {
+						
+					var parts = msg.Split(MessageDelimiters.PRIMARY, 5);
+					if (parts.Length < 4)
+					{
+						Debug.LogError("Failed to create window: " + msg);
+						return;
+					}
+					winId = int.Parse(parts[1]);
+					try
+					{
 						m_texSize.x = int.Parse(parts[2]);
 						m_texSize.y = int.Parse(parts[3]);
 						CreateElectronTexture();
-					});
-
-				}
-				catch (Exception ex)
-				{
-					Debug.LogError($"Failed to open shared memory: {ex}");
-					return;
-				}
+					}
+					catch (Exception ex)
+					{
+						Debug.LogError($"Failed to open shared memory: {ex}");
+						return;
+					}
+				});
 			};
 			if (BanterScene.Instance().link.pipe.GetIsConnected())
 			{

@@ -24,7 +24,7 @@ namespace Banter.SDK
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
         [SerializeField] float spawnRotation;
-        [SerializeField] bool openBrowser;
+        public bool openBrowser;
         [SerializeField] Transform _feetTransform;
         [SerializeField] RawImage _browserRenderer;
         public static bool SafeMode = false;
@@ -266,7 +266,7 @@ namespace Banter.SDK
 #endif
 
 #if UNITY_EDITOR
-            var Eargs = (isProd ? "--prod true " : "") + "--bebug --pipename " +
+            var Eargs = (isProd ? "--prod true " : "") + "--bebug " + (openBrowser ? "--openbrowser " : "") + "--pipename " +
                 BanterLink.pipeName + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"";
             processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
                 Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),

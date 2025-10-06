@@ -20,6 +20,7 @@ namespace Banter.SDK
         FixedJoint,
         BanterGeometry,
         BanterGLTF,
+        BanterGrababble,
         BanterGrabHandle,
         BanterHeldEvents,
         HingeJoint,

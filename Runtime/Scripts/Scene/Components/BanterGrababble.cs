@@ -1,27 +1,31 @@
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using Banter.FlexaBody;
-using Pixeye.Unity;
+using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
-    public class BanterHeldEvents : BanterComponentBase
-    {
 
-        [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
-        [See(initial = "0.5")][SerializeField] internal float sensitivity = 0.5f;
+    public class BanterGrababble : BanterComponentBase
+    {
+        [Tooltip("Defines the type of grab interaction (Point, Cylinder, Ball, Soft).")]
+        [See(initial = "0")][SerializeField] internal BanterGrabType grabType;
+
+        [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
+        [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
+
+         [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
+        [See(initial = "0.5")][SerializeField] internal float gunTriggerSensitivity = 0.5f;
 
         [Tooltip("Rate at which held events are fired (in seconds).")]
-        [See(initial = "0.1")][SerializeField] internal float fireRate = 0.1f;
+        [See(initial = "0.1")][SerializeField] internal float gunTriggerFireRate = 0.1f;
 
         [Tooltip("Enable automatic triggering of held events without manual input.")]
-        [See(initial = "false")][SerializeField] internal bool auto = false;
+        [See(initial = "false")][SerializeField] internal bool gunTriggerAutoFire = false;
 
         [Tooltip("Blocks the left controller's primary button input.")]
         [See(initial = "false")][SerializeField] internal bool blockLeftPrimary = false;
@@ -53,115 +57,122 @@ namespace Banter.SDK
         [Tooltip("Blocks the right controller's trigger input.")]
         [See(initial = "false")][SerializeField] internal bool blockRightTrigger = false;
 
-        BanterPlayerEvents banterPlayerEvents;
-        bool banterPlayerEventsAdded;
+        BanterGrabHandle banterGrabHandle;
 
-        ControllerHeldEvents controllerHeldEvents;
+        bool banterGrabHandleAdded;
 
-        bool controllerHeldEventsAdded;
+        BanterWorldObject banterWorldObject;
 
-        Handle_Controller handleController;
-        bool handleControllerAdded;
+        bool banterWorldObjectAdded;
 
-        GrabHandle grabHandle;
-
-        bool grabHandleAdded;
-
-        bool worldObjectAdded = true;
-
-
-
-
-        internal override void DestroyStuff()
-        {
-            if (banterPlayerEvents && banterPlayerEventsAdded)
-            {
-                Destroy(banterPlayerEvents);
-            }
-            if (controllerHeldEvents && controllerHeldEventsAdded)
-            {
-                Destroy(controllerHeldEvents);
-            }
-            if (handleController && handleControllerAdded)
-            {
-                Destroy(handleController);
-            }
-            if (grabHandle && grabHandleAdded)
-            {
-                Destroy(grabHandle);
-            }
-        }
-
+        BanterHeldEvents banterHeldEvents;
+        bool banterHeldEventsAdded;
 
         internal override void StartStuff()
         {
-            UpdateCallback(null);
-            SetLoadedIfNot();
+            banterGrabHandle = gameObject.GetComponent<BanterGrabHandle>();
+            if (!banterGrabHandle)
+            {
+                banterGrabHandleAdded = true;
+                banterGrabHandle = gameObject.AddComponent<BanterGrabHandle>();
+            }
+            banterWorldObject = gameObject.GetComponent<BanterWorldObject>();
+            if (!banterWorldObject)
+            {
+                banterWorldObjectAdded = true;
+                banterWorldObject = gameObject.AddComponent<BanterWorldObject>();
+            }
+            banterHeldEvents = gameObject.GetComponent<BanterHeldEvents>();
+            if (!banterHeldEvents)
+            {
+                banterHeldEventsAdded = true;
+                banterHeldEvents = gameObject.AddComponent<BanterHeldEvents>();
+            }
         }
-
+        internal override void DestroyStuff()
+        {
+            if (banterGrabHandle && banterGrabHandleAdded)
+            {
+                Destroy(banterGrabHandle);
+            }
+            if (banterWorldObject && banterWorldObjectAdded)
+            {
+                Destroy(banterWorldObject);
+            }
+            if (banterHeldEvents && banterHeldEventsAdded)
+            {
+                Destroy(banterHeldEvents);
+            }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (!gameObject.GetComponent<BanterPlayerEvents>())
+            if (changedProperties.Contains(PropertyName.grabType))
             {
-                banterPlayerEventsAdded = true;
-                banterPlayerEvents = gameObject.AddComponent<BanterPlayerEvents>();
+                banterGrabHandle.GrabType = grabType;
             }
-
-            controllerHeldEvents = GetComponent<ControllerHeldEvents>();
-            if (controllerHeldEvents == null)
+            if (changedProperties.Contains(PropertyName.grabRadius))
             {
-                controllerHeldEventsAdded = true;
-                controllerHeldEvents = gameObject.AddComponent<ControllerHeldEvents>();
+                banterGrabHandle.GrabRadius = grabRadius;
             }
-
-            controllerHeldEvents.banterEvents = banterPlayerEvents;
-            handleController = GetComponent<Handle_Controller>();
-            if (handleController == null)
+            if (changedProperties.Contains(PropertyName.gunTriggerSensitivity))
             {
-                handleControllerAdded = true;
-                handleController = gameObject.AddComponent<Handle_Controller>();
+                banterHeldEvents.Sensitivity = gunTriggerSensitivity;
             }
-
-            handleController.Sensitivity = Sensitivity;
-            handleController.FireTime = FireRate;
-            handleController.AutoFire = Auto;
-            handleController.Controllable = controllerHeldEvents;
-            handleController.InputBlocks = new InputBlockList[]{
-                new InputBlockList(){
-                    PrimaryButton = BlockLeftPrimary,
-                    SecondaryButton = BlockLeftSecondary,
-                    Thumbstick = BlockLeftThumbstick,
-                    ThumbstickClick = BlockLeftThumbstickClick,
-                    Trigger = BlockLeftTrigger,
-                },
-                new InputBlockList(){
-                    PrimaryButton = BlockRightPrimary,
-                    SecondaryButton = BlockRightSecondary,
-                    Thumbstick = BlockRightThumbstick,
-                    ThumbstickClick = BlockRightThumbstickClick,
-                    Trigger = BlockRightTrigger,
-                }
-            };
-
-            grabHandle = GetComponent<GrabHandle>();
-            if (grabHandle == null)
+            if (changedProperties.Contains(PropertyName.gunTriggerFireRate))
             {
-                grabHandleAdded = true;
-                grabHandle = gameObject.AddComponent<GrabHandle>();
+                banterHeldEvents.FireRate = gunTriggerFireRate;
             }
-            
-            grabHandle._handleFunctions = new HandleFunction[]{handleController};
-            grabHandle.WorldObj = GetComponentInParent<WorldObject>(); 
-            if (!grabHandle.WorldObj)
+            if (changedProperties.Contains(PropertyName.gunTriggerAutoFire))
             {
-                worldObjectAdded = true;
-                grabHandle.WorldObj = gameObject.AddComponent<WorldObject>();
+                banterHeldEvents.Auto = gunTriggerAutoFire;
+            }
+            if (changedProperties.Contains(PropertyName.blockLeftPrimary))
+            {
+                banterHeldEvents.BlockLeftPrimary = blockLeftPrimary;
+            }
+            if (changedProperties.Contains(PropertyName.blockLeftSecondary))
+            {
+                banterHeldEvents.BlockLeftSecondary = blockLeftSecondary;
+            }
+            if (changedProperties.Contains(PropertyName.blockRightPrimary))
+            {
+                banterHeldEvents.BlockRightPrimary = blockRightPrimary;
+            }
+            if (changedProperties.Contains(PropertyName.blockRightSecondary))
+            {
+                banterHeldEvents.BlockRightSecondary = blockRightSecondary;
+            }
+            if (changedProperties.Contains(PropertyName.blockLeftThumbstick))
+            {
+                banterHeldEvents.BlockLeftThumbstick = blockLeftThumbstick;
+            }
+            if (changedProperties.Contains(PropertyName.blockRightThumbstick))
+            {
+                banterHeldEvents.BlockRightThumbstick = blockRightThumbstick;
+            }
+            if (changedProperties.Contains(PropertyName.blockLeftThumbstickClick))
+            {
+                banterHeldEvents.BlockLeftThumbstickClick = blockLeftThumbstickClick;
+            }
+            if (changedProperties.Contains(PropertyName.blockRightThumbstickClick))
+            {
+                banterHeldEvents.BlockRightThumbstickClick = blockRightThumbstickClick;
+            }
+            if (changedProperties.Contains(PropertyName.blockLeftTrigger))
+            {
+                banterHeldEvents.BlockLeftTrigger = blockLeftTrigger;
+            }
+            if (changedProperties.Contains(PropertyName.blockRightTrigger))
+            {
+                banterHeldEvents.BlockRightTrigger = blockRightTrigger;
             }
         }
         // BANTER COMPILED CODE 
-        public System.Single Sensitivity { get { return sensitivity; } set { sensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.sensitivity }); } }
-        public System.Single FireRate { get { return fireRate; } set { fireRate = value; UpdateCallback(new List<PropertyName> { PropertyName.fireRate }); } }
-        public System.Boolean Auto { get { return auto; } set { auto = value; UpdateCallback(new List<PropertyName> { PropertyName.auto }); } }
+        public BanterGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
+        public System.Single GrabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
+        public System.Single GunTriggerSensitivity { get { return gunTriggerSensitivity; } set { gunTriggerSensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.gunTriggerSensitivity }); } }
+        public System.Single GunTriggerFireRate { get { return gunTriggerFireRate; } set { gunTriggerFireRate = value; UpdateCallback(new List<PropertyName> { PropertyName.gunTriggerFireRate }); } }
+        public System.Boolean GunTriggerAutoFire { get { return gunTriggerAutoFire; } set { gunTriggerAutoFire = value; UpdateCallback(new List<PropertyName> { PropertyName.gunTriggerAutoFire }); } }
         public System.Boolean BlockLeftPrimary { get { return blockLeftPrimary; } set { blockLeftPrimary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftPrimary }); } }
         public System.Boolean BlockLeftSecondary { get { return blockLeftSecondary; } set { blockLeftSecondary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftSecondary }); } }
         public System.Boolean BlockRightPrimary { get { return blockRightPrimary; } set { blockRightPrimary = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightPrimary }); } }
@@ -194,7 +205,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.sensitivity, PropertyName.fireRate, PropertyName.auto, PropertyName.blockLeftPrimary, PropertyName.blockLeftSecondary, PropertyName.blockRightPrimary, PropertyName.blockRightSecondary, PropertyName.blockLeftThumbstick, PropertyName.blockLeftThumbstickClick, PropertyName.blockRightThumbstick, PropertyName.blockRightThumbstickClick, PropertyName.blockLeftTrigger, PropertyName.blockRightTrigger, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.grabType, PropertyName.grabRadius, PropertyName.gunTriggerSensitivity, PropertyName.gunTriggerFireRate, PropertyName.gunTriggerAutoFire, PropertyName.blockLeftPrimary, PropertyName.blockLeftSecondary, PropertyName.blockRightPrimary, PropertyName.blockRightSecondary, PropertyName.blockLeftThumbstick, PropertyName.blockLeftThumbstickClick, PropertyName.blockRightThumbstick, PropertyName.blockRightThumbstickClick, PropertyName.blockLeftTrigger, PropertyName.blockRightTrigger, };
             UpdateCallback(changedProperties);
         }
 
@@ -202,7 +213,7 @@ namespace Banter.SDK
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterHeldEvents);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterGrababble);
 
 
             oid = gameObject.GetInstanceID();
@@ -239,31 +250,49 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BanterInt)
                 {
-                    var valsensitivity = (BanterFloat)values[i];
-                    if (valsensitivity.n == PropertyName.sensitivity)
+                    var valgrabType = (BanterInt)values[i];
+                    if (valgrabType.n == PropertyName.grabType)
                     {
-                        sensitivity = valsensitivity.x;
-                        changedProperties.Add(PropertyName.sensitivity);
+                        grabType = (BanterGrabType)valgrabType.x;
+                        changedProperties.Add(PropertyName.grabType);
                     }
                 }
                 if (values[i] is BanterFloat)
                 {
-                    var valfireRate = (BanterFloat)values[i];
-                    if (valfireRate.n == PropertyName.fireRate)
+                    var valgrabRadius = (BanterFloat)values[i];
+                    if (valgrabRadius.n == PropertyName.grabRadius)
                     {
-                        fireRate = valfireRate.x;
-                        changedProperties.Add(PropertyName.fireRate);
+                        grabRadius = valgrabRadius.x;
+                        changedProperties.Add(PropertyName.grabRadius);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valgunTriggerSensitivity = (BanterFloat)values[i];
+                    if (valgunTriggerSensitivity.n == PropertyName.gunTriggerSensitivity)
+                    {
+                        gunTriggerSensitivity = valgunTriggerSensitivity.x;
+                        changedProperties.Add(PropertyName.gunTriggerSensitivity);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valgunTriggerFireRate = (BanterFloat)values[i];
+                    if (valgunTriggerFireRate.n == PropertyName.gunTriggerFireRate)
+                    {
+                        gunTriggerFireRate = valgunTriggerFireRate.x;
+                        changedProperties.Add(PropertyName.gunTriggerFireRate);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var valauto = (BanterBool)values[i];
-                    if (valauto.n == PropertyName.auto)
+                    var valgunTriggerAutoFire = (BanterBool)values[i];
+                    if (valgunTriggerAutoFire.n == PropertyName.gunTriggerAutoFire)
                     {
-                        auto = valauto.x;
-                        changedProperties.Add(PropertyName.auto);
+                        gunTriggerAutoFire = valgunTriggerAutoFire.x;
+                        changedProperties.Add(PropertyName.gunTriggerAutoFire);
                     }
                 }
                 if (values[i] is BanterBool)
@@ -367,10 +396,10 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.sensitivity,
-                    type = PropertyType.Float,
-                    value = sensitivity,
-                    componentType = ComponentType.BanterHeldEvents,
+                    name = PropertyName.grabType,
+                    type = PropertyType.Int,
+                    value = grabType,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -379,10 +408,10 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.fireRate,
+                    name = PropertyName.grabRadius,
                     type = PropertyType.Float,
-                    value = fireRate,
-                    componentType = ComponentType.BanterHeldEvents,
+                    value = grabRadius,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -391,10 +420,34 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.auto,
+                    name = PropertyName.gunTriggerSensitivity,
+                    type = PropertyType.Float,
+                    value = gunTriggerSensitivity,
+                    componentType = ComponentType.BanterGrababble,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.gunTriggerFireRate,
+                    type = PropertyType.Float,
+                    value = gunTriggerFireRate,
+                    componentType = ComponentType.BanterGrababble,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.gunTriggerAutoFire,
                     type = PropertyType.Bool,
-                    value = auto,
-                    componentType = ComponentType.BanterHeldEvents,
+                    value = gunTriggerAutoFire,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -406,7 +459,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftPrimary,
                     type = PropertyType.Bool,
                     value = blockLeftPrimary,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -418,7 +471,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftSecondary,
                     type = PropertyType.Bool,
                     value = blockLeftSecondary,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -430,7 +483,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightPrimary,
                     type = PropertyType.Bool,
                     value = blockRightPrimary,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -442,7 +495,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightSecondary,
                     type = PropertyType.Bool,
                     value = blockRightSecondary,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -454,7 +507,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftThumbstick,
                     type = PropertyType.Bool,
                     value = blockLeftThumbstick,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -466,7 +519,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftThumbstickClick,
                     type = PropertyType.Bool,
                     value = blockLeftThumbstickClick,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -478,7 +531,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightThumbstick,
                     type = PropertyType.Bool,
                     value = blockRightThumbstick,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -490,7 +543,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightThumbstickClick,
                     type = PropertyType.Bool,
                     value = blockRightThumbstickClick,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -502,7 +555,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftTrigger,
                     type = PropertyType.Bool,
                     value = blockLeftTrigger,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });
@@ -514,7 +567,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightTrigger,
                     type = PropertyType.Bool,
                     value = blockRightTrigger,
-                    componentType = ComponentType.BanterHeldEvents,
+                    componentType = ComponentType.BanterGrababble,
                     oid = oid,
                     cid = cid
                 });

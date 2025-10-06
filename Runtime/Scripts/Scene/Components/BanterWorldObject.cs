@@ -1,6 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+#if BANTER_FLEX
+using Banter.FlexaBody;
+#endif
 using UnityEngine;
 
 namespace Banter.SDK
@@ -16,22 +19,33 @@ namespace Banter.SDK
         /// This array is automatically populated when colliders are collected.
         /// </summary>
         [Tooltip("Automatically populated array of colliders associated with this object.")]
-        public Collider[] colliders;
-        [Method]
-        public void _CollectColliders()
-        {
-            scene.events.OnWorldObjectCollectColliders.Invoke(this);
-        }
+
+        WorldObject worldObj;
+
+        bool worldObjectAdded;
 
         internal override void DestroyStuff()
         {
-            // throw new NotImplementedException();
+#if BANTER_FLEX
+            if (worldObjectAdded && worldObj)
+            {
+                Destroy(worldObj);
+            }
+#endif
         }
 
         internal override void StartStuff()
         {
-            scene.events.OnWorldObject.Invoke(this);
+#if BANTER_FLEX
+            worldObj = GetComponent<WorldObject>();
+            if (worldObj == null)
+            {
+                worldObjectAdded = true;
+                worldObj = gameObject.AddComponent<WorldObject>();
+            }
+            worldObj.RB = GetComponent<Rigidbody>();
             SetLoadedIfNot();
+#endif
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
@@ -95,22 +109,9 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        void CollectColliders()
-        {
-            _CollectColliders();
-        }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
-
-            if (methodName == "CollectColliders" && parameters.Count == 0)
-            {
-                CollectColliders();
-                return null;
-            }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
         internal override void Deserialise(List<object> values)

@@ -43,6 +43,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterGeometry>();
                 case ComponentType.BanterGLTF:
                     return gameObject.AddComponent<BanterGLTF>();
+                case ComponentType.BanterGrababble:
+                    return gameObject.AddComponent<BanterGrababble>();
                 case ComponentType.BanterGrabHandle:
                     return gameObject.AddComponent<BanterGrabHandle>();
                 case ComponentType.BanterHeldEvents:
