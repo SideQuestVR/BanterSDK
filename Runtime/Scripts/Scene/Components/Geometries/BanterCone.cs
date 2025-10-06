@@ -43,8 +43,9 @@ namespace Banter.SDK
                 shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BanterGeometry>();
             }
-            geometry.geometryType = GeometryType.ConeGeometry;
-            geometry.radius = radius;
+            geometry.geometryType = GeometryType.CylinderGeometry;
+            geometry.radiusTop = 0;
+            geometry.radiusBottom = radius;
             geometry.height = height;
             geometry.radialSegments = radialSegments;
             geometry.heightSegments = heightSegments;

@@ -33,7 +33,7 @@ namespace Banter.SDK
                 shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BanterGeometry>();
             }
-            geometry.geometryType = GeometryType.BoxGeometry;
+            geometry.geometryType = GeometryType.PlaneGeometry;
             geometry.width = width;
             geometry.height = height;
             geometry.widthSegments = widthSegments;
