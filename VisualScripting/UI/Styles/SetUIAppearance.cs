@@ -50,9 +50,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput visibility;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -68,7 +65,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIAppearance"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -78,7 +74,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIAppearance] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -106,13 +101,10 @@ namespace Banter.VisualScripting
                         _ => "visible"
                     };
                     SendStyleCommand(panelId, elemId, "visibility", visibilityValue);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIAppearance] Failed to set UI appearance: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -125,7 +117,6 @@ namespace Banter.VisualScripting
             opacity = ValueInput("Opacity", 1f);
             display = ValueInput("Display", UIDisplay.Flex);
             visibility = ValueInput("Visibility", UIVisibility.Visible);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

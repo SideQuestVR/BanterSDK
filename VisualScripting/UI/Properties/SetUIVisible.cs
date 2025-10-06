@@ -31,9 +31,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput panelReference;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -48,14 +45,12 @@ namespace Banter.VisualScripting
                 if (string.IsNullOrEmpty(elemId))
                 {
                     Debug.LogWarning("[SetUIVisible] Element ID/Name is null or empty.");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
                 if (panel == null)
                 {
                     Debug.LogWarning("[SetUIVisible] Panel reference is null.");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -69,13 +64,10 @@ namespace Banter.VisualScripting
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIVisible] Failed to set UI visible state: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -86,7 +78,6 @@ namespace Banter.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             visible = ValueInput("Visible", true);
             panelReference = ValueInput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

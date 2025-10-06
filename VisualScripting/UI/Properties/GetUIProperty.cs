@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
 using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 using System.Collections;
@@ -30,10 +31,7 @@ namespace Banter.VisualScripting
         public ValueInput propertyName;
 
         [DoNotSerialize]
-        public ValueInput panelReference;
-
-        [DoNotSerialize]
-        public ValueOutput success;
+        public ValueOutput elementIdOutput;
 
         [DoNotSerialize]
         public ValueOutput propertyValue;
@@ -48,7 +46,6 @@ namespace Banter.VisualScripting
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var propName = flow.GetValue<UIPropertyNameVS>(propertyName);
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
 
                 // Resolve element name to ID if needed
                 string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
@@ -56,26 +53,27 @@ namespace Banter.VisualScripting
                 if (string.IsNullOrEmpty(elemId))
                 {
                     Debug.LogWarning("[GetUIProperty] Element ID/Name is null or empty.");
-                    flow.SetValue(success, false);
+                    flow.SetValue(elementIdOutput, "");
                     flow.SetValue(propertyValue, null);
                     return outputTrigger;
                 }
 
-                if (panel == null)
-                {
-                    Debug.LogWarning("[GetUIProperty] Panel reference is null.");
-                    flow.SetValue(success, false);
-                    flow.SetValue(propertyValue, null);
-                    return outputTrigger;
-                }
+                // Set element ID output for chaining
+                flow.SetValue(elementIdOutput, elemId);
 
                 try
                 {
                     // Clean up any existing callback
                     CleanupCallback();
-                    
-                    // Get the panel ID for message routing
-                    var panelId = panel.GetFormattedPanelId();
+
+                    // Auto-resolve panel from element ID
+                    var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
+                    if (panelId == null)
+                    {
+                        Debug.LogError($"[GetUIProperty] Could not resolve panel for element '{elemId}'");
+                        flow.SetValue(propertyValue, null);
+                        return outputTrigger;
+                    }
                     
                     // Convert enum to property name
                     var propNameStr = GetPropertyName(propName);
@@ -86,15 +84,13 @@ namespace Banter.VisualScripting
                         if (args.arguments != null && args.arguments.Length > 0)
                         {
                             flow.SetValue(propertyValue, args.arguments[0]);
-                            flow.SetValue(success, true);
                             Debug.Log($"[GetUIProperty] Received property value: {args.arguments[0]} for {_currentEventName}");
                         }
                         else
                         {
                             flow.SetValue(propertyValue, null);
-                            flow.SetValue(success, false);
                         }
-                        
+
                         // Clean up callback after use
                         CleanupCallback();
                     };
@@ -113,7 +109,6 @@ namespace Banter.VisualScripting
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIProperty] Failed to get UI property: {e.Message}");
-                    flow.SetValue(success, false);
                     flow.SetValue(propertyValue, null);
                     CleanupCallback();
                 }
@@ -125,8 +120,7 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             propertyName = ValueInput("Property", UIPropertyNameVS.Text);
-            panelReference = ValueInput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
+            elementIdOutput = ValueOutput<string>("Element ID");
             propertyValue = ValueOutput<object>("Value");
         }
         

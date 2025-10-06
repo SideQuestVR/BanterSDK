@@ -185,7 +185,11 @@ namespace Banter.UI.Bridge
                 case UICommands.SET_UI_STYLE:
                     SetStyle(data);
                     break;
-                    
+
+                case UICommands.GET_UI_STYLE:
+                    GetStyle(data);
+                    break;
+
                 case UICommands.CALL_UI_METHOD:
                     CallMethod(data);
                     break;
@@ -413,6 +417,14 @@ namespace Banter.UI.Bridge
 
                     case Slider slider when propertyName == "value":
                         slider.value = float.Parse(value);
+                        return;
+
+                    case Slider slider when propertyName == "minvalue":
+                        slider.lowValue = float.Parse(value);
+                        return;
+
+                    case Slider slider when propertyName == "maxvalue":
+                        slider.highValue = float.Parse(value);
                         return;
 
                     case SliderInt sliderInt when propertyName == "value":
@@ -804,7 +816,247 @@ namespace Banter.UI.Bridge
             
             Debug.Log($"[UIElementBridge] Set style {styleProperty} = '{value}' on element {elementId}");
         }
-        
+
+        private void GetStyle(string[] data)
+        {
+            if (data.Length < 2) return;
+
+            var elementId = data[0];
+            var styleNameString = data[1];
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            {
+                Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get style '{styleNameString}'");
+                return;
+            }
+
+            // Convert string to enum
+            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
+
+            // Get style value from resolved style
+            string styleValue = GetStyleValue(element, styleProperty);
+
+            // Trigger EventBus event for Visual Scripting to receive the value
+            // Format: UIStyle_{elementId}_{styleName} with the style value
+            var eventName = $"UIStyle_{elementId}_{styleNameString}";
+            Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { styleValue }));
+
+            Debug.Log($"[UIElementBridge] Got style '{styleNameString}' = '{styleValue}' from element {elementId}, triggered event {eventName}");
+        }
+
+        private string GetStyleValue(VisualElement element, UIStyleProperty property)
+        {
+            var style = element.resolvedStyle;
+
+            switch (property)
+            {
+                // Layout Properties (Flexbox)
+                case UIStyleProperty.AlignContent:
+                    return style.alignContent.ToString().ToLower();
+                case UIStyleProperty.AlignItems:
+                    return style.alignItems.ToString().ToLower();
+                case UIStyleProperty.AlignSelf:
+                    return style.alignSelf.ToString().ToLower();
+                case UIStyleProperty.FlexBasis:
+                    return FormatStyleFloat(style.flexBasis);
+                case UIStyleProperty.FlexDirection:
+                    return FormatFlexDirection(style.flexDirection);
+                case UIStyleProperty.FlexGrow:
+                    return FormatStyleFloat(style.flexGrow);
+                case UIStyleProperty.FlexShrink:
+                    return FormatStyleFloat(style.flexShrink);
+                case UIStyleProperty.FlexWrap:
+                    return FormatWrap(style.flexWrap);
+                case UIStyleProperty.JustifyContent:
+                    return FormatJustify(style.justifyContent);
+
+                // Size Properties
+                case UIStyleProperty.Width:
+                    return FormatStyleLength(style.width);
+                case UIStyleProperty.Height:
+                    return FormatStyleLength(style.height);
+                case UIStyleProperty.MinWidth:
+                    return FormatStyleFloat(style.minWidth);
+                case UIStyleProperty.MinHeight:
+                    return FormatStyleFloat(style.minHeight);
+                case UIStyleProperty.MaxWidth:
+                    return FormatStyleFloat(style.maxWidth);
+                case UIStyleProperty.MaxHeight:
+                    return FormatStyleFloat(style.maxHeight);
+
+                // Position Properties
+                case UIStyleProperty.Position:
+                    return style.position.ToString().ToLower();
+                case UIStyleProperty.Left:
+                    return FormatStyleLength(style.left);
+                case UIStyleProperty.Top:
+                    return FormatStyleLength(style.top);
+                case UIStyleProperty.Right:
+                    return FormatStyleLength(style.right);
+                case UIStyleProperty.Bottom:
+                    return FormatStyleLength(style.bottom);
+
+                // Margin Properties
+                case UIStyleProperty.MarginTop:
+                    return FormatStyleLength(style.marginTop);
+                case UIStyleProperty.MarginRight:
+                    return FormatStyleLength(style.marginRight);
+                case UIStyleProperty.MarginBottom:
+                    return FormatStyleLength(style.marginBottom);
+                case UIStyleProperty.MarginLeft:
+                    return FormatStyleLength(style.marginLeft);
+
+                // Padding Properties
+                case UIStyleProperty.PaddingTop:
+                    return FormatStyleLength(style.paddingTop);
+                case UIStyleProperty.PaddingRight:
+                    return FormatStyleLength(style.paddingRight);
+                case UIStyleProperty.PaddingBottom:
+                    return FormatStyleLength(style.paddingBottom);
+                case UIStyleProperty.PaddingLeft:
+                    return FormatStyleLength(style.paddingLeft);
+
+                // Border Properties
+                case UIStyleProperty.BorderTopWidth:
+                    return style.borderTopWidth.ToString();
+                case UIStyleProperty.BorderRightWidth:
+                    return style.borderRightWidth.ToString();
+                case UIStyleProperty.BorderBottomWidth:
+                    return style.borderBottomWidth.ToString();
+                case UIStyleProperty.BorderLeftWidth:
+                    return style.borderLeftWidth.ToString();
+                case UIStyleProperty.BorderTopLeftRadius:
+                    return FormatStyleLength(style.borderTopLeftRadius);
+                case UIStyleProperty.BorderTopRightRadius:
+                    return FormatStyleLength(style.borderTopRightRadius);
+                case UIStyleProperty.BorderBottomLeftRadius:
+                    return FormatStyleLength(style.borderBottomLeftRadius);
+                case UIStyleProperty.BorderBottomRightRadius:
+                    return FormatStyleLength(style.borderBottomRightRadius);
+
+                // Border Color Properties
+                case UIStyleProperty.BorderTopColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderTopColor);
+                case UIStyleProperty.BorderRightColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderRightColor);
+                case UIStyleProperty.BorderBottomColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderBottomColor);
+                case UIStyleProperty.BorderLeftColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderLeftColor);
+
+                // Background Properties
+                case UIStyleProperty.BackgroundColor:
+                    return "#" + ColorUtility.ToHtmlStringRGBA(style.backgroundColor);
+
+                // Color Properties
+                case UIStyleProperty.Color:
+                    return "#" + ColorUtility.ToHtmlStringRGBA(style.color);
+                case UIStyleProperty.Opacity:
+                    return style.opacity.ToString();
+
+                // Text Properties
+                case UIStyleProperty.FontSize:
+                    return FormatStyleLength(style.fontSize);
+                case UIStyleProperty.FontStyle:
+                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                case UIStyleProperty.FontWeight:
+                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                case UIStyleProperty.UnityTextAlign:
+                    return FormatTextAnchor(style.unityTextAlign);
+                case UIStyleProperty.WhiteSpace:
+                    return style.whiteSpace.ToString().ToLower();
+
+                // Display Properties
+                case UIStyleProperty.Display:
+                    return style.display.ToString().ToLower();
+                case UIStyleProperty.Visibility:
+                    return style.visibility.ToString().ToLower();
+
+                default:
+                    Debug.LogWarning($"[UIElementBridge] Unsupported get style property: {property}");
+                    return "";
+            }
+        }
+
+        private string FormatStyleLength(StyleLength length)
+        {
+            if (length.keyword != StyleKeyword.Undefined && length.keyword != StyleKeyword.Null)
+            {
+                return length.keyword.ToString().ToLower();
+            }
+
+            var value = length.value;
+            if (value.unit == LengthUnit.Pixel)
+                return $"{value.value}px";
+            else if (value.unit == LengthUnit.Percent)
+                return $"{value.value}%";
+            else
+                return value.value.ToString();
+        }
+
+        private string FormatStyleFloat(StyleFloat styleFloat)
+        {
+            if (styleFloat.keyword != StyleKeyword.Undefined && styleFloat.keyword != StyleKeyword.Null)
+            {
+                return styleFloat.keyword.ToString().ToLower();
+            }
+
+            return styleFloat.value.ToString();
+        }
+
+        private string FormatFlexDirection(FlexDirection direction)
+        {
+            return direction switch
+            {
+                FlexDirection.Column => "column",
+                FlexDirection.ColumnReverse => "column-reverse",
+                FlexDirection.Row => "row",
+                FlexDirection.RowReverse => "row-reverse",
+                _ => "column"
+            };
+        }
+
+        private string FormatWrap(Wrap wrap)
+        {
+            return wrap switch
+            {
+                Wrap.NoWrap => "nowrap",
+                Wrap.Wrap => "wrap",
+                Wrap.WrapReverse => "wrap-reverse",
+                _ => "nowrap"
+            };
+        }
+
+        private string FormatJustify(Justify justify)
+        {
+            return justify switch
+            {
+                Justify.FlexStart => "flex-start",
+                Justify.FlexEnd => "flex-end",
+                Justify.Center => "center",
+                Justify.SpaceBetween => "space-between",
+                Justify.SpaceAround => "space-around",
+                _ => "flex-start"
+            };
+        }
+
+        private string FormatTextAnchor(TextAnchor anchor)
+        {
+            return anchor switch
+            {
+                TextAnchor.UpperLeft => "left",
+                TextAnchor.UpperCenter => "center",
+                TextAnchor.UpperRight => "right",
+                TextAnchor.MiddleLeft => "left",
+                TextAnchor.MiddleCenter => "center",
+                TextAnchor.MiddleRight => "right",
+                TextAnchor.LowerLeft => "left",
+                TextAnchor.LowerCenter => "center",
+                TextAnchor.LowerRight => "right",
+                _ => "left"
+            };
+        }
+
         private StyleLength ParseLength(string value)
         {
             if (string.IsNullOrEmpty(value))

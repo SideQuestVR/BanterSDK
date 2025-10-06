@@ -53,9 +53,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput unit;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -76,7 +73,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUISpacing"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -86,7 +82,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUISpacing] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -101,13 +96,10 @@ namespace Banter.VisualScripting
                     SendStyleCommand(panelId, elemId, "padding-right", FormatLength(pRight, unitVal));
                     SendStyleCommand(panelId, elemId, "padding-bottom", FormatLength(pBottom, unitVal));
                     SendStyleCommand(panelId, elemId, "padding-left", FormatLength(pLeft, unitVal));
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUISpacing] Failed to set UI spacing: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -125,7 +117,6 @@ namespace Banter.VisualScripting
             paddingBottom = ValueInput("Padding Bottom", 0f);
             paddingLeft = ValueInput("Padding Left", 0f);
             unit = ValueInput("Unit", LengthUnit.Pixel);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

@@ -29,9 +29,6 @@ namespace Banter.VisualScripting
         public ValueInput panelReference;
 
         [DoNotSerialize]
-        public ValueOutput success;
-
-        [DoNotSerialize]
         public ValueOutput value;
 
         // Store callback for cleanup
@@ -51,7 +48,6 @@ namespace Banter.VisualScripting
                 if (string.IsNullOrEmpty(elemId))
                 {
                     Debug.LogWarning("[GetUIValue] Element ID/Name is null or empty.");
-                    flow.SetValue(success, false);
                     flow.SetValue(value, 0f);
                     return outputTrigger;
                 }
@@ -59,7 +55,6 @@ namespace Banter.VisualScripting
                 if (panel == null)
                 {
                     Debug.LogWarning("[GetUIValue] Panel reference is null.");
-                    flow.SetValue(success, false);
                     flow.SetValue(value, 0f);
                     return outputTrigger;
                 }
@@ -89,13 +84,11 @@ namespace Banter.VisualScripting
                                 floatValue = parsedStr;
                                 
                             flow.SetValue(value, floatValue);
-                            flow.SetValue(success, true);
                             Debug.Log($"[GetUIValue] Received value: {floatValue} for {_currentEventName}");
                         }
                         else
                         {
                             flow.SetValue(value, 0f);
-                            flow.SetValue(success, false);
                         }
                         
                         // Clean up callback after use
@@ -116,7 +109,6 @@ namespace Banter.VisualScripting
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIValue] Failed to get UI value: {e.Message}");
-                    flow.SetValue(success, false);
                     flow.SetValue(value, 0f);
                     CleanupCallback();
                 }
@@ -128,7 +120,6 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             panelReference = ValueInput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
             value = ValueOutput<float>("Value");
         }
         

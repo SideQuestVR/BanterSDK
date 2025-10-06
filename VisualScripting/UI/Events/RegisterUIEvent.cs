@@ -28,9 +28,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput eventType;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -53,13 +50,11 @@ namespace Banter.VisualScripting
                 if (string.IsNullOrEmpty(elemId))
                 {
                     Debug.LogError("[RegisterUIEvent] No element ID or name provided");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "RegisterUIEvent"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -70,7 +65,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[RegisterUIEvent] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -84,12 +78,10 @@ namespace Banter.VisualScripting
                     UIElementBridge.HandleMessage(message);
 
                     Debug.Log($"[RegisterUIEvent] Registered '{eventName}' event for element '{elemId}' on panel '{panelId}'");
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[RegisterUIEvent] Failed to register UI event: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -99,7 +91,6 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             eventType = ValueInput("Event Type", UIEventType.Click);
-            success = ValueOutput<bool>("Success");
         }
 
         /// <summary>

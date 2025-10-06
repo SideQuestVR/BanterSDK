@@ -29,9 +29,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput text;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -49,7 +46,6 @@ namespace Banter.VisualScripting
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIText"))
                 {
                     Debug.LogError($"[SetUIText] Validation FAILED for element '{elemId}'");
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -63,7 +59,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIText] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
 
@@ -78,12 +73,10 @@ namespace Banter.VisualScripting
                     UIElementBridge.HandleMessage(message);
 
                     Debug.Log($"[SetUIText] SUCCESS - Text set to '{textValue}' for element '{elemId}'");
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIText] EXCEPTION: {e.Message}\n{e.StackTrace}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -93,7 +86,6 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             text = ValueInput("Text", "");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

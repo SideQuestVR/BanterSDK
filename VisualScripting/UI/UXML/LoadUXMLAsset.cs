@@ -32,9 +32,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput uiDocument;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -50,7 +47,6 @@ namespace Banter.VisualScripting
                     {
                         Debug.LogError("[LoadUXMLAsset] BanterUIPanel component not found on target GameObject");
                         flow.SetValue(uiDocument, null);
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
 
@@ -72,7 +68,6 @@ namespace Banter.VisualScripting
                         {
                             Debug.LogError($"[LoadUXMLAsset] Failed to load UXML asset from Resources: {resPath}");
                             flow.SetValue(uiDocument, null);
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                         Debug.Log($"[LoadUXMLAsset] Loaded UXML asset from Resources: {resPath}");
@@ -82,7 +77,6 @@ namespace Banter.VisualScripting
                     {
                         Debug.LogError("[LoadUXMLAsset] No VisualTreeAsset provided either directly or via resource path");
                         flow.SetValue(uiDocument, null);
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
 
@@ -118,13 +112,11 @@ namespace Banter.VisualScripting
                     Debug.Log($"[LoadUXMLAsset] Successfully loaded UXML asset and assigned to UIDocument");
 
                     flow.SetValue(uiDocument, document);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[LoadUXMLAsset] Failed to load UXML asset: {e.Message}");
                     flow.SetValue(uiDocument, null);
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -135,7 +127,6 @@ namespace Banter.VisualScripting
             visualTreeAsset = ValueInput<VisualTreeAsset>("UXML Asset", null);
             resourcePath = ValueInput<string>("Resource Path", "");
             uiDocument = ValueOutput<UIDocument>("UI Document");
-            success = ValueOutput<bool>("Success");
         }
 
         /// <summary>

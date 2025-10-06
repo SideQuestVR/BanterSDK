@@ -38,9 +38,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput heightUnit;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         public enum LengthUnit
         {
             Pixel,
@@ -65,7 +62,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUISize"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -76,7 +72,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUISize] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -90,13 +85,10 @@ namespace Banter.VisualScripting
                     // Send commands through UIElementBridge
                     UIElementBridge.HandleMessage(widthMessage);
                     UIElementBridge.HandleMessage(heightMessage);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUISize] Failed to set UI size: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -109,7 +101,6 @@ namespace Banter.VisualScripting
             height = ValueInput("Height", 50f);
             widthUnit = ValueInput("Width Unit", LengthUnit.Pixel);
             heightUnit = ValueInput("Height Unit", LengthUnit.Pixel);
-            success = ValueOutput<bool>("Success");
         }
 
         private string FormatLength(float value, LengthUnit unit)

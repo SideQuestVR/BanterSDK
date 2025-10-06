@@ -31,9 +31,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput panelReference;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -55,15 +52,13 @@ namespace Banter.VisualScripting
                     panel.ScreenSpace = isScreenSpace;
 
                     Debug.Log($"[CreateUIPanel] Created panel successfully");
-                    
+
                     flow.SetValue(panelReference, panel);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[CreateUIPanel] Failed to create UI Panel: {e.Message}");
                     flow.SetValue(panelReference, null);
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -74,7 +69,6 @@ namespace Banter.VisualScripting
             resolution = ValueInput("Resolution", new Vector2(512, 512));
             screenSpace = ValueInput("Screen Space", false);
             panelReference = ValueOutput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

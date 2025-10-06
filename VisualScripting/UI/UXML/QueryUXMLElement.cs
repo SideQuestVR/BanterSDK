@@ -50,9 +50,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput isVisible;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -67,7 +64,6 @@ namespace Banter.VisualScripting
                 {
                     Debug.LogWarning("[QueryUXMLElement] Element ID/Name cannot be empty");
                     flow.SetValue(elementFound, false);
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -79,7 +75,6 @@ namespace Banter.VisualScripting
                     {
                         Debug.LogError("[QueryUXMLElement] BanterUIPanel component not found on target GameObject");
                         flow.SetValue(elementFound, false);
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
 
@@ -89,7 +84,6 @@ namespace Banter.VisualScripting
                     {
                         Debug.LogError("[QueryUXMLElement] UIElementBridge not found");
                         flow.SetValue(elementFound, false);
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
 
@@ -104,7 +98,6 @@ namespace Banter.VisualScripting
                         flow.SetValue(hasChildren, element.childCount > 0);
                         flow.SetValue(childCount, element.childCount);
                         flow.SetValue(isVisible, element.style.display != DisplayStyle.None && element.style.visibility != Visibility.Hidden);
-                        flow.SetValue(success, true);
 
                         Debug.Log($"[QueryUXMLElement] Found element '{elemId}' (type: {element.GetType().Name}, children: {element.childCount})");
                     }
@@ -117,7 +110,6 @@ namespace Banter.VisualScripting
                         flow.SetValue(hasChildren, false);
                         flow.SetValue(childCount, 0);
                         flow.SetValue(isVisible, false);
-                        flow.SetValue(success, true); // Success but element not found
 
                         Debug.LogWarning($"[QueryUXMLElement] Element '{elemId}' not found in registered elements");
                     }
@@ -126,7 +118,6 @@ namespace Banter.VisualScripting
                 {
                     Debug.LogError($"[QueryUXMLElement] Failed to query element '{elemId}': {e.Message}");
                     flow.SetValue(elementFound, false);
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -142,7 +133,6 @@ namespace Banter.VisualScripting
             hasChildren = ValueOutput<bool>("Has Children");
             childCount = ValueOutput<int>("Child Count");
             isVisible = ValueOutput<bool>("Is Visible");
-            success = ValueOutput<bool>("Success");
         }
 
         /// <summary>
