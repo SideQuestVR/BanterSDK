@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -23,6 +24,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput color;
 
         [DoNotSerialize]
@@ -34,7 +38,11 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var colorValue = flow.GetValue<Color>(color);
                 var panel = flow.GetValue<BanterUIPanel>(panelReference);
 
@@ -83,7 +91,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             panelReference = ValueInput<BanterUIPanel>("Panel Reference", null);
             color = ValueInput("Color", Color.white);
             success = ValueOutput<bool>("Success");

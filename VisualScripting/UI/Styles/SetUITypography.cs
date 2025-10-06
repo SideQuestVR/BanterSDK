@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -52,6 +53,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput fontSize;
 
         [DoNotSerialize]
@@ -81,7 +85,11 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var fontSizeVal = flow.GetValue<float>(fontSize);
                 var fontStyleVal = flow.GetValue<UIFontStyle>(fontStyle);
                 var fontWeightVal = flow.GetValue<UIFontWeight>(fontWeight);
@@ -175,7 +183,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             fontSize = ValueInput("Font Size", 14f);
             fontStyle = ValueInput("Font Style", UIFontStyle.Normal);
             fontWeight = ValueInput("Font Weight", UIFontWeight.Normal);

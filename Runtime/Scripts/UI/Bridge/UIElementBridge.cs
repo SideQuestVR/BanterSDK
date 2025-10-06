@@ -356,38 +356,123 @@ namespace Banter.UI.Bridge
         
         private void SetProperty(string[] data)
         {
-            if (data.Length < 3) return;
-            
+            if (data.Length < 3)
+            {
+                Debug.LogError($"[UIElementBridge.SetProperty] Data array too short (length={data.Length}), expected at least 3");
+                return;
+            }
+
             var elementId = data[0];
             var propertyName = data[1];
             var value = data[2];
 
+            // Resolve element name to ID if needed
+            elementId = ResolveElementIdOrName(elementId);
+
             if (!_elements.TryGetValue(elementId, out var element))
-            { 
+            {
                 Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to set property '{propertyName}'");
                 return;
             }
-            
+
             // Try to use the generated SetProperty method if the element supports it
             if (element is IUIPropertySetter propertySetter)
             {
                 if (propertySetter.SetProperty(propertyName, value))
                     return; // Property was handled by the generated method
             }
-            
-            // If we get here, the property wasn't handled by any generated SetProperty method
+
+            // Fallback: Handle common UI element types and properties directly
+            try
+            {
+                switch (element)
+                {
+                    case Label label when propertyName == "text":
+                        label.text = value;
+                        return;
+
+                    case TextField textField when propertyName == "value":
+                        textField.value = value;
+                        return;
+
+                    case TextField textField when propertyName == "text":
+                        textField.value = value; // TextField uses 'value' not 'text'
+                        return;
+
+                    case Button button when propertyName == "text":
+                        button.text = value;
+                        return;
+
+                    case Toggle toggle when propertyName == "value":
+                        toggle.value = bool.Parse(value);
+                        return;
+
+                    case Toggle toggle when propertyName == "label":
+                        toggle.label = value;
+                        return;
+
+                    case Slider slider when propertyName == "value":
+                        slider.value = float.Parse(value);
+                        return;
+
+                    case SliderInt sliderInt when propertyName == "value":
+                        sliderInt.value = int.Parse(value);
+                        return;
+
+                    case MinMaxSlider minMaxSlider when propertyName == "value":
+                        var parts = value.Split(',');
+                        if (parts.Length == 2)
+                        {
+                            minMaxSlider.value = new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                        }
+                        return;
+                }
+
+                // Handle common properties that apply to all VisualElements
+                if (propertyName == "enabled")
+                {
+                    element.SetEnabled(value == "1" || value.ToLower() == "true");
+                    return;
+                }
+
+                if (propertyName == "visible")
+                {
+                    element.style.display = (value == "1" || value.ToLower() == "true") ? DisplayStyle.Flex : DisplayStyle.None;
+                    return;
+                }
+
+                // Generic reflection fallback for properties not handled above
+                var propertyInfo = element.GetType().GetProperty(propertyName);
+                if (propertyInfo != null && propertyInfo.CanWrite)
+                {
+                    var targetType = propertyInfo.PropertyType;
+                    object convertedValue = ConvertValue(value, targetType);
+                    propertyInfo.SetValue(element, convertedValue);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UIElementBridge.SetProperty] Error setting property '{propertyName}' on {element.GetType().Name}: {ex.Message}");
+                return;
+            }
+
+            // If we get here, the property wasn't handled by any method
             Debug.LogWarning($"[UIElementBridge] Unhandled property '{propertyName}' for element type '{element.GetType().Name}' with value '{value}'");
         }
         
         private void GetProperty(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var propertyName = data[1];
 
+            // Resolve element name to ID if needed
+            elementId = ResolveElementIdOrName(elementId);
+
             if (!_elements.TryGetValue(elementId, out var element))
-            { 
+            {
                 Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get property '{propertyName}'");
                 return;
             }
@@ -1270,11 +1355,24 @@ namespace Banter.UI.Bridge
         private void RegisterEvent(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var eventTypeString = data[1];
-            
-            if (!_elements.TryGetValue(elementId, out var element)) return;
+
+            Debug.Log($"[UIElementBridge] RegisterEvent called with elementId='{elementId}', eventType='{eventTypeString}'");
+
+            // Resolve element name to ID if needed
+            var originalElementId = elementId;
+            elementId = ResolveElementIdOrName(elementId);
+            Debug.Log($"[UIElementBridge] After resolution: '{originalElementId}' -> '{elementId}'");
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            {
+                Debug.LogWarning($"[UIElementBridge] Element '{elementId}' not found in _elements dictionary. Available elements: {string.Join(", ", _elements.Keys)}");
+                return;
+            }
+
+            Debug.Log($"[UIElementBridge] Found element '{elementId}' of type {element.GetType().Name}");
             
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
@@ -1609,6 +1707,8 @@ namespace Banter.UI.Bridge
         
         private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
+            Debug.Log($"[UIElementBridge] SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
+
             // Send event back to TypeScript
             var eventTypeName = eventType.ToEventName();
 
@@ -1624,6 +1724,7 @@ namespace Banter.UI.Bridge
             // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
             var eventPrefix = ConvertEventTypeToPrefix(eventType);
             var genericEventName = $"{eventPrefix}_{elementId}";
+            Debug.Log($"[UIElementBridge] Triggering generic OnUIEvent with name '{genericEventName}'");
             Unity.VisualScripting.EventBus.Trigger("OnUIEvent", new Unity.VisualScripting.CustomEventArgs(genericEventName, new object[] { evt }));
 
             // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
@@ -1697,9 +1798,9 @@ namespace Banter.UI.Bridge
                         var newValue = boolChangeEvt.newValue ? "1" : "0";
                         var oldValue = boolChangeEvt.previousValue ? "1" : "0";
 
+                        Debug.Log($"[UIElementBridge] About to trigger OnUIChange event for bool element {elementId}: {oldValue} -> {newValue}, eventName: '{eventName}'");
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                        Debug.Log($"[UIElementBridge] EventBus.Trigger completed for OnUIChange event");
                     }
                     else if (evt is ChangeEvent<int> intChangeEvt)
                     {
@@ -2041,6 +2142,58 @@ namespace Banter.UI.Bridge
         }
 
         /// <summary>
+        /// Converts a string value to the target type for property setting
+        /// </summary>
+        private object ConvertValue(string value, Type targetType)
+        {
+            try
+            {
+                if (targetType == typeof(string))
+                    return value;
+
+                if (targetType == typeof(int))
+                    return int.Parse(value);
+
+                if (targetType == typeof(float))
+                    return float.Parse(value);
+
+                if (targetType == typeof(double))
+                    return double.Parse(value);
+
+                if (targetType == typeof(bool))
+                    return bool.Parse(value);
+
+                if (targetType == typeof(Vector2))
+                {
+                    var parts = value.Split(',');
+                    if (parts.Length == 2)
+                        return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                }
+
+                if (targetType == typeof(Vector3))
+                {
+                    var parts = value.Split(',');
+                    if (parts.Length == 3)
+                        return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                }
+
+                if (targetType == typeof(Color))
+                {
+                    if (ColorUtility.TryParseHtmlString(value, out Color color))
+                        return color;
+                }
+
+                // Fallback: try Convert.ChangeType
+                return Convert.ChangeType(value, targetType);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UIElementBridge.ConvertValue] Failed to convert '{value}' to {targetType.Name}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets a summary of all currently registered elements
         /// </summary>
         /// <returns>Summary containing element counts and types</returns>
@@ -2048,7 +2201,7 @@ namespace Banter.UI.Bridge
         {
             var summary = new System.Text.StringBuilder();
             summary.AppendLine($"Registered Elements: {_elements.Count}");
-            
+
             var typeCounts = new Dictionary<string, int>();
             foreach (var element in _elements.Values)
             {
@@ -2058,13 +2211,13 @@ namespace Banter.UI.Bridge
                     typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
                 }
             }
-            
+
             summary.AppendLine("Element Types:");
             foreach (var kvp in typeCounts.OrderByDescending(x => x.Value))
             {
                 summary.AppendLine($"  {kvp.Key}: {kvp.Value}");
             }
-            
+
             return summary.ToString();
         }
     }

@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -56,6 +57,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput flexDirection;
 
         [DoNotSerialize]
@@ -79,7 +83,11 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var flexDir = flow.GetValue<UIFlexDirection>(flexDirection);
                 var justifyAlign = flow.GetValue<UIJustifyContent>(justifyContent);
                 var alignItemsVal = flow.GetValue<UIAlignItems>(alignItems);
@@ -164,7 +172,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             flexDirection = ValueInput("Flex Direction", UIFlexDirection.Column);
             justifyContent = ValueInput("Justify Content", UIJustifyContent.FlexStart);
             alignItems = ValueInput("Align Items", UIAlignItems.Stretch);

@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
 using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
@@ -9,7 +10,7 @@ namespace Banter.VisualScripting
 {
     [UnitTitle("On UI Mouse Event")]
     [UnitShortTitle("On UI Mouse Event")]
-    [UnitCategory("Events\\Banter\\UI\\Mouse")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnUIMouseEvent : EventUnit<CustomEventArgs>
     {
@@ -23,6 +24,9 @@ namespace Banter.VisualScripting
         public ValueInput mouseEventType;
 
         [DoNotSerialize]
+        public ValueInput autoRegister;
+
+        [DoNotSerialize]
         public ValueOutput triggeredElementId;
 
         [DoNotSerialize]
@@ -33,6 +37,8 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueOutput modifierKeys;
+
+        private bool _eventRegistered = false;
 
         protected override bool register => true;
 
@@ -47,10 +53,53 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             mouseEventType = ValueInput("Mouse Event", UIMouseEventType.Click);
+            autoRegister = ValueInput<bool>("Auto Register", true);
             triggeredElementId = ValueOutput<string>("Element ID");
             mousePosition = ValueOutput<Vector2>("Mouse Position");
             mouseButton = ValueOutput<int>("Mouse Button");
             modifierKeys = ValueOutput<string>("Modifier Keys");
+        }
+
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            // Auto-register when graph starts
+            if (!_eventRegistered)
+            {
+                var flow = Flow.New(stack.ToReference());
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+
+                if (shouldAutoRegister)
+                {
+                    var targetId = flow.GetValue<string>(elementId);
+                    var targetName = flow.GetValue<string>(elementName);
+                    var targetMouseEvent = flow.GetValue<UIMouseEventType>(mouseEventType);
+
+                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    {
+                        // Map mouse event type to UIEventType
+                        UIEventType eventType = targetMouseEvent switch
+                        {
+                            UIMouseEventType.Click => UIEventType.Click,
+                            UIMouseEventType.DoubleClick => UIEventType.DoubleClick,
+                            UIMouseEventType.MouseDown => UIEventType.MouseDown,
+                            UIMouseEventType.MouseUp => UIEventType.MouseUp,
+                            UIMouseEventType.MouseMove => UIEventType.MouseMove,
+                            UIMouseEventType.MouseEnter => UIEventType.MouseEnter,
+                            UIMouseEventType.MouseLeave => UIEventType.MouseLeave,
+                            UIMouseEventType.MouseOver => UIEventType.MouseOver,
+                            UIMouseEventType.MouseOut => UIEventType.MouseOut,
+                            _ => UIEventType.Click
+                        };
+
+                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIMouseEvent");
+                        _eventRegistered = true;
+                    }
+                }
+            }
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
