@@ -14612,6 +14612,13 @@ namespace Banter.SDKEditor
             "UnityEngine.UI.Toggle+ToggleEvent.Equals",
             "UnityEngine.UI.Toggle+ToggleEvent.ReferenceEquals",
             "UnityEngine.UI.Toggle+ToggleEvent..ctor",
+            "Banter.SDK.BanterUIPanel._SetBackgroundColor",
+            "Banter.SDK.BanterUIPanel.RenderTexture",
+            "Banter.SDK.BanterUIPanel.get_RenderTexture",
+            "Banter.SDK.BanterUIPanel.GetFormattedPanelId",
+            "Banter.SDK.BanterUIPanel.ValidateForUIOperation",
+            "Banter.SDK.BanterUIPanel.InitializePanel",
+            "Banter.SDK.BanterUIPanel.InitializeWithExistingDocument",
         };
     }
 }
