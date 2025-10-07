@@ -207,5 +207,13 @@ namespace Banter.SDK
         isMuted,
         duration,
         time,
+        enableHaptics,
+        clickHaptic,
+        enterHaptic,
+        exitHaptic,
+        enableSounds,
+        clickSoundUrl,
+        enterSoundUrl,
+        exitSoundUrl,
     }
 }
