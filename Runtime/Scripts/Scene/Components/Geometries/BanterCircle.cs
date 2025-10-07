@@ -14,11 +14,11 @@ namespace Banter.SDK
 
 
         [Tooltip("The radius of the circle")]
-        [See(initial = "1")][SerializeField] internal float radius;
+        [See(initial = "1")][SerializeField] internal float radius = 1;
         [Tooltip("The number of segments that make up the circle")]
-        [See(initial = "1")][SerializeField] internal int segments;
+        [See(initial = "16")][SerializeField] internal int segments = 16;
         [Tooltip("The starting angle of the circle in radians")]
-        [See(initial = "0")][SerializeField] internal float thetaStart;
+        [See(initial = "0")][SerializeField] internal float thetaStart = 0;
         [Tooltip("The length of the angle of the circle in radians")]
         [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength = Mathf.PI * 2;
         internal override void StartStuff()
@@ -41,15 +41,10 @@ namespace Banter.SDK
             geometry.segments = segments;
             geometry.thetaStart = thetaStart;
             geometry.thetaLength = thetaLength;
-
+            Debug.Log(radius + " " + segments + " - " + thetaStart + " - " + thetaLength);
             if (shouldSetGeometry)
             {
                 geometry.SetGeometry();
-            }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
             }
         }
 
@@ -59,11 +54,6 @@ namespace Banter.SDK
             if (geometry)
             {
                 Destroy(geometry);
-            }
-            var material = GetComponent<BanterMaterial>();
-            if (material)
-            {
-                Destroy(material);
             }
 
          }

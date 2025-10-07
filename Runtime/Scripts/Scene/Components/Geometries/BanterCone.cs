@@ -56,11 +56,6 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
         internal override void DestroyStuff()
@@ -69,11 +64,6 @@ namespace Banter.SDK
             if (geometry)
             {
                 Destroy(geometry);
-            }
-            var material = GetComponent<BanterMaterial>();
-            if (material)
-            {
-                Destroy(material);
             }
 
          }

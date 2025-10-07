@@ -16,9 +16,8 @@ namespace Banter.SDK
     {
         PanelSettings panelSettings;
         UIDocument uiDocument;
-        RenderTexture renderTexture;
+        public RenderTexture renderTexture;
         UIElementBridge uiElementBridge;
-        WorldSpaceUIDocument worldSpaceUIDocument;
 
         [See(initial = "512,512")][SerializeField] internal Vector2 resolution = new Vector2(512,512);
         [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
@@ -144,9 +143,9 @@ namespace Banter.SDK
                 Debug.Log($"[BanterUIPanel] Initialized with existing UIDocument and panel settings: {panelSettings.name}");
 
                 // Add stylesheets
-                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
-                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
-                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
+                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
 
                 // Configure panel settings
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
@@ -216,55 +215,12 @@ namespace Banter.SDK
                     renderTexture.Create();
                 }
 
-
-                
-                // var renderer = gameObject.GetComponent<UIRenderer>();
-                // if (renderer == null)
-                // {
-                //     gameObject.AddComponent<UIRenderer>();
-                //     createdMeshRenderer = true;
-                // }
                 createdMeshRenderer = true;
-                // var renderer = gameObject.GetComponent<Renderer>();
-                // if (renderer == null)
-                // {
-                //     var filter = gameObject.GetComponent<MeshFilter>();
-                //     if (filter == null)
-                //     {
-                //         filter = gameObject.AddComponent<MeshFilter>();
-                //         filter.mesh = CreateQuadMesh();
-                //         createdMeshFilter = true;
-                //     }
-                //     renderer = gameObject.AddComponent<MeshRenderer>();
-                //     renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
-                //     createdMeshRenderer = true;
-
-                // }
-
-                // var col = gameObject.GetComponent<BoxCollider>();
-                // if (col == null)
-                // {
-                //     col = gameObject.AddComponent<BoxCollider>();
-                // }
-                // if (worldSpaceUIDocument == null)
-                // {
-                //     worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
-                //     worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
-                //     worldSpaceUIDocument._uiDocument = uiDocument;
-                //     worldSpaceUIDocument._collider = col;
-                //     worldSpaceUIDocument.enabled = true;
-                // }
 
                 if (uiDocument != null)
                 {
                     uiDocument.panelSettings.targetTexture = renderTexture;
                 }
-                
-                // if (renderer != null)
-                // {
-                //     renderer.enabled = true;
-                //     renderer.sharedMaterial.mainTexture = renderTexture;
-                // }
             }
             else
             {
@@ -285,11 +241,6 @@ namespace Banter.SDK
                 if (renderer != null)
                 {
                     renderer.enabled = false;
-                }
-                
-                if (worldSpaceUIDocument != null)
-                {
-                    worldSpaceUIDocument.enabled = false;
                 }
             }
         }
@@ -346,45 +297,6 @@ namespace Banter.SDK
             }
         }
 
-        private Mesh CreateQuadMesh()
-        {
-            var mesh = new Mesh();
-            mesh.name = "UI Panel Quad";
-            
-            // Vertices for a quad (from -0.5 to 0.5 on X and Y, Z = 0)
-            mesh.vertices = new Vector3[]
-            {
-                new Vector3(-0.5f, -0.5f, 0f), // Bottom Left
-                new Vector3(0.5f, -0.5f, 0f),  // Bottom Right  
-                new Vector3(-0.5f, 0.5f, 0f),  // Top Left
-                new Vector3(0.5f, 0.5f, 0f)    // Top Right
-            };
-            
-            // UV coordinates (for texture mapping)
-            mesh.uv = new Vector2[]
-            {
-                new Vector2(0f, 0f), // Bottom Left
-                new Vector2(1f, 0f), // Bottom Right
-                new Vector2(0f, 1f), // Top Left  
-                new Vector2(1f, 1f)  // Top Right
-            };
-            
-            // Triangles (two triangles make a quad)
-            mesh.triangles = new int[]
-            {
-                0, 2, 1, // First triangle
-                2, 3, 1  // Second triangle
-            };
-            
-            // Normals (pointing towards camera)
-            mesh.normals = new Vector3[]
-            {
-                Vector3.back, Vector3.back, Vector3.back, Vector3.back
-            };
-            
-            return mesh;
-        }
-
         internal override void DestroyStuff()
         {
             // Remove from screenSpace tracking
@@ -412,13 +324,6 @@ namespace Banter.SDK
             {
                 Destroy(uiDocument);
                 uiDocument = null;
-            }
-
-            // Destroy WorldSpaceUIDocument if we created it
-            if (worldSpaceUIDocument != null)
-            {
-                Destroy(worldSpaceUIDocument);
-                worldSpaceUIDocument = null;
             }
 
             // Destroy mesh components if we created them
@@ -504,43 +409,6 @@ namespace Banter.SDK
                 }
 
                 gameObject.layer = LayerMask.NameToLayer("Menu");
-                // var renderer = gameObject.GetComponent<Renderer>();
-                // if (renderer == null)
-                // {
-                //     var filter = gameObject.GetComponent<MeshFilter>();
-                //     if (filter == null)
-                //     {
-                //         filter = gameObject.AddComponent<MeshFilter>();
-                //         filter.mesh = CreateQuadMesh();
-                //         createdMeshFilter = true;
-                //     }
-                //     renderer = gameObject.AddComponent<MeshRenderer>();
-                //     renderer.sharedMaterial = new Material(Shader.Find("Unlit/Texture"));
-                //     createdMeshRenderer = true;
-                    
-                // }
-                
-                // var col = gameObject.GetComponent<BoxCollider>();
-                // if (col == null)
-                // {
-                //     col = gameObject.AddComponent<BoxCollider>();
-                // }
-                // if (worldSpaceUIDocument == null)
-                // {
-                //     worldSpaceUIDocument = gameObject.AddComponent<WorldSpaceUIDocument>();
-                //     worldSpaceUIDocument.AllowRaycastThroughBlockers = true;
-                //     worldSpaceUIDocument.enabled = false;
-                //     worldSpaceUIDocument._uiDocument = uiDocument;
-                //     worldSpaceUIDocument._collider = col;
-                // }
-                // if (screenSpace)
-                // {
-                //     renderer.enabled = false;
-                // }
-                // else
-                // {
-                //     renderer.sharedMaterial.mainTexture = renderTexture;
-                // }
             }
 
             if (changedProperties.Contains(PropertyName.screenSpace))
@@ -561,10 +429,6 @@ namespace Banter.SDK
                     {
                         uiDocument.panelSettings.targetTexture = null;
                     }
-                    if (worldSpaceUIDocument)
-                    {
-                        worldSpaceUIDocument.enabled = false;
-                    }
                 }
                 else
                 {
@@ -581,10 +445,6 @@ namespace Banter.SDK
                         {
                             uiDocument.panelSettings.targetTexture = renderTexture;
                         }
-                    }
-                    if (worldSpaceUIDocument)
-                    {
-                        worldSpaceUIDocument.enabled = true;
                     }
                 }
             }

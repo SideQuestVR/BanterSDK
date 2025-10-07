@@ -3,6 +3,8 @@ namespace Banter.SDK
     public enum PropertyName
     {
         hasUnity,
+        stacks,
+        slices,
         windowsUrl,
         osxUrl,
         linuxUrl,
@@ -101,8 +103,6 @@ namespace Banter.SDK
         arc,
         p,
         q,
-        stacks,
-        slices,
         detail,
         parametricPoints,
         generateMipMaps,
