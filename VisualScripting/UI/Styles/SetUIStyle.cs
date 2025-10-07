@@ -66,7 +66,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[SetUIStyle] Set style '{propertyName}' = '{value}' on element '{elemId}'");
+#endif
                 }
                 catch (System.Exception e)
                 {

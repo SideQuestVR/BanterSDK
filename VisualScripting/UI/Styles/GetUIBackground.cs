@@ -80,7 +80,7 @@ namespace Banter.VisualScripting
                         return outputTrigger;
                     }
 
-                    var bridge = GetUIElementBridge(panel);
+                    var bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                     if (bridge == null)
                     {
                         Debug.LogError($"[GetUIBackground] Could not get UIElementBridge from panel");
@@ -172,7 +172,9 @@ namespace Banter.VisualScripting
                     flow.SetValue(hasBackground, hasBg);
                     flow.SetValue(backgroundType, bgTypeStr);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[GetUIBackground] Got background for element '{elemId}': Type={bgTypeStr}, Color={bgColor}, Tint={tint}");
+#endif
                 }
                 catch (System.Exception e)
                 {
@@ -212,22 +214,6 @@ namespace Banter.VisualScripting
             flow.SetValue(backgroundType, "None");
         }
 
-        /// <summary>
-        /// Gets the UIElementBridge from a BanterUIPanel using reflection
-        /// </summary>
-        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
-        {
-            try
-            {
-                var panelType = typeof(BanterUIPanel);
-                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                return bridgeField?.GetValue(panel) as UIElementBridge;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }
 #endif

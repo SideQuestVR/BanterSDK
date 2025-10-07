@@ -67,7 +67,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[DetachUIChild] Detached child '{childElemId}' from parent '{parentElemId}'");
+#endif
                 }
                 catch (System.Exception e)
                 {

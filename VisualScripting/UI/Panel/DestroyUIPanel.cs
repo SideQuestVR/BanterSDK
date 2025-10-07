@@ -36,7 +36,9 @@ namespace Banter.VisualScripting
                     // Destroy the panel component (panel IDs are handled internally)
                     Object.Destroy(panel);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[DestroyUIPanel] Destroyed panel component");
+#endif
                 }
                 catch (System.Exception e)
                 {

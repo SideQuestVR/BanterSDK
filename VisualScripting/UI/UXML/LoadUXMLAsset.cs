@@ -12,6 +12,8 @@ namespace Banter.VisualScripting
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadUXMLAsset : Unit
     {
+        private const string LogPrefix = "[LoadUXMLAsset]";
+
         [DoNotSerialize]
         public ControlInput inputTrigger;
 
@@ -55,7 +57,9 @@ namespace Banter.VisualScripting
                     if (document == null)
                     {
                         document = target.AddComponent<UIDocument>();
-                        Debug.Log("[LoadUXMLAsset] Created new UIDocument component");
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} Created new UIDocument component");
+#endif
                     }
 
                     VisualTreeAsset assetToLoad = vta;
@@ -70,7 +74,9 @@ namespace Banter.VisualScripting
                             flow.SetValue(uiDocument, null);
                             return outputTrigger;
                         }
-                        Debug.Log($"[LoadUXMLAsset] Loaded UXML asset from Resources: {resPath}");
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} Loaded UXML asset from Resources: {resPath}");
+#endif
                     }
 
                     if (assetToLoad == null)
@@ -91,17 +97,23 @@ namespace Banter.VisualScripting
                         if (panelSettings != null)
                         {
                             document.panelSettings = panelSettings;
-                            Debug.Log("[LoadUXMLAsset] Applied panel settings from BanterUIPanel");
-                        }
-                        else
-                        {
-                            Debug.Log("[LoadUXMLAsset] No panel settings found, document will use its own or default settings");
-                        }
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} Applied panel settings from BanterUIPanel");
+#endif
                     }
                     else
                     {
-                        Debug.Log("[LoadUXMLAsset] UIDocument already has panel settings, preserving existing configuration");
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} No panel settings found, document will use its own or default settings");
+#endif
                     }
+                }
+                else
+                {
+#if BANTER_UI_DEBUG
+                    Debug.Log($"{LogPrefix} UIDocument already has panel settings, preserving existing configuration");
+#endif
+                }
 
                     // Force rebuild of the UI
                     if (document.rootVisualElement != null)
@@ -109,7 +121,9 @@ namespace Banter.VisualScripting
                         document.rootVisualElement.MarkDirtyRepaint();
                     }
 
-                    Debug.Log($"[LoadUXMLAsset] Successfully loaded UXML asset and assigned to UIDocument");
+#if BANTER_UI_DEBUG
+                    Debug.Log($"{LogPrefix} Successfully loaded UXML asset and assigned to UIDocument");
+#endif
 
                     flow.SetValue(uiDocument, document);
                 }

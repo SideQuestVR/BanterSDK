@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
 using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
@@ -26,9 +27,6 @@ namespace Banter.VisualScripting
         public ValueInput elementName;
 
         [DoNotSerialize]
-        public ValueInput panelReference;
-
-        [DoNotSerialize]
         public ValueOutput value;
 
         // Store callback for cleanup
@@ -40,7 +38,6 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
 
                 // Resolve element name to ID if needed
                 string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
@@ -52,48 +49,65 @@ namespace Banter.VisualScripting
                     return outputTrigger;
                 }
 
-                if (panel == null)
+                if (!UIPanelExtensions.ValidateElementForOperation(elemId, "GetUIValue"))
                 {
-                    Debug.LogWarning("[GetUIValue] Panel reference is null.");
                     flow.SetValue(value, 0f);
                     return outputTrigger;
                 }
 
+                var graphReference = flow.stack.ToReference();
+
                 try
                 {
-                    // Clean up any existing callback
-                    CleanupCallback();
-                    
+                // Clean up any existing callback
+                CleanupCallback();
+                
                     // Get the panel ID for message routing
-                    var panelId = panel.GetFormattedPanelId();
-                    
-                    // Set up callback to receive the value
-                    _currentEventName = $"UIProperty_{elemId}_value";
-                    _currentCallback = (CustomEventArgs args) => {
-                        if (args.arguments != null && args.arguments.Length > 0)
-                        {
-                            // Try to parse as float, fallback to 0
-                            var rawValue = args.arguments[0];
-                            float floatValue = 0f;
-                            
-                            if (rawValue is float f)
-                                floatValue = f;
-                            else if (rawValue is string s && float.TryParse(s, out var parsed))
-                                floatValue = parsed;
-                            else if (rawValue != null && float.TryParse(rawValue.ToString(), out var parsedStr))
-                                floatValue = parsedStr;
-                                
-                            flow.SetValue(value, floatValue);
-                            Debug.Log($"[GetUIValue] Received value: {floatValue} for {_currentEventName}");
-                        }
-                        else
-                        {
-                            flow.SetValue(value, 0f);
-                        }
-                        
-                        // Clean up callback after use
+                    var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
+                    if (panelId == null)
+                    {
+                        Debug.LogError($"[GetUIValue] Could not resolve panel for element '{elemId}'");
+                        flow.SetValue(value, 0f);
+                        return outputTrigger;
+                    }
+                
+                // Set up callback to receive the value
+                _currentEventName = $"UIProperty_{elemId}_value";
+                _currentCallback = (CustomEventArgs args) => {
+                    if (!graphReference.isValid)
+                    {
                         CleanupCallback();
-                    };
+                        return;
+                    }
+
+                    var callbackFlow = Flow.New(graphReference);
+
+                    if (args.arguments != null && args.arguments.Length > 0)
+                    {
+                        // Try to parse as float, fallback to 0
+                        var rawValue = args.arguments[0];
+                        float floatValue = 0f;
+                        
+                        if (rawValue is float f)
+                            floatValue = f;
+                        else if (rawValue is string s && float.TryParse(s, out var parsed))
+                            floatValue = parsed;
+                        else if (rawValue != null && float.TryParse(rawValue.ToString(), out var parsedStr))
+                            floatValue = parsedStr;
+                            
+                        callbackFlow.SetValue(value, floatValue);
+#if BANTER_UI_DEBUG
+                        Debug.Log($"[GetUIValue] Received value: {floatValue} for {_currentEventName}");
+#endif
+                    }
+                    else
+                    {
+                        callbackFlow.SetValue(value, 0f);
+                    }
+                    
+                    // Clean up callback after use
+                    CleanupCallback();
+                };
                     
                     // Register for the callback event
                     EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
@@ -104,7 +118,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[GetUIValue] Requested value for element {elemId}, waiting for callback on {_currentEventName}");
+#endif
                 }
                 catch (System.Exception e)
                 {
@@ -119,7 +135,6 @@ namespace Banter.VisualScripting
             outputTrigger = ControlOutput("");
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
-            panelReference = ValueInput<BanterUIPanel>("Panel");
             value = ValueOutput<float>("Value");
         }
         

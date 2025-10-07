@@ -14,6 +14,14 @@ namespace Banter.SDK
 
     public class BanterUIPanel : BanterComponentBase
     {
+        private const string LogPrefix = "[BanterUIPanel]";
+
+        [System.Diagnostics.Conditional("BANTER_UI_DEBUG")]
+        private static void LogVerbose(string message)
+        {
+            Debug.Log($"{LogPrefix} {message}");
+        }
+
         PanelSettings panelSettings;
         UIDocument uiDocument;
         public RenderTexture renderTexture;
@@ -102,7 +110,7 @@ namespace Banter.SDK
                     // Use the existing UIDocument and its panel settings
                     panelSettings = document.panelSettings;
                     uiDocument = document;
-                    Debug.Log($"[BanterUIPanel] Using existing UIDocument with panel settings: {panelSettings.name}");
+                    LogVerbose($"Using existing UIDocument with panel settings: {panelSettings.name}");
                 }
                 else
                 {
@@ -137,10 +145,10 @@ namespace Banter.SDK
                     uiDocument.worldSpaceSize = new Vector2(resolution.x, resolution.y); // Convert pixels to meters
                     uiDocument.panelSettings.referenceSpritePixelsPerUnit = 500;
                     uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPhysicalSize;
-                    Debug.Log($"[BanterUIPanel] Created UIDocument with loaded panel settings: {panelSettingsName}");
+                    LogVerbose($"Created UIDocument with loaded panel settings: {panelSettingsName}");
                 }
                 
-                Debug.Log($"[BanterUIPanel] Initialized with existing UIDocument and panel settings: {panelSettings.name}");
+                LogVerbose($"Initialized with existing UIDocument and panel settings: {panelSettings.name}");
 
                 // Add stylesheets
                 uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
@@ -162,14 +170,14 @@ namespace Banter.SDK
                 var registrationId = GetFormattedPanelId();
                 UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge, this);
 
-                Debug.Log($"[BanterUIPanel] Successfully initialized panel with ID: {registrationId}");
+                LogVerbose($"Successfully initialized panel with ID: {registrationId}");
 
                 // Auto-register UXML elements if the UIDocument has a visual tree asset
                 if (uiDocument.visualTreeAsset != null && uiDocument.rootVisualElement != null)
                 {
-                    Debug.Log($"[BanterUIPanel] Auto-registering UXML elements from visual tree asset");
+                    LogVerbose($"Auto-registering UXML elements from visual tree asset");
                     var elementMap = uiElementBridge.ProcessUXMLTree(uiDocument, "uxml");
-                    Debug.Log($"[BanterUIPanel] Auto-registered {elementMap.Count} elements from UXML");
+                    LogVerbose($"Auto-registered {elementMap.Count} elements from UXML");
                 }
 
                 // Handle screen space vs world space setup
@@ -278,7 +286,7 @@ namespace Banter.SDK
                 
                 if (wasActive != IsScreenSpaceActive)
                 {
-                    Debug.Log($"[BanterUIPanel] IsScreenSpaceActive changed to: {IsScreenSpaceActive} (Active panels: {screenSpacePanels.Count})");
+                    LogVerbose($"IsScreenSpaceActive changed to: {IsScreenSpaceActive} (Active panels: {screenSpacePanels.Count})");
                 }
             }
         }
@@ -595,3 +603,4 @@ namespace Banter.SDK
         // END BANTER COMPILED CODE 
     }
 }
+

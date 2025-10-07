@@ -19,6 +19,9 @@ namespace Banter.VisualScripting
         public ValueInput elementName;
 
         [DoNotSerialize]
+        public ValueInput autoRegister;
+
+        [DoNotSerialize]
         public ValueOutput changedElementId;
 
         [DoNotSerialize]
@@ -26,6 +29,8 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueOutput oldValue;
+
+        private bool _eventRegistered = false;
 
         protected override bool register => true;
 
@@ -39,9 +44,45 @@ namespace Banter.VisualScripting
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
+            autoRegister = ValueInput<bool>("Auto Register", true);
             changedElementId = ValueOutput<string>("Changed Element ID");
             newValue = ValueOutput<object>("New Value");
             oldValue = ValueOutput<object>("Old Value");
+        }
+
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            if (_eventRegistered)
+            {
+                return;
+            }
+
+            var flow = Flow.New(stack.ToReference());
+            var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+
+            if (!shouldAutoRegister)
+            {
+                return;
+            }
+
+            var targetId = flow.GetValue<string>(elementId);
+            var targetName = flow.GetValue<string>(elementName);
+
+            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+            if (!string.IsNullOrEmpty(resolvedTarget))
+            {
+                UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnUIChange");
+                _eventRegistered = true;
+            }
+        }
+
+        public override void StopListening(GraphStack stack)
+        {
+            base.StopListening(stack);
+            _eventRegistered = false;
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)

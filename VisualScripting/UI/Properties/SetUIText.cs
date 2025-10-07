@@ -32,16 +32,16 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                Debug.Log("[SetUIText] ========== TRIGGERED ==========");
+                LogVerbose("========== TRIGGERED ==========");
 
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var textValue = flow.GetValue<string>(text);
 
-                Debug.Log($"[SetUIText] Input values: targetId='{targetId}', targetName='{targetName}', textValue='{textValue}'");
+                LogVerbose($"Input values: targetId='{targetId}', targetName='{targetName}', textValue='{textValue}'");
 
                 string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-                Debug.Log($"[SetUIText] Resolved element ID: '{elemId}'");
+                LogVerbose($"Resolved element ID: '{elemId}'");
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIText"))
                 {
@@ -49,12 +49,12 @@ namespace Banter.VisualScripting
                     return outputTrigger;
                 }
 
-                Debug.Log($"[SetUIText] Validation PASSED for element '{elemId}'");
+                LogVerbose($"Validation PASSED for element '{elemId}'");
 
                 try
                 {
                     // Get the formatted panel ID using UIElementResolver
-                    Debug.Log($"[SetUIText] Getting panel ID for element '{elemId}'");
+                    LogVerbose($"Getting panel ID for element '{elemId}'");
                     var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
                     if (panelId == null)
                     {
@@ -62,17 +62,17 @@ namespace Banter.VisualScripting
                         return outputTrigger;
                     }
 
-                    Debug.Log($"[SetUIText] Got panel ID: '{panelId}'");
+                    LogVerbose($"Got panel ID: '{panelId}'");
 
                     // Format: panelId|SET_UI_PROPERTY|elementId§propertyName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}text{MessageDelimiters.SECONDARY}{textValue ?? ""}";
 
-                    Debug.Log($"[SetUIText] Sending message: '{message}'");
+                    LogVerbose($"Sending message: '{message}'");
 
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
-                    Debug.Log($"[SetUIText] SUCCESS - Text set to '{textValue}' for element '{elemId}'");
+                    LogVerbose($"SUCCESS - Text set to '{textValue}' for element '{elemId}'");
                 }
                 catch (System.Exception e)
                 {
@@ -86,6 +86,12 @@ namespace Banter.VisualScripting
             elementId = ValueInput<string>("Element ID", "");
             elementName = ValueInput<string>("Element Name", "");
             text = ValueInput("Text", "");
+        }
+
+        [System.Diagnostics.Conditional("BANTER_UI_DEBUG")]
+        private void LogVerbose(string message)
+        {
+            UnityEngine.Debug.Log($"[SetUIText] {message}");
         }
     }
 }

@@ -76,7 +76,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[AttachUIChild] Attached child '{childElemId}' to parent '{parentElemId}' at index {insertIndex}");
+#endif
                 }
                 catch (System.Exception e)
                 {

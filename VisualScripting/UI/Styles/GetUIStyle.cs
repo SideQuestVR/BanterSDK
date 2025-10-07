@@ -60,6 +60,8 @@ namespace Banter.VisualScripting
                 // Set element ID output for chaining
                 flow.SetValue(elementIdOutput, elemId);
 
+                var graphReference = flow.stack.ToReference();
+
                 try
                 {
                     // Clean up any existing callback
@@ -80,14 +82,24 @@ namespace Banter.VisualScripting
                     // Set up callback to receive the value
                     _currentEventName = $"UIStyle_{elemId}_{propertyName}";
                     _currentCallback = (CustomEventArgs args) => {
+                        if (!graphReference.isValid)
+                        {
+                            CleanupCallback();
+                            return;
+                        }
+
+                        var callbackFlow = Flow.New(graphReference);
+
                         if (args.arguments != null && args.arguments.Length > 0)
                         {
-                            flow.SetValue(styleValue, args.arguments[0]);
+                            callbackFlow.SetValue(styleValue, args.arguments[0]);
+#if BANTER_UI_DEBUG
                             Debug.Log($"[GetUIStyle] Received style value: {args.arguments[0]} for {_currentEventName}");
+#endif
                         }
                         else
                         {
-                            flow.SetValue(styleValue, null);
+                            callbackFlow.SetValue(styleValue, null);
                         }
 
                         // Clean up callback after use
@@ -103,7 +115,9 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[GetUIStyle] Requested style '{propertyName}' for element {elemId}, waiting for callback on {_currentEventName}");
+#endif
                 }
                 catch (System.Exception e)
                 {

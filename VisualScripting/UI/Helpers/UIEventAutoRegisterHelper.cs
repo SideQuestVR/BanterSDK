@@ -12,6 +12,8 @@ namespace Banter.VisualScripting.UI.Helpers
     /// </summary>
     public static class UIEventAutoRegisterHelper
     {
+        private const string LogPrefix = "[UIEventAutoRegisterHelper]";
+
         /// <summary>
         /// Attempts to auto-register a Change event for the specified element with delayed retry
         /// </summary>
@@ -19,12 +21,8 @@ namespace Banter.VisualScripting.UI.Helpers
         /// <param name="nodeName">The name of the node requesting registration (for logging)</param>
         public static void TryRegisterChangeEventWithRetry(string elementId, string nodeName)
         {
-            Debug.Log($"[UIEventAutoRegisterHelper] TryRegisterChangeEventWithRetry called for element '{elementId}' from {nodeName}");
-            Debug.Log($"[UIEventAutoRegisterHelper] Getting CoroutineRunner.Instance...");
             var runner = CoroutineRunner.Instance;
-            Debug.Log($"[UIEventAutoRegisterHelper] CoroutineRunner.Instance obtained, starting coroutine...");
             runner.StartCoroutine(RegisterChangeEventCoroutine(elementId, nodeName));
-            Debug.Log($"[UIEventAutoRegisterHelper] Coroutine started for {nodeName}");
         }
 
         /// <summary>
@@ -32,7 +30,7 @@ namespace Banter.VisualScripting.UI.Helpers
         /// </summary>
         private static IEnumerator RegisterChangeEventCoroutine(string elementId, string nodeName)
         {
-            Debug.Log($"[{nodeName}] RegisterChangeEventCoroutine started for element '{elementId}'");
+            LogVerbose(nodeName, $"RegisterChangeEventCoroutine started for element '{elementId}'");
 
             // Wait for up to 5 seconds, checking every 0.1 seconds
             const float maxWaitTime = 5f;
@@ -43,15 +41,15 @@ namespace Banter.VisualScripting.UI.Helpers
             while (elapsedTime < maxWaitTime)
             {
                 attemptNumber++;
-                Debug.Log($"[{nodeName}] Registration attempt {attemptNumber} (elapsed: {elapsedTime:F1}s) for element '{elementId}'");
+                LogVerbose(nodeName, $"Registration attempt {attemptNumber} (elapsed: {elapsedTime:F1}s) for element '{elementId}'");
 
                 if (TryRegisterChangeEventImmediate(elementId, nodeName))
                 {
-                    Debug.Log($"[{nodeName}] Auto-registration succeeded on attempt {attemptNumber} after {elapsedTime:F1}s for element '{elementId}'");
+                    LogVerbose(nodeName, $"Auto-registration succeeded on attempt {attemptNumber} after {elapsedTime:F1}s for element '{elementId}'");
                     yield break;
                 }
 
-                Debug.Log($"[{nodeName}] Attempt {attemptNumber} failed, waiting {checkInterval}s before retry...");
+                LogVerbose(nodeName, $"Attempt {attemptNumber} failed, waiting {checkInterval}s before retry...");
                 yield return new WaitForSeconds(checkInterval);
                 elapsedTime += checkInterval;
             }
@@ -64,7 +62,7 @@ namespace Banter.VisualScripting.UI.Helpers
         /// </summary>
         private static bool TryRegisterChangeEventImmediate(string elementId, string nodeName)
         {
-            Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Starting with elementId='{elementId}'");
+            LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Starting with elementId='{elementId}'");
 
             if (string.IsNullOrEmpty(elementId))
             {
@@ -76,7 +74,7 @@ namespace Banter.VisualScripting.UI.Helpers
             {
                 // Try to find ANY panel that's initialized
                 var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
-                Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Found {allPanels.Length} BanterUIPanel(s)");
+                LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Found {allPanels.Length} BanterUIPanel(s)");
 
                 foreach (var panel in allPanels)
                 {
@@ -86,39 +84,39 @@ namespace Banter.VisualScripting.UI.Helpers
                         var bridge = panel.GetComponent<UIElementBridge>();
                         if (bridge == null)
                         {
-                            Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Panel '{panel.name}' has no UIElementBridge yet, skipping");
+                            LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Panel '{panel.name}' has no UIElementBridge yet, skipping");
                             continue;
                         }
 
                         // Try to get the formatted panel ID
                         var panelId = panel.GetFormattedPanelId();
-                        Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Panel '{panel.name}' has ID '{panelId}' and bridge is ready");
+                        LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Panel '{panel.name}' has ID '{panelId}' and bridge is ready");
 
                         // Skip if panel ID is still default (panel_0_0)
                         if (panelId == "panel_0_0")
                         {
-                            Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Panel '{panel.name}' still has default ID panel_0_0, skipping");
+                            LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Panel '{panel.name}' still has default ID panel_0_0, skipping");
                             continue;
                         }
 
                         // Try to register the event directly - HandleMessage will validate internally
                         var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.REGISTER_UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.SECONDARY}change";
-                        Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Attempting HandleMessage with: '{message}'");
+                        LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Attempting HandleMessage with: '{message}'");
 
                         UIElementBridge.HandleMessage(message);
 
                         // If we got here without exception, assume success
-                        Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: HandleMessage completed successfully for panel '{panel.name}'");
+                        LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: HandleMessage completed successfully for panel '{panel.name}'");
                         return true;
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: Failed for panel '{panel.name}': {ex.Message}");
+                        LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Failed for panel '{panel.name}': {ex.Message}");
                         // Continue to next panel
                     }
                 }
 
-                Debug.Log($"[{nodeName}] TryRegisterChangeEventImmediate: No panels succeeded, returning false");
+                LogVerbose(nodeName, "TryRegisterChangeEventImmediate: No panels succeeded, returning false");
                 return false;
             }
             catch (System.Exception ex)
@@ -156,8 +154,7 @@ namespace Banter.VisualScripting.UI.Helpers
 
                 if (TryRegisterEventImmediate(elementId, eventType, nodeName))
                 {
-                    var eventName = eventType.ToEventName();
-                    Debug.Log($"[{nodeName}] Auto-registration of '{eventName}' succeeded on attempt {attemptNumber} after {elapsedTime:F1}s for element '{elementId}'");
+                    LogVerbose(nodeName, $"Auto-registration of '{eventType.ToEventName()}' succeeded on attempt {attemptNumber} after {elapsedTime:F1}s for element '{elementId}'");
                     yield break;
                 }
 
@@ -227,6 +224,14 @@ namespace Banter.VisualScripting.UI.Helpers
                 return false;
             }
         }
+
+        private static void LogVerbose(string nodeName, string message)
+        {
+#if BANTER_UI_DEBUG
+            Debug.Log($"{LogPrefix} [{nodeName}] {message}");
+#endif
+        }
     }
 }
 #endif
+

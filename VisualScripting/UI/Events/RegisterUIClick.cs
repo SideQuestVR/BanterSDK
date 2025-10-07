@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -97,7 +98,7 @@ namespace Banter.VisualScripting
             {
                 try
                 {
-                    var bridge = GetUIElementBridge(panel);
+                    var bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                     if (bridge != null)
                     {
                         var resolvedId = bridge.ResolveElementIdOrName(elementName);
@@ -114,22 +115,6 @@ namespace Banter.VisualScripting
             return elementName; // Fallback
         }
 
-        /// <summary>
-        /// Gets the UIElementBridge from a BanterUIPanel using reflection
-        /// </summary>
-        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
-        {
-            try
-            {
-                var panelType = typeof(BanterUIPanel);
-                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                return bridgeField?.GetValue(panel) as UIElementBridge;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }
 #endif

@@ -109,7 +109,7 @@ namespace Banter.VisualScripting
                     var imagePanel = UIPanelExtensions.GetPanelByElementId(imageElementId);
                     if (imagePanel != null)
                     {
-                        var bridge = GetUIElementBridge(imagePanel);
+                        var bridge = UIElementResolverHelper.GetUIElementBridge(imagePanel);
                         if (bridge != null)
                         {
                             var element = bridge.GetElement(imageElementId);
@@ -131,7 +131,9 @@ namespace Banter.VisualScripting
                                 // Set scale mode
                                 element.style.unityBackgroundScaleMode = (ScaleMode)scale;
 
+#if BANTER_UI_DEBUG
                                 Debug.Log($"[CreateUIImage] Created image element '{imageElementId}' with background");
+#endif
                             }
                         }
                     }
@@ -160,22 +162,6 @@ namespace Banter.VisualScripting
             imageId = ValueOutput<string>("Element ID");
         }
 
-        /// <summary>
-        /// Gets the UIElementBridge from a BanterUIPanel using reflection
-        /// </summary>
-        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
-        {
-            try
-            {
-                var panelType = typeof(BanterUIPanel);
-                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                return bridgeField?.GetValue(panel) as UIElementBridge;
-            }
-            catch
-            {
-                return null;
-            }
-        }
     }
 }
 #endif
