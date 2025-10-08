@@ -41,6 +41,10 @@ namespace Banter.SDK
 #if UNITY_EDITOR
         void OnValidate()
         {
+            // Don't run during builds to prevent scene modification
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+                return;
+
             GenerateId(IsDuplicateId(Id));
         }
 
