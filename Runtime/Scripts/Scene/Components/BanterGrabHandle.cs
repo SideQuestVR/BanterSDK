@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if BANTER_FLEX
 using Banter.FlexaBody;
-#endif
 using UnityEngine;
 public enum BanterGrabType
 {
@@ -54,7 +52,7 @@ namespace Banter.SDK
                 grabHandleAdded = true;
                 grabHandle = gameObject.AddComponent<GrabHandle>();
             }
-            
+
             grabHandle.Col = GetComponent<Collider>();
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;

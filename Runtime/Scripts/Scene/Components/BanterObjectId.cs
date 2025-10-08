@@ -41,9 +41,18 @@ namespace Banter.SDK
         }
         void Start()
         {
+#if UNITY_EDITOR
+            // Don't run during builds to prevent scene modification
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+                return;
+#endif
             try
             {
+#if UNITY_EDITOR
                 GenerateId(IsDuplicateId(Id));
+#else
+                GenerateId();
+#endif
                 scene.AddBanterObject(gameObject, this);
                 SyncProperties(true);
             }
@@ -56,6 +65,10 @@ namespace Banter.SDK
 #if UNITY_EDITOR
         void OnValidate()
         {
+            // Don't run during builds to prevent scene modification
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+                return;
+
             GenerateId(IsDuplicateId(Id));
         }
 #endif

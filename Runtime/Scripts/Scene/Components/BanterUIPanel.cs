@@ -5,6 +5,7 @@ using Banter.UI.Bridge;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
+using UnityEngine.XR;
 
 namespace Banter.SDK
 {
@@ -29,6 +30,31 @@ namespace Banter.SDK
 
         [See(initial = "512,512")][SerializeField] internal Vector2 resolution = new Vector2(512,512);
         [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
+
+        [Header("Haptics")]
+        [See(initial = "false")][SerializeField] internal bool enableHaptics = false;
+        [See(initial = "0.5,0.1")][SerializeField] internal Vector2 clickHaptic = new Vector2(0.5f, 0.1f); // amplitude, duration
+        [See(initial = "0.3,0.05")][SerializeField] internal Vector2 enterHaptic = new Vector2(0.3f, 0.05f); // amplitude, duration
+        [See(initial = "0.2,0.05")][SerializeField] internal Vector2 exitHaptic = new Vector2(0.2f, 0.05f); // amplitude, duration
+
+        [Header("Sounds")]
+        [See(initial = "false")][SerializeField] internal bool enableSounds = false;
+        [Tooltip("Click sound - can be assigned directly or loaded from URL via JS")]
+        [SerializeField] private AudioClip clickSound;
+        [Tooltip("Enter/Hover sound - can be assigned directly or loaded from URL via JS")]
+        [SerializeField] private AudioClip enterSound;
+        [Tooltip("Exit sound - can be assigned directly or loaded from URL via JS")]
+        [SerializeField] private AudioClip exitSound;
+
+        // Internal URL storage for JS synchronization
+        [See(initial = "")][HideInInspector][SerializeField] internal string clickSoundUrl = "";
+        [See(initial = "")][HideInInspector][SerializeField] internal string enterSoundUrl = "";
+        [See(initial = "")][HideInInspector][SerializeField] internal string exitSoundUrl = "";
+
+        private AudioSource audioSource;
+
+        private InputDevice _leftDevice;
+        private InputDevice _rightDevice;
         
         // Internal panel management
         private static int nextPanelId = 0;
@@ -41,6 +67,34 @@ namespace Banter.SDK
             if (uiDocument != null && uiDocument.rootVisualElement != null)
             {
                 uiDocument.rootVisualElement.style.backgroundColor = new StyleColor(new Color(color.x, color.y, color.z, color.w));
+            }
+        }
+
+        /// <summary>
+        /// Gets the render texture used by this panel (null if in screen space mode)
+        /// </summary>
+        public RenderTexture RenderTexture
+        {
+            get
+            {
+                // Return the actual render texture from panel settings if available
+                // This is the texture that UI Toolkit is actively rendering to
+                if (uiDocument != null && uiDocument.panelSettings != null)
+                {
+                    var targetTex = uiDocument.panelSettings.targetTexture;
+                    if (targetTex != null)
+                    {
+                        Debug.Log($"[BanterUIPanel] RenderTexture: {targetTex.name}, Size: {targetTex.width}x{targetTex.height}, Format: {targetTex.format}, IsCreated: {targetTex.IsCreated()}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[BanterUIPanel] uiDocument.panelSettings.targetTexture is null! ScreenSpace: {screenSpace}");
+                    }
+                    return targetTex;
+                }
+
+                Debug.LogWarning($"[BanterUIPanel] UIDocument or panelSettings is null. Returning private renderTexture field.");
+                return renderTexture;
             }
         }
 
@@ -180,6 +234,9 @@ namespace Banter.SDK
                     LogVerbose($"Auto-registered {elementMap.Count} elements from UXML");
                 }
 
+                // Initialize haptics and sounds
+                InitializeHapticsAndSounds();
+
                 // Handle screen space vs world space setup
                 SetupRenderingMode();
 
@@ -205,6 +262,200 @@ namespace Banter.SDK
         public bool InitializeWithExistingDocument(UIDocument document)
         {
             return InitializePanel(document);
+        }
+
+        /// <summary>
+        /// Initialize haptics and sounds for UI interactions
+        /// </summary>
+        private void InitializeHapticsAndSounds()
+        {
+            if (enableHaptics)
+            {
+                UpdateControllerDevices();
+            }
+
+            if (enableSounds && audioSource == null)
+            {
+                audioSource = gameObject.GetComponent<AudioSource>();
+                if (audioSource == null)
+                {
+                    audioSource = gameObject.AddComponent<AudioSource>();
+                    audioSource.spatialBlend = 0f; // 2D sound
+                    audioSource.playOnAwake = false;
+                }
+            }
+
+            // Load audio clips from URLs if provided and no clip is directly assigned
+            if (enableSounds)
+            {
+                if (clickSound == null && !string.IsNullOrEmpty(clickSoundUrl))
+                {
+                    StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
+                }
+                if (enterSound == null && !string.IsNullOrEmpty(enterSoundUrl))
+                {
+                    StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
+                }
+                if (exitSound == null && !string.IsNullOrEmpty(exitSoundUrl))
+                {
+                    StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
+                }
+            }
+
+            if ((enableHaptics || enableSounds) && uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                RegisterUIEventHandlers(uiDocument.rootVisualElement);
+            }
+        }
+
+        /// <summary>
+        /// Load audio clip from URL
+        /// </summary>
+        private IEnumerator LoadAudioClip(string url, Action<AudioClip> onLoaded)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                yield break;
+            }
+
+            using (var www = UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(url, AudioType.UNKNOWN))
+            {
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
+                {
+                    var clip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(www);
+                    onLoaded?.Invoke(clip);
+                    LogVerbose($"Loaded audio clip from {url}");
+                }
+                else
+                {
+                    Debug.LogWarning($"[BanterUIPanel] Failed to load audio clip from {url}: {www.error}");
+                }
+            }
+        }
+
+        /// <summary>
+        /// Update controller device references
+        /// </summary>
+        private void UpdateControllerDevices()
+        {
+            _leftDevice = InputDevices.GetDeviceAtXRNode(XRNode.LeftHand);
+            _rightDevice = InputDevices.GetDeviceAtXRNode(XRNode.RightHand);
+        }
+
+        /// <summary>
+        /// Register haptic and sound event handlers for all interactive UI elements
+        /// </summary>
+        /// <param name="root">Root visual element to register handlers on</param>
+        public void RegisterUIEventHandlers(VisualElement root)
+        {
+            if (root == null) return;
+
+            // Register on all Button, Toggle, Slider, and other interactive elements
+            root.Query<VisualElement>().ForEach(element =>
+            {
+                if (element is Button || element is Toggle || element is Slider ||
+                    element.pickingMode == PickingMode.Position)
+                {
+                    RegisterElementEvents(element);
+                }
+            });
+        }
+
+        /// <summary>
+        /// Register events on a specific visual element
+        /// </summary>
+        /// <param name="element">Visual element to register events on</param>
+        public void RegisterElementEvents(VisualElement element)
+        {
+            if (element == null) return;
+
+            // Unregister first to avoid duplicates
+            element.UnregisterCallback<PointerDownEvent>(OnUIClick, TrickleDown.TrickleDown);
+            element.UnregisterCallback<PointerEnterEvent>(OnUIEnter);
+            element.UnregisterCallback<PointerLeaveEvent>(OnUIExit);
+
+            // Register new callbacks
+            if (enableHaptics || enableSounds)
+            {
+                element.RegisterCallback<PointerDownEvent>(OnUIClick, TrickleDown.TrickleDown);
+                element.RegisterCallback<PointerEnterEvent>(OnUIEnter);
+                element.RegisterCallback<PointerLeaveEvent>(OnUIExit);
+            }
+        }
+
+        /// <summary>
+        /// Unregister events from a specific visual element
+        /// </summary>
+        /// <param name="element">Visual element to unregister events from</param>
+        public void UnregisterElementEvents(VisualElement element)
+        {
+            if (element == null) return;
+
+            element.UnregisterCallback<PointerDownEvent>(OnUIClick, TrickleDown.TrickleDown);
+            element.UnregisterCallback<PointerEnterEvent>(OnUIEnter);
+            element.UnregisterCallback<PointerLeaveEvent>(OnUIExit);
+        }
+
+        private void OnUIClick(PointerDownEvent evt)
+        {
+            if (enableHaptics)
+            {
+                SendHapticPulse(clickHaptic.x, clickHaptic.y);
+            }
+
+            if (enableSounds && clickSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(clickSound);
+            }
+        }
+
+        private void OnUIEnter(PointerEnterEvent evt)
+        {
+            if (enableHaptics)
+            {
+                SendHapticPulse(enterHaptic.x, enterHaptic.y);
+            }
+
+            if (enableSounds && enterSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(enterSound);
+            }
+        }
+
+        private void OnUIExit(PointerLeaveEvent evt)
+        {
+            if (enableHaptics)
+            {
+                SendHapticPulse(exitHaptic.x, exitHaptic.y);
+            }
+
+            if (enableSounds && exitSound != null && audioSource != null)
+            {
+                audioSource.PlayOneShot(exitSound);
+            }
+        }
+
+        /// <summary>
+        /// Send haptic pulse to both controllers
+        /// </summary>
+        private void SendHapticPulse(float amplitude, float duration)
+        {
+            SendHapticPulseToDevice(_leftDevice, amplitude, duration);
+            SendHapticPulseToDevice(_rightDevice, amplitude, duration);
+        }
+
+        /// <summary>
+        /// Send haptic pulse to a specific device
+        /// </summary>
+        private void SendHapticPulseToDevice(InputDevice device, float amplitude, float duration)
+        {
+            if (device.isValid && device.TryGetHapticCapabilities(out HapticCapabilities capabilities) &&
+                capabilities.supportsImpulse)
+            {
+                device.SendHapticImpulse(0, amplitude, duration);
+            }
         }
 
         /// <summary>
@@ -309,6 +560,15 @@ namespace Banter.SDK
         {
             // Remove from screenSpace tracking
             RemovePanelFromTracking(this);
+
+            // Unregister haptic and sound event handlers
+            if (uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                uiDocument.rootVisualElement.Query<VisualElement>().ForEach(element =>
+                {
+                    UnregisterElementEvents(element);
+                });
+            }
 
             // Unregister this panel instance
             if (uiElementBridge != null)
@@ -457,13 +717,122 @@ namespace Banter.SDK
                 }
             }
 
+            // Handle haptics property changes
+            if (changedProperties.Contains(PropertyName.enableHaptics) ||
+                changedProperties.Contains(PropertyName.clickHaptic) ||
+                changedProperties.Contains(PropertyName.enterHaptic) ||
+                changedProperties.Contains(PropertyName.exitHaptic))
+            {
+                if (enableHaptics)
+                {
+                    UpdateControllerDevices();
+                }
+
+                // Re-register event handlers if haptics state changed
+                if (changedProperties.Contains(PropertyName.enableHaptics))
+                {
+                    if (uiDocument != null && uiDocument.rootVisualElement != null)
+                    {
+                        if (enableHaptics || enableSounds)
+                        {
+                            RegisterUIEventHandlers(uiDocument.rootVisualElement);
+                        }
+                        else if (!enableHaptics && !enableSounds)
+                        {
+                            // Unregister all if both are disabled
+                            uiDocument.rootVisualElement.Query<VisualElement>().ForEach(element =>
+                            {
+                                UnregisterElementEvents(element);
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Handle sound property changes
+            if (changedProperties.Contains(PropertyName.enableSounds) ||
+                changedProperties.Contains(PropertyName.clickSoundUrl) ||
+                changedProperties.Contains(PropertyName.enterSoundUrl) ||
+                changedProperties.Contains(PropertyName.exitSoundUrl))
+            {
+                if (enableSounds)
+                {
+                    // Ensure audio source exists
+                    if (audioSource == null)
+                    {
+                        audioSource = gameObject.GetComponent<AudioSource>();
+                        if (audioSource == null)
+                        {
+                            audioSource = gameObject.AddComponent<AudioSource>();
+                            audioSource.spatialBlend = 0f;
+                            audioSource.playOnAwake = false;
+                        }
+                    }
+
+                    // Reload audio clips if URLs changed (from JS)
+                    // Clear the existing clip and load from URL
+                    if (changedProperties.Contains(PropertyName.clickSoundUrl))
+                    {
+                        if (!string.IsNullOrEmpty(clickSoundUrl))
+                        {
+                            clickSound = null; // Clear inspector-assigned clip
+                            StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
+                        }
+                    }
+                    if (changedProperties.Contains(PropertyName.enterSoundUrl))
+                    {
+                        if (!string.IsNullOrEmpty(enterSoundUrl))
+                        {
+                            enterSound = null; // Clear inspector-assigned clip
+                            StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
+                        }
+                    }
+                    if (changedProperties.Contains(PropertyName.exitSoundUrl))
+                    {
+                        if (!string.IsNullOrEmpty(exitSoundUrl))
+                        {
+                            exitSound = null; // Clear inspector-assigned clip
+                            StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
+                        }
+                    }
+                }
+
+                // Re-register event handlers if sounds state changed
+                if (changedProperties.Contains(PropertyName.enableSounds))
+                {
+                    if (uiDocument != null && uiDocument.rootVisualElement != null)
+                    {
+                        if (enableHaptics || enableSounds)
+                        {
+                            RegisterUIEventHandlers(uiDocument.rootVisualElement);
+                        }
+                        else if (!enableHaptics && !enableSounds)
+                        {
+                            // Unregister all if both are disabled
+                            uiDocument.rootVisualElement.Query<VisualElement>().ForEach(element =>
+                            {
+                                UnregisterElementEvents(element);
+                            });
+                        }
+                    }
+                }
+            }
+
             UpdateScreenSpaceTracking(this, screenSpace);
             scene.events.OnBanterUiPanelActiveChanged?.Invoke();
             SetLoadedIfNot();
         }
-        // BANTER COMPILED CODE 
+        // BANTER COMPILED CODE
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
         public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
+        public System.Boolean EnableHaptics { get { return enableHaptics; } set { enableHaptics = value; UpdateCallback(new List<PropertyName> { PropertyName.enableHaptics }); } }
+        public UnityEngine.Vector2 ClickHaptic { get { return clickHaptic; } set { clickHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.clickHaptic }); } }
+        public UnityEngine.Vector2 EnterHaptic { get { return enterHaptic; } set { enterHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.enterHaptic }); } }
+        public UnityEngine.Vector2 ExitHaptic { get { return exitHaptic; } set { exitHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.exitHaptic }); } }
+        public System.Boolean EnableSounds { get { return enableSounds; } set { enableSounds = value; UpdateCallback(new List<PropertyName> { PropertyName.enableSounds }); } }
+        public System.String ClickSoundUrl { get { return clickSoundUrl; } set { clickSoundUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.clickSoundUrl }); } }
+        public System.String EnterSoundUrl { get { return enterSoundUrl; } set { enterSoundUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.enterSoundUrl }); } }
+        public System.String ExitSoundUrl { get { return exitSoundUrl; } set { exitSoundUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.exitSoundUrl }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -486,7 +855,19 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, };
+            List<PropertyName> changedProperties = new List<PropertyName>()
+            {
+                PropertyName.resolution,
+                PropertyName.screenSpace,
+                PropertyName.enableHaptics,
+                PropertyName.clickHaptic,
+                PropertyName.enterHaptic,
+                PropertyName.exitHaptic,
+                PropertyName.enableSounds,
+                PropertyName.clickSoundUrl,
+                PropertyName.enterSoundUrl,
+                PropertyName.exitSoundUrl,
+            };
             UpdateCallback(changedProperties);
         }
 
@@ -547,20 +928,64 @@ namespace Banter.SDK
             {
                 if (values[i] is BanterVector2)
                 {
-                    var valresolution = (BanterVector2)values[i];
-                    if (valresolution.n == PropertyName.resolution)
+                    var val = (BanterVector2)values[i];
+                    if (val.n == PropertyName.resolution)
                     {
-                        resolution = new Vector2(valresolution.x, valresolution.y);
+                        resolution = new Vector2(val.x, val.y);
                         changedProperties.Add(PropertyName.resolution);
+                    }
+                    else if (val.n == PropertyName.clickHaptic)
+                    {
+                        clickHaptic = new Vector2(val.x, val.y);
+                        changedProperties.Add(PropertyName.clickHaptic);
+                    }
+                    else if (val.n == PropertyName.enterHaptic)
+                    {
+                        enterHaptic = new Vector2(val.x, val.y);
+                        changedProperties.Add(PropertyName.enterHaptic);
+                    }
+                    else if (val.n == PropertyName.exitHaptic)
+                    {
+                        exitHaptic = new Vector2(val.x, val.y);
+                        changedProperties.Add(PropertyName.exitHaptic);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var valscreenSpace = (BanterBool)values[i];
-                    if (valscreenSpace.n == PropertyName.screenSpace)
+                    var val = (BanterBool)values[i];
+                    if (val.n == PropertyName.screenSpace)
                     {
-                        screenSpace = valscreenSpace.x;
+                        screenSpace = val.x;
                         changedProperties.Add(PropertyName.screenSpace);
+                    }
+                    else if (val.n == PropertyName.enableHaptics)
+                    {
+                        enableHaptics = val.x;
+                        changedProperties.Add(PropertyName.enableHaptics);
+                    }
+                    else if (val.n == PropertyName.enableSounds)
+                    {
+                        enableSounds = val.x;
+                        changedProperties.Add(PropertyName.enableSounds);
+                    }
+                }
+                if (values[i] is BanterString)
+                {
+                    var val = (BanterString)values[i];
+                    if (val.n == PropertyName.clickSoundUrl)
+                    {
+                        clickSoundUrl = val.x;
+                        changedProperties.Add(PropertyName.clickSoundUrl);
+                    }
+                    else if (val.n == PropertyName.enterSoundUrl)
+                    {
+                        enterSoundUrl = val.x;
+                        changedProperties.Add(PropertyName.enterSoundUrl);
+                    }
+                    else if (val.n == PropertyName.exitSoundUrl)
+                    {
+                        exitSoundUrl = val.x;
+                        changedProperties.Add(PropertyName.exitSoundUrl);
                     }
                 }
             }
@@ -581,14 +1006,83 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
-            }
-            if (force)
-            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.screenSpace,
                     type = PropertyType.Bool,
                     value = screenSpace,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.enableHaptics,
+                    type = PropertyType.Bool,
+                    value = enableHaptics,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.clickHaptic,
+                    type = PropertyType.Vector2,
+                    value = clickHaptic,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.enterHaptic,
+                    type = PropertyType.Vector2,
+                    value = enterHaptic,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.exitHaptic,
+                    type = PropertyType.Vector2,
+                    value = exitHaptic,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.enableSounds,
+                    type = PropertyType.Bool,
+                    value = enableSounds,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.clickSoundUrl,
+                    type = PropertyType.String,
+                    value = clickSoundUrl,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.enterSoundUrl,
+                    type = PropertyType.String,
+                    value = enterSoundUrl,
+                    componentType = ComponentType.BanterUIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.exitSoundUrl,
+                    type = PropertyType.String,
+                    value = exitSoundUrl,
                     componentType = ComponentType.BanterUIPanel,
                     oid = oid,
                     cid = cid

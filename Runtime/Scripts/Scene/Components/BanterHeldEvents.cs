@@ -149,9 +149,9 @@ namespace Banter.SDK
                 grabHandleAdded = true;
                 grabHandle = gameObject.AddComponent<GrabHandle>();
             }
-            
+
             grabHandle._handleFunctions = new HandleFunction[]{handleController};
-            grabHandle.WorldObj = GetComponentInParent<WorldObject>(); 
+            grabHandle.WorldObj = GetComponentInParent<WorldObject>();
             if (!grabHandle.WorldObj)
             {
                 worldObjectAdded = true;
