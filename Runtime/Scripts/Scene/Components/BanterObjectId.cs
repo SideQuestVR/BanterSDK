@@ -20,7 +20,11 @@ namespace Banter.SDK
         {
             try
             {
+#if UNITY_EDITOR
                 GenerateId(IsDuplicateId(Id));
+#else
+                GenerateId(false);
+#endif
                 BanterScene.Instance().AddBanterObject(gameObject, this);
             }
             catch (Exception)
