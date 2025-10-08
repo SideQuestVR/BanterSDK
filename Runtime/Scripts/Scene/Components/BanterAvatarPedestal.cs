@@ -95,7 +95,7 @@ namespace Banter.SDK
 #if BASIS_BUNDLE_MANAGEMENT
                     _loadableBundle = new BasisLoadableBundle();
                     _loadableBundle.UnlockPassword = a.author_users_id + "42069";
-                    _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"https://cdn.sidetestvr.com/file/{a.high_avatar_files_id}/high.bee";
+                    _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"{Get.GetUrl(EnvType.PROD, UrlType.CDN)}/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
                     BasisProgressReport BeeProgressReport = new BasisProgressReport();
                     BundledContentHolder.Selector PoliceMode = BundledContentHolder.Selector.Avatar;
