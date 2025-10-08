@@ -1,4 +1,3 @@
-
 #if BANTER_FLEX
 using Banter.FlexaBody;
 #endif
@@ -6,6 +5,7 @@ using Banter.SDK;
 using Unity.VisualScripting;
 using UnityEngine;
 
+#if BANTER_FLEX
 [RequireComponent(typeof(BanterObjectId))]
 public class ControllerHeldEvents : Controllable {
 
@@ -65,3 +65,4 @@ public class ControllerHeldEvents : Controllable {
         banterEvents.onRelease?.Invoke( handID == HandID.Left ? HandSide.LEFT : HandSide.RIGHT);
     }
 }
+#endif
