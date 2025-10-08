@@ -73,7 +73,7 @@ namespace Banter.FlexaBody
     /// <summary>
     /// Stub Handle_Controller component - accepts controller input configuration but provides no input handling
     /// </summary>
-    public class Handle_Controller : UnityEngine.MonoBehaviour
+    public class Handle_Controller : UnityEngine.MonoBehaviour, HandleFunction
     {
         public float Sensitivity { get; set; }
         public float FireTime { get; set; }
