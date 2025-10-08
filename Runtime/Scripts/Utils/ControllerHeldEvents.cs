@@ -1,5 +1,7 @@
 
+#if BANTER_FLEX
 using Banter.FlexaBody;
+#endif
 using Banter.SDK;
 using Unity.VisualScripting;
 using UnityEngine;

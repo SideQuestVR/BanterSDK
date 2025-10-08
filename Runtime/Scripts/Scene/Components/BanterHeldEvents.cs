@@ -1,7 +1,9 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+#if BANTER_FLEX
 using Banter.FlexaBody;
+#endif
 using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
