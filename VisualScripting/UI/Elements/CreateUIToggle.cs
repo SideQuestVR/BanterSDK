@@ -2,6 +2,7 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -19,10 +20,15 @@ namespace Banter.VisualScripting
         public ControlOutput outputTrigger;
 
         [DoNotSerialize]
-        public ValueInput panelReference;
+        [PortLabelHidden]
+        [NullMeansSelf]
+        public ValueInput gameObject;
 
         [DoNotSerialize]
         public ValueInput parentElementId;
+
+        [DoNotSerialize]
+        public ValueInput parentElementName;
 
         [DoNotSerialize]
         public ValueInput isChecked;
@@ -31,38 +37,37 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
-        public ValueOutput toggleId;
+        public ValueInput elementName;
 
         [DoNotSerialize]
-        public ValueOutput success;
+        public ValueOutput toggleId;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
+                var target = flow.GetValue<GameObject>(gameObject);
+                var panel = target?.GetComponent<BanterUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
+                var parentName = flow.GetValue<string>(parentElementName);
                 var checked_ = flow.GetValue<bool>(isChecked);
                 var elemId = flow.GetValue<string>(elementId);
+                var elemName = flow.GetValue<string>(elementName);
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIToggle] Panel reference is null.");
+                    Debug.LogWarning("[CreateUIToggle] BanterUIPanel component not found on GameObject.");
                     flow.SetValue(toggleId, "");
-                    flow.SetValue(success, false);
+                    return outputTrigger;
+                }
+
+                if (!panel.ValidateForUIOperation("CreateUIToggle"))
+                {
+                    flow.SetValue(toggleId, "");
                     return outputTrigger;
                 }
 
                 try
                 {
-                    // Get the UIElementBridge from the panel
-                    var bridge = panel.GetComponent<UIElementBridge>();
-                    if (bridge == null)
-                    {
-                        Debug.LogError("[CreateUIToggle] UIElementBridge not found on panel.");
-                        flow.SetValue(toggleId, "");
-                        flow.SetValue(success, false);
-                        return outputTrigger;
-                    }
 
                     // Generate unique element ID if not provided
                     var toggleElementId = string.IsNullOrEmpty(elemId) ? $"ui_toggle_{System.Guid.NewGuid().ToString("N")[..8]}" : elemId;
@@ -70,7 +75,8 @@ namespace Banter.VisualScripting
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementType = "13"; // UIElementType.Toggle = 13
-                    var parentElementId = string.IsNullOrEmpty(parentId) ? "root" : parentId;
+                    string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
+                    var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
                     
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{toggleElementId}{MessageDelimiters.SECONDARY}{elementType}{MessageDelimiters.SECONDARY}{parentElementId}";
@@ -78,30 +84,36 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+                    // Set element name if provided
+                    if (!string.IsNullOrEmpty(elemName))
+                    {
+                        var nameMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{toggleElementId}{MessageDelimiters.SECONDARY}name{MessageDelimiters.SECONDARY}{elemName}";
+                        UIElementBridge.HandleMessage(nameMessage);
+                    }
+
                     // Set checked property
                     var checkedMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{toggleElementId}{MessageDelimiters.SECONDARY}checked{MessageDelimiters.SECONDARY}{(checked_ ? "1" : "0")}";
                     UIElementBridge.HandleMessage(checkedMessage);
 
                     flow.SetValue(toggleId, toggleElementId);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[CreateUIToggle] Failed to create UI toggle: {e.Message}");
                     flow.SetValue(toggleId, "");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            panelReference = ValueInput<BanterUIPanel>("Panel");
+            gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             parentElementId = ValueInput("Parent Element ID", "");
+            parentElementName = ValueInput("Parent Element Name", "");
             isChecked = ValueInput("Checked", false);
             elementId = ValueInput("Element ID", "");
-            toggleId = ValueOutput<string>("Toggle ID");
-            success = ValueOutput<bool>("Success");
+            elementName = ValueInput("Element Name", "");
+            toggleId = ValueOutput<string>("Element ID");
         }
     }
 }

@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -23,24 +24,27 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput styleProperty;
 
         [DoNotSerialize]
         public ValueInput styleValue;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var property = flow.GetValue<UIStyleProperty>(styleProperty);
                 var value = flow.GetValue<string>(styleValue);
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIStyle"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -50,7 +54,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIStyle] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -63,23 +66,23 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[SetUIStyle] Set style '{propertyName}' = '{value}' on element '{elemId}'");
-                    flow.SetValue(success, true);
+#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIStyle] Failed to set UI style: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             styleProperty = ValueInput("Style Property", UIStyleProperty.BackgroundColor);
             styleValue = ValueInput("Style Value", "");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

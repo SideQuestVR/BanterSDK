@@ -33,8 +33,8 @@ namespace Banter.SDK
                 // now we calculate two points. P1 is our current position on the curve, P2 is a little farther ahead.
                 // these points are used to create a special "coordinate space", which is necessary to calculate the correct vertex positions
 
-                calculatePositionOnCurve(u, p, q, radius, P1);
-                calculatePositionOnCurve(u + 0.01f, p, q, radius, P2);
+                calculatePositionOnCurve(u, p, q, radius, ref P1);
+                calculatePositionOnCurve(u + 0.01f, p, q, radius, ref P2);
 
                 // calculate orthonormal basis
                 T = P2 - P1;
@@ -115,7 +115,7 @@ namespace Banter.SDK
 
         }
 
-        void calculatePositionOnCurve(float u, int p, int q, float radius, Vector3 position)
+        void calculatePositionOnCurve(float u, int p, int q, float radius, ref Vector3 position)
         {
 
             var cu = Mathf.Cos(u);

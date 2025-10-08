@@ -28,7 +28,20 @@ namespace Banter.SDK
         [See(initial = "")][SerializeField] internal string panoId = "";
 
         PhotoSphere photoSphere;
-        internal override void DestroyStuff() { }
+        GameObject streetViewObject;
+        internal override void DestroyStuff()
+        {
+            if (photoSphere != null)
+            {
+                Destroy(photoSphere);
+                photoSphere = null;
+            }
+            if (streetViewObject != null)
+            {
+                Destroy(streetViewObject);
+                streetViewObject = null;
+            }
+        }
         internal override void StartStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -36,8 +49,12 @@ namespace Banter.SDK
             {
                 Destroy(photoSphere);
             }
-            var obj = Instantiate(Resources.Load<GameObject>("StreetViewPrefab"), transform, false);
-            photoSphere = obj.GetComponent<PhotoSphere>();
+            if (streetViewObject != null)
+            {
+                Destroy(streetViewObject);
+            }
+            streetViewObject = Instantiate(Resources.Load<GameObject>("StreetViewPrefab"), transform, false);
+            photoSphere = streetViewObject.GetComponent<PhotoSphere>();
             photoSphere.Panoid = panoId;
             Action photoSphereCallback = null;
             photoSphereCallback = () =>

@@ -11,7 +11,14 @@ namespace Banter.UI.Bridge
 {
     public class UIElementBridge : MonoBehaviour
     {
-        
+        private const string LogPrefix = "[UIElementBridge]";
+
+        [System.Diagnostics.Conditional("BANTER_UI_DEBUG")]
+        private static void LogVerbose(string message)
+        {
+            Debug.Log($"{LogPrefix} {message}");
+        }
+
         // Registry for multiple panel instances
         private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
         
@@ -47,7 +54,7 @@ namespace Banter.UI.Bridge
             _panelInstances[panelId] = instance;
             instance.panelId = panelId;
             instance.banterUiPanel = banterUIPanel;
-            Debug.Log($"[UIElementBridge] Registered panel instance: {panelId}");
+            LogVerbose($"Registered panel instance: {panelId}");
         }
         
         public static void UnregisterPanelInstance(string panelId)
@@ -55,11 +62,12 @@ namespace Banter.UI.Bridge
             if (_panelInstances.ContainsKey(panelId))
             {
                 _panelInstances.Remove(panelId);
-                Debug.Log($"[UIElementBridge] Unregistered panel instance: {panelId}");
+                LogVerbose($"Unregistered panel instance: {panelId}");
             }
         }
         
         private Dictionary<string, VisualElement> _elements = new Dictionary<string, VisualElement>();
+        private Dictionary<VisualElement, string> _elementToId = new Dictionary<VisualElement, string>(); // Reverse lookup for O(1) element ID retrieval
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
         public UIDocument mainDocument;
         public BanterLink banterLink;
@@ -125,7 +133,7 @@ namespace Banter.UI.Bridge
         {
             try
             {
-                Debug.Log($"[UIElementBridge] Handling message: {message}");
+                LogVerbose($"Handling message: {message}");
                 var parts = message.Split(MessageDelimiters.PRIMARY);
                 if (parts.Length < 2)
                 {
@@ -184,7 +192,11 @@ namespace Banter.UI.Bridge
                 case UICommands.SET_UI_STYLE:
                     SetStyle(data);
                     break;
-                    
+
+                case UICommands.GET_UI_STYLE:
+                    GetStyle(data);
+                    break;
+
                 case UICommands.CALL_UI_METHOD:
                     CallMethod(data);
                     break;
@@ -221,25 +233,27 @@ namespace Banter.UI.Bridge
             if (mainDocument != null && mainDocument.rootVisualElement != null && !_elements.ContainsKey("root"))
             {
                 _elements["root"] = mainDocument.rootVisualElement;
+                _elementToId[mainDocument.rootVisualElement] = "root";
             }
-            Debug.Log("[UIElementBridge] Creating element" + string.Join(",", data));
+            LogVerbose("Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
             
             var elementId = data[0];
             var elementType = data[1];
             var parentId = data[2];
-            Debug.Log("[UIElementBridge] Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
+            LogVerbose("Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
             // Create the appropriate VisualElement based on type
             VisualElement element = CreateElementByType(elementType);
             
             if (element != null)
             {
                 _elements[elementId] = element;
+                _elementToId[element] = elementId;
 
                 // Attach to parent if specified
                 if (parentId != "null" && _elements.TryGetValue(parentId, out var parent))
                 {
-                    Debug.Log("[UIElementBridge] Attaching to parent element: " + parentId);
+                    LogVerbose("Attaching to parent element: " + parentId);
                     parent.Add(element);
                 }
                 else
@@ -247,7 +261,7 @@ namespace Banter.UI.Bridge
                     // If no valid parent, attach to root
                     if (_elements.TryGetValue("root", out var root))
                     {
-                        Debug.Log("[UIElementBridge] Attaching to root element.");
+                        LogVerbose("Attaching to root element.");
                         root.Add(element);
                     }
                     else
@@ -256,7 +270,7 @@ namespace Banter.UI.Bridge
                     }
                 }
                 
-                Debug.Log($"[UIElementBridge] Created element: {elementId} of type {elementType}");
+                LogVerbose($"Created element: {elementId} of type {elementType}");
             }
         }
         
@@ -307,8 +321,9 @@ namespace Banter.UI.Bridge
                 
                 element.RemoveFromHierarchy();
                 _elements.Remove(elementId);
-                
-                Debug.Log($"[UIElementBridge] Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
+                _elementToId.Remove(element);
+
+                LogVerbose($"Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
             }
         }
         
@@ -332,7 +347,7 @@ namespace Banter.UI.Bridge
                     parent.Add(child);
                 }
                 
-                Debug.Log($"[UIElementBridge] Attached {childId} to {parentId}");
+                LogVerbose($"Attached {childId} to {parentId}");
             }
         }
         
@@ -346,44 +361,137 @@ namespace Banter.UI.Bridge
             if (_elements.TryGetValue(childId, out var child))
             {
                 child.RemoveFromHierarchy();
-                Debug.Log($"[UIElementBridge] Detached {childId} from {parentId}");
+                LogVerbose($"Detached {childId} from {parentId}");
             }
         }
         
         private void SetProperty(string[] data)
         {
-            if (data.Length < 3) return;
-            
+            if (data.Length < 3)
+            {
+                Debug.LogError($"[UIElementBridge.SetProperty] Data array too short (length={data.Length}), expected at least 3");
+                return;
+            }
+
             var elementId = data[0];
             var propertyName = data[1];
             var value = data[2];
 
+            // Resolve element name to ID if needed
+            elementId = ResolveElementIdOrName(elementId);
+
             if (!_elements.TryGetValue(elementId, out var element))
-            { 
+            {
                 Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to set property '{propertyName}'");
                 return;
             }
-            
+
             // Try to use the generated SetProperty method if the element supports it
             if (element is IUIPropertySetter propertySetter)
             {
                 if (propertySetter.SetProperty(propertyName, value))
                     return; // Property was handled by the generated method
             }
-            
-            // If we get here, the property wasn't handled by any generated SetProperty method
+
+            // Fallback: Handle common UI element types and properties directly
+            try
+            {
+                switch (element)
+                {
+                    case Label label when propertyName == "text":
+                        label.text = value;
+                        return;
+
+                    case TextField textField when propertyName == "value":
+                        textField.value = value;
+                        return;
+
+                    case TextField textField when propertyName == "text":
+                        textField.value = value; // TextField uses 'value' not 'text'
+                        return;
+
+                    case Button button when propertyName == "text":
+                        button.text = value;
+                        return;
+
+                    case Toggle toggle when propertyName == "value":
+                        toggle.value = bool.Parse(value);
+                        return;
+
+                    case Toggle toggle when propertyName == "label":
+                        toggle.label = value;
+                        return;
+
+                    case Slider slider when propertyName == "value":
+                        slider.value = float.Parse(value);
+                        return;
+
+                    case Slider slider when propertyName == "minvalue":
+                        slider.lowValue = float.Parse(value);
+                        return;
+
+                    case Slider slider when propertyName == "maxvalue":
+                        slider.highValue = float.Parse(value);
+                        return;
+
+                    case SliderInt sliderInt when propertyName == "value":
+                        sliderInt.value = int.Parse(value);
+                        return;
+
+                    case MinMaxSlider minMaxSlider when propertyName == "value":
+                        var parts = value.Split(',');
+                        if (parts.Length == 2)
+                        {
+                            minMaxSlider.value = new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                        }
+                        return;
+                }
+
+                // Handle common properties that apply to all VisualElements
+                if (propertyName == "enabled")
+                {
+                    element.SetEnabled(value == "1" || value.ToLower() == "true");
+                    return;
+                }
+
+                if (propertyName == "visible")
+                {
+                    element.style.display = (value == "1" || value.ToLower() == "true") ? DisplayStyle.Flex : DisplayStyle.None;
+                    return;
+                }
+
+                // Generic reflection fallback for properties not handled above
+                var propertyInfo = element.GetType().GetProperty(propertyName);
+                if (propertyInfo != null && propertyInfo.CanWrite)
+                {
+                    var targetType = propertyInfo.PropertyType;
+                    object convertedValue = ConvertValue(value, targetType);
+                    propertyInfo.SetValue(element, convertedValue);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UIElementBridge.SetProperty] Error setting property '{propertyName}' on {element.GetType().Name}: {ex.Message}");
+                return;
+            }
+
+            // If we get here, the property wasn't handled by any method
             Debug.LogWarning($"[UIElementBridge] Unhandled property '{propertyName}' for element type '{element.GetType().Name}' with value '{value}'");
         }
         
         private void GetProperty(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var propertyName = data[1];
 
+            // Resolve element name to ID if needed
+            elementId = ResolveElementIdOrName(elementId);
+
             if (!_elements.TryGetValue(elementId, out var element))
-            { 
+            {
                 Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get property '{propertyName}'");
                 return;
             }
@@ -396,7 +504,7 @@ namespace Banter.UI.Bridge
             var eventName = $"UIProperty_{elementId}_{propertyName}";
             Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { propertyValue }));
             
-            Debug.Log($"[UIElementBridge] Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
+            LogVerbose($"Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
         }
         
         private object GetElementProperty(VisualElement element, string propertyName)
@@ -657,7 +765,7 @@ namespace Banter.UI.Bridge
                     element.style.backgroundColor = ParseColor(value);
                     break;
                 case UIStyleProperty.BackgroundImage:
-                    Debug.Log("[UIElementBridge] Setting background image: " + value);
+                    LogVerbose("Setting background image: " + value);
                     SetBackgroundImage(element, value);
                     break;
                     
@@ -713,9 +821,249 @@ namespace Banter.UI.Bridge
                     break;
             }
             
-            Debug.Log($"[UIElementBridge] Set style {styleProperty} = '{value}' on element {elementId}");
+            LogVerbose($"Set style {styleProperty} = '{value}' on element {elementId}");
         }
-        
+
+        private void GetStyle(string[] data)
+        {
+            if (data.Length < 2) return;
+
+            var elementId = data[0];
+            var styleNameString = data[1];
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            {
+                Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get style '{styleNameString}'");
+                return;
+            }
+
+            // Convert string to enum
+            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
+
+            // Get style value from resolved style
+            string styleValue = GetStyleValue(element, styleProperty);
+
+            // Trigger EventBus event for Visual Scripting to receive the value
+            // Format: UIStyle_{elementId}_{styleName} with the style value
+            var eventName = $"UIStyle_{elementId}_{styleNameString}";
+            Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { styleValue }));
+
+            LogVerbose($"Got style '{styleNameString}' = '{styleValue}' from element {elementId}, triggered event {eventName}");
+        }
+
+        private string GetStyleValue(VisualElement element, UIStyleProperty property)
+        {
+            var style = element.resolvedStyle;
+
+            switch (property)
+            {
+                // Layout Properties (Flexbox)
+                case UIStyleProperty.AlignContent:
+                    return style.alignContent.ToString().ToLower();
+                case UIStyleProperty.AlignItems:
+                    return style.alignItems.ToString().ToLower();
+                case UIStyleProperty.AlignSelf:
+                    return style.alignSelf.ToString().ToLower();
+                case UIStyleProperty.FlexBasis:
+                    return FormatStyleFloat(style.flexBasis);
+                case UIStyleProperty.FlexDirection:
+                    return FormatFlexDirection(style.flexDirection);
+                case UIStyleProperty.FlexGrow:
+                    return FormatStyleFloat(style.flexGrow);
+                case UIStyleProperty.FlexShrink:
+                    return FormatStyleFloat(style.flexShrink);
+                case UIStyleProperty.FlexWrap:
+                    return FormatWrap(style.flexWrap);
+                case UIStyleProperty.JustifyContent:
+                    return FormatJustify(style.justifyContent);
+
+                // Size Properties
+                case UIStyleProperty.Width:
+                    return FormatStyleLength(style.width);
+                case UIStyleProperty.Height:
+                    return FormatStyleLength(style.height);
+                case UIStyleProperty.MinWidth:
+                    return FormatStyleFloat(style.minWidth);
+                case UIStyleProperty.MinHeight:
+                    return FormatStyleFloat(style.minHeight);
+                case UIStyleProperty.MaxWidth:
+                    return FormatStyleFloat(style.maxWidth);
+                case UIStyleProperty.MaxHeight:
+                    return FormatStyleFloat(style.maxHeight);
+
+                // Position Properties
+                case UIStyleProperty.Position:
+                    return style.position.ToString().ToLower();
+                case UIStyleProperty.Left:
+                    return FormatStyleLength(style.left);
+                case UIStyleProperty.Top:
+                    return FormatStyleLength(style.top);
+                case UIStyleProperty.Right:
+                    return FormatStyleLength(style.right);
+                case UIStyleProperty.Bottom:
+                    return FormatStyleLength(style.bottom);
+
+                // Margin Properties
+                case UIStyleProperty.MarginTop:
+                    return FormatStyleLength(style.marginTop);
+                case UIStyleProperty.MarginRight:
+                    return FormatStyleLength(style.marginRight);
+                case UIStyleProperty.MarginBottom:
+                    return FormatStyleLength(style.marginBottom);
+                case UIStyleProperty.MarginLeft:
+                    return FormatStyleLength(style.marginLeft);
+
+                // Padding Properties
+                case UIStyleProperty.PaddingTop:
+                    return FormatStyleLength(style.paddingTop);
+                case UIStyleProperty.PaddingRight:
+                    return FormatStyleLength(style.paddingRight);
+                case UIStyleProperty.PaddingBottom:
+                    return FormatStyleLength(style.paddingBottom);
+                case UIStyleProperty.PaddingLeft:
+                    return FormatStyleLength(style.paddingLeft);
+
+                // Border Properties
+                case UIStyleProperty.BorderTopWidth:
+                    return style.borderTopWidth.ToString();
+                case UIStyleProperty.BorderRightWidth:
+                    return style.borderRightWidth.ToString();
+                case UIStyleProperty.BorderBottomWidth:
+                    return style.borderBottomWidth.ToString();
+                case UIStyleProperty.BorderLeftWidth:
+                    return style.borderLeftWidth.ToString();
+                case UIStyleProperty.BorderTopLeftRadius:
+                    return FormatStyleLength(style.borderTopLeftRadius);
+                case UIStyleProperty.BorderTopRightRadius:
+                    return FormatStyleLength(style.borderTopRightRadius);
+                case UIStyleProperty.BorderBottomLeftRadius:
+                    return FormatStyleLength(style.borderBottomLeftRadius);
+                case UIStyleProperty.BorderBottomRightRadius:
+                    return FormatStyleLength(style.borderBottomRightRadius);
+
+                // Border Color Properties
+                case UIStyleProperty.BorderTopColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderTopColor);
+                case UIStyleProperty.BorderRightColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderRightColor);
+                case UIStyleProperty.BorderBottomColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderBottomColor);
+                case UIStyleProperty.BorderLeftColor:
+                    return ColorUtility.ToHtmlStringRGBA(style.borderLeftColor);
+
+                // Background Properties
+                case UIStyleProperty.BackgroundColor:
+                    return "#" + ColorUtility.ToHtmlStringRGBA(style.backgroundColor);
+
+                // Color Properties
+                case UIStyleProperty.Color:
+                    return "#" + ColorUtility.ToHtmlStringRGBA(style.color);
+                case UIStyleProperty.Opacity:
+                    return style.opacity.ToString();
+
+                // Text Properties
+                case UIStyleProperty.FontSize:
+                    return FormatStyleLength(style.fontSize);
+                case UIStyleProperty.FontStyle:
+                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                case UIStyleProperty.FontWeight:
+                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                case UIStyleProperty.UnityTextAlign:
+                    return FormatTextAnchor(style.unityTextAlign);
+                case UIStyleProperty.WhiteSpace:
+                    return style.whiteSpace.ToString().ToLower();
+
+                // Display Properties
+                case UIStyleProperty.Display:
+                    return style.display.ToString().ToLower();
+                case UIStyleProperty.Visibility:
+                    return style.visibility.ToString().ToLower();
+
+                default:
+                    Debug.LogWarning($"[UIElementBridge] Unsupported get style property: {property}");
+                    return "";
+            }
+        }
+
+        private string FormatStyleLength(StyleLength length)
+        {
+            if (length.keyword != StyleKeyword.Undefined && length.keyword != StyleKeyword.Null)
+            {
+                return length.keyword.ToString().ToLower();
+            }
+
+            var value = length.value;
+            if (value.unit == LengthUnit.Pixel)
+                return $"{value.value}px";
+            else if (value.unit == LengthUnit.Percent)
+                return $"{value.value}%";
+            else
+                return value.value.ToString();
+        }
+
+        private string FormatStyleFloat(StyleFloat styleFloat)
+        {
+            if (styleFloat.keyword != StyleKeyword.Undefined && styleFloat.keyword != StyleKeyword.Null)
+            {
+                return styleFloat.keyword.ToString().ToLower();
+            }
+
+            return styleFloat.value.ToString();
+        }
+
+        private string FormatFlexDirection(FlexDirection direction)
+        {
+            return direction switch
+            {
+                FlexDirection.Column => "column",
+                FlexDirection.ColumnReverse => "column-reverse",
+                FlexDirection.Row => "row",
+                FlexDirection.RowReverse => "row-reverse",
+                _ => "column"
+            };
+        }
+
+        private string FormatWrap(Wrap wrap)
+        {
+            return wrap switch
+            {
+                Wrap.NoWrap => "nowrap",
+                Wrap.Wrap => "wrap",
+                Wrap.WrapReverse => "wrap-reverse",
+                _ => "nowrap"
+            };
+        }
+
+        private string FormatJustify(Justify justify)
+        {
+            return justify switch
+            {
+                Justify.FlexStart => "flex-start",
+                Justify.FlexEnd => "flex-end",
+                Justify.Center => "center",
+                Justify.SpaceBetween => "space-between",
+                Justify.SpaceAround => "space-around",
+                _ => "flex-start"
+            };
+        }
+
+        private string FormatTextAnchor(TextAnchor anchor)
+        {
+            return anchor switch
+            {
+                TextAnchor.UpperLeft => "left",
+                TextAnchor.UpperCenter => "center",
+                TextAnchor.UpperRight => "right",
+                TextAnchor.MiddleLeft => "left",
+                TextAnchor.MiddleCenter => "center",
+                TextAnchor.MiddleRight => "right",
+                TextAnchor.LowerLeft => "left",
+                TextAnchor.LowerCenter => "center",
+                TextAnchor.LowerRight => "right",
+                _ => "left"
+            };
+        }
+
         private StyleLength ParseLength(string value)
         {
             if (string.IsNullOrEmpty(value))
@@ -958,7 +1306,7 @@ namespace Banter.UI.Bridge
                 if (texture != null)
                 {
                     element.style.backgroundImage = new StyleBackground(texture);
-                    Debug.Log($"[UIElementBridge] Set background image from URL: {imageUrl}");
+                    LogVerbose($"Set background image from URL: {imageUrl}");
                 }
             }
             catch (Exception e)
@@ -1037,7 +1385,7 @@ namespace Banter.UI.Bridge
         {
             try
             {
-                Debug.Log($"[UIElementBridge] Downloading texture from: {url}");
+                LogVerbose($"Downloading texture from: {url}");
                 var texture = await Get.Texture(url);
                 return texture;
             }
@@ -1062,7 +1410,7 @@ namespace Banter.UI.Bridge
             }
             _textureCache.Clear();
             _downloadingTextures.Clear();
-            Debug.Log("[UIElementBridge] Cleared texture cache");
+            LogVerbose("Cleared texture cache");
         }
         
         private float[] ParseSpacing(string value)
@@ -1251,7 +1599,7 @@ namespace Banter.UI.Bridge
                 {
                     if (dispatcher.DispatchMethod(methodName, args))
                     {
-                        Debug.Log($"[UIElementBridge] Dispatched method: {methodName} on {elementId}");
+                        LogVerbose($"Dispatched method: {methodName} on {elementId}");
                         return; // Method was handled by the dispatcher
                     }
                 }
@@ -1266,11 +1614,24 @@ namespace Banter.UI.Bridge
         private void RegisterEvent(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var eventTypeString = data[1];
-            
-            if (!_elements.TryGetValue(elementId, out var element)) return;
+
+            LogVerbose($"RegisterEvent called with elementId='{elementId}', eventType='{eventTypeString}'");
+
+            // Resolve element name to ID if needed
+            var originalElementId = elementId;
+            elementId = ResolveElementIdOrName(elementId);
+            LogVerbose($"After resolution: '{originalElementId}' -> '{elementId}'");
+
+            if (!_elements.TryGetValue(elementId, out var element))
+            {
+                Debug.LogWarning($"[UIElementBridge] Element '{elementId}' not found in _elements dictionary. Available elements: {string.Join(", ", _elements.Keys)}");
+                return;
+            }
+
+            LogVerbose($"Found element '{elementId}' of type {element.GetType().Name}");
             
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
@@ -1415,11 +1776,23 @@ namespace Banter.UI.Bridge
                             element.RegisterCallback(floatCallback);
                             _registeredCallbacks[callbackKey] = floatCallback;
                         }
-                        else if (element is Toggle)
+                        else if (element is Toggle || element is RadioButton)
                         {
                             EventCallback<ChangeEvent<bool>> boolCallback = evt => SendUIEvent(elementId, eventType, evt);
                             element.RegisterCallback(boolCallback);
                             _registeredCallbacks[callbackKey] = boolCallback;
+                        }
+                        else if (element is SliderInt || element is RadioButtonGroup)
+                        {
+                            EventCallback<ChangeEvent<int>> intCallback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(intCallback);
+                            _registeredCallbacks[callbackKey] = intCallback;
+                        }
+                        else if (element is MinMaxSlider)
+                        {
+                            EventCallback<ChangeEvent<Vector2>> vector2Callback = evt => SendUIEvent(elementId, eventType, evt);
+                            element.RegisterCallback(vector2Callback);
+                            _registeredCallbacks[callbackKey] = vector2Callback;
                         }
                         else
                         {
@@ -1436,7 +1809,7 @@ namespace Banter.UI.Bridge
                     break;
             }
             
-            Debug.Log($"[UIElementBridge] Registered {eventType} event for element {elementId}");
+            LogVerbose($"Registered {eventType} event for element {elementId}");
         }
         
         private void UnregisterEvent(string[] data)
@@ -1539,6 +1912,10 @@ namespace Banter.UI.Bridge
                         element.UnregisterCallback(floatChangeCallback);
                     else if (callback is EventCallback<ChangeEvent<bool>> boolChangeCallback)
                         element.UnregisterCallback(boolChangeCallback);
+                    else if (callback is EventCallback<ChangeEvent<int>> intChangeCallback)
+                        element.UnregisterCallback(intChangeCallback);
+                    else if (callback is EventCallback<ChangeEvent<Vector2>> vector2ChangeCallback)
+                        element.UnregisterCallback(vector2ChangeCallback);
                     break;
                     
                     
@@ -1549,7 +1926,7 @@ namespace Banter.UI.Bridge
             
             // Remove from stored callbacks
             _registeredCallbacks.Remove(callbackKey);
-            Debug.Log($"[UIElementBridge] Unregistered {eventType} event for element {elementId}");
+            LogVerbose($"Unregistered {eventType} event for element {elementId}");
         }
         
         private void SetFocus(string[] data)
@@ -1589,20 +1966,50 @@ namespace Banter.UI.Bridge
         
         private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
+            LogVerbose($"SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
+
             // Send event back to TypeScript
             var eventTypeName = eventType.ToEventName();
-            
+
             // Build event data as JSON object based on event type
             var eventDataJson = BuildEventDataJson(evt);
-            
+
             var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{eventDataJson}";
-            
+
             // Send UI events directly to TypeScript without panel ID prefix
             // TypeScript doesn't need panel ID for element routing
             SendToJavaScript(message);
-            
-            // Also trigger EventBus events for Visual Scripting
+
+            // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
+            var eventPrefix = ConvertEventTypeToPrefix(eventType);
+            var genericEventName = $"{eventPrefix}_{elementId}";
+            LogVerbose($"Triggering generic OnUIEvent with name '{genericEventName}'");
+            Unity.VisualScripting.EventBus.Trigger("OnUIEvent", new Unity.VisualScripting.CustomEventArgs(genericEventName, new object[] { evt }));
+
+            // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
             TriggerVisualScriptingEvent(elementId, eventType, evt);
+        }
+
+        /// <summary>
+        /// Converts UIEventType to the event prefix format used in event names (e.g., Click -> UIClick)
+        /// </summary>
+        private string ConvertEventTypeToPrefix(UIEventType eventType)
+        {
+            return eventType switch
+            {
+                UIEventType.Click => "UIClick",
+                UIEventType.Change => "UIChange",
+                UIEventType.MouseDown => "UIMouseDown",
+                UIEventType.MouseUp => "UIMouseUp",
+                UIEventType.MouseMove => "UIMouseMove",
+                UIEventType.MouseEnter => "UIMouseEnter",
+                UIEventType.MouseLeave => "UIMouseLeave",
+                UIEventType.Focus => "UIFocus",
+                UIEventType.Blur => "UIBlur",
+                UIEventType.KeyDown => "UIKeyDown",
+                UIEventType.KeyUp => "UIKeyUp",
+                _ => $"UI{eventType}"
+            };
         }
         
         private void TriggerVisualScriptingEvent(string elementId, UIEventType eventType, EventBase evt)
@@ -1618,7 +2025,7 @@ namespace Banter.UI.Bridge
                         
                         Unity.VisualScripting.EventBus.Trigger("OnUIClick", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
                         
-                        Debug.Log($"[UIElementBridge] Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
+                        LogVerbose($"Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
                     }
                     break;
                     
@@ -1628,34 +2035,153 @@ namespace Banter.UI.Bridge
                         var eventName = $"UIChange_{elementId}";
                         var newValue = changeEvt.newValue;
                         var oldValue = changeEvt.previousValue;
-                        
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: '{oldValue}' -> '{newValue}'");
+
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: '{oldValue}' -> '{newValue}'");
                     }
                     // Handle other change event types
                     else if (evt is ChangeEvent<float> floatChangeEvt)
                     {
                         var eventName = $"UIChange_{elementId}";
-                        var newValue = floatChangeEvt.newValue.ToString();
-                        var oldValue = floatChangeEvt.previousValue.ToString();
-                        
+                        var newValue = floatChangeEvt.newValue;
+                        var oldValue = floatChangeEvt.previousValue;
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
                     }
                     else if (evt is ChangeEvent<bool> boolChangeEvt)
                     {
                         var eventName = $"UIChange_{elementId}";
                         var newValue = boolChangeEvt.newValue ? "1" : "0";
                         var oldValue = boolChangeEvt.previousValue ? "1" : "0";
-                        
+
+                        LogVerbose($"About to trigger OnUIChange event for bool element {elementId}: {oldValue} -> {newValue}, eventName: '{eventName}'");
                         Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
-                        
-                        Debug.Log($"[UIElementBridge] Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                        LogVerbose($"EventBus.Trigger completed for OnUIChange event");
+                    }
+                    else if (evt is ChangeEvent<int> intChangeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = intChangeEvt.newValue;
+                        var oldValue = intChangeEvt.previousValue;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: {oldValue} -> {newValue}");
+                    }
+                    else if (evt is ChangeEvent<Vector2> vector2ChangeEvt)
+                    {
+                        var eventName = $"UIChange_{elementId}";
+                        var newValue = vector2ChangeEvt.newValue;
+                        var oldValue = vector2ChangeEvt.previousValue;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIChange", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { newValue, oldValue }));
+
+                        LogVerbose($"Triggered OnUIChange event for element {elementId}: ({oldValue.x},{oldValue.y}) -> ({newValue.x},{newValue.y})");
                     }
                     break;
-                    
+
+                // Mouse events
+                case UIEventType.MouseDown:
+                    if (evt is MouseDownEvent mouseDownEvt)
+                    {
+                        var eventName = $"UIMouseDown_{elementId}";
+                        var mousePosition = new Vector2(mouseDownEvt.localMousePosition.x, mouseDownEvt.localMousePosition.y);
+                        var mouseButton = mouseDownEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseDown) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseUp:
+                    if (evt is MouseUpEvent mouseUpEvt)
+                    {
+                        var eventName = $"UIMouseUp_{elementId}";
+                        var mousePosition = new Vector2(mouseUpEvt.localMousePosition.x, mouseUpEvt.localMousePosition.y);
+                        var mouseButton = mouseUpEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseUp) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseMove:
+                    if (evt is MouseMoveEvent mouseMoveEvt)
+                    {
+                        var eventName = $"UIMouseMove_{elementId}";
+                        var mousePosition = new Vector2(mouseMoveEvt.localMousePosition.x, mouseMoveEvt.localMousePosition.y);
+                        var mouseButton = mouseMoveEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseMove) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseEnter:
+                    if (evt is MouseEnterEvent mouseEnterEvt)
+                    {
+                        var eventName = $"UIMouseEnter_{elementId}";
+                        var mousePosition = new Vector2(mouseEnterEvt.localMousePosition.x, mouseEnterEvt.localMousePosition.y);
+                        var mouseButton = mouseEnterEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseEnter) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseLeave:
+                    if (evt is MouseLeaveEvent mouseLeaveEvt)
+                    {
+                        var eventName = $"UIMouseLeave_{elementId}";
+                        var mousePosition = new Vector2(mouseLeaveEvt.localMousePosition.x, mouseLeaveEvt.localMousePosition.y);
+                        var mouseButton = mouseLeaveEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseLeave) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseOver:
+                    if (evt is MouseOverEvent mouseOverEvt)
+                    {
+                        var eventName = $"UIMouseOver_{elementId}";
+                        var mousePosition = new Vector2(mouseOverEvt.localMousePosition.x, mouseOverEvt.localMousePosition.y);
+                        var mouseButton = mouseOverEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseOver) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
+                case UIEventType.MouseOut:
+                    if (evt is MouseOutEvent mouseOutEvt)
+                    {
+                        var eventName = $"UIMouseOut_{elementId}";
+                        var mousePosition = new Vector2(mouseOutEvt.localMousePosition.x, mouseOutEvt.localMousePosition.y);
+                        var mouseButton = mouseOutEvt.button;
+
+                        Unity.VisualScripting.EventBus.Trigger("OnUIMouseEvent",
+                            new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
+
+                        LogVerbose($"Triggered OnUIMouseEvent (MouseOut) for element {elementId} at position {mousePosition}");
+                    }
+                    break;
+
                 // Add more event types as needed
                 default:
                     // Don't trigger Visual Scripting events for unsupported types
@@ -1782,7 +2308,7 @@ namespace Banter.UI.Bridge
             if (banterLink != null)
             {
                 banterLink.Send(message);
-                Debug.Log($"[UIElementBridge] Sent to JS: {message}");
+                LogVerbose($"Sent to JS: {message}");
             }
             else
             {
@@ -1795,7 +2321,46 @@ namespace Banter.UI.Bridge
         {
             return _elements.TryGetValue(elementId, out var element) ? element : null;
         }
-        
+
+        /// <summary>
+        /// Gets the registered element ID for a given VisualElement using reverse lookup
+        /// </summary>
+        /// <param name="element">The VisualElement to find the ID for</param>
+        /// <returns>The registered element ID, or null if not found</returns>
+        public string GetElementId(VisualElement element)
+        {
+            return element != null && _elementToId.TryGetValue(element, out var id) ? id : null;
+        }
+
+        /// <summary>
+        /// Resolves an element identifier (either ID or name) to a registered element ID
+        /// Priority: If it's already a registered ID, return it. Otherwise try to resolve as a name.
+        /// </summary>
+        /// <param name="elementIdOrName">Either an element ID or an element name</param>
+        /// <returns>The registered element ID, or the input value if not found</returns>
+        public string ResolveElementIdOrName(string elementIdOrName)
+        {
+            if (string.IsNullOrEmpty(elementIdOrName))
+                return elementIdOrName;
+
+            // Check if it's already a registered ID (O(1))
+            if (HasElement(elementIdOrName))
+                return elementIdOrName;
+
+            // Try to find by name in the visual tree
+            var element = mainDocument?.rootVisualElement?.Q(elementIdOrName);
+            if (element != null)
+            {
+                // Get the registered ID for this element
+                var registeredId = GetElementId(element);
+                if (!string.IsNullOrEmpty(registeredId))
+                    return registeredId;
+            }
+
+            // Fallback: return input as-is
+            return elementIdOrName;
+        }
+
         public bool HasElement(string elementId)
         {
             return !string.IsNullOrEmpty(elementId) && _elements.ContainsKey(elementId);
@@ -1806,7 +2371,9 @@ namespace Banter.UI.Bridge
             _documents[name] = document;
             if (document.rootVisualElement != null)
             {
-                _elements[$"doc_{name}"] = document.rootVisualElement;
+                var docId = $"doc_{name}";
+                _elements[docId] = document.rootVisualElement;
+                _elementToId[document.rootVisualElement] = docId;
             }
         }
 
@@ -1834,6 +2401,58 @@ namespace Banter.UI.Bridge
         }
 
         /// <summary>
+        /// Converts a string value to the target type for property setting
+        /// </summary>
+        private object ConvertValue(string value, Type targetType)
+        {
+            try
+            {
+                if (targetType == typeof(string))
+                    return value;
+
+                if (targetType == typeof(int))
+                    return int.Parse(value);
+
+                if (targetType == typeof(float))
+                    return float.Parse(value);
+
+                if (targetType == typeof(double))
+                    return double.Parse(value);
+
+                if (targetType == typeof(bool))
+                    return bool.Parse(value);
+
+                if (targetType == typeof(Vector2))
+                {
+                    var parts = value.Split(',');
+                    if (parts.Length == 2)
+                        return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                }
+
+                if (targetType == typeof(Vector3))
+                {
+                    var parts = value.Split(',');
+                    if (parts.Length == 3)
+                        return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                }
+
+                if (targetType == typeof(Color))
+                {
+                    if (ColorUtility.TryParseHtmlString(value, out Color color))
+                        return color;
+                }
+
+                // Fallback: try Convert.ChangeType
+                return Convert.ChangeType(value, targetType);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[UIElementBridge.ConvertValue] Failed to convert '{value}' to {targetType.Name}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets a summary of all currently registered elements
         /// </summary>
         /// <returns>Summary containing element counts and types</returns>
@@ -1841,7 +2460,7 @@ namespace Banter.UI.Bridge
         {
             var summary = new System.Text.StringBuilder();
             summary.AppendLine($"Registered Elements: {_elements.Count}");
-            
+
             var typeCounts = new Dictionary<string, int>();
             foreach (var element in _elements.Values)
             {
@@ -1851,14 +2470,15 @@ namespace Banter.UI.Bridge
                     typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
                 }
             }
-            
+
             summary.AppendLine("Element Types:");
             foreach (var kvp in typeCounts.OrderByDescending(x => x.Value))
             {
                 summary.AppendLine($"  {kvp.Key}: {kvp.Value}");
             }
-            
+
             return summary.ToString();
         }
     }
 }
+

@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -52,6 +53,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput fontSize;
 
         [DoNotSerialize]
@@ -75,13 +79,14 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput whiteSpace;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var fontSizeVal = flow.GetValue<float>(fontSize);
                 var fontStyleVal = flow.GetValue<UIFontStyle>(fontStyle);
                 var fontWeightVal = flow.GetValue<UIFontWeight>(fontWeight);
@@ -93,7 +98,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUITypography"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -103,7 +107,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUITypography] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -162,20 +165,18 @@ namespace Banter.VisualScripting
                         _ => "normal"
                     };
                     SendStyleCommand(panelId, elemId, "white-space", whiteSpaceValue);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUITypography] Failed to set UI typography: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             fontSize = ValueInput("Font Size", 14f);
             fontStyle = ValueInput("Font Style", UIFontStyle.Normal);
             fontWeight = ValueInput("Font Weight", UIFontWeight.Normal);
@@ -184,7 +185,6 @@ namespace Banter.VisualScripting
             lineHeight = ValueInput("Line Height", 0f);
             letterSpacing = ValueInput("Letter Spacing", 0f);
             whiteSpace = ValueInput("White Space", UIWhiteSpace.Normal);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

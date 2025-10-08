@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -23,15 +24,34 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
-        public ValueOutput success;
+        public ValueInput elementName;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Priority: Element ID first, then Element Name
+                string elemId = null;
+                if (!string.IsNullOrEmpty(targetId))
+                {
+                    elemId = targetId; // Use ID directly
+                }
+                else if (!string.IsNullOrEmpty(targetName))
+                {
+                    // Resolve name to ID using panels
+                    elemId = ResolveElementNameToId(targetName);
+                }
+
+                if (string.IsNullOrEmpty(elemId))
+                {
+                    Debug.LogError("[RegisterUIClick] No element ID or name provided");
+                    return outputTrigger;
+                }
+
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "RegisterUIClick"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -42,7 +62,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[RegisterUIClick] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -51,22 +70,51 @@ namespace Banter.VisualScripting
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[RegisterUIClick] Failed to register UI click event: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
-            success = ValueOutput<bool>("Success");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
         }
+
+        /// <summary>
+        /// Resolves an element name to its registered ID by searching all panels
+        /// </summary>
+        private string ResolveElementNameToId(string elementName)
+        {
+            if (string.IsNullOrEmpty(elementName))
+                return elementName;
+
+            // Try to find the element in any registered panel
+            var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+            foreach (var panel in allPanels)
+            {
+                try
+                {
+                    var bridge = UIElementResolverHelper.GetUIElementBridge(panel);
+                    if (bridge != null)
+                    {
+                        var resolvedId = bridge.ResolveElementIdOrName(elementName);
+                        if (!string.IsNullOrEmpty(resolvedId) && resolvedId != elementName)
+                        {
+                            // Successfully resolved
+                            return resolvedId;
+                        }
+                    }
+                }
+                catch { /* Continue to next panel */ }
+            }
+
+            return elementName; // Fallback
+        }
+
     }
 }
 #endif

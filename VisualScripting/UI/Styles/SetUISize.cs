@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -23,6 +24,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput width;
 
         [DoNotSerialize]
@@ -33,9 +37,6 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueInput heightUnit;
-
-        [DoNotSerialize]
-        public ValueOutput success;
 
         public enum LengthUnit
         {
@@ -49,14 +50,18 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var widthValue = flow.GetValue<float>(width);
                 var heightValue = flow.GetValue<float>(height);
                 var widthUnitValue = flow.GetValue<LengthUnit>(widthUnit);
                 var heightUnitValue = flow.GetValue<LengthUnit>(heightUnit);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUISize"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -67,7 +72,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUISize] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -81,25 +85,22 @@ namespace Banter.VisualScripting
                     // Send commands through UIElementBridge
                     UIElementBridge.HandleMessage(widthMessage);
                     UIElementBridge.HandleMessage(heightMessage);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUISize] Failed to set UI size: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             width = ValueInput("Width", 100f);
             height = ValueInput("Height", 50f);
             widthUnit = ValueInput("Width Unit", LengthUnit.Pixel);
             heightUnit = ValueInput("Height Unit", LengthUnit.Pixel);
-            success = ValueOutput<bool>("Success");
         }
 
         private string FormatLength(float value, LengthUnit unit)

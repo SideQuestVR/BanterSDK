@@ -1,19 +1,28 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
+using Banter.VisualScripting.UI.Helpers;
+using Banter.UI.Core;
+using Banter.UI.Bridge;
 using UnityEngine;
 
 namespace Banter.VisualScripting
 {
     [UnitTitle("On UI Click")]
     [UnitShortTitle("On UI Click")]
-    [UnitCategory("Events\\Banter\\UI\\Mouse")]
+    [UnitCategory("Events\\Banter\\UI")]
     [TypeIcon(typeof(BanterObjectId))]
     public class OnUIClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         public ValueInput elementId;
-        
+
+        [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
+        public ValueInput autoRegister;
+
         [DoNotSerialize]
         public ValueOutput clickedElementId;
 
@@ -22,6 +31,8 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueOutput mouseButton;
+
+        private bool _eventRegistered = false;
 
         protected override bool register => true;
 
@@ -34,23 +45,62 @@ namespace Banter.VisualScripting
         {
             base.Definition();
             elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
+            autoRegister = ValueInput<bool>("Auto Register", true);
             clickedElementId = ValueOutput<string>("Clicked Element ID");
             mousePosition = ValueOutput<Vector2>("Mouse Position");
             mouseButton = ValueOutput<int>("Mouse Button");
         }
 
+        public override void StartListening(GraphStack stack)
+        {
+            base.StartListening(stack);
+
+            // Auto-register when graph starts
+            if (!_eventRegistered)
+            {
+                var flow = Flow.New(stack.ToReference());
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+
+                if (shouldAutoRegister)
+                {
+                    var targetId = flow.GetValue<string>(elementId);
+                    var targetName = flow.GetValue<string>(elementName);
+
+                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    {
+                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, UIEventType.Click, "OnUIClick");
+                        _eventRegistered = true;
+                    }
+                }
+            }
+        }
+
+        public override void StopListening(GraphStack stack)
+        {
+            base.StopListening(stack);
+            // Reset flag so auto-registration works on next play session
+            _eventRegistered = false;
+        }
+
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            var targetElementId = flow.GetValue<string>(elementId);
-            
-            // If no specific element ID is provided, trigger for any UI click
-            if (string.IsNullOrEmpty(targetElementId))
+            var targetId = flow.GetValue<string>(elementId);
+            var targetName = flow.GetValue<string>(elementName);
+
+            // Priority: Element ID first, then Element Name
+            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+            // If no specific element is provided, trigger for any UI click
+            if (string.IsNullOrEmpty(resolvedTarget))
             {
                 return data.name.StartsWith("UIClick_");
             }
-            
+
             // Otherwise, only trigger for the specific element
-            return data.name == $"UIClick_{targetElementId}";
+            return data.name == $"UIClick_{resolvedTarget}";
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)

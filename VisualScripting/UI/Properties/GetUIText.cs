@@ -2,6 +2,8 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -22,10 +24,7 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
-        public ValueInput panelReference;
-
-        [DoNotSerialize]
-        public ValueOutput success;
+        public ValueInput elementName;
 
         [DoNotSerialize]
         public ValueOutput textValue;
@@ -37,51 +36,65 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
                 if (string.IsNullOrEmpty(elemId))
                 {
-                    Debug.LogWarning("[GetUIText] Element ID is null or empty.");
-                    flow.SetValue(success, false);
+                    Debug.LogWarning("[GetUIText] Element ID/Name is null or empty.");
                     flow.SetValue(textValue, "");
                     return outputTrigger;
                 }
 
-                if (panel == null)
+                if (!UIPanelExtensions.ValidateElementForOperation(elemId, "GetUIText"))
                 {
-                    Debug.LogWarning("[GetUIText] Panel reference is null.");
-                    flow.SetValue(success, false);
                     flow.SetValue(textValue, "");
                     return outputTrigger;
                 }
+
+                var graphReference = flow.stack.ToReference();
 
                 try
                 {
                     // Clean up any existing callback
-                    CleanupCallback();
-                    
+                CleanupCallback();
+                
                     // Get the panel ID for message routing
-                    var panelId = panel.GetFormattedPanelId();
-                    
-                    // Set up callback to receive the value
-                    _currentEventName = $"UIProperty_{elemId}_text";
-                    _currentCallback = (CustomEventArgs args) => {
-                        if (args.arguments != null && args.arguments.Length > 0)
-                        {
-                            flow.SetValue(textValue, args.arguments[0]?.ToString() ?? "");
-                            flow.SetValue(success, true);
-                            Debug.Log($"[GetUIText] Received text value: '{args.arguments[0]}' for {_currentEventName}");
-                        }
-                        else
-                        {
-                            flow.SetValue(textValue, "");
-                            flow.SetValue(success, false);
-                        }
-                        
-                        // Clean up callback after use
+                    var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
+                    if (panelId == null)
+                    {
+                        Debug.LogError($"[GetUIText] Could not resolve panel for element '{elemId}'");
+                        flow.SetValue(textValue, "");
+                        return outputTrigger;
+                    }
+                
+                // Set up callback to receive the value
+                _currentEventName = $"UIProperty_{elemId}_text";
+                _currentCallback = (CustomEventArgs args) => {
+                    if (!graphReference.isValid)
+                    {
                         CleanupCallback();
-                    };
+                        return;
+                    }
+
+                    var callbackFlow = Flow.New(graphReference);
+
+                    if (args.arguments != null && args.arguments.Length > 0)
+                    {
+                        callbackFlow.SetValue(textValue, args.arguments[0]?.ToString() ?? "");
+#if BANTER_UI_DEBUG
+                        Debug.Log($"[GetUIText] Received text value: '{args.arguments[0]}' for {_currentEventName}");
+#endif
+                    }
+                    else
+                    {
+                        callbackFlow.SetValue(textValue, "");
+                    }
+                    
+                    // Clean up callback after use
+                    CleanupCallback();
+                };
                     
                     // Register for the callback event
                     EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
@@ -92,12 +105,13 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[GetUIText] Requested text for element {elemId}, waiting for callback on {_currentEventName}");
+#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIText] Failed to get UI text: {e.Message}");
-                    flow.SetValue(success, false);
                     flow.SetValue(textValue, "");
                     CleanupCallback();
                 }
@@ -106,9 +120,8 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
-            panelReference = ValueInput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             textValue = ValueOutput<string>("Text");
         }
         

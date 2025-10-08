@@ -26,11 +26,12 @@ namespace Banter.SDK
         [Tooltip("Angle length of the cone in radians")]
         [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength = Mathf.PI * 2f;
 
-        
-        
+
+
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
         }
 
         void SetupGeometry()
@@ -42,8 +43,9 @@ namespace Banter.SDK
                 shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BanterGeometry>();
             }
-            geometry.geometryType = GeometryType.ConeGeometry;
-            geometry.radius = radius;
+            geometry.geometryType = GeometryType.CylinderGeometry;
+            geometry.radiusTop = 0;
+            geometry.radiusBottom = radius;
             geometry.height = height;
             geometry.radialSegments = radialSegments;
             geometry.heightSegments = heightSegments;
@@ -54,14 +56,17 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();

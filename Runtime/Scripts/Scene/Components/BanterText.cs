@@ -49,10 +49,10 @@ namespace Banter.SDK
         [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
 
         [Tooltip("The horizontal alignment of the text.")]
-        [See(initial = "0")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
+        [See(initial = "1")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center;
 
         [Tooltip("The vertical alignment of the text.")]
-        [See(initial = "0")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Top;
+        [See(initial = "1")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Center;
 
         [Tooltip("The font size of the text.")]
         [See(initial = "2")][SerializeField] internal float fontSize = 2;

@@ -336,6 +336,94 @@ namespace Banter.SDK
                 {
                     _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
                 }
+                else if (msg.StartsWith(APICommands.SET_CAN_MOVE))
+                {
+                    scene.SetActionsSystemCanMove(GetMsgData(msg, APICommands.SET_CAN_MOVE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_ROTATE))
+                {
+                    scene.SetActionsSystemCanRotate(GetMsgData(msg, APICommands.SET_CAN_ROTATE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_CROUCH))
+                {
+                    scene.SetActionsSystemCanCrouch(GetMsgData(msg, APICommands.SET_CAN_CROUCH) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_TELEPORT))
+                {
+                    scene.SetActionsSystemCanTeleport(GetMsgData(msg, APICommands.SET_CAN_TELEPORT) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAPPLE))
+                {
+                    scene.SetActionsSystemCanGrapple(GetMsgData(msg, APICommands.SET_CAN_GRAPPLE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_JUMP))
+                {
+                    scene.SetActionsSystemCanJump(GetMsgData(msg, APICommands.SET_CAN_JUMP) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAB))
+                {
+                    scene.SetActionsSystemCanGrab(GetMsgData(msg, APICommands.SET_CAN_GRAB) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockLeftPrimary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockRightPrimary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockLeftSecondary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockRightSecondary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockLeftTrigger(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockRightTrigger(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.GET_PLATFORM))
+                {
+                    scene.GetPlatform(id);
+                }
+                else if (msg.StartsWith(APICommands.SEND_HAPTIC_IMPULSE))
+                {
+                    scene.SendHapticImpulse(GetMsgData(msg, APICommands.SEND_HAPTIC_IMPULSE), id);
+                }
+                else if (msg.StartsWith(APICommands.TELEMETRY))
+                {
+                    string[] data = GetMsgData(msg, APICommands.TELEMETRY).Split(MessageDelimiters.PRIMARY);
+                    var propsplit = data[1].Split(MessageDelimiters.SECONDARY);
+                    List<KeyValuePair<string, string>> kvps = new();
+                    foreach (var d in propsplit)
+                    {
+                        var split = d.Split(MessageDelimiters.TERTIARY);
+                        kvps.Add(new KeyValuePair<string, string>(split[0], split[1]));
+                    }
+                    scene.data.SendTelemetry((data[0], kvps.ToArray()));
+                }
                 else
                 {
                     Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
@@ -753,6 +841,26 @@ namespace Banter.SDK
         public void OnButtonReleased(ButtonType button, HandSide side)
         {
             Send(APICommands.EVENT + APICommands.BUTTON_RELEASED + MessageDelimiters.PRIMARY + (int)button + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnControllerAxisUpdate(HandSide hand, float x, float y)
+        {
+            Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + x.ToString("F3") + MessageDelimiters.SECONDARY + y.ToString("F3"));
+        }
+
+        public void OnPoseUpdate(Transform head, Transform leftHand, Transform rightHand)
+        {
+            Send(APICommands.EVENT + APICommands.POSE_UPDATE + MessageDelimiters.PRIMARY +
+            head.position.x + MessageDelimiters.SECONDARY + head.position.y + MessageDelimiters.SECONDARY + head.position.z + MessageDelimiters.SECONDARY +
+            head.rotation.x + MessageDelimiters.SECONDARY + head.rotation.y + MessageDelimiters.SECONDARY + head.rotation.z + MessageDelimiters.SECONDARY + head.rotation.w + MessageDelimiters.SECONDARY +
+            leftHand.position.x + MessageDelimiters.SECONDARY + leftHand.position.y + MessageDelimiters.SECONDARY + leftHand.position.z + MessageDelimiters.SECONDARY +
+            leftHand.rotation.x + MessageDelimiters.SECONDARY + leftHand.rotation.y + MessageDelimiters.SECONDARY + leftHand.rotation.z + MessageDelimiters.SECONDARY + leftHand.rotation.w + MessageDelimiters.SECONDARY +
+            rightHand.position.x + MessageDelimiters.SECONDARY + rightHand.position.y + MessageDelimiters.SECONDARY + rightHand.position.z + MessageDelimiters.SECONDARY +
+            rightHand.rotation.x + MessageDelimiters.SECONDARY + rightHand.rotation.y + MessageDelimiters.SECONDARY + rightHand.rotation.z + MessageDelimiters.SECONDARY + rightHand.rotation.w);
+        }
+        public void OnTriggerAxisUpdate(HandSide hand, float value)
+        {
+            Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + value.ToString("F3"));
         }
         public void OnAframeTrigger(string data)
         {

@@ -11,6 +11,8 @@ namespace Banter.SDK
     public class BanterTorus : BanterComponentBase
     {
         [Tooltip("Radius of the inner circle")]
+        [See(initial = "1")][SerializeField] internal float radius;
+        [Tooltip("How tubular it is.")]
         [See(initial = "1")][SerializeField] internal float tube;
 
         [Tooltip("Number of radial segments")]
@@ -25,6 +27,7 @@ namespace Banter.SDK
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
         }
 
         void SetupGeometry()
@@ -38,6 +41,7 @@ namespace Banter.SDK
             }
             geometry.geometryType = GeometryType.TorusGeometry;
             geometry.tube = tube;
+            geometry.radius = radius;
             geometry.radialSegments = radialSegments;
             geometry.tubularSegments = tubularSegments;
             geometry.arc = arc;
@@ -46,19 +50,23 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
         }
         // BANTER COMPILED CODE 
+        public System.Single Radius { get { return radius; } set { radius = value; UpdateCallback(new List<PropertyName> { PropertyName.radius }); } }
         public System.Single Tube { get { return tube; } set { tube = value; UpdateCallback(new List<PropertyName> { PropertyName.tube }); } }
         public System.Int32 RadialSegments { get { return radialSegments; } set { radialSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.radialSegments }); } }
         public System.Int32 TubularSegments { get { return tubularSegments; } set { tubularSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.tubularSegments }); } }
@@ -85,7 +93,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.tube, PropertyName.radialSegments, PropertyName.tubularSegments, PropertyName.arc, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.radius, PropertyName.tube, PropertyName.radialSegments, PropertyName.tubularSegments, PropertyName.arc, };
             UpdateCallback(changedProperties);
         }
 
@@ -132,6 +140,15 @@ namespace Banter.SDK
             {
                 if (values[i] is BanterFloat)
                 {
+                    var valradius = (BanterFloat)values[i];
+                    if (valradius.n == PropertyName.radius)
+                    {
+                        radius = valradius.x;
+                        changedProperties.Add(PropertyName.radius);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
                     var valtube = (BanterFloat)values[i];
                     if (valtube.n == PropertyName.tube)
                     {
@@ -173,6 +190,18 @@ namespace Banter.SDK
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.radius,
+                    type = PropertyType.Float,
+                    value = radius,
+                    componentType = ComponentType.BanterTorus,
+                    oid = oid,
+                    cid = cid
+                });
+            }
             if (force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()

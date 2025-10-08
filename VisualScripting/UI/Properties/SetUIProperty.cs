@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -41,23 +42,27 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput propertyName;
 
         [DoNotSerialize]
         public ValueInput propertyValue;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var propName = flow.GetValue<UIPropertyNameVS>(propertyName);
                 var propValue = flow.GetValue<object>(propertyValue);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIProperty"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -68,7 +73,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIProperty] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -81,23 +85,20 @@ namespace Banter.VisualScripting
                     
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIProperty] Failed to set UI property: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             propertyName = ValueInput("Property", UIPropertyNameVS.Text);
             propertyValue = ValueInput<object>("Value");
-            success = ValueOutput<bool>("Success");
         }
 
         private string GetPropertyName(UIPropertyNameVS propName)

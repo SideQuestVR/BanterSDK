@@ -133,21 +133,25 @@ namespace Banter.SDK
             return null;
         }
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
-        static List<UnityEngine.Object> objectCache = new List<UnityEngine.Object>();
+        static Dictionary<string,UnityEngine.Object> objectCache = new Dictionary<string,UnityEngine.Object>();
 
         public static void Clear()
         {
             foreach (var obj in objectCache)
             {
-                if (obj != null)
+                if (obj.Value != null)
                 {
-                    GameObject.Destroy(obj);
+                    GameObject.Destroy(obj.Value);
                 }
             }
             objectCache.Clear();
         }
         public static async Task<Texture2D> Texture(string url)
         {
+            if (objectCache.ContainsKey(url))
+            {
+                return (Texture2D)objectCache[url];
+            }
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
             {
                 await uwr.SendWebRequest();
@@ -158,7 +162,7 @@ namespace Banter.SDK
                 else
                 {
                     var texture = DownloadHandlerTexture.GetContent(uwr);
-                    objectCache.Add(texture);
+                    objectCache.Add(url, texture);
                     return texture;
                 }
             }
@@ -311,6 +315,10 @@ namespace Banter.SDK
 
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)
         {
+            if (objectCache.ContainsKey(url))
+            {
+                return (AudioClip)objectCache[url];
+            }
             var m = ExtExtractor.Match(url);
             if (!m.Success || m.Groups.Count < 2)
             {
@@ -349,7 +357,7 @@ namespace Banter.SDK
                     var clip = DownloadHandlerAudioClip.GetContent(web);
                     if (clip != null)
                     {
-                        objectCache.Add(clip);
+                        objectCache.Add(url, clip);
                         return clip;
                     }
                     else

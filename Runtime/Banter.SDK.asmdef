@@ -36,6 +36,11 @@
             "name": "com.gator-dragon-games.jigglephysics",
             "expression": "13.0.0",
             "define": "UNITY_JIGGLE_PHYSICS"
+        },
+        {
+            "name": "com.sidequest.flexabody",
+            "expression": "0.0.1",
+            "define": "BANTER_FLEX"
         }
     ],
     "noEngineReferences": false

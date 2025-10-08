@@ -157,7 +157,14 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            if (browser != null)
+            {
+                Destroy(browser);
+                browser = null;
+            }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupBrowser(changedProperties);

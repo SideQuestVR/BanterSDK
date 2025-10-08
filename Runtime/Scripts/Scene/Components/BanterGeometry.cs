@@ -202,6 +202,7 @@ namespace Banter.SDK
                     break;
                 case GeometryType.TorusKnotGeometry:
                     _filter.sharedMesh = new TorusKnot(radius, tube, radialSegments, tubularSegments, p, q).Generate();
+                    Debug.Log(_filter.sharedMesh.triangles.Length + " - " + _filter.sharedMesh.vertices.Length + " - " + _filter.sharedMesh.normals.Length + " - " + _filter.sharedMesh.uv.Length);
                     break;
                 case GeometryType.ParametricGeometry:
                     switch (parametricType)

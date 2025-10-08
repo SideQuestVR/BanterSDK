@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -23,20 +24,38 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
-        public ValueInput eventType;
+        public ValueInput elementName;
 
         [DoNotSerialize]
-        public ValueOutput success;
+        public ValueInput eventType;
 
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var eventTypeValue = flow.GetValue<UIEventType>(eventType);
+
+                // Priority: Element ID first, then Element Name
+                string elemId = null;
+                if (!string.IsNullOrEmpty(targetId))
+                {
+                    elemId = targetId; // Use ID directly
+                }
+                else if (!string.IsNullOrEmpty(targetName))
+                {
+                    // Resolve name to ID using panels
+                    elemId = ResolveElementNameToId(targetName);
+                }
+
+                if (string.IsNullOrEmpty(elemId))
+                {
+                    Debug.LogError("[RegisterUIEvent] No element ID or name provided");
+                    return outputTrigger;
+                }
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "RegisterUIEvent"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -47,7 +66,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[RegisterUIEvent] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -60,23 +78,55 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[RegisterUIEvent] Registered '{eventName}' event for element '{elemId}' on panel '{panelId}'");
-                    flow.SetValue(success, true);
+#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[RegisterUIEvent] Failed to register UI event: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             eventType = ValueInput("Event Type", UIEventType.Click);
-            success = ValueOutput<bool>("Success");
         }
+
+        /// <summary>
+        /// Resolves an element name to its registered ID by searching all panels
+        /// </summary>
+        private string ResolveElementNameToId(string elementName)
+        {
+            if (string.IsNullOrEmpty(elementName))
+                return elementName;
+
+            // Try to find the element in any registered panel
+            var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+            foreach (var panel in allPanels)
+            {
+                try
+                {
+                    var bridge = UIElementResolverHelper.GetUIElementBridge(panel);
+                    if (bridge != null)
+                    {
+                        var resolvedId = bridge.ResolveElementIdOrName(elementName);
+                        if (!string.IsNullOrEmpty(resolvedId) && resolvedId != elementName)
+                        {
+                            // Successfully resolved
+                            return resolvedId;
+                        }
+                    }
+                }
+                catch { /* Continue to next panel */ }
+            }
+
+            return elementName; // Fallback
+        }
+
     }
 }
 #endif

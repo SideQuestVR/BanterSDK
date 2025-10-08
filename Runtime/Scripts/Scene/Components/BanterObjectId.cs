@@ -18,9 +18,18 @@ namespace Banter.SDK
         [HideInInspector] public UnityEvent loaded = new UnityEvent();
         void Start()
         {
+#if UNITY_EDITOR
+            // Don't run during builds to prevent scene modification
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+                return;
+#endif
             try
             {
-                GenerateId();
+#if UNITY_EDITOR
+                GenerateId(IsDuplicateId(Id));
+#else
+                GenerateId(false);
+#endif
                 BanterScene.Instance().AddBanterObject(gameObject, this);
             }
             catch (Exception)
@@ -28,6 +37,26 @@ namespace Banter.SDK
                 // Debug.LogError("BanterObjectId: " + e.Message);
             }
         }
+
+#if UNITY_EDITOR
+        void OnValidate()
+        {
+            // Don't run during builds to prevent scene modification
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+                return;
+
+            GenerateId(IsDuplicateId(Id));
+        }
+
+        private bool IsDuplicateId(string id)
+        {
+            var all = GameObject.FindObjectsOfType<BanterObjectId>();
+            foreach (var u in all)
+                if (u != this && u.Id == id)
+                    return true;
+            return false;
+        }
+#endif
         public void GenerateId(bool force = false)
         {
             if (string.IsNullOrEmpty(Id) || force)

@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -35,6 +36,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput backgroundColor;
 
         [DoNotSerialize]
@@ -46,13 +50,14 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput visibility;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var bgColor = flow.GetValue<Color>(backgroundColor);
                 var opacityVal = flow.GetValue<float>(opacity);
                 var displayVal = flow.GetValue<UIDisplay>(display);
@@ -60,7 +65,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIAppearance"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -70,7 +74,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIAppearance] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -98,25 +101,22 @@ namespace Banter.VisualScripting
                         _ => "visible"
                     };
                     SendStyleCommand(panelId, elemId, "visibility", visibilityValue);
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIAppearance] Failed to set UI appearance: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             backgroundColor = ValueInput("Background Color", Color.clear);
             opacity = ValueInput("Opacity", 1f);
             display = ValueInput("Display", UIDisplay.Flex);
             visibility = ValueInput("Visibility", UIVisibility.Visible);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

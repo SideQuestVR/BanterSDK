@@ -3,6 +3,7 @@ using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 
 namespace Banter.VisualScripting
@@ -27,6 +28,9 @@ namespace Banter.VisualScripting
 
         [DoNotSerialize]
         public ValueInput elementId;
+
+        [DoNotSerialize]
+        public ValueInput elementName;
 
         [DoNotSerialize]
         public ValueInput positionType;
@@ -55,13 +59,11 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput bottomUnit;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var posType = flow.GetValue<UIPositionType>(positionType);
                 var leftVal = flow.GetValue<float>(left);
                 var topVal = flow.GetValue<float>(top);
@@ -72,9 +74,11 @@ namespace Banter.VisualScripting
                 var rightUnitVal = flow.GetValue<LengthUnit>(rightUnit);
                 var bottomUnitVal = flow.GetValue<LengthUnit>(bottomUnit);
 
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIPosition"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -84,7 +88,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIPosition] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -97,20 +100,18 @@ namespace Banter.VisualScripting
                     SendStyleCommand(panelId, elemId, "top", FormatLength(topVal, topUnitVal));
                     SendStyleCommand(panelId, elemId, "right", FormatLength(rightVal, rightUnitVal));
                     SendStyleCommand(panelId, elemId, "bottom", FormatLength(bottomVal, bottomUnitVal));
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIPosition] Failed to set UI position: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             positionType = ValueInput("Position", UIPositionType.Relative);
             left = ValueInput("Left", 0f);
             top = ValueInput("Top", 0f);
@@ -120,7 +121,6 @@ namespace Banter.VisualScripting
             topUnit = ValueInput("Top Unit", LengthUnit.Pixel);
             rightUnit = ValueInput("Right Unit", LengthUnit.Pixel);
             bottomUnit = ValueInput("Bottom Unit", LengthUnit.Pixel);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

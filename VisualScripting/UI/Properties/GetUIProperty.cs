@@ -2,6 +2,8 @@
 using Unity.VisualScripting;
 using Banter.SDK;
 using Banter.UI.Bridge;
+using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 using UnityEngine;
 using System.Collections;
 
@@ -23,13 +25,13 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput propertyName;
 
         [DoNotSerialize]
-        public ValueInput panelReference;
-
-        [DoNotSerialize]
-        public ValueOutput success;
+        public ValueOutput elementIdOutput;
 
         [DoNotSerialize]
         public ValueOutput propertyValue;
@@ -41,52 +43,66 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
                 var propName = flow.GetValue<UIPropertyNameVS>(propertyName);
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
                 if (string.IsNullOrEmpty(elemId))
                 {
-                    Debug.LogWarning("[GetUIProperty] Element ID is null or empty.");
-                    flow.SetValue(success, false);
+                    Debug.LogWarning("[GetUIProperty] Element ID/Name is null or empty.");
+                    flow.SetValue(elementIdOutput, "");
                     flow.SetValue(propertyValue, null);
                     return outputTrigger;
                 }
 
-                if (panel == null)
-                {
-                    Debug.LogWarning("[GetUIProperty] Panel reference is null.");
-                    flow.SetValue(success, false);
-                    flow.SetValue(propertyValue, null);
-                    return outputTrigger;
-                }
+                // Set element ID output for chaining
+                flow.SetValue(elementIdOutput, elemId);
+
+                var graphReference = flow.stack.ToReference();
 
                 try
                 {
                     // Clean up any existing callback
                     CleanupCallback();
-                    
-                    // Get the panel ID for message routing
-                    var panelId = panel.GetFormattedPanelId();
+
+                    // Auto-resolve panel from element ID
+                    var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
+                    if (panelId == null)
+                    {
+                        Debug.LogError($"[GetUIProperty] Could not resolve panel for element '{elemId}'");
+                        flow.SetValue(propertyValue, null);
+                        return outputTrigger;
+                    }
                     
                     // Convert enum to property name
                     var propNameStr = GetPropertyName(propName);
-                    
+
                     // Set up callback to receive the value
                     _currentEventName = $"UIProperty_{elemId}_{propNameStr}";
                     _currentCallback = (CustomEventArgs args) => {
+                        if (!graphReference.isValid)
+                        {
+                            CleanupCallback();
+                            return;
+                        }
+
+                        var callbackFlow = Flow.New(graphReference);
+
                         if (args.arguments != null && args.arguments.Length > 0)
                         {
-                            flow.SetValue(propertyValue, args.arguments[0]);
-                            flow.SetValue(success, true);
+                            callbackFlow.SetValue(propertyValue, args.arguments[0]);
+#if BANTER_UI_DEBUG
                             Debug.Log($"[GetUIProperty] Received property value: {args.arguments[0]} for {_currentEventName}");
+#endif
                         }
                         else
                         {
-                            flow.SetValue(propertyValue, null);
-                            flow.SetValue(success, false);
+                            callbackFlow.SetValue(propertyValue, null);
                         }
-                        
+
                         // Clean up callback after use
                         CleanupCallback();
                     };
@@ -100,12 +116,13 @@ namespace Banter.VisualScripting
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
+#if BANTER_UI_DEBUG
                     Debug.Log($"[GetUIProperty] Requested property '{propNameStr}' for element {elemId}, waiting for callback on {_currentEventName}");
+#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIProperty] Failed to get UI property: {e.Message}");
-                    flow.SetValue(success, false);
                     flow.SetValue(propertyValue, null);
                     CleanupCallback();
                 }
@@ -114,10 +131,10 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             propertyName = ValueInput("Property", UIPropertyNameVS.Text);
-            panelReference = ValueInput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
+            elementIdOutput = ValueOutput<string>("Element ID");
             propertyValue = ValueOutput<object>("Value");
         }
         

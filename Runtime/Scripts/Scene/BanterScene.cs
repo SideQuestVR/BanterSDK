@@ -9,8 +9,10 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
+using UnityEngine.XR;
 using Banter.Utilities.Async;
 using Banter.Utilities;
+using Banter.FlexaBody;
 
 
 
@@ -1014,6 +1016,41 @@ namespace Banter.SDK
                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectNetworkId)}"));
             }
         }
+
+        public void GetJsBounds(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] GetJsBounds message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+            var isCollider = msgParts[1] == "1";
+            if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                 {
+                    object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
+                    if (renderers.Length > 0)
+                    {
+                        var bounds = ((Collider)renderers[0]).bounds;
+                        for (int i = 1; i < renderers.Length; i++)
+                        {
+                            bounds.Encapsulate(((Collider)renderers[i]).bounds);
+                        }
+                        var center = bounds.center;
+                        var extents = bounds.extents;
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
+                    }
+                    else
+                    {
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
+                    }
+                     
+                 }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+            }
+        }
         
         public void SetJsObjectName(string msg, int reqId)
         {
@@ -1089,33 +1126,68 @@ namespace Banter.SDK
         }
         public void InstantiateJsObject(string msg, int reqId)
         {
-            var gameObject = GetGameObject(int.Parse(msg));
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            var gameObject = GetGameObject(int.Parse(msgParts[0]));
+            var hasParent = msgParts.Length == 2;
+            var hasParentAndWorldPosStays = msgParts.Length == 3;
+            var hasPose = msgParts.Length == 8;
+            var hasPoseAndParent = msgParts.Length == 9;
             if (gameObject != null)
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
-                 {
-                     var newObject = GameObject.Instantiate(gameObject);
-                     var objectId = newObject.GetComponent<BanterObjectId>();
-                     objectId.GenerateId(true);
-                     newObject.transform.parent = settings.parentTransform;
-                     AddBanterObject(newObject, objectId);
-                     var banterObject = GetBanterObject(newObject.GetInstanceID());
-                     await new WaitForEndOfFrame();
-                     foreach (var comp in banterObject.banterComponents)
-                     {
-                         await comp.Value.GetProperties();
-                         foreach (var prop in comp.Value.componentProperties)
-                         {
-                             string change = Serialise(prop.Value, comp.Value);
-                             if (change != null)
-                             {
-                                 EnqueueChange(change);
-                             }
-                         }
-                     }
-                     //dirty = true;
-                     await new WaitForEndOfFrame();
-                     SendObjectUpdate(newObject, reqId);
+                {
+                    GameObject newObject;
+                    if (hasParent)
+                    {
+                        var parentObject = GetGameObject(int.Parse(msgParts[1]));
+                        newObject = GameObject.Instantiate(gameObject, parentObject.transform);
+                    }
+                    else if (hasParentAndWorldPosStays)
+                    {
+                        var parentObject = GetGameObject(int.Parse(msgParts[1]));
+                        newObject = GameObject.Instantiate(gameObject,parentObject.transform, msgParts[2] == "1");
+                    }
+                    else if (hasPose)
+                    {
+                        newObject = GameObject.Instantiate(gameObject,
+                            new Vector3(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3])),
+                            new Quaternion(NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]), NumberFormat.Parse(msgParts[6]), NumberFormat.Parse(msgParts[7]))
+                        );
+                    }
+                    else if (hasPoseAndParent)
+                    {
+                        var parentObject = GetGameObject(int.Parse(msgParts[8]));
+                        newObject = GameObject.Instantiate(gameObject,
+                            new Vector3(NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]), NumberFormat.Parse(msgParts[3])),
+                            new Quaternion(NumberFormat.Parse(msgParts[4]), NumberFormat.Parse(msgParts[5]), NumberFormat.Parse(msgParts[6]), NumberFormat.Parse(msgParts[7])),
+                            parentObject.transform
+                        );
+                    }
+                    else
+                    {
+                        newObject = GameObject.Instantiate(gameObject);
+                    }
+                    
+                    var objectId = newObject.GetComponent<BanterObjectId>();
+                    objectId.GenerateId(true);
+                    newObject.transform.parent = settings.parentTransform;
+                    AddBanterObject(newObject, objectId);
+                    var banterObject = GetBanterObject(newObject.GetInstanceID());
+                    await new WaitForEndOfFrame();
+                    foreach (var comp in banterObject.banterComponents)
+                    {
+                        await comp.Value.GetProperties();
+                        foreach (var prop in comp.Value.componentProperties)
+                        {
+                            string change = Serialise(prop.Value, comp.Value);
+                            if (change != null)
+                            {
+                                EnqueueChange(change);
+                            }
+                        }
+                    }
+                    await new WaitForEndOfFrame();
+                    SendObjectUpdate(newObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(InstantiateJsObject)}"));
             }
         }
@@ -2011,6 +2083,157 @@ namespace Banter.SDK
                  }
              }, $"{nameof(BanterScene)}.{nameof(LegacySetVideoUrl)}"));
         }
+
+        #region ActionsSystem Control Methods
+        public void SetActionsSystemCanMove(bool value, int reqId)
+        {
+            ActionsSystem.canMove = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanRotate(bool value, int reqId)
+        {
+            ActionsSystem.canRotate = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanCrouch(bool value, int reqId)
+        {
+            ActionsSystem.canCrouch = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanTeleport(bool value, int reqId)
+        {
+            ActionsSystem.canTeleport = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanGrapple(bool value, int reqId)
+        {
+            ActionsSystem.canGrapple = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanJump(bool value, int reqId)
+        {
+            ActionsSystem.canJump = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemCanGrab(bool value, int reqId)
+        {
+            ActionsSystem.canGrab = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftThumbstick(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftThumbstick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightThumbstick(bool value, int reqId)
+        {
+            ActionsSystem.blockRightThumbstick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftPrimary(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftPrimary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightPrimary(bool value, int reqId)
+        {
+            ActionsSystem.blockRightPrimary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftSecondary(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftSecondary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightSecondary(bool value, int reqId)
+        {
+            ActionsSystem.blockRightSecondary = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftThumbstickClick(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftThumbstickClick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightThumbstickClick(bool value, int reqId)
+        {
+            ActionsSystem.blockRightThumbstickClick = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockLeftTrigger(bool value, int reqId)
+        {
+            ActionsSystem.blockLeftTrigger = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+
+        public void SetActionsSystemBlockRightTrigger(bool value, int reqId)
+        {
+            ActionsSystem.blockRightTrigger = value;
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+        }
+        #endregion
+
+        #region Platform Detection
+        public void GetPlatform(int reqId)
+        {
+            string platform = events.GetPlatform?.Invoke() ?? "";
+            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + platform);
+        }
+        #endregion
+
+        #region Haptic Feedback
+        public void SendHapticImpulse(string msg, int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                var parts = msg.Split(MessageDelimiters.PRIMARY);
+                if (parts.Length >= 3)
+                {
+                    if (float.TryParse(parts[0], out float amplitude) &&
+                        float.TryParse(parts[1], out float duration) &&
+                        int.TryParse(parts[2], out int handInt))
+                    {
+                        HandSide hand = (HandSide)handInt;
+                        XRNode xrNode = hand == HandSide.LEFT ? XRNode.LeftHand : XRNode.RightHand;
+
+                        UnityEngine.XR.InputDevice device = InputDevices.GetDeviceAtXRNode(xrNode);
+                        if (device.isValid)
+                        {
+                            if (device.TryGetHapticCapabilities(out HapticCapabilities capabilities) && capabilities.supportsImpulse)
+                            {
+                                device.SendHapticImpulse(0, amplitude, duration);
+                            }
+                            else
+                            {
+                                Debug.LogWarning("The device does not support haptic impulses.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning("Invalid XR device for node: " + xrNode);
+                        }
+                    }
+                }
+                link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            }, $"{nameof(BanterScene)}.{nameof(SendHapticImpulse)}"));
+        }
+        #endregion
+
         #endregion
 
     }

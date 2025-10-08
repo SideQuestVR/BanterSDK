@@ -31,16 +31,15 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput panelReference;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var res = flow.GetValue<Vector2>(resolution);
                 var isScreenSpace = flow.GetValue<bool>(screenSpace);
+                #if BANTER_UI_DEBUG
                 Debug.Log("[CreateUIPanel] Attempting to create UI Panel...");
+                #endif
                 try
                 {
                     // Get or add BanterUIPanel component
@@ -54,16 +53,16 @@ namespace Banter.VisualScripting
                     panel.Resolution = res;
                     panel.ScreenSpace = isScreenSpace;
 
+                    #if BANTER_UI_DEBUG
                     Debug.Log($"[CreateUIPanel] Created panel successfully");
-                    
+                    #endif
+
                     flow.SetValue(panelReference, panel);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[CreateUIPanel] Failed to create UI Panel: {e.Message}");
                     flow.SetValue(panelReference, null);
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -74,7 +73,6 @@ namespace Banter.VisualScripting
             resolution = ValueInput("Resolution", new Vector2(512, 512));
             screenSpace = ValueInput("Screen Space", false);
             panelReference = ValueOutput<BanterUIPanel>("Panel");
-            success = ValueOutput<bool>("Success");
         }
     }
 }

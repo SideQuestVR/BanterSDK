@@ -4,6 +4,7 @@ using Banter.SDK;
 using Banter.UI.Bridge;
 using Banter.UI.Core;
 using UnityEngine;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -56,6 +57,9 @@ namespace Banter.VisualScripting
         public ValueInput elementId;
 
         [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
         public ValueInput flexDirection;
 
         [DoNotSerialize]
@@ -73,13 +77,14 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueInput flexShrink;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var elemId = flow.GetValue<string>(elementId);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
                 var flexDir = flow.GetValue<UIFlexDirection>(flexDirection);
                 var justifyAlign = flow.GetValue<UIJustifyContent>(justifyContent);
                 var alignItemsVal = flow.GetValue<UIAlignItems>(alignItems);
@@ -89,7 +94,6 @@ namespace Banter.VisualScripting
 
                 if (!UIPanelExtensions.ValidateElementForOperation(elemId, "SetUIFlexbox"))
                 {
-                    flow.SetValue(success, false);
                     return outputTrigger;
                 }
 
@@ -99,7 +103,6 @@ namespace Banter.VisualScripting
                     if (panelId == null)
                     {
                         Debug.LogError($"[SetUIFlexbox] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(success, false);
                         return outputTrigger;
                     }
                     
@@ -151,27 +154,24 @@ namespace Banter.VisualScripting
                     // Set flex-grow and flex-shrink
                     SendStyleCommand(panelId, elemId, "flex-grow", flexGrowVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     SendStyleCommand(panelId, elemId, "flex-shrink", flexShrinkVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[SetUIFlexbox] Failed to set UI flexbox: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
             });
 
             outputTrigger = ControlOutput("");
-            elementId = ValueInput<string>("Element ID");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
             flexDirection = ValueInput("Flex Direction", UIFlexDirection.Column);
             justifyContent = ValueInput("Justify Content", UIJustifyContent.FlexStart);
             alignItems = ValueInput("Align Items", UIAlignItems.Stretch);
             flexWrap = ValueInput("Flex Wrap", UIFlexWrap.NoWrap);
             flexGrow = ValueInput("Flex Grow", 0f);
             flexShrink = ValueInput("Flex Shrink", 1f);
-            success = ValueOutput<bool>("Success");
         }
 
         private void SendStyleCommand(string panelId, string elementId, string styleName, string value)

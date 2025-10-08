@@ -6,6 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
 using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
 
 namespace Banter.VisualScripting
 {
@@ -15,6 +16,8 @@ namespace Banter.VisualScripting
     [TypeIcon(typeof(BanterObjectId))]
     public class ProcessUXMLTree : Unit
     {
+        private const string LogPrefix = "[ProcessUXMLTree]";
+
         [DoNotSerialize]
         public ControlInput inputTrigger;
 
@@ -38,9 +41,6 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput elementSummary;
 
-        [DoNotSerialize]
-        public ValueOutput success;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
@@ -60,7 +60,7 @@ namespace Banter.VisualScripting
                     if (panel == null)
                     {
                         panel = target.AddComponent<BanterUIPanel>();
-                        Debug.Log("[ProcessUXMLTree] Created BanterUIPanel component");
+                        LogVerbose("Created BanterUIPanel component");
                     }
 
                     UIElementBridge bridge;
@@ -72,33 +72,31 @@ namespace Banter.VisualScripting
                     if (documentToUse != null)
                     {
                         // Initialize panel with the UIDocument
-                        Debug.Log("[ProcessUXMLTree] Initializing panel with UIDocument");
+                        LogVerbose("Initializing panel with UIDocument");
                         
                         if (panel.InitializeWithExistingDocument(documentToUse))
                         {
-                            bridge = GetUIElementBridge(panel);
+                            bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                             elementMap = bridge.ProcessUXMLTree(documentToUse, prefix);
-                            Debug.Log($"[ProcessUXMLTree] Processed UIDocument with {elementMap.Count} elements");
+                            LogVerbose($"Processed UIDocument with {elementMap.Count} elements");
                         }
                         else
                         {
                             Debug.LogError("[ProcessUXMLTree] Failed to initialize panel with UIDocument");
                             flow.SetValue(elementCount, 0);
                             flow.SetValue(elementSummary, "Error: Failed to initialize with UIDocument");
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                     }
                     else
                     {
                         // No UIDocument available, process from panel's existing setup
-                        bridge = GetUIElementBridge(panel);
+                        bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                         if (bridge == null)
                         {
                             Debug.LogError("[ProcessUXMLTree] No UIDocument provided and panel not initialized");
                             flow.SetValue(elementCount, 0);
                             flow.SetValue(elementSummary, "Error: No UIDocument available");
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                         
@@ -107,14 +105,13 @@ namespace Banter.VisualScripting
                         if (mainDocument?.rootVisualElement != null)
                         {
                             elementMap = bridge.ProcessVisualElementTree(mainDocument.rootVisualElement, prefix);
-                            Debug.Log($"[ProcessUXMLTree] Processed panel's main document with {elementMap.Count} elements");
+                            LogVerbose($"Processed panel's main document with {elementMap.Count} elements");
                         }
                         else
                         {
                             Debug.LogError("[ProcessUXMLTree] No document available for processing");
                             flow.SetValue(elementCount, 0);
                             flow.SetValue(elementSummary, "Error: No document available");
-                            flow.SetValue(success, false);
                             return outputTrigger;
                         }
                     }
@@ -124,22 +121,22 @@ namespace Banter.VisualScripting
                     var summaryText = summary.ToString();
 
                     // Log processed elements for debugging
-                    Debug.Log($"[ProcessUXMLTree] Successfully processed {elementMap.Count} elements:");
+                    LogVerbose($"Successfully processed {elementMap.Count} elements");
+#if BANTER_UI_DEBUG
                     foreach (var element in summary.Elements)
                     {
-                        Debug.Log($"  - {element}");
+                        Debug.Log($"{LogPrefix} Element: {element}");
                     }
+#endif
 
                     flow.SetValue(elementCount, elementMap.Count);
                     flow.SetValue(elementSummary, summaryText);
-                    flow.SetValue(success, true);
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
+                Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
                     flow.SetValue(elementCount, 0);
                     flow.SetValue(elementSummary, $"Error: {e.Message}");
-                    flow.SetValue(success, false);
                 }
 
                 return outputTrigger;
@@ -151,26 +148,6 @@ namespace Banter.VisualScripting
             elementPrefix = ValueInput("Element Prefix", "uxml");
             elementCount = ValueOutput<int>("Element Count");
             elementSummary = ValueOutput<string>("Summary");
-            success = ValueOutput<bool>("Success");
-        }
-
-        /// <summary>
-        /// Gets the UIElementBridge from a BanterUIPanel using reflection
-        /// </summary>
-        private UIElementBridge GetUIElementBridge(BanterUIPanel panel)
-        {
-            try
-            {
-                var panelType = typeof(BanterUIPanel);
-                var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-                return bridgeField?.GetValue(panel) as UIElementBridge;
-            }
-            catch (System.Exception e)
-            {
-                Debug.LogError($"[ProcessUXMLTree] Failed to get UIElementBridge: {e.Message}");
-                return null;
-            }
         }
 
         /// <summary>
@@ -190,6 +167,13 @@ namespace Banter.VisualScripting
                 Debug.LogError($"[ProcessUXMLTree] Failed to get main document: {e.Message}");
                 return null;
             }
+        }
+
+        private void LogVerbose(string message)
+        {
+#if BANTER_UI_DEBUG
+            Debug.Log($"{LogPrefix} {message}");
+#endif
         }
     }
 }
