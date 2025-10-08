@@ -18,6 +18,11 @@ namespace Banter.SDK
         [HideInInspector] public UnityEvent loaded = new UnityEvent();
         void Start()
         {
+#if UNITY_EDITOR
+            // Don't run during builds to prevent scene modification
+            if (UnityEditor.BuildPipeline.isBuildingPlayer)
+                return;
+#endif
             try
             {
 #if UNITY_EDITOR
