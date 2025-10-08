@@ -19,10 +19,11 @@ public class ObjectScreenshotter
             return;
         }
 
-        Bounds bounds = CalculateObjectBounds(target);
+        List<ParticleSystem> disabledParticles;
+        Bounds bounds = CalculateObjectBounds(target, out disabledParticles);
         if (bounds.size == Vector3.zero)
         {
-            Debug.LogError("Target object has no renderers.");
+            Debug.LogError("Target object has no renderers (excluding particles).");
             return;
         }
 
@@ -106,6 +107,12 @@ public class ObjectScreenshotter
         Object.DestroyImmediate(tex);
         Object.DestroyImmediate(rt);
         Object.DestroyImmediate(camGO);
+        
+        // Restore particle systems
+        foreach (var ps in disabledParticles)
+        {
+            if (ps != null) ps.gameObject.SetActive(true);
+        }
 
         // Restore original layers
         if (isolateLayer >= 0)
@@ -118,10 +125,10 @@ public class ObjectScreenshotter
         }
     }
 
-    private static Bounds CalculateObjectBounds(GameObject go)
+    private static Bounds CalculateObjectBounds(GameObject go, out List<ParticleSystem> disabledParticles)
     {
-        var disabledParticles = new List<ParticleSystem>();
-        
+        disabledParticles = new List<ParticleSystem>();
+
         // Temporarily disable all ParticleSystems so they don't affect bounds
         foreach (var ps in go.GetComponentsInChildren<ParticleSystem>())
         {
