@@ -51,8 +51,40 @@ namespace Banter.SDK
     rigidBody.Sleep();
     ```
     ```js
+    // WakeUp - Wake up the rigidbody from sleep.
+    rigidBody.WakeUp();
+    ```
+    ```js
     // AddExplosionForce - Add an explosion force to the rigidbody.
     rigidBody.AddExplosionForce(explosionForce: float, explosionPosition: BS.Vector3, explosionRadius: float, upwardsModifier: float, mode: BS.ForceMode);
+    ```
+    ```js
+    // AddTorque - Add torque to the rigidbody.
+    rigidBody.AddTorque(torque: BS.Vector3, mode: BS.ForceMode);
+    ```
+    ```js
+    // AddTorqueValues - Add torque to the rigidbody using x, y, z values.
+    rigidBody.AddTorqueValues(x: float, y: float, z: float, mode: BS.ForceMode);
+    ```
+    ```js
+    // AddRelativeForce - Add a force relative to the rigidbody's coordinate system.
+    rigidBody.AddRelativeForce(force: BS.Vector3, mode: BS.ForceMode);
+    ```
+    ```js
+    // AddRelativeTorque - Add torque relative to the rigidbody's coordinate system.
+    rigidBody.AddRelativeTorque(torque: BS.Vector3, mode: BS.ForceMode);
+    ```
+    ```js
+    // AddForceAtPosition - Add force at a specific position.
+    rigidBody.AddForceAtPosition(force: BS.Vector3, position: BS.Vector3, mode: BS.ForceMode);
+    ```
+    ```js
+    // ResetCenterOfMass - Reset the center of mass to the default computed value.
+    rigidBody.ResetCenterOfMass();
+    ```
+    ```js
+    // ResetInertiaTensor - Reset the inertia tensor to the default computed value.
+    rigidBody.ResetInertiaTensor();
     ```
 
 
@@ -154,9 +186,49 @@ namespace Banter.SDK
             _rigidbody.Sleep();
         }
         [Method]
+        public void _WakeUp()
+        {
+            _rigidbody.WakeUp();
+        }
+        [Method]
         public void _AddExplosionForce(float explosionForce, Vector3 explosionPosition, float explosionRadius, float upwardsModifier, ForceMode mode)
         {
             _rigidbody.AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
+        }
+        [Method]
+        public void _AddTorque(Vector3 torque, ForceMode mode)
+        {
+            _rigidbody.AddTorque(torque, mode);
+        }
+        [Method(overload = "Values")]
+        public void _AddTorque(float x, float y, float z, ForceMode mode)
+        {
+            _rigidbody.AddTorque(x, y, z, mode);
+        }
+        [Method]
+        public void _AddRelativeForce(Vector3 force, ForceMode mode)
+        {
+            _rigidbody.AddRelativeForce(force, mode);
+        }
+        [Method]
+        public void _AddRelativeTorque(Vector3 torque, ForceMode mode)
+        {
+            _rigidbody.AddRelativeTorque(torque, mode);
+        }
+        [Method]
+        public void _AddForceAtPosition(Vector3 force, Vector3 position, ForceMode mode)
+        {
+            _rigidbody.AddForceAtPosition(force, position, mode);
+        }
+        [Method]
+        public void _ResetCenterOfMass()
+        {
+            _rigidbody.ResetCenterOfMass();
+        }
+        [Method]
+        public void _ResetInertiaTensor()
+        {
+            _rigidbody.ResetInertiaTensor();
         }
 
         Rigidbody _rigidbody;
@@ -355,9 +427,41 @@ namespace Banter.SDK
         {
             _Sleep();
         }
+        void WakeUp()
+        {
+            _WakeUp();
+        }
         void AddExplosionForce(float explosionForce, Vector3 explosionPosition, float explosionRadius, float upwardsModifier, ForceMode mode)
         {
             _AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
+        }
+        void AddTorque(Vector3 torque, ForceMode mode)
+        {
+            _AddTorque(torque, mode);
+        }
+        void AddTorque(float x, float y, float z, ForceMode mode)
+        {
+            _AddTorque(x, y, z, mode);
+        }
+        void AddRelativeForce(Vector3 force, ForceMode mode)
+        {
+            _AddRelativeForce(force, mode);
+        }
+        void AddRelativeTorque(Vector3 torque, ForceMode mode)
+        {
+            _AddRelativeTorque(torque, mode);
+        }
+        void AddForceAtPosition(Vector3 force, Vector3 position, ForceMode mode)
+        {
+            _AddForceAtPosition(force, position, mode);
+        }
+        void ResetCenterOfMass()
+        {
+            _ResetCenterOfMass();
+        }
+        void ResetInertiaTensor()
+        {
+            _ResetInertiaTensor();
         }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
@@ -395,6 +499,11 @@ namespace Banter.SDK
                 Sleep();
                 return null;
             }
+            else if (methodName == "WakeUp" && parameters.Count == 0)
+            {
+                WakeUp();
+                return null;
+            }
             else if (methodName == "AddExplosionForce" && parameters.Count == 5 && parameters[0] is float && parameters[1] is Vector3 && parameters[2] is float && parameters[3] is float && parameters[4] is int)
             {
                 var explosionForce = (float)parameters[0];
@@ -403,6 +512,54 @@ namespace Banter.SDK
                 var upwardsModifier = (float)parameters[3];
                 var mode = (ForceMode)parameters[4];
                 AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
+                return null;
+            }
+            else if (methodName == "AddTorque" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
+            {
+                var torque = (Vector3)parameters[0];
+                var mode = (ForceMode)parameters[1];
+                AddTorque(torque, mode);
+                return null;
+            }
+            else if (methodName == "AddTorque" && parameters.Count == 4 && parameters[0] is float && parameters[1] is float && parameters[2] is float && parameters[3] is int)
+            {
+                var x = (float)parameters[0];
+                var y = (float)parameters[1];
+                var z = (float)parameters[2];
+                var mode = (ForceMode)parameters[3];
+                AddTorque(x, y, z, mode);
+                return null;
+            }
+            else if (methodName == "AddRelativeForce" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
+            {
+                var force = (Vector3)parameters[0];
+                var mode = (ForceMode)parameters[1];
+                AddRelativeForce(force, mode);
+                return null;
+            }
+            else if (methodName == "AddRelativeTorque" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
+            {
+                var torque = (Vector3)parameters[0];
+                var mode = (ForceMode)parameters[1];
+                AddRelativeTorque(torque, mode);
+                return null;
+            }
+            else if (methodName == "AddForceAtPosition" && parameters.Count == 3 && parameters[0] is Vector3 && parameters[1] is Vector3 && parameters[2] is int)
+            {
+                var force = (Vector3)parameters[0];
+                var position = (Vector3)parameters[1];
+                var mode = (ForceMode)parameters[2];
+                AddForceAtPosition(force, position, mode);
+                return null;
+            }
+            else if (methodName == "ResetCenterOfMass" && parameters.Count == 0)
+            {
+                ResetCenterOfMass();
+                return null;
+            }
+            else if (methodName == "ResetInertiaTensor" && parameters.Count == 0)
+            {
+                ResetInertiaTensor();
                 return null;
             }
             else

@@ -13,6 +13,7 @@ using Unity.VisualScripting;
 #endif
 using Banter.Utilities.Async;
 using NUnit.Framework;
+using System.Linq;
 
 namespace Banter.SDK
 {
@@ -215,6 +216,14 @@ namespace Banter.SDK
                 else if (msg.StartsWith(APICommands.AI_MODEL))
                 {
                     scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_TRANSFORM))
+                {
+                    scene.SetJsTransform(GetMsgData(msg, APICommands.SET_TRANSFORM), id);
+                }
+                else if (msg.StartsWith(APICommands.WATCH_TRANSFORM))
+                {
+                    scene.WatchJsTransform(GetMsgData(msg, APICommands.WATCH_TRANSFORM), id);
                 }
                 else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
                 {
@@ -705,6 +714,65 @@ namespace Banter.SDK
             await new WaitUntil(() => scene.state >= SceneState.SCENE_READY);
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
             scene.SetLoaded();
+        }
+
+
+        public void OnTransformUpdate(int oid, List<BanterComponentPropertyUpdate> updates)
+        {
+            StringBuilder updatesString = new StringBuilder();
+            if (updates.Count < 1)
+            {
+                return;
+            }
+            foreach (var update in updates)
+            {
+                switch (update.name)
+                {
+                    case PropertyName.position:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.Position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.localPosition:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.eulerAngles:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.EulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.localEulerAngles:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.rotation:
+                        {
+                            var value = (Quaternion)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.Rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            break;
+                        }
+                    case PropertyName.localRotation:
+                        {
+                            var value = (Quaternion)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            break;
+                        }
+                    case PropertyName.localScale:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                }
+            }
+            Send(APICommands.EVENT + APICommands.TRANSFORM_UPDATED + MessageDelimiters.PRIMARY + oid + updatesString.ToString());
         }
 
         public void OnSendVersion(string versionData)

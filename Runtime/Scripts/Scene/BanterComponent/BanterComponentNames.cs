@@ -2,6 +2,7 @@ namespace Banter.SDK
 {
     public enum ComponentType
     {
+        Transform,
         BanterApple,
         BanterAssetBundle,
         BanterAttachedObject,
@@ -57,7 +58,6 @@ namespace Banter.SDK
         BanterText,
         BanterTorus,
         BanterTorusKnot,
-        Transform,
         BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,

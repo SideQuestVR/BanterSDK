@@ -275,7 +275,7 @@ namespace Banter.SDK
 #else
             processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
                 Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
-                "--bebug --prod true --pipename " + BanterLink.pipeName,
+                "--bebug --prod true " + (openBrowser ? "--openbrowser " : "") + "--pipename " + BanterLink.pipeName,
                 LogTag.BanterBrowser);
 #endif
                    
