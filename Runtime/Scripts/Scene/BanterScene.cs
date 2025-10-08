@@ -12,9 +12,7 @@ using UnityEngine.Events;
 using UnityEngine.XR;
 using Banter.Utilities.Async;
 using Banter.Utilities;
-#if BANTER_FLEX
 using Banter.FlexaBody;
-#endif
 
 
 

@@ -20,10 +20,9 @@ namespace Banter.SDK
         /// </summary>
         [Tooltip("Automatically populated array of colliders associated with this object.")]
 
-#if BANTER_FLEX
         WorldObject worldObj;
+
         bool worldObjectAdded;
-#endif
 
         internal override void DestroyStuff()
         {
@@ -45,10 +44,8 @@ namespace Banter.SDK
                 worldObj = gameObject.AddComponent<WorldObject>();
             }
             worldObj.RB = GetComponent<Rigidbody>();
-#else
-            // Stub implementation when BANTER_FLEX is not available
-#endif
             SetLoadedIfNot();
+#endif
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)

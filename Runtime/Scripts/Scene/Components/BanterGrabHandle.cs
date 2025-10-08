@@ -19,12 +19,10 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterGrabHandle : BanterComponentBase
     {
-#if BANTER_FLEX
         GrabHandle grabHandle;
 
         bool grabHandleAdded;
         bool worldObjectAdded;
-#endif
 
         [Tooltip("Defines the type of grab interaction (Point, Cylinder, Ball, Soft).")]
         [See(initial = "0")][SerializeField] internal BanterGrabType grabType;
@@ -66,20 +64,16 @@ namespace Banter.SDK
                 worldObjectAdded = true;
                 grabHandle.WorldObj = gameObject.AddComponent<WorldObject>();
             }
-#else
-            // Stub implementation when BANTER_FLEX is not available
 #endif
             SetLoadedIfNot();
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-#if BANTER_FLEX
             if (changedProperties.Contains(PropertyName.grabType) && grabHandle)
             {
                 grabHandle.GrabType = (GrabType)grabType;
             }
-#endif
         }
         // BANTER COMPILED CODE 
         public BanterGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }

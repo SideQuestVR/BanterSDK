@@ -1,9 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-#if BANTER_FLEX
 using Banter.FlexaBody;
-#endif
 using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
@@ -58,18 +56,18 @@ namespace Banter.SDK
         BanterPlayerEvents banterPlayerEvents;
         bool banterPlayerEventsAdded;
 
-#if BANTER_FLEX
         ControllerHeldEvents controllerHeldEvents;
+
         bool controllerHeldEventsAdded;
 
         Handle_Controller handleController;
         bool handleControllerAdded;
 
         GrabHandle grabHandle;
+
         bool grabHandleAdded;
 
         bool worldObjectAdded = true;
-#endif
 
 
 
@@ -80,7 +78,6 @@ namespace Banter.SDK
             {
                 Destroy(banterPlayerEvents);
             }
-#if BANTER_FLEX
             if (controllerHeldEvents && controllerHeldEventsAdded)
             {
                 Destroy(controllerHeldEvents);
@@ -93,7 +90,6 @@ namespace Banter.SDK
             {
                 Destroy(grabHandle);
             }
-#endif
         }
 
 
@@ -111,7 +107,6 @@ namespace Banter.SDK
                 banterPlayerEvents = gameObject.AddComponent<BanterPlayerEvents>();
             }
 
-#if BANTER_FLEX
             controllerHeldEvents = GetComponent<ControllerHeldEvents>();
             if (controllerHeldEvents == null)
             {
@@ -162,9 +157,6 @@ namespace Banter.SDK
                 worldObjectAdded = true;
                 grabHandle.WorldObj = gameObject.AddComponent<WorldObject>();
             }
-#else
-            // Stub implementation when BANTER_FLEX is not available - BanterPlayerEvents still works
-#endif
         }
         // BANTER COMPILED CODE 
         public System.Single Sensitivity { get { return sensitivity; } set { sensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.sensitivity }); } }
