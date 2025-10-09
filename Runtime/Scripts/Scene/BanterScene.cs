@@ -22,16 +22,6 @@ using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public enum TransformType
-    {
-        Position,
-        LocalPosition,
-        Rotation,
-        LocalRotation,
-        EulerAngles,
-        LocalEulerAngles,
-        LocalScale
-    }
     public class SpawnPointData
     {
         public Vector3 position;
@@ -781,6 +771,11 @@ namespace Banter.SDK
                         // This is caught in the AddBanterComponent method instead. 
                         // Debug.LogError("BanterComponent is null: " + go.GetInstanceID() + " : " + cid + " : " + comp.name);
                     }
+                    // Debug.Log();
+                    if (comp is BanterMaterial)
+                    {
+                        Debug.Log("HERER - Sending loaded event for material:" + cid);
+                    }
                     link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
                 comp.progress.AddListener((progress) =>
@@ -1468,27 +1463,27 @@ namespace Banter.SDK
                     var transformParts = parts[1].Split(MessageDelimiters.PRIMARY);
                     foreach (var part in transformParts)
                     {
-                        switch ((TransformType)int.Parse(part))
+                        switch ((PropertyName)int.Parse(part))
                         {
-                            case TransformType.Position:
+                            case PropertyName.position:
                                 obj.id.watchPosition = true;
                                 break;
-                            case TransformType.LocalPosition:
+                            case PropertyName.localPosition:
                                 obj.id.watchLocalPosition = true;
                                 break;
-                            case TransformType.EulerAngles:
+                            case PropertyName.eulerAngles:
                                 obj.id.watchEuler = true;
                                 break;
-                            case TransformType.LocalEulerAngles:
+                            case PropertyName.localEulerAngles:
                                 obj.id.watchLocalEuler = true;
                                 break;
-                            case TransformType.Rotation:
+                            case PropertyName.rotation:
                                 obj.id.watchRotation = true;
                                 break;
-                            case TransformType.LocalRotation:
+                            case PropertyName.localRotation:
                                 obj.id.watchLocalRotation = true;
                                 break;
-                            case TransformType.LocalScale:
+                            case PropertyName.localScale:
                                 obj.id.watchLocalScale = true;
                                 break;
                         }
@@ -1515,10 +1510,10 @@ namespace Banter.SDK
                     var transformUpdate = part.Split(MessageDelimiters.SECONDARY);
                     if (int.TryParse(transformUpdate[0], out int transformType))
                     {
-                        var type = (TransformType)transformType;
+                        var type = (PropertyName)transformType;
                         switch (type)
                         {
-                            case TransformType.Position:
+                            case PropertyName.position:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1527,7 +1522,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.position = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.LocalPosition:
+                            case PropertyName.localPosition:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1536,7 +1531,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.localPosition = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.EulerAngles:
+                            case PropertyName.eulerAngles:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1545,7 +1540,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.eulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.LocalEulerAngles:
+                            case PropertyName.localEulerAngles:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1554,7 +1549,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.localEulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.Rotation:
+                            case PropertyName.rotation:
                                 if (transformUpdate.Length < 5)
                                 {
 
@@ -1563,7 +1558,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.rotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
                                 break;
-                            case TransformType.LocalRotation:
+                            case PropertyName.localRotation:
                                 if (transformUpdate.Length < 5)
                                 {
 
@@ -1572,7 +1567,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.localRotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
                                 break;
-                            case TransformType.LocalScale:
+                            case PropertyName.localScale:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1580,6 +1575,7 @@ namespace Banter.SDK
                                     break;
                                 }
                                 obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                Debug.Log(part + " - " + obj.transform.localScale);
                                 break;
                         }
                     }
@@ -1602,14 +1598,14 @@ namespace Banter.SDK
                     var go = new GameObject(parts[2]);
                     go.transform.parent = settings.parentTransform;
                     go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[3]), NumberFormat.Parse(parts[4]), NumberFormat.Parse(parts[5]));
-                    var rotation = new Vector4(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]), NumberFormat.Parse(parts[9]));
-                    if (rotation.magnitude == 0)
+                    var rotation = new Quaternion(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]), NumberFormat.Parse(parts[9]));
+                    if (rotation == Quaternion.identity)
                     {
                         go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
                     }
                     else
                     {
-                        go.transform.localRotation = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+                        go.transform.localRotation = rotation;
                     }
                     go.transform.localScale = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
                     AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);

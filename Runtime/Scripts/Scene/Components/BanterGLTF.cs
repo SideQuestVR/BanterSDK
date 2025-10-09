@@ -215,7 +215,10 @@ namespace Banter.SDK
         }
         internal override void DestroyStuff()
         {
-            KillGLTF(gameObject);
+            if (gameObject)
+            {
+                KillGLTF(gameObject);
+            }
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
