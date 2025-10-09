@@ -34,10 +34,4 @@ public class AddPanelStuff : MonoBehaviour
             uIDocument.runtimePanel.selectableGameObject = gameObject;
         }
     }
-
-    private void Update()
-    {
-        if (!_raycaster.enabled)
-            _raycaster.enabled = true;
-    }
 }
