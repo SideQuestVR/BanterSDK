@@ -117,8 +117,6 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterTorus>();
                 case ComponentType.BanterTorusKnot:
                     return gameObject.AddComponent<BanterTorusKnot>();
-                case ComponentType.Transform:
-                    return gameObject.AddComponent<BanterTransform>();
                 case ComponentType.BanterUIPanel:
                     return gameObject.AddComponent<BanterUIPanel>();
                 case ComponentType.BanterVideoPlayer:

@@ -9,6 +9,8 @@ public class APICommands
     public const string KILL_WINDOW = "!kw!";
     public const string SET_NETWORK_ID = "!sni!";
     public const string SET_NAME = "!sn!";
+    public const string SET_TRANSFORM = "!st!";
+    public const string WATCH_TRANSFORM = "!wt!";
     public const string REQUEST_ID = "!i!";
     public const string RESPONSE_ID = "!o!";
     public const string UPDATE = "!u!";
@@ -82,6 +84,7 @@ public class APICommands
     public const string RELEASED = "r!";
     public const string BUTTON_PRESSED = "bp!";
     public const string BUTTON_RELEASED = "br!";
+    public const string TRANSFORM_UPDATED = "tu!";
     public const string KEY = "k!";
     public const string ONE_SHOT_RECIEVED = "on!";
     public const string COLLISION_ENTER = "ce!";

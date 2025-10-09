@@ -205,9 +205,9 @@ namespace Banter.SDK
                 LogVerbose($"Initialized with existing UIDocument and panel settings: {panelSettings.name}");
 
                 // Add stylesheets
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
-                uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
+                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Slider"));
+                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
+                // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
 
                 // Configure panel settings
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
@@ -1097,4 +1097,3 @@ namespace Banter.SDK
         // END BANTER COMPILED CODE 
     }
 }
-

@@ -22,6 +22,16 @@ using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
+    public enum TransformType
+    {
+        Position,
+        LocalPosition,
+        Rotation,
+        LocalRotation,
+        EulerAngles,
+        LocalEulerAngles,
+        LocalScale
+    }
     public class SpawnPointData
     {
         public Vector3 position;
@@ -1333,6 +1343,7 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
+                     Debug.Log("SetParent" + msg);
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(SetParent)}"));
             }
@@ -1433,6 +1444,149 @@ namespace Banter.SDK
                 APICommands.OBJECT_ADDED + MessageDelimiters.PRIMARY + go.GetInstanceID() + MessageDelimiters.PRIMARY + (go.activeSelf ? 1 : 0) +
                 MessageDelimiters.PRIMARY + go.name + MessageDelimiters.PRIMARY + go.layer + MessageDelimiters.PRIMARY + parent + MessageDelimiters.PRIMARY + linkId;
         }
+
+        public void WatchJsTransform(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY, 2);
+            if (parts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsTransform message is malformed: " + msg);
+                return;
+            }
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+            {
+                var obj = GetObject(int.Parse(parts[0]));
+                if (obj.id)
+                {
+                    obj.id.watchPosition = false;
+                    obj.id.watchLocalPosition = false;
+                    obj.id.watchEuler = false;
+                    obj.id.watchLocalEuler = false;
+                    obj.id.watchRotation = false;
+                    obj.id.watchLocalRotation = false;
+                    obj.id.watchLocalScale = false;
+                    var transformParts = parts[1].Split(MessageDelimiters.PRIMARY);
+                    foreach (var part in transformParts)
+                    {
+                        switch ((TransformType)int.Parse(part))
+                        {
+                            case TransformType.Position:
+                                obj.id.watchPosition = true;
+                                break;
+                            case TransformType.LocalPosition:
+                                obj.id.watchLocalPosition = true;
+                                break;
+                            case TransformType.EulerAngles:
+                                obj.id.watchEuler = true;
+                                break;
+                            case TransformType.LocalEulerAngles:
+                                obj.id.watchLocalEuler = true;
+                                break;
+                            case TransformType.Rotation:
+                                obj.id.watchRotation = true;
+                                break;
+                            case TransformType.LocalRotation:
+                                obj.id.watchLocalRotation = true;
+                                break;
+                            case TransformType.LocalScale:
+                                obj.id.watchLocalScale = true;
+                                break;
+                        }
+                    }
+                }
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
+            }, $"{nameof(BanterScene)}.{nameof(WatchJsTransform)}"));
+        }
+
+        public void SetJsTransform(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY, 2);
+            if (parts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsTransform message is malformed: " + msg);
+                return;
+            }
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+            {
+                var obj = GetGameObject(int.Parse(parts[0]));
+                var updateParts = parts[1].Split(MessageDelimiters.PRIMARY);
+                foreach (var part in updateParts)
+                {
+                    var transformUpdate = part.Split(MessageDelimiters.SECONDARY);
+                    if (int.TryParse(transformUpdate[0], out int transformType))
+                    {
+                        var type = (TransformType)transformType;
+                        switch (type)
+                        {
+                            case TransformType.Position:
+                                if (transformUpdate.Length < 4)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate Position message is malformed: " + part + " _ " + transformUpdate.Length);
+                                    break;
+                                }
+                                obj.transform.position = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                break;
+                            case TransformType.LocalPosition:
+                                if (transformUpdate.Length < 4)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate LocalPosition message is malformed: " + part);
+                                    break;
+                                }
+                                obj.transform.localPosition = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                break;
+                            case TransformType.EulerAngles:
+                                if (transformUpdate.Length < 4)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate EulerAngles message is malformed: " + msg);
+                                    break;
+                                }
+                                obj.transform.eulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                break;
+                            case TransformType.LocalEulerAngles:
+                                if (transformUpdate.Length < 4)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate LocalEulerAngles message is malformed: " + msg);
+                                    break;
+                                }
+                                obj.transform.localEulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                break;
+                            case TransformType.Rotation:
+                                if (transformUpdate.Length < 5)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate Rotation message is malformed: " + msg);
+                                    break;
+                                }
+                                obj.transform.rotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
+                                break;
+                            case TransformType.LocalRotation:
+                                if (transformUpdate.Length < 5)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
+                                    break;
+                                }
+                                obj.transform.localRotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
+                                break;
+                            case TransformType.LocalScale:
+                                if (transformUpdate.Length < 4)
+                                {
+
+                                    Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
+                                    break;
+                                }
+                                obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                break;
+                        }
+                    }
+                }
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
+            }, $"{nameof(BanterScene)}.{nameof(SetJsTransform)}"));
+        }
         public void AddJsObject(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
@@ -1442,25 +1596,36 @@ namespace Banter.SDK
                 return;
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
-             {
-                 try
-                 {
-                     var go = new GameObject(parts[2]);
-                     go.transform.parent = settings.parentTransform;
-                     AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
-                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
-                     await new WaitForSeconds(2);
-                     if (parts[1] == "0")
-                     {
-                         Debug.Log("Creating object that is not active: " + go.name);
-                         go.SetActive(false);
-                     }
-                 }
-                 catch (Exception e)
-                 {
-                     Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
-                 }
-             }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
+            {
+                try
+                {
+                    var go = new GameObject(parts[2]);
+                    go.transform.parent = settings.parentTransform;
+                    go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[3]), NumberFormat.Parse(parts[4]), NumberFormat.Parse(parts[5]));
+                    var rotation = new Vector4(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]), NumberFormat.Parse(parts[9]));
+                    if (rotation.magnitude == 0)
+                    {
+                        go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
+                    }
+                    else
+                    {
+                        go.transform.localRotation = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+                    }
+                    go.transform.localScale = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
+                    AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
+                    link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
+                    await new WaitForSeconds(2);
+                    if (parts[1] == "0")
+                    {
+                        Debug.Log("Creating object that is not active: " + go.name);
+                        go.SetActive(false);
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
+                }
+            }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
         }
         public void Cancel(string message, bool isUserCancel = false)
         {
@@ -1481,19 +1646,7 @@ namespace Banter.SDK
             loadingManager?.SetLoadProgress(isUserCancel ? "Loading Cancelled" : "Loading failed", 0, message, true);
             LogLine.Do(isUserCancel ? "Loading Cancelled" : "Loading failed");
             loadingManager?.UpdateCancelText();
-            // if(!isHome) {
-            // loadUrlTaskCompletionSource?.TrySetException(new Exception((isUserCancel? "Loading cancelled: " : "The URL failed to load: ") + message));
-            // // _ = loadingManager.LoadOut();
-            // loadingManager?.SetLoadProgress("Failed to load", 0, message, true);
-            // loadingManager?.CancelPressed();
-            //UnityMainThreadTaskScheduler.Default.QueueAction(() => {
-            //     events.OnLoadFailed.Invoke(message);
-            // });
-            // }
         }
-        // public async Task LoadLobby() {
-        //     await LoadUrl(CUSTOM_HOME_SPACE); // https://sq-homepage.glitch.me/home-space.html
-        // }
         public void ResetLoadingProgress()
         {
             loadingManager?.SetLoadProgress("Loading", 0, LoadingStatus, true);
@@ -1915,43 +2068,43 @@ namespace Banter.SDK
                          switch (setting[0])
                          {
                              case SettingsMap.PhysicsMoveSpeed:
-                                 settings.PhysicsMoveSpeed = float.Parse(setting[1]);
+                                 settings.PhysicsMoveSpeed = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsMoveAcceleration:
-                                 settings.PhysicsMoveAcceleration = float.Parse(setting[1]);
+                                 settings.PhysicsMoveAcceleration = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsAirControlSpeed:
-                                 settings.PhysicsAirControlSpeed = float.Parse(setting[1]);
+                                 settings.PhysicsAirControlSpeed = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsAirControlAcceleration:
-                                 settings.PhysicsAirControlAcceleration = float.Parse(setting[1]);
+                                 settings.PhysicsAirControlAcceleration = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsDrag:
-                                 settings.PhysicsDrag = float.Parse(setting[1]);
+                                 settings.PhysicsDrag = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsFreeFallAngularDrag:
-                                 settings.PhysicsFreeFallAngularDrag = float.Parse(setting[1]);
+                                 settings.PhysicsFreeFallAngularDrag = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsJumpStrength:
-                                 settings.PhysicsJumpStrength = float.Parse(setting[1]);
+                                 settings.PhysicsJumpStrength = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsHandPositionStrength:
-                                 settings.PhysicsHandPositionStrength = float.Parse(setting[1]);
+                                 settings.PhysicsHandPositionStrength = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsHandRotationStrength:
-                                 settings.PhysicsHandRotationStrength = float.Parse(setting[1]);
+                                 settings.PhysicsHandRotationStrength = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsHandSpringiness:
-                                 settings.PhysicsHandSpringiness = float.Parse(setting[1]);
+                                 settings.PhysicsHandSpringiness = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsGrappleRange:
-                                 settings.PhysicsGrappleRange = float.Parse(setting[1]);
+                                 settings.PhysicsGrappleRange = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsGrappleReelSpeed:
-                                 settings.PhysicsGrappleReelSpeed = float.Parse(setting[1]);
+                                 settings.PhysicsGrappleReelSpeed = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsGrappleSpringiness:
-                                 settings.PhysicsGrappleSpringiness = float.Parse(setting[1]);
+                                 settings.PhysicsGrappleSpringiness = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.PhysicsGorillaMode:
                                  settings.PhysicsGorillaMode = setting[1] == "1";
@@ -2204,29 +2357,27 @@ namespace Banter.SDK
                 var parts = msg.Split(MessageDelimiters.PRIMARY);
                 if (parts.Length >= 3)
                 {
-                    if (float.TryParse(parts[0], out float amplitude) &&
-                        float.TryParse(parts[1], out float duration) &&
-                        int.TryParse(parts[2], out int handInt))
-                    {
-                        HandSide hand = (HandSide)handInt;
-                        XRNode xrNode = hand == HandSide.LEFT ? XRNode.LeftHand : XRNode.RightHand;
+                    var amplitude = NumberFormat.Parse(parts[0]);
+                    var duration = NumberFormat.Parse(parts[1]);
+                    var handInt = int.Parse(parts[2]);
+                    HandSide hand = (HandSide)handInt;
+                    XRNode xrNode = hand == HandSide.LEFT ? XRNode.LeftHand : XRNode.RightHand;
 
-                        UnityEngine.XR.InputDevice device = InputDevices.GetDeviceAtXRNode(xrNode);
-                        if (device.isValid)
+                    UnityEngine.XR.InputDevice device = InputDevices.GetDeviceAtXRNode(xrNode);
+                    if (device.isValid)
+                    {
+                        if (device.TryGetHapticCapabilities(out HapticCapabilities capabilities) && capabilities.supportsImpulse)
                         {
-                            if (device.TryGetHapticCapabilities(out HapticCapabilities capabilities) && capabilities.supportsImpulse)
-                            {
-                                device.SendHapticImpulse(0, amplitude, duration);
-                            }
-                            else
-                            {
-                                Debug.LogWarning("The device does not support haptic impulses.");
-                            }
+                            device.SendHapticImpulse(0, amplitude, duration);
                         }
                         else
                         {
-                            Debug.LogWarning("Invalid XR device for node: " + xrNode);
+                            Debug.LogWarning("The device does not support haptic impulses.");
                         }
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Invalid XR device for node: " + xrNode);
                     }
                 }
                 link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");

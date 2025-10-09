@@ -1,88 +1,88 @@
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+Shader "Unlit/Diffuse"
+{
+	Properties
+	{
+		_MainTex("Texture", 2D) = "white" {}
+		_Color("Color", Color) = (1, 1, 1, 1)
+		_Cull ("Culling", Float) = 0.0
+	}
 
-// Upgrade NOTE: replaced 'mul(UNITY_MATRIX_MVP,*)' with 'UnityObjectToClipPos(*)'
+	SubShader
+	{
+		Tags
+		{
+		}
 
-// Unity built-in shader source. Copyright (c) 2016 Unity Technologies. MIT license (see license.txt)
+		Pass
+		{
+			Cull [_Cull]
 
-Shader "Unlit/Diffuse" {
-    Properties {
-        _Color ("Main Color", Color) = (1,1,1,1)
-        _MainTex ("Base (RGB)", 2D) = "white" {}
-        _Cull ("Culling", Float) = 0.0
-        [Toggle] _FlipBackface ("Flip Backface", Float ) = 0.0
-    }
-    SubShader {
-        Tags {"RenderType"="Opaque"}
-        LOD 200
-        Cull [_Cull]
-        
-        Pass 
-        {
-            CGPROGRAM
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			#include "UnityCG.cginc"
+			#include "Lighting.cginc"
 
-            #pragma vertex vert alpha
-            #pragma fragment frag alpha
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
+			float4 _Color;
 
-            #include "UnityCG.cginc"
-            #pragma multi_compile_fog
-            #define USING_FOG (defined(FOG_LINEAR) || defined(FOG_EXP) || defined(FOG_EXP2))
+			struct appdata
+			{
+				float4 vertex : POSITION;
+				float3 normal : NORMAL;
+				float2 uv : TEXCOORD0;
+			};
 
+			struct v2f
+			{
+				float4 pos : SV_POSITION;
+				float2 uv : TEXCOORD0;
+				float3 worldNormal : TEXCOORD1;
+				float3 viewDir : TEXCOORD2;
+			};
 
-            struct appdata 
-            {
-                float4 vertex   : POSITION;
-                float2 texcoord : TEXCOORD0;
-                UNITY_VERTEX_INPUT_INSTANCE_ID //Insert
-            };
+			v2f vert(appdata v)
+			{
+				v2f o;
+				o.pos = UnityObjectToClipPos(v.vertex);
+				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+				o.worldNormal = UnityObjectToWorldNormal(v.normal);
+				float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+				o.viewDir = normalize(_WorldSpaceCameraPos - worldPos);
+				return o;
+			}
 
-            struct v2f 
-            {
-                float4 vertex  : SV_POSITION;
-                half2 texcoord : TEXCOORD0;
-#if USING_FOG
-                fixed fog : TEXCOORD2;
-#endif
-                UNITY_VERTEX_OUTPUT_STEREO //Insert
-            };
+			fixed4 frag(v2f i, fixed facing : VFACE) : SV_Target
+			{
+				// Sample texture
+				fixed4 texColor = tex2D(_MainTex, i.uv);
 
-            sampler2D _MainTex;
-            float _FlipBackface;
-            float4 _MainTex_ST;
-            float4 _Color;
+				// Combine with color
+				fixed4 col = texColor * _Color;
 
-            v2f vert (appdata v)
-            {
-                
-                v2f o;
+				// Flip normal for back faces
+				float3 worldNormal = normalize(i.worldNormal) * sign(facing);
 
-                UNITY_SETUP_INSTANCE_ID(v); //Insert
-                UNITY_INITIALIZE_OUTPUT(v2f, o); //Insert
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o); //Insert
-                o.vertex     = UnityObjectToClipPos(v.vertex);
-                // v.texcoord.x = 1 - v.texcoord.x;
-                o.texcoord   = TRANSFORM_TEX(v.texcoord, _MainTex);
-#if USING_FOG
-                float3 eyePos = UnityObjectToViewPos(v.vertex);
-                float fogCoord = length(eyePos.xyz);  // radial fog distance
-                UNITY_CALC_FOG_FACTOR_RAW(fogCoord);
-                o.fog = saturate(unityFogFactor);
-#endif
-                return o;
-            }
+				// Calculate lighting from main directional light if it exists
+				float3 lightDir = _WorldSpaceLightPos0.xyz;
+				float NdotL = max(0, dot(worldNormal, lightDir));
 
-            fixed4 frag (v2f i, bool isFrontFace : SV_IsFrontFace) : SV_Target
-            {
-                if (_FlipBackface > 0 && !isFrontFace) {
-                        i.texcoord.x = 1.0 - i.texcoord.x;
-                }
-                fixed4 col = tex2D(_MainTex, i.texcoord) * _Color; // multiply by _Color
-#if USING_FOG
-                col.rgb = lerp(unity_FogColor.rgb, col.rgb, i.fog);
-#endif
-                return col;
-            }
+				// Add ambient/environment lighting (works without lights)
+				float3 ambient = ShadeSH9(half4(worldNormal, 1.0));
 
-            ENDCG
-        }
-    }
+				// Combine directional and ambient light, ensuring minimum brightness
+				float3 lighting = max(0.6, max(ambient * 0.5 + 0.5, NdotL * _LightColor0.rgb + ambient));
+
+				// Apply lighting to color
+				col.rgb *= lighting;
+                col.a = 1;
+
+				return col;
+			}
+
+			ENDCG
+		}
+	}
+	Fallback "Unlit/Diffuse"
 }
