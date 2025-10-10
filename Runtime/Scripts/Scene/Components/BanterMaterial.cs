@@ -65,12 +65,18 @@ namespace Banter.SDK
 
         Texture2D defaultTexture;
         Texture2D mainTex;
+
+        bool UpdateCallbackRan = false;
         internal override void StartStuff()
         {
-            _ = SetupMaterial();
+            if(!UpdateCallbackRan)
+            {
+                _ = SetupMaterial();
+            }
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            UpdateCallbackRan = true;
             _ = SetupMaterial(changedProperties);
         }
         async Task SetupMaterial(List<PropertyName> changedProperties = null)

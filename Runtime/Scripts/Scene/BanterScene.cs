@@ -1036,24 +1036,43 @@ namespace Banter.SDK
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
-                    object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
-                    if (renderers.Length > 0)
-                    {
-                        var bounds = ((Collider)renderers[0]).bounds;
-                        for (int i = 1; i < renderers.Length; i++)
-                        {
-                            bounds.Encapsulate(((Collider)renderers[i]).bounds);
-                        }
-                        var center = bounds.center;
-                        var extents = bounds.extents;
-                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
-                    }
-                    else
-                    {
-                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
-                    }
-                     
+                     object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
+                     if (renderers.Length > 0)
+                     {
+                         var bounds = ((Collider)renderers[0]).bounds;
+                         for (int i = 1; i < renderers.Length; i++)
+                         {
+                             bounds.Encapsulate(((Collider)renderers[i]).bounds);
+                         }
+                         var center = bounds.center;
+                         var extents = bounds.extents;
+                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
+                     }
+                     else
+                     {
+                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
+                     }
+
                  }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+            }
+        }
+        
+        public void SetJsObjectTag(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+            if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                 {
+                     banterObject.tag = msgParts[1];
+                     SendObjectUpdate(banterObject, reqId);
+                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
             }
         }
         
@@ -1209,6 +1228,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Add Component message is malformed: " + msg);
                 return;
             }
+            Debug.Log("HERER: " + msg);
             var oid = int.Parse(parts[0]);
             var gameObject = GetGameObject(oid);
             if (gameObject == null)
@@ -1338,7 +1358,6 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
-                     Debug.Log("SetParent" + msg);
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(SetParent)}"));
             }
@@ -1437,7 +1456,7 @@ namespace Banter.SDK
         {
             return APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
                 APICommands.OBJECT_ADDED + MessageDelimiters.PRIMARY + go.GetInstanceID() + MessageDelimiters.PRIMARY + (go.activeSelf ? 1 : 0) +
-                MessageDelimiters.PRIMARY + go.name + MessageDelimiters.PRIMARY + go.layer + MessageDelimiters.PRIMARY + parent + MessageDelimiters.PRIMARY + linkId;
+                MessageDelimiters.PRIMARY + go.name + MessageDelimiters.PRIMARY + go.layer + MessageDelimiters.PRIMARY + go.tag + MessageDelimiters.PRIMARY + parent + MessageDelimiters.PRIMARY + linkId;
         }
 
         public void WatchJsTransform(string msg, int reqId)
@@ -1593,21 +1612,52 @@ namespace Banter.SDK
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
-                try
-                {
+                // try
+                // {
                     var go = new GameObject(parts[2]);
                     go.transform.parent = settings.parentTransform;
-                    go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[3]), NumberFormat.Parse(parts[4]), NumberFormat.Parse(parts[5]));
-                    var rotation = new Quaternion(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]), NumberFormat.Parse(parts[9]));
+                    try
+                    {
+                        go.layer = int.Parse(parts[3]);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Could not set layer! " + msg);
+                    }
+                    try
+                    {
+                        go.tag = parts[4];
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Could not set tag! " + msg);
+                    }
+                    try
+                    {
+                        if (!parts[5].Equals("undefined"))
+                        {
+                            var parentObject = GetGameObject(int.Parse(parts[5]));
+                            if (parentObject != null)
+                            {
+                                go.transform.SetParent(parentObject.transform, true);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Could not set parent! " + msg);
+                    }
+                    go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]));
+                    var rotation = new Quaternion(NumberFormat.Parse(parts[9]), NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
                     if (rotation == Quaternion.identity)
                     {
-                        go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
+                        go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
                     }
                     else
                     {
                         go.transform.localRotation = rotation;
                     }
-                    go.transform.localScale = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
+                    go.transform.localScale = new Vector3(NumberFormat.Parse(parts[16]), NumberFormat.Parse(parts[17]), NumberFormat.Parse(parts[18]));
                     AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                     await new WaitForSeconds(2);
@@ -1616,11 +1666,12 @@ namespace Banter.SDK
                         Debug.Log("Creating object that is not active: " + go.name);
                         go.SetActive(false);
                     }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
-                }
+                    Debug.Log("HERER - add object");
+                // }
+                // catch (Exception e)
+                // {
+                //     Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
+                // }
             }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
         }
         public void Cancel(string message, bool isUserCancel = false)

@@ -9,7 +9,9 @@ public class APICommands
     public const string KILL_WINDOW = "!kw!";
     public const string SET_NETWORK_ID = "!sni!";
     public const string SET_NAME = "!sn!";
+    public const string SET_TAG = "!sta!";
     public const string SET_TRANSFORM = "!st!";
+    public const string MONO_BEHAVIOUR = "!mb!";
     public const string WATCH_TRANSFORM = "!wt!";
     public const string REQUEST_ID = "!i!";
     public const string RESPONSE_ID = "!o!";

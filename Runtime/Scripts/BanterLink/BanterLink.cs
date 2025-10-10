@@ -275,6 +275,10 @@ namespace Banter.SDK
                 {
                     scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
                 }
+                else if (msg.StartsWith(APICommands.SET_TAG))
+                {
+                    scene.SetJsObjectTag(GetMsgData(msg, APICommands.SET_TAG), id);
+                }
                 else if (msg.StartsWith(APICommands.SET_NAME))
                 {
                     scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
@@ -779,18 +783,16 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.BANTER_VERSION + MessageDelimiters.PRIMARY + versionData);
         }
-
-        // public void OnSendUser(string name, string id, string color, string instance) {
-        //     Send(APICommands.EVENT + APICommands.SEND_USER + MessageDelimiters.PRIMARY + name + MessageDelimiters.SECONDARY + id + MessageDelimiters.SECONDARY + color + MessageDelimiters.SECONDARY + instance);
-        // }
-
         public void OnUnitySceneLoaded()
         {
             scene.state = SceneState.UNITY_READY;
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Unity Scene Loaded.");
             Send(APICommands.EVENT + APICommands.UNITY_LOADED + MessageDelimiters.PRIMARY);
         }
-
+        public void OnMonoBehaviourLifeCycle(int cid, BanterMonoBehaviourLifeCycle lifeCycle)
+        {
+            Send(APICommands.EVENT + APICommands.MONO_BEHAVIOUR + MessageDelimiters.PRIMARY + cid + MessageDelimiters.PRIMARY + (int)lifeCycle);
+        }
         public void OnVoiceStarted()
         {
             Send(APICommands.EVENT + APICommands.VOICE_STARTED + MessageDelimiters.PRIMARY);
@@ -926,7 +928,6 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.MENU_BROWSER_MESSAGE + MessageDelimiters.PRIMARY + data);
         }
-
         public void OnReceiveBrowserMessage(BanterBrowser browser, string message)
         {
 #if BANTER_VISUAL_SCRIPTING
@@ -934,7 +935,6 @@ namespace Banter.SDK
 #endif
             Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + message);
         }
-
         public void OnKeyPress(KeyCode key)
         {
             Send(APICommands.EVENT + APICommands.KEY + MessageDelimiters.PRIMARY + (int)key);
