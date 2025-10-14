@@ -8,107 +8,6 @@ using PropertyName = Banter.SDK.PropertyName;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Rigidbody
-    This component will add a rigidbody to the object and set the mass, drag, angular drag, is kinematic, use gravity, center of mass, collision detection mode, velocity, angular velocity, freeze position and freeze rotation of the rigidbody.
-
-    **Properties**
-     - `mass` - The mass of the rigidbody.
-     - `drag` - The drag of the rigidbody.
-     - `angularDrag` - The angular drag of the rigidbody.
-     - `isKinematic` - Whether the rigidbody is kinematic.
-     - `useGravity` - Whether the rigidbody uses gravity.
-     - `centerOfMass` - The center of mass of the rigidbody.
-     - `collisionDetectionMode` - The collision detection mode of the rigidbody.
-     - `velocity` - The velocity of the rigidbody.
-     - `angularVelocity` - The angular velocity of the rigidbody.
-     - `freezePositionX` - Whether to freeze the position on the x axis.
-     - `freezePositionY` - Whether to freeze the position on the y axis.
-     - `freezePositionZ` - Whether to freeze the position on the z axis.
-     - `freezeRotationX` - Whether to freeze the rotation on the x axis.
-     - `freezeRotationY` - Whether to freeze the rotation on the y axis.
-     - `freezeRotationZ` - Whether to freeze the rotation on the z axis.
-
-     **Methods**
-     ```js
-    // AddForce - Add a force to the rigidbody.
-    rigidBody.AddForce(force: BS.Vector3, mode: BS.ForceMode);
-    ```
-    ```js
-    // MovePosition - Move the position of the rigidbody.
-    rigidBody.MovePosition(position: BS.Vector3);
-    ```
-    ```js
-    // MoveRotation - Move the rotation of the rigidbody.
-    rigidBody.MoveRotation(rotation: BS.Quaternion);
-    ```
-    ```js
-    // AddForceValues - Add a force to the rigidbody.
-    rigidBody.AddForceValues(x: float, y: float, z: float, mode: BS.ForceMode);
-    ```
-    ```js
-    // Sleep - Put the rigidbody to sleep.
-    rigidBody.Sleep();
-    ```
-    ```js
-    // WakeUp - Wake up the rigidbody from sleep.
-    rigidBody.WakeUp();
-    ```
-    ```js
-    // AddExplosionForce - Add an explosion force to the rigidbody.
-    rigidBody.AddExplosionForce(explosionForce: float, explosionPosition: BS.Vector3, explosionRadius: float, upwardsModifier: float, mode: BS.ForceMode);
-    ```
-    ```js
-    // AddTorque - Add torque to the rigidbody.
-    rigidBody.AddTorque(torque: BS.Vector3, mode: BS.ForceMode);
-    ```
-    ```js
-    // AddTorqueValues - Add torque to the rigidbody using x, y, z values.
-    rigidBody.AddTorqueValues(x: float, y: float, z: float, mode: BS.ForceMode);
-    ```
-    ```js
-    // AddRelativeForce - Add a force relative to the rigidbody's coordinate system.
-    rigidBody.AddRelativeForce(force: BS.Vector3, mode: BS.ForceMode);
-    ```
-    ```js
-    // AddRelativeTorque - Add torque relative to the rigidbody's coordinate system.
-    rigidBody.AddRelativeTorque(torque: BS.Vector3, mode: BS.ForceMode);
-    ```
-    ```js
-    // AddForceAtPosition - Add force at a specific position.
-    rigidBody.AddForceAtPosition(force: BS.Vector3, position: BS.Vector3, mode: BS.ForceMode);
-    ```
-    ```js
-    // ResetCenterOfMass - Reset the center of mass to the default computed value.
-    rigidBody.ResetCenterOfMass();
-    ```
-    ```js
-    // ResetInertiaTensor - Reset the inertia tensor to the default computed value.
-    rigidBody.ResetInertiaTensor();
-    ```
-
-
-    **Code Example**
-    ```js
-        const mass = 1;
-        const drag = 0;
-        const angularDrag = 0.05;
-        const isKinematic = false;
-        const useGravity = true;
-        const centerOfMass = new BS.Vector3(0,0,0);
-        const collisionDetectionMode = BS.CollisionDetectionMode.Continuous;
-        const velocity = new BS.Vector3(0,0,0);
-        const angularVelocity = new BS.Vector3(0,0,0);
-        const freezePositionX = false;
-        const freezePositionY = false;
-        const freezePositionZ = false;
-        const freezeRotationX = false;
-        const freezeRotationY = false;
-        const freezeRotationZ = false;
-        const gameObject = new BS.GameObject("MyRigidbody");
-        const rigidBody = await gameObject.AddComponent(new BS.BanterRigidbody(mass, drag, angularDrag, isKinematic, useGravity, centerOfMass, collisionDetectionMode, velocity, angularVelocity, freezePositionX, freezePositionY, freezePositionZ, freezeRotationX, freezeRotationY, freezeRotationZ));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -163,6 +62,7 @@ namespace Banter.SDK
         [Method]
         public void _AddForce(Vector3 force, ForceMode mode)
         {
+            Debug.Log("AddForce: " + force + " - " + mode);
             _rigidbody.AddForce(force, mode);
         }
         [Method]
@@ -278,7 +178,7 @@ namespace Banter.SDK
             {
                 _rigidbody.linearVelocity = velocity;
             }
-            if (changedProperties?.Contains(PropertyName.velocity) ?? false)
+            if (changedProperties?.Contains(PropertyName.angularVelocity) ?? false)
             {
                 _rigidbody.angularVelocity = angularVelocity;
             }
@@ -330,6 +230,17 @@ namespace Banter.SDK
             {
                 Destroy(_rigidbody);
             }
+        }
+
+        internal override void UpdateStuff()
+        {
+            velocity = _rigidbody.linearVelocity;
+            angularVelocity = _rigidbody.angularVelocity;
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return _rigidbody;
         }
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 Velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
@@ -898,7 +809,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        void Tick(object sender, EventArgs e) { SyncProperties(); }
+        void Tick(object sender, EventArgs e) { SyncProperties(); UpdateStuff(); }
 
         internal override void WatchProperties(PropertyName[] properties)
         {

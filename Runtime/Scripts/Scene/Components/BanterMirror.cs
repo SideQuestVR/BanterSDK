@@ -48,6 +48,11 @@ namespace Banter.SDK
         {
             SetupMirror();
         }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal override void DestroyStuff()
         {
             if (_mirrorObject != null)

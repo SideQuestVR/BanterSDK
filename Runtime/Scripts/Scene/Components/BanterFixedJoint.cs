@@ -4,31 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /*
-    #### Banter Fixed Joint
-    A fixed joint restricts an object to follow another object's movement and rotation.
-
-    **Properties**
-    - `connectedBody` - The Rigidbody that this joint is connected to.
-    - `anchor` - The anchor point of the joint in local space.
-    - `connectedAnchor` - The connected anchor point in the connected body's local space.
-    - `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-    - `breakForce` - The force that needs to be applied for this joint to break.
-    - `breakTorque` - The torque that needs to be applied for this joint to break.
-    - `enableCollision` - Enable collision between connected bodies.
-    - `enablePreprocessing` - Enable preprocessing for the joint.
-
-    **Code Example**
-    ```js
-        const connectedBody = null;
-        const anchor = new BS.Vector3(0,0,0);
-        const breakForce = Infinity;
-
-        const gameObject = new BS.GameObject("MyFixedJoint");
-        const fixedJoint = await gameObject.AddComponent(new BS.BanterFixedJoint(connectedBody, anchor, breakForce));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(FixedJoint))]
     [RequireComponent(typeof(FixedJoint))]
@@ -348,6 +323,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

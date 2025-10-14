@@ -13,6 +13,8 @@ namespace Banter.SDK
         [Tooltip("A unique identifier for this object within the Banter system.")]
         public string Id;
         int oid;
+        [Tooltip("A javascript identifier set once this object is registered in javascript.")]
+        public string jsId;
 
         [HideInInspector]
         public Dictionary<int, BanterComponentBase> mainThreadComponentMap = new Dictionary<int, BanterComponentBase>();
@@ -38,29 +40,25 @@ namespace Banter.SDK
         {
             oid = gameObject.GetInstanceID();
             scene = BanterScene.Instance();
-        }
-        void Start()
-        {
 #if UNITY_EDITOR
-            // Don't run during builds to prevent scene modification
-            if (UnityEditor.BuildPipeline.isBuildingPlayer)
-                return;
-#endif
-            try
-            {
-#if UNITY_EDITOR
-                GenerateId(IsDuplicateId(Id));
+                if (!UnityEditor.BuildPipeline.isBuildingPlayer)
+                    GenerateId(IsDuplicateId(Id));
 #else
                 GenerateId();
 #endif
-                scene.AddBanterObject(gameObject, this);
-                SyncProperties(true);
-            }
-            catch (Exception)
-            {
-                // Debug.LogError("BanterObjectId: " + e.Message);
-            }
+            scene.AddBanterObject(gameObject, this);
+            SyncProperties(true);
         }
+        // void Start()
+        // {
+        //     try
+        //     {
+        //     }
+        //     catch (Exception)
+        //     {
+        //         // Debug.LogError("BanterObjectId: " + e.Message);
+        //     }
+        // }
 
 #if UNITY_EDITOR
         void OnValidate()

@@ -4,37 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /*
-    #### Banter Spring Joint
-    A spring joint applies a spring force between two Rigidbodies.
-
-    **Properties**
-    - `connectedBody` - The Rigidbody that this joint is connected to.
-    - `anchor` - The anchor point of the joint in local space.
-    - `connectedAnchor` - The connected anchor point in the connected body's local space.
-    - `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-    - `spring` - The spring force applied to reach the target distance.
-    - `damper` - The damper force applied to reduce the spring velocity.
-    - `minDistance` - The minimum distance between the objects.
-    - `maxDistance` - The maximum distance between the objects.
-    - `tolerance` - The error tolerance for the spring solver.
-    - `breakForce` - The force that needs to be applied for this joint to break.
-    - `breakTorque` - The torque that needs to be applied for this joint to break.
-    - `enableCollision` - Enable collision between connected bodies.
-    - `enablePreprocessing` - Enable preprocessing for the joint.
-
-    **Code Example**
-    ```js
-        const connectedBody = null;
-        const anchor = new BS.Vector3(0,0,0);
-        const spring = 100;
-        const damper = 5;
-
-        const gameObject = new BS.GameObject("MySpringJoint");
-        const springJoint = await gameObject.AddComponent(new BS.BanterSpringJoint(connectedBody, anchor, spring, damper));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(SpringJoint))]
     [RequireComponent(typeof(SpringJoint))]
@@ -479,6 +448,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

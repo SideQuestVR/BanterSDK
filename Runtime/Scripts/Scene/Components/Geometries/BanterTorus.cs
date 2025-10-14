@@ -30,6 +30,11 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         void SetupGeometry()
         {
             var geometry = GetComponent<BanterGeometry>();

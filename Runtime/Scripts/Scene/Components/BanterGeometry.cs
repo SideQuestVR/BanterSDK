@@ -162,6 +162,11 @@ namespace Banter.SDK
         {
             SetGeometry();
         }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetGeometry(changedProperties);

@@ -68,6 +68,11 @@ namespace Banter.SDK
         BanterHeldEvents banterHeldEvents;
         bool banterHeldEventsAdded;
 
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal override void StartStuff()
         {
             banterGrabHandle = gameObject.GetComponent<BanterGrabHandle>();

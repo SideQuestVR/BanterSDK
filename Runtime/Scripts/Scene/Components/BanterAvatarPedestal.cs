@@ -35,6 +35,11 @@ namespace Banter.SDK
         {
             LoadAvatar();
         }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         void KillAvatar(GameObject go)
         {
             foreach (Transform child in go.transform.GetComponentsInChildren<Transform>())

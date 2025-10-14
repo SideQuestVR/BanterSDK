@@ -267,7 +267,7 @@ namespace Banter.SDK
         /// <summary>
         /// Initialize haptics and sounds for UI interactions
         /// </summary>
-        private void InitializeHapticsAndSounds()
+        private async void InitializeHapticsAndSounds()
         {
             if (enableHaptics)
             {
@@ -290,15 +290,18 @@ namespace Banter.SDK
             {
                 if (clickSound == null && !string.IsNullOrEmpty(clickSoundUrl))
                 {
-                    StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
+                    clickSound = await Get.Audio(clickSoundUrl);
+                    // StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
                 }
                 if (enterSound == null && !string.IsNullOrEmpty(enterSoundUrl))
                 {
-                    StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
+                    enterSound = await Get.Audio(enterSoundUrl);
+                    // StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
                 }
                 if (exitSound == null && !string.IsNullOrEmpty(exitSoundUrl))
                 {
-                    StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
+                    exitSound = await Get.Audio(exitSoundUrl);
+                    // StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
                 }
             }
 
@@ -308,32 +311,6 @@ namespace Banter.SDK
             }
         }
 
-        /// <summary>
-        /// Load audio clip from URL
-        /// </summary>
-        private IEnumerator LoadAudioClip(string url, Action<AudioClip> onLoaded)
-        {
-            if (string.IsNullOrEmpty(url))
-            {
-                yield break;
-            }
-
-            using (var www = UnityEngine.Networking.UnityWebRequestMultimedia.GetAudioClip(url, AudioType.UNKNOWN))
-            {
-                yield return www.SendWebRequest();
-
-                if (www.result == UnityEngine.Networking.UnityWebRequest.Result.Success)
-                {
-                    var clip = UnityEngine.Networking.DownloadHandlerAudioClip.GetContent(www);
-                    onLoaded?.Invoke(clip);
-                    LogVerbose($"Loaded audio clip from {url}");
-                }
-                else
-                {
-                    Debug.LogWarning($"[BanterUIPanel] Failed to load audio clip from {url}: {www.error}");
-                }
-            }
-        }
 
         /// <summary>
         /// Update controller device references
@@ -644,7 +621,7 @@ namespace Banter.SDK
         {
             EnsureInitialized();
         }
-        void UpdateCallback(List<PropertyName> changedProperties)
+        async void UpdateCallback(List<PropertyName> changedProperties)
         {
             // Ensure panel is initialized before processing updates
             if (!EnsureInitialized())
@@ -775,24 +752,24 @@ namespace Banter.SDK
                     {
                         if (!string.IsNullOrEmpty(clickSoundUrl))
                         {
-                            clickSound = null; // Clear inspector-assigned clip
-                            StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
+                            clickSound = await Get.Audio(clickSoundUrl);
+                            // StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
                         }
                     }
                     if (changedProperties.Contains(PropertyName.enterSoundUrl))
                     {
                         if (!string.IsNullOrEmpty(enterSoundUrl))
                         {
-                            enterSound = null; // Clear inspector-assigned clip
-                            StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
+                            enterSound = await Get.Audio(enterSoundUrl); // Clear inspector-assigned clip
+                            // StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
                         }
                     }
                     if (changedProperties.Contains(PropertyName.exitSoundUrl))
                     {
                         if (!string.IsNullOrEmpty(exitSoundUrl))
                         {
-                            exitSound = null; // Clear inspector-assigned clip
-                            StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
+                            exitSound = await Get.Audio(exitSoundUrl); // Clear inspector-assigned clip
+                            // StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
                         }
                     }
                 }
@@ -821,6 +798,11 @@ namespace Banter.SDK
             UpdateScreenSpaceTracking(this, screenSpace);
             scene.events.OnBanterUiPanelActiveChanged?.Invoke();
             SetLoadedIfNot();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         // BANTER COMPILED CODE 
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }

@@ -4,30 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Configurable Joint
-    A configurable joint allows you to create a joint between two rigidbodies and control the motion/options of the joint.
-
-    **Properties**
-    - `targetPosition` - The target position of the joint.
-    - `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-    - `xMotion` - The x motion of the joint.
-    - `yMotion` - The y motion of the joint.
-    - `zMotion` - The z motion of the joint.
-
-    **Code Example**
-    ```js
-        const targetPosition = new BS.Vector3(0,0,0);
-        const autoConfigureConnectedAnchor = false;
-        const xMotion = 0;
-        const yMotion = 0;
-        const zMotion = 0;
-
-        const gameObject = new BS.GameObject("MyConfigurableJoint"); 
-        const configurableJoint = await gameObject.AddComponent(new BS.BanterConfigurableJoint(targetPosition, autoConfigureConnectedAnchor, xMotion, yMotion, zMotion));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(ConfigurableJoint))]
     [RequireComponent(typeof(ConfigurableJoint))]
@@ -722,6 +698,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

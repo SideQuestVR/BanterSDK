@@ -43,6 +43,11 @@ namespace Banter.SDK
 
         }
 
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal override void StartStuff()
         {
 #if BANTER_FLEX

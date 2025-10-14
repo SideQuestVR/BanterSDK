@@ -223,6 +223,7 @@ namespace Banter.SDK
                 }
                 else if (msg.StartsWith(APICommands.WATCH_TRANSFORM))
                 {
+                    Debug.Log(msg);
                     scene.WatchJsTransform(GetMsgData(msg, APICommands.WATCH_TRANSFORM), id);
                 }
                 else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
@@ -303,6 +304,14 @@ namespace Banter.SDK
                 {
                     scene.PhysicsRaycast(GetMsgData(msg, APICommands.RAYCAST), id);
                 }
+                else if (msg.StartsWith(APICommands.SET_JSOID))
+                {
+                    scene.SetJsObjectId(GetMsgData(msg, APICommands.SET_JSOID), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_JSCID))
+                {
+                    scene.SetJsComponentId(GetMsgData(msg, APICommands.SET_JSCID), id);
+                }
                 else if (msg.StartsWith(APICommands.OBJECT_UPDATE_REQUEST))
                 {
                     scene.UpdateJsObject(GetMsgData(msg, APICommands.OBJECT_UPDATE_REQUEST), id);
@@ -336,6 +345,19 @@ namespace Banter.SDK
                 else if (msg.StartsWith(APICommands.QUERY_COMPONENTS))
                 {
                     _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
+                }
+                // Asset System Commands
+                else if (msg.StartsWith(APICommands.CREATE_ASSET))
+                {
+                    HandleCreateAsset(GetMsgData(msg, APICommands.CREATE_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.DESTROY_ASSET))
+                {
+                    HandleDestroyAsset(GetMsgData(msg, APICommands.DESTROY_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.QUERY_ASSET))
+                {
+                    HandleQueryAsset(GetMsgData(msg, APICommands.QUERY_ASSET), id);
                 }
                 else if (msg.StartsWith(APICommands.SET_CAN_MOVE))
                 {
@@ -735,43 +757,43 @@ namespace Banter.SDK
                     case PropertyName.position:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.localPosition:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.eulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.eulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.localEulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.rotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
                             break;
                         }
                     case PropertyName.localRotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
                             break;
                         }
                     case PropertyName.localScale:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                 }
@@ -985,6 +1007,190 @@ namespace Banter.SDK
                 SetupPipe();
             }
         }
+
+        #region Asset System Handlers
+
+        /// <summary>
+        /// Handle CREATE_ASSET command from JavaScript
+        /// Format: assetId§assetType§url§tag§...additional properties
+        /// </summary>
+        private void HandleCreateAsset(string data, int reqId)
+        {
+            try
+            {
+                var parts = data.Split(MessageDelimiters.SECONDARY);
+                if (parts.Length < 2)
+                {
+                    Debug.LogError($"Invalid CREATE_ASSET message format: {data}");
+                    return;
+                }
+
+                string assetId = parts[0];
+                AssetType assetType = (AssetType)int.Parse(parts[1]);
+                string url = parts.Length > 2 ? parts[2] : null;
+                string tag = parts.Length > 3 ? parts[3] : null;
+
+                // Create asset based on type
+                switch (assetType)
+                {
+                    case AssetType.Texture2D:
+                        CreateTextureAsset(assetId, url, tag);
+                        break;
+                    case AssetType.AudioClip:
+                        CreateAudioClipAsset(assetId, url, tag);
+                        break;
+                    case AssetType.Material:
+                        CreateMaterialAsset(assetId, url, tag);
+                        break;
+                    default:
+                        Debug.LogWarning($"Asset type {assetType} not yet implemented for creation");
+                        break;
+                }
+                Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling CREATE_ASSET: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handle DESTROY_ASSET command from JavaScript
+        /// Format: assetId
+        /// </summary>
+        private void HandleDestroyAsset(string data, int reqId)
+        {
+            try
+            {
+                string assetId = data.Trim();
+                BanterAssetRegistry.Instance.UnregisterAsset(assetId);
+                Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling DESTROY_ASSET: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handle QUERY_ASSET command from JavaScript
+        /// Format: assetId
+        /// </summary>
+        private void HandleQueryAsset(string data, int reqId)
+        {
+            try
+            {
+                string assetId = data.Trim();
+                var metadata = BanterAssetRegistry.Instance.GetMetadata(assetId);
+
+                if (metadata.HasValue)
+                {
+                    var meta = metadata.Value;
+                    var response = $"{APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId}{MessageDelimiters.PRIMARY}" +
+                                 $"{assetId}{MessageDelimiters.SECONDARY}" +
+                                 $"{(int)meta.type}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.url ?? ""}{MessageDelimiters.SECONDARY}" +
+                                 $"{(meta.loaded ? "1" : "0")}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.memorySize}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.tag ?? ""}";
+
+                    Send(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling QUERY_ASSET: {ex.Message}");
+            }
+        }
+
+        private async void CreateTextureAsset(string assetId, string url, string tag)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogError($"Cannot create texture asset without URL: {assetId}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"Loading texture asset: {assetId} from {url}");
+
+                // Load texture from URL using existing Get utility
+                var texture = await Get.Texture(url);
+
+                if (texture == null)
+                {
+                    throw new Exception("Texture loading returned null");
+                }
+
+                // Register the loaded texture
+                BanterAssetRegistry.Instance.RegisterAsset(texture, AssetType.Texture2D, url, tag);
+                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+
+                Debug.Log($"Successfully loaded texture asset: {assetId} ({texture.width}x{texture.height})");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create texture asset {assetId}: {ex.Message}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+            }
+        }
+
+        private async void CreateAudioClipAsset(string assetId, string url, string tag)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogError($"Cannot create audio clip asset without URL: {assetId}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"Loading audio clip asset: {assetId} from {url}");
+
+                // Load audio from URL using existing Get utility
+                var audioClip = await Get.Audio(url);
+
+                if (audioClip == null)
+                {
+                    throw new Exception("Audio loading returned null");
+                }
+
+                // Register the loaded audio clip
+                BanterAssetRegistry.Instance.RegisterAsset(audioClip, AssetType.AudioClip, url, tag);
+                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+
+                Debug.Log($"Successfully loaded audio clip asset: {assetId} ({audioClip.length}s)");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create audio clip asset {assetId}: {ex.Message}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+            }
+        }
+
+        private void CreateMaterialAsset(string assetId, string url, string tag)
+        {
+            try
+            {
+                // Create a new material
+                var material = new Material(Shader.Find("Standard"));
+                BanterAssetRegistry.Instance.RegisterAsset(material, AssetType.Material, url, tag);
+                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+
+                Debug.Log($"Created material asset: {assetId}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create material asset {assetId}: {ex.Message}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+            }
+        }
+
+        #endregion
 
         #region Legacy stuff
         public void ToggleDevTools()

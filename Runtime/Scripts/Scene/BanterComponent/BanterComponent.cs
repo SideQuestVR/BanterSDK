@@ -10,6 +10,7 @@ namespace Banter.SDK
     public class BanterComponent
     {
         public int cid;
+        public string jsId;
         public ComponentType type;
         public ConcurrentDictionary<PropertyName, BanterComponentProperty> componentProperties = new ConcurrentDictionary<PropertyName, BanterComponentProperty>();
         public BanterObject banterObject;
@@ -101,15 +102,21 @@ namespace Banter.SDK
             await ObjectOnMainThread(component => callback(component.CallMethod(methodName, parameters)));
         }
 
+        public BanterComponentBase Object()
+        {
+            var ObjectId = banterObject.unityAndBanterObject.id;
+            if (ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component))
+            {
+                return component;
+            }
+            return null;
+        }
+
         public Task ObjectOnMainThread(Action<BanterComponentBase> callback)
         {
             return UnityMainThreadTaskScheduler.Default.EnqueueAsync(TaskRunner.Track(() =>
             {
-                var ObjectId = banterObject.unityAndBanterObject.id;
-                if (ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component))
-                {
-                    callback(component);
-                }
+                callback(Object());
             }, $"{nameof(BanterComponent)}.{nameof(ObjectOnMainThread)}"));
         }
 

@@ -4,41 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /*
-    #### Banter Character Joint
-    A character joint is used for ragdoll effects. It simulates the movement of a limb with swing and twist limits.
-
-    **Properties**
-    - `connectedBody` - The Rigidbody that this joint is connected to.
-    - `anchor` - The anchor point of the joint in local space.
-    - `axis` - The primary axis of the joint.
-    - `swingAxis` - The swing axis of the joint.
-    - `connectedAnchor` - The connected anchor point in the connected body's local space.
-    - `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-    - `lowTwistLimit` - The lower angular limit around the primary axis.
-    - `highTwistLimit` - The upper angular limit around the primary axis.
-    - `swing1Limit` - The angular limit around the swing axis.
-    - `swing2Limit` - The angular limit around the secondary swing axis.
-    - `enableProjection` - Enable joint projection for the joint.
-    - `projectionDistance` - The distance beyond which the joint will be projected.
-    - `projectionAngle` - The angle beyond which the joint will be projected.
-    - `breakForce` - The force that needs to be applied for this joint to break.
-    - `breakTorque` - The torque that needs to be applied for this joint to break.
-    - `enableCollision` - Enable collision between connected bodies.
-    - `enablePreprocessing` - Enable preprocessing for the joint.
-
-    **Code Example**
-    ```js
-        const connectedBody = null;
-        const anchor = new BS.Vector3(0,0,0);
-        const axis = new BS.Vector3(1,0,0);
-        const swingAxis = new BS.Vector3(0,1,0);
-
-        const gameObject = new BS.GameObject("MyCharacterJoint");
-        const characterJoint = await gameObject.AddComponent(new BS.BanterCharacterJoint(connectedBody, anchor, axis, swingAxis));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(CharacterJoint))]
     [RequireComponent(typeof(CharacterJoint))]
@@ -483,6 +448,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }
