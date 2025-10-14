@@ -269,7 +269,6 @@ namespace Banter.SDK
                         if (!string.IsNullOrEmpty(valconnectedBody.x))
                         {
                             // Lookup component by jsId
-                            Debug.Log("BanterString: connectedBody: " + valconnectedBody.x);
                             var targetComponentBase = scene.GetComponentByJsId(valconnectedBody.x);
                             if (targetComponentBase != null)
                             {

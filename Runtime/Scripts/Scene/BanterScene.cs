@@ -899,14 +899,6 @@ namespace Banter.SDK
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
-                if(sheetFerMainThread.Count()>0)
-                 {
-                     var item = sheetFerMainThread.First().Item2.First();
-                     if(item is BanterString)
-                     {
-                         Debug.Log("BanterString: " + ((BanterString)item).n + ", " + ((BanterString)item).x);
-                     }
-                 }
                  for (int i = 0; i < sheetFerMainThread.Count; i++)
                  {
                      var s = sheetFerMainThread[i];
@@ -1372,6 +1364,7 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, new Vector2(valVector2X, valVector2Y));
                             break;
                         case PropertyType.Vector3:
+                        case PropertyType.SoftJointLimit:
                             var valVector3X = NumberFormat.Parse(propParts[2]);
                             var valVector3Y = NumberFormat.Parse(propParts[3]);
                             var valVector3Z = NumberFormat.Parse(propParts[4]);
@@ -1380,6 +1373,7 @@ namespace Banter.SDK
                             break;
                         case PropertyType.Vector4:
                         case PropertyType.Quaternion:
+                        case PropertyType.JointDrive:
                             var valVector4X = NumberFormat.Parse(propParts[2]);
                             var valVector4Y = NumberFormat.Parse(propParts[3]);
                             var valVector4Z = NumberFormat.Parse(propParts[4]);

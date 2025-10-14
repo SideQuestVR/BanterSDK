@@ -8,8 +8,9 @@ public enum PropertyType
     Vector3,
     Vector4,
     Quaternion,
+    SoftJointLimit,
+    JointDrive,
     NotSupported,
-
     // Reference types
     AssetReference = 100,
     ComponentReference = 101,

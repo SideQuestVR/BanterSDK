@@ -16,31 +16,6 @@ namespace Banter.SDK
         Back,
         Double
     }
-    /* 
-    #### Banter Material
-    Add a material to the object. This component will add a material to the object and set the shader, texture, color and side of the material.
-
-    **Properties**
-     - `texture` - The texture to use for the material.
-     - `color` - The color of the material.
-     - `shaderName` - The name of the shader to use.
-     - `side` - The side of the material to render.
-     - `generateMipMaps` - Whether to generate mipmaps for the texture.
-
-    **Code Example**
-    ```js
-        const texture = "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        const color = new BS.Vector4(1,1,1,1);
-        const shaderName = "Unlit/Diffuse";
-        const side = BS.MaterialSide.Front;
-        const generateMipMaps = false;
-
-        const gameObject = new BS.GameObject("MyMaterial"); 
-        const material = await gameObject.AddComponent(new BS.BanterMaterial(shaderName, texture, color, side, generateMipMaps));
-
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]

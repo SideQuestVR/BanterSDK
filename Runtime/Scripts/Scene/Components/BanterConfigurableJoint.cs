@@ -14,7 +14,7 @@ namespace Banter.SDK
         [See(initial = "0,0,0")][SerializeField] internal Vector3 targetPosition = Vector3.zero;
 
         [Tooltip("If true, the connected anchor will be automatically configured.")]
-        [See(initial = "false")][SerializeField] internal bool autoConfigureConnectedAnchor = false;
+        [See(initial = "true")][SerializeField] internal bool autoConfigureConnectedAnchor = true;
 
         [Tooltip("The motion of the joint along the x-axis.")]
         [See(initial = "0")][SerializeField] internal ConfigurableJointMotion xMotion = ConfigurableJointMotion.Locked;
@@ -81,6 +81,52 @@ namespace Banter.SDK
 
         [Tooltip("Swap the bodies connected by the joint.")]
         [See(initial = "false")][SerializeField] internal bool swapBodies = false;
+        [Tooltip("The rigidbody that this joint connects to. Can be null for world-anchored joints. Accepts GameObject name or asset reference.")]
+        [See(initial = "", isAssetReference = true)][SerializeField] internal string connectedBody = "";
+
+        // Linear Limit (SoftJointLimit as Vector3: limit, bounciness, contactDistance)
+        [Tooltip("The limit on linear motion. Vector3(limit, bounciness, contactDistance). Default limit=0, bounciness=0, contactDistance=0.")]
+        [See(initial = "0,0,0")][SerializeField] internal SoftJointLimit linearLimit = new SoftJointLimit();
+
+        // Low Angular X Limit (SoftJointLimit as Vector3: limit, bounciness, contactDistance)
+        [Tooltip("The lower limit on rotation around the x-axis. Vector3(limit, bounciness, contactDistance). Default limit=-20, bounciness=0, contactDistance=0.")]
+        [See(initial = "-20,0,0")][SerializeField] internal SoftJointLimit lowAngularXLimit = new SoftJointLimit { limit = -20f };
+
+        // High Angular X Limit (SoftJointLimit as Vector3: limit, bounciness, contactDistance)
+        [Tooltip("The upper limit on rotation around the x-axis. Vector3(limit, bounciness, contactDistance). Default limit=70, bounciness=0, contactDistance=0.")]
+        [See(initial = "70,0,0")][SerializeField] internal SoftJointLimit highAngularXLimit = new SoftJointLimit { limit = 70f };
+
+        // Angular Y Limit (SoftJointLimit as Vector3: limit, bounciness, contactDistance)
+        [Tooltip("The limit on rotation around the y-axis. Vector3(limit, bounciness, contactDistance). Default limit=30, bounciness=0, contactDistance=0.")]
+        [See(initial = "30,0,0")][SerializeField] internal SoftJointLimit angularYLimit = new SoftJointLimit { limit = 30f };
+
+        // Angular Z Limit (SoftJointLimit as Vector3: limit, bounciness, contactDistance)
+        [Tooltip("The limit on rotation around the z-axis. Vector3(limit, bounciness, contactDistance). Default limit=30, bounciness=0, contactDistance=0.")]
+        [See(initial = "30,0,0")][SerializeField] internal SoftJointLimit angularZLimit = new SoftJointLimit { limit = 30f };
+
+        // X Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
+        [Tooltip("The drive for the x-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive xDrive = new JointDrive();
+
+        // Y Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
+        [Tooltip("The drive for the y-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive yDrive = new JointDrive();
+
+        // Z Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
+        [Tooltip("The drive for the z-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive zDrive = new JointDrive();
+
+        // Angular X Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
+        [Tooltip("The drive for the angular x-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive angularXDrive = new JointDrive();
+
+        // Angular YZ Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
+        [Tooltip("The drive for the angular YZ-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive angularYZDrive = new JointDrive();
+
+        // Slerp Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
+        [Tooltip("The slerp drive for rotation. Vector3(positionSpring, positionDamper, maximumForce).")]
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive slerpDrive = new JointDrive();
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 TargetPosition { get { return targetPosition; } set { targetPosition = value; } }
         public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
@@ -106,6 +152,18 @@ namespace Banter.SDK
         public UnityEngine.RotationDriveMode RotationDriveMode { get { return rotationDriveMode; } set { rotationDriveMode = value; } }
         public System.Boolean ConfiguredInWorldSpace { get { return configuredInWorldSpace; } set { configuredInWorldSpace = value; } }
         public System.Boolean SwapBodies { get { return swapBodies; } set { swapBodies = value; } }
+        public System.String ConnectedBody { get { return connectedBody; } set { connectedBody = value; } }
+        public UnityEngine.SoftJointLimit LinearLimit { get { return linearLimit; } set { linearLimit = value; } }
+        public UnityEngine.SoftJointLimit LowAngularXLimit { get { return lowAngularXLimit; } set { lowAngularXLimit = value; } }
+        public UnityEngine.SoftJointLimit HighAngularXLimit { get { return highAngularXLimit; } set { highAngularXLimit = value; } }
+        public UnityEngine.SoftJointLimit AngularYLimit { get { return angularYLimit; } set { angularYLimit = value; } }
+        public UnityEngine.SoftJointLimit AngularZLimit { get { return angularZLimit; } set { angularZLimit = value; } }
+        public UnityEngine.JointDrive XDrive { get { return xDrive; } set { xDrive = value; } }
+        public UnityEngine.JointDrive YDrive { get { return yDrive; } set { yDrive = value; } }
+        public UnityEngine.JointDrive ZDrive { get { return zDrive; } set { zDrive = value; } }
+        public UnityEngine.JointDrive AngularXDrive { get { return angularXDrive; } set { angularXDrive = value; } }
+        public UnityEngine.JointDrive AngularYZDrive { get { return angularYZDrive; } set { angularYZDrive = value; } }
+        public UnityEngine.JointDrive SlerpDrive { get { return slerpDrive; } set { slerpDrive = value; } }
         public ConfigurableJoint _componentType;
         public ConfigurableJoint componentType
         {
@@ -399,6 +457,200 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.swapBodies);
                     }
                 }
+                if (values[i] is BanterString)
+                {
+                    var valconnectedBody = (BanterString)values[i];
+                    if (valconnectedBody.n == PropertyName.connectedBody)
+                    {
+                        if (!string.IsNullOrEmpty(valconnectedBody.x))
+                        {
+                            // Lookup component by jsId
+                            var targetComponentBase = scene.GetComponentByJsId(valconnectedBody.x);
+                            if (targetComponentBase != null)
+                            {
+                                // Get the actual reference object (for UnityComponents, this returns componentType)
+                                var referenceObject = targetComponentBase.GetReferenceObject();
+                                if (referenceObject is Rigidbody)
+                                {
+                                    componentType.connectedBody = referenceObject as Rigidbody;
+                                    changedProperties.Add(PropertyName.connectedBody);
+                                }
+                            }
+                            else
+                            {
+                                // Fallback: Try parsing as GameObject instance ID
+                                if (int.TryParse(valconnectedBody.x, out int targetOid))
+                                {
+                                    var targetGameObject = scene.GetGameObject(targetOid);
+                                    if (targetGameObject != null)
+                                    {
+                                        var targetComponent = targetGameObject.GetComponent<Rigidbody>();
+                                        if (targetComponent != null)
+                                        {
+                                            componentType.connectedBody = targetComponent;
+                                            changedProperties.Add(PropertyName.connectedBody);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Empty string - set to null
+                            componentType.connectedBody = null;
+                            changedProperties.Add(PropertyName.connectedBody);
+                        }
+                    }
+                }
+                if (values[i] is BanterVector3)
+                {
+                    var vallinearLimit = (BanterVector3)values[i];
+                    if (vallinearLimit.n == PropertyName.linearLimit)
+                    {
+                        componentType.linearLimit = new SoftJointLimit(){
+                            limit = vallinearLimit.x,
+                            bounciness = vallinearLimit.y,
+                            contactDistance = vallinearLimit.z
+                        };
+                        changedProperties.Add(PropertyName.linearLimit);
+                    }
+                }
+                if (values[i] is BanterVector3)
+                {
+                    var vallowAngularXLimit = (BanterVector3)values[i];
+                    if (vallowAngularXLimit.n == PropertyName.lowAngularXLimit)
+                    {
+                        componentType.lowAngularXLimit = new SoftJointLimit(){
+                            limit = vallowAngularXLimit.x,
+                            bounciness = vallowAngularXLimit.y,
+                            contactDistance = vallowAngularXLimit.z
+                        };
+                        changedProperties.Add(PropertyName.lowAngularXLimit);
+                    }
+                }
+                if (values[i] is BanterVector3)
+                {
+                    var valhighAngularXLimit = (BanterVector3)values[i];
+                    if (valhighAngularXLimit.n == PropertyName.highAngularXLimit)
+                    {
+                        componentType.highAngularXLimit = new SoftJointLimit(){
+                            limit = valhighAngularXLimit.x,
+                            bounciness = valhighAngularXLimit.y,
+                            contactDistance = valhighAngularXLimit.z
+                        };
+                        changedProperties.Add(PropertyName.highAngularXLimit);
+                    }
+                }
+                if (values[i] is BanterVector3)
+                {
+                    var valangularYLimit = (BanterVector3)values[i];
+                    if (valangularYLimit.n == PropertyName.angularYLimit)
+                    {
+                        componentType.angularYLimit = new SoftJointLimit(){
+                            limit = valangularYLimit.x,
+                            bounciness = valangularYLimit.y,
+                            contactDistance = valangularYLimit.z
+                        };
+                        changedProperties.Add(PropertyName.angularYLimit);
+                    }
+                }
+                if (values[i] is BanterVector3)
+                {
+                    var valangularZLimit = (BanterVector3)values[i];
+                    if (valangularZLimit.n == PropertyName.angularZLimit)
+                    {
+                        componentType.angularZLimit = new SoftJointLimit(){
+                            limit = valangularZLimit.x,
+                            bounciness = valangularZLimit.y,
+                            contactDistance = valangularZLimit.z
+                        };
+                        changedProperties.Add(PropertyName.angularZLimit);
+                    }
+                }
+                if (values[i] is BanterVector4)
+                {
+                    var valxDrive = (BanterVector4)values[i];
+                    if (valxDrive.n == PropertyName.xDrive)
+                    {
+                        componentType.xDrive = new JointDrive(){
+                            positionSpring = valxDrive.x,
+                            positionDamper = valxDrive.y,
+                            maximumForce = valxDrive.z,
+                            useAcceleration = valxDrive.w != 0
+                        };
+                        changedProperties.Add(PropertyName.xDrive);
+                    }
+                }
+                if (values[i] is BanterVector4)
+                {
+                    var valyDrive = (BanterVector4)values[i];
+                    if (valyDrive.n == PropertyName.yDrive)
+                    {
+                        componentType.yDrive = new JointDrive(){
+                            positionSpring = valyDrive.x,
+                            positionDamper = valyDrive.y,
+                            maximumForce = valyDrive.z,
+                            useAcceleration = valyDrive.w != 0
+                        };
+                        changedProperties.Add(PropertyName.yDrive);
+                    }
+                }
+                if (values[i] is BanterVector4)
+                {
+                    var valzDrive = (BanterVector4)values[i];
+                    if (valzDrive.n == PropertyName.zDrive)
+                    {
+                        componentType.zDrive = new JointDrive(){
+                            positionSpring = valzDrive.x,
+                            positionDamper = valzDrive.y,
+                            maximumForce = valzDrive.z,
+                            useAcceleration = valzDrive.w != 0
+                        };
+                        changedProperties.Add(PropertyName.zDrive);
+                    }
+                }
+                if (values[i] is BanterVector4)
+                {
+                    var valangularXDrive = (BanterVector4)values[i];
+                    if (valangularXDrive.n == PropertyName.angularXDrive)
+                    {
+                        componentType.angularXDrive = new JointDrive(){
+                            positionSpring = valangularXDrive.x,
+                            positionDamper = valangularXDrive.y,
+                            maximumForce = valangularXDrive.z,
+                            useAcceleration = valangularXDrive.w != 0
+                        };
+                        changedProperties.Add(PropertyName.angularXDrive);
+                    }
+                }
+                if (values[i] is BanterVector4)
+                {
+                    var valangularYZDrive = (BanterVector4)values[i];
+                    if (valangularYZDrive.n == PropertyName.angularYZDrive)
+                    {
+                        componentType.angularYZDrive = new JointDrive(){
+                            positionSpring = valangularYZDrive.x,
+                            positionDamper = valangularYZDrive.y,
+                            maximumForce = valangularYZDrive.z,
+                            useAcceleration = valangularYZDrive.w != 0
+                        };
+                        changedProperties.Add(PropertyName.angularYZDrive);
+                    }
+                }
+                if (values[i] is BanterVector4)
+                {
+                    var valslerpDrive = (BanterVector4)values[i];
+                    if (valslerpDrive.n == PropertyName.slerpDrive)
+                    {
+                        componentType.slerpDrive = new JointDrive(){
+                            positionSpring = valslerpDrive.x,
+                            positionDamper = valslerpDrive.y,
+                            maximumForce = valslerpDrive.z,
+                            useAcceleration = valslerpDrive.w != 0
+                        };
+                        changedProperties.Add(PropertyName.slerpDrive);
+                    }
+                }
             }
         }
 
@@ -688,6 +940,150 @@ namespace Banter.SDK
                     name = PropertyName.swapBodies,
                     type = PropertyType.Bool,
                     value = componentType.swapBodies,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.connectedBody,
+                    type = PropertyType.String,
+                    value = componentType.connectedBody,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.linearLimit,
+                    type = PropertyType.SoftJointLimit,
+                    value = componentType.linearLimit,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.lowAngularXLimit,
+                    type = PropertyType.SoftJointLimit,
+                    value = componentType.lowAngularXLimit,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.highAngularXLimit,
+                    type = PropertyType.SoftJointLimit,
+                    value = componentType.highAngularXLimit,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.angularYLimit,
+                    type = PropertyType.SoftJointLimit,
+                    value = componentType.angularYLimit,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.angularZLimit,
+                    type = PropertyType.SoftJointLimit,
+                    value = componentType.angularZLimit,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.xDrive,
+                    type = PropertyType.JointDrive,
+                    value = componentType.xDrive,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.yDrive,
+                    type = PropertyType.JointDrive,
+                    value = componentType.yDrive,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.zDrive,
+                    type = PropertyType.JointDrive,
+                    value = componentType.zDrive,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.angularXDrive,
+                    type = PropertyType.JointDrive,
+                    value = componentType.angularXDrive,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.angularYZDrive,
+                    type = PropertyType.JointDrive,
+                    value = componentType.angularYZDrive,
+                    componentType = ComponentType.ConfigurableJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.slerpDrive,
+                    type = PropertyType.JointDrive,
+                    value = componentType.slerpDrive,
                     componentType = ComponentType.ConfigurableJoint,
                     oid = oid,
                     cid = cid
