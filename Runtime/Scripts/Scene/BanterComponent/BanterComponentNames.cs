@@ -39,6 +39,7 @@ namespace Banter.SDK
         BanterMirror,
         BanterMobius,
         BanterMobius3d,
+        BanterMonoBehaviour,
         BanterNatica,
         BanterPhysicMaterial,
         BanterPillow,

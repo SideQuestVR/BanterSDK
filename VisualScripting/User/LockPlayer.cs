@@ -5,7 +5,7 @@ using Banter.SDK;
 namespace Banter.VisualScripting
 {
     [UnitTitle("Lock Player Position")]
-    [UnitShortTitle("Anchor Player")]
+    [UnitShortTitle("Lock Player")]
     [UnitCategory("Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LockPlayer : Unit
@@ -27,7 +27,7 @@ namespace Banter.VisualScripting
     }
 
     [UnitTitle("Unlock Player Position")]
-    [UnitShortTitle("Unanchor Player")]
+    [UnitShortTitle("Unlock Player")]
     [UnitCategory("Banter\\User")]
     [TypeIcon(typeof(BanterObjectId))]
     public class UnlockPlayer : Unit

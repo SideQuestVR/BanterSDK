@@ -22,16 +22,6 @@ using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public enum TransformType
-    {
-        Position,
-        LocalPosition,
-        Rotation,
-        LocalRotation,
-        EulerAngles,
-        LocalEulerAngles,
-        LocalScale
-    }
     public class SpawnPointData
     {
         public Vector3 position;
@@ -781,6 +771,11 @@ namespace Banter.SDK
                         // This is caught in the AddBanterComponent method instead. 
                         // Debug.LogError("BanterComponent is null: " + go.GetInstanceID() + " : " + cid + " : " + comp.name);
                     }
+                    // Debug.Log();
+                    if (comp is BanterMaterial)
+                    {
+                        Debug.Log("HERER - Sending loaded event for material:" + cid);
+                    }
                     link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
                 comp.progress.AddListener((progress) =>
@@ -1041,24 +1036,43 @@ namespace Banter.SDK
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
-                    object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
-                    if (renderers.Length > 0)
-                    {
-                        var bounds = ((Collider)renderers[0]).bounds;
-                        for (int i = 1; i < renderers.Length; i++)
-                        {
-                            bounds.Encapsulate(((Collider)renderers[i]).bounds);
-                        }
-                        var center = bounds.center;
-                        var extents = bounds.extents;
-                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
-                    }
-                    else
-                    {
-                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
-                    }
-                     
+                     object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
+                     if (renderers.Length > 0)
+                     {
+                         var bounds = ((Collider)renderers[0]).bounds;
+                         for (int i = 1; i < renderers.Length; i++)
+                         {
+                             bounds.Encapsulate(((Collider)renderers[i]).bounds);
+                         }
+                         var center = bounds.center;
+                         var extents = bounds.extents;
+                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
+                     }
+                     else
+                     {
+                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
+                     }
+
                  }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+            }
+        }
+        
+        public void SetJsObjectTag(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+            if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                 {
+                     banterObject.tag = msgParts[1];
+                     SendObjectUpdate(banterObject, reqId);
+                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
             }
         }
         
@@ -1214,6 +1228,7 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Add Component message is malformed: " + msg);
                 return;
             }
+            Debug.Log("HERER: " + msg);
             var oid = int.Parse(parts[0]);
             var gameObject = GetGameObject(oid);
             if (gameObject == null)
@@ -1343,7 +1358,6 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
                      banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
-                     Debug.Log("SetParent" + msg);
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(SetParent)}"));
             }
@@ -1442,7 +1456,7 @@ namespace Banter.SDK
         {
             return APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
                 APICommands.OBJECT_ADDED + MessageDelimiters.PRIMARY + go.GetInstanceID() + MessageDelimiters.PRIMARY + (go.activeSelf ? 1 : 0) +
-                MessageDelimiters.PRIMARY + go.name + MessageDelimiters.PRIMARY + go.layer + MessageDelimiters.PRIMARY + parent + MessageDelimiters.PRIMARY + linkId;
+                MessageDelimiters.PRIMARY + go.name + MessageDelimiters.PRIMARY + go.layer + MessageDelimiters.PRIMARY + go.tag + MessageDelimiters.PRIMARY + parent + MessageDelimiters.PRIMARY + linkId;
         }
 
         public void WatchJsTransform(string msg, int reqId)
@@ -1468,27 +1482,27 @@ namespace Banter.SDK
                     var transformParts = parts[1].Split(MessageDelimiters.PRIMARY);
                     foreach (var part in transformParts)
                     {
-                        switch ((TransformType)int.Parse(part))
+                        switch ((PropertyName)int.Parse(part))
                         {
-                            case TransformType.Position:
+                            case PropertyName.position:
                                 obj.id.watchPosition = true;
                                 break;
-                            case TransformType.LocalPosition:
+                            case PropertyName.localPosition:
                                 obj.id.watchLocalPosition = true;
                                 break;
-                            case TransformType.EulerAngles:
+                            case PropertyName.eulerAngles:
                                 obj.id.watchEuler = true;
                                 break;
-                            case TransformType.LocalEulerAngles:
+                            case PropertyName.localEulerAngles:
                                 obj.id.watchLocalEuler = true;
                                 break;
-                            case TransformType.Rotation:
+                            case PropertyName.rotation:
                                 obj.id.watchRotation = true;
                                 break;
-                            case TransformType.LocalRotation:
+                            case PropertyName.localRotation:
                                 obj.id.watchLocalRotation = true;
                                 break;
-                            case TransformType.LocalScale:
+                            case PropertyName.localScale:
                                 obj.id.watchLocalScale = true;
                                 break;
                         }
@@ -1515,10 +1529,10 @@ namespace Banter.SDK
                     var transformUpdate = part.Split(MessageDelimiters.SECONDARY);
                     if (int.TryParse(transformUpdate[0], out int transformType))
                     {
-                        var type = (TransformType)transformType;
+                        var type = (PropertyName)transformType;
                         switch (type)
                         {
-                            case TransformType.Position:
+                            case PropertyName.position:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1527,7 +1541,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.position = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.LocalPosition:
+                            case PropertyName.localPosition:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1536,7 +1550,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.localPosition = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.EulerAngles:
+                            case PropertyName.eulerAngles:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1545,7 +1559,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.eulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.LocalEulerAngles:
+                            case PropertyName.localEulerAngles:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1554,7 +1568,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.localEulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                 break;
-                            case TransformType.Rotation:
+                            case PropertyName.rotation:
                                 if (transformUpdate.Length < 5)
                                 {
 
@@ -1563,7 +1577,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.rotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
                                 break;
-                            case TransformType.LocalRotation:
+                            case PropertyName.localRotation:
                                 if (transformUpdate.Length < 5)
                                 {
 
@@ -1572,7 +1586,7 @@ namespace Banter.SDK
                                 }
                                 obj.transform.localRotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
                                 break;
-                            case TransformType.LocalScale:
+                            case PropertyName.localScale:
                                 if (transformUpdate.Length < 4)
                                 {
 
@@ -1580,6 +1594,7 @@ namespace Banter.SDK
                                     break;
                                 }
                                 obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
+                                Debug.Log(part + " - " + obj.transform.localScale);
                                 break;
                         }
                     }
@@ -1597,21 +1612,52 @@ namespace Banter.SDK
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
-                try
-                {
+                // try
+                // {
                     var go = new GameObject(parts[2]);
                     go.transform.parent = settings.parentTransform;
-                    go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[3]), NumberFormat.Parse(parts[4]), NumberFormat.Parse(parts[5]));
-                    var rotation = new Vector4(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]), NumberFormat.Parse(parts[9]));
-                    if (rotation.magnitude == 0)
+                    try
                     {
-                        go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
+                        go.layer = int.Parse(parts[3]);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Could not set layer! " + msg);
+                    }
+                    try
+                    {
+                        go.tag = parts[4];
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Could not set tag! " + msg);
+                    }
+                    try
+                    {
+                        if (!parts[5].Equals("undefined"))
+                        {
+                            var parentObject = GetGameObject(int.Parse(parts[5]));
+                            if (parentObject != null)
+                            {
+                                go.transform.SetParent(parentObject.transform, true);
+                            }
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogError("Could not set parent! " + msg);
+                    }
+                    go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]));
+                    var rotation = new Quaternion(NumberFormat.Parse(parts[9]), NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
+                    if (rotation == Quaternion.identity)
+                    {
+                        go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
                     }
                     else
                     {
-                        go.transform.localRotation = new Quaternion(rotation.x, rotation.y, rotation.z, rotation.w);
+                        go.transform.localRotation = rotation;
                     }
-                    go.transform.localScale = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
+                    go.transform.localScale = new Vector3(NumberFormat.Parse(parts[16]), NumberFormat.Parse(parts[17]), NumberFormat.Parse(parts[18]));
                     AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                     await new WaitForSeconds(2);
@@ -1620,11 +1666,12 @@ namespace Banter.SDK
                         Debug.Log("Creating object that is not active: " + go.name);
                         go.SetActive(false);
                     }
-                }
-                catch (Exception e)
-                {
-                    Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
-                }
+                    Debug.Log("HERER - add object");
+                // }
+                // catch (Exception e)
+                // {
+                //     Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
+                // }
             }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
         }
         public void Cancel(string message, bool isUserCancel = false)

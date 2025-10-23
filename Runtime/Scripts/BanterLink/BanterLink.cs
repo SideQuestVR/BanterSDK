@@ -287,6 +287,10 @@ namespace Banter.SDK
                 {
                     scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
                 }
+                else if (msg.StartsWith(APICommands.SET_TAG))
+                {
+                    scene.SetJsObjectTag(GetMsgData(msg, APICommands.SET_TAG), id);
+                }
                 else if (msg.StartsWith(APICommands.SET_NAME))
                 {
                     scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
@@ -743,43 +747,43 @@ namespace Banter.SDK
                     case PropertyName.position:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.Position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.localPosition:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.eulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.EulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.eulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.localEulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                     case PropertyName.rotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.Rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
                             break;
                         }
                     case PropertyName.localRotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
                             break;
                         }
                     case PropertyName.localScale:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + TransformType.LocalScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + PropertyName.localScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
                             break;
                         }
                 }
@@ -791,18 +795,16 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.BANTER_VERSION + MessageDelimiters.PRIMARY + versionData);
         }
-
-        // public void OnSendUser(string name, string id, string color, string instance) {
-        //     Send(APICommands.EVENT + APICommands.SEND_USER + MessageDelimiters.PRIMARY + name + MessageDelimiters.SECONDARY + id + MessageDelimiters.SECONDARY + color + MessageDelimiters.SECONDARY + instance);
-        // }
-
         public void OnUnitySceneLoaded()
         {
             scene.state = SceneState.UNITY_READY;
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Unity Scene Loaded.");
             Send(APICommands.EVENT + APICommands.UNITY_LOADED + MessageDelimiters.PRIMARY);
         }
-
+        public void OnMonoBehaviourLifeCycle(int cid, BanterMonoBehaviourLifeCycle lifeCycle)
+        {
+            Send(APICommands.EVENT + APICommands.MONO_BEHAVIOUR + MessageDelimiters.PRIMARY + cid + MessageDelimiters.PRIMARY + (int)lifeCycle);
+        }
         public void OnVoiceStarted()
         {
             Send(APICommands.EVENT + APICommands.VOICE_STARTED + MessageDelimiters.PRIMARY);
@@ -938,7 +940,6 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.MENU_BROWSER_MESSAGE + MessageDelimiters.PRIMARY + data);
         }
-
         public void OnReceiveBrowserMessage(BanterBrowser browser, string message)
         {
 #if BANTER_VISUAL_SCRIPTING
@@ -946,7 +947,6 @@ namespace Banter.SDK
 #endif
             Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + message);
         }
-
         public void OnKeyPress(KeyCode key)
         {
             Send(APICommands.EVENT + APICommands.KEY + MessageDelimiters.PRIMARY + (int)key);

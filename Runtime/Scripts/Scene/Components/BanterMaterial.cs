@@ -65,43 +65,64 @@ namespace Banter.SDK
 
         Texture2D defaultTexture;
         Texture2D mainTex;
+
+        bool UpdateCallbackRan = false;
         internal override void StartStuff()
         {
-            _ = SetupMaterial();
+            if(!UpdateCallbackRan)
+            {
+                _ = SetupMaterial();
+            }
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            UpdateCallbackRan = true;
             _ = SetupMaterial(changedProperties);
         }
         async Task SetupMaterial(List<PropertyName> changedProperties = null)
         {
-            if (defaultTexture == null)
+            try
             {
-                defaultTexture = Resources.Load<Texture2D>("Images/GridBox_Default");
+
+                if (defaultTexture == null)
+                {
+                    defaultTexture = Resources.Load<Texture2D>("Images/GridBox_Default");
+                }
+                _renderer = GetComponent<MeshRenderer>();
+                if (_renderer == null)
+                {
+                    _renderer = gameObject.AddComponent<MeshRenderer>();
+                }
+                if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
+                {
+                    var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                    _renderer.sharedMaterial = material;
+                }
+                if (changedProperties?.Contains(PropertyName.texture) ?? false)
+                {
+                    if (!string.IsNullOrEmpty(texture))
+                    {
+                        Debug.Log("BeforeLoadTexture: " + texture);
+                    }
+                    await SetTexture(texture);
+                    if (!string.IsNullOrEmpty(texture))
+                    {
+                        Debug.Log("AfterLoadTexture: " + texture);
+                        scene.link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
+                    }
+                }
+                if (changedProperties?.Contains(PropertyName.color) ?? false)
+                {
+                    SetColor(new Color(color.x, color.y, color.z, color.w));
+                }
+                if (changedProperties?.Contains(PropertyName.side) ?? false)
+                {
+                    _renderer.sharedMaterial.SetFloat("_Cull", 2 - (int)side);
+                }
             }
+            catch { }
+            Debug.Log("HERER - Before set loaded on material:" + cid);
             SetLoadedIfNot();
-            _renderer = GetComponent<MeshRenderer>();
-            if (_renderer == null)
-            {
-                _renderer = gameObject.AddComponent<MeshRenderer>();
-            }
-            if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
-            {
-                var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
-                _renderer.sharedMaterial = material;
-            }
-            if (changedProperties?.Contains(PropertyName.texture) ?? false)
-            {
-                await SetTexture(texture);
-            }
-            if (changedProperties?.Contains(PropertyName.color) ?? false)
-            {
-                SetColor(new Color(color.x, color.y, color.z, color.w));
-            }
-            if (changedProperties?.Contains(PropertyName.side) ?? false)
-            {
-                _renderer.sharedMaterial.SetFloat("_Cull", 2 - (int)side);
-            }
         }
 
         public void SetColor(Color color)

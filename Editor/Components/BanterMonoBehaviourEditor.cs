@@ -5,14 +5,14 @@ using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
-    [CustomEditor(typeof(BanterUIPanel))]
-    public class BanterUIPanelEditor : Editor
+    [CustomEditor(typeof(BanterMonoBehaviour))]
+    public class BanterMonoBehaviourEditor : Editor
     {
         void OnEnable()
         {
-            if (target is BanterUIPanel)
+            if (target is BanterMonoBehaviour)
             {
-                var script = (BanterUIPanel)target;
+                var script = (BanterMonoBehaviour)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
@@ -20,7 +20,7 @@ namespace Banter.SDKEditor
         public override bool UseDefaultMargins() => false;
         public override VisualElement CreateInspectorGUI()
         {
-            var script = (BanterUIPanel)target;
+            var script = (BanterMonoBehaviour)target;
             Editor editor = Editor.CreateEditor(script);
             // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("resolution, screenSpace, enableHaptics, clickHaptic, enterHaptic, exitHaptic, enableSounds, clickSoundUrl, enterSoundUrl, exitSoundUrl, ");
+            var seeFields = new Label("fps, startFunction, updateFunction, destroyFunction, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

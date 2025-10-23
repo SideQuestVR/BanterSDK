@@ -822,7 +822,7 @@ namespace Banter.SDK
             scene.events.OnBanterUiPanelActiveChanged?.Invoke();
             SetLoadedIfNot();
         }
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
         public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
         public System.Boolean EnableHaptics { get { return enableHaptics; } set { enableHaptics = value; UpdateCallback(new List<PropertyName> { PropertyName.enableHaptics }); } }
@@ -855,19 +855,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>()
-            {
-                PropertyName.resolution,
-                PropertyName.screenSpace,
-                PropertyName.enableHaptics,
-                PropertyName.clickHaptic,
-                PropertyName.enterHaptic,
-                PropertyName.exitHaptic,
-                PropertyName.enableSounds,
-                PropertyName.clickSoundUrl,
-                PropertyName.enterSoundUrl,
-                PropertyName.exitSoundUrl,
-            };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, PropertyName.enableHaptics, PropertyName.clickHaptic, PropertyName.enterHaptic, PropertyName.exitHaptic, PropertyName.enableSounds, PropertyName.clickSoundUrl, PropertyName.enterSoundUrl, PropertyName.exitSoundUrl, };
             UpdateCallback(changedProperties);
         }
 
@@ -928,63 +916,91 @@ namespace Banter.SDK
             {
                 if (values[i] is BanterVector2)
                 {
-                    var val = (BanterVector2)values[i];
-                    if (val.n == PropertyName.resolution)
+                    var valresolution = (BanterVector2)values[i];
+                    if (valresolution.n == PropertyName.resolution)
                     {
-                        resolution = new Vector2(val.x, val.y);
+                        resolution = new Vector2(valresolution.x, valresolution.y);
                         changedProperties.Add(PropertyName.resolution);
                     }
-                    else if (val.n == PropertyName.clickHaptic)
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valscreenSpace = (BanterBool)values[i];
+                    if (valscreenSpace.n == PropertyName.screenSpace)
                     {
-                        clickHaptic = new Vector2(val.x, val.y);
+                        screenSpace = valscreenSpace.x;
+                        changedProperties.Add(PropertyName.screenSpace);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valenableHaptics = (BanterBool)values[i];
+                    if (valenableHaptics.n == PropertyName.enableHaptics)
+                    {
+                        enableHaptics = valenableHaptics.x;
+                        changedProperties.Add(PropertyName.enableHaptics);
+                    }
+                }
+                if (values[i] is BanterVector2)
+                {
+                    var valclickHaptic = (BanterVector2)values[i];
+                    if (valclickHaptic.n == PropertyName.clickHaptic)
+                    {
+                        clickHaptic = new Vector2(valclickHaptic.x, valclickHaptic.y);
                         changedProperties.Add(PropertyName.clickHaptic);
                     }
-                    else if (val.n == PropertyName.enterHaptic)
+                }
+                if (values[i] is BanterVector2)
+                {
+                    var valenterHaptic = (BanterVector2)values[i];
+                    if (valenterHaptic.n == PropertyName.enterHaptic)
                     {
-                        enterHaptic = new Vector2(val.x, val.y);
+                        enterHaptic = new Vector2(valenterHaptic.x, valenterHaptic.y);
                         changedProperties.Add(PropertyName.enterHaptic);
                     }
-                    else if (val.n == PropertyName.exitHaptic)
+                }
+                if (values[i] is BanterVector2)
+                {
+                    var valexitHaptic = (BanterVector2)values[i];
+                    if (valexitHaptic.n == PropertyName.exitHaptic)
                     {
-                        exitHaptic = new Vector2(val.x, val.y);
+                        exitHaptic = new Vector2(valexitHaptic.x, valexitHaptic.y);
                         changedProperties.Add(PropertyName.exitHaptic);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var val = (BanterBool)values[i];
-                    if (val.n == PropertyName.screenSpace)
+                    var valenableSounds = (BanterBool)values[i];
+                    if (valenableSounds.n == PropertyName.enableSounds)
                     {
-                        screenSpace = val.x;
-                        changedProperties.Add(PropertyName.screenSpace);
-                    }
-                    else if (val.n == PropertyName.enableHaptics)
-                    {
-                        enableHaptics = val.x;
-                        changedProperties.Add(PropertyName.enableHaptics);
-                    }
-                    else if (val.n == PropertyName.enableSounds)
-                    {
-                        enableSounds = val.x;
+                        enableSounds = valenableSounds.x;
                         changedProperties.Add(PropertyName.enableSounds);
                     }
                 }
                 if (values[i] is BanterString)
                 {
-                    var val = (BanterString)values[i];
-                    if (val.n == PropertyName.clickSoundUrl)
+                    var valclickSoundUrl = (BanterString)values[i];
+                    if (valclickSoundUrl.n == PropertyName.clickSoundUrl)
                     {
-                        clickSoundUrl = val.x;
+                        clickSoundUrl = valclickSoundUrl.x;
                         changedProperties.Add(PropertyName.clickSoundUrl);
                     }
-                    else if (val.n == PropertyName.enterSoundUrl)
+                }
+                if (values[i] is BanterString)
+                {
+                    var valenterSoundUrl = (BanterString)values[i];
+                    if (valenterSoundUrl.n == PropertyName.enterSoundUrl)
                     {
-                        enterSoundUrl = val.x;
+                        enterSoundUrl = valenterSoundUrl.x;
                         changedProperties.Add(PropertyName.enterSoundUrl);
                     }
-                    else if (val.n == PropertyName.exitSoundUrl)
+                }
+                if (values[i] is BanterString)
+                {
+                    var valexitSoundUrl = (BanterString)values[i];
+                    if (valexitSoundUrl.n == PropertyName.exitSoundUrl)
                     {
-                        exitSoundUrl = val.x;
+                        exitSoundUrl = valexitSoundUrl.x;
                         changedProperties.Add(PropertyName.exitSoundUrl);
                     }
                 }
@@ -1006,6 +1022,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.screenSpace,
@@ -1015,6 +1034,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.enableHaptics,
@@ -1024,6 +1046,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.clickHaptic,
@@ -1033,6 +1058,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.enterHaptic,
@@ -1042,6 +1070,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.exitHaptic,
@@ -1051,6 +1082,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.enableSounds,
@@ -1060,6 +1094,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.clickSoundUrl,
@@ -1069,6 +1106,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.enterSoundUrl,
@@ -1078,6 +1118,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.exitSoundUrl,

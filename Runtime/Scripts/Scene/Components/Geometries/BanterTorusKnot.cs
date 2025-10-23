@@ -48,8 +48,6 @@ namespace Banter.SDK
             geometry.p = p;
             geometry.q = q;
 
-            Debug.Log(tube + " - " + radius + " - " + radialSegments + " - " + tubularSegments + " - " + p + " - " + q);
-
             if (shouldSetGeometry)
             {
                 geometry.SetGeometry();

@@ -79,6 +79,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterMobius>();
                 case ComponentType.BanterMobius3d:
                     return gameObject.AddComponent<BanterMobius3d>();
+                case ComponentType.BanterMonoBehaviour:
+                    return gameObject.AddComponent<BanterMonoBehaviour>();
                 case ComponentType.BanterNatica:
                     return gameObject.AddComponent<BanterNatica>();
                 case ComponentType.BanterPhysicMaterial:
