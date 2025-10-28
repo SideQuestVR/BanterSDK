@@ -18,14 +18,15 @@ public class AddPanelStuff : MonoBehaviour
 
     private void WaitForRuntimePanel()
     {
+        if (uIDocument == null)
+            uIDocument = GetComponent<UIDocument>();
+        
         if (uIDocument.runtimePanel == null)
         {
             Invoke(nameof(WaitForRuntimePanel),0.5f);
             return;
         }
         
-        if (uIDocument == null)
-            uIDocument = GetComponent<UIDocument>();
         if (uIDocument != null)
         {
             _raycaster = GetComponent<PanelRaycaster>();

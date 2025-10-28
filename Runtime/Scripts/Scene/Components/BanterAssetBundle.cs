@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
@@ -244,6 +245,13 @@ namespace Banter.SDK
                             if (canvas.renderMode == RenderMode.WorldSpace)
                             {
                                 canvas.worldCamera = Camera.main;
+                                if (!canvas.GetComponent<BoxCollider>())
+                                {
+                                    var box = canvas.AddComponent<BoxCollider>();
+                                    var rt = canvas.GetComponent<RectTransform>();
+                                    box.size = new Vector3(rt.rect.width, rt.rect.height, 0.01f);
+                                    box.center = new Vector3(0f, 0f, 0.015f);
+                                }
                             }
                         }
 
