@@ -6,6 +6,7 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 
 namespace Banter.SDK
@@ -252,6 +253,9 @@ namespace Banter.SDK
                                     box.size = new Vector3(rt.rect.width, rt.rect.height, 0.01f);
                                     box.center = new Vector3(0f, 0f, 0.015f);
                                 }
+                                var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
+                                if(trackedDeviceRaycaster)
+                                    Destroy(trackedDeviceRaycaster);
                             }
                         }
 
