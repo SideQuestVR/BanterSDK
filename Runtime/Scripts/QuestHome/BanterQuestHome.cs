@@ -73,6 +73,12 @@ namespace Banter.SDK
                 return;
             }
 
+            // Don't load if URL is empty
+            if (string.IsNullOrEmpty(url))
+            {
+                return;
+            }
+
             _loaded = false;
             loadStarted = true;
 
@@ -189,32 +195,92 @@ namespace Banter.SDK
         }
 
         /// <summary>
-        /// Download APK from URL with progress tracking
+        /// Download APK from URL with progress tracking and retry logic
         /// </summary>
-        private async Task<byte[]> DownloadAPK(string apkUrl)
+        private async Task<byte[]> DownloadAPK(string apkUrl, int maxRetries = 3)
         {
-            using (UnityWebRequest request = UnityWebRequest.Get(apkUrl))
+            Exception lastException = null;
+
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
-                var operation = request.SendWebRequest();
-
-                while (!operation.isDone)
+                try
                 {
-                    float progress = request.downloadProgress;
-                    // Log progress every 10%
-                    if (progress > 0 && (int)(progress * 10) % 2 == 0)
+                    if (attempt > 1)
                     {
-                        LogLine.Do($"Download progress: {progress * 100:F0}%");
+                        LogLine.Do($"Download attempt {attempt}/{maxRetries}...");
                     }
-                    await Task.Yield();
-                }
 
-                if (request.result != UnityWebRequest.Result.Success)
+                    using (UnityWebRequest request = UnityWebRequest.Get(apkUrl))
+                    {
+                        // Set timeout for large APKs (5 minutes)
+                        request.timeout = 300;
+
+                        var operation = request.SendWebRequest();
+
+                        while (!operation.isDone)
+                        {
+                            float progress = request.downloadProgress;
+                            // Log progress every 10%
+                            if (progress > 0 && (int)(progress * 10) % 2 == 0)
+                            {
+                                LogLine.Do($"Download progress: {progress * 100:F0}%");
+                            }
+                            await Task.Yield();
+                        }
+
+                        if (request.result != UnityWebRequest.Result.Success)
+                        {
+                            throw new Exception($"APK download failed: {request.error}");
+                        }
+
+                        // Get data reference before disposal
+                        byte[] data = request.downloadHandler.data;
+                        if (data == null || data.Length == 0)
+                        {
+                            throw new Exception("Downloaded data is null or empty");
+                        }
+
+                        // CRITICAL FIX: Copy data before disposal to prevent corruption
+                        byte[] dataCopy = new byte[data.Length];
+                        Buffer.BlockCopy(data, 0, dataCopy, 0, data.Length);
+
+                        LogLine.Do($"Download complete: {dataCopy.Length} bytes ({dataCopy.Length / 1024.0 / 1024.0:F2} MB)");
+
+                        // Validate ZIP signature (PK header: 0x50 0x4B)
+                        if (dataCopy.Length < 4 || dataCopy[0] != 0x50 || dataCopy[1] != 0x4B)
+                        {
+                            throw new Exception($"Downloaded data is not a valid ZIP/APK file. First 4 bytes: {BitConverter.ToString(dataCopy, 0, Math.Min(4, dataCopy.Length))}");
+                        }
+
+                        // Validate size matches Content-Length if available
+                        string contentLength = request.GetResponseHeader("Content-Length");
+                        if (!string.IsNullOrEmpty(contentLength) && long.TryParse(contentLength, out long expectedSize))
+                        {
+                            if (dataCopy.Length != expectedSize)
+                            {
+                                Debug.LogWarning($"Downloaded size mismatch: expected {expectedSize} bytes, got {dataCopy.Length} bytes");
+                            }
+                        }
+
+                        return dataCopy;
+                    }
+                }
+                catch (Exception ex)
                 {
-                    throw new Exception($"APK download failed: {request.error}");
-                }
+                    lastException = ex;
+                    LogLine.Do($"Download attempt {attempt} failed: {ex.Message}");
 
-                return request.downloadHandler.data;
+                    if (attempt < maxRetries)
+                    {
+                        // Wait before retry (exponential backoff: 1s, 2s, 4s)
+                        int delayMs = 1000 * (int)Math.Pow(2, attempt - 1);
+                        LogLine.Do($"Retrying in {delayMs}ms...");
+                        await Task.Delay(delayMs);
+                    }
+                }
             }
+
+            throw new Exception($"Download failed after {maxRetries} attempts. Last error: {lastException?.Message}", lastException);
         }
 
         /// <summary>
@@ -816,7 +882,11 @@ namespace Banter.SDK
             if (alreadyStarted) { return; }
             alreadyStarted = true;
 
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterQuestHome);
+            // Only register with scene if link is available (not in standalone mode)
+            if (scene.link != null)
+            {
+                scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterQuestHome);
+            }
 
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
@@ -826,7 +896,11 @@ namespace Banter.SDK
                 Deserialise(constructorProperties);
             }
 
-            SyncProperties(true);
+            // Only sync properties if link is available
+            if (scene.link != null)
+            {
+                SyncProperties(true);
+            }
         }
 
         /// <summary>

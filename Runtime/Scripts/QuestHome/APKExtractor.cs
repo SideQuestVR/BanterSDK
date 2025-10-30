@@ -74,29 +74,58 @@ namespace Banter.SDK
         /// </summary>
         private static byte[] ExtractSceneZip(byte[] apkData)
         {
-            using (var stream = new MemoryStream(apkData))
-            using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
+            // Validate input data
+            if (apkData == null || apkData.Length == 0)
             {
-                // Find assets/scene.zip
-                var sceneZipEntry = archive.Entries.FirstOrDefault(e =>
-                    e.FullName.Equals("assets/scene.zip", StringComparison.OrdinalIgnoreCase));
+                throw new ArgumentException("APK data is null or empty");
+            }
 
-                if (sceneZipEntry == null)
+            Debug.Log($"Extracting scene.zip from APK data ({apkData.Length} bytes, {apkData.Length / 1024.0 / 1024.0:F2} MB)");
+
+            // Validate ZIP signature
+            bool hasValidZipSignature = apkData.Length >= 4 && apkData[0] == 0x50 && apkData[1] == 0x4B;
+            if (!hasValidZipSignature)
+            {
+                throw new InvalidDataException(
+                    $"APK data does not have valid ZIP signature. " +
+                    $"First 4 bytes: {BitConverter.ToString(apkData, 0, Math.Min(4, apkData.Length))}");
+            }
+
+            try
+            {
+                using (var stream = new MemoryStream(apkData))
+                using (var archive = new ZipArchive(stream, ZipArchiveMode.Read))
                 {
-                    Debug.LogError("assets/scene.zip not found in APK. Available entries:");
-                    foreach (var entry in archive.Entries.Take(20))
+                    // Find assets/scene.zip
+                    var sceneZipEntry = archive.Entries.FirstOrDefault(e =>
+                        e.FullName.Equals("assets/scene.zip", StringComparison.OrdinalIgnoreCase));
+
+                    if (sceneZipEntry == null)
                     {
-                        Debug.Log($"  - {entry.FullName}");
+                        Debug.LogError("assets/scene.zip not found in APK. Available entries:");
+                        foreach (var entry in archive.Entries.Take(20))
+                        {
+                            Debug.Log($"  - {entry.FullName}");
+                        }
+                        throw new FileNotFoundException("assets/scene.zip not found in APK");
                     }
-                    throw new FileNotFoundException("assets/scene.zip not found in APK");
-                }
 
-                using (var entryStream = sceneZipEntry.Open())
-                using (var memStream = new MemoryStream())
-                {
-                    entryStream.CopyTo(memStream);
-                    return memStream.ToArray();
+                    using (var entryStream = sceneZipEntry.Open())
+                    using (var memStream = new MemoryStream())
+                    {
+                        entryStream.CopyTo(memStream);
+                        return memStream.ToArray();
+                    }
                 }
+            }
+            catch (InvalidDataException ex)
+            {
+                // More specific error for ZIP corruption
+                throw new InvalidDataException(
+                    $"APK data appears to be corrupted or incomplete. " +
+                    $"Size: {apkData.Length} bytes. " +
+                    $"ZIP signature valid: {hasValidZipSignature}. " +
+                    $"Error: {ex.Message}", ex);
             }
         }
 

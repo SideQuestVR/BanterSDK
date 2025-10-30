@@ -2,7 +2,6 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
@@ -37,21 +36,20 @@ namespace Banter.VisualScripting
                 var _addColliders = flow.GetValue<bool>(addColliders);
                 var _legacyShaderFix = flow.GetValue<bool>(legacyShaderFix);
 
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    // Create a new GameObject with BanterQuestHome component
-                    GameObject questHomeGo = new GameObject("QuestHome");
-                    var questHomeComponent = questHomeGo.AddComponent<BanterQuestHome>();
+                // Create GameObject and component immediately (synchronously on main thread)
+                // Visual Scripting already runs on the main thread, no need for task scheduler
+                GameObject questHomeGo = new GameObject("QuestHome");
+                var questHomeComponent = questHomeGo.AddComponent<BanterQuestHome>();
 
-                    // Set properties
-                    questHomeComponent.Url = _url;
-                    questHomeComponent.AddColliders = _addColliders;
-                    questHomeComponent.LegacyShaderFix = _legacyShaderFix;
+                // Set properties (BanterQuestHome will handle async loading internally)
+                questHomeComponent.Url = _url;
+                questHomeComponent.AddColliders = _addColliders;
+                questHomeComponent.LegacyShaderFix = _legacyShaderFix;
 
-                    // Store the GameObject for output
-                    flow.SetValue(questHomeObject, questHomeGo);
+                // Store the GameObject for output (must be synchronous so next node can use it)
+                flow.SetValue(questHomeObject, questHomeGo);
 
-                    Debug.Log($"LoadQuestHome: Started loading Quest Home from {_url}");
-                }, $"{nameof(LoadQuestHome)}.{nameof(Definition)}"));
+                Debug.Log($"[LoadQuestHome] Started loading Quest Home from {_url}");
 
                 return outputTrigger;
             });

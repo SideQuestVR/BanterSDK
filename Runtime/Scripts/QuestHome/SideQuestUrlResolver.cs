@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -66,7 +67,8 @@ namespace Banter.SDK
                 return false;
 
             url = url.ToLowerInvariant();
-            return url.EndsWith(".apk") && url.Contains("cdn.sidequestvr.com");
+            // Accept any .apk URL, not just CDN URLs
+            return url.EndsWith(".apk");
         }
 
         /// <summary>
@@ -164,47 +166,263 @@ namespace Banter.SDK
             {
                 JObject json = JObject.Parse(jsonResponse);
 
+                // Debug: Log the JSON structure
+                LogLine.Do($"API Response Keys: {string.Join(", ", json.Properties().Select(p => p.Name))}");
+
                 // Get app name for constructing filename
                 string appName = json["name"]?.ToString() ?? "app";
                 appName = SanitizeFilename(appName);
 
-                // Look for app_release_files array
-                var releaseFiles = json["app_release_files"] as JArray;
+                // Try multiple paths to find files_id
+                string filesId = null;
 
-                if (releaseFiles == null || releaseFiles.Count == 0)
+                // Method 1: Look for app_release_files array
+                LogLine.Do("Method 1: Checking app_release_files array...");
+                var releaseFiles = json["app_release_files"] as JArray;
+                if (releaseFiles != null && releaseFiles.Count > 0)
                 {
-                    throw new Exception($"No release files found for app ID {appId}. The app may not have any published versions.");
+                    LogLine.Do($"Found app_release_files array with {releaseFiles.Count} entries");
+                    filesId = ExtractFilesIdFromReleaseFiles(releaseFiles);
+                }
+                else
+                {
+                    LogLine.Do("Method 1: No app_release_files array found");
                 }
 
-                // Find APK file in release files
-                foreach (var file in releaseFiles)
+                // Method 2: Look for urls array (alternative structure)
+                if (string.IsNullOrEmpty(filesId))
                 {
-                    string fileType = file["type"]?.ToString();
-
-                    if (fileType == "apk")
+                    LogLine.Do("Method 2: Checking urls array...");
+                    var urls = json["urls"] as JArray;
+                    if (urls != null && urls.Count > 0)
                     {
-                        string filesId = file["files_id"]?.ToString();
+                        LogLine.Do($"Found urls array with {urls.Count} entries");
+                        string urlResult = ExtractFilesIdFromUrls(urls);
 
-                        if (string.IsNullOrEmpty(filesId))
+                        // Check if we got a full URL or just a files_id
+                        if (!string.IsNullOrEmpty(urlResult))
                         {
-                            LogLine.Do("Found APK entry but files_id is empty, skipping...");
-                            continue;
+                            if (urlResult.StartsWith("http"))
+                            {
+                                // Full URL returned, use it directly
+                                LogLine.Do($"Using full URL from urls array: {urlResult}");
+                                return urlResult;
+                            }
+                            else
+                            {
+                                // Just files_id returned
+                                filesId = urlResult;
+                            }
                         }
-
-                        // Construct CDN URL
-                        string apkUrl = $"{SIDEQUEST_CDN_BASE}/{filesId}/{appName}.apk";
-                        LogLine.Do($"Constructed APK URL from files_id: {filesId}");
-                        return apkUrl;
+                        else
+                        {
+                            LogLine.Do("Method 2: No valid APK URL found in urls array");
+                        }
+                    }
+                    else
+                    {
+                        LogLine.Do("Method 2: No urls array found");
                     }
                 }
 
-                // No APK file found
-                throw new Exception($"No APK file found for app ID {appId}. The app may not be a Quest Home or may not have an APK release.");
+                // Method 3: Look for direct download_url field
+                if (string.IsNullOrEmpty(filesId))
+                {
+                    LogLine.Do("Method 3: Checking direct download_url field...");
+                    string downloadUrl = json["download_url"]?.ToString();
+                    if (!string.IsNullOrEmpty(downloadUrl) && downloadUrl.EndsWith(".apk"))
+                    {
+                        LogLine.Do($"Found direct download_url: {downloadUrl}");
+                        return downloadUrl;
+                    }
+                    else
+                    {
+                        LogLine.Do("Method 3: No valid download_url field found");
+                    }
+                }
+
+                // Method 4: Check top-level URL fields
+                if (string.IsNullOrEmpty(filesId))
+                {
+                    LogLine.Do("Method 4: Checking top-level URL fields (apk_url, file_url, url, cdn_url)...");
+                    string[] topLevelFields = { "apk_url", "file_url", "url", "cdn_url" };
+
+                    foreach (var field in topLevelFields)
+                    {
+                        string url = json[field]?.ToString();
+                        if (!string.IsNullOrEmpty(url) && url.EndsWith(".apk"))
+                        {
+                            LogLine.Do($"Found APK URL in top-level field '{field}': {url}");
+                            return url;
+                        }
+                    }
+                    LogLine.Do("Method 4: No valid APK URL found in top-level fields");
+                }
+
+                // Method 5: Check nested data object
+                if (string.IsNullOrEmpty(filesId))
+                {
+                    LogLine.Do("Method 5: Checking nested data object...");
+                    var dataObj = json["data"] as JObject;
+                    if (dataObj != null)
+                    {
+                        LogLine.Do("Found nested data object");
+
+                        // Check data.download_url
+                        string dataDownloadUrl = dataObj["download_url"]?.ToString();
+                        if (!string.IsNullOrEmpty(dataDownloadUrl) && dataDownloadUrl.EndsWith(".apk"))
+                        {
+                            LogLine.Do($"Found APK URL in data.download_url: {dataDownloadUrl}");
+                            return dataDownloadUrl;
+                        }
+
+                        // Check data.apk_url
+                        string dataApkUrl = dataObj["apk_url"]?.ToString();
+                        if (!string.IsNullOrEmpty(dataApkUrl) && dataApkUrl.EndsWith(".apk"))
+                        {
+                            LogLine.Do($"Found APK URL in data.apk_url: {dataApkUrl}");
+                            return dataApkUrl;
+                        }
+
+                        // Check data.urls array
+                        var dataUrls = dataObj["urls"] as JArray;
+                        if (dataUrls != null && dataUrls.Count > 0)
+                        {
+                            LogLine.Do($"Found data.urls array with {dataUrls.Count} entries");
+                            string urlResult = ExtractFilesIdFromUrls(dataUrls);
+
+                            if (!string.IsNullOrEmpty(urlResult))
+                            {
+                                if (urlResult.StartsWith("http"))
+                                {
+                                    LogLine.Do($"Using full URL from data.urls array: {urlResult}");
+                                    return urlResult;
+                                }
+                                else
+                                {
+                                    filesId = urlResult;
+                                }
+                            }
+                        }
+
+                        LogLine.Do("Method 5: No valid APK URL found in nested data object");
+                    }
+                    else
+                    {
+                        LogLine.Do("Method 5: No nested data object found");
+                    }
+                }
+
+                if (string.IsNullOrEmpty(filesId))
+                {
+                    // Log the full JSON for debugging
+                    Debug.LogWarning($"Could not find files_id in API response. JSON: {jsonResponse.Substring(0, Math.Min(500, jsonResponse.Length))}...");
+                    throw new Exception($"No APK download URL found for app ID {appId}. " +
+                        $"Tried the following methods:\n" +
+                        $"1. app_release_files array\n" +
+                        $"2. urls array (link_url, url, download_url, cdn_url)\n" +
+                        $"3. Top-level download_url field\n" +
+                        $"4. Top-level URL fields (apk_url, file_url, url, cdn_url)\n" +
+                        $"5. Nested data object (data.download_url, data.apk_url, data.urls)\n" +
+                        $"This may not be a Quest Home app, or the app structure is not supported.");
+                }
+
+                // Construct CDN URL
+                string apkUrl = $"{SIDEQUEST_CDN_BASE}/{filesId}/{appName}.apk";
+                LogLine.Do($"Constructed APK URL from files_id {filesId}: {apkUrl}");
+                return apkUrl;
             }
             catch (Exception ex) when (ex is Newtonsoft.Json.JsonException)
             {
                 throw new Exception($"Failed to parse SideQuest API response: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Extract files_id from app_release_files array
+        /// </summary>
+        private static string ExtractFilesIdFromReleaseFiles(JArray releaseFiles)
+        {
+            foreach (var file in releaseFiles)
+            {
+                string fileType = file["type"]?.ToString();
+
+                if (fileType == "apk")
+                {
+                    string filesId = file["files_id"]?.ToString();
+
+                    if (!string.IsNullOrEmpty(filesId))
+                    {
+                        LogLine.Do($"Found APK in release_files with files_id: {filesId}");
+                        return filesId;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Extract files_id from urls array (alternative structure)
+        /// </summary>
+        private static string ExtractFilesIdFromUrls(JArray urls)
+        {
+            // Property names to check in URL objects (matching Tampermonkey script)
+            string[] candidateFields = { "link_url", "url", "download_url", "cdn_url" };
+
+            foreach (var urlEntry in urls)
+            {
+                // Check if the entry is a simple string
+                if (urlEntry.Type == JTokenType.String)
+                {
+                    string url = urlEntry.ToString();
+
+                    // Look for any URL ending with .apk (not just CDN URLs)
+                    if (url.EndsWith(".apk"))
+                    {
+                        LogLine.Do($"Found APK URL in urls array (string): {url}");
+                        return url; // Return full URL directly
+                    }
+
+                    // Try to extract files_id from CDN URL
+                    var match = Regex.Match(url, @"cdn\.sidequestvr\.com/file/(\d+)/");
+                    if (match.Success)
+                    {
+                        string filesId = match.Groups[1].Value;
+                        LogLine.Do($"Extracted files_id from URL string in urls array: {filesId}");
+                        return filesId;
+                    }
+                }
+
+                // If it's an object, check common URL property names
+                if (urlEntry.Type == JTokenType.Object)
+                {
+                    foreach (var field in candidateFields)
+                    {
+                        string url = urlEntry[field]?.ToString();
+                        if (!string.IsNullOrEmpty(url))
+                        {
+                            // Look for any URL ending with .apk (not just CDN URLs)
+                            if (url.EndsWith(".apk"))
+                            {
+                                LogLine.Do($"Found APK URL in urls array ({field}): {url}");
+                                return url; // Return full URL directly
+                            }
+
+                            // Try to extract files_id from CDN URL
+                            var match = Regex.Match(url, @"cdn\.sidequestvr\.com/file/(\d+)/");
+                            if (match.Success)
+                            {
+                                string filesId = match.Groups[1].Value;
+                                LogLine.Do($"Extracted files_id from {field} in urls array: {filesId}");
+                                return filesId;
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

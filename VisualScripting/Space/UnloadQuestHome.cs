@@ -2,7 +2,6 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.Utilities.Async;
 
 namespace Banter.VisualScripting
 {
@@ -26,18 +25,18 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _questHomeObject = flow.GetValue<GameObject>(questHomeObject);
 
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    if (_questHomeObject != null)
-                    {
-                        // Destroy the Quest Home GameObject
-                        Object.Destroy(_questHomeObject);
-                        Debug.Log("UnloadQuestHome: Quest Home unloaded");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("UnloadQuestHome: Quest Home object is null");
-                    }
-                }, $"{nameof(UnloadQuestHome)}.{nameof(Definition)}"));
+                // Destroy immediately (synchronously on main thread)
+                // Visual Scripting already runs on the main thread, no need for task scheduler
+                if (_questHomeObject != null)
+                {
+                    // Destroy the Quest Home GameObject
+                    Object.Destroy(_questHomeObject);
+                    Debug.Log("[UnloadQuestHome] Quest Home unloaded");
+                }
+                else
+                {
+                    Debug.LogWarning("[UnloadQuestHome] Quest Home object is null");
+                }
 
                 return outputTrigger;
             });
