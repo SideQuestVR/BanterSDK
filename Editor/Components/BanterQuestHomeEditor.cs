@@ -13,6 +13,7 @@ namespace Banter.SDKEditor
             if (target is BanterQuestHome)
             {
                 var script = (BanterQuestHome)target;
+                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
         }
@@ -21,6 +22,7 @@ namespace Banter.SDKEditor
         {
             var script = (BanterQuestHome)target;
             Editor editor = Editor.CreateEditor(script);
+            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
 
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
@@ -38,12 +40,14 @@ namespace Banter.SDKEditor
             seeFields.style.color = Color.gray;
             myInspector.Add(seeFields);
 
+            //#if BANTER_EDITOR
             var foldout = new Foldout();
             foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
             foldout.value = false;
             foldout.Add(inspectorIMGUI);
             myInspector.Add(foldout);
+            //#endif
 
             return myInspector;
         }
