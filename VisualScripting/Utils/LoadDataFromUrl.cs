@@ -51,6 +51,11 @@ namespace Banter.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var genMipmaps = flow.GetValue<bool>(this.generateMipmaps);
 
+            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+                yield return failure;
+                yield break;
+            }
+
             using (var request = UnityWebRequestTexture.GetTexture(url))
             {
                 yield return request.SendWebRequest();
@@ -59,19 +64,21 @@ namespace Banter.VisualScripting
                 {
                     yield return failure;
                 }
-
-                var texture = DownloadHandlerTexture.GetContent(request);
-
-                if (!genMipmaps && texture.mipmapCount > 1)
+                else
                 {
-                    // Create a new texture without mipmaps
-                    Texture2D noMipTexture = new Texture2D(texture.width, texture.height, texture.format, false);
-                    noMipTexture.SetPixels(texture.GetPixels());
-                    noMipTexture.Apply(false); // false = don't generate mipmaps
-                    texture = noMipTexture;
+                    var texture = DownloadHandlerTexture.GetContent(request);
+
+                    if (!genMipmaps && texture.mipmapCount > 1)
+                    {
+                        // Create a new texture without mipmaps
+                        Texture2D noMipTexture = new Texture2D(texture.width, texture.height, texture.format, false);
+                        noMipTexture.SetPixels(texture.GetPixels());
+                        noMipTexture.Apply(false); // false = don't generate mipmaps
+                        texture = noMipTexture;
+                    }
+                    flow.SetValue(this.texture, texture);
+                    yield return success;
                 }
-                flow.SetValue(this.texture, texture);
-                yield return success;
             }
         }
     }
@@ -189,6 +196,11 @@ namespace Banter.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var type = flow.GetValue<AudioType>(audioType);
 
+            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+                yield return failure;
+                yield break;
+            }
+
             using (var request = UnityWebRequestMultimedia.GetAudioClip(url, type))
             {
                 yield return request.SendWebRequest();
@@ -197,10 +209,12 @@ namespace Banter.VisualScripting
                 {
                     yield return failure;
                 }
-
-                var clip = DownloadHandlerAudioClip.GetContent(request);
-                flow.SetValue(audio, clip);
-                yield return success;
+                else
+                {
+                    var clip = DownloadHandlerAudioClip.GetContent(request);
+                    flow.SetValue(audio, clip);
+                    yield return success;
+                }
             }
         }
     }
