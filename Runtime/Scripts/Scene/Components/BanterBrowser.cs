@@ -153,6 +153,12 @@ namespace Banter.SDK
             {
                 RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
                 rt.sizeDelta = new Vector2(pageWidth, pageHeight);
+                var box = browser.GetComponent<BoxCollider>();
+                if (box)
+                {
+                    box.size = new Vector3(pageWidth, pageHeight, 0.01f);
+                    box.center = new Vector3(0, 0, 0.01f);
+                }
             }
             SetLoadedIfNot();
         }
