@@ -198,7 +198,7 @@ namespace Banter.SDK
         {
             try
             {
-                var text = await Text(GetUrl(EnvType.TEST, UrlType.API) + $"/v2/avatars/{avatarId}");
+                var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + $"/v2/avatars/{avatarId}");
                 return JsonConvert.DeserializeObject<SqAvatar>(text);
             }
             catch (Exception)
@@ -210,7 +210,7 @@ namespace Banter.SDK
         {
             try
             {
-                var text = await Text(GetUrl(EnvType.TEST, UrlType.API) + $"/v2/users/{userId}/avatars");
+                var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + $"/v2/users/{userId}/avatars");
                 List<UserAvatar> avatars = JsonConvert.DeserializeObject<List<UserAvatar>>(text);
                 foreach (UserAvatar a in avatars)
                 {

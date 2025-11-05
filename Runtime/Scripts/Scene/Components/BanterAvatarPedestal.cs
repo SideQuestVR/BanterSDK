@@ -28,7 +28,9 @@ namespace Banter.SDK
         [Tooltip("The ID of the avatar")]
         [See(initial = "0")][SerializeField] internal long avatarId;
 
+#if BASIS_BUNDLE_MANAGEMENT
         BasisLoadableBundle _loadableBundle;
+#endif
         private bool _loadStarted;
 
         internal override void StartStuff()
@@ -89,14 +91,16 @@ namespace Banter.SDK
                         LogLine.Do("Invalid uavatarId");
                         return;
                     }
+                    
+#if BASIS_BUNDLE_MANAGEMENT
                     _loadableBundle = new BasisLoadableBundle();
                     _loadableBundle.UnlockPassword = a.author_users_id + "42069";
-                    _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"https://cdn.sidetestvr.com/file/{a.high_avatar_files_id}/high.bee";
+                    _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"{Get.GetUrl(EnvType.PROD, UrlType.CDN)}/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
                     BasisProgressReport BeeProgressReport = new BasisProgressReport();
                     BundledContentHolder.Selector PoliceMode = BundledContentHolder.Selector.Avatar;
                     go = await BasisLoadHandler.LoadGameObjectBundle(_loadableBundle, false, BeeProgressReport, cancellationToken, transform.position, transform.rotation, Vector3.one, false, PoliceMode, transform, false);
-
+#endif
                     var comp = this;
                     if (comp == null || gameObject == null)
                     {

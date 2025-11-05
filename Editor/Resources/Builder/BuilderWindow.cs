@@ -56,7 +56,7 @@ public class BuilderWindow : EditorWindow
 
     public const string SQ_API_CLIENT_ID_TEST = "client_85b087d9975cb8ca5bb575a2";
 
-    public bool isTestEnvironment = true;
+    public bool isTestEnvironment = false;
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
@@ -246,6 +246,16 @@ public class BuilderWindow : EditorWindow
     //         rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
 #endif // BANTER_EDITOR
 
+#if BANTER_EDITOR
+    [MenuItem("Banter/Tools/Domain Reload")]
+    public static void DomainReload()
+    {
+        EditorUtility.RequestScriptReload();
+    }
+    //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
+#endif // BANTER_EDITOR
+    
+    
 #else // BANTER_VISUAL_SCRIPTING
     //         Remove(rootVisualElement.Q<Button>("visualScript"));
 #endif // BANTER_VISUAL_SCRIPTING
