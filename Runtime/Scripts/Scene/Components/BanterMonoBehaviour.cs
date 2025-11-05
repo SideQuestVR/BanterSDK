@@ -32,6 +32,11 @@ namespace Banter.SDK
         {
 
         }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
            

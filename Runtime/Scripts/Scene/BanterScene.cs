@@ -346,6 +346,36 @@ namespace Banter.SDK
             }
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.AI_IMAGE);
         }
+        public void SetJsObjectId(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY);
+            if (parts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsObjectId message is malformed: " + msg);
+                return;
+            }
+            var obj = GetObject(int.Parse(parts[0]));
+            if (obj.id)
+            {
+                obj.id.jsId = parts[1];
+            }
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+
+        }
+        public void SetJsComponentId(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.PRIMARY);
+            if (parts.Length < 2)
+            {
+                Debug.LogError("[Banter] SetJsComponentId message is malformed: " + msg);
+                return;
+            }
+            var comp = GetBanterComponent(int.Parse(parts[0]));
+            comp.jsId = parts[1];
+            comp.Object().jsId = parts[1];
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+
+        }
         public void AddPlayerForce(string msg, int reqId)
         {
             try
@@ -608,7 +638,7 @@ namespace Banter.SDK
                 objects.TryRemove(oid, out _);
             }
         }
-        public BanterComponent AddBanterComponent(int objectId, int componetId, ComponentType type)
+        public BanterComponent AddBanterComponent(int objectId, int componetId, string linkId, ComponentType type)
         {
             var uBanterObject = GetObject(objectId);
             if (uBanterObject.banterObject != null)
@@ -617,6 +647,7 @@ namespace Banter.SDK
                 {
                     cid = componetId,
                     type = type,
+                    jsId = linkId,
                     banterObject = uBanterObject.banterObject
                 };
                 uBanterObject.banterObject.AddComponent(componetId, component);
@@ -670,6 +701,26 @@ namespace Banter.SDK
             }
             return null;
         }
+
+        /// <summary>
+        /// Get a BanterComponentBase by its JavaScript ID
+        /// </summary>
+        public BanterComponentBase GetComponentByJsId(string jsId)
+        {
+            if (string.IsNullOrEmpty(jsId))
+                return null;
+
+            // Search through banterComponents dictionary
+            foreach (var banterComponent in banterComponents.Values)
+            {
+                if (banterComponent.jsId == jsId)
+                {
+                    return banterComponent.Object();
+                }
+            }
+            return null;
+        }
+
         public void DestroyBanterComponent(int componetId)
         {
             if (banterComponents.ContainsKey(componetId))
@@ -771,11 +822,6 @@ namespace Banter.SDK
                         // This is caught in the AddBanterComponent method instead. 
                         // Debug.LogError("BanterComponent is null: " + go.GetInstanceID() + " : " + cid + " : " + comp.name);
                     }
-                    // Debug.Log();
-                    if (comp is BanterMaterial)
-                    {
-                        Debug.Log("HERER - Sending loaded event for material:" + cid);
-                    }
                     link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
                 comp.progress.AddListener((progress) =>
@@ -787,8 +833,8 @@ namespace Banter.SDK
                     if (banterComp != null)
                     {
                         banterComp.progress = progress;
-                        // SetLoaded();
-                    }
+                    }                    
+                    link.Send(APICommands.EVENT + APICommands.PROGRESS + MessageDelimiters.PRIMARY + cid + MessageDelimiters.SECONDARY + progress);
                 });
             }
         }
@@ -1228,7 +1274,6 @@ namespace Banter.SDK
                 Debug.LogError("[Banter] Add Component message is malformed: " + msg);
                 return;
             }
-            Debug.Log("HERER: " + msg);
             var oid = int.Parse(parts[0]);
             var gameObject = GetGameObject(oid);
             if (gameObject == null)
@@ -1249,12 +1294,13 @@ namespace Banter.SDK
                      return;
                  }
                  var comp = BanterComponentFromType.CreateComponent(gameObject, componentType);
+                 comp.jsId = linkId;
                  if (comp == null)
                  {
                      Debug.LogError("[Banter] Component type not found: " + componentType);
                      return;
                  }
-                 var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), componentType);
+                 var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), linkId, componentType);
                  if (banterComp != null)
                  {
                      link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
@@ -1318,6 +1364,7 @@ namespace Banter.SDK
                             banterComp.UpdateProperty(name, new Vector2(valVector2X, valVector2Y));
                             break;
                         case PropertyType.Vector3:
+                        case PropertyType.SoftJointLimit:
                             var valVector3X = NumberFormat.Parse(propParts[2]);
                             var valVector3Y = NumberFormat.Parse(propParts[3]);
                             var valVector3Z = NumberFormat.Parse(propParts[4]);
@@ -1326,6 +1373,7 @@ namespace Banter.SDK
                             break;
                         case PropertyType.Vector4:
                         case PropertyType.Quaternion:
+                        case PropertyType.JointDrive:
                             var valVector4X = NumberFormat.Parse(propParts[2]);
                             var valVector4Y = NumberFormat.Parse(propParts[3]);
                             var valVector4Z = NumberFormat.Parse(propParts[4]);
@@ -1464,7 +1512,7 @@ namespace Banter.SDK
             var parts = msg.Split(MessageDelimiters.PRIMARY, 2);
             if (parts.Length < 2)
             {
-                Debug.LogError("[Banter] SetJsTransform message is malformed: " + msg);
+                Debug.LogError("[Banter] WatchJsTransform message is malformed: " + msg);
                 return;
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
@@ -1594,7 +1642,6 @@ namespace Banter.SDK
                                     break;
                                 }
                                 obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
-                                Debug.Log(part + " - " + obj.transform.localScale);
                                 break;
                         }
                     }
@@ -1658,7 +1705,9 @@ namespace Banter.SDK
                         go.transform.localRotation = rotation;
                     }
                     go.transform.localScale = new Vector3(NumberFormat.Parse(parts[16]), NumberFormat.Parse(parts[17]), NumberFormat.Parse(parts[18]));
-                    AddBanterObject(go, go.AddComponent<BanterObjectId>(), true);
+                    var objId = go.AddComponent<BanterObjectId>();
+                    objId.jsId = parts[0];
+                    AddBanterObject(go, objId, true);
                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
                     await new WaitForSeconds(2);
                     if (parts[1] == "0")
@@ -1666,7 +1715,6 @@ namespace Banter.SDK
                         Debug.Log("Creating object that is not active: " + go.name);
                         go.SetActive(false);
                     }
-                    Debug.Log("HERER - add object");
                 // }
                 // catch (Exception e)
                 // {
@@ -1938,7 +1986,7 @@ namespace Banter.SDK
                 var component = GetBanterComponent(property.cid);
                 if (component == null)
                 {
-                    component = AddBanterComponent(property.oid, property.cid, (ComponentType)property.componentType);
+                    component = AddBanterComponent(property.oid, property.cid, null, (ComponentType)property.componentType);
                 }
                 if (component != null)
                 {

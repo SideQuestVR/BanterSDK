@@ -445,6 +445,18 @@ namespace Banter.UI.Bridge
                             minMaxSlider.value = new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
                         }
                         return;
+
+                    case ScrollView scrollView when propertyName == "horizontalScrolling":
+                        scrollView.horizontalScrollerVisibility = (value == "1" || value.ToLower() == "true")
+                            ? ScrollerVisibility.Auto
+                            : ScrollerVisibility.Hidden;
+                        return;
+
+                    case ScrollView scrollView when propertyName == "verticalScrolling":
+                        scrollView.verticalScrollerVisibility = (value == "1" || value.ToLower() == "true")
+                            ? ScrollerVisibility.Auto
+                            : ScrollerVisibility.Hidden;
+                        return;
                 }
 
                 // Handle common properties that apply to all VisualElements
@@ -765,7 +777,6 @@ namespace Banter.UI.Bridge
                     element.style.backgroundColor = ParseColor(value);
                     break;
                 case UIStyleProperty.BackgroundImage:
-                    LogVerbose("Setting background image: " + value);
                     SetBackgroundImage(element, value);
                     break;
                     
@@ -782,6 +793,9 @@ namespace Banter.UI.Bridge
                     element.style.fontSize = ParseLength(value);
                     break;
                 case UIStyleProperty.FontStyle:
+                    element.style.unityFontStyleAndWeight = ParseEnum<FontStyle>(value);
+                    break;
+                case UIStyleProperty.FontWeight:
                     element.style.unityFontStyleAndWeight = ParseEnum<FontStyle>(value);
                     break;
                 case UIStyleProperty.TextAlign:

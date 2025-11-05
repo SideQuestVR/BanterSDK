@@ -5,14 +5,14 @@ using Banter.SDK;
 
 namespace Banter.SDKEditor
 {
-    [CustomEditor(typeof(BanterSpringJoint))]
-    public class BanterSpringJointEditor : Editor
+    [CustomEditor(typeof(BanterPhysicsMaterial))]
+    public class BanterPhysicsMaterialEditor : Editor
     {
         void OnEnable()
         {
-            if (target is BanterSpringJoint)
+            if (target is BanterPhysicsMaterial)
             {
-                var script = (BanterSpringJoint)target;
+                var script = (BanterPhysicsMaterial)target;
                 // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
@@ -20,7 +20,7 @@ namespace Banter.SDKEditor
         public override bool UseDefaultMargins() => false;
         public override VisualElement CreateInspectorGUI()
         {
-            var script = (BanterSpringJoint)target;
+            var script = (BanterPhysicsMaterial)target;
             Editor editor = Editor.CreateEditor(script);
             // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("anchor, connectedAnchor, autoConfigureConnectedAnchor, spring, damper, minDistance, maxDistance, tolerance, breakForce, breakTorque, enableCollision, enablePreprocessing, connectedMassScale, massScale, connectedBody, ");
+            var seeFields = new Label("dynamicFriction, staticFriction, bounciness, frictionCombine, bounceCombine, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

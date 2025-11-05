@@ -13,6 +13,8 @@ public class APICommands
     public const string SET_TRANSFORM = "!st!";
     public const string MONO_BEHAVIOUR = "!mb!";
     public const string WATCH_TRANSFORM = "!wt!";
+    public const string SET_JSOID = "!sjoi!";
+    public const string SET_JSCID = "!sjci!";
     public const string REQUEST_ID = "!i!";
     public const string RESPONSE_ID = "!o!";
     public const string UPDATE = "!u!";
@@ -80,6 +82,7 @@ public class APICommands
     public const string EVENT = "!e!";
     public const string POSE_UPDATE = "pu!";
     public const string LOADED = "l!";
+    public const string PROGRESS = "p!";
     public const string UNITY_LOADED = "ulo!";
     public const string CLICKED = "c!";
     public const string GRABBED = "g!";
@@ -165,4 +168,15 @@ public class APICommands
     // Controller input events
     public const string CONTROLLER_AXIS_UPDATE = "ca!";
     public const string TRIGGER_AXIS_UPDATE = "ta!";
+
+    // Asset System
+    public const string ASSET_REGISTERED = "!ar!";
+    public const string ASSET_LOADED = "!al!";
+    public const string ASSET_FAILED = "!af!";
+    public const string ASSET_DESTROYED = "!ad!";
+    public const string ASSET_UPDATED = "!au!";
+    public const string CREATE_ASSET = "!cra!";
+    public const string DESTROY_ASSET = "!dra!";
+    public const string QUERY_ASSET = "!qa!";
+    public const string SET_ASSET_PROPERTY = "!sap!";
 }

@@ -11,36 +11,6 @@ using UnityEngine.SceneManagement;
 
 namespace Banter.SDK
 {
-
-    /* 
-    #### Banter Asset Bundle
-    Load an asset bundle into Banter which contains a scene or a collection of prefabs.
-
-    **Properties**
-    - `windowsUrl` - The URL to the Windows asset bundle.
-    - `osxUrl` - The URL to the OSX asset bundle.
-    - `linuxUrl` - The URL to the Linux asset bundle.
-    - `androidUrl` - The URL to the Android asset bundle.
-    - `iosUrl` - The URL to the iOS asset bundle.
-    - `vosUrl` - The URL to the Vision OS asset bundle.
-    - `isScene` - If the asset bundle is a scene or a collection of prefabs.
-    - `legacyShaderFix` - If the asset bundle requires a legacy shader/lighting fix like we had in the past with AFRAME.
-
-    **Code Example**
-    ```js
-        const windowsUrl = "https://example.bant.ing/windows.banter";
-        const osxUrl = null; // Not implemented yet...
-        const linuxUrl = null; // Not implemented yet...
-        const androidUrl = "https://example.bant.ing/android.banter";
-        const iosUrl = null; // Not implemented yet...
-        const vosUrl = null; // Not implemented yet...
-        const isScene = true;
-        const legacyShaderFix = false;
-        const gameObject = new BS.GameObject("MyAssetBundle"); 
-        const assetBundle = await gameObject.AddComponent(new BS.BanterAssetBundle(windowsUrl, osxUrl, linuxUrl, androidUrl, iosUrl, vosUrl, isScene, legacyShaderFix));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -77,6 +47,11 @@ namespace Banter.SDK
         internal override void StartStuff()
         {
             // _ = SetupBundle();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         private async Task SetupBundle(List<PropertyName> changedProperties)
         {
@@ -141,7 +116,11 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.windowsUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress =>
+                {
+                    this.progress?.Invoke(progress);
+                });
+                    
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }

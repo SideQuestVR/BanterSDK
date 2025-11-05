@@ -4,41 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /*
-    #### Banter Character Joint
-    A character joint is used for ragdoll effects. It simulates the movement of a limb with swing and twist limits.
-
-    **Properties**
-    - `connectedBody` - The Rigidbody that this joint is connected to.
-    - `anchor` - The anchor point of the joint in local space.
-    - `axis` - The primary axis of the joint.
-    - `swingAxis` - The swing axis of the joint.
-    - `connectedAnchor` - The connected anchor point in the connected body's local space.
-    - `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-    - `lowTwistLimit` - The lower angular limit around the primary axis.
-    - `highTwistLimit` - The upper angular limit around the primary axis.
-    - `swing1Limit` - The angular limit around the swing axis.
-    - `swing2Limit` - The angular limit around the secondary swing axis.
-    - `enableProjection` - Enable joint projection for the joint.
-    - `projectionDistance` - The distance beyond which the joint will be projected.
-    - `projectionAngle` - The angle beyond which the joint will be projected.
-    - `breakForce` - The force that needs to be applied for this joint to break.
-    - `breakTorque` - The torque that needs to be applied for this joint to break.
-    - `enableCollision` - Enable collision between connected bodies.
-    - `enablePreprocessing` - Enable preprocessing for the joint.
-
-    **Code Example**
-    ```js
-        const connectedBody = null;
-        const anchor = new BS.Vector3(0,0,0);
-        const axis = new BS.Vector3(1,0,0);
-        const swingAxis = new BS.Vector3(0,1,0);
-
-        const gameObject = new BS.GameObject("MyCharacterJoint");
-        const characterJoint = await gameObject.AddComponent(new BS.BanterCharacterJoint(connectedBody, anchor, axis, swingAxis));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(CharacterJoint))]
     [RequireComponent(typeof(CharacterJoint))]
@@ -86,6 +51,8 @@ namespace Banter.SDK
 
         [Tooltip("The mass scale of this body.")]
         [See(initial = "1")][SerializeField] internal float massScale = 1f;
+        [Tooltip("The rigidbody that this joint connects to. Can be null for world-anchored joints. Accepts GameObject name or asset reference.")]
+        [See(initial = "", isAssetReference = true)][SerializeField] internal string connectedBody = "";
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 Anchor { get { return anchor; } set { anchor = value; } }
         public UnityEngine.Vector3 Axis { get { return axis; } set { axis = value; } }
@@ -101,6 +68,7 @@ namespace Banter.SDK
         public System.Boolean EnablePreprocessing { get { return enablePreprocessing; } set { enablePreprocessing = value; } }
         public System.Single ConnectedMassScale { get { return connectedMassScale; } set { connectedMassScale = value; } }
         public System.Single MassScale { get { return massScale; } set { massScale = value; } }
+        public System.String ConnectedBody { get { return connectedBody; } set { connectedBody = value; } }
         public CharacterJoint _componentType;
         public CharacterJoint componentType
         {
@@ -304,6 +272,51 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.massScale);
                     }
                 }
+                if (values[i] is BanterString)
+                {
+                    var valconnectedBody = (BanterString)values[i];
+                    if (valconnectedBody.n == PropertyName.connectedBody)
+                    {
+                        if (!string.IsNullOrEmpty(valconnectedBody.x))
+                        {
+                            // Lookup component by jsId
+                            var targetComponentBase = scene.GetComponentByJsId(valconnectedBody.x);
+                            if (targetComponentBase != null)
+                            {
+                                // Get the actual reference object (for UnityComponents, this returns componentType)
+                                var referenceObject = targetComponentBase.GetReferenceObject();
+                                if (referenceObject is Rigidbody)
+                                {
+                                    componentType.connectedBody = referenceObject as Rigidbody;
+                                    changedProperties.Add(PropertyName.connectedBody);
+                                }
+                            }
+                            else
+                            {
+                                // Fallback: Try parsing as GameObject instance ID
+                                if (int.TryParse(valconnectedBody.x, out int targetOid))
+                                {
+                                    var targetGameObject = scene.GetGameObject(targetOid);
+                                    if (targetGameObject != null)
+                                    {
+                                        var targetComponent = targetGameObject.GetComponent<Rigidbody>();
+                                        if (targetComponent != null)
+                                        {
+                                            componentType.connectedBody = targetComponent;
+                                            changedProperties.Add(PropertyName.connectedBody);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Empty string - set to null
+                            componentType.connectedBody = null;
+                            changedProperties.Add(PropertyName.connectedBody);
+                        }
+                    }
+                }
             }
         }
 
@@ -478,11 +491,28 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.connectedBody,
+                    type = PropertyType.String,
+                    value = componentType.connectedBody,
+                    componentType = ComponentType.CharacterJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
             scene.SetFromUnityProperties(updates, callback);
         }
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

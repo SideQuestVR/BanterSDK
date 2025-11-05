@@ -50,6 +50,11 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         internal override void DestroyStuff()
         {
             if (lookAt != null)

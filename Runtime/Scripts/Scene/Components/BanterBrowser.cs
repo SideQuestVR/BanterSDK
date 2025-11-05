@@ -5,34 +5,6 @@ using UnityEngine.Events;
 
 namespace Banter.SDK
 {
-    // [Serializable]
-    // public class BrowserObject
-    // {
-    //     public bool enabled;
-    //     public string url;
-    //     public string instanceId;
-    //     public bool remote;
-    //     public float pixelsPerUnit;
-    //     public float width;
-    //     public float height;
-    //     public int mipMaps;
-    //     public BrowserAction[] afterLoadActions;
-    // }
-
-    // [Serializable]
-    // public static class BrowserActionType
-    // {
-    //     public const string click2d = "click2d";
-    //     public const string click = "click";
-    //     public const string keypress = "keypress";
-    //     public const string scroll = "scroll";
-    //     public const string delayseconds = "delayseconds";
-    //     public const string runscript = "runscript";
-    //     public const string goback = "goback";
-    //     public const string goforward = "goforward";
-    //     public const string postmessage = "postmessage";
-    // }
-
     [Serializable]
     public class BrowserAction
     {
@@ -46,35 +18,7 @@ namespace Banter.SDK
         public string strParam3;
         public string strParam4;
     }
-    /* 
-    #### Banter Browser
-    A browser component that can be added to a GameObject to display a webpage.
 
-    **Properties**
-    - `url` - The URL of the webpage to display.
-    - `mipMaps` - The number of mipmaps to use.
-    - `pixelsPerUnit` - The number of pixels per unit.
-    - `actions` - A list of actions to run after the page has loaded.
-
-    **Methods**
-    - `ToggleInteraction(enabled: boolean)` - Toggles the interaction of the browser.
-    - `RunActions(actions: string)` - Runs a list of actions on the browser.
-
-    **Code Example**
-    ```js
-        const url = "https://www.google.com";
-        const mipMaps = 4;
-        const pixelsPerUnit = 1200;
-        const actions = "click2d,0.5,0.5";
-        const gameObject = new BS.GameObject("MyBrowser"); 
-        const browser = await gameObject.AddComponent(new BS.BanterBrowser(url, mipMaps, pixelsPerUnit, actions));
-        // ...
-        browser.ToggleInteraction(true);
-        // ...
-        browser.RunActions("click2d,0.5,0.5");
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -122,6 +66,11 @@ namespace Banter.SDK
             
             SetupBrowser();
             OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
 
         private void SetupBrowser(List<PropertyName> changedProperties = null)

@@ -27,6 +27,11 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         void SetupGeometry()
         {
             var geometry = GetComponent<BanterGeometry>();
@@ -41,7 +46,6 @@ namespace Banter.SDK
             geometry.segments = segments;
             geometry.thetaStart = thetaStart;
             geometry.thetaLength = thetaLength;
-            Debug.Log(radius + " " + segments + " - " + thetaStart + " - " + thetaLength);
             if (shouldSetGeometry)
             {
                 geometry.SetGeometry();

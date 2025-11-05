@@ -220,6 +220,11 @@ namespace Banter.SDK
                 KillGLTF(gameObject);
             }
         }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGLTF();

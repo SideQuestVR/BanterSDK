@@ -6,21 +6,6 @@ using UnityEngine;
 using UnityEngine.Networking;
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Kit Item
-    Add a kit item to the scene. This component will wait until all asset bundles are loaded inthe scene before trying to instantiate a kit item (prefab).
-
-    **Properties**
-     - `path` - The location of the preaf in the kit object - the same as the path in the asset bundle (always lower case).
-
-    **Code Example**
-    ```js
-        const path = "assets/prefabs/mykititem.prefab";
-        const gameObject = new BS.GameObject("MyKitItem"); 
-        const kitItem = await gameObject.AddComponent(new BS.BanterKitItem(path));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -75,6 +60,11 @@ namespace Banter.SDK
             {
                 scene.kitItems.Remove(item);
             }
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         internal override void StartStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)

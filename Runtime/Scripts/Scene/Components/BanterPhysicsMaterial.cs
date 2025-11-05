@@ -12,13 +12,19 @@ namespace Banter.SDK
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
 
-    public class BanterPhysicMaterial : BanterComponentBase
+    public class BanterPhysicsMaterial : BanterComponentBase
     {
         [Tooltip("The dynamic friction of the material, affecting movement when in contact with another surface.")]
         [See(initial = "1")][SerializeField] internal float dynamicFriction = 1;
 
         [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
         [See(initial = "1")][SerializeField] internal float staticFriction = 1;
+
+        [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
+        [See(initial = "1")][SerializeField] internal float bounciness = 1;
+
+        [See(initial = "0")][SerializeField] internal PhysicsMaterialCombine frictionCombine;
+        [See(initial = "0")][SerializeField] internal PhysicsMaterialCombine bounceCombine;
 
         PhysicsMaterial _material;
         Collider _collider;
@@ -61,12 +67,21 @@ namespace Banter.SDK
                 {
                     _material.staticFriction = staticFriction;
                 }
+                if (changedProperties?.Contains(PropertyName.bounciness) ?? false)
+                {
+                    _material.bounciness = bounciness;
+                }
+                if (changedProperties?.Contains(PropertyName.frictionCombine) ?? false)
+                {
+                    _material.frictionCombine = frictionCombine;
+                }
+                if (changedProperties?.Contains(PropertyName.bounceCombine) ?? false)
+                {
+                    _material.bounceCombine = bounceCombine;
+                }
                 if (_collider.material != _material)
                 {
                     _collider.material = _material;
-                    _collider.material.bounciness = 0;
-                    _collider.material.frictionCombine = PhysicsMaterialCombine.Minimum;
-                    _collider.material.bounceCombine = PhysicsMaterialCombine.Minimum;
                 }
             }
             SetLoadedIfNot();
@@ -82,6 +97,9 @@ namespace Banter.SDK
         // BANTER COMPILED CODE 
         public System.Single DynamicFriction { get { return dynamicFriction; } set { dynamicFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.dynamicFriction }); } }
         public System.Single StaticFriction { get { return staticFriction; } set { staticFriction = value; UpdateCallback(new List<PropertyName> { PropertyName.staticFriction }); } }
+        public System.Single Bounciness { get { return bounciness; } set { bounciness = value; UpdateCallback(new List<PropertyName> { PropertyName.bounciness }); } }
+        public UnityEngine.PhysicsMaterialCombine FrictionCombine { get { return frictionCombine; } set { frictionCombine = value; UpdateCallback(new List<PropertyName> { PropertyName.frictionCombine }); } }
+        public UnityEngine.PhysicsMaterialCombine BounceCombine { get { return bounceCombine; } set { bounceCombine = value; UpdateCallback(new List<PropertyName> { PropertyName.bounceCombine }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -104,7 +122,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.dynamicFriction, PropertyName.staticFriction, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.dynamicFriction, PropertyName.staticFriction, PropertyName.bounciness, PropertyName.frictionCombine, PropertyName.bounceCombine, };
             UpdateCallback(changedProperties);
         }
 
@@ -112,7 +130,7 @@ namespace Banter.SDK
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterPhysicMaterial);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterPhysicsMaterial);
 
 
             oid = gameObject.GetInstanceID();
@@ -167,6 +185,33 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.staticFriction);
                     }
                 }
+                if (values[i] is BanterFloat)
+                {
+                    var valbounciness = (BanterFloat)values[i];
+                    if (valbounciness.n == PropertyName.bounciness)
+                    {
+                        bounciness = valbounciness.x;
+                        changedProperties.Add(PropertyName.bounciness);
+                    }
+                }
+                if (values[i] is BanterInt)
+                {
+                    var valfrictionCombine = (BanterInt)values[i];
+                    if (valfrictionCombine.n == PropertyName.frictionCombine)
+                    {
+                        frictionCombine = (PhysicsMaterialCombine)valfrictionCombine.x;
+                        changedProperties.Add(PropertyName.frictionCombine);
+                    }
+                }
+                if (values[i] is BanterInt)
+                {
+                    var valbounceCombine = (BanterInt)values[i];
+                    if (valbounceCombine.n == PropertyName.bounceCombine)
+                    {
+                        bounceCombine = (PhysicsMaterialCombine)valbounceCombine.x;
+                        changedProperties.Add(PropertyName.bounceCombine);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -181,7 +226,7 @@ namespace Banter.SDK
                     name = PropertyName.dynamicFriction,
                     type = PropertyType.Float,
                     value = dynamicFriction,
-                    componentType = ComponentType.BanterPhysicMaterial,
+                    componentType = ComponentType.BanterPhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });
@@ -193,7 +238,43 @@ namespace Banter.SDK
                     name = PropertyName.staticFriction,
                     type = PropertyType.Float,
                     value = staticFriction,
-                    componentType = ComponentType.BanterPhysicMaterial,
+                    componentType = ComponentType.BanterPhysicsMaterial,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.bounciness,
+                    type = PropertyType.Float,
+                    value = bounciness,
+                    componentType = ComponentType.BanterPhysicsMaterial,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.frictionCombine,
+                    type = PropertyType.Int,
+                    value = frictionCombine,
+                    componentType = ComponentType.BanterPhysicsMaterial,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.bounceCombine,
+                    type = PropertyType.Int,
+                    value = bounceCombine,
+                    componentType = ComponentType.BanterPhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });

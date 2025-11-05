@@ -4,21 +4,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 namespace Banter.SDK
 {
-
-    /* 
-    #### Banter StreetView
-    This component will add a streetview dome to the object and set the panoId of the streetview.
-
-    **Properties**
-     - `panoId` - The panoId of the streetview.
-
-    **Code Example**
-    ```js
-        const panoId = "CAoSLEFGM";
-        const gameObject = new BS.GameObject("MyStreetView");
-        const streetView = await gameObject.AddComponent(new BS.BanterStreetView(panoId));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -43,6 +28,11 @@ namespace Banter.SDK
             }
         }
         internal override void StartStuff() { }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (photoSphere != null)

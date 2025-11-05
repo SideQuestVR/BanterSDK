@@ -16,31 +16,6 @@ namespace Banter.SDK
         Back,
         Double
     }
-    /* 
-    #### Banter Material
-    Add a material to the object. This component will add a material to the object and set the shader, texture, color and side of the material.
-
-    **Properties**
-     - `texture` - The texture to use for the material.
-     - `color` - The color of the material.
-     - `shaderName` - The name of the shader to use.
-     - `side` - The side of the material to render.
-     - `generateMipMaps` - Whether to generate mipmaps for the texture.
-
-    **Code Example**
-    ```js
-        const texture = "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        const color = new BS.Vector4(1,1,1,1);
-        const shaderName = "Unlit/Diffuse";
-        const side = BS.MaterialSide.Front;
-        const generateMipMaps = false;
-
-        const gameObject = new BS.GameObject("MyMaterial"); 
-        const material = await gameObject.AddComponent(new BS.BanterMaterial(shaderName, texture, color, side, generateMipMaps));
-
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -51,8 +26,8 @@ namespace Banter.SDK
         [Tooltip("The name of the shader to use for this material.")]
         [See(initial = "\"Unlit/Diffuse\"")][SerializeField] internal string shaderName = "Unlit/Diffuse";
 
-        [Tooltip("The texture to apply to the material. Provide a valid URL.")]
-        [See(initial = "")][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
+        [Tooltip("The texture to apply to the material. Provide a valid URL or asset reference.")]
+        [See(initial = "", isAssetReference = true)][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
 
         [Tooltip("The color of the material in RGBA format.")]
         [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
@@ -73,6 +48,11 @@ namespace Banter.SDK
             {
                 _ = SetupMaterial();
             }
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -100,14 +80,9 @@ namespace Banter.SDK
                 }
                 if (changedProperties?.Contains(PropertyName.texture) ?? false)
                 {
-                    if (!string.IsNullOrEmpty(texture))
-                    {
-                        Debug.Log("BeforeLoadTexture: " + texture);
-                    }
                     await SetTexture(texture);
                     if (!string.IsNullOrEmpty(texture))
                     {
-                        Debug.Log("AfterLoadTexture: " + texture);
                         scene.link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                     }
                 }
@@ -121,7 +96,6 @@ namespace Banter.SDK
                 }
             }
             catch { }
-            Debug.Log("HERER - Before set loaded on material:" + cid);
             SetLoadedIfNot();
         }
 
@@ -134,6 +108,30 @@ namespace Banter.SDK
         {
             try
             {
+                // Check if texture is an asset reference (starts with "asset_")
+                if (!string.IsNullOrEmpty(texture) && texture.StartsWith("asset_"))
+                {
+                    // It's an asset reference - look it up in the asset registry
+                    var asset = BanterAssetRegistry.Instance.GetAsset<Texture2D>(texture);
+
+                    if (asset != null)
+                    {
+                        Debug.Log($"Using texture asset from registry: {texture}");
+                        mainTex = asset;
+                        if (_renderer != null)
+                        {
+                            _renderer.sharedMaterial.mainTexture = mainTex;
+                        }
+                        return;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Texture asset not found in registry: {texture}");
+                        return;
+                    }
+                }
+
+                // Original URL-based texture loading
                 if ((!scene.settings.EnableDefaultTextures && string.IsNullOrEmpty(texture)) || !Uri.IsWellFormedUriString(texture, UriKind.Absolute))
                 {
                     return;

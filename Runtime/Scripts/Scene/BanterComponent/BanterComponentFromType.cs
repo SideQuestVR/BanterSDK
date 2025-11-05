@@ -85,6 +85,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterNatica>();
                 case ComponentType.BanterPhysicMaterial:
                     return gameObject.AddComponent<BanterPhysicMaterial>();
+                case ComponentType.BanterPhysicsMaterial:
+                    return gameObject.AddComponent<BanterPhysicsMaterial>();
                 case ComponentType.BanterPillow:
                     return gameObject.AddComponent<BanterPillow>();
                 case ComponentType.BanterPlane:

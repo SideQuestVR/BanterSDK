@@ -4,31 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /*
-    #### Banter Fixed Joint
-    A fixed joint restricts an object to follow another object's movement and rotation.
-
-    **Properties**
-    - `connectedBody` - The Rigidbody that this joint is connected to.
-    - `anchor` - The anchor point of the joint in local space.
-    - `connectedAnchor` - The connected anchor point in the connected body's local space.
-    - `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-    - `breakForce` - The force that needs to be applied for this joint to break.
-    - `breakTorque` - The torque that needs to be applied for this joint to break.
-    - `enableCollision` - Enable collision between connected bodies.
-    - `enablePreprocessing` - Enable preprocessing for the joint.
-
-    **Code Example**
-    ```js
-        const connectedBody = null;
-        const anchor = new BS.Vector3(0,0,0);
-        const breakForce = Infinity;
-
-        const gameObject = new BS.GameObject("MyFixedJoint");
-        const fixedJoint = await gameObject.AddComponent(new BS.BanterFixedJoint(connectedBody, anchor, breakForce));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(FixedJoint))]
     [RequireComponent(typeof(FixedJoint))]
@@ -61,6 +36,8 @@ namespace Banter.SDK
 
         [Tooltip("The mass scale of this body.")]
         [See(initial = "1")][SerializeField] internal float massScale = 1f;
+        [Tooltip("The rigidbody that this joint connects to. Can be null for world-anchored joints. Accepts GameObject name or asset reference.")]
+        [See(initial = "", isAssetReference = true)][SerializeField] internal string connectedBody = "";
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 Anchor { get { return anchor; } set { anchor = value; } }
         public UnityEngine.Vector3 ConnectedAnchor { get { return connectedAnchor; } set { connectedAnchor = value; } }
@@ -71,6 +48,7 @@ namespace Banter.SDK
         public System.Boolean EnablePreprocessing { get { return enablePreprocessing; } set { enablePreprocessing = value; } }
         public System.Single ConnectedMassScale { get { return connectedMassScale; } set { connectedMassScale = value; } }
         public System.Single MassScale { get { return massScale; } set { massScale = value; } }
+        public System.String ConnectedBody { get { return connectedBody; } set { connectedBody = value; } }
         public FixedJoint _componentType;
         public FixedJoint componentType
         {
@@ -229,6 +207,51 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.massScale);
                     }
                 }
+                if (values[i] is BanterString)
+                {
+                    var valconnectedBody = (BanterString)values[i];
+                    if (valconnectedBody.n == PropertyName.connectedBody)
+                    {
+                        if (!string.IsNullOrEmpty(valconnectedBody.x))
+                        {
+                            // Lookup component by jsId
+                            var targetComponentBase = scene.GetComponentByJsId(valconnectedBody.x);
+                            if (targetComponentBase != null)
+                            {
+                                // Get the actual reference object (for UnityComponents, this returns componentType)
+                                var referenceObject = targetComponentBase.GetReferenceObject();
+                                if (referenceObject is Rigidbody)
+                                {
+                                    componentType.connectedBody = referenceObject as Rigidbody;
+                                    changedProperties.Add(PropertyName.connectedBody);
+                                }
+                            }
+                            else
+                            {
+                                // Fallback: Try parsing as GameObject instance ID
+                                if (int.TryParse(valconnectedBody.x, out int targetOid))
+                                {
+                                    var targetGameObject = scene.GetGameObject(targetOid);
+                                    if (targetGameObject != null)
+                                    {
+                                        var targetComponent = targetGameObject.GetComponent<Rigidbody>();
+                                        if (targetComponent != null)
+                                        {
+                                            componentType.connectedBody = targetComponent;
+                                            changedProperties.Add(PropertyName.connectedBody);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            // Empty string - set to null
+                            componentType.connectedBody = null;
+                            changedProperties.Add(PropertyName.connectedBody);
+                        }
+                    }
+                }
             }
         }
 
@@ -343,11 +366,28 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.connectedBody,
+                    type = PropertyType.String,
+                    value = componentType.connectedBody,
+                    componentType = ComponentType.FixedJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
             scene.SetFromUnityProperties(updates, callback);
         }
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

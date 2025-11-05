@@ -31,12 +31,17 @@ public struct BanterVector4
         w = NumberFormat.Parse(parts[5]);
     }
 
-    public static explicit operator BanterVector4(Vector4 v)
+
+    public static explicit operator BanterVector4(Quaternion v)
     {
         return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
+    public static explicit operator Quaternion(BanterVector4 v)
+    {
+        return new Quaternion() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
 
-    public static explicit operator BanterVector4(Quaternion v)
+    public static explicit operator BanterVector4(Vector4 v)
     {
         return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
@@ -44,9 +49,13 @@ public struct BanterVector4
     {
         return new Vector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
-    public static explicit operator Quaternion(BanterVector4 v)
+    public static explicit operator BanterVector4(JointDrive v)
     {
-        return new Quaternion() { x = v.x, y = v.y, z = v.z, w = v.w };
+        return new BanterVector4() { x = v.positionSpring, y = v.positionDamper, z = v.maximumForce, w = v.useAcceleration ? 1 : 0 };
+    }
+    public static explicit operator JointDrive(BanterVector4 v)
+    {
+        return new JointDrive() { positionSpring = v.x, positionDamper = v.y, maximumForce = v.z, useAcceleration = !(v.w == 0) };
     }
 }
 
@@ -123,7 +132,14 @@ public struct BanterVector3
     {
         return new BanterVector3() { x = v.x, y = v.y, z = v.z };
     }
-
+    public static explicit operator BanterVector3(SoftJointLimit v)
+    {
+        return new BanterVector3() { x = v.limit, y = v.bounciness, z = v.contactDistance };
+    }
+    public static explicit operator SoftJointLimit(BanterVector3 v)
+    {
+        return new SoftJointLimit() { limit = v.x, bounciness = v.y, contactDistance = v.z };
+    }
     public static explicit operator Vector3(BanterVector3 v)
     {
         return new Vector3() { x = v.x, y = v.y, z = v.z };

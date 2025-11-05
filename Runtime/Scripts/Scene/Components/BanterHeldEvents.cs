@@ -72,6 +72,11 @@ namespace Banter.SDK
 
 
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         internal override void DestroyStuff()
         {
             if (banterPlayerEvents && banterPlayerEventsAdded)

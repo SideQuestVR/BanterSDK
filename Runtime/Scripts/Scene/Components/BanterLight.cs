@@ -4,35 +4,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /*
-    #### Banter Light
-    A light component that can be configured as Point, Directional, or Spot light.
-
-    **Properties**
-    - `lightType` - The type of light (0 = Point, 1 = Directional, 2 = Spot).
-    - `color` - The color of the light.
-    - `intensity` - The brightness of the light.
-    - `range` - How far the light reaches (Point and Spot only).
-    - `spotAngle` - The angle of the light cone in degrees (Spot only).
-    - `innerSpotAngle` - The inner angle of the light cone in degrees (Spot only).
-    - `shadows` - The type of shadows to cast (0 = None, 1 = Hard, 2 = Soft).
-
-    **Code Example**
-    ```js
-        // Point Light
-        const pointLight = new BS.GameObject("MyPointLight");
-        await pointLight.AddComponent(new BS.BanterLight(0, new BS.Color(1, 1, 0, 1), 2, 10, 30, 21.8, 0));
-
-        // Directional Light
-        const dirLight = new BS.GameObject("MyDirectionalLight");
-        await dirLight.AddComponent(new BS.BanterLight(1, new BS.Color(1, 1, 1, 1), 1, 10, 30, 21.8, 0));
-
-        // Spot Light
-        const spotLight = new BS.GameObject("MySpotLight");
-        await spotLight.AddComponent(new BS.BanterLight(2, new BS.Color(0, 1, 1, 1), 3, 15, 45, 30, 0));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(Light))]
     [RequireComponent(typeof(Light))]
@@ -302,6 +273,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }
