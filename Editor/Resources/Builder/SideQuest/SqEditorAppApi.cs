@@ -503,7 +503,7 @@ namespace Banter.SDKEditor
                 yield break;
             }
 
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = "banter", Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = "", Name = name }, (u) =>
             {
                 if (u == null)
                 {
