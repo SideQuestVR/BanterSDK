@@ -212,6 +212,20 @@ namespace Banter.SDK
                 // Configure panel settings
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
 
+                // Ensure required components exist
+                if (gameObject.GetComponent<PanelRaycaster>() == null)
+                {
+                    gameObject.AddComponent<PanelRaycaster>();
+                }
+                if (gameObject.GetComponent<PanelEventHandler>() == null)
+                {
+                    gameObject.AddComponent<PanelEventHandler>();
+                }
+                if (gameObject.GetComponent<AddPanelStuff>() == null)
+                {
+                    gameObject.AddComponent<AddPanelStuff>();
+                }
+
                 // Set up the bridge
                 if (uiElementBridge == null)
                 {
