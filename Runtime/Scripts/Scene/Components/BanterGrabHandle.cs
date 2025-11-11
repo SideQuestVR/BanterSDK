@@ -61,11 +61,15 @@ namespace Banter.SDK
             grabHandle.Col = GetComponent<Collider>();
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;
-            grabHandle.WorldObj = GetComponentInParent<WorldObject>();
-            if (!grabHandle.WorldObj)
+            Rigidbody rb = grabHandle.Col.attachedRigidbody;
+            if(rb)
             {
-                worldObjectAdded = true;
-                grabHandle.WorldObj = gameObject.AddComponent<WorldObject>();
+                grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
+                if (!grabHandle.WorldObj)
+                {
+                    worldObjectAdded = true;
+                    grabHandle.WorldObj = rb.gameObject.AddComponent<WorldObject>();
+                }
             }
 #endif
             SetLoadedIfNot();
