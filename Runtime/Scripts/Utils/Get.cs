@@ -1,11 +1,13 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
+using Object = UnityEngine.Object;
 
 namespace Banter.SDK
 {
@@ -133,7 +135,7 @@ namespace Banter.SDK
             return null;
         }
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
-        static Dictionary<string,UnityEngine.Object> objectCache = new Dictionary<string,UnityEngine.Object>();
+        static ConcurrentDictionary<string,UnityEngine.Object> objectCache = new ConcurrentDictionary<string,UnityEngine.Object>();
 
         public static void Clear()
         {
@@ -148,9 +150,10 @@ namespace Banter.SDK
         }
         public static async Task<Texture2D> Texture(string url)
         {
-            if (objectCache.ContainsKey(url))
+            LogLine.Do("Checking cache for texture: " + url);
+            if (objectCache.TryGetValue(url, out Object value))
             {
-                return (Texture2D)objectCache[url];
+                return (Texture2D)value;
             }
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
             {
@@ -162,7 +165,8 @@ namespace Banter.SDK
                 else
                 {
                     var texture = DownloadHandlerTexture.GetContent(uwr);
-                    objectCache.Add(url, texture);
+                    LogLine.Do("Adding texture to cache: " + url);
+                    objectCache.TryAdd(url, texture);
                     return texture;
                 }
             }
@@ -315,9 +319,9 @@ namespace Banter.SDK
 
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)
         {
-            if (objectCache.ContainsKey(url))
+            if (objectCache.TryGetValue(url, out Object value))
             {
-                return (AudioClip)objectCache[url];
+                return (AudioClip)value;
             }
             var m = ExtExtractor.Match(url);
             if (!m.Success || m.Groups.Count < 2)
@@ -357,7 +361,7 @@ namespace Banter.SDK
                     var clip = DownloadHandlerAudioClip.GetContent(web);
                     if (clip != null)
                     {
-                        objectCache.Add(url, clip);
+                        objectCache.TryAdd(url, clip);
                         return clip;
                     }
                     else
