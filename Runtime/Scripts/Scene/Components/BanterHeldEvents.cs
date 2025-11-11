@@ -156,11 +156,15 @@ namespace Banter.SDK
             }
 
             grabHandle._handleFunctions = new HandleFunction[]{handleController};
-            grabHandle.WorldObj = GetComponentInParent<WorldObject>();
-            if (!grabHandle.WorldObj)
+            Rigidbody rb = grabHandle.Col.attachedRigidbody;
+            if (rb)
             {
-                worldObjectAdded = true;
-                grabHandle.WorldObj = gameObject.AddComponent<WorldObject>();
+                grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
+                if (!grabHandle.WorldObj)
+                {
+                    worldObjectAdded = true;
+                    grabHandle.WorldObj = rb.gameObject.AddComponent<WorldObject>();
+                }
             }
         }
         // BANTER COMPILED CODE 
