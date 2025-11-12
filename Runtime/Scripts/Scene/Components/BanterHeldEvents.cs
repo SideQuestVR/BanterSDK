@@ -156,7 +156,7 @@ namespace Banter.SDK
             }
 
             grabHandle._handleFunctions = new HandleFunction[]{handleController};
-            Rigidbody rb = grabHandle.Col.attachedRigidbody;
+            Rigidbody rb = grabHandle.Col?.attachedRigidbody;
             if (rb)
             {
                 grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
