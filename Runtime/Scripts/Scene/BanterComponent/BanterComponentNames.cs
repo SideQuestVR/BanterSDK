@@ -46,6 +46,7 @@ namespace Banter.SDK
         BanterPillow,
         BanterPlane,
         BanterPortal,
+        BanterQuestHome,
         BanterRigidbody,
         BanterRing,
         BanterScherk,
@@ -63,6 +64,5 @@ namespace Banter.SDK
         BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,
-        BanterQuestHome,
     }
 }

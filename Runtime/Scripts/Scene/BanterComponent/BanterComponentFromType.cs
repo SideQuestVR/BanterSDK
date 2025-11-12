@@ -93,6 +93,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterPlane>();
                 case ComponentType.BanterPortal:
                     return gameObject.AddComponent<BanterPortal>();
+                case ComponentType.BanterQuestHome:
+                    return gameObject.AddComponent<BanterQuestHome>();
                 case ComponentType.BanterRigidbody:
                     return gameObject.AddComponent<BanterRigidbody>();
                 case ComponentType.BanterRing:
