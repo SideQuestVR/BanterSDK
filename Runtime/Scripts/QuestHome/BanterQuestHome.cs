@@ -759,6 +759,14 @@ namespace Banter.SDK
         // ========== ABSTRACT METHOD IMPLEMENTATIONS ==========
 
         /// <summary>
+        /// Per-frame update (not called - BanterQuestHome has no [Watch] properties)
+        /// </summary>
+        internal override void UpdateStuff()
+        {
+
+        }
+
+        /// <summary>
         /// Watch properties for changes (unused - handled automatically)
         /// </summary>
         internal override void WatchProperties(PropertyName[] properties)
