@@ -80,7 +80,7 @@ Shader "Unlit/DiffuseTransparent"
 
 				// Apply lighting to color
 				col.rgb *= lighting;
-                col.a = 1;
+                //col.a = 1;
 
 				return col;
 			}
