@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 namespace Banter.SDK
 {
@@ -235,6 +236,9 @@ namespace Banter.SDK
                                 var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
                                 if(trackedDeviceRaycaster)
                                     Destroy(trackedDeviceRaycaster);
+                                var graphicsRaycaster = canvas.gameObject.GetComponent<GraphicRaycaster>();
+                                if(graphicsRaycaster)
+                                    Destroy(graphicsRaycaster);
                             }
                         }
 
