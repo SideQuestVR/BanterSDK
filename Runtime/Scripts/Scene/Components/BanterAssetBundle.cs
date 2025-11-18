@@ -230,8 +230,15 @@ namespace Banter.SDK
                                 {
                                     var box = canvas.AddComponent<BoxCollider>();
                                     var rt = canvas.GetComponent<RectTransform>();
+                                    box.isTrigger = true;
                                     box.size = new Vector3(rt.rect.width, rt.rect.height, 0.01f);
                                     box.center = new Vector3(0f, 0f, 0.015f);
+                                    
+                                    // Founds some spaces that have huge canvases with no rectT scaling, so cap it
+                                    if (rt.localScale.x >= 1f && rt.rect.width > 10f)
+                                    {
+                                        box.enabled = false;
+                                    }
                                 }
                                 var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
                                 if(trackedDeviceRaycaster)
