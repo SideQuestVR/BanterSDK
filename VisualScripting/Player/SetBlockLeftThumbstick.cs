@@ -24,7 +24,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var value = flow.GetValue<bool>(blockInput);
-                ActionsSystem.blockLeftThumbstick = value;
+                ActionsSystem.Blocker_LeftThumbstick.All = value;
                 return outputTrigger;
             });
 

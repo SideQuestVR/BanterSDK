@@ -2377,61 +2377,61 @@ namespace Banter.SDK
 
         public void SetActionsSystemBlockLeftThumbstick(bool value, int reqId)
         {
-            ActionsSystem.blockLeftThumbstick = value;
+            ActionsSystem.Blocker_LeftThumbstick.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockRightThumbstick(bool value, int reqId)
         {
-            ActionsSystem.blockRightThumbstick = value;
+            ActionsSystem.Blocker_RightThumbstick.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockLeftPrimary(bool value, int reqId)
         {
-            ActionsSystem.blockLeftPrimary = value;
+            ActionsSystem.Blocker_LeftPrimary.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockRightPrimary(bool value, int reqId)
         {
-            ActionsSystem.blockRightPrimary = value;
+            ActionsSystem.Blocker_RightPrimary.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockLeftSecondary(bool value, int reqId)
         {
-            ActionsSystem.blockLeftSecondary = value;
+            ActionsSystem.Blocker_LeftSecondary.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockRightSecondary(bool value, int reqId)
         {
-            ActionsSystem.blockRightSecondary = value;
+            ActionsSystem.Blocker_RightSecondary.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockLeftThumbstickClick(bool value, int reqId)
         {
-            ActionsSystem.blockLeftThumbstickClick = value;
+            ActionsSystem.Blocker_LeftThumbstick.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockRightThumbstickClick(bool value, int reqId)
         {
-            ActionsSystem.blockRightThumbstickClick = value;
+            ActionsSystem.Blocker_RightThumbstick.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockLeftTrigger(bool value, int reqId)
         {
-            ActionsSystem.blockLeftTrigger = value;
+            ActionsSystem.Blocker_LeftTrigger.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
 
         public void SetActionsSystemBlockRightTrigger(bool value, int reqId)
         {
-            ActionsSystem.blockRightTrigger = value;
+            ActionsSystem.Blocker_RightTrigger.All = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
         #endregion
