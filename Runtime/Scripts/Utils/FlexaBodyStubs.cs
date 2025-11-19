@@ -5,28 +5,34 @@
 
 namespace Banter.FlexaBody
 {
+    /// <summary> List of functions to block input to </summary>
+    [System.Serializable]
+    public class ActionBlocker
+    {
+        public bool All { set { Global = Grab = value; } get { return Global || Grab; } }   // Block All
+        public bool Global = false;     // Block NonGrab
+        public bool Grab = false;       // Block Grabs
+    }
+    
     /// <summary>
     /// Stub for ActionsSystem - static properties that accept values but perform no actions when FlexaBody is not available
     /// </summary>
     public static class ActionsSystem
     {
-        public static bool canMove { get; set; }
-        public static bool canRotate { get; set; }
-        public static bool canCrouch { get; set; }
-        public static bool canTeleport { get; set; }
-        public static bool canGrapple { get; set; }
-        public static bool canJump { get; set; }
-        public static bool canGrab { get; set; }
-        public static bool blockLeftThumbstick { get; set; }
-        public static bool blockRightThumbstick { get; set; }
-        public static bool blockLeftPrimary { get; set; }
-        public static bool blockRightPrimary { get; set; }
-        public static bool blockLeftSecondary { get; set; }
-        public static bool blockRightSecondary { get; set; }
-        public static bool blockLeftThumbstickClick { get; set; }
-        public static bool blockRightThumbstickClick { get; set; }
-        public static bool blockLeftTrigger { get; set; }
-        public static bool blockRightTrigger { get; set; }
+        public static ActionBlocker Blocker_LeftThumbstick = new ActionBlocker();
+        public static ActionBlocker Blocker_RightThumbstick = new ActionBlocker();
+        public static ActionBlocker Blocker_LeftThumbstickClick = new ActionBlocker();
+        public static ActionBlocker Blocker_RightThumbstickClick = new ActionBlocker();
+
+        public static ActionBlocker Blocker_LeftPrimary = new ActionBlocker();
+        public static ActionBlocker Blocker_RightPrimary = new ActionBlocker();
+        public static ActionBlocker Blocker_LeftSecondary = new ActionBlocker();
+        public static ActionBlocker Blocker_RightSecondary = new ActionBlocker();
+
+        public static ActionBlocker Blocker_LeftTrigger = new ActionBlocker();
+        public static ActionBlocker Blocker_RightTrigger = new ActionBlocker();
+        public static ActionBlocker Blocker_LeftGrip = new ActionBlocker();
+        public static ActionBlocker Blocker_RightGrip = new ActionBlocker();
     }
 
     /// <summary>
