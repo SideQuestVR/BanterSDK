@@ -19,6 +19,13 @@ namespace Banter.FlexaBody
     /// </summary>
     public static class ActionsSystem
     {
+        public static bool canMove { get; set; }
+        public static bool canRotate { get; set; }
+        public static bool canCrouch { get; set; }
+        public static bool canTeleport { get; set; }
+        public static bool canGrapple { get; set; }
+        public static bool canJump { get; set; }
+        public static bool canGrab { get; set; }
         public static ActionBlocker Blocker_LeftThumbstick = new ActionBlocker();
         public static ActionBlocker Blocker_RightThumbstick = new ActionBlocker();
         public static ActionBlocker Blocker_LeftThumbstickClick = new ActionBlocker();
