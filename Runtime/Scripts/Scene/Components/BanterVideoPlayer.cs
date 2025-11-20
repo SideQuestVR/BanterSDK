@@ -8,30 +8,6 @@ using PropertyName = Banter.SDK.PropertyName;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Video Player
-    This component will add a video player to the object and set the url, volume, loop, playOnAwake, skipOnDrop and waitForFirstFrame of the video player.
-
-    **Properties**
-     - `url` - The url of the video to play.
-     - `volume` - The volume of the video.
-     - `loop` - Whether the video should loop.
-     - `playOnAwake` - Whether the video should play on awake.
-     - `skipOnDrop` - Whether the video should skip on drop.
-     - `waitForFirstFrame` - Whether the video should wait for the first frame.
-
-    **Code Example**
-    ```js
-        const url = "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.mp4?v=1708022523716";
-        const volume = 0.5;
-        const loop = true;
-        const playOnAwake = true;
-        const skipOnDrop = true;
-        const waitForFirstFrame = true;
-        const gameObject = new BS.GameObject("MyVideoPlayer");
-        const videoPlayer = await gameObject.AddComponent(new BS.BanterVideoPlayer(url, volume, loop, playOnAwake, skipOnDrop, waitForFirstFrame));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -233,6 +209,11 @@ namespace Banter.SDK
                 _source.loopPointReached -= VideoEnded;
                 Destroy(_source);
             }
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         // BANTER COMPILED CODE 
         public System.Single Time { get { return time; } set { time = value; UpdateCallback(new List<PropertyName> { PropertyName.time }); } }
@@ -609,7 +590,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        void Tick(object sender, EventArgs e) { SyncProperties(); }
+        void Tick(object sender, EventArgs e) { SyncProperties(); UpdateStuff(); }
 
         internal override void WatchProperties(PropertyName[] properties)
         {

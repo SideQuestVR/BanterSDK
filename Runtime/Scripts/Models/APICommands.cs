@@ -7,6 +7,14 @@ public class APICommands
     public const string CREATE_WINDOW = "!cw!";
     public const string RESIZE_WINDOW = "!rw!";
     public const string KILL_WINDOW = "!kw!";
+    public const string SET_NETWORK_ID = "!sni!";
+    public const string SET_NAME = "!sn!";
+    public const string SET_TAG = "!sta!";
+    public const string SET_TRANSFORM = "!st!";
+    public const string MONO_BEHAVIOUR = "!mb!";
+    public const string WATCH_TRANSFORM = "!wt!";
+    public const string SET_JSOID = "!sjoi!";
+    public const string SET_JSCID = "!sjci!";
     public const string REQUEST_ID = "!i!";
     public const string RESPONSE_ID = "!o!";
     public const string UPDATE = "!u!";
@@ -66,18 +74,22 @@ public class APICommands
     public const string YT_INFO = "!yti!";
     public const string LOCK_TELEPORT = "!lt!";
     public const string LOCK_SPIDERMAN = "!ls!";
+    public const string TELEMETRY = "!tel!";
 
 
 
     #region Events
     public const string EVENT = "!e!";
+    public const string POSE_UPDATE = "pu!";
     public const string LOADED = "l!";
+    public const string PROGRESS = "p!";
     public const string UNITY_LOADED = "ulo!";
     public const string CLICKED = "c!";
     public const string GRABBED = "g!";
     public const string RELEASED = "r!";
     public const string BUTTON_PRESSED = "bp!";
     public const string BUTTON_RELEASED = "br!";
+    public const string TRANSFORM_UPDATED = "tu!";
     public const string KEY = "k!";
     public const string ONE_SHOT_RECIEVED = "on!";
     public const string COLLISION_ENTER = "ce!";
@@ -126,4 +138,45 @@ public class APICommands
     public const string LEGACY_ATTACH_OBJECT = "ao!";
     #endregion
 
+
+    public const string SET_CAN_MOVE = "!scm!";
+    public const string SET_CAN_ROTATE = "!scr!";
+    public const string SET_CAN_CROUCH = "!scc!";
+    public const string SET_CAN_TELEPORT = "!sct!";
+    public const string SET_CAN_GRAPPLE = "!scg!";
+    public const string SET_CAN_JUMP = "!scj!";
+    public const string SET_CAN_GRAB = "!scgr!";
+    public const string SET_BLOCK_LEFT_THUMBSTICK = "!sblt!";
+    public const string SET_BLOCK_RIGHT_THUMBSTICK = "!sbrt!";
+    public const string SET_BLOCK_LEFT_PRIMARY = "!sblp!";
+    public const string SET_BLOCK_RIGHT_PRIMARY = "!sbrp!";
+    public const string SET_BLOCK_LEFT_SECONDARY = "!sbls!";
+    public const string SET_BLOCK_RIGHT_SECONDARY = "!sbrs!";
+    public const string SET_BLOCK_LEFT_THUMBSTICK_CLICK = "!sbltc!";
+    public const string SET_BLOCK_RIGHT_THUMBSTICK_CLICK = "!sbrtc!";
+    public const string SET_BLOCK_LEFT_TRIGGER = "!sbltr!";
+    public const string SET_BLOCK_RIGHT_TRIGGER = "!sbrtr!";
+
+    // Platform detection command
+    public const string GET_PLATFORM = "!gp!";
+
+    public const string GET_BOUNDS = "!gb!";
+
+    // Haptic feedback command
+    public const string SEND_HAPTIC_IMPULSE = "!shi!";
+
+    // Controller input events
+    public const string CONTROLLER_AXIS_UPDATE = "ca!";
+    public const string TRIGGER_AXIS_UPDATE = "ta!";
+
+    // Asset System
+    public const string ASSET_REGISTERED = "!ar!";
+    public const string ASSET_LOADED = "!al!";
+    public const string ASSET_FAILED = "!af!";
+    public const string ASSET_DESTROYED = "!ad!";
+    public const string ASSET_UPDATED = "!au!";
+    public const string CREATE_ASSET = "!cra!";
+    public const string DESTROY_ASSET = "!dra!";
+    public const string QUERY_ASSET = "!qa!";
+    public const string SET_ASSET_PROPERTY = "!sap!";
 }

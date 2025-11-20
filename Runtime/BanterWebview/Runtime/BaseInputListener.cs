@@ -3,7 +3,7 @@ using UnityEngine.EventSystems;
 
 namespace TLab.WebView
 {
-    public abstract class BaseInputListener : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler, IPointerExitHandler
+    public abstract class BaseInputListener : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler, IPointerExitHandler, IPointerMoveHandler
     {
         private bool m_pointerDown = false;
         private int? m_pointerId = null;
@@ -69,7 +69,7 @@ namespace TLab.WebView
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            if (m_pointerId == null && !m_pointerDown && GetInputPosition(eventData))
+            if (!m_pointerDown && GetInputPosition(eventData))
             {
                 m_pointerId = eventData.pointerId;
 
@@ -120,6 +120,21 @@ namespace TLab.WebView
                 m_pointerDown = false;
             }
         }
+        protected abstract void OnPointerMove(PointerEventData pointerEventData, InputEventData inputEventData);
+
+        public void OnPointerMove(PointerEventData eventData)
+        {
+            if (m_pointerId == null)
+            {
+                m_pointerId = eventData.pointerId;
+            }
+            if ((m_pointerId == eventData.pointerId) && GetInputPosition(eventData) && !m_pointerDown)
+            {
+                m_inputEventData.Update(m_current, m_current - m_prev);
+                OnPointerMove(eventData, m_inputEventData);
+            }
+                
+        }
 
         protected virtual void OnEnable()
         {
@@ -152,5 +167,6 @@ namespace TLab.WebView
 
             return i >= min && i <= max;
         }
+
     }
 }

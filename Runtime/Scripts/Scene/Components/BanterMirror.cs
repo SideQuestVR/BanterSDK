@@ -30,6 +30,7 @@ namespace Banter.SDK
 
 
         VRPortalRenderer _renderer;
+        GameObject _mirrorObject;
 
         [Method]
         public void _SetCullingLayer(int layer)
@@ -47,7 +48,20 @@ namespace Banter.SDK
         {
             SetupMirror();
         }
-        internal override void DestroyStuff() { }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
+        internal override void DestroyStuff()
+        {
+            if (_mirrorObject != null)
+            {
+                Destroy(_mirrorObject);
+                _mirrorObject = null;
+            }
+            _renderer = null;
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupMirror(changedProperties);
@@ -61,8 +75,8 @@ namespace Banter.SDK
             }
             if (_renderer == null)
             {
-                var obj = Instantiate(Resources.Load<GameObject>("Prefabs/BanterMirror3D"));
-                obj.transform.SetParent(transform, false);
+                _mirrorObject = Instantiate(Resources.Load<GameObject>("Prefabs/BanterMirror3D"));
+                _mirrorObject.transform.SetParent(transform, false);
                 _renderer = gameObject.GetComponentInChildren<VRPortalRenderer>();
             }
             if (changedProperties?.Contains(PropertyName.renderTextureSize) ?? true)

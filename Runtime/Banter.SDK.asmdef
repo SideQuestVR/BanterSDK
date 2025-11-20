@@ -11,7 +11,8 @@
         "GUID:fccaf08def19e644086779b7428cf417",
         "GUID:fe5c9d210f6859a4eac877d630830953",
         "GUID:11a03fa8efb0abf4fba2ae9ddc6a09f4",
-        "GUID:af6e7370d62c866409111f9afdb8c47a"
+        "GUID:af6e7370d62c866409111f9afdb8c47a",
+        "GUID:b4ae365a73764ee478adc74cb89832fe"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -30,6 +31,16 @@
             "name": "com.basis.bundlemanagement",
             "expression": "0.0.1",
             "define": "BASIS_BUNDLE_MANAGEMENT"
+        },
+        {
+            "name": "com.gator-dragon-games.jigglephysics",
+            "expression": "13.0.0",
+            "define": "UNITY_JIGGLE_PHYSICS"
+        },
+        {
+            "name": "com.sidequest.flexabody",
+            "expression": "0.0.1",
+            "define": "BANTER_FLEX"
         }
     ],
     "noEngineReferences": false

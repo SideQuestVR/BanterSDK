@@ -4,23 +4,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Portal
-    This component will add a portal to the object and set the url and instance of the portal.
-
-    **Properties**
-     - `url` - The url of the space to link to.
-     - `instance` - The instance of the space to link to.
-
-    **Code Example**
-    ```js
-        const url = "https://banter.host/space/5f9b4";
-        const instance = "5f9b4";
-        const gameObject = new BS.GameObject("MyPortal");
-        const portal = await gameObject.AddComponent(new BS.BanterPortal(url, instance));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -114,7 +97,19 @@ namespace Banter.SDK
             }
         }
 
-        internal override void DestroyStuff() { }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
+        internal override void DestroyStuff()
+        {
+            if (portal != null)
+            {
+                Destroy(portal);
+                portal = null;
+            }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties = null)
         {
             _ = SetupPortal();

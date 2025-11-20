@@ -49,10 +49,6 @@ public class BanterSceneEvents
     public UnityEvent OnSceneReset = new UnityEvent();
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
     public UnityEvent<string, string, bool> OnJsCallbackRecieved = new UnityEvent<string, string, bool>();
-    public UnityEvent<BanterHeldEvents> OnHeldEvents = new UnityEvent<BanterHeldEvents>();
-    public UnityEvent<BanterGrabHandle> OnGrabHandle = new UnityEvent<BanterGrabHandle>();
-    public UnityEvent<BanterWorldObject> OnWorldObject = new UnityEvent<BanterWorldObject>();
-    public UnityEvent<BanterWorldObject> OnWorldObjectCollectColliders = new UnityEvent<BanterWorldObject>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
     public UnityEvent<string, int, int, Color> OnToast = new UnityEvent<string, int, int, Color>();
 
@@ -80,8 +76,10 @@ public class BanterSceneEvents
     public UnityEvent<string, string, string> OnSetUserState = new UnityEvent<string, string, string>();
     public UnityEvent<string, string> OnRemoveUserState = new UnityEvent<string, string>();
 
+    public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
+    public Func<string> GetPlatform = new Func<string>(() => { return ""; });
 
     #endregion
 

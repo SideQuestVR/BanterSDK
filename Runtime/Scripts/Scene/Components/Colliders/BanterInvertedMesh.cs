@@ -32,6 +32,7 @@ namespace Banter.SDK
                 SetLoadedIfNot();
             }
         }
+        internal override void UpdateStuff() {}
         // BANTER COMPILED CODE 
         BanterScene _scene;
         public BanterScene scene

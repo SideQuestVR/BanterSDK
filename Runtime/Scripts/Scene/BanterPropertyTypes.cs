@@ -31,14 +31,31 @@ public struct BanterVector4
         w = NumberFormat.Parse(parts[5]);
     }
 
-    public static explicit operator BanterVector4(Vector4 v)
-    {
-        return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
-    }
 
     public static explicit operator BanterVector4(Quaternion v)
     {
         return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
+    public static explicit operator Quaternion(BanterVector4 v)
+    {
+        return new Quaternion() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
+
+    public static explicit operator BanterVector4(Vector4 v)
+    {
+        return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
+    public static explicit operator Vector4(BanterVector4 v)
+    {
+        return new Vector4() { x = v.x, y = v.y, z = v.z, w = v.w };
+    }
+    public static explicit operator BanterVector4(JointDrive v)
+    {
+        return new BanterVector4() { x = v.positionSpring, y = v.positionDamper, z = v.maximumForce, w = v.useAcceleration ? 1 : 0 };
+    }
+    public static explicit operator JointDrive(BanterVector4 v)
+    {
+        return new JointDrive() { positionSpring = v.x, positionDamper = v.y, maximumForce = v.z, useAcceleration = !(v.w == 0) };
     }
 }
 
@@ -74,6 +91,10 @@ public struct BanterVector2
     public static explicit operator BanterVector2(Vector2 v)
     {
         return new BanterVector2() { x = v.x, y = v.y };
+    }
+    public static explicit operator Vector2(BanterVector2 v)
+    {
+        return new Vector2() { x = v.x, y = v.y };
     }
 }
 
@@ -111,6 +132,18 @@ public struct BanterVector3
     {
         return new BanterVector3() { x = v.x, y = v.y, z = v.z };
     }
+    public static explicit operator BanterVector3(SoftJointLimit v)
+    {
+        return new BanterVector3() { x = v.limit, y = v.bounciness, z = v.contactDistance };
+    }
+    public static explicit operator SoftJointLimit(BanterVector3 v)
+    {
+        return new SoftJointLimit() { limit = v.x, bounciness = v.y, contactDistance = v.z };
+    }
+    public static explicit operator Vector3(BanterVector3 v)
+    {
+        return new Vector3() { x = v.x, y = v.y, z = v.z };
+    }
 }
 
 [Serializable]
@@ -143,6 +176,13 @@ public struct BanterFloat
     {
         return new BanterFloat() { x = v };
     }
+
+    public static explicit operator float(BanterFloat v)
+    {
+        return v.x;
+    }
+
+    
 }
 
 [Serializable]
@@ -175,6 +215,10 @@ public struct BanterInt
     {
         return new BanterInt() { x = v };
     }
+    public static explicit operator int(BanterInt v)
+    {
+        return v.x;
+    }
 }
 
 [Serializable]
@@ -206,6 +250,10 @@ public struct BanterBool
     {
         return new BanterBool() { x = v };
     }
+    public static explicit operator bool(BanterBool v)
+    {
+        return v.x;
+    }
 }
 [Serializable]
 public struct BanterString
@@ -236,6 +284,10 @@ public struct BanterString
     public static explicit operator BanterString(string v)
     {
         return new BanterString() { x = v };
+    }
+    public static explicit operator string(BanterString v)
+    {
+        return v.x;
     }
 }
 

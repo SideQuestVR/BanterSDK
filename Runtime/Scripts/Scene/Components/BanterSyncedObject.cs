@@ -53,6 +53,11 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {

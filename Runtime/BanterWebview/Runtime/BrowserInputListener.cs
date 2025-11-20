@@ -16,6 +16,7 @@ namespace TLab.WebView
             Down,
             Up,
             Drag,
+            Move
         };
 
         protected override void OnPointerUp(PointerEventData pointerEventData, InputEventData inputEventData)
@@ -48,6 +49,14 @@ namespace TLab.WebView
             position.x *= browser.viewSize.x;
             position.y *= browser.viewSize.y;
             browser.TouchEvent((int)position.x, (int)position.y, (int)TouchEvent.Drag, m_downTime);
+        }
+
+        protected override void OnPointerMove(PointerEventData pointerEventData, InputEventData inputEventData)
+        {
+            var position = inputEventData.position;
+            position.x *= browser.viewSize.x;
+            position.y *= browser.viewSize.y;
+            browser.TouchEvent((int)position.x, (int)position.y, (int)TouchEvent.Move, m_downTime);
         }
     }
 }

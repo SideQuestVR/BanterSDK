@@ -115,5 +115,10 @@ namespace TLab.WebView.Widget
 
             m_inertia = System.Math.Sign(m_inertia) * Mathf.Clamp(Mathf.Abs(m_inertia) - m_duration, 0, float.MaxValue);
         }
+
+        protected override void OnPointerMove(PointerEventData pointerEventData, InputEventData inputEventData)
+        {
+            throw new System.NotImplementedException();
+        }
     }
 }

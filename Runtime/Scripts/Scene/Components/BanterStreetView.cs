@@ -4,21 +4,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 namespace Banter.SDK
 {
-
-    /* 
-    #### Banter StreetView
-    This component will add a streetview dome to the object and set the panoId of the streetview.
-
-    **Properties**
-     - `panoId` - The panoId of the streetview.
-
-    **Code Example**
-    ```js
-        const panoId = "CAoSLEFGM";
-        const gameObject = new BS.GameObject("MyStreetView");
-        const streetView = await gameObject.AddComponent(new BS.BanterStreetView(panoId));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -28,16 +13,38 @@ namespace Banter.SDK
         [See(initial = "")][SerializeField] internal string panoId = "";
 
         PhotoSphere photoSphere;
-        internal override void DestroyStuff() { }
+        GameObject streetViewObject;
+        internal override void DestroyStuff()
+        {
+            if (photoSphere != null)
+            {
+                Destroy(photoSphere);
+                photoSphere = null;
+            }
+            if (streetViewObject != null)
+            {
+                Destroy(streetViewObject);
+                streetViewObject = null;
+            }
+        }
         internal override void StartStuff() { }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             if (photoSphere != null)
             {
                 Destroy(photoSphere);
             }
-            var obj = Instantiate(Resources.Load<GameObject>("StreetViewPrefab"), transform, false);
-            photoSphere = obj.GetComponent<PhotoSphere>();
+            if (streetViewObject != null)
+            {
+                Destroy(streetViewObject);
+            }
+            streetViewObject = Instantiate(Resources.Load<GameObject>("StreetViewPrefab"), transform, false);
+            photoSphere = streetViewObject.GetComponent<PhotoSphere>();
             photoSphere.Panoid = panoId;
             Action photoSphereCallback = null;
             photoSphereCallback = () =>

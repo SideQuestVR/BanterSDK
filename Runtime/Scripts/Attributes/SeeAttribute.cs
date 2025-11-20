@@ -11,10 +11,12 @@ namespace Banter.SDK
     {
         public string propertyName;
         public string initial;
-        public SeeAttribute([CallerMemberName] string propertyName = "", string initial = "")
+        public bool isAssetReference;
+        public SeeAttribute([CallerMemberName] string propertyName = "", string initial = "", bool isAssetReference = false)
         {
             this.propertyName = propertyName;
             this.initial = initial;
+            this.isAssetReference = isAssetReference;
         }
     }
 }

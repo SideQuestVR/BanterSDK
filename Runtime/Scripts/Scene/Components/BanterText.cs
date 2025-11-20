@@ -7,34 +7,6 @@ using PropertyName = Banter.SDK.PropertyName;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Text
-    This component will add a text component to the object and set the text, color, alignment, font size, rich text, word wrapping and size delta of the text.
-
-    **Properties**
-     - `text` - The text to display.
-     - `color` - The color of the text.
-     - `horizontalAlignment` - The horizontal alignment of the text.
-     - `verticalAlignment` - The vertical alignment of the text.
-     - `fontSize` - The font size of the text.
-     - `richText` - Whether the text is rich text.
-     - `enableWordWrapping` - Whether to enable word wrapping.
-     - `rectTransformSizeDelta` - The size delta of the text.
-
-    **Code Example**
-    ```js
-        const text = "Hello World";
-        const color = new BS.Vector4(1,1,1,1);
-        const horizontalAlignment = BS.HorizontalAlignment.Center;
-        const verticalAlignment = BS.VerticalAlignment.Middle;
-        const fontSize = 20;
-        const richText = true;
-        const enableWordWrapping = true;
-        const rectTransformSizeDelta = new BS.Vector2(20,5);
-        const gameObject = new BS.GameObject("MyText");
-        const text = await gameObject.AddComponent(new BS.BanterText(text, color, horizontalAlignment, verticalAlignment, fontSize, richText, enableWordWrapping, rectTransformSizeDelta));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BanterObjectId))]
@@ -49,10 +21,10 @@ namespace Banter.SDK
         [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
 
         [Tooltip("The horizontal alignment of the text.")]
-        [See(initial = "0")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Left;
+        [See(initial = "1")][SerializeField] internal HorizontalAlignment horizontalAlignment = HorizontalAlignment.Center;
 
         [Tooltip("The vertical alignment of the text.")]
-        [See(initial = "0")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Top;
+        [See(initial = "1")][SerializeField] internal VerticalAlignment verticalAlignment = VerticalAlignment.Center;
 
         [Tooltip("The font size of the text.")]
         [See(initial = "2")][SerializeField] internal float fontSize = 2;
@@ -67,6 +39,11 @@ namespace Banter.SDK
         [See(initial = "20,5")][SerializeField] internal Vector2 rectTransformSizeDelta = new Vector2(20, 5);
 
 
+
+        internal override void UpdateStuff()
+        {
+            
+        }
 
         internal override void StartStuff()
         {

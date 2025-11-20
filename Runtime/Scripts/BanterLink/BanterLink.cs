@@ -5,12 +5,15 @@ using System.Threading.Tasks;
 using UnityEngine;
 using System.IO;
 using System.Text;
+using Banter.UI.Bridge;
 
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
 using Banter.Utilities.Async;
+using NUnit.Framework;
+using System.Linq;
 
 namespace Banter.SDK
 {
@@ -45,6 +48,7 @@ namespace Banter.SDK
         {
             return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
         }
+        
         async void ParseCommand(string msg)
         {
             if (msg.StartsWith(APICommands.LOG))
@@ -164,6 +168,22 @@ namespace Banter.SDK
             else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS)) {
                     scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
             }
+            else if (msg.StartsWith(APICommands.TELEMETRY))
+            {
+                string[] data = GetMsgData(msg, APICommands.TELEMETRY).Split(MessageDelimiters.PRIMARY);
+                var propsplit = data[1].Split(MessageDelimiters.SECONDARY);
+                List<KeyValuePair<string, string>> kvps = new();
+                foreach (var d in propsplit)
+                {
+                    var split = d.Split(MessageDelimiters.TERTIARY);
+                    kvps.Add(new KeyValuePair<string, string>(split[0], split[1]));
+                }
+                scene.data.SendTelemetry((data[0], kvps.ToArray()));
+            }
+            else if (UIElementBridge.IsUICommand(msg))
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => UIElementBridge.HandleMessage(msg), $"{nameof(BanterLink)}.{nameof(ParseCommand)}.UIElementBridge.IsUICommand"));
+            }
             else
             {
                 LogLine.Do(Color.red, LogTag.Banter, "Unknown parse message: " + msg);
@@ -175,152 +195,277 @@ namespace Banter.SDK
             {
                 return;
             }
-            // try{
-            if (msg.StartsWith(APICommands.OBJECT_ADDED))
-            {
-                scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
+            try{
+                if (msg.StartsWith(APICommands.OBJECT_ADDED))
+                {
+                    scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
+                }
+                else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
+                {
+                    var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
+                    scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], false);
+                }
+                else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
+                {
+                    scene.SetSettings(GetMsgData(msg, APICommands.SCENE_SETTINGS), id);
+                }
+                else if (msg.StartsWith(APICommands.START_TTS))
+                {
+                    scene.StartTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
+                }
+                else if (msg.StartsWith(APICommands.WAIT_FOR_END_OF_FRAME))
+                {
+                    _ = scene.WaitForEndOfFrame(id);
+                }
+                else if (msg.StartsWith(APICommands.STOP_TTS))
+                {
+                    scene.StopTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
+                }
+                else if (msg.StartsWith(APICommands.AI_IMAGE))
+                {
+                    scene.AiImage(GetMsgData(msg, APICommands.AI_IMAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.AI_MODEL))
+                {
+                    scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_TRANSFORM))
+                {
+                    scene.SetJsTransform(GetMsgData(msg, APICommands.SET_TRANSFORM), id);
+                }
+                else if (msg.StartsWith(APICommands.WATCH_TRANSFORM))
+                {
+                    Debug.Log(msg);
+                    scene.WatchJsTransform(GetMsgData(msg, APICommands.WATCH_TRANSFORM), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
+                {
+                    scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
+                }
+                else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
+                {
+                    scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
+                }
+                else if (msg.StartsWith(APICommands.SELECT_FILE))
+                {
+                    scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
+                }
+                else if (msg.StartsWith(APICommands.GRAVITY))
+                {
+                    scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);
+                }
+                else if (msg.StartsWith(APICommands.TIME_SCALE))
+                {
+                    scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
+                }
+                else if (msg.StartsWith(APICommands.DEEP_LINK))
+                {
+                    var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.events.OnDeepLink.Invoke(parts[0], parts[1]);
+                }
+                else if (msg.StartsWith(APICommands.ONE_SHOT))
+                {
+                    var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
+                    scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
+                }
+                else if (msg.StartsWith(APICommands.YT_INFO))
+                {
+                    scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
+                }
+                else if (msg.StartsWith(APICommands.OPEN_PAGE))
+                {
+                    scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.TELEPORT))
+                {
+                    scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);
+                }
+                else if (msg.StartsWith(APICommands.CALL_METHOD))
+                {
+                    scene.CallMethodOnJsComponent(GetMsgData(msg, APICommands.CALL_METHOD), id, full);
+                }
+                else if (msg.StartsWith(APICommands.INSTANTIATE))
+                {
+                    scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_TAG))
+                {
+                    scene.SetJsObjectTag(GetMsgData(msg, APICommands.SET_TAG), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_NAME))
+                {
+                    scene.SetJsObjectName(GetMsgData(msg, APICommands.SET_NAME), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_NETWORK_ID))
+                {
+                    scene.SetJsObjectNetworkId(GetMsgData(msg, APICommands.SET_NETWORK_ID), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_LAYER))
+                {
+                    scene.SetJsObjectLayer(GetMsgData(msg, APICommands.SET_LAYER), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_ACTIVE))
+                {
+                    scene.SetJsObjectActive(GetMsgData(msg, APICommands.SET_ACTIVE), id);
+                }
+                else if (msg.StartsWith(APICommands.SEND_MENU_BROWSER_MESSAGE))
+                {
+                    scene.SendBrowserMessage(GetMsgData(msg, APICommands.SEND_MENU_BROWSER_MESSAGE), id);
+                }
+                else if (msg.StartsWith(APICommands.RAYCAST))
+                {
+                    scene.PhysicsRaycast(GetMsgData(msg, APICommands.RAYCAST), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_JSOID))
+                {
+                    scene.SetJsObjectId(GetMsgData(msg, APICommands.SET_JSOID), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_JSCID))
+                {
+                    scene.SetJsComponentId(GetMsgData(msg, APICommands.SET_JSCID), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_UPDATE_REQUEST))
+                {
+                    scene.UpdateJsObject(GetMsgData(msg, APICommands.OBJECT_UPDATE_REQUEST), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_PARENT))
+                {
+                    scene.SetParent(GetMsgData(msg, APICommands.SET_PARENT), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_REMOVED))
+                {
+                    scene.DestroyJsComponent(int.Parse(GetMsgData(msg, APICommands.COMPONENT_REMOVED)), id);
+                }
+                else if (msg.StartsWith(APICommands.WATCH_PROPERTIES))
+                {
+                    _ = scene.WatchProperties(GetMsgData(msg, APICommands.WATCH_PROPERTIES), id);
+                }
+                else if (msg.StartsWith(APICommands.OBJECT_REMOVED))
+                {
+                    scene.DestroyJsObject(int.Parse(GetMsgData(msg, APICommands.OBJECT_REMOVED)), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_UPDATED))
+                {
+                    scene.UpdateJsComponent(GetMsgData(msg, APICommands.COMPONENT_UPDATED), id);
+                    // }else if(msg.StartsWith(APICommands.ATTACH)) {
+                    //     scene.Attach(GetMsgData(msg, APICommands.ATTACH), id);
+                }
+                else if (msg.StartsWith(APICommands.COMPONENT_ADDED))
+                {
+                    scene.AddJsComponent(GetMsgData(msg, APICommands.COMPONENT_ADDED), id);
+                }
+                else if (msg.StartsWith(APICommands.QUERY_COMPONENTS))
+                {
+                    _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
+                }
+                // Asset System Commands
+                else if (msg.StartsWith(APICommands.CREATE_ASSET))
+                {
+                    HandleCreateAsset(GetMsgData(msg, APICommands.CREATE_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.DESTROY_ASSET))
+                {
+                    HandleDestroyAsset(GetMsgData(msg, APICommands.DESTROY_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.QUERY_ASSET))
+                {
+                    HandleQueryAsset(GetMsgData(msg, APICommands.QUERY_ASSET), id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_MOVE))
+                {
+                    scene.SetActionsSystemCanMove(GetMsgData(msg, APICommands.SET_CAN_MOVE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_ROTATE))
+                {
+                    scene.SetActionsSystemCanRotate(GetMsgData(msg, APICommands.SET_CAN_ROTATE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_CROUCH))
+                {
+                    scene.SetActionsSystemCanCrouch(GetMsgData(msg, APICommands.SET_CAN_CROUCH) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_TELEPORT))
+                {
+                    scene.SetActionsSystemCanTeleport(GetMsgData(msg, APICommands.SET_CAN_TELEPORT) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAPPLE))
+                {
+                    scene.SetActionsSystemCanGrapple(GetMsgData(msg, APICommands.SET_CAN_GRAPPLE) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_JUMP))
+                {
+                    scene.SetActionsSystemCanJump(GetMsgData(msg, APICommands.SET_CAN_JUMP) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_CAN_GRAB))
+                {
+                    scene.SetActionsSystemCanGrab(GetMsgData(msg, APICommands.SET_CAN_GRAB) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockLeftPrimary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_PRIMARY))
+                {
+                    scene.SetActionsSystemBlockRightPrimary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_PRIMARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockLeftSecondary(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_SECONDARY))
+                {
+                    scene.SetActionsSystemBlockRightSecondary(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_SECONDARY) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockLeftThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK))
+                {
+                    scene.SetActionsSystemBlockRightThumbstickClick(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_THUMBSTICK_CLICK) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_LEFT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockLeftTrigger(GetMsgData(msg, APICommands.SET_BLOCK_LEFT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.SET_BLOCK_RIGHT_TRIGGER))
+                {
+                    scene.SetActionsSystemBlockRightTrigger(GetMsgData(msg, APICommands.SET_BLOCK_RIGHT_TRIGGER) == "1", id);
+                }
+                else if (msg.StartsWith(APICommands.GET_PLATFORM))
+                {
+                    scene.GetPlatform(id);
+                }
+                else if (msg.StartsWith(APICommands.SEND_HAPTIC_IMPULSE))
+                {
+                    scene.SendHapticImpulse(GetMsgData(msg, APICommands.SEND_HAPTIC_IMPULSE), id);
+                }
+                else if (msg.StartsWith(APICommands.TELEMETRY))
+                {
+                    string[] data = GetMsgData(msg, APICommands.TELEMETRY).Split(MessageDelimiters.PRIMARY);
+                    var propsplit = data[1].Split(MessageDelimiters.SECONDARY);
+                    List<KeyValuePair<string, string>> kvps = new();
+                    foreach (var d in propsplit)
+                    {
+                        var split = d.Split(MessageDelimiters.TERTIARY);
+                        kvps.Add(new KeyValuePair<string, string>(split[0], split[1]));
+                    }
+                    scene.data.SendTelemetry((data[0], kvps.ToArray()));
+                }
+                else
+                {
+                    Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
+                }
+            }catch(Exception e){
+                Debug.Log("[Banter] Error parsing request: " + e.Message);
             }
-            else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
-            {
-                var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
-                scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], false);
-            }
-            else if (msg.StartsWith(APICommands.SCENE_SETTINGS))
-            {
-                scene.SetSettings(GetMsgData(msg, APICommands.SCENE_SETTINGS), id);
-            }
-            else if (msg.StartsWith(APICommands.START_TTS))
-            {
-                scene.StartTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
-            }
-            else if (msg.StartsWith(APICommands.WAIT_FOR_END_OF_FRAME))
-            {
-                _ = scene.WaitForEndOfFrame(id);
-            }
-            else if (msg.StartsWith(APICommands.STOP_TTS))
-            {
-                scene.StopTTS(GetMsgData(msg, APICommands.STOP_TTS), id);
-            }
-            else if (msg.StartsWith(APICommands.AI_IMAGE))
-            {
-                scene.AiImage(GetMsgData(msg, APICommands.AI_IMAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.AI_MODEL))
-            {
-                scene.AiModel(GetMsgData(msg, APICommands.AI_MODEL), id);
-            }
-            else if (msg.StartsWith(APICommands.OBJECT_TEX_TO_BASE_64))
-            {
-                scene.ObjectTextureToBase64(GetMsgData(msg, APICommands.OBJECT_TEX_TO_BASE_64), id);
-            }
-            else if (msg.StartsWith(APICommands.BASE_64_TO_CDN))
-            {
-                scene.Base64ToCDN(GetMsgData(msg, APICommands.BASE_64_TO_CDN), id);
-            }
-            else if (msg.StartsWith(APICommands.SELECT_FILE))
-            {
-                scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
-            }
-            else if (msg.StartsWith(APICommands.GRAVITY))
-            {
-                scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);
-            }
-            else if (msg.StartsWith(APICommands.TIME_SCALE))
-            {
-                scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
-            }
-            // else if (msg.StartsWith(APICommands.PLAYER_SPEED))
-            // {
-            //     scene.PlayerSpeed(GetMsgData(msg, APICommands.PLAYER_SPEED), id);
-            // } //OnPlayerSpeedChanged was never re-implemented for Flexa, and will now be superceded by physics settings/move speed
-            else if (msg.StartsWith(APICommands.DEEP_LINK))
-            {
-                var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
-                Debug.Log(parts[0] + " : " + parts[1]);
-                scene.events.OnDeepLink.Invoke(parts[0], parts[1]);
-            }
-            else if (msg.StartsWith(APICommands.ONE_SHOT))
-            {
-                var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);
-                scene.events.OnOneShot.Invoke(parts[1], parts[0] == "1");
-            }
-            else if (msg.StartsWith(APICommands.YT_INFO))
-            {
-                scene.YtInfo(GetMsgData(msg, APICommands.YT_INFO), id);
-            }
-            else if (msg.StartsWith(APICommands.OPEN_PAGE))
-            {
-                scene.OpenPage(GetMsgData(msg, APICommands.OPEN_PAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.TELEPORT))
-            {
-                scene.Teleport(GetMsgData(msg, APICommands.TELEPORT), id);
-            }
-            else if (msg.StartsWith(APICommands.CALL_METHOD))
-            {
-                scene.CallMethodOnJsComponent(GetMsgData(msg, APICommands.CALL_METHOD), id, full);
-            }
-            else if (msg.StartsWith(APICommands.INSTANTIATE))
-            {
-                scene.InstantiateJsObject(GetMsgData(msg, APICommands.INSTANTIATE), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_LAYER))
-            {
-                scene.SetJsObjectLayer(GetMsgData(msg, APICommands.SET_LAYER), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_ACTIVE))
-            {
-                scene.SetJsObjectActive(GetMsgData(msg, APICommands.SET_ACTIVE), id);
-            }
-            else if (msg.StartsWith(APICommands.SEND_MENU_BROWSER_MESSAGE))
-            {
-                scene.SendBrowserMessage(GetMsgData(msg, APICommands.SEND_MENU_BROWSER_MESSAGE), id);
-            }
-            else if (msg.StartsWith(APICommands.RAYCAST))
-            {
-                scene.PhysicsRaycast(GetMsgData(msg, APICommands.RAYCAST), id);
-            }
-            else if (msg.StartsWith(APICommands.OBJECT_UPDATE_REQUEST))
-            {
-                scene.UpdateJsObject(GetMsgData(msg, APICommands.OBJECT_UPDATE_REQUEST), id);
-            }
-            else if (msg.StartsWith(APICommands.SET_PARENT))
-            {
-                scene.SetParent(GetMsgData(msg, APICommands.SET_PARENT), id);
-            }
-            else if (msg.StartsWith(APICommands.COMPONENT_REMOVED))
-            {
-                scene.DestroyJsComponent(int.Parse(GetMsgData(msg, APICommands.COMPONENT_REMOVED)), id);
-            }
-            else if (msg.StartsWith(APICommands.WATCH_PROPERTIES))
-            {
-                _ = scene.WatchProperties(GetMsgData(msg, APICommands.WATCH_PROPERTIES), id);
-            }
-            else if (msg.StartsWith(APICommands.OBJECT_REMOVED))
-            {
-                scene.DestroyJsObject(int.Parse(GetMsgData(msg, APICommands.OBJECT_REMOVED)), id);
-            }
-            else if (msg.StartsWith(APICommands.COMPONENT_UPDATED))
-            {
-                scene.UpdateJsComponent(GetMsgData(msg, APICommands.COMPONENT_UPDATED), id);
-                // }else if(msg.StartsWith(APICommands.ATTACH)) {
-                //     scene.Attach(GetMsgData(msg, APICommands.ATTACH), id);
-            }
-            else if (msg.StartsWith(APICommands.COMPONENT_ADDED))
-            {
-                scene.AddJsComponent(GetMsgData(msg, APICommands.COMPONENT_ADDED), id);
-            }
-            else if (msg.StartsWith(APICommands.QUERY_COMPONENTS))
-            {
-                _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
-            }
-            else
-            {
-                Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
-            }
-            // }catch(Exception e){
-            //     Debug.Log("[Banter] Error parsing request: " + e.Message);
-            // }
         }
         void ParseLegacy(string msg)
         {
@@ -609,22 +754,79 @@ namespace Banter.SDK
             scene.SetLoaded();
         }
 
+
+        public void OnTransformUpdate(int oid, List<BanterComponentPropertyUpdate> updates)
+        {
+            StringBuilder updatesString = new StringBuilder();
+            if (updates.Count < 1)
+            {
+                return;
+            }
+            foreach (var update in updates)
+            {
+                switch (update.name)
+                {
+                    case PropertyName.position:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.localPosition:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.eulerAngles:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.localEulerAngles:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                    case PropertyName.rotation:
+                        {
+                            var value = (Quaternion)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            break;
+                        }
+                    case PropertyName.localRotation:
+                        {
+                            var value = (Quaternion)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            break;
+                        }
+                    case PropertyName.localScale:
+                        {
+                            var value = (Vector3)update.value;
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            break;
+                        }
+                }
+            }
+            Send(APICommands.EVENT + APICommands.TRANSFORM_UPDATED + MessageDelimiters.PRIMARY + oid + updatesString.ToString());
+        }
+
         public void OnSendVersion(string versionData)
         {
             Send(APICommands.EVENT + APICommands.BANTER_VERSION + MessageDelimiters.PRIMARY + versionData);
         }
-
-        // public void OnSendUser(string name, string id, string color, string instance) {
-        //     Send(APICommands.EVENT + APICommands.SEND_USER + MessageDelimiters.PRIMARY + name + MessageDelimiters.SECONDARY + id + MessageDelimiters.SECONDARY + color + MessageDelimiters.SECONDARY + instance);
-        // }
-
         public void OnUnitySceneLoaded()
         {
             scene.state = SceneState.UNITY_READY;
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Unity Scene Loaded.");
             Send(APICommands.EVENT + APICommands.UNITY_LOADED + MessageDelimiters.PRIMARY);
         }
-
+        public void OnMonoBehaviourLifeCycle(int cid, BanterMonoBehaviourLifeCycle lifeCycle)
+        {
+            Send(APICommands.EVENT + APICommands.MONO_BEHAVIOUR + MessageDelimiters.PRIMARY + cid + MessageDelimiters.PRIMARY + (int)lifeCycle);
+        }
         public void OnVoiceStarted()
         {
             Send(APICommands.EVENT + APICommands.VOICE_STARTED + MessageDelimiters.PRIMARY);
@@ -732,6 +934,26 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.BUTTON_RELEASED + MessageDelimiters.PRIMARY + (int)button + MessageDelimiters.SECONDARY + (int)side);
         }
+
+        public void OnControllerAxisUpdate(HandSide hand, float x, float y)
+        {
+            Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + x.ToString("F3") + MessageDelimiters.SECONDARY + y.ToString("F3"));
+        }
+
+        public void OnPoseUpdate(Transform head, Transform leftHand, Transform rightHand)
+        {
+            Send(APICommands.EVENT + APICommands.POSE_UPDATE + MessageDelimiters.PRIMARY +
+            head.position.x + MessageDelimiters.SECONDARY + head.position.y + MessageDelimiters.SECONDARY + head.position.z + MessageDelimiters.SECONDARY +
+            head.rotation.x + MessageDelimiters.SECONDARY + head.rotation.y + MessageDelimiters.SECONDARY + head.rotation.z + MessageDelimiters.SECONDARY + head.rotation.w + MessageDelimiters.SECONDARY +
+            leftHand.position.x + MessageDelimiters.SECONDARY + leftHand.position.y + MessageDelimiters.SECONDARY + leftHand.position.z + MessageDelimiters.SECONDARY +
+            leftHand.rotation.x + MessageDelimiters.SECONDARY + leftHand.rotation.y + MessageDelimiters.SECONDARY + leftHand.rotation.z + MessageDelimiters.SECONDARY + leftHand.rotation.w + MessageDelimiters.SECONDARY +
+            rightHand.position.x + MessageDelimiters.SECONDARY + rightHand.position.y + MessageDelimiters.SECONDARY + rightHand.position.z + MessageDelimiters.SECONDARY +
+            rightHand.rotation.x + MessageDelimiters.SECONDARY + rightHand.rotation.y + MessageDelimiters.SECONDARY + rightHand.rotation.z + MessageDelimiters.SECONDARY + rightHand.rotation.w);
+        }
+        public void OnTriggerAxisUpdate(HandSide hand, float value)
+        {
+            Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + value.ToString("F3"));
+        }
         public void OnAframeTrigger(string data)
         {
             Send(APICommands.EVENT + APICommands.AFRAME_TRIGGER + MessageDelimiters.PRIMARY + data);
@@ -740,7 +962,6 @@ namespace Banter.SDK
         {
             Send(APICommands.EVENT + APICommands.MENU_BROWSER_MESSAGE + MessageDelimiters.PRIMARY + data);
         }
-
         public void OnReceiveBrowserMessage(BanterBrowser browser, string message)
         {
 #if BANTER_VISUAL_SCRIPTING
@@ -748,7 +969,6 @@ namespace Banter.SDK
 #endif
             Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + message);
         }
-
         public void OnKeyPress(KeyCode key)
         {
             Send(APICommands.EVENT + APICommands.KEY + MessageDelimiters.PRIMARY + (int)key);
@@ -799,6 +1019,190 @@ namespace Banter.SDK
                 SetupPipe();
             }
         }
+
+        #region Asset System Handlers
+
+        /// <summary>
+        /// Handle CREATE_ASSET command from JavaScript
+        /// Format: assetId§assetType§url§tag§...additional properties
+        /// </summary>
+        private void HandleCreateAsset(string data, int reqId)
+        {
+            try
+            {
+                var parts = data.Split(MessageDelimiters.SECONDARY);
+                if (parts.Length < 2)
+                {
+                    Debug.LogError($"Invalid CREATE_ASSET message format: {data}");
+                    return;
+                }
+
+                string assetId = parts[0];
+                AssetType assetType = (AssetType)int.Parse(parts[1]);
+                string url = parts.Length > 2 ? parts[2] : null;
+                string tag = parts.Length > 3 ? parts[3] : null;
+
+                // Create asset based on type
+                switch (assetType)
+                {
+                    case AssetType.Texture2D:
+                        CreateTextureAsset(assetId, url, tag);
+                        break;
+                    case AssetType.AudioClip:
+                        CreateAudioClipAsset(assetId, url, tag);
+                        break;
+                    case AssetType.Material:
+                        CreateMaterialAsset(assetId, url, tag);
+                        break;
+                    default:
+                        Debug.LogWarning($"Asset type {assetType} not yet implemented for creation");
+                        break;
+                }
+                Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling CREATE_ASSET: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handle DESTROY_ASSET command from JavaScript
+        /// Format: assetId
+        /// </summary>
+        private void HandleDestroyAsset(string data, int reqId)
+        {
+            try
+            {
+                string assetId = data.Trim();
+                BanterAssetRegistry.Instance.UnregisterAsset(assetId);
+                Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling DESTROY_ASSET: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handle QUERY_ASSET command from JavaScript
+        /// Format: assetId
+        /// </summary>
+        private void HandleQueryAsset(string data, int reqId)
+        {
+            try
+            {
+                string assetId = data.Trim();
+                var metadata = BanterAssetRegistry.Instance.GetMetadata(assetId);
+
+                if (metadata.HasValue)
+                {
+                    var meta = metadata.Value;
+                    var response = $"{APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId}{MessageDelimiters.PRIMARY}" +
+                                 $"{assetId}{MessageDelimiters.SECONDARY}" +
+                                 $"{(int)meta.type}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.url ?? ""}{MessageDelimiters.SECONDARY}" +
+                                 $"{(meta.loaded ? "1" : "0")}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.memorySize}{MessageDelimiters.SECONDARY}" +
+                                 $"{meta.tag ?? ""}";
+
+                    Send(response);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error handling QUERY_ASSET: {ex.Message}");
+            }
+        }
+
+        private async void CreateTextureAsset(string assetId, string url, string tag)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogError($"Cannot create texture asset without URL: {assetId}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"Loading texture asset: {assetId} from {url}");
+
+                // Load texture from URL using existing Get utility
+                var texture = await Get.Texture(url);
+
+                if (texture == null)
+                {
+                    throw new Exception("Texture loading returned null");
+                }
+
+                // Register the loaded texture
+                BanterAssetRegistry.Instance.RegisterAsset(texture, AssetType.Texture2D, url, tag);
+                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+
+                Debug.Log($"Successfully loaded texture asset: {assetId} ({texture.width}x{texture.height})");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create texture asset {assetId}: {ex.Message}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+            }
+        }
+
+        private async void CreateAudioClipAsset(string assetId, string url, string tag)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                Debug.LogError($"Cannot create audio clip asset without URL: {assetId}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                return;
+            }
+
+            try
+            {
+                Debug.Log($"Loading audio clip asset: {assetId} from {url}");
+
+                // Load audio from URL using existing Get utility
+                var audioClip = await Get.Audio(url);
+
+                if (audioClip == null)
+                {
+                    throw new Exception("Audio loading returned null");
+                }
+
+                // Register the loaded audio clip
+                BanterAssetRegistry.Instance.RegisterAsset(audioClip, AssetType.AudioClip, url, tag);
+                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+
+                Debug.Log($"Successfully loaded audio clip asset: {assetId} ({audioClip.length}s)");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create audio clip asset {assetId}: {ex.Message}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+            }
+        }
+
+        private void CreateMaterialAsset(string assetId, string url, string tag)
+        {
+            try
+            {
+                // Create a new material
+                var material = new Material(Shader.Find("Standard"));
+                BanterAssetRegistry.Instance.RegisterAsset(material, AssetType.Material, url, tag);
+                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+
+                Debug.Log($"Created material asset: {assetId}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Failed to create material asset {assetId}: {ex.Message}");
+                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+            }
+        }
+
+        #endregion
 
         #region Legacy stuff
         public void ToggleDevTools()

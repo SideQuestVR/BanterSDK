@@ -24,10 +24,11 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal float thetaStart;
         [Tooltip("Length of the vertical segments in radians")]
         [See(initial = "Math.PI")][SerializeField] internal float thetaLength = Mathf.PI;
-        
+
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
         }
 
         void SetupGeometry()
@@ -51,14 +52,22 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+        }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();

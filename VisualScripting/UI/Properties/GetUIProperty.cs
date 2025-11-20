@@ -1,0 +1,174 @@
+#if BANTER_VISUAL_SCRIPTING
+using Unity.VisualScripting;
+using Banter.SDK;
+using Banter.UI.Bridge;
+using Banter.UI.Core;
+using Banter.VisualScripting.UI.Helpers;
+using UnityEngine;
+using System.Collections;
+
+namespace Banter.VisualScripting
+{
+    [UnitTitle("Get UI Property")]
+    [UnitShortTitle("Get UI Property")]
+    [UnitCategory("Banter\\UI\\Properties")]
+    [TypeIcon(typeof(BanterObjectId))]
+    public class GetUIProperty : Unit
+    {
+        [DoNotSerialize]
+        public ControlInput inputTrigger;
+
+        [DoNotSerialize]
+        public ControlOutput outputTrigger;
+
+        [DoNotSerialize]
+        public ValueInput elementId;
+
+        [DoNotSerialize]
+        public ValueInput elementName;
+
+        [DoNotSerialize]
+        public ValueInput propertyName;
+
+        [DoNotSerialize]
+        public ValueOutput elementIdOutput;
+
+        [DoNotSerialize]
+        public ValueOutput propertyValue;
+
+        // Store callback for cleanup
+        private System.Action<CustomEventArgs> _currentCallback;
+        private string _currentEventName;
+
+        protected override void Definition()
+        {
+            inputTrigger = ControlInput("", (flow) => {
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
+                var propName = flow.GetValue<UIPropertyNameVS>(propertyName);
+
+                // Resolve element name to ID if needed
+                string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                if (string.IsNullOrEmpty(elemId))
+                {
+                    Debug.LogWarning("[GetUIProperty] Element ID/Name is null or empty.");
+                    flow.SetValue(elementIdOutput, "");
+                    flow.SetValue(propertyValue, null);
+                    return outputTrigger;
+                }
+
+                // Set element ID output for chaining
+                flow.SetValue(elementIdOutput, elemId);
+
+                var graphReference = flow.stack.ToReference();
+
+                try
+                {
+                    // Clean up any existing callback
+                    CleanupCallback();
+
+                    // Auto-resolve panel from element ID
+                    var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
+                    if (panelId == null)
+                    {
+                        Debug.LogError($"[GetUIProperty] Could not resolve panel for element '{elemId}'");
+                        flow.SetValue(propertyValue, null);
+                        return outputTrigger;
+                    }
+                    
+                    // Convert enum to property name
+                    var propNameStr = GetPropertyName(propName);
+
+                    // Set up callback to receive the value
+                    _currentEventName = $"UIProperty_{elemId}_{propNameStr}";
+                    _currentCallback = (CustomEventArgs args) => {
+                        if (!graphReference.isValid)
+                        {
+                            CleanupCallback();
+                            return;
+                        }
+
+                        var callbackFlow = Flow.New(graphReference);
+
+                        if (args.arguments != null && args.arguments.Length > 0)
+                        {
+                            callbackFlow.SetValue(propertyValue, args.arguments[0]);
+#if BANTER_UI_DEBUG
+                            Debug.Log($"[GetUIProperty] Received property value: {args.arguments[0]} for {_currentEventName}");
+#endif
+                        }
+                        else
+                        {
+                            callbackFlow.SetValue(propertyValue, null);
+                        }
+
+                        // Clean up callback after use
+                        CleanupCallback();
+                    };
+                    
+                    // Register for the callback event
+                    EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
+                    
+                    // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
+                    var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propNameStr}";
+                    
+                    // Send command through UIElementBridge
+                    UIElementBridge.HandleMessage(message);
+
+#if BANTER_UI_DEBUG
+                    Debug.Log($"[GetUIProperty] Requested property '{propNameStr}' for element {elemId}, waiting for callback on {_currentEventName}");
+#endif
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError($"[GetUIProperty] Failed to get UI property: {e.Message}");
+                    flow.SetValue(propertyValue, null);
+                    CleanupCallback();
+                }
+
+                return outputTrigger;
+            });
+
+            outputTrigger = ControlOutput("");
+            elementId = ValueInput<string>("Element ID", "");
+            elementName = ValueInput<string>("Element Name", "");
+            propertyName = ValueInput("Property", UIPropertyNameVS.Text);
+            elementIdOutput = ValueOutput<string>("Element ID");
+            propertyValue = ValueOutput<object>("Value");
+        }
+        
+        private void CleanupCallback()
+        {
+            if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))
+            {
+                EventBus.Unregister(new EventHook(_currentEventName), _currentCallback);
+                _currentCallback = null;
+                _currentEventName = null;
+            }
+        }
+
+        private string GetPropertyName(UIPropertyNameVS propName)
+        {
+            return propName switch
+            {
+                UIPropertyNameVS.Checked => "checked",
+                UIPropertyNameVS.Elasticity => "elasticity",
+                UIPropertyNameVS.Enabled => "enabled",
+                UIPropertyNameVS.Horizontalscrolling => "horizontalscrolling",
+                UIPropertyNameVS.Maxvalue => "maxvalue",
+                UIPropertyNameVS.Minvalue => "minvalue",
+                UIPropertyNameVS.Name => "name",
+                UIPropertyNameVS.Scrolldecelerationrate => "scrolldecelerationrate",
+                UIPropertyNameVS.Scrollposition => "scrollposition",
+                UIPropertyNameVS.Text => "text",
+                UIPropertyNameVS.Tooltip => "tooltip",
+                UIPropertyNameVS.Value => "value",
+                UIPropertyNameVS.Verticalscrolling => "verticalscrolling",
+                UIPropertyNameVS.Visible => "visible",
+                _ => "text"
+            };
+        }
+    }
+}
+#endif

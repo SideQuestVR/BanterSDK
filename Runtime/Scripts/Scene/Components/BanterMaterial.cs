@@ -16,31 +16,6 @@ namespace Banter.SDK
         Back,
         Double
     }
-    /* 
-    #### Banter Material
-    Add a material to the object. This component will add a material to the object and set the shader, texture, color and side of the material.
-
-    **Properties**
-     - `texture` - The texture to use for the material.
-     - `color` - The color of the material.
-     - `shaderName` - The name of the shader to use.
-     - `side` - The side of the material to render.
-     - `generateMipMaps` - Whether to generate mipmaps for the texture.
-
-    **Code Example**
-    ```js
-        const texture = "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-        const color = new BS.Vector4(1,1,1,1);
-        const shaderName = "Unlit/Diffuse";
-        const side = BS.MaterialSide.Front;
-        const generateMipMaps = false;
-
-        const gameObject = new BS.GameObject("MyMaterial"); 
-        const material = await gameObject.AddComponent(new BS.BanterMaterial(shaderName, texture, color, side, generateMipMaps));
-
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -48,60 +23,80 @@ namespace Banter.SDK
     {
         public ShaderType shaderType = ShaderType.Custom;
         MeshRenderer _renderer;
-		[Tooltip("The name of the shader to use for this material.")]
+        [Tooltip("The name of the shader to use for this material.")]
         [See(initial = "\"Unlit/Diffuse\"")][SerializeField] internal string shaderName = "Unlit/Diffuse";
-		
-		[Tooltip("The texture to apply to the material. Provide a valid URL.")]
-        [See(initial = "")][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-       
-		[Tooltip("The color of the material in RGBA format.")]
-		[See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
-		
-		[Tooltip("Determines which side(s) of the material are rendered.")]
+
+        [Tooltip("The texture to apply to the material. Provide a valid URL or asset reference.")]
+        [See(initial = "", isAssetReference = true)][SerializeField] internal string texture = "";// "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
+
+        [Tooltip("The color of the material in RGBA format.")]
+        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
+
+        [Tooltip("Determines which side(s) of the material are rendered.")]
         [See(initial = "0")][SerializeField] internal MaterialSide side = MaterialSide.Front;
-		
-		[Tooltip("Enable to generate mipmaps for the texture (improves texture scaling).")]
+
+        [Tooltip("Enable to generate mipmaps for the texture (improves texture scaling).")]
         [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
-		
+
         Texture2D defaultTexture;
         Texture2D mainTex;
+
+        bool UpdateCallbackRan = false;
         internal override void StartStuff()
         {
-            _ = SetupMaterial();
+            if(!UpdateCallbackRan)
+            {
+                _ = SetupMaterial();
+            }
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            UpdateCallbackRan = true;
             _ = SetupMaterial(changedProperties);
         }
         async Task SetupMaterial(List<PropertyName> changedProperties = null)
         {
-            if (defaultTexture == null)
+            try
             {
-                defaultTexture = Resources.Load<Texture2D>("Images/GridBox_Default");
+
+                if (defaultTexture == null)
+                {
+                    defaultTexture = Resources.Load<Texture2D>("Images/GridBox_Default");
+                }
+                _renderer = GetComponent<MeshRenderer>();
+                if (_renderer == null)
+                {
+                    _renderer = gameObject.AddComponent<MeshRenderer>();
+                }
+                if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
+                {
+                    var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                    _renderer.sharedMaterial = material;
+                }
+                if (changedProperties?.Contains(PropertyName.texture) ?? false)
+                {
+                    await SetTexture(texture);
+                    if (!string.IsNullOrEmpty(texture))
+                    {
+                        scene.link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
+                    }
+                }
+                if (changedProperties?.Contains(PropertyName.color) ?? false)
+                {
+                    SetColor(new Color(color.x, color.y, color.z, color.w));
+                }
+                if (changedProperties?.Contains(PropertyName.side) ?? false)
+                {
+                    _renderer.sharedMaterial.SetFloat("_Cull", 2 - (int)side);
+                }
             }
+            catch { }
             SetLoadedIfNot();
-            _renderer = GetComponent<MeshRenderer>();
-            if (_renderer == null)
-            {
-                _renderer = gameObject.AddComponent<MeshRenderer>();
-            }
-            if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
-            {
-                var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
-                _renderer.sharedMaterial = material;
-            }
-            if (changedProperties?.Contains(PropertyName.texture) ?? false)
-            {
-                await SetTexture(texture);
-            }
-            if (changedProperties?.Contains(PropertyName.color) ?? false)
-            {
-                SetColor(new Color(color.x, color.y, color.z, color.w));
-            }
-            if (changedProperties?.Contains(PropertyName.side) ?? false)
-            {
-                _renderer.sharedMaterial.SetFloat("_Cull", 2 - (int)side);
-            }
         }
 
         public void SetColor(Color color)
@@ -113,6 +108,30 @@ namespace Banter.SDK
         {
             try
             {
+                // Check if texture is an asset reference (starts with "asset_")
+                if (!string.IsNullOrEmpty(texture) && texture.StartsWith("asset_"))
+                {
+                    // It's an asset reference - look it up in the asset registry
+                    var asset = BanterAssetRegistry.Instance.GetAsset<Texture2D>(texture);
+
+                    if (asset != null)
+                    {
+                        Debug.Log($"Using texture asset from registry: {texture}");
+                        mainTex = asset;
+                        if (_renderer != null)
+                        {
+                            _renderer.sharedMaterial.mainTexture = mainTex;
+                        }
+                        return;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"Texture asset not found in registry: {texture}");
+                        return;
+                    }
+                }
+
+                // Original URL-based texture loading
                 if ((!scene.settings.EnableDefaultTextures && string.IsNullOrEmpty(texture)) || !Uri.IsWellFormedUriString(texture, UriKind.Absolute))
                 {
                     return;

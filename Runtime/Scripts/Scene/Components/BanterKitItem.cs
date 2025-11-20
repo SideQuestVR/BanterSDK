@@ -2,25 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.Networking;
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Kit Item
-    Add a kit item to the scene. This component will wait until all asset bundles are loaded inthe scene before trying to instantiate a kit item (prefab).
-
-    **Properties**
-     - `path` - The location of the preaf in the kit object - the same as the path in the asset bundle (always lower case).
-
-    **Code Example**
-    ```js
-        const path = "assets/prefabs/mykititem.prefab";
-        const gameObject = new BS.GameObject("MyKitItem"); 
-        const kitItem = await gameObject.AddComponent(new BS.BanterKitItem(path));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -61,6 +48,29 @@ namespace Banter.SDK
                 }
                 item = Instantiate(asset, transform, false);
                 scene.kitItems.Add(item);
+                
+                foreach (Transform transform in item.GetComponentsInChildren<Transform>(true))
+                {
+                    var canvas = transform.gameObject.GetComponent<Canvas>();
+                    if (canvas != null)
+                    {
+                        if (canvas.renderMode == RenderMode.WorldSpace)
+                        {
+                            canvas.worldCamera = Camera.main;
+                            if (!canvas.GetComponent<BoxCollider>())
+                            {
+                                var box = canvas.gameObject.AddComponent<BoxCollider>();
+                                var rt = canvas.GetComponent<RectTransform>();
+                                box.size = new Vector3(rt.rect.width, rt.rect.height, 0.01f);
+                                box.center = new Vector3(0f, 0f, 0.015f);
+                            }
+                            var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
+                            if(trackedDeviceRaycaster)
+                                Destroy(trackedDeviceRaycaster);
+                        }
+                    }
+                }
+                
                 SetLoadedIfNot();
             }
             catch (Exception e)
@@ -75,6 +85,11 @@ namespace Banter.SDK
             {
                 scene.kitItems.Remove(item);
             }
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         internal override void StartStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)

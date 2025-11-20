@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Banter.FlexaBody;
 using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
@@ -52,26 +53,119 @@ namespace Banter.SDK
         [Tooltip("Blocks the right controller's trigger input.")]
         [See(initial = "false")][SerializeField] internal bool blockRightTrigger = false;
 
+        BanterPlayerEvents banterPlayerEvents;
+        bool banterPlayerEventsAdded;
+
+        ControllerHeldEvents controllerHeldEvents;
+
+        bool controllerHeldEventsAdded;
+
+        Handle_Controller handleController;
+        bool handleControllerAdded;
+
+        GrabHandle grabHandle;
+
+        bool grabHandleAdded;
+
+        bool worldObjectAdded = true;
+
+
+
+
+        internal override void UpdateStuff()
+        {
+            
+        }
 
         internal override void DestroyStuff()
         {
-            // throw new NotImplementedException();
+            if (banterPlayerEvents && banterPlayerEventsAdded)
+            {
+                Destroy(banterPlayerEvents);
+            }
+            if (controllerHeldEvents && controllerHeldEventsAdded)
+            {
+                Destroy(controllerHeldEvents);
+            }
+            if (handleController && handleControllerAdded)
+            {
+                Destroy(handleController);
+            }
+            if (grabHandle && grabHandleAdded)
+            {
+                Destroy(grabHandle);
+            }
         }
 
 
         internal override void StartStuff()
         {
-            if (!gameObject.GetComponent<BanterPlayerEvents>())
-                gameObject.AddComponent<BanterPlayerEvents>();
-
-            scene.events.OnHeldEvents.Invoke(this);
+            UpdateCallback(null);
             SetLoadedIfNot();
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            // SetupPhysicMaterial(changedProperties);
-            scene.events.OnHeldEvents.Invoke(this);
+            if (!gameObject.GetComponent<BanterPlayerEvents>())
+            {
+                banterPlayerEventsAdded = true;
+                banterPlayerEvents = gameObject.AddComponent<BanterPlayerEvents>();
+            }
+
+            controllerHeldEvents = GetComponent<ControllerHeldEvents>();
+            if (controllerHeldEvents == null)
+            {
+                controllerHeldEventsAdded = true;
+                controllerHeldEvents = gameObject.AddComponent<ControllerHeldEvents>();
+            }
+
+            controllerHeldEvents.banterEvents = banterPlayerEvents;
+            handleController = GetComponent<Handle_Controller>();
+            if (handleController == null)
+            {
+                handleControllerAdded = true;
+                handleController = gameObject.AddComponent<Handle_Controller>();
+            }
+
+            handleController.Sensitivity = Sensitivity;
+            handleController.FireTime = FireRate;
+            handleController.AutoFire = Auto;
+            handleController.Controllable = controllerHeldEvents;
+            handleController.InputBlocks = new InputBlockList[]{
+                new InputBlockList(){
+                    PrimaryButton = BlockLeftPrimary,
+                    SecondaryButton = BlockLeftSecondary,
+                    Thumbstick = BlockLeftThumbstick,
+                    ThumbstickClick = BlockLeftThumbstickClick,
+                    Trigger = BlockLeftTrigger,
+                },
+                new InputBlockList(){
+                    PrimaryButton = BlockRightPrimary,
+                    SecondaryButton = BlockRightSecondary,
+                    Thumbstick = BlockRightThumbstick,
+                    ThumbstickClick = BlockRightThumbstickClick,
+                    Trigger = BlockRightTrigger,
+                }
+            };
+
+            grabHandle = GetComponent<GrabHandle>();
+            if (grabHandle == null)
+            {
+                grabHandleAdded = true;
+                grabHandle = gameObject.AddComponent<GrabHandle>();
+            }
+
+            grabHandle._handleFunctions = new HandleFunction[]{handleController};
+            Rigidbody rb = grabHandle.Col?.attachedRigidbody;
+            if (rb)
+            {
+                grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
+                if (!grabHandle.WorldObj)
+                {
+                    worldObjectAdded = true;
+                    grabHandle.WorldObj = rb.gameObject.AddComponent<WorldObject>();
+                }
+            }
         }
         // BANTER COMPILED CODE 
         public System.Single Sensitivity { get { return sensitivity; } set { sensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.sensitivity }); } }

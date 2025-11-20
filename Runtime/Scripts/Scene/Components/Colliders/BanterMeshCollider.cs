@@ -171,6 +171,11 @@ namespace Banter.SDK
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
+        }
         // END BANTER COMPILED CODE 
     }
 }

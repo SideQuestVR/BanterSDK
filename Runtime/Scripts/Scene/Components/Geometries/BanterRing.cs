@@ -22,13 +22,19 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal float thetaStart;
         [Tooltip("Angle in radians")]
         [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength = Mathf.PI * 2;
-        
 
-        
-        
+
+
+
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
 
         void SetupGeometry()
@@ -51,14 +57,17 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();

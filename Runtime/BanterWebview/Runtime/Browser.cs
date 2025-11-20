@@ -305,7 +305,6 @@ Debug.Log("" + THIS_NAME + "InitNativePlugin: " + m_viewSize + ", " + m_texSize 
 		{
 			if (m_state != State.Initialized)
 				return;
-			// Debug.Log("" + THIS_NAME + ": KeyEvent: " + $"{APICommands.KEY_EVENT}{MessageDelimiters.PRIMARY}{key}{MessageDelimiters.PRIMARY}{(int)keyFlags}");
 #if UNITY_ANDROID && !UNITY_EDITOR || DEBUG
 			m_NativePlugin.Call(nameof(KeyEvent), key, (int)keyFlags);
 #else

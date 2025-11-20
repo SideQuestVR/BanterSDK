@@ -1,10 +1,13 @@
 using System;
 using System.Collections;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Networking;
+using Object = UnityEngine.Object;
 
 namespace Banter.SDK
 {
@@ -29,6 +32,41 @@ namespace Banter.SDK
         public string title;
         public string url;
     }
+
+    [Serializable]
+    public class SqAvatar
+    {
+        public long avatars_id;
+        public long high_avatar_files_id;
+        public long low_avatar_files_id;
+        public string created_at;
+        public string last_modified;
+        public string version;
+        public bool is_public;
+        public long? preview_image;
+        public bool is_selected;
+        public long author_users_id;
+        public string name;
+    }
+    
+    [Serializable]
+    public class UserAvatar
+    {
+        public long user_avatars_id;
+        public long avatars_id;
+        public long clone_from_user_id;
+        public long high_avatar_files_id;
+        public long low_avatar_files_id;
+        public string created_at;
+        public string last_modified;
+        public string version;
+        public bool is_public;
+        public long? preview_image;
+        public bool is_selected;
+        public long author_users_id;
+        public string name;
+    }
+
     public enum EnvType
     {
         PROD,
@@ -97,21 +135,26 @@ namespace Banter.SDK
             return null;
         }
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
-        static List<UnityEngine.Object> objectCache = new List<UnityEngine.Object>();
+        static ConcurrentDictionary<string,UnityEngine.Object> objectCache = new ConcurrentDictionary<string,UnityEngine.Object>();
 
         public static void Clear()
         {
             foreach (var obj in objectCache)
             {
-                if (obj != null)
+                if (obj.Value != null)
                 {
-                    GameObject.Destroy(obj);
+                    GameObject.Destroy(obj.Value);
                 }
             }
             objectCache.Clear();
         }
         public static async Task<Texture2D> Texture(string url)
         {
+            LogLine.Do("Checking cache for texture: " + url);
+            if (objectCache.TryGetValue(url, out Object value))
+            {
+                return (Texture2D)value;
+            }
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
             {
                 await uwr.SendWebRequest();
@@ -122,7 +165,8 @@ namespace Banter.SDK
                 else
                 {
                     var texture = DownloadHandlerTexture.GetContent(uwr);
-                    objectCache.Add(texture);
+                    LogLine.Do("Adding texture to cache: " + url);
+                    objectCache.TryAdd(url, texture);
                     return texture;
                 }
             }
@@ -152,6 +196,37 @@ namespace Banter.SDK
                 {
                     return null;
                 }
+            }
+        }
+        public static async Task<SqAvatar> AvatarDetails(long avatarId)
+        {
+            try
+            {
+                var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + $"/v2/avatars/{avatarId}");
+                return JsonConvert.DeserializeObject<SqAvatar>(text);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+        public static async Task<UserAvatar> UserAvatar(long userId, long userAvatarId)
+        {
+            try
+            {
+                var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + $"/v2/users/{userId}/avatars");
+                List<UserAvatar> avatars = JsonConvert.DeserializeObject<List<UserAvatar>>(text);
+                foreach (UserAvatar a in avatars)
+                {
+                    if (a.user_avatars_id == userAvatarId)
+                        return a;
+                }
+
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
             }
         }
         public static async Task<byte[]> Bytes(string url)
@@ -244,6 +319,10 @@ namespace Banter.SDK
 
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)
         {
+            if (objectCache.TryGetValue(url, out Object value))
+            {
+                return (AudioClip)value;
+            }
             var m = ExtExtractor.Match(url);
             if (!m.Success || m.Groups.Count < 2)
             {
@@ -282,7 +361,7 @@ namespace Banter.SDK
                     var clip = DownloadHandlerAudioClip.GetContent(web);
                     if (clip != null)
                     {
-                        objectCache.Add(clip);
+                        objectCache.TryAdd(url, clip);
                         return clip;
                     }
                     else
