@@ -76,6 +76,7 @@ namespace Banter.SDK
             // Don't load if URL is empty
             if (string.IsNullOrEmpty(url))
             {
+                SetLoadedIfNot(false, "URL cannot be empty");
                 return;
             }
 
@@ -96,6 +97,7 @@ namespace Banter.SDK
 
                 // Step 1: Download APK
                 LogLine.Do("Downloading APK...");
+                LogLine.Do($"🔗 DOWNLOAD URL: {resolvedApkUrl}");
                 byte[] apkData = await DownloadAPK(resolvedApkUrl);
                 LogLine.Do($"APK downloaded ({apkData.Length / 1024 / 1024} MB)");
 
@@ -191,15 +193,18 @@ namespace Banter.SDK
             {
                 Debug.LogError($"Failed to load Quest Home: {ex.Message}\n{ex.StackTrace}");
                 loadStarted = false;
+                SetLoadedIfNot(false, ex.Message);
             }
         }
 
         /// <summary>
-        /// Download APK from URL with progress tracking and retry logic
+        /// Download APK from URL with progress tracking and retry logic with alternate filename patterns
         /// </summary>
-        private async Task<byte[]> DownloadAPK(string apkUrl, int maxRetries = 3)
+        private async Task<byte[]> DownloadAPK(string apkUrl, int maxRetries = 6)
         {
             Exception lastException = null;
+            string originalUrl = apkUrl;
+            bool htmlDetected = false;
 
             for (int attempt = 1; attempt <= maxRetries; attempt++)
             {
@@ -249,6 +254,25 @@ namespace Banter.SDK
                         // Validate ZIP signature (PK header: 0x50 0x4B)
                         if (dataCopy.Length < 4 || dataCopy[0] != 0x50 || dataCopy[1] != 0x4B)
                         {
+                            // Check if it's HTML (starts with "<!DO" or similar)
+                            bool isHtml = dataCopy.Length >= 2 && dataCopy[0] == 0x3C && (dataCopy[1] == 0x21 || dataCopy[1] == 0x68);
+
+                            if (isHtml && attempt < maxRetries)
+                            {
+                                htmlDetected = true;
+                                LogLine.Do($"⚠ HTML page detected instead of APK file. Wrong filename in URL!");
+
+                                // Try alternate filename pattern
+                                string alternateUrl = GenerateAlternateApkUrl(originalUrl, attempt);
+                                if (alternateUrl != null)
+                                {
+                                    LogLine.Do($"🔄 Trying alternate filename pattern {attempt}: {alternateUrl}");
+                                    apkUrl = alternateUrl;
+                                    lastException = new Exception($"HTML detected, trying alternate filename pattern");
+                                    continue; // Retry with new URL
+                                }
+                            }
+
                             throw new Exception($"Downloaded data is not a valid ZIP/APK file. First 4 bytes: {BitConverter.ToString(dataCopy, 0, Math.Min(4, dataCopy.Length))}");
                         }
 
@@ -270,17 +294,91 @@ namespace Banter.SDK
                     lastException = ex;
                     LogLine.Do($"Download attempt {attempt} failed: {ex.Message}");
 
-                    if (attempt < maxRetries)
+                    if (attempt < maxRetries && !htmlDetected)
                     {
-                        // Wait before retry (exponential backoff: 1s, 2s, 4s)
-                        int delayMs = 1000 * (int)Math.Pow(2, attempt - 1);
+                        // Wait before retry (exponential backoff: 1s, 2s, 4s) - but not for HTML retries
+                        int delayMs = 1000 * (int)Math.Pow(2, Math.Min(attempt - 1, 3));
                         LogLine.Do($"Retrying in {delayMs}ms...");
                         await Task.Delay(delayMs);
                     }
+
+                    htmlDetected = false; // Reset for next attempt
                 }
             }
 
-            throw new Exception($"Download failed after {maxRetries} attempts. Last error: {lastException?.Message}", lastException);
+            string errorMessage = htmlDetected
+                ? $"Download failed after {maxRetries} attempts with multiple filename patterns. Last error: {lastException?.Message}"
+                : $"Download failed after {maxRetries} attempts. Last error: {lastException?.Message}";
+
+            throw new Exception(errorMessage, lastException);
+        }
+
+        /// <summary>
+        /// Generate alternate APK URL with different filename patterns
+        /// </summary>
+        private string GenerateAlternateApkUrl(string originalUrl, int attemptNumber)
+        {
+            // Extract files_id and current filename from URL
+            var match = System.Text.RegularExpressions.Regex.Match(originalUrl, @"cdn\.sidequestvr\.com/file/(\d+)/(.+\.apk)");
+            if (!match.Success)
+                return null;
+
+            string filesId = match.Groups[1].Value;
+            string currentFilename = match.Groups[2].Value;
+            string baseUrl = $"https://cdn.sidequestvr.com/file/{filesId}";
+
+            // Extract base name without .apk extension and clean it
+            string baseName = currentFilename.Replace(".apk", "").ToLowerInvariant();
+            // Remove common prefixes
+            baseName = baseName.Replace("custom_home_", "").Replace("customhome_", "").Replace("custom_home", "").Replace("customhome", "");
+            baseName = baseName.Trim('_', '-');
+
+            // Try different filename patterns based on attempt number
+            switch (attemptNumber)
+            {
+                case 1:
+                    // Try: "custom_home_baseName.apk"
+                    return $"{baseUrl}/custom_home_{baseName}.apk";
+
+                case 2:
+                    // Try: "customhome_baseName.apk"
+                    return $"{baseUrl}/customhome_{baseName}.apk";
+
+                case 3:
+                    // Try: "baseName_environment.apk"
+                    return $"{baseUrl}/{baseName}_environment.apk";
+
+                case 4:
+                    // Try: "CustomHome_TitleCase.apk"
+                    string titleCase = ToTitleCase(baseName);
+                    return $"{baseUrl}/CustomHome_{titleCase}.apk";
+
+                case 5:
+                    // Try: just "baseName.apk" (simplest form)
+                    return $"{baseUrl}/{baseName}.apk";
+
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Convert string to Title Case (e.g., "hello_world" -> "Hello_World")
+        /// </summary>
+        private string ToTitleCase(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return input;
+
+            var words = input.Split('_', '-');
+            for (int i = 0; i < words.Length; i++)
+            {
+                if (words[i].Length > 0)
+                {
+                    words[i] = char.ToUpper(words[i][0]) + words[i].Substring(1).ToLowerInvariant();
+                }
+            }
+            return string.Join("_", words);
         }
 
         /// <summary>
@@ -580,7 +678,13 @@ namespace Banter.SDK
                 // Add AudioSource with loaded clip (outside using block to keep clip alive)
                 if (clip != null)
                 {
-                    var audioSource = gameObject.AddComponent<AudioSource>();
+                    // Get existing AudioSource or add a new one
+                    var audioSource = gameObject.GetComponent<AudioSource>();
+                    if (audioSource == null)
+                    {
+                        audioSource = gameObject.AddComponent<AudioSource>();
+                    }
+
                     audioSource.clip = clip;
                     audioSource.loop = true;
                     audioSource.playOnAwake = false; // We'll call Play() manually
