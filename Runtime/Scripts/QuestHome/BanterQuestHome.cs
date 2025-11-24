@@ -17,13 +17,15 @@ namespace Banter.SDK
     **Properties**
     - `url` - The URL of the Quest Home APK file.
     - `addColliders` - If colliders should be added to opaque meshes.
-    - `legacyShaderFix` - Convert materials to unlit shaders (Quest optimization).
+    - `climbable` - Makes surfaces climbable by setting colliders to Grabbable layer (Layer 20).
+    - `loadingStatus` - Current loading status message (read-only).
+    - `loadingProgress` - Current loading progress 0-1 (read-only).
 
     **Code Example**
     ```js
         const url = "https://cdn.sidequestvr.com/file/167567/canyon_environment.apk";
         const gameObject = new BS.GameObject("MyQuestHome");
-        const questHome = await gameObject.AddComponent(new BS.BanterQuestHome(url, true, true));
+        const questHome = await gameObject.AddComponent(new BS.BanterQuestHome(url, true, false));
     ```
     */
     [DefaultExecutionOrder(-1)]
@@ -37,8 +39,15 @@ namespace Banter.SDK
         [Tooltip("Enable to automatically add colliders to opaque meshes.")]
         [See(initial = "true")][SerializeField] internal bool addColliders = true;
 
-        [Tooltip("Enable to convert materials to unlit shaders (Quest optimization).")]
-        [See(initial = "true")][SerializeField] internal bool legacyShaderFix = true;
+        [Tooltip("Enable to make surfaces climbable by setting colliders to Grabbable layer (Layer 20).")]
+        [See(initial = "false")][SerializeField] internal bool climbable = false;
+
+        [Tooltip("Current loading status message.")]
+        public string loadingStatus = "";
+
+        [Tooltip("Current loading progress (0-1).")]
+        [Range(0f, 1f)]
+        public float loadingProgress = 0f;
 
         private bool loadStarted;
         private GameObject loadedModel;
@@ -85,42 +94,45 @@ namespace Banter.SDK
 
             try
             {
-                LogLine.Do($"Starting Quest Home load from: {url}");
+                UpdateLoadingStatus($"Starting Quest Home load from: {url}", 0f);
 
                 // Step 0: Resolve URL (handles both direct APK URLs and SideQuest listing URLs)
-                LogLine.Do("Resolving URL...");
+                UpdateLoadingStatus("Resolving URL...", 0.02f);
                 string resolvedApkUrl = await SideQuestUrlResolver.ResolveApkUrl(url);
                 if (resolvedApkUrl != url)
                 {
                     LogLine.Do($"Resolved listing URL to APK URL: {resolvedApkUrl}");
                 }
+                UpdateLoadingStatus("URL resolved", 0.05f);
 
                 // Step 1: Download APK
-                LogLine.Do("Downloading APK...");
+                UpdateLoadingStatus("Downloading APK...", 0.08f);
                 LogLine.Do($"🔗 DOWNLOAD URL: {resolvedApkUrl}");
                 byte[] apkData = await DownloadAPK(resolvedApkUrl);
-                LogLine.Do($"APK downloaded ({apkData.Length / 1024 / 1024} MB)");
+                UpdateLoadingStatus($"APK downloaded ({apkData.Length / 1024 / 1024} MB)", 0.30f);
 
                 // Step 2: Extract files
-                LogLine.Do("Extracting APK contents...");
+                UpdateLoadingStatus("Extracting APK contents...", 0.32f);
                 QuestHomeAssets assets = APKExtractor.ExtractAll(apkData);
 
                 if (!APKExtractor.ValidateAssets(assets))
                 {
                     throw new Exception("Extracted assets validation failed");
                 }
+                UpdateLoadingStatus("APK extraction complete", 0.40f);
 
                 // Step 3: Load textures
-                LogLine.Do($"Loading {assets.textures.Count} textures...");
+                UpdateLoadingStatus($"Loading {assets.textures.Count} textures...", 0.42f);
                 Dictionary<string, Texture2D> loadedTextures = await LoadTextures(assets.textures);
-                LogLine.Do($"Loaded {loadedTextures.Count} textures");
+                UpdateLoadingStatus($"Loaded {loadedTextures.Count} textures", 0.55f);
 
                 // Step 4: Parse GLTF for texture mappings
-                LogLine.Do("Parsing GLTF material mappings...");
+                UpdateLoadingStatus("Parsing GLTF material mappings...", 0.57f);
                 List<TextureMapping> textureMappings = GLTFMaterialMapper.ParseGLTF(assets.gltfJson);
+                UpdateLoadingStatus("Material mappings parsed", 0.60f);
 
                 // Step 5: Load GLTF model with animations
-                LogLine.Do("Loading GLTF model with animations...");
+                UpdateLoadingStatus("Loading GLTF model with animations...", 0.62f);
 
                 // Configure import settings for animation looping
                 ImportSettings importSettings = new ImportSettings();
@@ -137,46 +149,49 @@ namespace Banter.SDK
                 }
 
                 loadedModel = model;
-                LogLine.Do("GLTF model loaded successfully");
+                UpdateLoadingStatus("GLTF model loaded successfully", 0.75f);
 
                 // Step 5b: Setup animations if present
                 if (animations != null && animations.Length > 0)
                 {
-                    LogLine.Do($"Setting up {animations.Length} animations...");
+                    UpdateLoadingStatus($"Setting up {animations.Length} animations...", 0.76f);
                     SetupAnimations(model, animations);
+                    UpdateLoadingStatus("Animations configured", 0.78f);
                 }
 
                 // Step 6: Apply textures to materials
                 // This also applies correct unlit shaders based on alpha mode (OPAQUE/MASK/BLEND)
-                LogLine.Do("Applying textures to materials with alpha-aware shaders...");
+                UpdateLoadingStatus("Applying textures to materials with alpha-aware shaders...", 0.79f);
                 GLTFMaterialMapper.ApplyTextures(model, loadedTextures, textureMappings);
+                UpdateLoadingStatus("Textures applied to materials", 0.83f);
 
-                // Step 7: Convert remaining materials to unlit shaders if requested
+                // Step 7: Convert remaining materials to unlit shaders (Quest optimization, always enabled)
                 // (ApplyTextures already handles materials with textures)
-                if (legacyShaderFix)
-                {
-                    LogLine.Do("Converting any remaining materials to unlit shaders...");
-                    GLTFMaterialMapper.ConvertAllToUnlit(model);
-                }
+                UpdateLoadingStatus("Converting any remaining materials to unlit shaders...", 0.84f);
+                GLTFMaterialMapper.ConvertAllToUnlit(model);
+                UpdateLoadingStatus("Material shaders converted", 0.88f);
 
                 // Step 8: Setup colliders
                 if (addColliders)
                 {
-                    LogLine.Do("Setting up colliders...");
+                    UpdateLoadingStatus("Setting up colliders...", 0.89f);
                     SetupColliders(model);
+                    UpdateLoadingStatus("Colliders configured", 0.93f);
                 }
 
                 // Step 9: Load background audio (optional)
                 if (assets.audioData != null && assets.audioData.Length > 0)
                 {
-                    LogLine.Do("Loading background audio...");
+                    UpdateLoadingStatus("Loading background audio...", 0.94f);
                     await SetupAudio(assets.audioData);
+                    UpdateLoadingStatus("Background audio loaded", 0.97f);
                 }
 
                 // Step 10: Set skybox to black for Quest Home environments
+                UpdateLoadingStatus("Finalizing environment...", 0.98f);
                 SetSkyboxToBlack();
 
-                LogLine.Do("Quest Home loaded successfully!");
+                UpdateLoadingStatus("Quest Home loaded successfully!", 1.0f);
 
                 // SetLoadedIfNot triggers callbacks that may require BanterLink
                 // Wrap in try-catch for standalone usage (e.g., via QuestHomeLoader)
@@ -192,9 +207,21 @@ namespace Banter.SDK
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to load Quest Home: {ex.Message}\n{ex.StackTrace}");
+                UpdateLoadingStatus($"Failed to load: {ex.Message}", 0f);
                 loadStarted = false;
                 SetLoadedIfNot(false, ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Update loading status message and progress for Visual Scripting access
+        /// </summary>
+        private void UpdateLoadingStatus(string message, float progress)
+        {
+            loadingStatus = message;
+            loadingProgress = progress;
+            percentage = progress; // Update base class percentage
+            LogLine.Do(message);
         }
 
         /// <summary>
@@ -621,6 +648,12 @@ namespace Banter.SDK
                         collider.convex = false; // Use exact mesh collision
                         collidersAdded++;
                     }
+
+                    // Set to Grabbable layer if climbable is enabled
+                    if (climbable)
+                    {
+                        meshFilter.gameObject.layer = 20; // Layer 20 = Grabbable
+                    }
                 }
             }
 
@@ -760,28 +793,41 @@ namespace Banter.SDK
                     animation = model.AddComponent<Animation>();
                 }
 
-                // Add all animation clips
-                for (int i = 0; i < animations.Length; i++)
+                // Add all animation clips to the Animation component
+                foreach (AnimationClip clip in animations)
                 {
-                    AnimationClip clip = animations[i];
                     animation.AddClip(clip, clip.name);
-
-                    if (i == 0)
-                    {
-                        // Set first animation as default
-                        animation.clip = clip;
-                        animation.playAutomatically = true;
-                    }
-
-                    LogLine.Do($"Added animation: {clip.name} (length: {clip.length:F2}s, looping: {clip.wrapMode == WrapMode.Loop})");
                 }
 
-                // Start playing the first animation
-                if (animations.Length > 0 && animation.clip != null)
+                // Configure and play all animation states
+                // Use layers so each clip can play independently and simultaneously
+                int clipsPlayed = 0;
+                int layerIndex = 0;
+
+                foreach (AnimationState state in animation)
                 {
-                    animation.Play();
-                    LogLine.Do($"Playing animation: {animation.clip.name}");
+                    if (state.clip != null)
+                    {
+                        // Assign each clip to a unique layer for simultaneous playback
+                        state.layer = layerIndex++;
+
+                        // Set to loop mode
+                        state.wrapMode = WrapMode.Loop;
+
+                        // Enable the animation state with full weight
+                        state.enabled = true;
+                        state.weight = 1.0f;
+
+                        // Start playing from the beginning
+                        state.time = 0f;
+
+                        clipsPlayed++;
+
+                        LogLine.Do($"Playing animation: '{state.name}' on layer {state.layer} (Loop, {state.clip.length:F2}s)");
+                    }
                 }
+
+                LogLine.Do($"Animation setup complete: {clipsPlayed} clip(s) configured and playing simultaneously");
             }
             catch (Exception ex)
             {
@@ -826,12 +872,12 @@ namespace Banter.SDK
         }
 
         /// <summary>
-        /// Public C# API property for LegacyShaderFix
+        /// Public C# API property for Climbable
         /// </summary>
-        public System.Boolean LegacyShaderFix
+        public System.Boolean Climbable
         {
-            get { return legacyShaderFix; }
-            set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); }
+            get { return climbable; }
+            set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); }
         }
 
         /// <summary>
@@ -898,7 +944,7 @@ namespace Banter.SDK
                     }
                 }
 
-                // Handle boolean properties (addColliders, legacyShaderFix)
+                // Handle boolean properties (addColliders, climbable)
                 if (values[i] is BanterBool)
                 {
                     var valbool = (BanterBool)values[i];
@@ -907,10 +953,10 @@ namespace Banter.SDK
                         addColliders = valbool.x;
                         changedProperties.Add(PropertyName.addColliders);
                     }
-                    else if (valbool.n == PropertyName.legacyShaderFix)
+                    else if (valbool.n == PropertyName.climbable)
                     {
-                        legacyShaderFix = valbool.x;
-                        changedProperties.Add(PropertyName.legacyShaderFix);
+                        climbable = valbool.x;
+                        changedProperties.Add(PropertyName.climbable);
                     }
                 }
             }
@@ -960,9 +1006,9 @@ namespace Banter.SDK
 
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.legacyShaderFix,
+                    name = PropertyName.climbable,
                     type = PropertyType.Bool,
-                    value = legacyShaderFix,
+                    value = climbable,
                     componentType = ComponentType.BanterQuestHome,
                     oid = oid,
                     cid = cid
@@ -981,7 +1027,7 @@ namespace Banter.SDK
             {
                 PropertyName.url,
                 PropertyName.addColliders,
-                PropertyName.legacyShaderFix
+                PropertyName.climbable
             };
             UpdateCallback(changedProperties);
         }

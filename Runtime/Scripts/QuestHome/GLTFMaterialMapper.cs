@@ -309,8 +309,8 @@ namespace Banter.SDK
             switch (alphaMode)
             {
                 case "MASK":
-                    // Alpha clipping - use Transparent Cutout
-                    targetShader = Shader.Find("Unlit/Transparent Cutout");
+                    // Alpha clipping - use Transparent Cutout with vertex color support
+                    targetShader = Shader.Find("Unlit/TransparentCutout");
                     if (targetShader != null)
                     {
                         material.shader = targetShader;
@@ -318,12 +318,12 @@ namespace Banter.SDK
                         {
                             material.SetFloat("_Cutoff", alphaCutoff);
                         }
-                        Debug.Log($"Applied Unlit/Transparent Cutout to material '{material.name}' (cutoff: {alphaCutoff})");
+                        Debug.Log($"Applied Unlit/TransparentCutout to material '{material.name}' (cutoff: {alphaCutoff})");
                     }
                     break;
 
                 case "BLEND":
-                    // Alpha blending - use Transparent
+                    // Alpha blending - use Transparent with vertex color support
                     targetShader = Shader.Find("Unlit/Transparent");
                     if (targetShader != null)
                     {
@@ -339,12 +339,12 @@ namespace Banter.SDK
 
                 case "OPAQUE":
                 default:
-                    // Opaque - use regular Unlit/Texture
-                    targetShader = Shader.Find("Unlit/Texture");
+                    // Opaque - use texture shader with vertex color support
+                    targetShader = Shader.Find("Unlit/TextureVertexColor");
                     if (targetShader != null)
                     {
                         material.shader = targetShader;
-                        Debug.Log($"Applied Unlit/Texture to material '{material.name}'");
+                        Debug.Log($"Applied Unlit/TextureVertexColor to material '{material.name}'");
                     }
                     break;
             }
@@ -370,8 +370,8 @@ namespace Banter.SDK
         {
             if (material == null) return;
 
-            // Try to find Unlit/Texture shader
-            Shader unlitShader = Shader.Find("Unlit/Texture");
+            // Try to find Unlit/TextureVertexColor shader (supports texture, color, and vertex colors)
+            Shader unlitShader = Shader.Find("Unlit/TextureVertexColor");
             if (unlitShader == null)
             {
                 // Fallback to standard unlit

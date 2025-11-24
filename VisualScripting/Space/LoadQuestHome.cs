@@ -27,7 +27,7 @@ namespace Banter.VisualScripting
         public ValueInput addColliders;
 
         [DoNotSerialize]
-        public ValueInput legacyShaderFix;
+        public ValueInput climbable;
 
         [DoNotSerialize]
         public ValueOutput questHomeObject;
@@ -37,7 +37,7 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _url = flow.GetValue<string>(url);
                 var _addColliders = flow.GetValue<bool>(addColliders);
-                var _legacyShaderFix = flow.GetValue<bool>(legacyShaderFix);
+                var _climbable = flow.GetValue<bool>(climbable);
 
                 // Validate URL format before doing anything
                 if (!SideQuestUrlResolver.ValidateUrlFormat(_url))
@@ -111,7 +111,7 @@ namespace Banter.VisualScripting
                 // Set properties (starts async loading)
                 questHomeComponent.Url = _url;
                 questHomeComponent.AddColliders = _addColliders;
-                questHomeComponent.LegacyShaderFix = _legacyShaderFix;
+                questHomeComponent.Climbable = _climbable;
 
                 // Return new Quest Home GameObject
                 flow.SetValue(questHomeObject, questHomeGo);
@@ -125,7 +125,7 @@ namespace Banter.VisualScripting
             invalid = ControlOutput("Invalid");
             url = ValueInput("URL", "https://sidequestvr.com/app/167567/canyon-environment");
             addColliders = ValueInput("Add Colliders", true);
-            legacyShaderFix = ValueInput("Legacy Shader Fix", true);
+            climbable = ValueInput("Climbable", false);
             questHomeObject = ValueOutput<GameObject>("Quest Home Object");
         }
     }

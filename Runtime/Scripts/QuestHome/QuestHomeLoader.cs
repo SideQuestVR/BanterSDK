@@ -16,8 +16,8 @@ namespace Banter.SDK
         [Tooltip("Automatically generate colliders on opaque meshes")]
         public bool addColliders = true;
 
-        [Tooltip("Convert materials to unlit shaders for Quest optimization")]
-        public bool legacyShaderFix = true;
+        [Tooltip("Enable to make surfaces climbable by setting colliders to Grabbable layer (Layer 20)")]
+        public bool climbable = false;
 
         [Space(10)]
         [Tooltip("Load the Quest Home automatically when Start() is called")]
@@ -85,7 +85,7 @@ namespace Banter.SDK
             // Configure the component using the public C# API
             questHomeComponent.Url = apkUrl;
             questHomeComponent.AddColliders = addColliders;
-            questHomeComponent.LegacyShaderFix = legacyShaderFix;
+            questHomeComponent.Climbable = climbable;
 
             // Monitor for completion (check the _loaded field via reflection or wait)
             StartCoroutine(MonitorLoadStatus());

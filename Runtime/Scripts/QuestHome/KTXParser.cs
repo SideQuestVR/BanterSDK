@@ -164,12 +164,14 @@ namespace Banter.SDK
                 TextureFormat format = GetTextureFormat(header.glInternalFormat);
                 byte[] textureData = ExtractTextureData(ktxData, header);
 
-                // Create texture with ASTC format
+                // Create texture with ASTC format in sRGB color space
+                // linear=false tells Unity the data is sRGB, so it will convert to linear when sampling
                 Texture2D texture = new Texture2D(
                     (int)header.width,
                     (int)header.height,
                     format,
-                    false  // No mipmaps
+                    false,  // mipChain = false (no mipmaps)
+                    false   // linear = false (sRGB color space - critical for correct colors!)
                 );
 
                 texture.name = textureName;

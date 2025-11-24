@@ -38,9 +38,6 @@ namespace Banter.SDK
         [Tooltip("Indicates whether this asset bundle contains a scene or a collection of prefabs.")]
         [See(initial = "false")][SerializeField] internal bool isScene = false;
 
-        [Tooltip("Enables a legacy shader fix for compatibility with older lighting models.")]
-        [See(initial = "false")][SerializeField] internal bool legacyShaderFix = false;
-
         [Tooltip("The loaded asset bundle.")]
         public AssetBundle assetBundle;
         List<string> assetPaths;
@@ -183,23 +180,19 @@ namespace Banter.SDK
             {
                 string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenes[0]);
                 await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
-                if (legacyShaderFix)
-                {
-                    RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
-                    RenderSettings.ambientSkyColor = Color.white;
-                    RenderSettings.ambientEquatorColor = Color.white;
-                    RenderSettings.ambientGroundColor = new Color(0.1f, 0.1f, 0.1f, 1f);
-                }
+
+                // Apply ambient lighting settings for compatibility
+                RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+                RenderSettings.ambientSkyColor = Color.white;
+                RenderSettings.ambientEquatorColor = Color.white;
+                RenderSettings.ambientGroundColor = new Color(0.1f, 0.1f, 0.1f, 1f);
+
                 var reference = SceneManager.GetSceneByName(sceneName);
 
                 foreach (GameObject thisgo in reference.GetRootGameObjects())
                 {
                     foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
                     {
-                        // if (legacyShaderFix)
-                        // {
-                        //     transform.gameObject.AddComponent<FixLegacyShaders>();
-                        // }
                         var inputModule = transform.gameObject.GetComponent<StandaloneInputModule>();
                         if (inputModule != null)
                         {
@@ -318,7 +311,6 @@ namespace Banter.SDK
         public System.String IosUrl { get { return iosUrl; } set { iosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.iosUrl }); } }
         public System.String VosUrl { get { return vosUrl; } set { vosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.vosUrl }); } }
         public System.Boolean IsScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
-        public System.Boolean LegacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -341,7 +333,7 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, PropertyName.legacyShaderFix, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, };
             UpdateCallback(changedProperties);
         }
 
@@ -449,15 +441,6 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.isScene);
                     }
                 }
-                if (values[i] is BanterBool)
-                {
-                    var vallegacyShaderFix = (BanterBool)values[i];
-                    if (vallegacyShaderFix.n == PropertyName.legacyShaderFix)
-                    {
-                        legacyShaderFix = vallegacyShaderFix.x;
-                        changedProperties.Add(PropertyName.legacyShaderFix);
-                    }
-                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -544,18 +527,6 @@ namespace Banter.SDK
                     name = PropertyName.isScene,
                     type = PropertyType.Bool,
                     value = isScene,
-                    componentType = ComponentType.BanterAssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BanterComponentPropertyUpdate()
-                {
-                    name = PropertyName.legacyShaderFix,
-                    type = PropertyType.Bool,
-                    value = legacyShaderFix,
                     componentType = ComponentType.BanterAssetBundle,
                     oid = oid,
                     cid = cid

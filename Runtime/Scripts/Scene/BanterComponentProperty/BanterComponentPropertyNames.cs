@@ -19,7 +19,6 @@ namespace Banter.SDK
         iosUrl,
         vosUrl,
         isScene,
-        legacyShaderFix,
         uid,
         attachmentPosition,
         attachmentRotation,
