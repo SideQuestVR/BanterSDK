@@ -120,7 +120,7 @@ namespace Banter.SDK
                 }
                 catch (Exception e)
                 {
-                    SetLoadedIfNot(false, e.Message);
+                    SetLoadedIfNot(true, e.Message);
                     Destroy(go);
                     _loadStarted = false;
                 }
@@ -128,7 +128,7 @@ namespace Banter.SDK
             catch (Exception e)
             {
                 Debug.LogError(e);
-                SetLoadedIfNot(false, e.Message);
+                SetLoadedIfNot(true, e.Message);
                 _loadStarted = false;
             }
         }
