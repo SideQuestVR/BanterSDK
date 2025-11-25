@@ -52,8 +52,11 @@ Shader "Unlit/TextureVertexColor"
 
 			fixed4 frag(v2f i) : SV_Target
 			{
-				// Sample texture (already in linear space if texture is sRGB)
+				// Sample texture (loaded as linear to preserve alpha channel on ASTC)
 				fixed4 texColor = tex2D(_MainTex, i.uv);
+
+				// Manually convert RGB from sRGB to linear (alpha stays linear to prevent corruption)
+				texColor.rgb = pow(texColor.rgb, 2.2);
 
 				// Check if vertex colors are nearly black (default/missing)
 				// Unity provides black (0,0,0,1) for meshes without vertex colors
