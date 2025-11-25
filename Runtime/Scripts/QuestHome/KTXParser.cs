@@ -164,14 +164,16 @@ namespace Banter.SDK
                 TextureFormat format = GetTextureFormat(header.glInternalFormat);
                 byte[] textureData = ExtractTextureData(ktxData, header);
 
-                // Create texture with ASTC format in sRGB color space
-                // linear=false tells Unity the data is sRGB, so it will convert to linear when sampling
+                // Create texture with ASTC format in linear space
+                // CRITICAL: linear=true prevents Unity from corrupting alpha channel on ASTC textures
+                // (ASTC has no separate sRGB variant, so linear=false applies gamma to ALL channels including alpha)
+                // Shaders will manually convert RGB from sRGB to linear while preserving alpha
                 Texture2D texture = new Texture2D(
                     (int)header.width,
                     (int)header.height,
                     format,
                     false,  // mipChain = false (no mipmaps)
-                    false   // linear = false (sRGB color space - critical for correct colors!)
+                    true    // linear = true (prevents ASTC alpha corruption on Quest!)
                 );
 
                 texture.name = textureName;
