@@ -214,7 +214,7 @@ namespace Banter.SDK
 
         private void OnApplicationQuit()
         {
-            Kill(true);
+            // Kill(true);
         }
 
         void OnDestroy()

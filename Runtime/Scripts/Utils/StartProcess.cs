@@ -7,11 +7,11 @@ public class StartProcess
     public static int Do(Color color, string workingDirectory, string filename, string arguments, string tag, Action callback = null)
     {
 #if BANTER_EDITOR && !UNITY_EDITOR && !ENABLE_MONO
-        LogLine.Do("Launching banter-link with KS.Diagnostics");
+        // LogLine.Do("Launching banter-link with KS.Diagnostics");
         var process = new KS.Diagnostics.Process();
         process.StartInfo = new KS.Diagnostics.ProcessStartInfo();
 #else
-        LogLine.Do("Launching banter-link with System.Diagnostics");
+        // LogLine.Do("Launching banter-link with System.Diagnostics");
         var process = new System.Diagnostics.Process();
         process.StartInfo = new System.Diagnostics.ProcessStartInfo();
 #endif
