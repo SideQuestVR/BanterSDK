@@ -3,7 +3,6 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using Banter.SDK;
 using SideQuest.Ora;
-using UnityEditor;
 
 public class BanterPipe
 {
@@ -29,7 +28,7 @@ public class BanterPipe
         
         view.loadStarted.AddListener((url) =>
         {
-            _ = link.scene.OnLoad(GUID.Generate().ToString());
+            _ = link.scene.OnLoad(Guid.NewGuid().ToString());
             link.scene.SetLoaded();
         });
         view.loadFailed.AddListener((url) =>
