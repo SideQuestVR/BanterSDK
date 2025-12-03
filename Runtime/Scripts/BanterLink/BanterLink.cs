@@ -14,6 +14,7 @@ using Unity.VisualScripting;
 using Banter.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
+using SideQuest.Ora;
 
 namespace Banter.SDK
 {
@@ -30,9 +31,6 @@ namespace Banter.SDK
 
         void Start()
         {
-            scene = BanterScene.Instance();
-            SetupPipe();
-
             scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -84,8 +82,9 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.ONLOAD))
             {
-                _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
-                scene.SetLoaded();
+                // Debug.Log("HERERER! " +msg); 
+                // _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
+                // scene.SetLoaded();
             }
             else if (msg.StartsWith(APICommands.NOTHING_20S))
             {
@@ -603,6 +602,7 @@ namespace Banter.SDK
             //end of debug stuff
 #endif
 
+
             if (msg.StartsWith(APICommands.REQUEST_ID))
             {
                 var startLength = (APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID).Length;
@@ -622,17 +622,20 @@ namespace Banter.SDK
                 ParseCommand(msg);
             }
         }
-        void SetupPipe()
+        public void SetupPipe(OraView view, OraManager manager)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            pipe = new AndroidPipe();
-#else
-            pipe = new ElectronPipe(pipeName);
-#endif
+            // #if UNITY_ANDROID && !UNITY_EDITOR
+            //             pipe = new AndroidPipe();
+            // #else
+            //             pipe = new ElectronPipe(pipeName);
+            // #endif
 
+            scene = BanterScene.Instance();
+            pipe = new BanterPipe(this, view, manager);
             batchUpdater = new BatchUpdater(pipe);
             pipe.Start(() =>
             {
+                Debug.Log("HERER3 pipe.Start(() =>");
                 Connected?.Invoke(this, EventArgs.Empty);
             }, msg =>
             {
@@ -678,22 +681,6 @@ namespace Banter.SDK
                 _pipeName = Guid.NewGuid().ToString().Replace("-", "");
             }
             return $"banterPipe{_pipeName}";
-        }
-
-        void OnDestroy()
-        {
-            if (pipe != null)
-            {
-                pipe.Stop();
-            }
-        }
-
-        void OnApplicationQuit()
-        {
-            if (pipe != null)
-            {
-                pipe.Stop();
-            }
         }
 
         
@@ -746,11 +733,12 @@ namespace Banter.SDK
         public async Task LoadUrl(string url)
         {
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + url);
-            pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
+            pipe.view.LoadUrl(url);
+            // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
             scene.state = SceneState.NONE;
-            LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
+            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
             await new WaitUntil(() => scene.state >= SceneState.SCENE_READY);
-            LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
+            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
             scene.SetLoaded();
         }
 
@@ -1014,10 +1002,10 @@ namespace Banter.SDK
 
         public void CheckPipe()
         {
-            if (!pipe.GetIsConnected())
-            {
-                SetupPipe();
-            }
+            // if (!pipe.GetIsConnected())
+            // {
+            //     SetupPipe();
+            // }
         }
 
         #region Asset System Handlers

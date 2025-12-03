@@ -12,7 +12,8 @@
         "GUID:fe5c9d210f6859a4eac877d630830953",
         "GUID:11a03fa8efb0abf4fba2ae9ddc6a09f4",
         "GUID:af6e7370d62c866409111f9afdb8c47a",
-        "GUID:b4ae365a73764ee478adc74cb89832fe"
+        "GUID:b4ae365a73764ee478adc74cb89832fe",
+        "GUID:68e4fffbb7c599049b29a7c930eec568"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -41,6 +42,11 @@
             "name": "com.sidequest.flexabody",
             "expression": "0.0.1",
             "define": "BANTER_FLEX"
+        },
+        {
+            "name": "com.sidequest.ora",
+            "expression": "0.0.1",
+            "define": "BANTER_ORA"
         }
     ],
     "noEngineReferences": false

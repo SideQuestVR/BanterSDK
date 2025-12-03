@@ -9,6 +9,8 @@ using Banter.Utilities.Async;
 using Debug = UnityEngine.Debug;
 using TLab.WebView;
 using UnityEngine.UI;
+using SideQuest.Ora;
+using SideQuest.Ora.WebRTC;
 
 
 
@@ -71,6 +73,7 @@ namespace Banter.SDK
                     currentCoroutine = StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
+                Debug.Log("BanterStarterUpper initialized");
             }
 
             scene = BanterScene.Instance();
@@ -84,25 +87,52 @@ namespace Banter.SDK
 #if UNITY_EDITOR
             CreateWebRoot();
 #endif
-#if UNITY_STANDALONE || UNITY_EDITOR
-            Kill();
-            StartElectronBrowser();
-#else
-            StartBrowserWindow();
+#if BANTER_ORA
+            var oraManager = gameObject.GetComponent<OraManager>();
+            if (!oraManager)
+            {
+                oraManager = gameObject.AddComponent<OraManager>();
+            }
+            oraManager.oraAudioManager = gameObject.GetComponent<OraAudioManager>();
+            if (!oraManager.oraAudioManager)
+            {
+                oraManager.oraAudioManager = gameObject.AddComponent<OraAudioManager>();
+            }
+            oraManager.oraWebRTCManager = gameObject.GetComponent<OraWebRTCManager>();
+            if (!oraManager.oraWebRTCManager)
+            {
+                oraManager.oraWebRTCManager = gameObject.AddComponent<OraWebRTCManager>();
+            }
+            oraManager.hardwareKeyboardInput = gameObject.GetComponent<HardwareKeyboardInput>();
+            if (!oraManager.hardwareKeyboardInput)
+            {
+                oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
+            }
+            var oraView = gameObject.GetComponent<OraView>();
+            if (!oraView)
+            {
+                oraView = gameObject.AddComponent<OraView>();
+            }
+            SetupBrowserLink(oraView, oraManager);
 #endif
-            SetupBrowserLink();
-#if UNITY_STANDALONE || UNITY_EDITOR
-    EventHandler args = null;
-    args = (arg0, arg1) =>
-    {
-        scene.link.Connected -= args;
-        UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-        {
-            StartBrowserWindow();
-        });
-    };
-    scene.link.Connected += args;
-#endif
+            // #if UNITY_STANDALONE || UNITY_EDITOR
+            //             Kill();
+            //             StartElectronBrowser();
+            // #else
+            //             StartBrowserWindow();
+            // #endif
+            // #if UNITY_STANDALONE || UNITY_EDITOR
+            //     EventHandler args = null;
+            //     args = (arg0, arg1) =>
+            //     {
+            //         scene.link.Connected -= args;
+            //         UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            //         {
+            //             StartBrowserWindow();
+            //         });
+            //     };
+            //     scene.link.Connected += args;
+            // #endif
 
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
@@ -207,9 +237,10 @@ namespace Banter.SDK
             {
             }
         }
-        private void SetupBrowserLink()
+        private void SetupBrowserLink(OraView view, OraManager manager)
         {
             scene.link = gameObject.AddComponent<BanterLink>();
+            scene.link.SetupPipe(view, manager);
             scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BanterStarterUpper)}.{nameof(SetupBrowserLink)}"));
         }
         public void CancelLoading()

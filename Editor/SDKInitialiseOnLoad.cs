@@ -33,13 +33,12 @@ namespace Banter.SDKEditor
 #if !UNITY_2022
             ImportBasisPackages();
 #endif
+            ImportOraPackage();
             SetupLayersAndTags();
             SetApiCompatibilityLevel();
             CreateWebRoot();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-
-            
 #endif
         }
 
@@ -58,11 +57,32 @@ namespace Banter.SDKEditor
         static void SetApiCompatibilityLevel()
         {
             var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
-            if( level == ApiCompatibilityLevel.NET_Unity_4_8)
+            if (level == ApiCompatibilityLevel.NET_Unity_4_8)
             {
                 return;
             }
             PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
+        }
+        static void ImportOraPackage()
+        {
+            var packageName = "com.sidequest.ora";
+            if (Directory.Exists("Packages/" + packageName))
+            {
+#if !BANTER_ORA
+                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
+#endif
+                return;
+            }
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string zipDirectory = Path.Combine(projectRoot, "Packages/" + packageName + "/OraPackage");
+            string zipPath = Path.Combine(zipDirectory, $"com.sidequest.ora.zip");
+            string extractRoot = Path.Combine(projectRoot, "Packages");
+            string extractPath = Path.Combine(extractRoot, packageName);
+
+            if (Directory.Exists(extractPath))
+                Directory.Delete(extractPath, true);
+
+            ZipFile.ExtractToDirectory(zipPath, extractRoot);
         }
         static void ImportBasisPackages()
         {
