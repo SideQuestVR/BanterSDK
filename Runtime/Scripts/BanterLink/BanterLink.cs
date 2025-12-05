@@ -824,14 +824,14 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiModel", new CustomEventArgs("", new object[] { glb }));
 #endif
-            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + glb);
+            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + glb);
         }
         public void OnAiImage(string image)
         {
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
 #endif
-            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + image);
+            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + image);
         }
         public void OnBase64ToCDN(long image)
         {
