@@ -582,6 +582,21 @@ namespace Banter.SDK
             if (createdUIDocument && uiDocument != null)
             {
                 Destroy(uiDocument);
+                var addPanelStiff = gameObject.GetComponent<AddPanelStuff>();
+                if(addPanelStiff)
+                {
+                    Destroy(addPanelStiff);
+                }
+                var panelRaycaster = gameObject.GetComponent<PanelRaycaster>();
+                if(panelRaycaster)
+                {
+                    Destroy(panelRaycaster);
+                }
+                var panelEventHandler = gameObject.GetComponent<PanelEventHandler>();
+                if(panelEventHandler)
+                {
+                    Destroy(panelEventHandler);
+                }
                 uiDocument = null;
             }
 

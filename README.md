@@ -1,1448 +1,1894 @@
-# Banter Creator Documentation
-<sup>Powered by `BullShcript`<sup>TM</sup><br><sup>([bullshc.rip/t](https://bullshc.rip/t))</sup></sup>
+# Banter SDK Documentation
 
-<img src="https://cdn.sidequestvr.com/file/606701/unity_uv0yc00xq7-ezgifcom-video-to-gif-converter.gif" style="float: right; max-width: 300px; margin: 20px; margin-top: 0;"/>
+Create interactive 3D VR spaces using JavaScript. The Banter SDK provides a complete API for building multiplayer virtual reality experiences.
 
-Here you will find all the information you need to start building spaces and avatars in Banter. You should also [join our discord server](https://discord.gg/bantaverse) to interact with others interested in building spaces in Banter.
+---
 
-## Avatar Creation
-
-We have a new avatar system out in beta, including an extension for blender to make building avatars as easy as possible. 
-
-<details><summary>Click Here For More Info</summary>
-
-  Get your avatar ready for the Bantaverse. This plugin will help you set up your avatars with the correct LOD levels, prepare materials, and upload directly to your Banter account.
-
-  ### Blender Plugin Features
-  1. Generate a Banter-compliant armature if your avatar needs one.
-  1. Assign your local avatar meshes, and designate your head mesh.
-  1. Auto-generate performance-friendly LODs, complete with atlas material.
-  1. Validate your avatar against Banter requirements.
-  1. Export and/or upload your avatar to Banter!
-  
-  Our blender plugin is currently pending review over on the [blender extensions marketplace](https://extensions.blender.org/approval-queue/sidequest-banter-avatars). You can grab it there or from our [github](https://github.com/SideQuestVR/banter-blender-plugin/releases).
-  
-  ### How To Use
-  
-  1. In the sidebar tray, locate the 'BANTER' tab.
-  1. Assign the local armature to the slot, or generate a new one.
-  1. Assign your local avatar's meshes to the local avatar section by selecting the objects and clicking 'Use Selected Objects'
-  1. Assign the head mesh of your local avatar. We will turn this off in Banter so you can see properly!
-  1. Assign or generate LODs of your avatar. Shapekeys are only allowed on LOD0.
-  1. Press 'Run Validation' and fix any errors. If possible, a quick fix button will generate a new LOD per the requirements.
-  1. Link with your SideQuest account to export and upload your new avatar.
-</details>
-
-## Space Creation
-
-It's recommended to use `Unity` for making spaces on Banter so we will cover how to get started with `Unity`. The great news is that we have built out a great set of tools in the form of the `Banter Unity Plugin` to make building for Banter with Unity even more powerful. With this plugin you can build your space inside the `Unity Editor`, including testing and running your scripts and running your space almost like it does in the build at runtime. You can even use `VR` in the `Unity Editor` for testing things like two handed interactions in first person `VR`.
-
-There are two primary ways you can add scripting in Banter, using [Unity Visual Scripting](https://unity.com/features/unity-visual-scripting) or using [JavaScript](https://en.wikipedia.org/wiki/JavaScript) or a combination of the two! With 
-options like these you have an incredible amount of power to build out awesome spaces and games!
-
-Making spaces in Banter is easy and fun. You can get going quickly with a simple example, or dive right into a world of possibilities with professional workflows using tools such as `Unity` and `Blender`.
-
-Here are the steps required to get started with building spaces in Banter with `Unity`. 
-
- * Download and install `Unity v2022.3.39f1` and select both android and windows build support to be installed.
- * You also need to have [git-scm](https://git-scm.com/downloads/win) installed right now, until we release the plugin on OpenUPM. 
- * Download the Banter plugin through the Package Manager in Unity
-   * Open the Package Manager through `Window` > `Package Manager`
-   * Add a package with the + icon on the top left.
-   * Select `Add package from git URL`.
-   * Enter the following URL `https://github.com/SideQuestVR/BanterSDK.git` and click Add.
- * Make a space over `https://sidequestvr.com/account/create-space`
- * Note down the space slug from the banter tab in the above space in the `Mange Space` section. 
- * Sign in on the Banter Unity Plugin, and enter the space-slug (without bant.ing) into the `Upload` tab.
- * Finally tick the Auto Upload checkbox on the `Build` tab. When your space is ready, select `Build & Upload`. 
-   
-
-Now you can jump into Banter and test your space! If you want your space to be featured, you can submit it on our [discord](https://discord.gg/bantaverse) or via our [service portal](https://sdq.st/banter-help).
-
-
-### Unity Scenes in Banter
-
-In the past loading a scene into banter was tricky, but we have made things easier with the new SDK. Now you can avoid a lot of the tricky parts and just build and upload your scene to Banter.
-In case you want to expand the basic example here is some more info around how you can do that in the `index.html`, or you can skip to the next section since our Unity plugin handles this for you!.
-
-<details><summary>Click Here For More Info</summary>
-
- Unity uses asset bundles to store your scene which we then load into Banter via the `index.html`. Now you only need a small amount of HTML in your `index.html` to load the bundles, and we add it in automatically for you when you install the Banter Unity Plugin, so you can skip to the next section if you want!
-
- ```html
-<html android-bundle windows-bundle><head>
-```
-If the space is not hosted on SideQuest i.e. the address does not end with `*.bant.ing` then you can expand this to the following (replace `example.com`): 
-```html
-<html android-bundle="https://example.com/android.banter" windows-bundle="https://example.com/windows.banter"><head>
-``` 
-You can also do this with JavaScript using code like this (`*.bant.ing`): 
-```js
-BS.LoadAssetBundles();
-```
-or by including the asset bundle addresses like this (replace `example.com`):
-```js
-BS.LoadAssetBundles("https://example.com/android.banter", "https://example.com/windows.banter");
-```
-This will be the default code in the `index.html` file in new projects, so if you're unsure about any of the above it can be safely ignored and everything should be fine.
-
-</details>
-
-You can make any object in your scene visible to `JavaScript` by adding a `BanterObjectId` component to it inside of Unity. This works for normal asset bundles as well as for kit (prefab) based bundles too. Objects that are created from `JavaScript` will have a `BanterObjectId` added automatically and will be exposed automatically. In order to access these object, listen for the `unity-loaded` event in `JavaScript` before you try to use methods like `scene.Find`.
-
-**PLEASE NOTE** It's generally good to wrap all your banter code in the following, its kinda like our `DOMContentLoaded` or `window.onload` event for Banter.
+## Quick Start
 
 ```js
-BS.BanterScene.GetInstance().On("unity-loaded", async () => {
-    // do things here.
+// Get the scene singleton
+const scene = BS.BanterScene.GetInstance();
+
+// Wait for the scene to be ready
+scene.On("unity-loaded", () => {
+
+    // Create a simple object with a red sphere
+    const sphere = BS.CreateGameObject({
+        name: "MySphere",
+        layer: BS.L.UI, // Layer 5 for UI.
+        localPosition: new BS.Vector3(0, 1.5, 2)
+    });
+
+    // Add visual geometry
+    sphere.AddComponent(new BS.BanterSphere({ radius: 0.5 }));
+    sphere.AddComponent(new BS.BanterMaterial({
+        color: new BS.Vector4(1, 0, 0, 1)
+    }));
+
+    // Add physics
+    sphere.AddComponent(new BS.SphereCollider({ radius: 0.5 }));
+    sphere.AddComponent(new BS.BanterRigidbody({ mass: 1, useGravity: true }));
+
+    // Handle clicks
+    sphere.On("click", (e) => {
+        console.log("Clicked at:", e.detail.point);
+    });
 });
-
 ```
 
+---
 
-### Running Your Scene in the Unity Editor
+## Core Concepts
 
-Now you can run your unity scene inside the unity editor before you upload it to Banter. To do this you must add a `BanterStarterUpper` component into your scene. Create an empty game object in unity and add the `BanterStarterUpper` component. Now when you hit play Banter will run a headless browser inside the unity editor so it can run and test your `BS` code without having to upload your space! That allows for a huge amount of debugging capability inside the unity editor. 
+### BanterScene
+The scene is the top-level singleton that manages all GameObjects, components, users, and communication with Unity. Access it via `BS.BanterScene.GetInstance()`.
 
-### Visual Scripting
+### GameObject
+GameObjects are the basic building blocks - containers that hold components. Create them with `BS.CreateGameObject({...})`. Every GameObject has a Transform for position, rotation, and scale.
 
-Creating spaces in Banter is fun, but you can add even more excitement with scripting. While Banter primarily uses JavaScript, you can also use Unity's Visual Scripting to enhance your spaces with complex logic. This allows you to create a variety of cool games and functionalities in Banter.
-Some visual scripting nodes are not permitted. We've added a check in the Banter Unity plugin to alert you in the console if any disallowed nodes are used. This check runs every time you hit play in the editor. A more user-friendly UI for this feature is coming in a future update.
-If an unsupported node is detected, an error will print to the console. You can use this tool: [UVS Finder](https://github.com/myanko/uvs-finder.git) to identify and remove unsupported nodes. Install it by clicking "Add package from GIT URL" in the package manager. Then, search for and delete the unsupported node from your script graph using the NodeFinder window.
-For more guides and tutorials, please see some of these third party resources. 
+### Components
+Components add functionality to GameObjects. Physics, rendering, audio, interaction - all are components. Add them with `gameObject.AddComponent(new BS.ComponentName({...}))`.
 
-[Unity Visual Scripting Guide by NotSlot](https://www.youtube.com/watch?v=JYkFm1Sc3v8&list=PLqqkaa8OrxkHxJHcGATpq-MCJnjX5hUBj)
+### Transform
+Every GameObject has a transform controlling its position, rotation, and scale in 3D space. Set these in the constructor or modify later with methods like `SetPosition()`.
 
+---
 
-### Banter SDK Contributions
+## BanterScene API
 
-Since our SDK is going to be open source, there are two ways that new functionality can be added. 
-The first way is that we add functionality when we need it in Banter, which makes sense. The second is if
-a creator wants to add functionality to Banter. In that case we have a process for accepting contributions. 
-To find out more, check out our [Contribution Guidelines](/CONTRIBUTING.md) page.
-<!--
-## Avatar Creation
+### Getting the Scene
 
-Creating avatars in Banter can be a lot of fun. We recommend using `Blender` for creating avatars, we've even made a plugin to make building avatars in `Blender` a breeze. You can also create avatars using `Ready Player Me` though those avatars won't have a lot of the extra features you get when making Banter avatars in `Blender`.
-
-Right now we are working on a brand new avatar system. It should allow us to bring more avatar features and custom options whilst also squeezing every last bit of performance out of the avatar system at scale.
--->
-### More Resources
-
-You can also find more info and tutorials here: 
-
-<!-- * [Banter Space Tutorials](https://www.youtube.com/watch?v=dQw4w9WgXcQ)
- * [Banter Avatar Tutorials](https://www.youtube.com/watch?v=dQw4w9WgXcQ) -->
- * [Unity Getting Started Tutorials](https://www.youtube.com/watch?v=j48LtUkZRjU&list=PLPV2KyIb3jR5QFsefuO2RlAgWEz6EvVi6)
- * [JavaScript Tutorials](https://www.javascript.com/)
- * [Blender Tutorials](https://www.youtube.com/watch?v=B0J27sf9N1Y)
-
-Now, continue reading for more info and a detailed specification on Banter's latest SDKv2.
-
-## BullShcript SDK Reference
-
-Here is a full specification of the Banter SDK in `JavaScript`. BullShcript is just JavaScript, it's just an april fools joke - for more info see here: [bullshc.rip/t](https://bullshc.rip/t).
-
-### Banter Scene
-
-The scene in Banter is the top level object that everything is stored inside. It stores all the GameObjects in the scene as-well as data and settings. It also handles all of the interactions with the scene hierarchy in `Unity`, and all of the low level messaging between `Unity` and `JavaScript` - though you don't need to worry about that.
-
-<details><summary>Click Here For More Info</summary>
-
- To get a reference to the scene from anywhere:
-
- ```js
-const scene = BS.BanterScene.getInstance();
-```
-
- <b>Properties</b>
- 
- `objects` - The list of `GameObject` objects in the scene, the basic building blocks of the space. 
- 
- `components` - The `Component` functionality objects that are attached to all the `GameObject`s.
- 
- `users` - All the `User` objects in the scene. These change when users join or leave the space.
- 
- `localUser` - The local `User` object. This is set once the user joins the room, which happens after loading has completed. 
- 
- `unityLoaded` - The unity scene is fully loaded, i.e. the loading screen is finished and the user is in the world. 
- 
- `spaceState` - The current state of the space, an object containing all space state properties.   
-
- <b>Methods</b>
-
- ```js
-// SetLoadPromise - Set a promise which will delay loading until the promise resolves, also await that promise.
-// Normally loading will begin 500ms after you stop adding objects to the scene (debounced).
-await scene.SetLoadPromise(callback: Promise<void>);
-```
 ```js
-// SetSettings - Set settings for the current space like spawn position, portals, guest access etc.
+const scene = BS.BanterScene.GetInstance();
+```
+
+### Properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `objects` | Object | All GameObjects in the scene by ID |
+| `components` | Object | All Components in the scene by ID |
+| `users` | Object | All connected users by UID |
+| `localUser` | UserData | The current local user |
+| `unityLoaded` | boolean | True when Unity is fully loaded |
+| `spaceState` | Object | Current space state (public/protected) |
+
+### Finding Objects
+
+```js
+// Find by name (first match)
+const obj = scene.Find("MyObject");
+
+// Find by full hierarchy path
+const child = scene.FindByPath("Parent/Child/GrandChild");
+```
+
+### Creating & Cloning Objects
+
+```js
+// Clone an existing object
+const clone = scene.Instantiate(originalObject);
+
+// Clone with position and rotation
+const clone = scene.Instantiate(original, new BS.Vector3(0, 1, 0), new BS.Quaternion(0, 0, 0, 1));
+
+// Clone with parent
+const clone = scene.Instantiate(original, parentObject, true); // worldPositionStays = true
+```
+
+### State Management
+
+```js
+// Set public properties (visible to all, persists)
+scene.SetPublicSpaceProps({ "score": "100", "level": "3" });
+
+// Set protected properties (admin/mod only can set)
+scene.SetProtectedSpaceProps({ "gameMode": "competitive" });
+
+// Set user-specific properties
+scene.SetUserProps({ "team": "red" }, userId);
+
+// Send one-shot message to all users
+scene.OneShot({ action: "explosion", position: [0, 1, 0] }, true); // allInstances
+```
+
+### Browser & Page Methods
+
+```js
+// Open a URL in the user's menu browser
+scene.OpenPage("https://example.com");
+
+// Send message to browser in menu
+scene.SendBrowserMessage("hello from space");
+
+// Deep link with message
+scene.DeepLink("https://example.com", "welcome");
+```
+
+### Text-to-Speech
+
+```js
+// Start voice detection
+scene.StartTTS(true); // voiceDetection = true
+
+// Stop and get transcription (provide ID for tracking)
+scene.StopTTS("request-1");
+
+// Listen for result
+scene.On("transcription", (e) => {
+    console.log(e.detail.id, e.detail.message);
+});
+```
+
+### AI Generation
+
+```js
+// Generate an AI image (ratio: _1_1, _3_2, _4_3, _16_9, _21_9, _2_3, _3_4, _9_16, _9_21)
+scene.AiImage("a sunset over mountains", BS.AiImageRatio._1_1);
+
+// Generate 3D model from image (simplify: low, med, high)
+scene.AiModel(base64ImageData, BS.AiModelSimplify.med, 512);
+```
+
+### Utility Methods
+
+```js
+// Wait for end of frame (sync with Unity render)
+scene.WaitForEndOfFrame();
+
+// Select a file from user
+scene.SelectFile(BS.SelectFileType.Image);
+
+// Upload base64 to CDN
+scene.Base64ToCDN(base64Data, "myfile.png");
+
+// Get YouTube video info
+scene.YtInfo("dQw4w9WgXcQ");
+```
+
+---
+
+## Scene Settings
+
+Configure scene behavior with `SceneSettings`:
+
+```js
 const settings = new BS.SceneSettings();
- 
+
+// General settings
 settings.EnableDevTools = true;
 settings.EnableTeleport = true;
 settings.EnableForceGrab = false;
 settings.EnableSpiderMan = false;
 settings.EnablePortals = true;
 settings.EnableGuests = true;
-settings.EnableQuaternionPose = false;
-settings.EnableControllerExtras = false;
-settings.EnableFriendPositionJoin = true;
-settings.EnableDefaultTextures = true;
 settings.EnableAvatars = true;
 settings.MaxOccupancy = 20;
 settings.RefreshRate = 72;
 settings.ClippingPlane = new BS.Vector2(0.02, 1500);
-settings.SpawnPoint = new BS.Vector4(0, 10, 0, 90); // x,y,z is position. w is Y rotation
- 
-await scene.SetSettings(settings);
+settings.SpawnPoint = new BS.Vector4(0, 10, 0, 90); // x,y,z position, w = Y rotation
+
+scene.SetSettings(settings);
 ```
+
+### General Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `EnableDevTools` | boolean | false | Show developer console |
+| `EnableTeleport` | boolean | true | Allow teleportation |
+| `EnableForceGrab` | boolean | false | Grab objects at distance |
+| `EnableSpiderMan` | boolean | false | Wall climbing ability |
+| `EnableHandHold` | boolean | true | Hand physics enabled |
+| `EnableRadar` | boolean | false | Show mini-map |
+| `EnableNametags` | boolean | true | Show player names |
+| `EnablePortals` | boolean | true | Allow portal travel |
+| `EnableGuests` | boolean | true | Allow guest users |
+| `EnableQuaternionPose` | boolean | false | Quaternion pose updates |
+| `EnableControllerExtras` | boolean | false | Extra controller data |
+| `EnableFriendPositionJoin` | boolean | true | Join at friend location |
+| `EnableDefaultTextures` | boolean | true | Use default materials |
+| `EnableAvatars` | boolean | true | Show avatars |
+| `MaxOccupancy` | number | 20 | Maximum players |
+| `RefreshRate` | number | 72 | Target FPS |
+| `ClippingPlane` | Vector2 | (0.02, 1500) | Near/far clip planes |
+| `SpawnPoint` | Vector4 | (0, 0, 0, 0) | Spawn position + Y rotation |
+| `SettingsLocked` | boolean | false | Prevent setting changes |
+
+### Physics Settings
+
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `PhysicsMoveSpeed` | number | 4 | Walking speed |
+| `PhysicsMoveAcceleration` | number | 4.6 | Walking acceleration |
+| `PhysicsAirControlSpeed` | number | 3.8 | Air movement speed |
+| `PhysicsAirControlAcceleration` | number | 6 | Air acceleration |
+| `PhysicsDrag` | number | 0 | Air resistance |
+| `PhysicsFreeFallAngularDrag` | number | 6 | Spin resistance when falling |
+| `PhysicsJumpStrength` | number | 1 | Jump power multiplier |
+| `PhysicsHandPositionStrength` | number | 1 | Hand tracking position weight |
+| `PhysicsHandRotationStrength` | number | 1 | Hand tracking rotation weight |
+| `PhysicsHandSpringiness` | number | 10 | Hand smoothing |
+| `PhysicsGrappleRange` | number | 512 | Grapple hook distance |
+| `PhysicsGrappleReelSpeed` | number | 1 | Grapple pull speed |
+| `PhysicsGrappleSpringiness` | number | 10 | Grapple smoothing |
+| `PhysicsGorillaMode` | boolean | false | Gorilla-style climbing |
+| `PhysicsSettingsLocked` | boolean | false | Prevent physics changes |
+
+### Scene Physics Methods
+
 ```js
-// Find - Find a GameObject in the scene by name - returns the first result. 
-const gameObject = await scene.Find(name: string);
+// Set gravity (default is 0, -9.8, 0)
+scene.Gravity(new BS.Vector3(0, -9.8, 0));
+
+// Set time scale (1 = normal, 0.5 = half speed)
+scene.TimeScale(1);
+
+// Cast a ray - hit objects receive "intersection" event
+scene.Raycast(
+    new BS.Vector3(0, 1, 0),  // origin
+    new BS.Vector3(0, -1, 0), // direction
+    100,                       // distance
+    0                          // layerMask (0 = all)
+);
+
+// Listen for intersection on a GameObject
+obj.On("intersection", (e) => {
+    console.log("Ray hit at:", e.detail.point);
+});
 ```
+
+### Player Control Methods
+
 ```js
-// FindByPath - Find a GameObject in the scene by full path - returns the first result. 
-const gameObject = await scene.FindByPath(path: string);
+// Enable/disable player abilities
+scene.SetCanMove(true);
+scene.SetCanRotate(true);
+scene.SetCanCrouch(true);
+scene.SetCanTeleport(true);
+scene.SetCanGrapple(true);
+scene.SetCanJump(true);
+scene.SetCanGrab(true);
+
+// Teleport the player
+scene.TeleportTo(
+    new BS.Vector3(0, 5, 0), // position
+    90,                       // Y rotation in degrees
+    true,                     // stop velocity
+    false                     // isSpawn (respects spawn point)
+);
+
+// Apply force to player
+scene.AddPlayerForce(new BS.Vector3(0, 10, 0), BS.ForceMode.Impulse);
+
+// Set player speed mode
+scene.PlayerSpeed(true); // true = fast, false = normal
+
+// Send haptic feedback
+scene.SendHapticImpulse(0.5, 0.1, BS.HandSide.LEFT); // amplitude, duration, hand
 ```
+
+### Input Blocking
+
+Block specific controller inputs:
+
 ```js
-// OpenPage - Open a page in the users menu browser.
-await scene.OpenPage(url: string);
+scene.SetBlockLeftThumbstick(true);
+scene.SetBlockRightThumbstick(true);
+scene.SetBlockLeftPrimary(true);
+scene.SetBlockRightPrimary(true);
+scene.SetBlockLeftSecondary(true);
+scene.SetBlockRightSecondary(true);
+scene.SetBlockLeftTrigger(true);
+scene.SetBlockRightTrigger(true);
+scene.SetBlockLeftThumbstickClick(true);
+scene.SetBlockRightThumbstickClick(true);
 ```
+
+---
+
+## Scene Events
+
+Listen to scene events with `scene.On(eventName, callback)`:
+
+### Core Events
+
 ```js
-// StartTTS - Start text-to-speech for the user, this will display a toast message to the user. If selected, wait to start detection until the user speaks.
-await scene.StartTTS(voiceDetection: boolean);
-```
-```js
-// StopTTS - Stop voice detection to wait for results. Specify an id to receive back with the response if multiple requests are pending.
-await scene.StopTTS(id: string);
-```
-```js
-// SendBrowserMessage - Send a post message to the browser in the menu. See Browser Communication for more info.
-await scene.SendBrowserMessage(id: string);
-```
-```js
-// Gravity - Set the gravity of the space as a Vector3. Default is (0,-9.8,0).
-await scene.Gravity(vector: Vector3);
-```
-```js
-// TimeScale - Set the timescale of the space as a float. Default is 1.
-await scene.TimeScale(scale: number);
-```
-```js
-// PlayerSpeed - Set the player speed to 'Normal' or 'Fast'.
-await scene.PlayerSpeed(isFast: boolean);
-```
-```js
-// TeleportTo - Teleport the player to a certain position and rotation on the y axis. 
-// You can control if the velocity is stopped, for a portal-like teleport effect and 
-//specify if the teleport is a spawn/respawn to respect the user's last spawn point.
-await scene.TeleportTo(point: Vector3, rotation: number, stopVelocity: boolean, isSpawn: boolean = false);
-```
-```js
-// SetPublicSpaceProps - Set a property on the space that will persist and be synced to all players. Like oneshot but includes persistance.
-scene.SetPublicSpaceProps(props: {[key: string]: string});
-```
-```js
-// SetProtectedSpaceProps - Set a property on the space that will persist and be synced to all players. The same as SetPublicSpaceProps except only admins/mods can set these.
-scene.SetProtectedSpaceProps(props: {[key: string]: string});
-```
-```js
-// SetUserProps - Set a property on the user that will persist until that user leaves the space. This will be synced to other players too.
-scene.SetUserProps(props: {[key: string]: string}, id: string);
-```
-```js
-// WaitForEndOfFrame - Wait until the end of the current frame
-await scene.WaitForEndOfFrame();
-```
-```js
-// Instantiate - Create a new GameObject from an existing GameObject cloning all components too. 
-const newGameObject = await scene.Instantiate(object: GameObject);
-```
-```js
-// Raycast - Cast a ray from an origin point in a certain direction to find objects that intersect. 
-await scene.Raycast(origin: Vector3, direction: Vector3, distance: number, layerMask: number = 0);
-```
-```js
-// OneShot - Send a message to all users in the space, or just the current instance. 
-await scene.OneShot(data: any, allInstances = true);
-```
-```js
-// QueryComponents - Query a bunch of properties on a bunch of components.
-const transform = await gameObject.AddComponent(new BS.Transform());
-const query = new BS.ComponentQuery();
-query.Add(transform, [BS.PropertyName.position, BS.PropertyName.rotation]);
-await scene.QueryComponents(query);
-// Now the properties should be the latest values.
-```
- 
-<b>Events</b>
- 
- ```js
-// loaded - Fired when the scene has settled and all objects are enumerated. This can be fired as a result of a custom load promise, or once no more objects have been added for 500ms.
+// Scene has settled, all objects enumerated
 scene.On("loaded", () => {
-  // Do something.
-})
-```
-```js
-// unity-loaded - Fired when the scene is fully loaded and all assets have been fully downloaded. This fires as the loading screen disappears.
+    console.log("Scene loaded");
+});
+
+// Unity fully loaded, loading screen gone
 scene.On("unity-loaded", () => {
-  // Do something.
-})
+    console.log("Ready to interact");
+});
 ```
-```js
-// transcription - Fired when the text-to-speech engine has finished transcribing
-scene.On("transcription", e => {
-  // Do something with e.detail.id and e.detail.message
-})
-```
-```js
-// button-pressed - Fired when the user presses a button on the controller.
-scene.On("button-pressed", e => {
-  // Do something with e.detail.button and e.detail.side
-  // See BS.ButtonType and BS.HandSide for options. 
-})
-```
-```js
-// button-released - Fired when the user releases a button on the controller.
-scene.On("button-released", e => {
-  // Do something with e.detail.button and e.detail.side
-  // See BS.ButtonType and BS.HandSide for options. 
-})
-```
-```js
-// menu-browser-message - Fired when the space receives a message from the page in the users browser.  
-scene.On("menu-browser-message", e => {
-  // Do something with e.detail
-})
-```
-```js
-// user-joined - Fired when a user joins the space.  
-scene.On("user-joined", e => {
-  // Do something with e.detail which is a User object.
-})
-```
-```js
-// user-left - Fired when a user leaves the space.  
-scene.On("user-left", e => {
-  // Do something with e.detail which is a User object.
-})
-```
-```js
-// space-state-changed - Fired when a space-state property changes.  
-scene.On("space-state-changed", e => {
-  // Do something with e.detail.changes which is a list of changed properties.
-})
-```
-```js
-// one-shot - Fired when a one-shot message is received from a user in the space.
-scene.On("one-shot", e => {
-  // Do something with e.detail.fromId, e.detail.fromAdmin and e.detail.data which is the ID and admin status of the user who sent the one-shot message, and the message itself.
-})
-```
-```js
-// aframe-trigger - Fired when a message is received from an AframeTrigger.cs unity script in the scene. 
-scene.On("aframe-trigger", e => {
-  // Do something with e.detail.data which is a message received from the trigger.
-})
-```
-```js
-// key-press - Fired when a key is pressed on the keyboard. See BS.KeyCode for a full list. 
-scene.On("key-press", e => {
-  // Do something with e.detail.key which is the key that was pressed.
-})
-```
-```js
-// voice-started - Fired when text-to-speech begins to listen to the voice.
-scene.On("voice-started", e => {
-  // Do something.
-})
-```
-</details>
-
-### Game Object
-
-A GameObject can be thought of as the same as a `Unity` GameObject, it's the basic building block of creating a scene in `Unity`.
-
-<details><summary>Click Here For More Info</summary>
- 
- <b>Properties</b>
- 
- `name` - The name this object was given when created. (read-only)
- `path` - The path of this object in the hierarchy or sub-hierarchy. (read-only)
- `active` - The active status of this object. (read-only)
- `components` - A list of the components on this object.
- `id` - The id of this object. Before the equivalent unity object is created this is a random UUID but then this becomes the InstanceID of the Unity GameObject.
- `parent` - The id of this object's parent.
- `layer` - This objects current layer.
- `hasUnity` - A flag to tell if this object's Unity equivalent GameObject has been created yet.
- `scene` - A reference to the BanterScene.
- `meta` - A generic object to store user metadata against this object. 
-
- <b>Methods</b>
- ```js
-// Async - Get a promise that resolves the GameObject when the object has been created in Unity. 
-// Useful when you create a GameObject via the constructor. 
-const gameObject = await new BS.GameObject().Async();
-// Alternatively you can use await BS.CreateGameObject().
-const gameObject = await new BS.CreateGameObject();
-```
- 
- ```js
-// SetActive - Enable/Disable this object and its children. 
-gameObject.SetActive(active: boolean);
-```
-```js
-// SetParent - Set the parent of this GameObject.
-await gameObject.SetParent(parent: GameObject, worldPositionStays: boolean = true);
-```
-```js
-// AddComponent - Add a Banter Component to the object such as BanterAudioSource and return that component. See the menu for a full list.
-const component = await gameObject.AddComponent(component: Component);
-```
-```js
-// SetLayer - Set the layer of this GameObject. This corresponds to the layer in unity. See the Layers section in the menu for a full list.
-await gameObject.SetLayer(layer: number);
-```
-```js
-// GetComponent - Grabs the component by type such as BS.ComponentType.BanterAudioSource.
-const component = gameObject.GetComponent(type: ComponentType);
-```
-```js
-// Find - Get a child GameObject by name or path.
-const newGameObject = await gameObject.Find(path: string);
-```
-```js
-// Destroy - Destroy this GameObject and all its children and all components below.
-gameObject.Destroy();
-```
-```js
-// Traverse - Iterate through all children of this object recursively or iterate through all parents (decendants) of this GameObject until you reach the top.
-gameObject.Traverse(callback: (o: GameObject) => void, decendants: boolean);
-```
- 
- <b>Code Example</b>
- 
- ```js
-const gameObject = await new BS.GameObject("My Game Object").Async();
-```
-
- <b>Events</b>
- 
- ```js
-// click - Fired when a user clicks on the object. 
-gameObject.On("click", e => {
-  // Do something with e.detail.point and e.detail.normal.
-})
-```
-```js
-// grab - Fired when a user grabs the object. 
-gameObject.On("grab", e => {
-  // Do something with e.detail.point (Vector3) e.detail.normal (Vector3) and e.detail.side (BS.HandSide).
-})
-```
-```js
-// drop - Fired when a user drops the object. 
-gameObject.On("drop", e => {
-  // Do something with e.detail.side (BS.HandSide).
-})
-```
-```js
-// collision-enter - Fired when something collides with the object at first. 
-gameObject.On("collision-enter", e => {
-  // Do something with e.detail which contains the following properties: name, tag, collider, point, normal, user. The User property is only set if the collision happens with one of the colliders on a user.
-})
-```
-```js
-// collision-exit - Fired when something collides with the object at first. 
-gameObject.On("collision-exit", e => {
-  // Do something with e.detail which contains the following properties: name, tag, collider, object.
-})
-```
-```js
-// trigger-enter - Fired when something hits a trigger. 
-gameObject.On("trigger-enter", e => {
-  // Do something with e.detail which contains the following properties: name, tag, collider, object.
-})
-```
-```js
-// trigger-exit - Fired when something hits a trigger. 
-gameObject.On("trigger-exit", e => {
-  // Do something with e.detail which contains the following properties: name, tag, collider, object.
-})
-```
-```js
-// browser-message - Fired when a message is received from a browser in the space.  
-gameObject.On("browser-message", e => {
-  // Do something with e.detail.
-})
-```
-</details>
-
-### Banter Constants/Enums
-
-THe below are some constants/enums used for various thing sin the banter SDK.
-
-<details><summary>ComponentType</summary>
-
- A list of the different component types used for `GetComponent`:
-
- ```js
-enum BS.ComponentType{
-    BanterAssetBundle,
-    BanterAudioSource,
-    BanterBillboard,
-    BoxCollider,
-    BanterBrowser,
-    CapsuleCollider,
-    BanterColliderEvents,
-    ConfigurableJoint,
-    BanterGeometry,
-    BanterGLTF,
-    BanterInvertedMesh,
-    BanterKitItem,
-    BanterMaterial,
-    MeshCollider,
-    BanterMirror,
-    BanterPhysicMaterial,
-    BanterPortal,
-    BanterRigidbody,
-    SphereCollider,
-    BanterStreetView,
-    BanterText,
-    Transform,
-    BanterVideoPlayer,
-}
-```
-</details>
-
-<details><summary>PropertyName</summary>
-
- A list of all property names used by different components in banter:
-
- ```js
-enum BS.PropertyName {
-    hasUnity,
-    windowsUrl,
-    osxUrl,
-    linuxUrl,
-    androidUrl,
-    iosUrl,
-    vosUrl,
-    isScene,
-    legacyShaderFix,
-    volume,
-    pitch,
-    mute,
-    loop,
-    bypassEffects,
-    bypassListenerEffects,
-    bypassReverbZones,
-    playOnAwake,
-    smoothing,
-    enableXAxis,
-    enableYAxis,
-    enableZAxis,
-    isTrigger,
-    center,
-    size,
-    url,
-    mipMaps,
-    pixelsPerUnit,
-    pageWidth,
-    pageHeight,
-    actions,
-    radius,
-    height,
-    targetPosition,
-    autoConfigureConnectedAnchor,
-    xMotion,
-    yMotion,
-    zMotion,
-    geometryType,
-    parametricType,
-    width,
-    depth,
-    widthSegments,
-    heightSegments,
-    depthSegments,
-    segments,
-    thetaStart,
-    thetaLength,
-    phiStart,
-    phiLength,
-    radialSegments,
-    openEnded,
-    radiusTop,
-    radiusBottom,
-    innerRadius,
-    outerRadius,
-    thetaSegments,
-    phiSegments,
-    tube,
-    tubularSegments,
-    arc,
-    p,
-    q,
-    stacks,
-    slices,
-    detail,
-    parametricPoints,
-    generateMipMaps,
-    addColliders,
-    nonConvexColliders,
-    slippery,
-    climbable,
-    legacyRotate,
-    path,
-    shaderName,
-    texture,
-    color,
-    side,
-    convex,
-    dynamicFriction,
-    staticFriction,
-    instance,
-    mass,
-    drag,
-    angularDrag,
-    isKinematic,
-    useGravity,
-    centerOfMass,
-    collisionDetectionMode,
-    freezePositionX,
-    freezePositionY,
-    freezePositionZ,
-    freezeRotationX,
-    freezeRotationY,
-    freezeRotationZ,
-    velocity,
-    angularVelocity,
-    panoId,
-    text,
-    horizontalAlignment,
-    verticalAlignment,
-    fontSize,
-    richText,
-    enableWordWrapping,
-    rectTransformSizeDelta,
-    lerpPosition,
-    lerpRotation,
-    position,
-    localPosition,
-    rotation,
-    localRotation,
-    localScale,
-    eulerAngles,
-    localEulerAngles,
-    up,
-    forward,
-    right,
-    skipOnDrop,
-    time,
-    waitForFirstFrame,
-}
-```
-</details>
-
-<details><summary>BanterLayers</summary>
-
- A list of all layers you can use on GameObjects in Banter:
-
- ```js
-enum BS.BanterLayers {
-    UserLayer1 = 3,
-    UserLayer2 = 6,
-    UserLayer3 = 7,
-    UserLayer4 = 8,
-    UserLayer5 = 9,
-    UserLayer6 = 10,
-    UserLayer7 = 11,
-    UserLayer8 = 12,
-    UserLayer9 = 13,
-    UserLayer10 = 14,
-    UserLayer11 = 15,
-    UserLayer12 = 16,
-    NetworkPlayer = 17,
-    RPMAvatarHead = 18,
-    RPMAvatarBody = 19,
-    Grabbable = 20,
-    HandColliders = 21,
-    WalkingLegs = 22,
-    PhysicsPlayer = 23,
-    BanterInternal1_DONTUSE = 24,
-    BanterInternal2_DONTUSE = 25,
-    BanterInternal3_DONTUSE = 26,
-    BanterInternal4_DONTUSE = 27,
-    BanterInternal5_DONTUSE = 28,
-    BanterInternal6_DONTUSE = 29,
-    BanterInternal7_DONTUSE = 30,
-    BanterInternal8_DONTUSE = 31,
-}
-```
-</details>
-
-<details><summary>ButtonType</summary>
-
- The button types for each controller:
-
- ```js
-enum BS.ButtonType{
-    TRIGGER,
-    GRIP,
-    PRIMARY,
-    SECONDARY,
-}
-```
-</details>
-
-<details><summary>GeometryType</summary>
-
- The different geometry types:
-
- ```js
-enum BS.GeometryType{
-    BoxGeometry,
-    CircleGeometry,
-    ConeGeometry,
-    CylinderGeometry,
-    PlaneGeometry,
-    RingGeometry,
-    SphereGeometry,
-    TorusGeometry,
-    TorusKnotGeometry,
-    ParametricGeometry,
-}
-```
-</details>
-
-<details><summary>ParametricGeometryType</summary>
-
- The different parametric geometry types:
-
- ```js
-enum BS.ParametricGeometryType{
-    Klein,
-    Apple,
-    Fermet,
-    Catenoid,
-    Helicoid,
-    Horn,
-    Mobius,
-    Mobius3d,
-    Natica,
-    Pillow,
-    Scherk,
-    Snail,
-    Spiral,
-    Spring,
-    Custom,
-}
-```
-</details>
-
-<details><summary>HandSide</summary>
-
- The sides of the hands, left and right:
-
- ```js
-enum BS.HandSide{
-    LEFT,
-    RIGHT,
-}
-```
-</details>
-
-<details><summary>ForceMode</summary>
-
- The types of rigid body force:
-
- ```js
-enum BS.ForceMode{
-    Force,
-    Impulse,
-    VelocityChange,
-    Acceleration,
-}
-```
-</details>
-
-<details><summary>MaterialSide</summary>
-
- The sides to render a meterial on:
-
- ```js
-enum BS.MaterialSide{
-    Front,
-    Back,
-    Double,
-}
-```
-</details>
-
-<details><summary>VerticalAlignment</summary>
-
- The alignment of text:
-
- ```js
-enum BS.VerticalAlignment{
-    Top,
-    Center,
-    Bottom,
-}
-```
-</details>
-
-<details><summary>HorizontalAlignment</summary>
-
- The alignment of text:
-
- ```js
-enum BS.HorizontalAlignment{
-    Left,
-    Center,
-    Right,
-}
-```
-</details>
-
-### Components
-
-Components are the real functionality for GameObjects, they can add almost any kind of capability or asset to a GameObject. 
- 
-
-#### Common to all Components
-
-
-**Properties**
-
-- `gameObject` 
-- `scene`
-
-
-
-#### Banter Asset Bundle
-Load an asset bundle into Banter which contains a scene or a collection of prefabs.
-
-**Properties**
-- `windowsUrl` - The URL to the Windows asset bundle.
-- `osxUrl` - The URL to the OSX asset bundle.
-- `linuxUrl` - The URL to the Linux asset bundle.
-- `androidUrl` - The URL to the Android asset bundle.
-- `iosUrl` - The URL to the iOS asset bundle.
-- `vosUrl` - The URL to the Vision OS asset bundle.
-- `isScene` - If the asset bundle is a scene or a collection of prefabs.
-- `legacyShaderFix` - If the asset bundle requires a legacy shader/lighting fix like we had in the past with A-FRAME.
-
-**Code Example**
-```js
-    const windowsUrl = "https://example.bant.ing/windows.banter";
-    const osxUrl = null; // Not implemented yet...
-    const linuxUrl = null; // Not implemented yet...
-    const androidUrl = "https://example.bant.ing/android.banter";
-    const iosUrl = null; // Not implemented yet...
-    const vosUrl = null; // Not implemented yet...
-    const isScene = true;
-    const legacyShaderFix = false;
-    const gameObject = new BS.GameObject("MyAssetBundle"); 
-    const assetBundle = await gameObject.AddComponent(new BS.BanterAssetBundle(windowsUrl, osxUrl, linuxUrl, androidUrl, iosUrl, vosUrl, isScene, legacyShaderFix));
-```
-
-
-
-#### Banter Audio Source
-Load an audio file from a URL, or from a list of files in the editor.
-
-**Properties**
-- `volume` - The volume of the audio source.
-- `pitch` - The pitch of the audio source.
-- `mute` - Is the audio source muted?
-- `loop` - Should the audio source loop?
-- `bypassEffects` - Bypass effects?
-- `bypassListenerEffects` - Bypass listener effects?
-- `bypassReverbZones` - Bypass reverb zones?
-- `playOnAwake` - Should the audio source play on awake?
-
-**Methods**
-```js
-// PlayOneShot - Play a clip from the list of clips.
-audioSource.PlayOneShot(index: number);
-```
-```js
-// PlayOneShotFromUrl - Play a clip from a URL.
-audioSource.PlayOneShotFromUrl(url: string);
-```
-```js
-// Play - Play the current audio clip.
-audioSource.Play();
-```
-
-**Code Example**
-```js
-    const volume = 1;
-    const pitch = 1;
-    const mute = false;
-    const loop = false;
-    const bypassEffects = false;
-    const bypassListenerEffects = false;
-    const bypassReverbZones = false;
-    const playOnAwake = false;
-
-    const gameObject = new BS.GameObject("MyAudioSource"); 
-    const audioSource = await gameObject.AddComponent(new BS.BanterAudioSource(volume, pitch, mute, loop, bypassEffects, bypassListenerEffects, bypassReverbZones, playOnAwake));
-    // ...
-    audioSource.Play();
-    // ...
-    audioSource.PlayOneShot(0);
-    // ...
-    audioSource.PlayOneShotFromUrl("https://example.com/music.mp3");
-```
-
-
-
-#### Banter Billboard
-Make an object look at the player camera.
-
-**Properties**
-- `smoothing` - The smoothing of the billboard.
-- `enableXAxis` - Enable the X axis.
-- `enableYAxis` - Enable the Y axis.
-- `enableZAxis` - Enable the Z axis.
-
-**Code Example**
-```js
-    const smoothing = 0;
-    const enableXAxis = true;
-    const enableYAxis = true;
-    const enableZAxis = true;
-    const gameObject = new BS.GameObject("MyBillboard"); 
-    const billBoard = await gameObject.AddComponent(new BS.BanterBillboard(smoothing, enableXAxis, enableYAxis, enableZAxis));
-
-```
-
-
-
-#### Box Collider
-Add a box shaped physics collider to the object.
-
-**Properties**
-- `isTrigger` - If the collider is a trigger.
-- `center` - The center of the box.
-- `size` - The size of the box.
-
-**Code Example**
-```js
-    const isTrigger = false;
-    const center = new BS.Vector3(0,0,0);
-    const size = new BS.Vector3(1,1,1);
-    const gameObject = new GameObject("MyBoxCollider"); 
-    const boxCollider = await gameObject.AddComponent(new BS.BoxCollider(isTrigger, center, size));
-```
-
-
-#### Banter Browser
-A browser component that can be added to a GameObject to display a webpage.
-
-**Properties**
-- `url` - The URL of the webpage to display.
-- `mipMaps` - The number of mipmaps to use.
-- `pixelsPerUnit` - The number of pixels per unit.
-- `actions` - A list of actions to run after the page has loaded.
-
-**Methods**
-- `ToggleInteraction(enabled: boolean)` - Toggles the interaction of the browser.
-- `RunActions(actions: string)` - Runs a list of actions on the browser.
-
-**Code Example**
-```js
-    const url = "https://www.google.com";
-    const mipMaps = 4;
-    const pixelsPerUnit = 1200;
-    const actions = "click2d,0.5,0.5";
-    const gameObject = new BS.GameObject("MyBrowser"); 
-    const pageWidth = 1280;
-    const pageHeight = 720;
-    const browser = await gameObject.AddComponent(new BS.BanterBrowser(url, mipMaps, pixelsPerUnit, pageWidth, pageHeight, actions));
-    // ...
-    browser.ToggleInteraction(true);
-    // ...
-    browser.RunActions("click2d,0.5,0.5");
-```
-
-
-
-#### Capsule Collider
-Add a capsule shaped physics collider to the object.
-
-**Properties**
-- `isTrigger` - If the collider is a trigger.
-- `radius` - The radius of the capsule.
-- `height` - The height of the capsule.
-
-**Code Example**
-```js
-    const isTrigger = false;
-    const radius = 0.5;
-    const height = 2;
-    const gameObject = new GameObject("MyCapsuleCollider"); 
-    const capsuleCollider = await gameObject.AddComponent(new BS.CapsuleCollider(isTrigger, radius, height));
-```
-
-
-#### Banter Collider Events
-Fire collision and trigger events on the object. This component is required for the `trigger-enter` etc events to work.
-
-**Code Example**
-```js
-    const gameObject = new BS.GameObject("MyBanterColliderEvents"); 
-    const events = await gameObject.AddComponent(new BS.BanterColliderEvents());
-```
-
-
-#### Banter Configurable Joint
-A configurable joint allows you to create a joint between two rigidbodies and control the motion/options of the joint.
-
-**Properties**
-- `targetPosition` - The target position of the joint.
-- `autoConfigureConnectedAnchor` - If the connected anchor should be auto configured.
-- `xMotion` - The x motion of the joint.
-- `yMotion` - The y motion of the joint.
-- `zMotion` - The z motion of the joint.
-
-**Code Example**
-```js
-    const targetPosition = new BS.Vector3(0,0,0);
-    const autoConfigureConnectedAnchor = false;
-    const xMotion = 0;
-    const yMotion = 0;
-    const zMotion = 0;
-
-    const gameObject = new BS.GameObject("MyConfigurableJoint"); 
-    const configurableJoint = await gameObject.AddComponent(new BS.BanterConfigurableJoint(targetPosition, autoConfigureConnectedAnchor, xMotion, yMotion, zMotion));
-```
-
-
-
-#### Banter Geometry
-Add a geometry shape to the object. This can be a box, circle, cone, cylinder, plane, ring, sphere, torus, torus knot, or a custom parametric shape.
-
-**Properties**
-- `geometryType` - The type of primitive shape to generate.
-- `parametricType` - The type of parametric shape to generate if using ParametricGeometry.
-- `width` - The width of the shape.
-- `height` - The height of the shape.
-- `depth` - The depth of the shape.
-- `widthSegments` - The number of width segments to divide the shape into.
-- `heightSegments` - The number of height segments to divide the shape into.
-- `depthSegments` - The number of depth segments to divide the shape into.
-- `radius` - The radius of the shape.
-- `segments` - The number of segments to divide the shape into.
-- `thetaStart` - The starting x angle of the shape.
-- `thetaLength` - The ending x angle of the shape.
-- `phiStart` - The starting y angle of the shape.
-- `phiLength` - The ending y angle of the shape.
-- `radialSegments` - The number of radial segments to divide the shape into.
-- `openEnded` - Whether the object is open on the end or not.
-- `radiusTop` - The radius of the top of the shape.
-- `radiusBottom` - The radius of the bottom of the shape.
-- `innerRadius` - The inner radius of the shape.
-- `outerRadius` - The outer radius of the shape.
-- `thetaSegments` - The number of angular x segments to divide the shape into.
-- `phiSegments` - The number of angular y segments to divide the shape into.
-- `tube` - The tube size.
-- `tubularSegments` - The number of tubular segments to divide the tube into.
-- `arc` - The arc of the shape.
-- `p` - The number of p segments to divide the shape into.
-- `q` - The number of q segments to divide the shape into.
-- `stacks` - The number of stacks to divide the shape into.
-- `slices` - The number of slices to divide the shape into.
-- `detail` - The detail of the shape.
-- `parametricPoints` - The points of the parametric shape.
-
-**Code Example**
-```js
-    const geometryType = BS.GeometryType.BOxGeometry;
-    const parametricType = null;
-    const width = 1;
-    const height = 1;
-    const depth = 1;
-    const widthSegments = 1;
-    const heightSegments = 1;
-    const depthSegments = 1;
-    const radius = 1;
-    const segments = 24;
-    const thetaStart = 0;
-    const thetaLength = 6.283185;
-    const phiStart = 0;
-    const phiLength = 6.283185;
-    const radialSegments = 8;
-    const openEnded = false;
-    const radiusTop = 1;
-    const radiusBottom = 1;
-    const innerRadius = 0.3;
-    const outerRadius = 1;
-    const thetaSegments = 24;
-    const phiSegments = 8;
-    const tube = 0.4;
-    const tubularSegments = 16;
-    const arc = 6.283185;
-    const p = 2;
-    const q = 3;
-    const stacks = 5;
-    const slices = 5;
-    const detail = 0;
-    const parametricPoints = "";
-    const gameObject = new BS.GameObject("MyGeometry");
-    const geometry = await gameObject.AddComponent(new BS.BanterGeometry(geometryType, parametricType, width, height, depth, widthSegments, heightSegments, depthSegments, radius, segments, thetaStart, thetaLength, phiStart, phiLength, radialSegments, openEnded, radiusTop, radiusBottom, innerRadius, outerRadius, thetaSegments, phiSegments, tube, tubularSegments, arc, p, q, stacks, slices, detail, parametricPoints));
-```
-
-
-#### Banter GLTF
-Add a 3D Model from a glb file to the scene.
-
-**Properties**
-- `url` - The url of the glb file.
-- `generateMipMaps` - If mipmaps should be generated.
-- `addColliders` - If colliders should be added.
-- `nonConvexColliders` - If colliders should be non convex.
-- `slippery` - If colliders should be slippery.
-- `climbable` - If colliders should be climbable.
-- `legacyRotate` - If the model should be rotated to match the old GLTF forward direction.
-
-**Code Example**
-```js
-    const url = "https://example.com/model.glb";
-    const generateMipMaps = false;
-    const addColliders = false;
-    const nonConvexColliders = false;
-    const slippery = false;
-    const climbable = false;
-    const legacyRotate = false;
-    const gameObject = new BS.GameObject("MyGLTF"); 
-    const gltf = await gameObject.AddComponent(new BS.BanterGLTF(url, generateMipMaps, addColliders, nonConvexColliders, slippery, climbable, legacyRotate));
-```
-
-
-#### Banter Inverted Mesh
-Invert the mesh of a GameObject. This is useful for creating inverted colliders.
-
-**Code Example**
-```js
-    const gameObject = new BS.GameObject("MyInvertedMesh"); 
-    const invertedMesh = await gameObject.AddComponent(new BS.BanterInvertedMesh());
-```
-
-
-#### Banter Kit Item
-Add a kit item to the scene. This component will wait until all asset bundles are loaded in the scene before trying to instantiate a kit item (prefab).
-
-**Properties**
-- `path` - The location of the prefab in the kit object - the same as the path in the asset bundle (always lower case).
-
-**Code Example**
-```js
-    const path = "assets/prefabs/mykititem.prefab";
-    const gameObject = new BS.GameObject("MyKitItem"); 
-    const kitItem = await gameObject.AddComponent(new BS.BanterKitItem(path));
-```
-
-
-
-#### Banter Material
-Add a material to the object. This component will add a material to the object and set the shader, texture, color and side of the material.
-
-**Properties**
-- `texture` - The texture to use for the material.
-- `color` - The color of the material.
-- `shaderName` - The name of the shader to use.
-- `side` - The side of the material to render.
-- `generateMipMaps` - Whether to generate mipmaps for the texture.
-
-**Code Example**
-```js
-    const texture = "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.png?v=1708022523716";
-    const color = new BS.Vector4(1,1,1,1);
-    const shaderName = "Unlit/Diffuse";
-    const side = BS.MaterialSide.Front;
-    const generateMipMaps = false;
-
-    const gameObject = new BS.GameObject("MyMaterial"); 
-    const material = await gameObject.AddComponent(new BS.BanterMaterial(shaderName, texture, color, side, generateMipMaps));
-
-```
-
-
-
-#### Mesh Collider
-Add a mesh shaped physics collider to the object. This requires a mesh to be supplied, or used from a MeshFilter component.
-
-**Properties**
-- `isTrigger` - If the collider is a trigger.
-- `convex` - If the collider is convex i.e. has no holes or concave parts.
-
-**Code Example**
-```js
-    const isTrigger = false;
-    const convex = true;
-    const gameObject = new BS.GameObject("MyMeshCollider"); 
-    const meshCollider = await gameObject.AddComponent(new BS.MeshCollider(isTrigger, convex));
-```
-
-
-#### Banter Mirror
-Add a mirror to the object.
-
-**Code Example**
-```js
-    const gameObject = new BS.GameObject("MyMirror");
-    const mirror = await gameObject.AddComponent(new BS.BanterMirror());
-```
-
-
-#### Banter Physic Material
-This component will add a physic material to the object and set the dynamic and static friction of the material.
-
-**Properties**
-- `dynamicFriction` - The dynamic friction of the material.
-- `staticFriction` - The static friction of the material.
-
-**Code Example**
-```js
-    const dynamicFriction = 1;
-    const staticFriction = 1;
-    const gameObject = new BS.GameObject("MyPhysicMaterial");
-    const physicMaterial = await gameObject.AddComponent(new BS.BanterPhysicMaterial(dynamicFriction, staticFriction));
-```
-
-
-#### Banter Portal
-This component will add a portal to the object and set the url and instance of the portal.
-
-**Properties**
-- `url` - The url of the space to link to.
-- `instance` - The instance of the space to link to.
-
-**Code Example**
-```js
-    const url = "https://banter.host/space/5f9b4";
-    const instance = "5f9b4";
-    const gameObject = new BS.GameObject("MyPortal");
-    const portal = await gameObject.AddComponent(new BS.BanterPortal(url, instance));
-```
-
-
-
-#### Banter Rigidbody
-This component will add a rigidbody to the object and set the mass, drag, angular drag, is kinematic, use gravity, center of mass, collision detection mode, velocity, angular velocity, freeze position and freeze rotation of the rigidbody.
-
-**Properties**
-- `mass` - The mass of the rigidbody.
-- `drag` - The drag of the rigidbody.
-- `angularDrag` - The angular drag of the rigidbody.
-- `isKinematic` - Whether the rigidbody is kinematic.
-- `useGravity` - Whether the rigidbody uses gravity.
-- `centerOfMass` - The center of mass of the rigidbody.
-- `collisionDetectionMode` - The collision detection mode of the rigidbody.
-- `velocity` - The velocity of the rigidbody.
-- `angularVelocity` - The angular velocity of the rigidbody.
-- `freezePositionX` - Whether to freeze the position on the x axis.
-- `freezePositionY` - Whether to freeze the position on the y axis.
-- `freezePositionZ` - Whether to freeze the position on the z axis.
-- `freezeRotationX` - Whether to freeze the rotation on the x axis.
-- `freezeRotationY` - Whether to freeze the rotation on the y axis.
-- `freezeRotationZ` - Whether to freeze the rotation on the z axis.
-
-**Methods**
-```js
-// AddForce - Add a force to the rigidbody.
-rigidBody.AddForce(force: BS.Vector3, mode: BS.ForceMode);
-```
-```js
-// MovePosition - Move the position of the rigidbody.
-rigidBody.MovePosition(position: BS.Vector3);
-```
-```js
-// MoveRotation - Move the rotation of the rigidbody.
-rigidBody.MoveRotation(rotation: BS.Quaternion);
-```
-```js
-// AddForceValues - Add a force to the rigidbody.
-rigidBody.AddForceValues(x: float, y: float, z: float, mode: BS.ForceMode);
-```
-```js
-// Sleep - Put the rigidbody to sleep.
-rigidBody.Sleep();
-```
-```js
-// AddExplosionForce - Add an explosion force to the rigidbody.
-rigidBody.AddExplosionForce(explosionForce: float, explosionPosition: BS.Vector3, explosionRadius: float, upwardsModifier: float, mode: BS.ForceMode);
-```
-
-
-**Code Example**
-```js
-    const mass = 1;
-    const drag = 0;
-    const angularDrag = 0.05;
-    const isKinematic = false;
-    const useGravity = true;
-    const centerOfMass = new BS.Vector3(0,0,0);
-    const collisionDetectionMode = BS.CollisionDetectionMode.Continuous;
-    const velocity = new BS.Vector3(0,0,0);
-    const angularVelocity = new BS.Vector3(0,0,0);
-    const freezePositionX = false;
-    const freezePositionY = false;
-    const freezePositionZ = false;
-    const freezeRotationX = false;
-    const freezeRotationY = false;
-    const freezeRotationZ = false;
-    const gameObject = new BS.GameObject("MyRigidbody");
-    const rigidBody = await gameObject.AddComponent(new BS.BanterRigidbody(mass, drag, angularDrag, isKinematic, useGravity, centerOfMass, collisionDetectionMode, freezePositionX, freezePositionY, freezePositionZ, freezeRotationX, freezeRotationY, freezeRotationZ, velocity, angularVelocity));
-```
-
-
-#### Sphere Collider
-Add a sphere shaped physics collider to the object.
-
-**Properties**
-- `isTrigger` - If the collider is a trigger.
-- `radius` - The radius of the sphere.
-
-**Code Example**
-```js
-    const isTrigger = false;
-    const radius = 0.5;
-    const gameObject = new BS.GameObject("MySphereCollider"); 
-    const sphereCollider = await gameObject.AddComponent(new BS.SphereCollider(isTrigger, radius));
-```
-
-
-#### Banter StreetView
-This component will add a streetview dome to the object and set the panoId of the streetview.
-
-**Properties**
-    - `panoId` - The panoId of the streetview.
-
-**Code Example**
-```js
-    const panoId = "CAoSLEFGM";
-    const gameObject = new BS.GameObject("MyStreetView");
-    const streetView = await gameObject.AddComponent(new BS.BanterStreetView(panoId));
-```
-
-
-#### Banter Text
-This component will add a text component to the object and set the text, color, alignment, font size, rich text, word wrapping and size delta of the text.
-
-**Properties**
-- `text` - The text to display.
-- `color` - The color of the text.
-- `horizontalAlignment` - The horizontal alignment of the text.
-- `verticalAlignment` - The vertical alignment of the text.
-- `fontSize` - The font size of the text.
-- `richText` - Whether the text is rich text.
-- `enableWordWrapping` - Whether to enable word wrapping.
-- `rectTransformSizeDelta` - The size delta of the text.
-
-**Code Example**
-```js
-    const text = "Hello World";
-    const color = new BS.Vector4(1,1,1,1);
-    const horizontalAlignment = BS.HorizontalAlignment.Center;
-    const verticalAlignment = BS.VerticalAlignment.Middle;
-    const fontSize = 20;
-    const richText = true;
-    const enableWordWrapping = true;
-    const rectTransformSizeDelta = new BS.Vector2(20,5);
-    const gameObject = new BS.GameObject("MyText");
-    const text = await gameObject.AddComponent(new BS.BanterText(text, color, horizontalAlignment, verticalAlignment, fontSize, richText, enableWordWrapping, rectTransformSizeDelta));
-```
-
-
-#### Transform
-Add a transform to the object. Every object has a transform by default in Unity, this component sets up tracking for the transform properties.
-
-**Properties**
-- `position` - The position of the object.
-- `localPosition` - The local position of the object.
-- `rotation` - The rotation of the object.
-- `localRotation` - The local rotation of the object.
-- `localScale` - The local scale of the object.
-- `eulerAngles` - The euler angles of the object.
-- `localEulerAngles` - The local euler angles of the object.
-- `up` - The up vector of the object.
-- `forward` - The forward vector of the object.
-- `right` - The right vector of the object.
-- `lerpPosition` - Whether to lerp the position of the object.
-- `lerpRotation` - Whether to lerp the rotation of the object.
-
-**Code Example**
-```js
-    const gameObject = new BS.GameObject("MyTransform");
-    const transform = await gameObject.AddComponent(new BS.Transform());
-    transform.position = new BS.Vector3(1,1,1);
-```
-
-
-#### Banter Video Player
-This component will add a video player to the object and set the url, volume, loop, playOnAwake, skipOnDrop and waitForFirstFrame of the video player.
-
-**Properties**
-- `url` - The url of the video to play.
-- `volume` - The volume of the video.
-- `loop` - Whether the video should loop.
-- `playOnAwake` - Whether the video should play on awake.
-- `skipOnDrop` - Whether the video should skip on drop.
-- `waitForFirstFrame` - Whether the video should wait for the first frame.
-
-**Code Example**
-```js
-    const url = "https://cdn.glitch.global/7bdd46d4-73c4-47a1-b156-10440ceb99fb/GridBox_Default.mp4?v=1708022523716";
-    const volume = 0.5;
-    const loop = true;
-    const playOnAwake = true;
-    const skipOnDrop = true;
-    const waitForFirstFrame = true;
-    const gameObject = new BS.GameObject("MyVideoPlayer");
-    const videoPlayer = await gameObject.AddComponent(new BS.BanterVideoPlayer(url, volume, loop, playOnAwake, skipOnDrop, waitForFirstFrame));
-```
-    
-
-### Math
-
-Use these to set properties on Banter Components.
-
-#### Vector2
 
-A two dimensional vector, x and y.
+### User Events
 
 ```js
-const uv = new BS.Vector2(0,1);
+// User joined the space
+scene.On("user-joined", (e) => {
+    const user = e.detail; // UserData object
+    console.log(user.name, "joined");
+});
 
+// User left the space
+scene.On("user-left", (e) => {
+    const user = e.detail;
+    console.log(user.name, "left");
+});
 ```
 
-#### Vector3
-
-A three dimensional vector, x, y and z.
+### Input Events
 
 ```js
-const position = new BS.Vector3(0,1,0);
+// Controller button pressed
+scene.On("button-pressed", (e) => {
+    console.log(e.detail.button, e.detail.side);
+    // button: BS.ButtonType (TRIGGER, GRIP, PRIMARY, SECONDARY)
+    // side: BS.HandSide (LEFT, RIGHT)
+});
 
+// Controller button released
+scene.On("button-released", (e) => {
+    console.log(e.detail.button, e.detail.side);
+});
+
+// Keyboard key pressed
+scene.On("key-press", (e) => {
+    console.log(e.detail.key); // BS.KeyCode value
+});
 ```
 
-#### Vector4
-
-A four dimensional vector, x, y, z and w.
+### State Events
 
 ```js
-const color = new BS.Vector4(0,0,0,1);
+// Space state property changed
+scene.On("space-state-changed", (e) => {
+    e.detail.changes.forEach(change => {
+        console.log(change.property, change.oldValue, change.newValue);
+    });
+});
+
+// One-shot message received
+scene.On("one-shot", (e) => {
+    console.log(e.detail.fromId);    // sender user ID
+    console.log(e.detail.fromAdmin); // sender is admin
+    console.log(e.detail.data);      // message data
+});
 ```
 
-#### Quaternion
-
-A rotational object involving imaginary numbers invented by a mad Irish mathematician. 
+### Voice Events
 
 ```js
-const rotation = new BS.Quaternion(0,0,0,1);
+// TTS started listening
+scene.On("voice-started", () => {
+    console.log("Listening...");
+});
+
+// TTS transcription result
+scene.On("transcription", (e) => {
+    console.log(e.detail.id, e.detail.message);
+});
 ```
+
+### Browser Events
+
+```js
+// Message from menu browser
+scene.On("menu-browser-message", (e) => {
+    console.log(e.detail);
+});
+
+// Legacy A-Frame trigger
+scene.On("aframe-trigger", (e) => {
+    console.log(e.detail.data);
+});
+```
+
+---
+
+## GameObject API
+
+### Creating GameObjects
+
+Use `BS.CreateGameObject()` with a configuration object:
+
+```js
+const obj = BS.CreateGameObject({
+    name: "MyObject",                           // Required
+    localPosition: new BS.Vector3(0, 1, 0),     // Optional
+    localEulerAngles: new BS.Vector3(0, 45, 0), // Optional (degrees)
+    localScale: new BS.Vector3(1, 1, 1),        // Optional
+    active: true,                               // Optional (default: true)
+    layer: 0,                                   // Optional
+    tag: "MyTag",                               // Optional
+    parent: parentGameObject                    // Optional
+});
+```
+
+### GameObjectConfig Interface
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `name` | string | Yes | Object name |
+| `id` | string | No | Custom JavaScript ID |
+| `layer` | number | No | Layer for physics/rendering |
+| `active` | boolean | No | Active state (default: true) |
+| `tag` | string | No | Tag for identification |
+| `localPosition` | Vector3 | No | Initial local position |
+| `localEulerAngles` | Vector3 | No | Initial rotation in degrees |
+| `localRotation` | Quaternion | No | Initial rotation as quaternion |
+| `localScale` | Vector3 | No | Initial scale |
+| `parent` | GameObject | No | Parent object |
+
+### Properties
+
+All properties auto-sync when modified:
+
+```js
+obj.name = "NewName";
+obj.active = false;
+obj.layer = 3;
+obj.tag = "Enemy";
+obj.parent = otherObject;
+
+// Read-only
+console.log(obj.id);         // Unique ID
+console.log(obj.path);       // Hierarchy path: "Parent/Child"
+console.log(obj.transform);  // Transform component
+console.log(obj.components); // All attached components
+console.log(obj.meta);       // Custom metadata object
+```
+
+### Transform Methods
+
+Modify position, rotation, and scale after creation:
+
+```js
+// World space position
+obj.SetPosition(new BS.Vector3(1, 2, 3));
+obj.SetPosition(1, 2, 3); // Alternate syntax
+
+// Local space position (relative to parent)
+obj.SetLocalPosition(new BS.Vector3(1, 0, 0));
+
+// Rotation in degrees (Euler angles)
+obj.SetEulerAngles(new BS.Vector3(0, 90, 0));
+obj.SetLocalEulerAngles(new BS.Vector3(45, 0, 0));
+
+// Rotation as quaternion
+obj.SetRotation(new BS.Quaternion(0, 0.707, 0, 0.707));
+obj.SetLocalRotation(new BS.Quaternion(0, 0, 0, 1));
+
+// Scale (always local)
+obj.SetLocalScale(new BS.Vector3(2, 2, 2));
+
+// Set multiple transform properties at once
+obj.SetTransform(transformObject);
+
+// Watch for transform changes
+obj.WatchTransform([BS.PN.position, BS.PN.rotation], (transform) => {
+    console.log("Position:", transform.position);
+    console.log("Rotation:", transform.rotation);
+});
+```
+
+### Hierarchy Methods
+
+```js
+// Set parent (worldPositionStays = keep world position)
+obj.SetParent(parentObject, true);
+
+// Find child by name or path
+const child = obj.Find("ChildName");
+const nested = obj.Find("Child/GrandChild");
+
+// Traverse all children recursively
+obj.Traverse((childObj) => {
+    console.log(childObj.name);
+}, false); // false = children, true = ancestors
+```
+
+### Component Methods
+
+```js
+// Add a component
+const rb = obj.AddComponent(new BS.BanterRigidbody({ mass: 2 }));
+
+// Get an existing component by type
+const collider = obj.GetComponent(BS.CT.BoxCollider);
+const transform = obj.GetComponent(BS.CT.Transform);
+```
+
+### Other Methods
+
+```js
+// Set properties
+obj.SetLayer(3);
+obj.SetActive(false);
+obj.SetTag("Pickup");
+obj.SetName("RenamedObject");
+obj.SetNetworkId("sync-001");
+
+// Get bounding box
+const bounds = obj.GetBounds(true); // true = collider bounds
+console.log(bounds.center, bounds.size);
+
+// Destroy the object
+obj.Destroy();
+```
+
+### GameObject Events
+
+```js
+// Click/tap on object
+obj.On("click", (e) => {
+    console.log("Hit point:", e.detail.point);   // Vector3
+    console.log("Surface normal:", e.detail.normal); // Vector3
+});
+
+// VR grab
+obj.On("grab", (e) => {
+    console.log("Grabbed at:", e.detail.point);
+    console.log("Hand:", e.detail.side); // BS.HandSide
+});
+
+// VR drop
+obj.On("drop", (e) => {
+    console.log("Dropped by:", e.detail.side);
+});
+
+// Collision events (requires BanterColliderEvents component)
+obj.On("collision-enter", (e) => {
+    console.log("Collided with:", e.detail.name);
+    console.log("Tag:", e.detail.tag);
+    console.log("Contact point:", e.detail.point);
+    console.log("Normal:", e.detail.normal);
+    if (e.detail.user) {
+        console.log("Hit player:", e.detail.user.name);
+    }
+});
+
+obj.On("collision-exit", (e) => {
+    console.log("Left collision with:", e.detail.name);
+});
+
+// Trigger events (collider must have isTrigger = true)
+obj.On("trigger-enter", (e) => {
+    console.log("Entered trigger:", e.detail.name);
+});
+
+obj.On("trigger-exit", (e) => {
+    console.log("Exited trigger:", e.detail.name);
+});
+
+// Raycast intersection (when scene.Raycast hits this object)
+obj.On("intersection", (e) => {
+    console.log("Ray hit at:", e.detail.point);
+    console.log("Surface normal:", e.detail.normal);
+});
+
+// Browser component message
+obj.On("browser-message", (e) => {
+    console.log("Message:", e.detail);
+});
+```
+
+---
+
+## Components
+
+All components use the constructor pattern with config objects. Add them to GameObjects with `AddComponent()`.
+
+```js
+const obj = BS.CreateGameObject({ name: "MyObject" });
+obj.AddComponent(new BS.ComponentName({ property: value }));
+```
+
+---
+
+## Physics Components
+
+### BanterRigidbody
+
+Adds physics simulation to an object.
+
+```js
+const rb = obj.AddComponent(new BS.BanterRigidbody({
+    mass: 1,                    // Weight (default: 1)
+    drag: 0,                    // Linear drag (default: 0)
+    angularDrag: 0.05,          // Rotational drag (default: 0.05)
+    useGravity: true,           // Affected by gravity (default: true)
+    isKinematic: false,         // Ignore physics forces (default: false)
+    centerOfMass: new BS.Vector3(0, 0, 0),
+    velocity: new BS.Vector3(0, 0, 0),
+    angularVelocity: new BS.Vector3(0, 0, 0),
+    collisionDetectionMode: BS.CollisionDetectionMode.Continuous,
+    freezePositionX: false,
+    freezePositionY: false,
+    freezePositionZ: false,
+    freezeRotationX: false,
+    freezeRotationY: false,
+    freezeRotationZ: false
+}));
+```
+
+**Methods:**
+
+```js
+// Apply forces
+rb.AddForce(new BS.Vector3(0, 10, 0), BS.ForceMode.Impulse);
+rb.AddForceValues(0, 10, 0, BS.ForceMode.Force);
+rb.AddRelativeForce(new BS.Vector3(0, 0, 10), BS.ForceMode.Force);
+rb.AddForceAtPosition(force, position, BS.ForceMode.Impulse);
+
+// Apply torque (rotation force)
+rb.AddTorque(new BS.Vector3(0, 5, 0), BS.ForceMode.Force);
+rb.AddTorqueValues(0, 5, 0, BS.ForceMode.Force);
+rb.AddRelativeTorque(new BS.Vector3(0, 5, 0), BS.ForceMode.Force);
+
+// Explosion force
+rb.AddExplosionForce(100, explosionCenter, 10, 1, BS.ForceMode.Impulse);
+
+// Kinematic movement
+rb.MovePosition(new BS.Vector3(0, 5, 0));
+rb.MoveRotation(new BS.Quaternion(0, 0, 0, 1));
+
+// Sleep state
+rb.Sleep();
+rb.WakeUp();
+
+// Reset
+rb.ResetCenterOfMass();
+rb.ResetInertiaTensor();
+```
+
+**Properties (get/set):**
+
+```js
+rb.velocity = new BS.Vector3(0, 5, 0);
+rb.angularVelocity = new BS.Vector3(0, 1, 0);
+rb.mass = 2;
+rb.drag = 0.1;
+rb.useGravity = false;
+rb.isKinematic = true;
+```
+
+### BoxCollider
+
+Box-shaped collision volume.
+
+```js
+obj.AddComponent(new BS.BoxCollider({
+    isTrigger: false,                      // Trigger mode (no physics response)
+    center: new BS.Vector3(0, 0, 0),       // Offset from object center
+    size: new BS.Vector3(1, 1, 1)          // Box dimensions
+}));
+```
+
+### SphereCollider
+
+Sphere-shaped collision volume.
+
+```js
+obj.AddComponent(new BS.SphereCollider({
+    isTrigger: false,
+    radius: 0.5        // Sphere radius (default: 0.5)
+}));
+```
+
+### CapsuleCollider
+
+Capsule-shaped collision volume (cylinder with hemisphere ends).
+
+```js
+obj.AddComponent(new BS.CapsuleCollider({
+    isTrigger: false,
+    radius: 0.5,       // Capsule radius (default: 0.5)
+    height: 2          // Total height including caps (default: 2)
+}));
+```
+
+### MeshCollider
+
+Uses the object's mesh for collision (more expensive).
+
+```js
+obj.AddComponent(new BS.MeshCollider({
+    isTrigger: false,
+    convex: true       // Required for rigidbody interaction
+}));
+```
+
+### BanterColliderEvents
+
+Enables collision and trigger events on the GameObject. Required for `collision-enter`, `collision-exit`, `trigger-enter`, `trigger-exit` events.
+
+```js
+obj.AddComponent(new BS.BanterColliderEvents());
+```
+
+### BanterPhysicMaterial
+
+Controls surface friction.
+
+```js
+obj.AddComponent(new BS.BanterPhysicMaterial({
+    dynamicFriction: 0.6,  // Friction when moving
+    staticFriction: 0.6    // Friction when stationary
+}));
+```
+
+---
+
+## Joint Components
+
+### CharacterJoint
+
+Human-like joint with swing and twist limits.
+
+```js
+obj.AddComponent(new BS.CharacterJoint({
+    anchor: new BS.Vector3(0, 0, 0),
+    axis: new BS.Vector3(1, 0, 0),
+    swingAxis: new BS.Vector3(0, 1, 0),
+    connectedAnchor: new BS.Vector3(0, 0, 0),
+    autoConfigureConnectedAnchor: true,
+    enableProjection: false,
+    projectionDistance: 0.1,
+    projectionAngle: 180,
+    breakForce: Infinity,
+    breakTorque: Infinity,
+    enableCollision: false,
+    connectedBody: "other-object-id"
+}));
+```
+
+### FixedJoint
+
+Locks two objects together.
+
+```js
+obj.AddComponent(new BS.FixedJoint({
+    anchor: new BS.Vector3(0, 0, 0),
+    connectedAnchor: new BS.Vector3(0, 0, 0),
+    autoConfigureConnectedAnchor: true,
+    breakForce: Infinity,
+    breakTorque: Infinity,
+    enableCollision: false,
+    connectedBody: "other-object-id"
+}));
+```
+
+### HingeJoint
+
+Rotates around a single axis (like a door).
+
+```js
+obj.AddComponent(new BS.HingeJoint({
+    anchor: new BS.Vector3(0, 0, 0),
+    axis: new BS.Vector3(0, 1, 0),
+    connectedAnchor: new BS.Vector3(0, 0, 0),
+    autoConfigureConnectedAnchor: true,
+    useLimits: false,
+    useMotor: false,
+    useSpring: false,
+    breakForce: Infinity,
+    breakTorque: Infinity,
+    enableCollision: false,
+    connectedBody: "other-object-id"
+}));
+```
+
+### SpringJoint
+
+Elastic connection between objects.
+
+```js
+obj.AddComponent(new BS.SpringJoint({
+    anchor: new BS.Vector3(0, 0, 0),
+    connectedAnchor: new BS.Vector3(0, 0, 0),
+    autoConfigureConnectedAnchor: true,
+    spring: 10,          // Spring force
+    damper: 0,           // Damping
+    minDistance: 0,
+    maxDistance: 1,
+    tolerance: 0.025,
+    breakForce: Infinity,
+    breakTorque: Infinity,
+    enableCollision: false,
+    connectedBody: "other-object-id"
+}));
+```
+
+### ConfigurableJoint
+
+Fully customizable joint with per-axis control.
+
+```js
+obj.AddComponent(new BS.ConfigurableJoint({
+    targetPosition: new BS.Vector3(0, 0, 0),
+    targetRotation: new BS.Quaternion(0, 0, 0, 1),
+    targetVelocity: new BS.Vector3(0, 0, 0),
+    targetAngularVelocity: new BS.Vector3(0, 0, 0),
+    xMotion: BS.ConfigurableJointMotion.Free,
+    yMotion: BS.ConfigurableJointMotion.Free,
+    zMotion: BS.ConfigurableJointMotion.Free,
+    angularXMotion: BS.ConfigurableJointMotion.Free,
+    angularYMotion: BS.ConfigurableJointMotion.Free,
+    angularZMotion: BS.ConfigurableJointMotion.Free,
+    anchor: new BS.Vector3(0, 0, 0),
+    axis: new BS.Vector3(1, 0, 0),
+    secondaryAxis: new BS.Vector3(0, 1, 0),
+    connectedAnchor: new BS.Vector3(0, 0, 0),
+    autoConfigureConnectedAnchor: true,
+    configuredInWorldSpace: false,
+    swapBodies: false,
+    breakForce: Infinity,
+    breakTorque: Infinity,
+    enableCollision: false,
+    connectedBody: "other-object-id"
+}));
+```
+
+---
+
+## Rendering & Visual Components
+
+### Light
+
+Adds lighting to the scene.
+
+```js
+obj.AddComponent(new BS.Light({
+    type: BS.LightType.Point,           // Point, Directional, Spot
+    color: new BS.Vector4(1, 1, 1, 1),  // RGBA
+    intensity: 1,                        // Brightness
+    range: 10,                           // Distance (Point/Spot)
+    spotAngle: 30,                       // Cone angle (Spot only)
+    innerSpotAngle: 21.8,               // Inner cone (Spot only)
+    shadows: BS.LightShadows.None       // None, Hard, Soft
+}));
+```
+
+### BanterMaterial
+
+Applies a material/shader to the object.
+
+```js
+obj.AddComponent(new BS.BanterMaterial({
+    shaderName: "Unlit/Diffuse",        // Shader name
+    texture: "https://example.com/texture.png",
+    color: new BS.Vector4(1, 1, 1, 1),  // RGBA tint
+    side: BS.MaterialSide.Front,        // Front, Back, Double
+    generateMipMaps: false
+}));
+```
+
+### BanterGeometry
+
+Generates procedural geometry (deprecated - use specific shape components).
+
+```js
+obj.AddComponent(new BS.BanterGeometry({
+    geometryType: BS.GeometryType.BoxGeometry,
+    width: 1,
+    height: 1,
+    depth: 1
+}));
+```
+
+### BanterText
+
+3D text rendering.
+
+```js
+obj.AddComponent(new BS.BanterText({
+    text: "Hello World",
+    color: new BS.Vector4(1, 1, 1, 1),
+    fontSize: 2,
+    horizontalAlignment: BS.HorizontalAlignment.Center,
+    verticalAlignment: BS.VerticalAlignment.Middle,
+    richText: true,                      // Support formatting tags
+    enableWordWrapping: true,
+    rectTransformSizeDelta: new BS.Vector2(10, 5)  // Text box size
+}));
+```
+
+### BanterBillboard
+
+Makes object always face the camera.
+
+```js
+obj.AddComponent(new BS.BanterBillboard({
+    smoothing: 0,        // Rotation smoothing (0 = instant)
+    enableXAxis: true,   // Rotate on X
+    enableYAxis: true,   // Rotate on Y
+    enableZAxis: false   // Rotate on Z
+}));
+```
+
+### BanterMirror
+
+Creates a reflective mirror surface.
+
+```js
+obj.AddComponent(new BS.BanterMirror());
+```
+
+### BanterInvertedMesh
+
+Inverts mesh normals (renders inside-out).
+
+```js
+obj.AddComponent(new BS.BanterInvertedMesh());
+```
+
+---
+
+## Geometry Primitives
+
+Simple shape components for quick prototyping.
+
+### BanterBox
+
+```js
+obj.AddComponent(new BS.BanterBox({
+    width: 1,
+    height: 1,
+    depth: 1,
+    widthSegments: 1,
+    heightSegments: 1,
+    depthSegments: 1
+}));
+```
+
+### BanterSphere
+
+```js
+obj.AddComponent(new BS.BanterSphere({
+    radius: 1,
+    widthSegments: 16,
+    heightSegments: 16,
+    phiStart: 0,
+    phiLength: Math.PI * 2,
+    thetaStart: 0,
+    thetaLength: Math.PI
+}));
+```
+
+### BanterPlane
+
+```js
+obj.AddComponent(new BS.BanterPlane({
+    width: 1,
+    height: 1,
+    widthSegments: 1,
+    heightSegments: 1
+}));
+```
+
+### BanterCylinder
+
+```js
+obj.AddComponent(new BS.BanterCylinder({
+    radiusTop: 1,
+    radiusBottom: 1,
+    height: 1,
+    radialSegments: 8,
+    heightSegments: 1,
+    openEnded: false,
+    thetaStart: 0,
+    thetaLength: Math.PI * 2
+}));
+```
+
+### BanterCone
+
+```js
+obj.AddComponent(new BS.BanterCone({
+    radius: 1,
+    height: 1,
+    radialSegments: 8,
+    heightSegments: 1,
+    openEnded: false,
+    thetaStart: 0,
+    thetaLength: Math.PI * 2
+}));
+```
+
+### BanterCircle
+
+```js
+obj.AddComponent(new BS.BanterCircle({
+    radius: 1,
+    segments: 32,
+    thetaStart: 0,
+    thetaLength: Math.PI * 2
+}));
+```
+
+### BanterTorus
+
+```js
+obj.AddComponent(new BS.BanterTorus({
+    radius: 1,
+    tube: 0.4,
+    radialSegments: 8,
+    tubularSegments: 16,
+    arc: Math.PI * 2
+}));
+```
+
+### BanterTorusKnot
+
+```js
+obj.AddComponent(new BS.BanterTorusKnot({
+    radius: 1,
+    tube: 0.4,
+    tubularSegments: 64,
+    radialSegments: 8,
+    p: 2,      // Winds around axis
+    q: 3       // Winds around interior
+}));
+```
+
+### Parametric Shapes
+
+Advanced mathematical surfaces:
+
+- `BanterKlein` - Klein bottle
+- `BanterMobius` - Möbius strip
+- `BanterMobius3d` - 3D Möbius
+- `BanterCatenoid` - Catenoid surface
+- `BanterHelicoid` - Helicoid surface
+- `BanterFermet` - Fermat spiral
+- `BanterNatica` - Natica shell
+- `BanterScherk` - Scherk surface
+- `BanterSnail` - Snail shell
+- `BanterSpiral` - Spiral surface
+- `BanterSpring` - Spring/coil
+
+---
+
+## Audio Components
+
+### BanterAudioSource
+
+Plays audio in 3D space.
+
+```js
+const audio = obj.AddComponent(new BS.BanterAudioSource({
+    volume: 1,              // 0 to 1
+    pitch: 1,               // Playback speed
+    mute: false,
+    loop: false,
+    playOnAwake: true,
+    bypassEffects: false,
+    bypassListenerEffects: false,
+    bypassReverbZones: false,
+    spatialBlend: 1         // 0 = 2D, 1 = 3D
+}));
+```
+
+**Methods:**
+
+```js
+audio.Play();
+audio.PlayOneShot(0);  // Play clip by index
+audio.PlayOneShotFromUrl("https://example.com/sound.mp3");
+```
+
+---
+
+## Media & Content Components
+
+### BanterGLTF
+
+Loads 3D models in glTF/GLB format.
+
+```js
+obj.AddComponent(new BS.BanterGLTF({
+    url: "https://example.com/model.glb",
+    generateMipMaps: false,
+    addColliders: false,        // Auto-generate colliders
+    nonConvexColliders: false,  // Use mesh colliders
+    slippery: false,            // Low friction
+    climbable: false,           // VR climbing surface
+    legacyRotate: false,
+    childrenLayer: 0            // Layer for child objects
+}));
+```
+
+### BanterAssetBundle
+
+Loads Unity asset bundles (for advanced content).
+
+```js
+obj.AddComponent(new BS.BanterAssetBundle({
+    windowsUrl: "https://example.com/windows.banter",
+    androidUrl: "https://example.com/android.banter",
+    osxUrl: null,
+    linuxUrl: null,
+    iosUrl: null,
+    vosUrl: null,               // Vision OS
+    isScene: false,             // Load as scene vs prefabs
+    legacyShaderFix: false
+}));
+```
+
+### BanterVideoPlayer
+
+Plays video on a surface.
+
+```js
+const video = obj.AddComponent(new BS.BanterVideoPlayer({
+    url: "https://example.com/video.mp4",
+    volume: 1,
+    loop: true,
+    playOnAwake: true,
+    skipOnDrop: true,
+    waitForFirstFrame: true
+}));
+```
+
+**Properties:**
+
+```js
+video.time = 30;        // Seek to 30 seconds
+video.isPlaying;        // Read current state
+video.isLooping;
+```
+
+**Methods:**
+
+```js
+video.Play();
+video.Pause();
+video.Stop();
+```
+
+### BanterBrowser
+
+Embedded web browser on a surface.
+
+```js
+const browser = obj.AddComponent(new BS.BanterBrowser({
+    url: "https://example.com",
+    mipMaps: 4,
+    pixelsPerUnit: 1200,
+    pageWidth: 1280,
+    pageHeight: 720,
+    actions: ""             // Startup actions
+}));
+```
+
+**Methods:**
+
+```js
+browser.ToggleInteraction(true);
+browser.RunActions("click2d,0.5,0.5");
+```
+
+### BanterStreetView
+
+Google Street View panorama viewer.
+
+```js
+obj.AddComponent(new BS.BanterStreetView({
+    panoId: "CAoSLEFGM..."  // Street View panorama ID
+}));
+```
+
+### BanterPortal
+
+Creates a portal to another space.
+
+```js
+obj.AddComponent(new BS.BanterPortal({
+    url: "https://space.bant.ing",
+    instance: "instance-id"
+}));
+```
+
+---
+
+## VR Interaction Components
+
+### BanterGrababble
+
+Makes an object grabbable in VR with full input control.
+
+```js
+obj.AddComponent(new BS.BanterGrababble({
+    grabType: BS.BanterGrabType.Default,
+    grabRadius: 0.01,
+    gunTriggerSensitivity: 0.5,
+    gunTriggerFireRate: 0.1,
+    gunTriggerAutoFire: false,
+    // Input blocking while held
+    blockLeftPrimary: false,
+    blockLeftSecondary: false,
+    blockRightPrimary: false,
+    blockRightSecondary: false,
+    blockLeftThumbstick: false,
+    blockLeftThumbstickClick: false,
+    blockRightThumbstick: false,
+    blockRightThumbstickClick: false,
+    blockLeftTrigger: false,
+    blockRightTrigger: false
+}));
+```
+
+### BanterGrabHandle
+
+Simple grab point on an object.
+
+```js
+obj.AddComponent(new BS.BanterGrabHandle({
+    grabType: BS.BanterGrabType.Default,
+    grabRadius: 0.01
+}));
+```
+
+### BanterHeldEvents
+
+Handles input events while an object is held.
+
+```js
+obj.AddComponent(new BS.BanterHeldEvents({
+    sensitivity: 0.5,
+    fireRate: 0.1,
+    auto: false,           // Auto-fire
+    blockLeftPrimary: false,
+    blockLeftSecondary: false,
+    blockRightPrimary: false,
+    blockRightSecondary: false,
+    blockLeftThumbstick: false,
+    blockLeftThumbstickClick: false,
+    blockRightThumbstick: false,
+    blockRightThumbstickClick: false,
+    blockLeftTrigger: false,
+    blockRightTrigger: false
+}));
+```
+
+### BanterAttachedObject
+
+Attaches object to player body parts.
+
+```js
+obj.AddComponent(new BS.BanterAttachedObject({
+    attachmentType: BS.AttachmentType.RightHand
+}));
+```
+
+---
+
+## Special Components
+
+### BanterKitItem
+
+Instantiates a prefab from an asset bundle.
+
+```js
+obj.AddComponent(new BS.BanterKitItem({
+    path: "assets/prefabs/myitem.prefab"
+}));
+```
+
+### BanterSyncedObject
+
+Enables network synchronization for the object.
+
+```js
+obj.AddComponent(new BS.BanterSyncedObject());
+```
+
+### BanterWorldObject
+
+Marks object as part of the world (non-interactive).
+
+```js
+obj.AddComponent(new BS.BanterWorldObject());
+```
+
+### BanterAvatarPedestal
+
+Displays an avatar on a pedestal.
+
+```js
+obj.AddComponent(new BS.BanterAvatarPedestal());
+```
+
+---
+
+## UI System
+
+Create 2D user interfaces in VR with the UI system.
+
+### BanterUIPanel
+
+Container for UI elements. Must be added to a GameObject first.
+
+```js
+const panelObj = BS.CreateGameObject({ name: "UIPanel" });
+const panel = panelObj.AddComponent(new BS.BanterUIPanel({
+    resolution: new BS.Vector2(800, 600),
+    screenSpace: false,     // World-space UI
+    enableHaptics: true,
+    clickHaptic: new BS.Vector2(0.1, 0.05),   // amplitude, duration
+    enterHaptic: new BS.Vector2(0.05, 0.02),
+    exitHaptic: new BS.Vector2(0.05, 0.02),
+    enableSounds: false,
+    clickSoundUrl: "",
+    enterSoundUrl: "",
+    exitSoundUrl: ""
+}));
+```
+
+### UIElement (Base Class)
+
+All UI components inherit from UIElement.
+
+**Properties:**
+
+```js
+element.id;           // Unique ID
+element.type;         // UIElementType
+element.panel;        // Parent BanterUIPanel
+element.parent;       // Parent UIElement
+element.children;     // Child UIElements
+element.enabled;      // Interactive
+element.visible;      // Displayed
+```
+
+**Hierarchy Methods:**
+
+```js
+parent.AppendChild(child);
+parent.RemoveChild(child);
+parent.InsertBefore(child, referenceChild);
+```
+
+**Property Methods:**
+
+```js
+element.SetProperty(BS.PN.text, "Hello");
+element.GetProperty(BS.PN.text);
+element.SetProperties([BS.PN.text, BS.PN.fontSize]);
+```
+
+**Style Methods:**
+
+```js
+element.SetStyle("backgroundColor", "#FF0000");
+element.GetStyle("backgroundColor");
+element.SetStyles({
+    backgroundColor: "#FF0000",
+    padding: "10px",
+    borderRadius: "5px"
+});
+
+// Or use the style property
+element.style.backgroundColor = "#FF0000";
+element.style.width = "100px";
+element.style.height = "50px";
+```
+
+**Event Methods:**
+
+```js
+element.OnClick((e) => console.log("Clicked"));
+element.OnMouseDown((e) => console.log("Mouse down"));
+element.OnMouseUp((e) => console.log("Mouse up"));
+element.OnMouseEnter((e) => console.log("Hover start"));
+element.OnMouseLeave((e) => console.log("Hover end"));
+element.OnMouseMove((e) => console.log("Moving"));
+element.OnKeyDown((e) => console.log("Key:", e.key));
+element.OnKeyUp((e) => console.log("Key released"));
+element.OnFocus((e) => console.log("Focused"));
+element.OnBlur((e) => console.log("Lost focus"));
+element.OnChange((e) => console.log("Value:", e.value));
+element.OnWheel((e) => console.log("Scrolled"));
+
+// Standard event listener API
+element.AddEventListener("click", handler);
+element.RemoveEventListener("click", handler);
+```
+
+**Query Methods:**
+
+```js
+const button = element.QuerySelector("#myButton");
+const allButtons = element.QuerySelectorAll(".button");
+```
+
+### UIButton
+
+Clickable button.
+
+```js
+const button = new BS.UIButton();
+button.SetProperty(BS.PN.text, "Click Me");
+button.style.width = "200px";
+button.style.height = "50px";
+button.style.backgroundColor = "#4CAF50";
+button.style.color = "#FFFFFF";
+button.OnClick(() => console.log("Button clicked!"));
+panel.root.AppendChild(button);
+```
+
+### UILabel
+
+Text display.
+
+```js
+const label = new BS.UILabel();
+label.SetProperty(BS.PN.text, "Hello World");
+label.style.fontSize = "24px";
+label.style.color = "#FFFFFF";
+panel.root.AppendChild(label);
+```
+
+### UISlider
+
+Value slider.
+
+```js
+const slider = new BS.UISlider();
+slider.style.width = "200px";
+slider.OnChange((e) => console.log("Value:", e.value));
+panel.root.AppendChild(slider);
+```
+
+### UIToggle
+
+Checkbox/toggle.
+
+```js
+const toggle = new BS.UIToggle();
+toggle.OnChange((e) => console.log("Checked:", e.value));
+panel.root.AppendChild(toggle);
+```
+
+### UIScrollView
+
+Scrollable container.
+
+```js
+const scrollView = new BS.UIScrollView();
+scrollView.style.width = "300px";
+scrollView.style.height = "200px";
+scrollView.style.overflow = "scroll";
+panel.root.AppendChild(scrollView);
+```
+
+### UIVisualElement
+
+Generic container for layout.
+
+```js
+const container = new BS.UIVisualElement();
+container.style.flexDirection = "row";
+container.style.justifyContent = "space-between";
+container.style.padding = "10px";
+panel.root.AppendChild(container);
+```
+
+### Style Properties Reference
+
+**Layout:**
+- `alignContent`, `alignItems`, `justifyContent`
+- `flexBasis`, `flexDirection`, `flexGrow`, `flexShrink`, `flexWrap`
+
+**Size:**
+- `width`, `height`, `minWidth`, `minHeight`, `maxWidth`, `maxHeight`
+
+**Position:**
+- `position` (relative, absolute)
+- `left`, `top`, `right`, `bottom`
+
+**Spacing:**
+- `margin`, `marginLeft`, `marginRight`, `marginTop`, `marginBottom`
+- `padding`, `paddingLeft`, `paddingRight`, `paddingTop`, `paddingBottom`
+
+**Borders:**
+- `borderWidth`, `borderLeftWidth`, `borderRightWidth`, `borderTopWidth`, `borderBottomWidth`
+- `borderRadius`, `borderTopLeftRadius`, `borderTopRightRadius`, `borderBottomLeftRadius`, `borderBottomRightRadius`
+- `borderColor`, `borderLeftColor`, `borderRightColor`, `borderTopColor`, `borderBottomColor`
+
+**Background:**
+- `backgroundColor`, `backgroundImage`, `backgroundSize`, `backgroundRepeat`, `backgroundPosition`
+
+**Text:**
+- `color`, `fontSize`, `fontStyle`, `fontWeight`
+- `lineHeight`, `textAlign`, `textOverflow`
+- `whiteSpace`, `wordWrap`, `letterSpacing`
+
+**Display:**
+- `display`, `visibility`, `overflow`, `opacity`
+
+**Transform:**
+- `rotate`, `scale`, `translate`, `transformOrigin`
+
+**Cursor:**
+- `cursor`
+
+**Transitions:**
+- `transitionProperty`, `transitionDuration`, `transitionTimingFunction`, `transitionDelay`
+
+---
+
+## Math Types
+
+### Vector2
+
+2D vector for UV coordinates, UI sizes, etc.
+
+```js
+const v = new BS.Vector2(1, 2);
+
+v.x = 3;
+v.y = 4;
+
+v.Set(5, 6);
+v.Add(new BS.Vector2(1, 1));
+v.Subtract(new BS.Vector2(1, 1));
+v.Multiply(2);
+v.MultiplyVectors(new BS.Vector2(2, 3));
+```
+
+### Vector3
+
+3D vector for positions, directions, scales.
+
+```js
+const v = new BS.Vector3(1, 2, 3);
+
+v.x = 4;
+v.y = 5;
+v.z = 6;
+
+// Basic operations
+v.Set(1, 2, 3);
+v.Add(new BS.Vector3(1, 1, 1));
+v.Subtract(new BS.Vector3(1, 1, 1));
+v.Multiply(2);
+v.MultiplyVectors(new BS.Vector3(2, 3, 4));
+v.Divide(2);
+
+// Vector math
+const length = v.Length();
+v.Normalize();
+const normalized = v.NormalizeNew();  // Returns new vector
+const sqrMag = v.SqrMagnitude();
+
+// Cross and dot product
+v.Cross(new BS.Vector3(0, 1, 0));
+const dot = BS.Vector3.Dot(v, other);
+
+// Angles
+const angle = v.Angle(other);                    // Unsigned angle in degrees
+const signedAngle = v.SignedAngle(other, axis);  // Signed angle around axis
+
+// Quaternion rotation
+v.ApplyQuaternion(quaternion);
+
+// Non-mutating versions
+const added = v.AddNew(other);
+const subtracted = v.SubtractNew(other);
+const multiplied = v.MultiplyNew(2);
+const divided = v.DivideNew(2);
+```
+
+### Vector4
+
+4D vector for colors (RGBA), quaternions, etc.
+
+```js
+const v = new BS.Vector4(1, 0, 0, 1);  // Red, full opacity
+
+v.x = 0;  // R
+v.y = 1;  // G
+v.z = 0;  // B
+v.w = 1;  // A
+
+v.Set(0.5, 0.5, 0.5, 1);
+v.Add(new BS.Vector4(0.1, 0.1, 0.1, 0));
+v.Multiply(0.5);
+```
+
+### Quaternion
+
+Rotation representation (avoids gimbal lock).
+
+```js
+const q = new BS.Quaternion(0, 0, 0, 1);  // Identity (no rotation)
+
+// Set from Euler angles (degrees)
+q.SetFromEuler({ x: 45, y: 90, z: 0 });
+
+// Get Euler angles back
+const euler = q.GetEuler();  // Returns Vector3 in degrees
+
+// Components
+q.x = 0;
+q.y = 0.707;
+q.z = 0;
+q.w = 0.707;
+```
+
+---
+
+## Enums & Constants
+
+### ComponentType (BS.CT)
+
+Used with `GetComponent()`. Shorthand: `BS.CT`
+
+```js
+BS.CT.Transform
+BS.CT.BanterRigidbody
+BS.CT.BoxCollider
+BS.CT.SphereCollider
+BS.CT.CapsuleCollider
+BS.CT.MeshCollider
+BS.CT.BanterAudioSource
+BS.CT.BanterGLTF
+BS.CT.BanterMaterial
+BS.CT.BanterText
+BS.CT.Light
+// ... and more
+```
+
+### ForceMode
+
+Physics force application:
+
+```js
+BS.ForceMode.Force          // Continuous force (affected by mass)
+BS.ForceMode.Impulse        // Instant force (affected by mass)
+BS.ForceMode.VelocityChange // Direct velocity change (ignores mass)
+BS.ForceMode.Acceleration   // Continuous acceleration (ignores mass)
+```
+
+### HandSide
+
+VR controller hand:
+
+```js
+BS.HandSide.LEFT
+BS.HandSide.RIGHT
+```
+
+### ButtonType
+
+Controller buttons:
+
+```js
+BS.ButtonType.TRIGGER
+BS.ButtonType.GRIP
+BS.ButtonType.PRIMARY    // A/X button
+BS.ButtonType.SECONDARY  // B/Y button
+```
+
+### GeometryType
+
+Procedural geometry shapes:
+
+```js
+BS.GeometryType.BoxGeometry
+BS.GeometryType.CircleGeometry
+BS.GeometryType.ConeGeometry
+BS.GeometryType.CylinderGeometry
+BS.GeometryType.PlaneGeometry
+BS.GeometryType.RingGeometry
+BS.GeometryType.SphereGeometry
+BS.GeometryType.TorusGeometry
+BS.GeometryType.TorusKnotGeometry
+BS.GeometryType.ParametricGeometry
+```
+
+### PropertyName (BS.PN)
+
+Property identifiers for watching/querying. Shorthand: `BS.PN`
+
+```js
+BS.PN.position
+BS.PN.localPosition
+BS.PN.rotation
+BS.PN.localRotation
+BS.PN.localScale
+BS.PN.eulerAngles
+BS.PN.localEulerAngles
+BS.PN.velocity
+BS.PN.angularVelocity
+BS.PN.text
+BS.PN.fontSize
+// ... and more
+```
+
+### BanterLayers (BS.L)
+
+Physics/rendering layers. Shorthand: `BS.L`
+
+```js
+BS.L.UserLayer1    // 3
+BS.L.UserLayer2    // 6
+BS.L.UserLayer3    // 7
+// ... through UserLayer12
+BS.L.NetworkPlayer // 17
+BS.L.Grabbable     // 20
+BS.L.HandColliders // 21
+BS.L.PhysicsPlayer // 23
+```
+
+### MaterialSide
+
+Which side of geometry to render:
+
+```js
+BS.MaterialSide.Front
+BS.MaterialSide.Back
+BS.MaterialSide.Double
+```
+
+### LightType
+
+Light source types:
+
+```js
+BS.LightType.Directional  // Sun-like
+BS.LightType.Point        // Bulb-like
+BS.LightType.Spot         // Flashlight-like
+```
+
+### LightShadows
+
+Shadow quality:
+
+```js
+BS.LightShadows.None
+BS.LightShadows.Hard
+BS.LightShadows.Soft
+```
+
+### HorizontalAlignment
+
+Text horizontal alignment:
+
+```js
+BS.HorizontalAlignment.Left
+BS.HorizontalAlignment.Center
+BS.HorizontalAlignment.Right
+```
+
+### VerticalAlignment
+
+Text vertical alignment:
+
+```js
+BS.VerticalAlignment.Top
+BS.VerticalAlignment.Middle
+BS.VerticalAlignment.Bottom
+```
+
+### CollisionDetectionMode
+
+Physics collision quality:
+
+```js
+BS.CollisionDetectionMode.Discrete
+BS.CollisionDetectionMode.Continuous
+BS.CollisionDetectionMode.ContinuousDynamic
+BS.CollisionDetectionMode.ContinuousSpeculative
+```
+
+### ConfigurableJointMotion
+
+Joint axis constraints:
+
+```js
+BS.ConfigurableJointMotion.Locked
+BS.ConfigurableJointMotion.Limited
+BS.ConfigurableJointMotion.Free
+```
+
+---
+
+## User & Multiplayer
+
+### UserData
+
+Information about connected users:
+
+```js
+const user = scene.localUser;
+
+user.id;        // User ID
+user.uid;       // Session UID
+user.name;      // Display name
+user.color;     // Avatar color
+user.isLocal;   // Is this the local player
+user.props;     // Custom properties
+```
+
+### Attaching Objects to Users
+
+```js
+// Attach object to user's body part
+user.Attach(gameObject, BS.AttachmentType.RightHand);
+
+// Attachment types:
+BS.AttachmentType.Head
+BS.AttachmentType.LeftHand
+BS.AttachmentType.RightHand
+BS.AttachmentType.LeftFoot
+BS.AttachmentType.RightFoot
+BS.AttachmentType.Chest
+BS.AttachmentType.Back
+```
+
+### State Synchronization
+
+```js
+// Set shared public state
+scene.SetPublicSpaceProps({
+    "gameScore": "100",
+    "currentRound": "3"
+});
+
+// Listen for changes
+scene.On("space-state-changed", (e) => {
+    e.detail.changes.forEach(change => {
+        console.log(change.property, "changed to", change.newValue);
+    });
+});
+
+// Send message to all users
+scene.OneShot({
+    type: "player-action",
+    data: { x: 1, y: 2 }
+}, true);
+
+// Receive messages
+scene.On("one-shot", (e) => {
+    console.log("From:", e.detail.fromId);
+    console.log("Data:", e.detail.data);
+});
+```
+
+---
+
+## Additional Resources
+
+- [Unity Getting Started](https://www.youtube.com/watch?v=j48LtUkZRjU&list=PLPV2KyIb3jR5QFsefuO2RlAgWEz6EvVi6)
+- [JavaScript Tutorials](https://www.javascript.com/)
+- [Blender Tutorials](https://www.youtube.com/watch?v=B0J27sf9N1Y)
+- [Banter Discord](https://discord.gg/mPAjUEcwad)
+- [Service Portal](https://sdq.st/banter-help)
