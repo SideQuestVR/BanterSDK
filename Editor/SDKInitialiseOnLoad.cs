@@ -14,6 +14,8 @@ namespace Banter.SDKEditor
     [InitializeOnLoad]
     public static class InitialiseOnLoad
     {
+        static bool hasAlreadyAttemptedOra;
+        static bool hasAlreadyAttemptedBasis;
         static InitialiseOnLoad()
         {
             var renderPipeline = UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline;
@@ -30,9 +32,7 @@ namespace Banter.SDKEditor
                 }
             }
 #if !BANTER_EDITOR
-#if !UNITY_2022
             ImportBasisPackages();
-#endif
             ImportOraPackage();
             SetupLayersAndTags();
             SetApiCompatibilityLevel();
@@ -69,7 +69,15 @@ namespace Banter.SDKEditor
             if (Directory.Exists("Packages/" + packageName))
             {
 #if !BANTER_ORA
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
+                if(!hasAlreadyAttemptedOra)
+                {
+                    PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
+                    hasAlreadyAttemptedOra = true;
+                }
+                else
+                {
+                    Debug.Log("The script defines \"BANTER_ORA\" could not be added, you will need to add it manually in the player settings.");
+                }
 #endif
                 return;
             }
@@ -105,7 +113,15 @@ namespace Banter.SDKEditor
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
 #if !BASIS_BUNDLE_MANAGEMENT
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
+                if(!hasAlreadyAttemptedBasis)
+                {
+                    PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
+                    hasAlreadyAttemptedBasis = true;
+                }
+                else
+                {
+                    Debug.Log("The script defines \"BASIS_BUNDLE_MANAGEMENT\" could not be added, you will need to add it manually in the player settings.");
+                }
 #endif
                 return;
             }
