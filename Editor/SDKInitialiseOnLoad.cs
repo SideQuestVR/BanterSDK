@@ -74,7 +74,7 @@ namespace Banter.SDKEditor
                 return;
             }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/OraPackages");
+            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/OraPackage");
             string zipPath = Path.Combine(zipDirectory, $"com.sidequest.ora.zip");
             string extractRoot = Path.Combine(projectRoot, "Packages");
             string extractPath = Path.Combine(extractRoot, packageName);
