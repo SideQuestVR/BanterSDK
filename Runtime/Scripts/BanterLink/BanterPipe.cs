@@ -45,13 +45,20 @@ public class BanterPipe
             link.scene.SetLoaded();
         });
     }
+#endif
     public void Send(string msg)
     {
+
+#if BANTER_ORA
         view?.Send(msg);
+#endif
     }
     public bool GetIsConnected()
     {
+#if BANTER_ORA
         return manager.connected;
-    }
+#else
+        return false
 #endif
+    }
 }
