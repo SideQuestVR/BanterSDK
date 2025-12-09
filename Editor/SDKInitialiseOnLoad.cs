@@ -82,7 +82,21 @@ namespace Banter.SDKEditor
             if (Directory.Exists(extractPath))
                 Directory.Delete(extractPath, true);
 
-            ZipFile.ExtractToDirectory(zipPath, extractRoot);
+            ZipFile.ExtractToDirectory(zipPath, extractRoot);            
+            
+            // Modify manifest.json
+            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
+            string json = File.ReadAllText(manifestPath);
+
+            var jObject = JObject.Parse(json);
+            var dependencies = (JObject)jObject["dependencies"];
+
+            dependencies[packageName] = $"file:{packageName}";
+
+            File.WriteAllText(manifestPath, jObject.ToString());
+            AssetDatabase.Refresh();
+            Debug.Log("All Ora packages installed and manifest.json updated.");    
+            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
         }
         static void ImportBasisPackages()
         {
