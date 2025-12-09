@@ -14,8 +14,6 @@ namespace Banter.SDKEditor
     [InitializeOnLoad]
     public static class InitialiseOnLoad
     {
-        static bool hasAlreadyAttemptedOra;
-        static bool hasAlreadyAttemptedBasis;
         static InitialiseOnLoad()
         {
             var renderPipeline = UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline;
@@ -69,11 +67,11 @@ namespace Banter.SDKEditor
             if (Directory.Exists("Packages/" + packageName))
             {
 #if !BANTER_ORA
-                if(!hasAlreadyAttemptedOra)
+                if(!ProjectPrefs.HasKey("hasAlreadyAttemptedOra"))
                 {
                     Debug.Log("Banter Ora is installed, but the script define is not set, setting...");
                     PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
-                    hasAlreadyAttemptedOra = true;
+                    ProjectPrefs.SetBool("hasAlreadyAttemptedOra", true);
                 }
                 else
                 {
@@ -114,11 +112,11 @@ namespace Banter.SDKEditor
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
 #if !BASIS_BUNDLE_MANAGEMENT
-                if(!hasAlreadyAttemptedBasis)
+                if(!ProjectPrefs.HasKey("hasAlreadyAttemptedBasis"))
                 {
                     Debug.Log("Basis is installed, but the script define is not set, setting...");
                     PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
-                    hasAlreadyAttemptedBasis = true;
+                    ProjectPrefs.SetBool("hasAlreadyAttemptedBasis", true);
                 }
                 else
                 {
