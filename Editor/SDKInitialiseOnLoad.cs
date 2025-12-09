@@ -71,6 +71,7 @@ namespace Banter.SDKEditor
 #if !BANTER_ORA
                 if(!hasAlreadyAttemptedOra)
                 {
+                    Debug.Log("Banter Ora is installed, but the script define is not set, setting...");
                     PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
                     hasAlreadyAttemptedOra = true;
                 }
@@ -115,6 +116,7 @@ namespace Banter.SDKEditor
 #if !BASIS_BUNDLE_MANAGEMENT
                 if(!hasAlreadyAttemptedBasis)
                 {
+                    Debug.Log("Basis is installed, but the script define is not set, setting...");
                     PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
                     hasAlreadyAttemptedBasis = true;
                 }
