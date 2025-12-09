@@ -70,7 +70,7 @@ namespace Banter.SDKEditor
                 if(!ProjectPrefs.HasKey("hasAlreadyAttemptedOra"))
                 {
                     Debug.Log("Banter Ora is installed, but the script define is not set, setting...");
-                    PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
+                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BANTER_ORA");
                     ProjectPrefs.SetBool("hasAlreadyAttemptedOra", true);
                 }
                 else
@@ -103,7 +103,7 @@ namespace Banter.SDKEditor
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
             Debug.Log("All Ora packages installed and manifest.json updated.");    
-            PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BANTER_ORA");
+            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BANTER_ORA");
         }
         static void ImportBasisPackages()
         {
@@ -115,7 +115,7 @@ namespace Banter.SDKEditor
                 if(!ProjectPrefs.HasKey("hasAlreadyAttemptedBasis"))
                 {
                     Debug.Log("Basis is installed, but the script define is not set, setting...");
-                    PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
+                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BASIS_BUNDLE_MANAGEMENT");
                     ProjectPrefs.SetBool("hasAlreadyAttemptedBasis", true);
                 }
                 else
