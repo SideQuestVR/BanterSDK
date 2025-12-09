@@ -58,7 +58,7 @@ public class BanterPipe
 #if BANTER_ORA
         return manager.connected;
 #else
-        return false
+        return false;
 #endif
     }
 }
