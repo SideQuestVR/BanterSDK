@@ -82,8 +82,7 @@ namespace Banter.SDKEditor
             if (Directory.Exists(extractPath))
                 Directory.Delete(extractPath, true);
 
-            Directory.CreateDirectory(extractPath);
-            ZipFile.ExtractToDirectory(zipPath, extractPath);            
+            ZipFile.ExtractToDirectory(zipPath, extractRoot);            
             
             // Modify manifest.json
             string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
