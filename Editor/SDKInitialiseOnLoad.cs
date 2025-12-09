@@ -8,6 +8,7 @@ using System.IO.Compression;
 using LongBunnyLabs;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.Build;
+using System.Linq;
 
 namespace Banter.SDKEditor
 {
@@ -52,6 +53,13 @@ namespace Banter.SDKEditor
                 }
             }
         }
+        static void AddScriptDefine(string define)
+        {
+            var buildTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            var symbols = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
+            symbols = string.Join(";", symbols.Split(";").Where(d => !string.IsNullOrWhiteSpace(d)));
+            PlayerSettings.SetScriptingDefineSymbols(buildTarget, symbols + ";" + define);
+        }
         static void SetApiCompatibilityLevel()
         {
             var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
@@ -67,17 +75,7 @@ namespace Banter.SDKEditor
             if (Directory.Exists("Packages/" + packageName))
             {
 #if !BANTER_ORA
-                if (!ProjectPrefs.HasKey("hasAlreadyAttemptedOra"))
-                {
-                    Debug.Log("Banter Ora is installed, but the script define is not set, setting...");
-                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, "BANTER_ORA");
-                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "BANTER_ORA");
-                    ProjectPrefs.SetBool("hasAlreadyAttemptedOra", true);
-                }
-                else
-                {
-                    Debug.Log("The script defines \"BANTER_ORA\" could not be added, you will need to add it manually in the player settings.");
-                }
+                AddScriptDefine("BANTER_ORA");
 #endif
                 return;
             }
@@ -109,8 +107,7 @@ namespace Banter.SDKEditor
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
             Debug.Log("All Ora packages installed and manifest.json updated.");    
-            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, "BANTER_ORA");
-            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "BANTER_ORA");
+            AddScriptDefine("BANTER_ORA");
         }
         static void ImportBasisPackages()
         {
@@ -119,17 +116,7 @@ namespace Banter.SDKEditor
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
 #if !BASIS_BUNDLE_MANAGEMENT
-                if (!ProjectPrefs.HasKey("hasAlreadyAttemptedBasis"))
-                {
-                    Debug.Log("Basis is installed, but the script define is not set, setting...");
-                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, "BASIS_BUNDLE_MANAGEMENT");
-                    PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "BASIS_BUNDLE_MANAGEMENT");
-                    ProjectPrefs.SetBool("hasAlreadyAttemptedBasis", true);
-                }
-                else
-                {
-                    Debug.Log("The script defines \"BASIS_BUNDLE_MANAGEMENT\" could not be added, you will need to add it manually in the player settings.");
-                }
+                AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
 #endif
                 return;
             }
@@ -176,8 +163,7 @@ namespace Banter.SDKEditor
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
             Debug.Log("All Basis packages installed and manifest.json updated.");
-            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Standalone, "BASIS_BUNDLE_MANAGEMENT");
-            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.Android, "BASIS_BUNDLE_MANAGEMENT");
+            AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
         }
         static void CreateWebRoot()
         {
