@@ -726,7 +726,9 @@ namespace Banter.SDK
         public async Task LoadUrl(string url)
         {
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + url);
+#if BANTER_ORA
             pipe.view.LoadUrl(url);
+#endif
             // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
             scene.state = SceneState.NONE;
             // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
