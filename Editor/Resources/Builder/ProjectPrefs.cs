@@ -58,6 +58,7 @@ namespace LongBunnyLabs
     {
       get
       {
+        Debug.Log("Get Instance");
         var instance = AssetDatabase.LoadAssetAtPath<ProjectPrefs>(InstancePath);
 
         if (instance == null)
@@ -136,6 +137,7 @@ namespace LongBunnyLabs
 
     public static bool HasKey(string key)
     {
+      Debug.Log("HasKey: " + (Instance == null) + " : " + (Instance?.Records == null));
       return Instance.Records.Any(x => x.Key.Equals(key));
     }
 
