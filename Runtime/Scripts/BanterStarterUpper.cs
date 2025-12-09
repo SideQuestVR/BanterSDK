@@ -8,9 +8,10 @@ using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Debug = UnityEngine.Debug;
 using UnityEngine.UI;
+#if BANTER_ORA
 using SideQuest.Ora;
 using SideQuest.Ora.WebRTC;
-
+#endif
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -235,12 +236,14 @@ namespace Banter.SDK
             {
             }
         }
+#if BANTER_ORA
         private void SetupBrowserLink(OraView view, OraManager manager)
         {
             scene.link = gameObject.AddComponent<BanterLink>();
             scene.link.SetupPipe(view, manager);
             scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BanterStarterUpper)}.{nameof(SetupBrowserLink)}"));
         }
+#endif
         public void CancelLoading()
         {
             if (scene.HasLoadFailed())

@@ -2,10 +2,12 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using Banter.SDK;
+#if BANTER_ORA
 using SideQuest.Ora;
-
+#endif
 public class BanterPipe
 {
+#if BANTER_ORA
     public OraView view;
     OraManager manager;
     BanterLink link;
@@ -51,4 +53,5 @@ public class BanterPipe
     {
         return manager.connected;
     }
+#endif
 }

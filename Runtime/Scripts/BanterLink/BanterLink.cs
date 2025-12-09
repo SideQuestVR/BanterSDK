@@ -14,14 +14,14 @@ using Unity.VisualScripting;
 using Banter.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
+#if BANTER_ORA
 using SideQuest.Ora;
-
+#endif
 namespace Banter.SDK
 {
     public class BanterLink : MonoBehaviour
     {
         public BanterPipe pipe;
-        public static string pipeName => GeneratePipeName();
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
@@ -622,6 +622,8 @@ namespace Banter.SDK
                 ParseCommand(msg);
             }
         }
+
+#if BANTER_ORA
         public void SetupPipe(OraView view, OraManager manager)
         {
             // #if UNITY_ANDROID && !UNITY_EDITOR
@@ -672,16 +674,7 @@ namespace Banter.SDK
                 }
             });
         }
-
-        private static string _pipeName;
-        private static string GeneratePipeName()
-        {
-            if (_pipeName == null)
-            {
-                _pipeName = Guid.NewGuid().ToString().Replace("-", "");
-            }
-            return $"banterPipe{_pipeName}";
-        }
+#endif
 
         
         Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
