@@ -81,6 +81,7 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
+            ProjectPrefs.DeleteKey("hasAlreadyAttemptedOra");
             if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?  (Required)", "OK", "Cancel"))
             {
                 return;
@@ -132,6 +133,7 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
+            ProjectPrefs.DeleteKey("hasAlreadyAttemptedBasis");
             if (!EditorUtility.DisplayDialog("Install Basis", "Install the Basis packages? (Required)", "OK", "Cancel"))
             {
                 return;
