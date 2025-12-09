@@ -67,7 +67,7 @@ namespace Banter.SDKEditor
             if (Directory.Exists("Packages/" + packageName))
             {
 #if !BANTER_ORA
-                if(!ProjectPrefs.HasKey("hasAlreadyAttemptedOra"))
+                if (!ProjectPrefs.HasKey("hasAlreadyAttemptedOra"))
                 {
                     Debug.Log("Banter Ora is installed, but the script define is not set, setting...");
                     PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BANTER_ORA");
@@ -78,6 +78,10 @@ namespace Banter.SDKEditor
                     Debug.Log("The script defines \"BANTER_ORA\" could not be added, you will need to add it manually in the player settings.");
                 }
 #endif
+                return;
+            }
+            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?", "OK", "Cancel"))
+            {
                 return;
             }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
@@ -112,7 +116,7 @@ namespace Banter.SDKEditor
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
 #if !BASIS_BUNDLE_MANAGEMENT
-                if(!ProjectPrefs.HasKey("hasAlreadyAttemptedBasis"))
+                if (!ProjectPrefs.HasKey("hasAlreadyAttemptedBasis"))
                 {
                     Debug.Log("Basis is installed, but the script define is not set, setting...");
                     PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BASIS_BUNDLE_MANAGEMENT");
@@ -123,6 +127,10 @@ namespace Banter.SDKEditor
                     Debug.Log("The script defines \"BASIS_BUNDLE_MANAGEMENT\" could not be added, you will need to add it manually in the player settings.");
                 }
 #endif
+                return;
+            }
+            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Basis packages?", "OK", "Cancel"))
+            {
                 return;
             }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
