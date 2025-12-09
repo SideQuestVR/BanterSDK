@@ -80,7 +80,7 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
-            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?", "OK", "Cancel"))
+            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?  (Required)", "OK", "Cancel"))
             {
                 return;
             }
@@ -129,7 +129,7 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
-            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Basis packages?", "OK", "Cancel"))
+            if (!EditorUtility.DisplayDialog("Install Basis", "Install the Basis packages? (Required)", "OK", "Cancel"))
             {
                 return;
             }
