@@ -105,8 +105,7 @@ namespace Banter.SDKEditor
             dependencies[packageName] = $"file:{packageName}";
 
             File.WriteAllText(manifestPath, jObject.ToString());
-            AssetDatabase.Refresh();
-            Debug.Log("All Ora packages installed and manifest.json updated.");    
+            AssetDatabase.Refresh();   
             AddScriptDefine("BANTER_ORA");
         }
         static void ImportBasisPackages()
@@ -145,7 +144,6 @@ namespace Banter.SDKEditor
                     Directory.Delete(extractPath, true);
 
                 ZipFile.ExtractToDirectory(zipPath, extractRoot);
-                Debug.Log($"Extracted {packageName} to {extractPath}");
             }
 
             // Modify manifest.json
@@ -162,7 +160,6 @@ namespace Banter.SDKEditor
 
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
-            Debug.Log("All Basis packages installed and manifest.json updated.");
             AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
         }
         static void CreateWebRoot()
