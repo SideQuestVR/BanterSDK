@@ -14,14 +14,14 @@ using Unity.VisualScripting;
 using Banter.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
+#if BANTER_ORA
 using SideQuest.Ora;
-
+#endif
 namespace Banter.SDK
 {
     public class BanterLink : MonoBehaviour
     {
         public BanterPipe pipe;
-        public static string pipeName => GeneratePipeName();
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
@@ -357,6 +357,14 @@ namespace Banter.SDK
                 {
                     _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
                 }
+                else if (msg.StartsWith(APICommands.GET_BOUNDS))
+                {
+                    scene.GetJsBounds(GetMsgData(msg, APICommands.GET_BOUNDS), id);
+                }
+                else if (msg.StartsWith(APICommands.INLINE_OBJECT))
+                {
+                    scene.InlineJsObject(GetMsgData(msg, APICommands.INLINE_OBJECT), id);
+                }
                 // Asset System Commands
                 else if (msg.StartsWith(APICommands.CREATE_ASSET))
                 {
@@ -622,6 +630,8 @@ namespace Banter.SDK
                 ParseCommand(msg);
             }
         }
+
+#if BANTER_ORA
         public void SetupPipe(OraView view, OraManager manager)
         {
             // #if UNITY_ANDROID && !UNITY_EDITOR
@@ -672,16 +682,7 @@ namespace Banter.SDK
                 }
             });
         }
-
-        private static string _pipeName;
-        private static string GeneratePipeName()
-        {
-            if (_pipeName == null)
-            {
-                _pipeName = Guid.NewGuid().ToString().Replace("-", "");
-            }
-            return $"banterPipe{_pipeName}";
-        }
+#endif
 
         
         Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
@@ -733,7 +734,9 @@ namespace Banter.SDK
         public async Task LoadUrl(string url)
         {
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + url);
+#if BANTER_ORA
             pipe.view.LoadUrl(url);
+#endif
             // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
             scene.state = SceneState.NONE;
             // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
@@ -824,14 +827,14 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiModel", new CustomEventArgs("", new object[] { glb }));
 #endif
-            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + glb);
+            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + glb);
         }
         public void OnAiImage(string image)
         {
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
 #endif
-            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + image);
+            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + image);
         }
         public void OnBase64ToCDN(long image)
         {

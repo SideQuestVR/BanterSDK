@@ -50,6 +50,7 @@ namespace Banter.SDK
         BanterRigidbody,
         BanterRing,
         BanterScherk,
+        SkinnedMeshRenderer,
         BanterSnail,
         BanterSphere,
         SphereCollider,
@@ -64,5 +65,6 @@ namespace Banter.SDK
         BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,
+        BanterSkinnedMeshRenderer
     }
 }

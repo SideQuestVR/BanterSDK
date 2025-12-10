@@ -13,6 +13,8 @@ using UnityEngine.XR;
 using Banter.Utilities.Async;
 using Banter.Utilities;
 using Banter.FlexaBody;
+using Mono.Unix.Native;
+
 
 
 
@@ -336,6 +338,7 @@ namespace Banter.SDK
                 if (parts.Length < 2)
                 {
                     Debug.LogError("[Banter] AiImage message is malformed: " + msg);
+                    SendError(reqId, "AIIMAGE: Message is malformed: " + msg);
                     return;
                 }
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])), $"{nameof(BanterScene)}.{nameof(AiImage)}"));
@@ -352,6 +355,7 @@ namespace Banter.SDK
             if (parts.Length < 2)
             {
                 Debug.LogError("[Banter] SetJsObjectId message is malformed: " + msg);
+                SendError(reqId, "SET_OBJECT_ID: Message is malformed: " + msg);
                 return;
             }
             var obj = GetObject(int.Parse(parts[0]));
@@ -368,6 +372,7 @@ namespace Banter.SDK
             if (parts.Length < 2)
             {
                 Debug.LogError("[Banter] SetJsComponentId message is malformed: " + msg);
+                SendError(reqId, "SET_COMPONENT_ID: Message is malformed: " + msg);
                 return;
             }
             var comp = GetBanterComponent(int.Parse(parts[0]));
@@ -384,6 +389,7 @@ namespace Banter.SDK
                 if (parts.Length < 4)
                 {
                     Debug.LogError("[Banter] AddPlayerForce message is malformed: " + msg);
+                    SendError(reqId, "ADD_PLAYER_FORCE: Message is malformed: " + msg);
                     return;
                 }
                 var force = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
@@ -403,6 +409,7 @@ namespace Banter.SDK
                 if (parts.Length < 3)
                 {
                     Debug.LogError("[Banter] AiModel message is malformed: " + msg);
+                    SendError(reqId, "AIMODEL: Message is malformed: " + msg);
                     return;
                 }
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiModel.Invoke(parts[0], (AiModelSimplify)int.Parse(parts[1]), int.Parse(parts[2])), $"{nameof(BanterScene)}.{nameof(AiModel)}"));
@@ -467,6 +474,7 @@ namespace Banter.SDK
             if (parts.Length < 3)
             {
                 Debug.LogError("[Banter] Gravity message is malformed: " + msg);
+                SendError(reqId, "GRAVITY: Message is malformed: " + msg);
                 return;
             }
             var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
@@ -505,6 +513,7 @@ namespace Banter.SDK
             if (parts.Length < 5)
             {
                 Debug.LogError("[Banter] Teleport message is malformed: " + msg);
+                SendError(reqId, "TELEPORT: Message is malformed: " + msg);
                 return;
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -855,6 +864,7 @@ namespace Banter.SDK
             if (sendBackParts.Length < 2)
             {
                 Debug.LogError("[Banter] Update Component message sendBackParts is malformed: " + msg);
+                SendError(reqId, "UPDATE_COMPONENT: Message is malformed: " + msg);
                 return;
             }
             if (!isReady)
@@ -870,6 +880,7 @@ namespace Banter.SDK
                 if (parts.Length < 3)
                 {
                     Debug.LogError("[Banter] Update Component message is malformed: " + sendBackParts[i]);
+                    SendError(reqId, "UPDATE_COMPONENT: Message is malformed: " + msg);
                     return;
                 }
                 var gameObject = GetObject(int.Parse(parts[0]));
@@ -882,19 +893,28 @@ namespace Banter.SDK
                     if (unityComp == null)
                     {
                         Debug.LogError("[Banter] Unity component not found: " + msg);
+                        SendError(reqId, "UPDATE_COMPONENT: Component not found: " + msg);
                     }
                     var banterComp = GetBanterComponent(int.Parse(componentId));
                     var objs = SetComponentProperties(2, parts, banterComp, msg);
                     sheetFerMainThread.Add(new Tuple<BanterComponentBase, List<object>>(unityComp, objs));
-                    if (banterComp != null && sendBack)
+                    if (banterComp != null)
                     {
-                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.COMPONENT_UPDATED);
+                        if (sendBack)
+                        {
+                            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.COMPONENT_UPDATED);
+                        }
+                    }
+                    else
+                    { 
+                        SendError(reqId, "UPDATE_COMPONENT: Component not found: " + componentId);
                     }
                 }
                 catch (Exception e)
                 {
                     // [Banter] Error updating component offthread: Object reference not set to an instance of an object: True, 0~:~-2765352|-2765670|88~~5~~0~~16.5606751 ~~0
                     Debug.LogError("[Banter] Error updating component offthread: " + e.Message + ": " + (gameObject.id == null) + ", " + msg);
+                    SendError(reqId, "UPDATE_COMPONENT: Error updating component: " + e.Message);
                 }
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -921,23 +941,18 @@ namespace Banter.SDK
             if (msgParts.Length < 3)
             {
                 Debug.LogError("[Banter] Call Method message is malformed: " + msg);
+                SendError(reqId, "CALL_METHOD: Message is malformed: " + msg);
                 return;
             }
             var methodName = msgParts[1];
             if (!int.TryParse(msgParts[0], out var oid))
             {
                 Debug.LogWarning($"CallMethodOnJsComponent called method {methodName} with an unset instance ID, it probably hasn't been created yet");
+                SendError(reqId, $"CALL_METHOD: called method {methodName} with an unset instance ID, it probably hasn't been created yet");
                 return;
             }
             var banterComponent = GetBanterComponent(int.Parse(msgParts[0]));
 
-            // var paramsList = "";
-            // for(int i = 2; i < msgParts.Length; i++) {
-            //     paramsList += msgParts[i];
-            //     if(i < msgParts.Length - 1) {
-            //         paramsList += MessageDelimiters.PRIMARY;
-            //     }
-            // }
             var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries);
             var paramList = new List<object>();
             foreach (var param in parameters)
@@ -946,6 +961,7 @@ namespace Banter.SDK
                 if (paramParts.Length < 1)
                 {
                     Debug.LogError("[Banter] Call Method message is malformed: " + msg);
+                    SendError(reqId, "CALL_METHOD: Message is malformed: " + msg);
                     return;
                 }
                 var paramType = (PropertyType)int.Parse(paramParts[0]);
@@ -1028,6 +1044,7 @@ namespace Banter.SDK
             if (msgParts.Length < 2)
             {
                 Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                SendError(reqId, "SET_ACTIVE: Message is malformed: " + msg);
                 return;
             }
             try
@@ -1041,6 +1058,10 @@ namespace Banter.SDK
                         SendObjectUpdate(banterObject, reqId);
                     }, $"{nameof(BanterScene)}.{nameof(SetJsObjectActive)}"));
                 }
+                else
+                {
+                    SendError(reqId, "SET_ACTIVE: Could not find object with id: " + msgParts[0]);
+                }
             }
             catch (Exception ex)
             {
@@ -1048,13 +1069,14 @@ namespace Banter.SDK
                 Debug.LogException(ex);
             }
         }
-        
+
         public void SetJsObjectNetworkId(string msg, int reqId)
         {
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
             if (msgParts.Length < 2)
             {
-                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                Debug.LogError("[Banter] SetJsObjectNetworkId message is malformed: " + msg);
+                SendError(reqId, "SET_NETWORK_ID: Message is malformed: " + msg);
                 return;
             }
             var banterObject = GetObject(int.Parse(msgParts[0]));
@@ -1066,6 +1088,49 @@ namespace Banter.SDK
                     SendObjectUpdate(banterObject.gameObject, reqId);
                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectNetworkId)}"));
             }
+            else
+            {
+                SendError(reqId, "SET_NETWORK_ID: Could not find object with id: " + msgParts[0]);
+            }
+        }
+
+        void SendError(int reqId, string msg)
+        {
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.REQUEST_ERROR + MessageDelimiters.PRIMARY + msg);
+        }
+        
+        public void InlineJsObject(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY, 2);
+            if (msgParts.Length < 2)
+            {
+                Debug.LogError("[Banter] InlineJsObject message is malformed: " + msg);
+                SendError(reqId, "INLINE_OBJECT: Message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+            var path = msgParts[1];
+            if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+                {
+                    var child = banterObject.transform.Find(path);
+                    if(child)
+                    {
+                        child.gameObject.AddComponent<BanterObjectId>();
+                        await new WaitForEndOfFrame();
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_OBJECT + MessageDelimiters.PRIMARY + child.gameObject.GetInstanceID());
+                    }
+                    else
+                    {
+                        SendError(reqId, "INLINE_OBJECT: Could not find child at path: " + path);
+                    }
+                }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+            }
+            else
+            {
+                SendError(reqId, "INLINE_OBJECT: Could not find object with id: " + msgParts[0]);
+            }
         }
 
         public void GetJsBounds(string msg, int reqId)
@@ -1074,10 +1139,11 @@ namespace Banter.SDK
             if (msgParts.Length < 2)
             {
                 Debug.LogError("[Banter] GetJsBounds message is malformed: " + msg);
+                SendError(reqId, "GET_BOUNDS: Message is malformed: " + msg);
                 return;
             }
-            var banterObject = GetGameObject(int.Parse(msgParts[0]));
-            var isCollider = msgParts[1] == "1";
+            var banterObject = GetGameObject(int.Parse(msgParts[1]));
+            var isCollider = msgParts[0] == "1";
             if (banterObject != null)
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -1085,10 +1151,25 @@ namespace Banter.SDK
                      object[] renderers = isCollider ? banterObject.GetComponentsInChildren<Collider>() : banterObject.GetComponentsInChildren<Renderer>();
                      if (renderers.Length > 0)
                      {
-                         var bounds = ((Collider)renderers[0]).bounds;
+                         Bounds bounds;
+                         if (isCollider)
+                         {
+                             bounds = ((Collider)renderers[0]).bounds;
+                         }
+                         else
+                         {
+                             bounds = ((Renderer)renderers[0]).bounds;
+                         }
                          for (int i = 1; i < renderers.Length; i++)
                          {
-                             bounds.Encapsulate(((Collider)renderers[i]).bounds);
+                             if (isCollider)
+                             {
+                                 bounds.Encapsulate(((Collider)renderers[i]).bounds);
+                             }
+                             else
+                             {
+                                 bounds.Encapsulate(((Renderer)renderers[i]).bounds);
+                             }
                          }
                          var center = bounds.center;
                          var extents = bounds.extents;
@@ -1101,6 +1182,11 @@ namespace Banter.SDK
 
                  }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
             }
+            else
+            {
+                
+                SendError(reqId, "GET_BOUNDS: Object not found: " + msgParts[1]);
+            }
         }
         
         public void SetJsObjectTag(string msg, int reqId)
@@ -1108,7 +1194,8 @@ namespace Banter.SDK
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
             if (msgParts.Length < 2)
             {
-                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                Debug.LogError("[Banter] SetJsObjectTag message is malformed: " + msg);
+                SendError(reqId, "SET_TAG: Message is malformed: " + msg);
                 return;
             }
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
@@ -1120,6 +1207,10 @@ namespace Banter.SDK
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
             }
+            else
+            {
+                SendError(reqId, "SET_TAG: Object not found: " + msgParts[0]);
+            }
         }
         
         public void SetJsObjectName(string msg, int reqId)
@@ -1127,7 +1218,8 @@ namespace Banter.SDK
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
             if (msgParts.Length < 2)
             {
-                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                Debug.LogError("[Banter] SetJsObjectname message is malformed: " + msg);
+                SendError(reqId, "SET_NAME: Message is malformed: " + msg);
                 return;
             }
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
@@ -1139,6 +1231,10 @@ namespace Banter.SDK
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
             }
+            else
+            {
+                SendError(reqId, "SET_NAME: Object not found: " + msgParts[0]);
+            }
         }
         
         public void SetJsObjectLayer(string msg, int reqId)
@@ -1146,7 +1242,8 @@ namespace Banter.SDK
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
             if (msgParts.Length < 2)
             {
-                Debug.LogError("[Banter] SetJsObjectActive message is malformed: " + msg);
+                Debug.LogError("[Banter] SetJsObjectLayer message is malformed: " + msg);
+                SendError(reqId, "SET_LAYER: Message is malformed: " + msg);
                 return;
             }
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
@@ -1160,6 +1257,10 @@ namespace Banter.SDK
                  }, $"{nameof(BanterScene)}.{nameof(SetJsObjectLayer)}"));
 
             }
+            else
+            {
+                SendError(reqId, "SET_LAYER: Object not found: " + msgParts[0]);
+            }
         }
         public void PhysicsRaycast(string msg, int reqId)
         {
@@ -1167,6 +1268,7 @@ namespace Banter.SDK
             if (msgParts.Length < 6)
             {
                 Debug.LogError("[Banter] Physics Raycast message is malformed: " + msg);
+                SendError(reqId, "RAYCAST: Message is malformed: " + msg);
                 return;
             }
             var position = new Vector3(NumberFormat.Parse(msgParts[0]), NumberFormat.Parse(msgParts[1]), NumberFormat.Parse(msgParts[2]));
@@ -1260,6 +1362,10 @@ namespace Banter.SDK
                     SendObjectUpdate(newObject, reqId);
                  }, $"{nameof(BanterScene)}.{nameof(InstantiateJsObject)}"));
             }
+            else
+            {
+                SendError(reqId, "INSTANTIATE: Object not found: " + msgParts[0]);
+            }
         }
         public void SendBrowserMessage(string msg, int reqId)
         {
@@ -1272,6 +1378,7 @@ namespace Banter.SDK
             if (parts.Length < 3)
             {
                 Debug.LogError("[Banter] Add Component message is malformed: " + msg);
+                SendError(reqId, "ADD_COMPONENT: Message is malformed: " + msg);
                 return;
             }
             var oid = int.Parse(parts[0]);
@@ -1279,6 +1386,7 @@ namespace Banter.SDK
             if (gameObject == null)
             {
                 Debug.LogError("[Banter] Add Component object is null, count:  " + objects.Count + ", " + InstanceID + ", " + msg);
+                SendError(reqId, "ADD_COMPONENT: Object not found: " + oid);
                 return;
             }
             else
@@ -1397,6 +1505,7 @@ namespace Banter.SDK
             if (msgParts.Length < 3)
             {
                 Debug.LogError("[Banter] Set Parent message is malformed: " + msg);
+                SendError(reqId, "SET_PARENT: Message is malformed: " + msg);
                 return;
             }
             var parentObject = GetGameObject(int.Parse(msgParts[0]));
@@ -1432,7 +1541,14 @@ namespace Banter.SDK
         void SendObjectUpdate(int oid, int reqId)
         {
             var banterObject = GetGameObject(oid);
-            SendObjectUpdate(banterObject, reqId);
+            if (banterObject != null)
+            {
+                SendObjectUpdate(banterObject, reqId);
+            }
+            else
+            {
+                SendError(reqId, "SEND_UPDATE: Object not found: " + oid);
+            }
         }
         // TODO: This too
         void SendObjectUpdate(GameObject banterObject, int reqId)
@@ -1445,6 +1561,10 @@ namespace Banter.SDK
                     parent = banterObject.transform.parent.gameObject.GetInstanceID();
                 }
                 link.Send(GetObjectUpdateString(banterObject, reqId, parent, null));
+            }
+            else
+            {
+                SendError(reqId, "SEND_UPDATE: Object not found...");
             }
         }
 
@@ -1513,6 +1633,7 @@ namespace Banter.SDK
             if (parts.Length < 2)
             {
                 Debug.LogError("[Banter] WatchJsTransform message is malformed: " + msg);
+                SendError(reqId, "WATCH_TRANSFORM: Message is malformed: " + msg);
                 return;
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
@@ -1566,6 +1687,7 @@ namespace Banter.SDK
             if (parts.Length < 2)
             {
                 Debug.LogError("[Banter] SetJsTransform message is malformed: " + msg);
+                SendError(reqId, "SET_TRANSFORM: Message is malformed: " + msg);
                 return;
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
@@ -1585,6 +1707,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate Position message is malformed: " + part + " _ " + transformUpdate.Length);
+                                    SendError(reqId, "TRANSORM_UPDATE position: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.position = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
@@ -1594,6 +1717,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate LocalPosition message is malformed: " + part);
+                                    SendError(reqId, "TRANSORM_UPDATE localPosition: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.localPosition = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
@@ -1603,6 +1727,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate EulerAngles message is malformed: " + msg);
+                                    SendError(reqId, "TRANSORM_UPDATE eulerAngles: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.eulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
@@ -1612,6 +1737,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate LocalEulerAngles message is malformed: " + msg);
+                                    SendError(reqId, "TRANSORM_UPDATE localEulerAngles: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.localEulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
@@ -1621,6 +1747,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate Rotation message is malformed: " + msg);
+                                    SendError(reqId, "TRANSORM_UPDATE rotation: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.rotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
@@ -1630,6 +1757,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
+                                    SendError(reqId, "TRANSORM_UPDATE localRotation: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.localRotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
@@ -1639,6 +1767,7 @@ namespace Banter.SDK
                                 {
 
                                     Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
+                                    SendError(reqId, "TRANSORM_UPDATE localScale: Message is malformed: " + msg);
                                     break;
                                 }
                                 obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
@@ -1655,6 +1784,7 @@ namespace Banter.SDK
             if (parts.Length < 3)
             {
                 Debug.LogError("[Banter] Add Object message is malformed: " + msg);
+                SendError(reqId, "ADD_OBJECT: Message is malformed: " + msg);
                 return;
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
@@ -1902,6 +2032,7 @@ namespace Banter.SDK
             if (msgParts.Length < 2)
             {
                 Debug.LogError("[Banter] Watch Properties message is malformed: " + msg);
+                SendError(reqId, "WATCH_PROPERTIES: Message is malformed: " + msg);
                 return;
             }
             var banterComponent = GetBanterComponent(int.Parse(msgParts[0]));
@@ -1922,6 +2053,7 @@ namespace Banter.SDK
                 if (comParts.Length < 2)
                 {
                     Debug.LogError("[Banter] Query Components message is malformed: " + msg);
+                    SendError(reqId, "QUERY_COMPONENT: Message is malformed: " + msg);
                     continue;
                 }
                 var banterComponent = GetBanterComponent(int.Parse(comParts[0]));

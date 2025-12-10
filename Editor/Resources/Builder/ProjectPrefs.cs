@@ -136,7 +136,14 @@ namespace LongBunnyLabs
 
     public static bool HasKey(string key)
     {
-      return Instance.Records.Any(x => x.Key.Equals(key));
+      try
+      {
+        return Instance.Records.Any(x => x.Key.Equals(key));
+      }
+      catch
+      {
+        return false;
+      }
     }
 
     public static void DeleteKey(string key)

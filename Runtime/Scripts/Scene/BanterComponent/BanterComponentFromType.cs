@@ -101,6 +101,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterRing>();
                 case ComponentType.BanterScherk:
                     return gameObject.AddComponent<BanterScherk>();
+                case ComponentType.SkinnedMeshRenderer:
+                    return gameObject.AddComponent<BanterSkinnedMeshRenderer>();
                 case ComponentType.BanterSnail:
                     return gameObject.AddComponent<BanterSnail>();
                 case ComponentType.BanterSphere:
