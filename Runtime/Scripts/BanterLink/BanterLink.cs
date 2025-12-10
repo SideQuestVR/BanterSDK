@@ -365,6 +365,10 @@ namespace Banter.SDK
                 {
                     scene.InlineJsObject(GetMsgData(msg, APICommands.INLINE_OBJECT), id);
                 }
+                else if (msg.StartsWith(APICommands.INLINE_CRAWL))
+                {
+                    scene.InlineJsCrawl(GetMsgData(msg, APICommands.INLINE_CRAWL), id);
+                }
                 // Asset System Commands
                 else if (msg.StartsWith(APICommands.CREATE_ASSET))
                 {

@@ -70,6 +70,7 @@ public class APICommands
     public const string DEEP_LINK = "!dl!";
     public const string ONE_SHOT = "!ons!";
     public const string INLINE_OBJECT = "!ilo!";
+    public const string INLINE_CRAWL = "!ic!";
     public const string SEND_MENU_BROWSER_MESSAGE = "!smbm!";
     public const string INJECT_JS = "!ijs!";
     public const string INJECT_JS_CALLBACK = "!ijc!";

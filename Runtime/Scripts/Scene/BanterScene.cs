@@ -1098,7 +1098,37 @@ namespace Banter.SDK
         {
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.REQUEST_ERROR + MessageDelimiters.PRIMARY + msg);
         }
-        
+
+        public void InlineJsCrawl(string msg, int reqId)
+        {
+            var msgParts = msg.Split(MessageDelimiters.PRIMARY, 2);
+            if (msgParts.Length < 1)
+            {
+                Debug.LogError("[Banter] InlineJsCrawl message is malformed: " + msg);
+                SendError(reqId, "INLINE_CRAWL: Message is malformed: " + msg);
+                return;
+            }
+            var banterObject = GetGameObject(int.Parse(msgParts[0]));
+              if (banterObject != null)
+            {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+                {
+                    foreach (var t in banterObject.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (t != banterObject.transform)
+                        {
+                            t.gameObject.AddComponent<BanterObjectId>();
+                        }
+                    }
+                    link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_CRAWL);
+                }, $"{nameof(BanterScene)}.{nameof(InlineJsCrawl)}"));
+            }
+            else
+            {
+                SendError(reqId, "INLINE_OBJECT: Could not find object with id: " + msgParts[0]);
+            }
+        }
+
         public void InlineJsObject(string msg, int reqId)
         {
             var msgParts = msg.Split(MessageDelimiters.PRIMARY, 2);
@@ -1125,7 +1155,7 @@ namespace Banter.SDK
                     {
                         SendError(reqId, "INLINE_OBJECT: Could not find child at path: " + path);
                     }
-                }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+                }, $"{nameof(BanterScene)}.{nameof(InlineJsObject)}"));
             }
             else
             {
