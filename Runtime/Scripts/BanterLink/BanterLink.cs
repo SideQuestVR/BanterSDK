@@ -357,6 +357,14 @@ namespace Banter.SDK
                 {
                     _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
                 }
+                else if (msg.StartsWith(APICommands.GET_BOUNDS))
+                {
+                    scene.GetJsBounds(GetMsgData(msg, APICommands.GET_BOUNDS), id);
+                }
+                else if (msg.StartsWith(APICommands.INLINE_OBJECT))
+                {
+                    scene.InlineJsObject(GetMsgData(msg, APICommands.INLINE_OBJECT), id);
+                }
                 // Asset System Commands
                 else if (msg.StartsWith(APICommands.CREATE_ASSET))
                 {

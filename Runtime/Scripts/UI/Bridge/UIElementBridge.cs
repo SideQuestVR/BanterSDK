@@ -286,7 +286,7 @@ namespace Banter.UI.Bridge
                     2 => new ListView(), // ListView
                     10 => new BanterUIButton(), // Button -> BanterUIButton
                     11 => new BanterUILabel(), // Label -> BanterUILabel
-                    12 => new TextField(), // TextField
+                    12 => new BanterUITextField(), // TextField -> BanterUITextField
                     13 => new Toggle(), // Toggle
                     14 => new Slider(), // Slider
                     15 => new DropdownField(), // DropdownField

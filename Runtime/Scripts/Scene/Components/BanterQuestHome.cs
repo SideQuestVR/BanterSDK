@@ -51,20 +51,6 @@ namespace Banter.SDK
 
         private bool loadStarted;
         private GameObject loadedModel;
-        private bool alreadyStarted = false;
-
-        BanterScene _scene;
-        public BanterScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BanterScene.Instance();
-                }
-                return _scene;
-            }
-        }
 
         internal override void StartStuff()
         {
@@ -854,86 +840,91 @@ namespace Banter.SDK
         }
 
         /// <summary>
-        /// Public C# API property for URL
+        /// Cleanup loaded assets
         /// </summary>
-        public System.String Url
+        internal override void DestroyStuff()
         {
-            get { return url; }
-            set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); }
+            if (loadedModel != null)
+            {
+                Destroy(loadedModel);
+                loadedModel = null;
+            }
         }
-
-        /// <summary>
-        /// Public C# API property for AddColliders
-        /// </summary>
-        public System.Boolean AddColliders
+        internal override void UpdateStuff()
         {
-            get { return addColliders; }
-            set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); }
+            
         }
+        // BANTER COMPILED CODE 
+        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
+        public System.Boolean AddColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
+        public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
 
-        /// <summary>
-        /// Public C# API property for Climbable
-        /// </summary>
-        public System.Boolean Climbable
+        BanterScene _scene;
+        public BanterScene scene
         {
-            get { return climbable; }
-            set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); }
+            get
+            {
+                if (_scene == null)
+                {
+                    _scene = BanterScene.Instance();
+                }
+                return _scene;
+            }
         }
-
-        /// <summary>
-        /// Unity Awake - Register component with BanterScene
-        /// </summary>
-        void Awake()
-        {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        /// <summary>
-        /// Unity Start - Initialize and start component
-        /// </summary>
+        bool alreadyStarted = false;
         void Start()
         {
             Init();
             StartStuff();
         }
 
-        /// <summary>
-        /// Cleanup when component is destroyed
-        /// </summary>
+        internal override void ReSetup()
+        {
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.addColliders, PropertyName.climbable, };
+            UpdateCallback(changedProperties);
+        }
+
+        internal override void Init(List<object> constructorProperties = null)
+        {
+            if (alreadyStarted) { return; }
+            alreadyStarted = true;
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterQuestHome);
+
+
+            oid = gameObject.GetInstanceID();
+            cid = GetInstanceID();
+
+            if (constructorProperties != null)
+            {
+                Deserialise(constructorProperties);
+            }
+
+            SyncProperties(true);
+
+        }
+
+        void Awake()
+        {
+            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+        }
+
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
+
             DestroyStuff();
         }
 
-        // ========== ABSTRACT METHOD IMPLEMENTATIONS ==========
-
-        /// <summary>
-        /// Per-frame update (not called - BanterQuestHome has no [Watch] properties)
-        /// </summary>
-        internal override void UpdateStuff()
+        internal override object CallMethod(string methodName, List<object> parameters)
         {
-
+            return null;
         }
 
-        /// <summary>
-        /// Watch properties for changes (unused - handled automatically)
-        /// </summary>
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-            // Empty implementation - property watching handled by UpdateCallback
-        }
-
-        /// <summary>
-        /// Deserialize property updates from JavaScript
-        /// </summary>
         internal override void Deserialise(List<object> values)
         {
             List<PropertyName> changedProperties = new List<PropertyName>();
-
             for (int i = 0; i < values.Count; i++)
             {
-                // Handle string properties (url)
                 if (values[i] is BanterString)
                 {
                     var valurl = (BanterString)values[i];
@@ -943,45 +934,31 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-
-                // Handle boolean properties (addColliders, climbable)
                 if (values[i] is BanterBool)
                 {
-                    var valbool = (BanterBool)values[i];
-                    if (valbool.n == PropertyName.addColliders)
+                    var valaddColliders = (BanterBool)values[i];
+                    if (valaddColliders.n == PropertyName.addColliders)
                     {
-                        addColliders = valbool.x;
+                        addColliders = valaddColliders.x;
                         changedProperties.Add(PropertyName.addColliders);
                     }
-                    else if (valbool.n == PropertyName.climbable)
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valclimbable = (BanterBool)values[i];
+                    if (valclimbable.n == PropertyName.climbable)
                     {
-                        climbable = valbool.x;
+                        climbable = valclimbable.x;
                         changedProperties.Add(PropertyName.climbable);
                     }
                 }
             }
-
-            if (values.Count > 0)
-            {
-                UpdateCallback(changedProperties);
-            }
+            if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
 
-        /// <summary>
-        /// Call method from JavaScript (not used for BanterQuestHome)
-        /// </summary>
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null; // No callable methods for BanterQuestHome
-        }
-
-        /// <summary>
-        /// Sync properties from Unity to JavaScript
-        /// </summary>
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
             var updates = new List<BanterComponentPropertyUpdate>();
-
             if (force)
             {
                 updates.Add(new BanterComponentPropertyUpdate()
@@ -993,7 +970,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
-
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.addColliders,
@@ -1003,7 +982,9 @@ namespace Banter.SDK
                     oid = oid,
                     cid = cid
                 });
-
+            }
+            if (force)
+            {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
                     name = PropertyName.climbable,
@@ -1014,63 +995,13 @@ namespace Banter.SDK
                     cid = cid
                 });
             }
-
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        /// <summary>
-        /// Reset and reload the component with all properties
-        /// </summary>
-        internal override void ReSetup()
+        internal override void WatchProperties(PropertyName[] properties)
         {
-            List<PropertyName> changedProperties = new List<PropertyName>()
-            {
-                PropertyName.url,
-                PropertyName.addColliders,
-                PropertyName.climbable
-            };
-            UpdateCallback(changedProperties);
         }
 
-        /// <summary>
-        /// Initialize component with BanterScene
-        /// </summary>
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-
-            // Only register with scene if link is available (not in standalone mode)
-            if (scene.link != null)
-            {
-                scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BanterQuestHome);
-            }
-
-            oid = gameObject.GetInstanceID();
-            cid = GetInstanceID();
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            // Only sync properties if link is available
-            if (scene.link != null)
-            {
-                SyncProperties(true);
-            }
-        }
-
-        /// <summary>
-        /// Cleanup loaded assets
-        /// </summary>
-        internal override void DestroyStuff()
-        {
-            if (loadedModel != null)
-            {
-                Destroy(loadedModel);
-                loadedModel = null;
-            }
-        }
+        // END BANTER COMPILED CODE 
     }
 }
