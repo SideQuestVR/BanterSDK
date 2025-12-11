@@ -14,7 +14,7 @@ const scene = BS.BanterScene.GetInstance();
 scene.On("unity-loaded", () => {
 
     // Create a simple object with a red sphere
-    const sphere = BS.CreateGameObject({
+    const sphere = new BS.GameObject({
         name: "MySphere",
         layer: BS.L.UI, // Layer 5 for UI.
         localPosition: new BS.Vector3(0, 1.5, 2)
@@ -45,7 +45,7 @@ scene.On("unity-loaded", () => {
 The scene is the top-level singleton that manages all GameObjects, components, users, and communication with Unity. Access it via `BS.BanterScene.GetInstance()`.
 
 ### GameObject
-GameObjects are the basic building blocks - containers that hold components. Create them with `BS.CreateGameObject({...})`. Every GameObject has a Transform for position, rotation, and scale.
+GameObjects are the basic building blocks - containers that hold components. Create them with `new BS.GameObject({...})`. Every GameObject has a Transform for position, rotation, and scale.
 
 ### Components
 Components add functionality to GameObjects. Physics, rendering, audio, interaction - all are components. Add them with `gameObject.AddComponent(new BS.ComponentName({...}))`.
@@ -289,21 +289,59 @@ scene.PlayerSpeed(true); // true = fast, false = normal
 scene.SendHapticImpulse(0.5, 0.1, BS.HandSide.LEFT); // amplitude, duration, hand
 ```
 
-### Input Blocking
+### Input Blocking & Controller Events
 
-Block specific controller inputs:
+Block specific controller inputs to handle them yourself:
 
 ```js
+// Block thumbstick input (for custom movement/menus)
 scene.SetBlockLeftThumbstick(true);
 scene.SetBlockRightThumbstick(true);
+scene.SetBlockLeftThumbstickClick(true);
+scene.SetBlockRightThumbstickClick(true);
+
+// Block button input
 scene.SetBlockLeftPrimary(true);
 scene.SetBlockRightPrimary(true);
 scene.SetBlockLeftSecondary(true);
 scene.SetBlockRightSecondary(true);
+
+// Block trigger input
 scene.SetBlockLeftTrigger(true);
 scene.SetBlockRightTrigger(true);
-scene.SetBlockLeftThumbstickClick(true);
-scene.SetBlockRightThumbstickClick(true);
+```
+
+#### Controller Input Events
+
+When inputs are blocked, handle them with these events:
+
+```js
+// Button pressed
+scene.On("button-pressed", (e) => {
+    console.log(e.detail.button, e.detail.side);
+    // button: BS.ButtonType (TRIGGER, GRIP, PRIMARY, SECONDARY, THUMBSTICK)
+    // side: BS.HandSide (LEFT, RIGHT)
+});
+
+// Button released
+scene.On("button-released", (e) => {
+    console.log(e.detail.button, e.detail.side);
+});
+
+// Thumbstick axis (fires continuously while moved)
+scene.On("controller-axis-update", (e) => {
+    console.log(e.detail.hand, e.detail.x, e.detail.y);
+    // hand: BS.HandSide (LEFT, RIGHT)
+    // x: number (-1 to 1, left/right)
+    // y: number (-1 to 1, down/up)
+});
+
+// Trigger axis (fires continuously while pressed)
+scene.On("trigger-axis-update", (e) => {
+    console.log(e.detail.hand, e.detail.value);
+    // hand: BS.HandSide (LEFT, RIGHT)
+    // value: number (0 to 1, trigger depression)
+});
 ```
 
 ---
@@ -342,21 +380,9 @@ scene.On("user-left", (e) => {
 });
 ```
 
-### Input Events
+### Keyboard Events
 
 ```js
-// Controller button pressed
-scene.On("button-pressed", (e) => {
-    console.log(e.detail.button, e.detail.side);
-    // button: BS.ButtonType (TRIGGER, GRIP, PRIMARY, SECONDARY)
-    // side: BS.HandSide (LEFT, RIGHT)
-});
-
-// Controller button released
-scene.On("button-released", (e) => {
-    console.log(e.detail.button, e.detail.side);
-});
-
 // Keyboard key pressed
 scene.On("key-press", (e) => {
     console.log(e.detail.key); // BS.KeyCode value
@@ -395,6 +421,43 @@ scene.On("transcription", (e) => {
 });
 ```
 
+### Component & GameObject Events
+
+Components and GameObjects fire their own events you can listen to:
+
+```js
+const obj = new BS.GameObject({ name: "Model" });
+const gltf = obj.AddComponent(new BS.BanterGLTF({ url: "model.glb" }));
+
+// Component finished loading its asset (GLTF, video, audio, etc.)
+gltf.On("loaded", () => {
+    console.log("Model loaded!", gltf.isLoaded); // true
+});
+
+// Loading progress (0-1 for components that load assets)
+gltf.On("progress", (e) => {
+    console.log("Loading:", e.detail.progress * 100 + "%");
+});
+
+// Component/GameObject linked to Unity engine
+gltf.On("unity-linked", (e) => {
+    console.log("Unity ID:", e.detail.unityId);
+});
+
+// GameObject received update from Unity
+obj.On("object-update", (e) => {
+    console.log("Updated components:", e.detail); // array of component IDs
+});
+```
+
+**Component `isLoaded` property:**
+```js
+// Check if component has finished loading
+if (gltf.isLoaded) {
+    // Asset is ready
+}
+```
+
 ### Browser Events
 
 ```js
@@ -415,10 +478,10 @@ scene.On("aframe-trigger", (e) => {
 
 ### Creating GameObjects
 
-Use `BS.CreateGameObject()` with a configuration object:
+Use the `BS.GameObject` constructor with a configuration object:
 
 ```js
-const obj = BS.CreateGameObject({
+const obj = new BS.GameObject({
     name: "MyObject",                           // Required
     localPosition: new BS.Vector3(0, 1, 0),     // Optional
     localEulerAngles: new BS.Vector3(0, 45, 0), // Optional (degrees)
@@ -605,7 +668,7 @@ obj.On("browser-message", (e) => {
 All components use the constructor pattern with config objects. Add them to GameObjects with `AddComponent()`.
 
 ```js
-const obj = BS.CreateGameObject({ name: "MyObject" });
+const obj = new BS.GameObject({ name: "MyObject" });
 obj.AddComponent(new BS.ComponentName({ property: value }));
 ```
 
@@ -1336,7 +1399,7 @@ Create 2D user interfaces in VR with the UI system.
 Container for UI elements. Must be added to a GameObject first.
 
 ```js
-const panelObj = BS.CreateGameObject({ name: "UIPanel" });
+const panelObj = new BS.GameObject({ name: "UIPanel" });
 const panel = panelObj.AddComponent(new BS.BanterUIPanel({
     resolution: new BS.Vector2(800, 600),
     screenSpace: false,     // World-space UI

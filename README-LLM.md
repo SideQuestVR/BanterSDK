@@ -50,17 +50,23 @@ TeleportTo(point: Vector3, rotation: number, stopVelocity: boolean, isSpawn?: bo
 AddPlayerForce(force: Vector3, mode: ForceMode)
 SendHapticImpulse(amplitude: number, duration: number, hand: HandSide)
 
-// Input Blocking
+// Input Blocking (block to handle yourself)
 SetBlockLeftThumbstick(value: boolean)
 SetBlockRightThumbstick(value: boolean)
+SetBlockLeftThumbstickClick(value: boolean)
+SetBlockRightThumbstickClick(value: boolean)
 SetBlockLeftPrimary(value: boolean)
 SetBlockRightPrimary(value: boolean)
 SetBlockLeftSecondary(value: boolean)
 SetBlockRightSecondary(value: boolean)
 SetBlockLeftTrigger(value: boolean)
 SetBlockRightTrigger(value: boolean)
-SetBlockLeftThumbstickClick(value: boolean)
-SetBlockRightThumbstickClick(value: boolean)
+
+// Controller Input Events (use with blocking)
+"button-pressed" -> {detail: {button: ButtonType, side: HandSide}}
+"button-released" -> {detail: {button: ButtonType, side: HandSide}}
+"controller-axis-update" -> {detail: {hand: HandSide, x: number, y: number}}  // thumbstick, -1 to 1
+"trigger-axis-update" -> {detail: {hand: HandSide, value: number}}  // 0 to 1
 
 // Browser/Media
 OpenPage(url: string)
@@ -127,12 +133,10 @@ PhysicsSettingsLocked: boolean (false)
 
 ### Scene Events
 ```
-"loaded" -> {}
-"unity-loaded" -> {}
+"loaded" -> {}  // scene settled, objects enumerated
+"unity-loaded" -> {}  // Unity fully loaded, loading screen gone
 "user-joined" -> {detail: UserData}
 "user-left" -> {detail: UserData}
-"button-pressed" -> {detail: {button: ButtonType, side: HandSide}}
-"button-released" -> {detail: {button: ButtonType, side: HandSide}}
 "key-press" -> {detail: {key: KeyCode}}
 "space-state-changed" -> {detail: {changes: [{property, oldValue, newValue}]}}
 "one-shot" -> {detail: {fromId, fromAdmin, data}}
@@ -141,13 +145,26 @@ PhysicsSettingsLocked: boolean (false)
 "voice-started" -> {}
 "aframe-trigger" -> {detail: {data}}
 ```
+Note: Controller input events (button-pressed, button-released, controller-axis-update, trigger-axis-update) documented in Input Blocking section above.
+
+### Component & GameObject Events
+```
+// On Component or GameObject:
+component.On("loaded", callback)  // asset finished loading
+component.On("progress", (e) => e.detail.progress)  // 0-1 loading progress
+component.On("unity-linked", (e) => e.detail.unityId)  // linked to Unity
+gameObject.On("object-update", (e) => e.detail)  // component IDs updated
+
+// Property:
+component.isLoaded: boolean  // true when asset loaded
+```
 
 ---
 
 ## GameObject
 
 ```
-BS.CreateGameObject(config: GameObjectConfig) -> GameObject
+new BS.GameObject(config: GameObjectConfig) -> GameObject
 ```
 
 ### GameObjectConfig
@@ -725,14 +742,14 @@ obj.RemoveEventListener(eventName, callback)
 
 ### Create object with component
 ```js
-const obj = BS.CreateGameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
+const obj = new BS.GameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
 obj.AddComponent(new BS.BanterSphere({radius: 1}));
 obj.AddComponent(new BS.BanterMaterial({color: new BS.Vector4(1,0,0,1)}));
 ```
 
 ### Physics object
 ```js
-const obj = BS.CreateGameObject({name: "Ball"});
+const obj = new BS.GameObject({name: "Ball"});
 obj.AddComponent(new BS.BanterSphere({radius: 0.5}));
 obj.AddComponent(new BS.SphereCollider({radius: 0.5}));
 obj.AddComponent(new BS.BanterRigidbody({mass: 1}));
@@ -742,7 +759,7 @@ obj.On("collision-enter", (e) => console.log(e.detail.name));
 
 ### Grabbable object
 ```js
-const obj = BS.CreateGameObject({name: "Pickup"});
+const obj = new BS.GameObject({name: "Pickup"});
 obj.AddComponent(new BS.BanterGrababble({grabType: BS.BanterGrabType.Default}));
 obj.On("grab", (e) => console.log("Grabbed by", e.detail.side));
 obj.On("drop", (e) => console.log("Dropped"));
@@ -764,12 +781,3 @@ obj.WatchTransform([BS.PN.position, BS.PN.rotation], (t) => console.log(t.positi
 
 ---
 
-## Legacy (Deprecated)
-
-```js
-// OLD: await new BS.GameObject("X").Async()
-// NEW: BS.CreateGameObject({name: "X"})
-
-// OLD: new BS.BoxCollider(false, center, size)
-// NEW: new BS.BoxCollider({isTrigger: false, center, size})
-```
