@@ -65,6 +65,6 @@ namespace Banter.SDK
         BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,
-        BanterSkinnedMeshRenderer
+BanterSkinnedMeshRenderer,
     }
 }

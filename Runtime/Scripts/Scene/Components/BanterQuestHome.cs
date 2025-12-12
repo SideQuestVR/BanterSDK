@@ -1001,7 +1001,6 @@ namespace Banter.SDK
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-
         // END BANTER COMPILED CODE 
     }
 }

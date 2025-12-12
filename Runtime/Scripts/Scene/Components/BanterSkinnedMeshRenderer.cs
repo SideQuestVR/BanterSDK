@@ -237,7 +237,6 @@ namespace Banter.SDK
         }
 
         internal override void DestroyStuff() { }
-
         // BANTER COMPILED CODE 
         public System.String BlendShapes { get { return blendShapes; } set { blendShapes = value; UpdateCallback(new List<PropertyName> { PropertyName.blendShapes }); } }
         public System.String Bones { get { return bones; } set { bones = value; UpdateCallback(new List<PropertyName> { PropertyName.bones }); } }

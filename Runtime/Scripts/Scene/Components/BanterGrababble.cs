@@ -93,6 +93,7 @@ namespace Banter.SDK
                 banterHeldEventsAdded = true;
                 banterHeldEvents = gameObject.AddComponent<BanterHeldEvents>();
             }
+            gameObject.layer = 20; // grabbale layer
         }
         internal override void DestroyStuff()
         {

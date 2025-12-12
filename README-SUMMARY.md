@@ -8,6 +8,9 @@ const scene = BS.BanterScene.GetInstance();
 const obj = new BS.GameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
 obj.AddComponent(new BS.ComponentName({prop: value}));
 obj.On("event", (e) => {});
+
+const obj2 = new BS.GameObject({name: "Y", localPosition: new BS.Vector3(0,0,0)});
+obj2.SetParent(obj, false); // Worldpositionstays - true by default
 ```
 
 ## Shorthands
@@ -53,7 +56,8 @@ obj.On("event", (e) => {});
 **Visual:**
 ```
 BanterGLTF({url})
-BanterSphere({radius}), BanterBox({width, height, depth})
+BanterSphere({radius}), BanterBox({width, height, depth}), BanterCylinder({radiusTop, radiusBottom})  // curved side faces -Z
+BanterPlane({width, height}) // facing -Z
 BanterMaterial({color: Vector4, texture: url})
 BanterText({text, fontSize, color})
 Light({type, color, intensity})
@@ -95,6 +99,21 @@ ButtonType: TRIGGER, GRIP, PRIMARY, SECONDARY
 LightType: Point, Spot, Directional
 AttachmentType: Head, LeftHand, RightHand, Chest, Back
 ```
+
+## MCP Tools
+
+| Tool | Purpose |
+|------|---------|
+| `getting-started` | Read first - essential context |
+| `search-docs` | Search docs (fuse.js extended search), empty query returns all lines |
+| `get-browsers` | List browser instances (returns id, injection status) |
+| `execute-javascript` | Run JS in browser - wrap in anonymous function, avoid let/const/var |
+| `tail-logs` | Search logs by level (info,warning,error,debug) and query |
+| `reload-browser` | Reload browser by id |
+| `toggle-devtools` | Open/close Chrome devtools |
+| `mouse-input` | Send mouse events (mouseDown/Up/Move/Wheel, x, y, button) |
+| `key-input` | Send keyboard events (key, modifiers: control/alt/meta/shift) |
+| `get-child-objects` | Get scene objects by parentId ('0' for root) |
 
 ## Full Reference
 See [README-LLM.md](README-LLM.md) for complete API details.
