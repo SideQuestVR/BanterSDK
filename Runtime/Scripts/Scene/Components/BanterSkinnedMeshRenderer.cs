@@ -35,7 +35,7 @@ namespace Banter.SDK
 
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
-    [WatchComponent(typeof(SkinnedMeshRenderer))]
+    [WatchComponent]
     public class BanterSkinnedMeshRenderer : BanterComponentBase
     {
         SkinnedMeshRenderer _skinnedMeshRenderer;
@@ -96,18 +96,18 @@ namespace Banter.SDK
 
             SetupRootBone();
 
-            // if (changedProperties?.Contains(PropertyName.updateWhenOffscreen) ?? false)
-            // {
-            //     _skinnedMeshRenderer.updateWhenOffscreen = updateWhenOffscreen;
-            // }
-            // if (changedProperties?.Contains(PropertyName.skinnedMotionVectors) ?? false)
-            // {
-            //     _skinnedMeshRenderer.skinnedMotionVectors = skinnedMotionVectors;
-            // }
-            // if (changedProperties?.Contains(PropertyName.quality) ?? false)
-            // {
-            //     _skinnedMeshRenderer.quality = (SkinQuality)quality;
-            // }
+            if (changedProperties?.Contains(PropertyName.updateWhenOffscreen) ?? false)
+            {
+                _skinnedMeshRenderer.updateWhenOffscreen = updateWhenOffscreen;
+            }
+            if (changedProperties?.Contains(PropertyName.skinnedMotionVectors) ?? false)
+            {
+                _skinnedMeshRenderer.skinnedMotionVectors = skinnedMotionVectors;
+            }
+            if (changedProperties?.Contains(PropertyName.quality) ?? false)
+            {
+                _skinnedMeshRenderer.quality = (SkinQuality)quality;
+            }
 
             UpdateBlendShapesInfo();
             UpdateBonesInfo();
@@ -412,7 +412,7 @@ namespace Banter.SDK
                     name = PropertyName.blendShapes,
                     type = PropertyType.String,
                     value = blendShapes,
-                    componentType = ComponentType.SkinnedMeshRenderer,
+                    componentType = ComponentType.BanterSkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -424,7 +424,7 @@ namespace Banter.SDK
                     name = PropertyName.bones,
                     type = PropertyType.String,
                     value = bones,
-                    componentType = ComponentType.SkinnedMeshRenderer,
+                    componentType = ComponentType.BanterSkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -436,7 +436,7 @@ namespace Banter.SDK
                     name = PropertyName.rootBoneInstanceId,
                     type = PropertyType.Int,
                     value = rootBoneInstanceId,
-                    componentType = ComponentType.SkinnedMeshRenderer,
+                    componentType = ComponentType.BanterSkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -448,7 +448,7 @@ namespace Banter.SDK
                     name = PropertyName.updateWhenOffscreen,
                     type = PropertyType.Bool,
                     value = updateWhenOffscreen,
-                    componentType = ComponentType.SkinnedMeshRenderer,
+                    componentType = ComponentType.BanterSkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -460,7 +460,7 @@ namespace Banter.SDK
                     name = PropertyName.skinnedMotionVectors,
                     type = PropertyType.Bool,
                     value = skinnedMotionVectors,
-                    componentType = ComponentType.SkinnedMeshRenderer,
+                    componentType = ComponentType.BanterSkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -472,7 +472,7 @@ namespace Banter.SDK
                     name = PropertyName.quality,
                     type = PropertyType.Int,
                     value = quality,
-                    componentType = ComponentType.SkinnedMeshRenderer,
+                    componentType = ComponentType.BanterSkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });

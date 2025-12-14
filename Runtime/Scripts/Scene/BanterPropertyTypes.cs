@@ -4,6 +4,64 @@ using Banter.SDK;
 using PropertyName = Banter.SDK.PropertyName;
 
 [Serializable]
+public struct BanterVector5
+{
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+    public float v;
+    public PropertyName n;
+    public int GetShortType()
+    {
+        return (int)PropertyType.Vector5;
+    }
+    public string Serialise()
+    {
+        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}{MessageDelimiters.SECONDARY}{w}{MessageDelimiters.SECONDARY}{v}";
+    }
+    public void Deserialise(string str)
+    {
+        var parts = str.Split(MessageDelimiters.SECONDARY);
+        if (parts.Length < 2) return;
+        n = (PropertyName)int.Parse(parts[0]);
+        x = NumberFormat.Parse(parts[2]);
+        y = NumberFormat.Parse(parts[3]);
+        z = NumberFormat.Parse(parts[4]);
+        w = NumberFormat.Parse(parts[5]);
+        v = NumberFormat.Parse(parts[6]);
+    }
+
+
+    public static explicit operator BanterVector5(JointLimits v)
+    {
+        return new BanterVector5() { x = v.bounciness, y = v.bounceMinVelocity, z = v.contactDistance, w = v.min, v = v.max };
+    }
+    public static explicit operator JointLimits(BanterVector5 v)
+    {
+        return new JointLimits() { bounciness = v.x, bounceMinVelocity = v.y, contactDistance = v.z, min = v.w, max = v.v };
+    }
+}
+
+public class Vector5
+{
+    public Vector5(float x, float y, float z, float w, float v)
+    {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.w = w;
+        this.v = v;
+    }
+    public float x;
+    public float y;
+    public float z;
+    public float w;
+    public float v;
+    
+}
+
+[Serializable]
 public struct BanterVector4
 {
     public float x;

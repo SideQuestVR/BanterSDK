@@ -7,8 +7,10 @@ public enum PropertyType
     Vector2,
     Vector3,
     Vector4,
+    Vector5,
     Quaternion,
     SoftJointLimit,
+    JointLimits,
     JointDrive,
     NotSupported,
     // Reference types

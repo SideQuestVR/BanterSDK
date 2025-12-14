@@ -148,6 +148,7 @@ namespace Banter.SDK
         fireRate,
         auto,
         useLimits,
+        limits,
         useMotor,
         useSpring,
         path,

@@ -17,6 +17,7 @@ using Banter.FlexaBody;
 
 
 
+
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
@@ -1517,6 +1518,16 @@ namespace Banter.SDK
                             var valVector4W = NumberFormat.Parse(propParts[5]);
                             updates.Add(new BanterVector4() { n = name, x = valVector4X, y = valVector4Y, z = valVector4Z, w = valVector4W });
                             banterComp.UpdateProperty(name, new Vector4(valVector4X, valVector4Y, valVector4Z, valVector4W));
+                            break;
+                        case PropertyType.Vector5:
+                        case PropertyType.JointLimits:
+                            var valVector5X = NumberFormat.Parse(propParts[2]);
+                            var valVector5Y = NumberFormat.Parse(propParts[3]);
+                            var valVector5Z = NumberFormat.Parse(propParts[4]);
+                            var valVector5W = NumberFormat.Parse(propParts[5]);
+                            var valVector5V = NumberFormat.Parse(propParts[6]);
+                            updates.Add(new BanterVector5() { n = name, x = valVector5X, y = valVector5Y, z = valVector5Z, w = valVector5W, v = valVector5V });
+                            banterComp.UpdateProperty(name, new Vector5(valVector5X, valVector5Y, valVector5Z, valVector5W, valVector5V));
                             break;
                     }
 
