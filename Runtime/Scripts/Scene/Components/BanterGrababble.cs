@@ -75,25 +75,6 @@ namespace Banter.SDK
         }
         internal override void StartStuff()
         {
-            banterGrabHandle = gameObject.GetComponent<BanterGrabHandle>();
-            if (!banterGrabHandle)
-            {
-                banterGrabHandleAdded = true;
-                banterGrabHandle = gameObject.AddComponent<BanterGrabHandle>();
-            }
-            banterWorldObject = gameObject.GetComponent<BanterWorldObject>();
-            if (!banterWorldObject)
-            {
-                banterWorldObjectAdded = true;
-                banterWorldObject = gameObject.AddComponent<BanterWorldObject>();
-            }
-            banterHeldEvents = gameObject.GetComponent<BanterHeldEvents>();
-            if (!banterHeldEvents)
-            {
-                banterHeldEventsAdded = true;
-                banterHeldEvents = gameObject.AddComponent<BanterHeldEvents>();
-            }
-            gameObject.layer = 20; // grabbale layer
         }
         internal override void DestroyStuff()
         {
@@ -112,6 +93,33 @@ namespace Banter.SDK
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            if(!banterGrabHandle) {
+                banterGrabHandle = gameObject.GetComponent<BanterGrabHandle>();
+                if (!banterGrabHandle)
+                {
+                    banterGrabHandleAdded = true;
+                    banterGrabHandle = gameObject.AddComponent<BanterGrabHandle>();
+                }
+            }
+            if (!banterGrabHandle)
+            {
+                banterWorldObject = gameObject.GetComponent<BanterWorldObject>();
+                if (!banterWorldObject)
+                {
+                    banterWorldObjectAdded = true;
+                    banterWorldObject = gameObject.AddComponent<BanterWorldObject>();
+                }
+            }
+            if (!banterGrabHandle)
+            {
+                banterHeldEvents = gameObject.GetComponent<BanterHeldEvents>();
+                if (!banterHeldEvents)
+                {
+                    banterHeldEventsAdded = true;
+                    banterHeldEvents = gameObject.AddComponent<BanterHeldEvents>();
+                }
+            }
+            gameObject.layer = 20;
             if (changedProperties.Contains(PropertyName.grabType))
             {
                 banterGrabHandle.GrabType = grabType;

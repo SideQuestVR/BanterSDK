@@ -67,7 +67,7 @@ Light({type, color, intensity})
 BanterRigidbody({mass, useGravity, isKinematic})
 BoxCollider({size}), SphereCollider({radius}), MeshCollider({convex})
 BanterColliderEvents({})  // enables collision events
-HingJoint({connectedBody}) // the connectedBody is the rigidbody on the other game obejct, without this then the hinge connects to world space. You must link joints and their connected bodies together. You can specify the connectedBody with gameObject.id and banter will connect the body if it exists.
+HingJoint({connectedBody}) // the connectedBody is the rigidbody on the other game obejct, without this then the hinge connects to world space. You must link joints and their connected bodies together. You can specify the connectedBody with rigidBody.id and banter will connect the body if it exists.
 ```
 
 **Interaction:**
