@@ -55,7 +55,6 @@ obj2.SetParent(obj, false); // Worldpositionstays - true by default
 
 **Visual:**
 ```
-BanterGLTF({url})
 BanterSphere({radius}), BanterBox({width, height, depth}), BanterCylinder({radiusTop, radiusBottom})  // curved side faces -Z
 BanterPlane({width, height}) // facing -Z
 BanterMaterial({color: Vector4, texture: url})
@@ -68,6 +67,7 @@ Light({type, color, intensity})
 BanterRigidbody({mass, useGravity, isKinematic})
 BoxCollider({size}), SphereCollider({radius}), MeshCollider({convex})
 BanterColliderEvents({})  // enables collision events
+HingJoint({connectedBody}) // the connected budy is the rigidbody on the other game obejct, you can specify it with gameObject.id and banter will connect eh body if it exists.
 ```
 
 **Interaction:**
@@ -78,6 +78,7 @@ BanterAttachedObject({attachmentType})  // attach to player
 
 **Media:**
 ```
+BanterGLTF({url})
 BanterVideoPlayer({url, loop, volume})
 BanterBrowser({url, pageWidth, pageHeight})
 BanterAudioSource({volume, loop, spatialBlend})
