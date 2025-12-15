@@ -2,6 +2,8 @@
 
 JS SDK for 3D VR spaces. All APIs: `BS.*`
 
+Use the `get-child-objects` tool to browse the scene, starting with 0 for the parent id you can explore your way through the scene hierarchy. 
+
 ## Core Pattern
 ```js
 const scene = BS.BanterScene.GetInstance();
@@ -69,7 +71,7 @@ BoxCollider({size}), SphereCollider({radius}), MeshCollider({convex})
 BanterColliderEvents({})  // enables collision events
 HingJoint({connectedBody}) // IMPORTANT! ALWAYS REMEMBER THIS PART! the connectedBody is the rigidbody on the other game obejct, without this then the hinge connects to world space. You must link joints and their connected bodies together. You can specify the connectedBody with rigidBody.id and banter will connect the body if it exists.
 
-DO NOT MAKE A HINGE WITHOUT A CONNECTED BODY!
+DO NOT MAKE A HINGE WITHOUT A CONNECTED BODY!!!
 ```
 
 **Interaction:**
