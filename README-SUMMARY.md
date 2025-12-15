@@ -109,7 +109,7 @@ AttachmentType: Head, LeftHand, RightHand, Chest, Back
 
 | Tool | Purpose |
 |------|---------|
-| `getting-started` | Read first - essential context |
+| `instructions` | Read first - essential context |
 | `search-docs` | Search docs (fuse.js extended search), empty query returns all lines |
 | `get-browsers` | List browser instances (returns id, injection status) |
 | `execute-javascript` | Run JS in browser - wrap in anonymous function, avoid let/const/var |
@@ -119,6 +119,8 @@ AttachmentType: Head, LeftHand, RightHand, Chest, Back
 | `mouse-input` | Send mouse events (mouseDown/Up/Move/Wheel, x, y, button) |
 | `key-input` | Send keyboard events (key, modifiers: control/alt/meta/shift) |
 | `get-child-objects` | Get scene objects by parentId ('0' for root) |
+| `see` | Grab a frame from main camera with custom position/rotation |
+| `see-all-round` | Grab six frames from different angles for 360° view |
 
 ## Full Reference
 See [README-LLM.md](README-LLM.md) for complete API details.

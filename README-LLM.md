@@ -318,6 +318,8 @@ Config: {anchor?: Vector3, connectedAnchor?: Vector3, autoConfigureConnectedAnch
 **HingeJoint**
 ```
 Config: {anchor?: Vector3, axis?: Vector3(0,1,0), connectedAnchor?: Vector3, autoConfigureConnectedAnchor?: boolean(true), useLimits?: boolean(false), useMotor?: boolean(false), useSpring?: boolean(false), breakForce?: number(Infinity), breakTorque?: number(Infinity), enableCollision?: boolean(false), connectedBody?: string}
+
+IMPORTANT: connectedBody is the rigidbody.id on the other GameObject. Without it, hinge connects to world space. Always specify connectedBody!
 ```
 
 **SpringJoint**
@@ -377,11 +379,13 @@ Config: {radius?: number(1), widthSegments?: number(16), heightSegments?: number
 **BanterPlane**
 ```
 Config: {width?: number(1), height?: number(1), widthSegments?: number(1), heightSegments?: number(1)}
+// facing -Z
 ```
 
 **BanterCylinder**
 ```
 Config: {radiusTop?: number(1), radiusBottom?: number(1), height?: number(1), radialSegments?: number(8), heightSegments?: number(1), openEnded?: boolean(false), thetaStart?: number(0), thetaLength?: number(2π)}
+// curved side faces -Z
 ```
 
 **BanterCone**

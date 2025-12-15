@@ -851,6 +851,8 @@ obj.AddComponent(new BS.FixedJoint({
 
 Rotates around a single axis (like a door).
 
+**IMPORTANT:** The `connectedBody` is the `rigidbody.id` on the other GameObject. Without it, the hinge connects to world space. You must link joints and their connected bodies together!
+
 ```js
 obj.AddComponent(new BS.HingeJoint({
     anchor: new BS.Vector3(0, 0, 0),
@@ -863,7 +865,7 @@ obj.AddComponent(new BS.HingeJoint({
     breakForce: Infinity,
     breakTorque: Infinity,
     enableCollision: false,
-    connectedBody: "other-object-id"
+    connectedBody: otherRigidbody.id  // Always specify this!
 }));
 ```
 
@@ -1046,6 +1048,8 @@ obj.AddComponent(new BS.BanterSphere({
 
 ### BanterPlane
 
+Plane faces -Z direction (forward).
+
 ```js
 obj.AddComponent(new BS.BanterPlane({
     width: 1,
@@ -1056,6 +1060,8 @@ obj.AddComponent(new BS.BanterPlane({
 ```
 
 ### BanterCylinder
+
+Curved side faces -Z direction (forward).
 
 ```js
 obj.AddComponent(new BS.BanterCylinder({
