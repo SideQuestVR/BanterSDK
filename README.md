@@ -859,7 +859,14 @@ obj.AddComponent(new BS.HingeJoint({
     axis: new BS.Vector3(0, 1, 0),
     connectedAnchor: new BS.Vector3(0, 0, 0),
     autoConfigureConnectedAnchor: true,
-    useLimits: false,
+    useLimits: true,
+    limits: new BS.JointLimits({
+        bounciness: 0,           // Bounce amount when hitting limit
+        bounceMinVelocity: 0,    // Min velocity for bounce
+        contactDistance: 0,      // Contact distance
+        min: -45,                // Min angle in degrees
+        max: 45                  // Max angle in degrees
+    }),
     useMotor: false,
     useSpring: false,
     breakForce: Infinity,
@@ -951,19 +958,6 @@ obj.AddComponent(new BS.BanterMaterial({
     color: new BS.Vector4(1, 1, 1, 1),  // RGBA tint
     side: BS.MaterialSide.Front,        // Front, Back, Double
     generateMipMaps: false
-}));
-```
-
-### BanterGeometry
-
-Generates procedural geometry (deprecated - use specific shape components).
-
-```js
-obj.AddComponent(new BS.BanterGeometry({
-    geometryType: BS.GeometryType.BoxGeometry,
-    width: 1,
-    height: 1,
-    depth: 1
 }));
 ```
 

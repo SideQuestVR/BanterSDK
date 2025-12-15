@@ -25,7 +25,7 @@ namespace Banter.SDK
         [Tooltip("Enable angular limits for the joint.")]
         [See(initial = "false")][SerializeField] internal bool useLimits = false;
         [Tooltip("Angular limits for the joint.")]
-        [See(initial = "0,0,0,0,0")][SerializeField] internal JointLimits limits = new JointLimits();
+        [See(initial = "{bounciness: 0, bounceMinVelocity: 0, contactDistance: 0, min: -90, max: 90}")][SerializeField] internal JointLimits limits = new JointLimits();
 
         [Tooltip("Enable the joint motor.")]
         [See(initial = "false")][SerializeField] internal bool useMotor = false;

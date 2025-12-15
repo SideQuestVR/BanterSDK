@@ -317,7 +317,9 @@ Config: {anchor?: Vector3, connectedAnchor?: Vector3, autoConfigureConnectedAnch
 
 **HingeJoint**
 ```
-Config: {anchor?: Vector3, axis?: Vector3(0,1,0), connectedAnchor?: Vector3, autoConfigureConnectedAnchor?: boolean(true), useLimits?: boolean(false), useMotor?: boolean(false), useSpring?: boolean(false), breakForce?: number(Infinity), breakTorque?: number(Infinity), enableCollision?: boolean(false), connectedBody?: string}
+Config: {anchor?: Vector3, axis?: Vector3(0,1,0), connectedAnchor?: Vector3, autoConfigureConnectedAnchor?: boolean(true), useLimits?: boolean(false), limits?: JointLimits, useMotor?: boolean(false), useSpring?: boolean(false), breakForce?: number(Infinity), breakTorque?: number(Infinity), enableCollision?: boolean(false), connectedBody?: string}
+
+JointLimits: {bounciness?: number, bounceMinVelocity?: number, contactDistance?: number, min?: number, max?: number}
 
 IMPORTANT: connectedBody is the rigidbody.id on the other GameObject. Without it, hinge connects to world space. Always specify connectedBody!
 ```
