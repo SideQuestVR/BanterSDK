@@ -75,7 +75,7 @@ namespace Banter.SDK
                 }
                 if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
                 {
-                    var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                    var material = new Material(shaderType == ShaderType.Custom && !string.IsNullOrEmpty(shaderName) ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
                     _renderer.sharedMaterial = material;
                 }
                 if (changedProperties?.Contains(PropertyName.texture) ?? false)
