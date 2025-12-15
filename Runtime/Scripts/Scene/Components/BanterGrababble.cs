@@ -101,7 +101,7 @@ namespace Banter.SDK
                     banterGrabHandle = gameObject.AddComponent<BanterGrabHandle>();
                 }
             }
-            if (!banterGrabHandle)
+            if (!banterWorldObject)
             {
                 banterWorldObject = gameObject.GetComponent<BanterWorldObject>();
                 if (!banterWorldObject)
@@ -110,7 +110,7 @@ namespace Banter.SDK
                     banterWorldObject = gameObject.AddComponent<BanterWorldObject>();
                 }
             }
-            if (!banterGrabHandle)
+            if (!banterHeldEvents)
             {
                 banterHeldEvents = gameObject.GetComponent<BanterHeldEvents>();
                 if (!banterHeldEvents)
