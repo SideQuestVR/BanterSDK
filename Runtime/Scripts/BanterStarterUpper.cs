@@ -77,11 +77,14 @@ namespace Banter.SDK
 
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
+            
 #if !BANTER_EDITOR
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
             SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
+            scene.LoadUrl("http://localhost:42066");
+           
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
