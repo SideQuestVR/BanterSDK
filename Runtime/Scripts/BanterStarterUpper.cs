@@ -42,7 +42,11 @@ namespace Banter.SDK
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-        
+        void Start() {
+#if !BANTER_EDITOR
+            scene.LoadUrl("http://localhost:42068");
+#endif
+        }
         void Awake()
         {
             // Safe mode?
@@ -83,7 +87,6 @@ namespace Banter.SDK
             SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
-            scene.LoadUrl("http://localhost:42068");
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
