@@ -11,6 +11,8 @@ using UnityEngine.UI;
 #if BANTER_ORA
 using SideQuest.Ora;
 using SideQuest.Ora.WebRTC;
+using System.Collections;
+
 #endif
 
 
@@ -42,9 +44,6 @@ namespace Banter.SDK
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-        public void LoadDev() {
-            scene.LoadUrl("http://localhost:42068");
-        }
         void Awake()
         {
             // Safe mode?
@@ -59,7 +58,7 @@ namespace Banter.SDK
                 LogLine.Do("SAFE MODE is set on");
                 PlayerPrefs.SetInt("SafeModeOff", 1);
             }
-            
+
 #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
             BasisLoadHandler.OnGameStart();
@@ -79,12 +78,13 @@ namespace Banter.SDK
 
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
-            
+
 #if !BANTER_EDITOR
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
             SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
+            StartCoroutine(OpenPageDev())
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
@@ -140,6 +140,12 @@ namespace Banter.SDK
             scene.loadingManager.feetTransform = _feetTransform;
 #endif
             scene.ResetLoadingProgress();
+        }
+        
+        IEnumerator OpenPageDev()
+        {
+            yield return new WaitForSeconds(5);
+            scene.link.pipe.view.LoadUrl("http://localhost:42068");
         }
 
         Vector3 RandomSpawnPoint()
