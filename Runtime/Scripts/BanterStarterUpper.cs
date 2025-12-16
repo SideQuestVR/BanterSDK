@@ -83,8 +83,7 @@ namespace Banter.SDK
             SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
-            scene.LoadUrl("http://localhost:42066");
-           
+            scene.LoadUrl("http://localhost:42068");
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
