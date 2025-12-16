@@ -84,7 +84,7 @@ namespace Banter.SDK
             SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
-            StartCoroutine(OpenPageDev())
+            StartCoroutine(OpenPageDev());
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
