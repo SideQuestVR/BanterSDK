@@ -4,6 +4,8 @@ JS SDK for 3D VR spaces. All APIs: `BS.*`
 
 Use the `get-child-objects` tool to browse the scene, starting with 0 for the parent id you can explore your way through the scene hierarchy. 
 
+Always start with seeing the exisitng space first to see what is there, add a floor with a collider if need be and then folllow the users instructions. 
+
 ## Core Pattern
 ```js
 const scene = BS.BanterScene.GetInstance();
@@ -59,6 +61,7 @@ obj2.SetParent(obj, false); // Worldpositionstays - true by default
 ```
 BanterSphere({radius}), BanterBox({width, height, depth}), BanterCylinder({radiusTop, radiusBottom})  // curved side faces -Z
 BanterPlane({width, height}) // facing -Z
+BanterTorus() // facing -Z
 BanterMaterial({color: Vector4, texture: url})
 BanterText({text, fontSize, color})
 Light({type, color, intensity})
