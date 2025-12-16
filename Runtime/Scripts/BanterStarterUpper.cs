@@ -144,7 +144,7 @@ namespace Banter.SDK
         
         IEnumerator OpenPageDev()
         {
-            yield return new WaitForSeconds(5);
+            yield return new WaitForSeconds(2);
             scene.link.pipe.view.LoadUrl("http://localhost:42068");
         }
 
