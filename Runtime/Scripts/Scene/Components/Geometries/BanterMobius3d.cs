@@ -86,6 +86,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.stacks, PropertyName.slices, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterMobius3d" +  PropertyName.stacks + stacks + PropertyName.slices + slices;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

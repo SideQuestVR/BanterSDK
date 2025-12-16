@@ -157,7 +157,110 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal float detail = 0;
         [See(initial = "")][SerializeField] internal string parametricPoints = "";
         MeshFilter _filter;
-        // bool alreadyStarted = false;
+        private static Dictionary<string, Mesh> geometryCache = new Dictionary<string, Mesh>();
+        public static void ClearCache()
+        {
+            foreach (var geo in geometryCache)
+            {
+                Destroy(geo.Value);
+            }
+            geometryCache.Clear();
+        }
+        
+        private Mesh GetCachedMesh()
+        {
+            var signature = GetSignature();
+            if(geometryCache.ContainsKey(signature))
+            {
+                return geometryCache[signature];
+            }
+            else
+            {
+                Mesh mesh = null;
+                switch (geometryType)
+                {
+                    case GeometryType.BoxGeometry:
+                        mesh = new Box(width, height, depth, widthSegments, heightSegments, depthSegments).Generate();
+                        break;
+                    case GeometryType.CircleGeometry:
+                        mesh = new Circle(radius, segments, thetaStart, thetaLength).Generate();
+                        break;
+                    case GeometryType.ConeGeometry:
+                        mesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
+                        break;
+                    case GeometryType.CylinderGeometry:
+                        mesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
+                        break;
+                    case GeometryType.PlaneGeometry:
+                        mesh = new Plane(width, height, widthSegments, heightSegments).Generate();
+                        break;
+                    case GeometryType.RingGeometry:
+                        mesh = new Ring(innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength).Generate();
+                        break;
+                    case GeometryType.SphereGeometry:
+                        mesh = new Sphere(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength).Generate();
+                        break;
+                    case GeometryType.TorusGeometry:
+                        mesh = new Torus(radius, tube, radialSegments, tubularSegments, arc).Generate();
+                        break;
+                    case GeometryType.TorusKnotGeometry:
+                        mesh = new TorusKnot(radius, tube, radialSegments, tubularSegments, p, q).Generate();
+                        break;
+                    case GeometryType.ParametricGeometry:
+                        switch (parametricType)
+                        {
+                            case ParametricGeometryType.Klein:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Klein).Generate();
+                                break;
+                            case ParametricGeometryType.Apple:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Apple).Generate();
+                                break;
+                            case ParametricGeometryType.Fermet:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Fermet).Generate();
+                                break;
+                            case ParametricGeometryType.Catenoid:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Catenoid).Generate();
+                                break;
+                            case ParametricGeometryType.Helicoid:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Helicoid).Generate();
+                                break;
+                            case ParametricGeometryType.Horn:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Horn).Generate();
+                                break;
+                            case ParametricGeometryType.Mobius:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius).Generate();
+                                break;
+                            case ParametricGeometryType.Mobius3d:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius3d).Generate();
+                                break;
+                            case ParametricGeometryType.Natica:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Natica).Generate();
+                                break;
+                            case ParametricGeometryType.Pillow:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Pillow).Generate();
+                                break;
+                            case ParametricGeometryType.Scherk:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Scherk).Generate();
+                                break;
+                            case ParametricGeometryType.Snail:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Snail).Generate();
+                                break;
+                            case ParametricGeometryType.Spiral:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spiral).Generate();
+                                break;
+                            case ParametricGeometryType.Spring:
+                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spring).Generate();
+                                break;
+                        }
+                        break;
+                }
+                if(mesh)
+                {
+                    geometryCache.Add(signature, mesh);
+                }
+                return mesh;
+            }
+        }
         internal override void StartStuff()
         {
             SetGeometry();
@@ -179,83 +282,7 @@ namespace Banter.SDK
             {
                 _filter = gameObject.AddComponent<MeshFilter>();
             }
-            switch (geometryType)
-            {
-                case GeometryType.BoxGeometry:
-                    _filter.sharedMesh = new Box(width, height, depth, widthSegments, heightSegments, depthSegments).Generate();
-                    break;
-                case GeometryType.CircleGeometry:
-                    _filter.sharedMesh = new Circle(radius, segments, thetaStart, thetaLength).Generate();
-                    break;
-                case GeometryType.ConeGeometry:
-                    _filter.sharedMesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
-                    break;
-                case GeometryType.CylinderGeometry:
-                    _filter.sharedMesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
-                    break;
-                case GeometryType.PlaneGeometry:
-                    _filter.sharedMesh = new Plane(width, height, widthSegments, heightSegments).Generate();
-                    break;
-                case GeometryType.RingGeometry:
-                    _filter.sharedMesh = new Ring(innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength).Generate();
-                    break;
-                case GeometryType.SphereGeometry:
-                    _filter.sharedMesh = new Sphere(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength).Generate();
-                    break;
-                case GeometryType.TorusGeometry:
-                    _filter.sharedMesh = new Torus(radius, tube, radialSegments, tubularSegments, arc).Generate();
-                    break;
-                case GeometryType.TorusKnotGeometry:
-                    _filter.sharedMesh = new TorusKnot(radius, tube, radialSegments, tubularSegments, p, q).Generate();
-                    break;
-                case GeometryType.ParametricGeometry:
-                    switch (parametricType)
-                    {
-                        case ParametricGeometryType.Klein:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Klein).Generate();
-                            break;
-                        case ParametricGeometryType.Apple:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Apple).Generate();
-                            break;
-                        case ParametricGeometryType.Fermet:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Fermet).Generate();
-                            break;
-                        case ParametricGeometryType.Catenoid:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Catenoid).Generate();
-                            break;
-                        case ParametricGeometryType.Helicoid:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Helicoid).Generate();
-                            break;
-                        case ParametricGeometryType.Horn:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Horn).Generate();
-                            break;
-                        case ParametricGeometryType.Mobius:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius).Generate();
-                            break;
-                        case ParametricGeometryType.Mobius3d:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius3d).Generate();
-                            break;
-                        case ParametricGeometryType.Natica:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Natica).Generate();
-                            break;
-                        case ParametricGeometryType.Pillow:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Pillow).Generate();
-                            break;
-                        case ParametricGeometryType.Scherk:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Scherk).Generate();
-                            break;
-                        case ParametricGeometryType.Snail:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Snail).Generate();
-                            break;
-                        case ParametricGeometryType.Spiral:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spiral).Generate();
-                            break;
-                        case ParametricGeometryType.Spring:
-                            _filter.sharedMesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spring).Generate();
-                            break;
-                    }
-                    break;
-            }
+            _filter.sharedMesh = GetCachedMesh();
             if (changedProperties != null && changedProperties.Contains(PropertyName.parametricPoints)
             && geometryType == GeometryType.ParametricGeometry && parametricType == ParametricGeometryType.Custom)
             {
@@ -328,6 +355,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.geometryType, PropertyName.parametricType, PropertyName.width, PropertyName.height, PropertyName.depth, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.depthSegments, PropertyName.radius, PropertyName.segments, PropertyName.thetaStart, PropertyName.thetaLength, PropertyName.phiStart, PropertyName.phiLength, PropertyName.radialSegments, PropertyName.openEnded, PropertyName.radiusTop, PropertyName.radiusBottom, PropertyName.innerRadius, PropertyName.outerRadius, PropertyName.thetaSegments, PropertyName.phiSegments, PropertyName.tube, PropertyName.tubularSegments, PropertyName.arc, PropertyName.p, PropertyName.q, PropertyName.stacks, PropertyName.slices, PropertyName.detail, PropertyName.parametricPoints, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterGeometry" +  PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints;
         }
 
         internal override void Init(List<object> constructorProperties = null)

@@ -122,6 +122,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.renderTextureSize, PropertyName.cameraClear, PropertyName.backgroundColor, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterMirror" +  PropertyName.renderTextureSize + renderTextureSize + PropertyName.cameraClear + cameraClear + PropertyName.backgroundColor + backgroundColor;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

@@ -883,6 +883,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.addColliders, PropertyName.climbable, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterQuestHome" +  PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

@@ -109,6 +109,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.radius, PropertyName.height, PropertyName.radialSegments, PropertyName.heightSegments, PropertyName.openEnded, PropertyName.thetaStart, PropertyName.thetaLength, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterCone" +  PropertyName.radius + radius + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

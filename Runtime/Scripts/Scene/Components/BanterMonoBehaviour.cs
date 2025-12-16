@@ -71,6 +71,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.fps, PropertyName.startFunction, PropertyName.updateFunction, PropertyName.destroyFunction, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterMonoBehaviour" +  PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

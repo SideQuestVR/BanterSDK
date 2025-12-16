@@ -142,6 +142,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.instance, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterPortal" +  PropertyName.url + url + PropertyName.instance + instance;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

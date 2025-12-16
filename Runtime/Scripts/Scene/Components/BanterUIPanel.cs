@@ -869,6 +869,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, PropertyName.enableHaptics, PropertyName.clickHaptic, PropertyName.enterHaptic, PropertyName.exitHaptic, PropertyName.enableSounds, PropertyName.clickSoundUrl, PropertyName.enterSoundUrl, PropertyName.exitSoundUrl, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterUIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

@@ -1935,6 +1935,9 @@ namespace Banter.SDK
                 bundlesLoaded = false;
                 MipMaps.Clear();
                 Get.Clear();
+                BanterMaterial.ClearCache();
+                BanterGeometry.ClearCache();
+                BanterGLTF.ClearCache();
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     events.OnSceneReset.Invoke();

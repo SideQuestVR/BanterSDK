@@ -269,6 +269,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.blendShapes, PropertyName.bones, PropertyName.rootBoneInstanceId, PropertyName.updateWhenOffscreen, PropertyName.skinnedMotionVectors, PropertyName.quality, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterSkinnedMeshRenderer" +  PropertyName.blendShapes + blendShapes + PropertyName.bones + bones + PropertyName.rootBoneInstanceId + rootBoneInstanceId + PropertyName.updateWhenOffscreen + updateWhenOffscreen + PropertyName.skinnedMotionVectors + skinnedMotionVectors + PropertyName.quality + quality;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

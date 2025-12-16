@@ -156,6 +156,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterBrowser" +  PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

@@ -344,6 +344,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, PropertyName.legacyShaderFix, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterAssetBundle" +  PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

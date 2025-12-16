@@ -104,6 +104,10 @@ namespace Banter.SDK
         {
 
         }
+        internal override string GetSignature()
+        {
+            return "HingeJoint" +  PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.useLimits + useLimits + PropertyName.limits + limits + PropertyName.useMotor + useMotor + PropertyName.useSpring + useSpring + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

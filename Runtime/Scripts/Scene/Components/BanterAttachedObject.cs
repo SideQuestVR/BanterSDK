@@ -180,6 +180,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, PropertyName.autoAttach, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterAttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

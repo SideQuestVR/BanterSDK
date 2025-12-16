@@ -206,6 +206,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.sensitivity, PropertyName.fireRate, PropertyName.auto, PropertyName.blockLeftPrimary, PropertyName.blockLeftSecondary, PropertyName.blockRightPrimary, PropertyName.blockRightSecondary, PropertyName.blockLeftThumbstick, PropertyName.blockLeftThumbstickClick, PropertyName.blockRightThumbstick, PropertyName.blockRightThumbstickClick, PropertyName.blockLeftTrigger, PropertyName.blockRightTrigger, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterHeldEvents" +  PropertyName.sensitivity + sensitivity + PropertyName.fireRate + fireRate + PropertyName.auto + auto + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

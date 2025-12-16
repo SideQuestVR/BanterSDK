@@ -44,6 +44,11 @@ namespace Banter.SDK
             throw new System.NotImplementedException();
         }
 
+        internal override string GetSignature()
+        {
+            throw new System.NotImplementedException();
+        }
+
         internal override void SyncProperties(bool force, Action callback)
         {
             throw new System.NotImplementedException();

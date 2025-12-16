@@ -81,6 +81,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.panoId, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterStreetView" +  PropertyName.panoId + panoId;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {
