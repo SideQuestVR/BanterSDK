@@ -172,12 +172,10 @@ namespace Banter.SDK
             var signature = GetSignature();
             if(geometryCache.ContainsKey(signature))
             {
-                Debug.Log("Re-using mesh");
                 return geometryCache[signature];
             }
             else
             {
-                Debug.Log("Making new mesh");
                 Mesh mesh = null;
                 switch (geometryType)
                 {
