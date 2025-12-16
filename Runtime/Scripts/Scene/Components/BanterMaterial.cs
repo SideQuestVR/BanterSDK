@@ -59,10 +59,12 @@ namespace Banter.SDK
             var signature = GetSignature();
             if(materialCache.ContainsKey(signature))
             {
+                Debug.Log("Re-using material");
                 return materialCache[signature];
             }
             else
             {
+                Debug.Log("Making a new material");
                 var material = new Material(shaderType == ShaderType.Custom && !string.IsNullOrEmpty(shaderName) ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
                 materialCache.Add(signature, material);
                 return material;
