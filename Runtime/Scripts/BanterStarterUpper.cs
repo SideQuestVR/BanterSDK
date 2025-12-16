@@ -42,10 +42,8 @@ namespace Banter.SDK
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-        void Start() {
-#if !BANTER_EDITOR
+        public void LoadDev() {
             scene.LoadUrl("http://localhost:42068");
-#endif
         }
         void Awake()
         {
