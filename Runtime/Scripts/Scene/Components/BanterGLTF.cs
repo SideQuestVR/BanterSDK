@@ -69,13 +69,13 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal int childrenLayer;
         bool loadStarted;
 
-         private static Dictionary<string, byte[]> gltfCache = new Dictionary<string, byte[]>();
+         private static Dictionary<string, Task<byte[]>> gltfCache = new Dictionary<string, Task<byte[]>>();
         public static void ClearCache()
         {
             gltfCache.Clear();
         }
 
-        private async Task<byte[]> GetCachedGLTF()
+        private Task<byte[]> GetCachedGLTF()
         {
             var signature = GetSignature();
             if (gltfCache.ContainsKey(signature))
@@ -84,7 +84,7 @@ namespace Banter.SDK
             }
             else
             {
-                var gltf = await Get.Bytes(url);
+                var gltf = Get.Bytes(url);
                 gltfCache.Add(signature, gltf);
                 return gltf;
             }
