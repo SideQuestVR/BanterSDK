@@ -8,10 +8,10 @@ using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Debug = UnityEngine.Debug;
 using UnityEngine.UI;
+using System.Collections;
 #if BANTER_ORA
 using SideQuest.Ora;
 using SideQuest.Ora.WebRTC;
-using System.Collections;
 
 #endif
 
@@ -145,7 +145,9 @@ namespace Banter.SDK
         IEnumerator OpenPageDev()
         {
             yield return new WaitForSeconds(2);
+#if BANTER_ORA
             scene.link.pipe.view.LoadUrl("http://localhost:42068");
+#endif
         }
 
         Vector3 RandomSpawnPoint()
