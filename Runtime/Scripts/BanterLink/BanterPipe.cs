@@ -38,7 +38,7 @@ public class BanterPipe
             link.scene.state = SceneState.LOAD_FAILED;
             link.scene.Cancel("The web page failed to load!");
         });
-        view.domReady.AddListener(() =>
+        view.domReady.AddListener((url) =>
         {
             link.scene.state = SceneState.DOM_READY;
             link.scene.events.OnDomReady.Invoke();
