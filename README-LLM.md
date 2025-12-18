@@ -511,6 +511,28 @@ Config: {}
 Config: {}
 ```
 
+### Optimization
+
+**BanterAOBaking**
+```
+Config: {subdivisionLevel?: number(1), sampleCount?: number(64), aoIntensity?: number(1), aoBias?: number(0.005), aoRadius?: number(0), hideSourceObjects?: boolean(true), targetShaderName?: string("")}
+
+Methods:
+BakeAO()    // Merge child meshes, subdivide, bake AO into vertex colors
+Preview()   // Merge and subdivide without AO baking
+Clear()     // Remove generated mesh, restore original children
+
+Read-only: isProcessing: boolean, progress: number (0-1)
+```
+
+Use when: Static geometry needs soft shadows without real-time lighting cost.
+
+Best Practices:
+- Always use a root parent GameObject when building with multiple primitives
+- Bake each object when done, before building the next one
+- Rebake existing objects when adding new geometry nearby/intersecting
+- Build in layers: Background → Ground → Large elements → Details
+
 ---
 
 ## UI System

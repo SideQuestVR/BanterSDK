@@ -65,5 +65,6 @@ namespace Banter.SDK
         BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,
+        BanterAOBaking,
     }
 }

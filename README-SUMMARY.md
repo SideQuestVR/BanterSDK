@@ -5,6 +5,8 @@ JS SDK for 3D VR spaces. All APIs: `BS.*`
 Use the `get-child-objects` tool to browse the scene, starting with 0 for the parent id you can explore your way through the scene hierarchy. 
 
 Always start with seeing the exisitng space first to see what is there, add a floor with a collider if need be and then folllow the users instructions. 
+Use root parent for objects constructed out of primitives, bake incrementally, rebake when adding neighbors.
+Set Parent Tag to "Respawn".
 
 ## Core Pattern
 ```js
@@ -32,6 +34,7 @@ obj2.SetParent(obj, false); // Worldpositionstays - true by default
 | **Geometry** | `BanterBox`, `BanterSphere`, `BanterPlane`, `BanterCylinder` |
 | **Media** | `BanterGLTF`, `BanterVideoPlayer`, `BanterBrowser`, `BanterAssetBundle` |
 | **Audio** | `BanterAudioSource` |
+| **Optimization** | `BanterAOBaking` |
 | **VR** | `BanterGrababble`, `BanterAttachedObject`, `BanterHeldEvents` |
 | **UI** | `BanterUIPanel`, `UIButton`, `UILabel`, `UISlider`, `UIToggle` |
 
@@ -90,6 +93,15 @@ BanterVideoPlayer({url, loop, volume})
 BanterBrowser({url, pageWidth, pageHeight})
 BanterAudioSource({volume, loop, spatialBlend})
 ```
+
+**Optimization:**
+```
+BanterAOBaking({subdivisionLevel, sampleCount, aoIntensity})  // Merge children & bake AO
+  .BakeAO()   // Bake ambient occlusion
+  .Preview()  // Merge without AO
+  .Clear()    // Restore originals
+```
+Best practice: Use root parent for primitives, bake incrementally, rebake when adding neighbors.
 
 ## Math Types
 ```

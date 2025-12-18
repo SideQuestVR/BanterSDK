@@ -131,6 +131,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterVideoPlayer>();
                 case ComponentType.BanterWorldObject:
                     return gameObject.AddComponent<BanterWorldObject>();
+                case ComponentType.BanterAOBaking:
+                    return gameObject.AddComponent<BanterAOBaking>();
                 default:
                     return null;
             }

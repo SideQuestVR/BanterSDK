@@ -1388,6 +1388,85 @@ Displays an avatar on a pedestal.
 obj.AddComponent(new BS.BanterAvatarPedestal());
 ```
 
+### BanterAOBaking
+
+Merges child meshes and bakes ambient occlusion into vertex colors for improved visual quality with minimal runtime cost. Use this for static geometry like buildings, terrain features, or any collection of primitives that won't move.
+
+**When to use:**
+- You have multiple child primitives/meshes under a parent object
+- The objects are static (won't move after baking)
+- You want soft shadows/ambient occlusion without real-time lighting cost
+- Building procedural environments that need better visual depth
+
+**Best Practices:**
+
+1. **Use root parents:** When building something out of multiple primitives, always create a root parent GameObject first and add all primitives as children. This keeps the hierarchy clean and organized, and is required for BanterAOBaking to work correctly.
+
+2. **Bake incrementally:** Bake each object as soon as it's finished before building the next one. This ensures proper AO from nearby objects.
+
+3. **Rebake when adding neighbors:** If you add a new object next to or intersecting with an already-baked object, rebake the existing object so it picks up occlusion from the new geometry.
+
+4. **Build in layers:** Construct scenes in this order for best results:
+   - **Background** (skyboxes, distant scenery)
+   - **Ground** (terrain, floors)
+   - **Large elements** (buildings, walls, major structures)
+   - **Detail objects** (furniture, props, decorations)
+
+   This layered approach ensures large occluders are in place before baking smaller objects.
+
+```js
+// Create parent with child primitives
+const building = new BS.GameObject({ name: "Building" });
+
+const wall = new BS.GameObject({ name: "Wall", parent: building });
+wall.AddComponent(new BS.BanterBox({ width: 5, height: 3, depth: 0.2 }));
+
+const pillar = new BS.GameObject({ name: "Pillar", parent: building });
+pillar.AddComponent(new BS.BanterCylinder({ radiusTop: 0.3, radiusBottom: 0.3, height: 3 }));
+
+// Add AO baking to parent
+const aoBaker = building.AddComponent(new BS.BanterAOBaking({
+    subdivisionLevel: 2,              // 0-3, higher = more detail
+    sampleCount: 128,                 // 16-256, higher = better quality
+    aoIntensity: 1.2,                 // 0-2, strength of shadows
+    aoBias: 0.005,                    // Prevents self-shadowing artifacts
+    aoRadius: 0,                      // 0 = auto, or set max occlusion distance
+    hideSourceObjects: true,          // Hide original meshes after merge
+    targetShaderName: "Mobile/StylizedFakeLit"  // Shader with vertex color support
+}));
+
+// Bake the AO (merges meshes, subdivides, raycasts for occlusion)
+aoBaker.BakeAO();
+
+// Preview without AO (just merge)
+aoBaker.Preview();
+
+// Clear and restore original meshes
+aoBaker.Clear();
+```
+
+**Properties:**
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `subdivisionLevel` | number | 1 | Subdivision iterations (0-3). Higher = more vertices for smoother AO |
+| `sampleCount` | number | 64 | Ray samples per vertex (16-256). Higher = better quality, slower |
+| `aoIntensity` | number | 1 | Strength of occlusion effect (0-2) |
+| `aoBias` | number | 0.005 | Offset to prevent self-intersection (0.001-0.1) |
+| `aoRadius` | number | 0 | Max occlusion check distance (0 = auto based on mesh size) |
+| `hideSourceObjects` | boolean | true | Hide original child meshes after baking |
+| `targetShaderName` | string | "" | Shader name to apply (must support vertex colors) |
+| `isProcessing` | boolean | - | Read-only: true while baking |
+| `progress` | number | - | Read-only: bake progress 0-1 |
+
+**Methods:**
+
+| Method | Description |
+|--------|-------------|
+| `BakeAO()` | Merge child meshes, subdivide, and bake ambient occlusion |
+| `Preview()` | Merge and subdivide without AO baking (quick preview) |
+| `Clear()` | Remove generated mesh and show original child objects |
+
 ---
 
 ## UI System

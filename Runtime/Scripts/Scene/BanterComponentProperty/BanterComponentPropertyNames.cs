@@ -234,5 +234,15 @@ namespace Banter.SDK
         isMuted,
         duration,
         time,
+        // AO Baking
+        subdivisionLevel,
+        sampleCount,
+        aoIntensity,
+        aoBias,
+        aoRadius,
+        hideSourceObjects,
+        targetShaderName,
+        isProcessing,
+        progress,
     }
 }
