@@ -75,7 +75,7 @@ namespace Banter.SDK
         [See(initial = "true")][SerializeField] internal bool hideSourceObjects = true;
 
         [Tooltip("Shader name to apply to merged meshes (e.g., 'Mobile/StylizedFakeLit')")]
-        [See(initial = "Mobile/StylizedFakeLit")][SerializeField] internal string targetShaderName = "Mobile/StylizedFakeLit";
+        [See(initial = "\"Mobile/StylizedFakeLit\"")][SerializeField] internal string targetShaderName = "Mobile/StylizedFakeLit";
 
         [Tooltip("True when bake operation is in progress (read-only)")]
         [See(initial = "false")][SerializeField] internal bool isProcessing = false;
@@ -183,7 +183,6 @@ namespace Banter.SDK
                 _merger.ClearGeneratedMesh();
             }
         }
-
         // BANTER COMPILED CODE 
         public System.Int32 SubdivisionLevel { get { return subdivisionLevel; } set { subdivisionLevel = value; UpdateCallback(new List<PropertyName> { PropertyName.subdivisionLevel }); } }
         public System.Int32 SampleCount { get { return sampleCount; } set { sampleCount = value; UpdateCallback(new List<PropertyName> { PropertyName.sampleCount }); } }
