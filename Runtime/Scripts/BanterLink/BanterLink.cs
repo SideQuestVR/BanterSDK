@@ -1202,7 +1202,7 @@ namespace Banter.SDK
         #region Legacy stuff
         public void ToggleDevTools()
         {
-            pipe.Send(APICommands.TOGGLE_DEV_TOOLS);
+            pipe.view.ToggleDevTools(true);
         }
         public void HideDevTools()
         {
