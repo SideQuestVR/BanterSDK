@@ -184,7 +184,7 @@ namespace Banter.SDK
             }
         }
 
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public System.Int32 SubdivisionLevel { get { return subdivisionLevel; } set { subdivisionLevel = value; UpdateCallback(new List<PropertyName> { PropertyName.subdivisionLevel }); } }
         public System.Int32 SampleCount { get { return sampleCount; } set { sampleCount = value; UpdateCallback(new List<PropertyName> { PropertyName.sampleCount }); } }
         public System.Single AoIntensity { get { return aoIntensity; } set { aoIntensity = value; UpdateCallback(new List<PropertyName> { PropertyName.aoIntensity }); } }
@@ -192,8 +192,8 @@ namespace Banter.SDK
         public System.Single AoRadius { get { return aoRadius; } set { aoRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.aoRadius }); } }
         public System.Boolean HideSourceObjects { get { return hideSourceObjects; } set { hideSourceObjects = value; UpdateCallback(new List<PropertyName> { PropertyName.hideSourceObjects }); } }
         public System.String TargetShaderName { get { return targetShaderName; } set { targetShaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.targetShaderName }); } }
-        public System.Boolean IsProcessing { get { return isProcessing; } }
-        public System.Single Progress { get { return progress; } }
+        public System.Boolean IsProcessing { get { return isProcessing; } set { isProcessing = value; UpdateCallback(new List<PropertyName> { PropertyName.isProcessing }); } }
+        public System.Single Progress { get { return progress; } set { progress = value; UpdateCallback(new List<PropertyName> { PropertyName.progress }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -216,22 +216,12 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() {
-                PropertyName.subdivisionLevel,
-                PropertyName.sampleCount,
-                PropertyName.aoIntensity,
-                PropertyName.aoBias,
-                PropertyName.aoRadius,
-                PropertyName.hideSourceObjects,
-                PropertyName.targetShaderName,
-                PropertyName.isProcessing,
-                PropertyName.progress
-            };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.subdivisionLevel, PropertyName.sampleCount, PropertyName.aoIntensity, PropertyName.aoBias, PropertyName.aoRadius, PropertyName.hideSourceObjects, PropertyName.targetShaderName, PropertyName.isProcessing, PropertyName.progress, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "BanterAOBaking" + PropertyName.subdivisionLevel + subdivisionLevel + PropertyName.sampleCount + sampleCount + PropertyName.aoIntensity + aoIntensity + PropertyName.aoBias + aoBias + PropertyName.aoRadius + aoRadius + PropertyName.hideSourceObjects + hideSourceObjects + PropertyName.targetShaderName + targetShaderName + PropertyName.isProcessing + isProcessing + PropertyName.progress + progress;
+            return "BanterAOBaking" +  PropertyName.subdivisionLevel + subdivisionLevel + PropertyName.sampleCount + sampleCount + PropertyName.aoIntensity + aoIntensity + PropertyName.aoBias + aoBias + PropertyName.aoRadius + aoRadius + PropertyName.hideSourceObjects + hideSourceObjects + PropertyName.targetShaderName + targetShaderName + PropertyName.isProcessing + isProcessing + PropertyName.progress + progress;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -265,24 +255,40 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
+        void BakeAO()
+        {
+            _BakeAO();
+        }
+        void Preview()
+        {
+            _Preview();
+        }
+        void Clear()
+        {
+            _Clear();
+        }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
-            if (methodName == "BakeAO")
+
+            if (methodName == "BakeAO" && parameters.Count == 0)
             {
-                _BakeAO();
+                BakeAO();
                 return null;
             }
-            else if (methodName == "Preview")
+            else if (methodName == "Preview" && parameters.Count == 0)
             {
-                _Preview();
+                Preview();
                 return null;
             }
-            else if (methodName == "Clear")
+            else if (methodName == "Clear" && parameters.Count == 0)
             {
-                _Clear();
+                Clear();
                 return null;
             }
-            return null;
+            else
+            {
+                return null;
+            }
         }
 
         internal override void Deserialise(List<object> values)
@@ -292,63 +298,83 @@ namespace Banter.SDK
             {
                 if (values[i] is BanterInt)
                 {
-                    var val = (BanterInt)values[i];
-                    if (val.n == PropertyName.subdivisionLevel)
+                    var valsubdivisionLevel = (BanterInt)values[i];
+                    if (valsubdivisionLevel.n == PropertyName.subdivisionLevel)
                     {
-                        subdivisionLevel = val.x;
+                        subdivisionLevel = valsubdivisionLevel.x;
                         changedProperties.Add(PropertyName.subdivisionLevel);
                     }
-                    else if (val.n == PropertyName.sampleCount)
+                }
+                if (values[i] is BanterInt)
+                {
+                    var valsampleCount = (BanterInt)values[i];
+                    if (valsampleCount.n == PropertyName.sampleCount)
                     {
-                        sampleCount = val.x;
+                        sampleCount = valsampleCount.x;
                         changedProperties.Add(PropertyName.sampleCount);
                     }
                 }
                 if (values[i] is BanterFloat)
                 {
-                    var val = (BanterFloat)values[i];
-                    if (val.n == PropertyName.aoIntensity)
+                    var valaoIntensity = (BanterFloat)values[i];
+                    if (valaoIntensity.n == PropertyName.aoIntensity)
                     {
-                        aoIntensity = val.x;
+                        aoIntensity = valaoIntensity.x;
                         changedProperties.Add(PropertyName.aoIntensity);
                     }
-                    else if (val.n == PropertyName.aoBias)
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valaoBias = (BanterFloat)values[i];
+                    if (valaoBias.n == PropertyName.aoBias)
                     {
-                        aoBias = val.x;
+                        aoBias = valaoBias.x;
                         changedProperties.Add(PropertyName.aoBias);
                     }
-                    else if (val.n == PropertyName.aoRadius)
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valaoRadius = (BanterFloat)values[i];
+                    if (valaoRadius.n == PropertyName.aoRadius)
                     {
-                        aoRadius = val.x;
+                        aoRadius = valaoRadius.x;
                         changedProperties.Add(PropertyName.aoRadius);
-                    }
-                    else if (val.n == PropertyName.progress)
-                    {
-                        progress = val.x;
-                        changedProperties.Add(PropertyName.progress);
                     }
                 }
                 if (values[i] is BanterBool)
                 {
-                    var val = (BanterBool)values[i];
-                    if (val.n == PropertyName.hideSourceObjects)
+                    var valhideSourceObjects = (BanterBool)values[i];
+                    if (valhideSourceObjects.n == PropertyName.hideSourceObjects)
                     {
-                        hideSourceObjects = val.x;
+                        hideSourceObjects = valhideSourceObjects.x;
                         changedProperties.Add(PropertyName.hideSourceObjects);
-                    }
-                    else if (val.n == PropertyName.isProcessing)
-                    {
-                        isProcessing = val.x;
-                        changedProperties.Add(PropertyName.isProcessing);
                     }
                 }
                 if (values[i] is BanterString)
                 {
-                    var val = (BanterString)values[i];
-                    if (val.n == PropertyName.targetShaderName)
+                    var valtargetShaderName = (BanterString)values[i];
+                    if (valtargetShaderName.n == PropertyName.targetShaderName)
                     {
-                        targetShaderName = val.x;
+                        targetShaderName = valtargetShaderName.x;
                         changedProperties.Add(PropertyName.targetShaderName);
+                    }
+                }
+                if (values[i] is BanterBool)
+                {
+                    var valisProcessing = (BanterBool)values[i];
+                    if (valisProcessing.n == PropertyName.isProcessing)
+                    {
+                        isProcessing = valisProcessing.x;
+                        changedProperties.Add(PropertyName.isProcessing);
+                    }
+                }
+                if (values[i] is BanterFloat)
+                {
+                    var valprogress = (BanterFloat)values[i];
+                    if (valprogress.n == PropertyName.progress)
+                    {
+                        progress = valprogress.x;
+                        changedProperties.Add(PropertyName.progress);
                     }
                 }
             }
@@ -472,6 +498,6 @@ namespace Banter.SDK
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE
+        // END BANTER COMPILED CODE 
     }
 }

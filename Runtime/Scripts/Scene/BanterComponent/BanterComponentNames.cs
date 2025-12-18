@@ -3,6 +3,7 @@ namespace Banter.SDK
     public enum ComponentType
     {
         Transform,
+        BanterAOBaking,
         BanterApple,
         BanterAssetBundle,
         BanterAttachedObject,
@@ -65,6 +66,5 @@ namespace Banter.SDK
         BanterUIPanel,
         BanterVideoPlayer,
         BanterWorldObject,
-        BanterAOBaking,
     }
 }

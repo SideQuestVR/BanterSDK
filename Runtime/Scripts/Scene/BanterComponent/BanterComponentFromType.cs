@@ -7,6 +7,8 @@ namespace Banter.SDK
         {
             switch (componentType)
             {
+                case ComponentType.BanterAOBaking:
+                    return gameObject.AddComponent<BanterAOBaking>();
                 case ComponentType.BanterApple:
                     return gameObject.AddComponent<BanterApple>();
                 case ComponentType.BanterAssetBundle:
@@ -131,8 +133,6 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterVideoPlayer>();
                 case ComponentType.BanterWorldObject:
                     return gameObject.AddComponent<BanterWorldObject>();
-                case ComponentType.BanterAOBaking:
-                    return gameObject.AddComponent<BanterAOBaking>();
                 default:
                     return null;
             }
