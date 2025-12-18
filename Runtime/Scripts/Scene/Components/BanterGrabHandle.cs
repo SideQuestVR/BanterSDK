@@ -50,6 +50,7 @@ namespace Banter.SDK
         }
         internal override void StartStuff()
         {
+            SetLoadedIfNot();
 #if BANTER_FLEX
             grabHandle = GetComponent<GrabHandle>();
             if (grabHandle == null)
@@ -72,7 +73,6 @@ namespace Banter.SDK
                 }
             }
 #endif
-            SetLoadedIfNot();
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
