@@ -514,24 +514,64 @@ Config: {}
 ### Optimization
 
 **BanterAOBaking**
+
+Merges child primitives into a single optimized mesh and bakes ambient occlusion into vertex colors for realistic soft shadows without runtime lighting cost.
+
 ```
-Config: {subdivisionLevel?: number(1), sampleCount?: number(64), aoIntensity?: number(1), aoBias?: number(0.005), aoRadius?: number(0), hideSourceObjects?: boolean(true), targetShaderName?: string("")}
+Config: {
+  subdivisionLevel?: number(1),      // 0=none, 1=4x, 2=16x, 3=64x triangles
+  sampleCount?: number(64),          // Ray samples per vertex (16-256, higher=better quality)
+  aoIntensity?: number(1),           // AO darkness (0-2)
+  aoBias?: number(0.005),            // Self-intersection bias (0.001-0.1)
+  aoRadius?: number(0),              // Occlusion check distance (0=auto)
+  hideSourceObjects?: boolean(true), // Hide originals after merge
+  targetShaderName?: string("Mobile/StylizedFakeLit")  // Vertex color shader
+}
 
 Methods:
 BakeAO()    // Merge child meshes, subdivide, bake AO into vertex colors
-Preview()   // Merge and subdivide without AO baking
+Preview()   // Merge and subdivide without AO baking (for testing)
 Clear()     // Remove generated mesh, restore original children
 
 Read-only: isProcessing: boolean, progress: number (0-1)
 ```
 
-Use when: Static geometry needs soft shadows without real-time lighting cost.
+**Default Shader**: `Mobile/StylizedFakeLit` - A mobile-optimized shader that supports vertex colors. This shader is used by default to ensure baked AO is visible.
 
-Best Practices:
+**Usage Example:**
+```js
+// 1. Create a parent object for your primitives
+const building = new BS.GameObject({name: "Building"});
+
+// 2. Add child primitives
+const wall = new BS.GameObject({name: "Wall", localPosition: new BS.Vector3(0, 1, 0)});
+wall.SetParent(building, false);
+wall.AddComponent(new BS.BanterBox({width: 4, height: 2, depth: 0.2}));
+wall.AddComponent(new BS.BanterMaterial({color: new BS.Vector4(0.8, 0.8, 0.8, 1)}));
+
+const pillar = new BS.GameObject({name: "Pillar", localPosition: new BS.Vector3(-1.5, 1, 0.5)});
+pillar.SetParent(building, false);
+pillar.AddComponent(new BS.BanterCylinder({radiusTop: 0.2, radiusBottom: 0.2, height: 2}));
+pillar.AddComponent(new BS.BanterMaterial({color: new BS.Vector4(0.7, 0.7, 0.7, 1)}));
+
+// 3. Add AO baking to the parent and bake
+const aoBaker = building.AddComponent(new BS.BanterAOBaking({
+  subdivisionLevel: 2,    // More triangles = smoother AO
+  sampleCount: 64,        // Good quality
+  aoIntensity: 0.8        // Subtle shadows
+}));
+
+// 4. Bake the AO
+aoBaker.BakeAO();
+```
+
+**Best Practices:**
 - Always use a root parent GameObject when building with multiple primitives
-- Bake each object when done, before building the next one
+- Bake each object group when done, before building the next one
 - Rebake existing objects when adding new geometry nearby/intersecting
 - Build in layers: Background → Ground → Large elements → Details
+- Use subdivision level 1-2 for most cases (higher = better quality but slower)
+- The default shader (`Mobile/StylizedFakeLit`) is recommended for best results
 
 ---
 

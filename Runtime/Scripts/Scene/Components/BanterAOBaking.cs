@@ -75,7 +75,7 @@ namespace Banter.SDK
         [See(initial = "true")][SerializeField] internal bool hideSourceObjects = true;
 
         [Tooltip("Shader name to apply to merged meshes (e.g., 'Mobile/StylizedFakeLit')")]
-        [See(initial = "")][SerializeField] internal string targetShaderName = "";
+        [See(initial = "Mobile/StylizedFakeLit")][SerializeField] internal string targetShaderName = "Mobile/StylizedFakeLit";
 
         [Tooltip("True when bake operation is in progress (read-only)")]
         [See(initial = "false")][SerializeField] internal bool isProcessing = false;

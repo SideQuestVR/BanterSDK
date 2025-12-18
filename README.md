@@ -1455,7 +1455,7 @@ aoBaker.Clear();
 | `aoBias` | number | 0.005 | Offset to prevent self-intersection (0.001-0.1) |
 | `aoRadius` | number | 0 | Max occlusion check distance (0 = auto based on mesh size) |
 | `hideSourceObjects` | boolean | true | Hide original child meshes after baking |
-| `targetShaderName` | string | "" | Shader name to apply (must support vertex colors) |
+| `targetShaderName` | string | "Mobile/StylizedFakeLit" | Shader name to apply (must support vertex colors) |
 | `isProcessing` | boolean | - | Read-only: true while baking |
 | `progress` | number | - | Read-only: bake progress 0-1 |
 
