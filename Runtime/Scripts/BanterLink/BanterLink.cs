@@ -1200,9 +1200,9 @@ namespace Banter.SDK
         #endregion
 
         #region Legacy stuff
-        public void ToggleDevTools()
+        public void ToggleDevTools(bool open)
         {
-            pipe.view.ToggleDevTools(true);
+            pipe.view.ToggleDevTools(open);
         }
         public void HideDevTools()
         {

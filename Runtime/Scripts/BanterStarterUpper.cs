@@ -295,7 +295,7 @@ namespace Banter.SDK
 #endif
             if (Application.isPlaying)
             {
-                BanterScene.Instance().link.ToggleDevTools();
+                BanterScene.Instance().link.ToggleDevTools(devToolsEnabled);
             }
         }
 
