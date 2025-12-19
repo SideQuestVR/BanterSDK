@@ -286,8 +286,9 @@ namespace Banter.SDK
 
         public static void ToggleDevTools()
         {
+            var devToolsEnabled = false;
 #if UNITY_EDITOR
-            var devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
+            devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
             devToolsEnabled = !devToolsEnabled;
             UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
 
