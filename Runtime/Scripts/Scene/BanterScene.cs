@@ -957,7 +957,7 @@ namespace Banter.SDK
             var paramList = new List<object>();
             foreach (var param in parameters)
             {
-                var paramParts = param.Split(MessageDelimiters.TERTIARY);
+                var paramParts = param.Split(MessageDelimiters.TERTIARY, 2);
                 if (paramParts.Length < 1)
                 {
                     Debug.LogError("[Banter] Call Method message is malformed: " + msg);
@@ -980,13 +980,16 @@ namespace Banter.SDK
                         paramList.Add(int.Parse(paramParts[1]));
                         break;
                     case PropertyType.Vector2:
-                        paramList.Add(new Vector2(NumberFormat.Parse(paramParts[1]), NumberFormat.Parse(paramParts[2])));
+                        var vec2Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 2);
+                        paramList.Add(new Vector2(NumberFormat.Parse(vec2Parts[0]), NumberFormat.Parse(vec2Parts[1])));
                         break;
                     case PropertyType.Vector3:
-                        paramList.Add(new Vector3(NumberFormat.Parse(paramParts[1]), NumberFormat.Parse(paramParts[2]), NumberFormat.Parse(paramParts[3])));
+                        var vec3Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 3);
+                        paramList.Add(new Vector3(NumberFormat.Parse(vec3Parts[0]), NumberFormat.Parse(vec3Parts[1]), NumberFormat.Parse(vec3Parts[2])));
                         break;
                     case PropertyType.Vector4:
-                        paramList.Add(new Vector4(NumberFormat.Parse(paramParts[1]), NumberFormat.Parse(paramParts[2]), NumberFormat.Parse(paramParts[3]), NumberFormat.Parse(paramParts[4])));
+                        var vec4Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
+                        paramList.Add(new Vector4(NumberFormat.Parse(vec4Parts[0]), NumberFormat.Parse(vec4Parts[1]), NumberFormat.Parse(vec4Parts[2]), NumberFormat.Parse(vec4Parts[3])));
                         break;
                 }
             }

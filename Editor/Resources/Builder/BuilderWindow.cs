@@ -214,10 +214,9 @@ public class BuilderWindow : EditorWindow
     {
         OnCompileInjection.Invoke();
     }
-
 #else
     [MenuItem("Banter/Tools/Setup Layers")]
-    public static void CompileInjection()
+    public static void SetupLayersAndTags()
     {
         InitialiseOnLoad.SetupLayersAndTags();
     }
