@@ -284,19 +284,21 @@ namespace Banter.SDK
             }
         }
 
+        private static bool _devToolsEnabled = false;
         public static void ToggleDevTools()
         {
-            var devToolsEnabled = false;
 #if UNITY_EDITOR
-            devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
-            devToolsEnabled = !devToolsEnabled;
-            UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
+            _devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
+            _devToolsEnabled = !_devToolsEnabled;
+            UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, _devToolsEnabled);
 
-            LogLine.Do($"Banter DevTools " + (devToolsEnabled ? "enabled." : "disabled."));
+            LogLine.Do($"Banter DevTools " + (_devToolsEnabled ? "enabled." : "disabled."));
+#else
+            _devtoolsEnabled = ! _devToolsEnabled;
 #endif
             if (Application.isPlaying)
             {
-                BanterScene.Instance().link.ToggleDevTools(devToolsEnabled);
+                BanterScene.Instance().link.ToggleDevTools(_devToolsEnabled);
             }
         }
 
