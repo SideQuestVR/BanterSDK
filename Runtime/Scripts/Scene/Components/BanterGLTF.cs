@@ -133,6 +133,7 @@ namespace Banter.SDK
             loadStarted = true;
             try
             {
+                SetLoadedIfNot();
                 Importer.ImportGLBAsync(await GetCachedGLTF(), new ImportSettings(), (go, animations) =>
                 {
                     try
@@ -217,12 +218,11 @@ namespace Banter.SDK
                                 // need to add support fo sq-overridecolor default setting maybe? 
                             }
                         }
-                        SetLoadedIfNot();
                         loadStarted = false;
                     }
                     catch (Exception e)
                     {
-                        SetLoadedIfNot(false, e.Message + " - " + url);
+                        SetLoadedIfNot(true, e.Message + " - " + url);
                         Destroy(go);
                         loadStarted = false;
                     }
@@ -231,7 +231,7 @@ namespace Banter.SDK
             catch (Exception e)
             {
                 Debug.LogError(e + " " + url);
-                SetLoadedIfNot(false, e.Message);
+                SetLoadedIfNot(true, e.Message);
                 loadStarted = false;
             }
         }
