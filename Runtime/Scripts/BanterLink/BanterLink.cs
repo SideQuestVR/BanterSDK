@@ -764,43 +764,43 @@ namespace Banter.SDK
                     case PropertyName.position:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.localPosition:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.eulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.localEulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.rotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.w + ""));
                             break;
                         }
                     case PropertyName.localRotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.w + ""));
                             break;
                         }
                     case PropertyName.localScale:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                 }
