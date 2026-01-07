@@ -294,7 +294,7 @@ namespace Banter.SDK
 
             LogLine.Do($"Banter DevTools " + (_devToolsEnabled ? "enabled." : "disabled."));
 #else
-            _devtoolsEnabled = ! _devToolsEnabled;
+            _devToolsEnabled = ! _devToolsEnabled;
 #endif
             if (Application.isPlaying)
             {
