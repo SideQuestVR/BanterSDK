@@ -115,6 +115,8 @@ namespace Banter.SDK
             {
                 oraView = gameObject.AddComponent<OraView>();
             }
+
+            oraView.openBrowser = openBrowser;
             SetupBrowserLink(oraView, oraManager);
 #endif
             // #if UNITY_STANDALONE || UNITY_EDITOR
