@@ -2006,6 +2006,7 @@ namespace Banter.SDK
                     loading = false;
                     return;
                 }
+                loadUrlTaskCompletionSource.SetResult(true);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
@@ -2014,7 +2015,6 @@ namespace Banter.SDK
 
                 await loadingManager?.LoadOut();
                 loading = false;
-                loadUrlTaskCompletionSource.SetResult(true);
             }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}"));
             await loadUrlTaskCompletionSource.Task;
         }
