@@ -153,7 +153,12 @@ namespace Banter.SDK
             LogLine.Do("Checking cache for texture: " + url);
             if (objectCache.TryGetValue(url, out Object value))
             {
-                return (Texture2D)value;
+                // Sometimes the cached object gets destroyed explicitly elsewhere (MipMaps.Do), so we need to check for null
+                if(value==null)
+                {
+                    objectCache.TryRemove(url, out _);
+                }
+                else return (Texture2D)value;
             }
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
             {
