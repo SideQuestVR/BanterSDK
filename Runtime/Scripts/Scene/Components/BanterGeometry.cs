@@ -296,6 +296,7 @@ namespace Banter.SDK
             if (_filter != null)
             {
                 Destroy(_filter.sharedMesh);
+                geometryCache.Remove(GetSignature());
                 Destroy(_filter);
             }
         }
