@@ -274,7 +274,12 @@ namespace Banter.SDK
         }
         async Task _Unload()
         {
-            await assetBundle.UnloadAsync(true);
+            try
+            {
+                await assetBundle.UnloadAsync(true);
+            }catch(Exception e){
+                Debug.Log(e.Message); 
+            }
             assetBundle = null;
             if (isScene)
             {
