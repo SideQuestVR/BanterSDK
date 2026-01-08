@@ -36,6 +36,8 @@ Shader "Unlit/DiffuseTransparent"
 				float4 vertex : POSITION;
 				float3 normal : NORMAL;
 				float2 uv : TEXCOORD0;
+
+				UNITY_VERTEX_INPUT_INSTANCE_ID //Insert
 			};
 
 			struct v2f
@@ -44,11 +46,18 @@ Shader "Unlit/DiffuseTransparent"
 				float2 uv : TEXCOORD0;
 				float3 worldNormal : TEXCOORD1;
 				float3 viewDir : TEXCOORD2;
+
+				 UNITY_VERTEX_OUTPUT_STEREO //Insert
 			};
 
 			v2f vert(appdata v)
 			{
 				v2f o;
+
+				UNITY_SETUP_INSTANCE_ID(v); //Insert
+				UNITY_INITIALIZE_OUTPUT(v2f, o); //Insert
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o); //Insert
+
 				o.pos = UnityObjectToClipPos(v.vertex);
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				o.worldNormal = UnityObjectToWorldNormal(v.normal);
@@ -59,8 +68,12 @@ Shader "Unlit/DiffuseTransparent"
 
 			fixed4 frag(v2f i, fixed facing : VFACE) : SV_Target
 			{
+				
+				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i); //Insert
 				// Sample texture
-				fixed4 texColor = tex2D(_MainTex, i.uv);
+				fixed4 texColor = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_MainTex, i.uv);
+				// Sample texture
+				// fixed4 texColor = tex2D(_MainTex, i.uv);
 
 				// Combine with color
 				fixed4 col = texColor * _Color;
