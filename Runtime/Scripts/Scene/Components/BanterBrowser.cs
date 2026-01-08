@@ -86,7 +86,7 @@ namespace Banter.SDK
                 browser.SendMessage("RunActions", actions);
             }
 
-            if (changedProperties?.Contains(PropertyName.url) ?? true)
+            if (changedProperties?.Contains(PropertyName.url) ?? true && !string.IsNullOrEmpty(url))
             {
                 browser.SendMessage("LoadUrl", url);
             }
