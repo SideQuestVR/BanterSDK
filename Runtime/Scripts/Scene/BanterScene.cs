@@ -2006,13 +2006,13 @@ namespace Banter.SDK
                     loading = false;
                     return;
                 }
-                await Task.Delay(2500);
                 loadUrlTaskCompletionSource.SetResult(true);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
                 }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
                 
+                await Task.Delay(2500);
 
                 await loadingManager?.LoadOut();
                 loading = false;
