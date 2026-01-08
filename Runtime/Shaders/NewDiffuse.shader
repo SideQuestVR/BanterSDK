@@ -68,7 +68,7 @@ Shader "Unlit/Diffuse"
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i); //Insert
 				
 				// Sample texture
-				fixed4 texColor = UNITY_SAMPLE_SCREENSPACE_TEXTURE(_MainTex, i.uv);
+				fixed4 texColor = tex2D(_MainTex, i.uv);
 
 				// Combine with color
 				fixed4 col = texColor * _Color;
