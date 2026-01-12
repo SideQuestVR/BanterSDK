@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 namespace Banter.SDK
 {
@@ -98,17 +99,14 @@ namespace Banter.SDK
             // {
             //     browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
             // }
-            // if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
-            // {
-            //     RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
-            //     rt.sizeDelta = new Vector2(pageWidth, pageHeight);
-            //     var box = browser.GetComponent<BoxCollider>();
-            //     if (box)
-            //     {
-            //         box.size = new Vector3(pageWidth, pageHeight, 0.01f);
-            //         box.center = new Vector3(0, 0, 0.01f);
-            //     }
-            // }
+            if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
+            {
+                UIDocument doc = browser.GetComponent<UIDocument>();
+                if(doc)
+                {
+                    doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
+                }
+            }
             SetLoadedIfNot();
         }
 
