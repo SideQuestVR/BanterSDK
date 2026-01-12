@@ -1,5 +1,6 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
+using UnityEngine;
 using Banter.SDK;
 using Banter.FlexaBody;
 
@@ -24,6 +25,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var value = flow.GetValue<bool>(canRotate);
+                Debug.Log("[MouseLook] ActionsSystem.canRotate set to " + value);
                 ActionsSystem.canRotate = value;
                 return outputTrigger;
             });
