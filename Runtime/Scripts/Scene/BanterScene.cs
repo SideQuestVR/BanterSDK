@@ -2520,6 +2520,7 @@ namespace Banter.SDK
 
         public void SetActionsSystemCanRotate(bool value, int reqId)
         {
+            Debug.Log("[MouseLook] ActionsSystem.canRotate set to " + value);
             ActionsSystem.canRotate = value;
             link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
         }
