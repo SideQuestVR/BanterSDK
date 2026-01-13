@@ -37,6 +37,7 @@ namespace Banter.SDK
 
         [Tooltip("Enable to generate mipmaps for the texture (improves texture scaling).")]
         [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
+        [See(initial = "")][SerializeField] internal string cacheBust = "";
         
         Texture2D defaultTexture;
         Texture2D mainTex;
@@ -193,6 +194,7 @@ namespace Banter.SDK
         public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
         public Banter.SDK.MaterialSide Side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
         public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
+        public System.String CacheBust { get { return cacheBust; } set { cacheBust = value; UpdateCallback(new List<PropertyName> { PropertyName.cacheBust }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -215,12 +217,12 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.shaderName, PropertyName.texture, PropertyName.color, PropertyName.side, PropertyName.generateMipMaps, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.shaderName, PropertyName.texture, PropertyName.color, PropertyName.side, PropertyName.generateMipMaps, PropertyName.cacheBust, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "BanterMaterial" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps;
+            return "BanterMaterial" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps + PropertyName.cacheBust + cacheBust;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -309,6 +311,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.generateMipMaps);
                     }
                 }
+                if (values[i] is BanterString)
+                {
+                    var valcacheBust = (BanterString)values[i];
+                    if (valcacheBust.n == PropertyName.cacheBust)
+                    {
+                        cacheBust = valcacheBust.x;
+                        changedProperties.Add(PropertyName.cacheBust);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -371,6 +382,18 @@ namespace Banter.SDK
                     name = PropertyName.generateMipMaps,
                     type = PropertyType.Bool,
                     value = generateMipMaps,
+                    componentType = ComponentType.BanterMaterial,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.cacheBust,
+                    type = PropertyType.String,
+                    value = cacheBust,
                     componentType = ComponentType.BanterMaterial,
                     oid = oid,
                     cid = cid

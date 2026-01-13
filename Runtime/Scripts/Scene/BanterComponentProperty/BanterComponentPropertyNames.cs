@@ -172,6 +172,7 @@ namespace Banter.SDK
         shaderName,
         texture,
         side,
+        cacheBust,
         convex,
         renderTextureSize,
         cameraClear,
