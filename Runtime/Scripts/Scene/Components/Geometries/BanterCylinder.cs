@@ -11,9 +11,9 @@ namespace Banter.SDK
     public class BanterCylinder : BanterComponentBase
     {
         [Tooltip("Radius of the top of the cylinder")]
-        [See(initial = "1")][SerializeField] internal float topRadius;
+        [See(initial = "1")][SerializeField] internal float radiusTop;
         [Tooltip("Radius of the bottom of the cylinder")]
-        [See(initial = "1")][SerializeField] internal float bottomRadius;
+        [See(initial = "1")][SerializeField] internal float radiusBottom;
         [Tooltip("Height of the cylinder")]
         [See(initial = "1")][SerializeField] internal float height;
         [Tooltip("Number of segments around the cylinder")]
@@ -50,8 +50,8 @@ namespace Banter.SDK
                 geometry = gameObject.AddComponent<BanterGeometry>();
             }
             geometry.geometryType = GeometryType.CylinderGeometry;
-            geometry.radiusTop = topRadius;
-            geometry.radiusBottom = bottomRadius;
+            geometry.radiusTop = radiusTop;
+            geometry.radiusBottom = radiusBottom;
             geometry.height = height;
             geometry.radialSegments = radialSegments;
             geometry.heightSegments = heightSegments;
@@ -84,8 +84,8 @@ namespace Banter.SDK
             SetupGeometry();
         }
         // BANTER COMPILED CODE 
-        public System.Single TopRadius { get { return topRadius; } set { topRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.topRadius }); } }
-        public System.Single BottomRadius { get { return bottomRadius; } set { bottomRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.bottomRadius }); } }
+        public System.Single RadiusTop { get { return radiusTop; } set { radiusTop = value; UpdateCallback(new List<PropertyName> { PropertyName.radiusTop }); } }
+        public System.Single RadiusBottom { get { return radiusBottom; } set { radiusBottom = value; UpdateCallback(new List<PropertyName> { PropertyName.radiusBottom }); } }
         public System.Single Height { get { return height; } set { height = value; UpdateCallback(new List<PropertyName> { PropertyName.height }); } }
         public System.Int32 RadialSegments { get { return radialSegments; } set { radialSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.radialSegments }); } }
         public System.Int32 HeightSegments { get { return heightSegments; } set { heightSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.heightSegments }); } }
@@ -114,8 +114,12 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.topRadius, PropertyName.bottomRadius, PropertyName.height, PropertyName.radialSegments, PropertyName.heightSegments, PropertyName.openEnded, PropertyName.thetaStart, PropertyName.thetaLength, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.radiusTop, PropertyName.radiusBottom, PropertyName.height, PropertyName.radialSegments, PropertyName.heightSegments, PropertyName.openEnded, PropertyName.thetaStart, PropertyName.thetaLength, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterCylinder" +  PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -161,20 +165,20 @@ namespace Banter.SDK
             {
                 if (values[i] is BanterFloat)
                 {
-                    var valtopRadius = (BanterFloat)values[i];
-                    if (valtopRadius.n == PropertyName.topRadius)
+                    var valradiusTop = (BanterFloat)values[i];
+                    if (valradiusTop.n == PropertyName.radiusTop)
                     {
-                        topRadius = valtopRadius.x;
-                        changedProperties.Add(PropertyName.topRadius);
+                        radiusTop = valradiusTop.x;
+                        changedProperties.Add(PropertyName.radiusTop);
                     }
                 }
                 if (values[i] is BanterFloat)
                 {
-                    var valbottomRadius = (BanterFloat)values[i];
-                    if (valbottomRadius.n == PropertyName.bottomRadius)
+                    var valradiusBottom = (BanterFloat)values[i];
+                    if (valradiusBottom.n == PropertyName.radiusBottom)
                     {
-                        bottomRadius = valbottomRadius.x;
-                        changedProperties.Add(PropertyName.bottomRadius);
+                        radiusBottom = valradiusBottom.x;
+                        changedProperties.Add(PropertyName.radiusBottom);
                     }
                 }
                 if (values[i] is BanterFloat)
@@ -242,9 +246,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.topRadius,
+                    name = PropertyName.radiusTop,
                     type = PropertyType.Float,
-                    value = topRadius,
+                    value = radiusTop,
                     componentType = ComponentType.BanterCylinder,
                     oid = oid,
                     cid = cid
@@ -254,9 +258,9 @@ namespace Banter.SDK
             {
                 updates.Add(new BanterComponentPropertyUpdate()
                 {
-                    name = PropertyName.bottomRadius,
+                    name = PropertyName.radiusBottom,
                     type = PropertyType.Float,
-                    value = bottomRadius,
+                    value = radiusBottom,
                     componentType = ComponentType.BanterCylinder,
                     oid = oid,
                     cid = cid

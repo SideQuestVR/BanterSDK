@@ -124,6 +124,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.path, PropertyName.resetTransform, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterKitItem" +  PropertyName.path + path + PropertyName.resetTransform + resetTransform;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

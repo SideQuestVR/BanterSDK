@@ -177,6 +177,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.volume, PropertyName.pitch, PropertyName.mute, PropertyName.loop, PropertyName.bypassEffects, PropertyName.bypassListenerEffects, PropertyName.bypassReverbZones, PropertyName.playOnAwake, PropertyName.spatialBlend, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterAudioSource" +  PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

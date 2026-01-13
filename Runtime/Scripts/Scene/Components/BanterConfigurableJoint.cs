@@ -199,6 +199,10 @@ namespace Banter.SDK
         {
 
         }
+        internal override string GetSignature()
+        {
+            return "ConfigurableJoint" +  PropertyName.targetPosition + targetPosition + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.xMotion + xMotion + PropertyName.yMotion + yMotion + PropertyName.zMotion + zMotion + PropertyName.angularXMotion + angularXMotion + PropertyName.angularYMotion + angularYMotion + PropertyName.angularZMotion + angularZMotion + PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.secondaryAxis + secondaryAxis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.targetRotation + targetRotation + PropertyName.targetVelocity + targetVelocity + PropertyName.targetAngularVelocity + targetAngularVelocity + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.rotationDriveMode + rotationDriveMode + PropertyName.configuredInWorldSpace + configuredInWorldSpace + PropertyName.swapBodies + swapBodies + PropertyName.connectedBody + connectedBody + PropertyName.linearLimit + linearLimit + PropertyName.lowAngularXLimit + lowAngularXLimit + PropertyName.highAngularXLimit + highAngularXLimit + PropertyName.angularYLimit + angularYLimit + PropertyName.angularZLimit + angularZLimit + PropertyName.xDrive + xDrive + PropertyName.yDrive + yDrive + PropertyName.zDrive + zDrive + PropertyName.angularXDrive + angularXDrive + PropertyName.angularYZDrive + angularYZDrive + PropertyName.slerpDrive + slerpDrive;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

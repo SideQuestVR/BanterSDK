@@ -5,7 +5,6 @@ using UnityEngine.Events;
 
 namespace Banter.SDK
 {
-    [ExecuteInEditMode]
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1)]
     public class BanterObjectId : MonoBehaviour

@@ -13,7 +13,11 @@ public class AddPanelStuff : MonoBehaviour
     void Start()
     {
         Invoke(nameof(WaitForRuntimePanel),1f);
-        
+    }
+    
+    public void Reset()
+    {
+        WaitForRuntimePanel();
     }
 
     private void WaitForRuntimePanel()

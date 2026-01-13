@@ -141,6 +141,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.text, PropertyName.color, PropertyName.horizontalAlignment, PropertyName.verticalAlignment, PropertyName.fontSize, PropertyName.richText, PropertyName.enableWordWrapping, PropertyName.rectTransformSizeDelta, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterText" +  PropertyName.text + text + PropertyName.color + color + PropertyName.horizontalAlignment + horizontalAlignment + PropertyName.verticalAlignment + verticalAlignment + PropertyName.fontSize + fontSize + PropertyName.richText + richText + PropertyName.enableWordWrapping + enableWordWrapping + PropertyName.rectTransformSizeDelta + rectTransformSizeDelta;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

@@ -106,6 +106,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.smoothing, PropertyName.enableXAxis, PropertyName.enableYAxis, PropertyName.enableZAxis, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterBillboard" +  PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

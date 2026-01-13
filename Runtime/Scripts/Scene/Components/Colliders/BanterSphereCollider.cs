@@ -66,6 +66,10 @@ namespace Banter.SDK
         {
 
         }
+        internal override string GetSignature()
+        {
+            return "SphereCollider" +  PropertyName.isTrigger + isTrigger + PropertyName.radius + radius;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

@@ -255,6 +255,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.time, PropertyName.url, PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake, PropertyName.skipOnDrop, PropertyName.waitForFirstFrame, PropertyName.isPlaying, PropertyName.isLooping, PropertyName.isPrepared, PropertyName.isMuted, PropertyName.duration, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterVideoPlayer" +  PropertyName.time + time + PropertyName.url + url + PropertyName.volume + volume + PropertyName.loop + loop + PropertyName.playOnAwake + playOnAwake + PropertyName.skipOnDrop + skipOnDrop + PropertyName.waitForFirstFrame + waitForFirstFrame + PropertyName.isPlaying + isPlaying + PropertyName.isLooping + isLooping + PropertyName.isPrepared + isPrepared + PropertyName.isMuted + isMuted + PropertyName.duration + duration;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

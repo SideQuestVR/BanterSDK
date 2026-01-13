@@ -175,6 +175,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.avatarId, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterAvatarPedestal" +  PropertyName.avatarId + avatarId;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

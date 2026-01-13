@@ -50,6 +50,7 @@ namespace Banter.SDK
         }
         internal override void StartStuff()
         {
+            SetLoadedIfNot();
 #if BANTER_FLEX
             grabHandle = GetComponent<GrabHandle>();
             if (grabHandle == null)
@@ -72,7 +73,6 @@ namespace Banter.SDK
                 }
             }
 #endif
-            SetLoadedIfNot();
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
@@ -109,6 +109,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.grabType, PropertyName.grabRadius, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterGrabHandle" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
         }
 
         internal override void Init(List<object> constructorProperties = null)

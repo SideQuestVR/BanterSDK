@@ -24,8 +24,9 @@ namespace Banter.SDK
 
         [Tooltip("Enable angular limits for the joint.")]
         [See(initial = "false")][SerializeField] internal bool useLimits = false;
+        [Tooltip("Angular limits for the joint.")]
+        [See(initial = "{bounciness: 0, bounceMinVelocity: 0, contactDistance: 0, min: -90, max: 90}")][SerializeField] internal JointLimits limits = new JointLimits();
 
-    
         [Tooltip("Enable the joint motor.")]
         [See(initial = "false")][SerializeField] internal bool useMotor = false;
 
@@ -58,6 +59,7 @@ namespace Banter.SDK
         public UnityEngine.Vector3 ConnectedAnchor { get { return connectedAnchor; } set { connectedAnchor = value; } }
         public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
         public System.Boolean UseLimits { get { return useLimits; } set { useLimits = value; } }
+        public UnityEngine.JointLimits Limits { get { return limits; } set { limits = value; } }
         public System.Boolean UseMotor { get { return useMotor; } set { useMotor = value; } }
         public System.Boolean UseSpring { get { return useSpring; } set { useSpring = value; } }
         public System.Single BreakForce { get { return breakForce; } set { breakForce = value; } }
@@ -101,6 +103,10 @@ namespace Banter.SDK
         internal override void ReSetup()
         {
 
+        }
+        internal override string GetSignature()
+        {
+            return "HingeJoint" +  PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.useLimits + useLimits + PropertyName.limits + limits + PropertyName.useMotor + useMotor + PropertyName.useSpring + useSpring + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -187,6 +193,21 @@ namespace Banter.SDK
                     {
                         componentType.useLimits = valuseLimits.x;
                         changedProperties.Add(PropertyName.useLimits);
+                    }
+                }
+                if (values[i] is BanterVector5)
+                {
+                    var vallimits = (BanterVector5)values[i];
+                    if (vallimits.n == PropertyName.limits)
+                    {
+                        componentType.limits = new JointLimits(){
+                            bounciness = vallimits.x,
+                            bounceMinVelocity = vallimits.y,
+                            contactDistance = vallimits.z,
+                            min = vallimits.w,
+                            max = vallimits.v
+                        };
+                        changedProperties.Add(PropertyName.limits);
                     }
                 }
                 if (values[i] is BanterBool)
@@ -367,6 +388,18 @@ namespace Banter.SDK
                     name = PropertyName.useLimits,
                     type = PropertyType.Bool,
                     value = componentType.useLimits,
+                    componentType = ComponentType.HingeJoint,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.limits,
+                    type = PropertyType.JointLimits,
+                    value = componentType.limits,
                     componentType = ComponentType.HingeJoint,
                     oid = oid,
                     cid = cid

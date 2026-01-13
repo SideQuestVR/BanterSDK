@@ -7,6 +7,8 @@ namespace Banter.SDK
         {
             switch (componentType)
             {
+                case ComponentType.BanterAOBaking:
+                    return gameObject.AddComponent<BanterAOBaking>();
                 case ComponentType.BanterApple:
                     return gameObject.AddComponent<BanterApple>();
                 case ComponentType.BanterAssetBundle:
@@ -101,6 +103,8 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterRing>();
                 case ComponentType.BanterScherk:
                     return gameObject.AddComponent<BanterScherk>();
+                case ComponentType.BanterSkinnedMeshRenderer:
+                    return gameObject.AddComponent<BanterSkinnedMeshRenderer>();
                 case ComponentType.BanterSnail:
                     return gameObject.AddComponent<BanterSnail>();
                 case ComponentType.BanterSphere:

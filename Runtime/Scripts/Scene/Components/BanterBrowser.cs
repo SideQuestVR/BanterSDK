@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 namespace Banter.SDK
 {
@@ -34,10 +35,10 @@ namespace Banter.SDK
         [See(initial = "1200")][SerializeField] internal float pixelsPerUnit = 1200;
 
         [Tooltip("The width of the browser page in pixels")]
-        [See(initial = "1024")][SerializeField] internal float pageWidth = 1024;
+        [See(initial = "1024")][SerializeField] internal float pageWidth = 1280;
 
         [Tooltip("The height of the browser page in pixels")]
-        [See(initial = "576")][SerializeField] internal float pageHeight = 576;
+        [See(initial = "576")][SerializeField] internal float pageHeight = 720;
 
         [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
         [See(initial = "")][SerializeField] internal string actions;
@@ -86,27 +87,24 @@ namespace Banter.SDK
                 browser.SendMessage("RunActions", actions);
             }
 
-            if (changedProperties?.Contains(PropertyName.url) ?? true)
+            if (changedProperties?.Contains(PropertyName.url) ?? true && !string.IsNullOrEmpty(url))
             {
                 browser.SendMessage("LoadUrl", url);
             }
-            if (changedProperties?.Contains(PropertyName.mipMaps) ?? true)
-            {
-                browser.SendMessage("SetMipMaps", mipMaps);
-            }
-            if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? true)
-            {
-                browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
-            }
+            // if (changedProperties?.Contains(PropertyName.mipMaps) ?? true)
+            // {
+            //     browser.SendMessage("SetMipMaps", mipMaps);
+            // }
+            // if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? true)
+            // {
+            //     browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
+            // }
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
             {
-                RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
-                rt.sizeDelta = new Vector2(pageWidth, pageHeight);
-                var box = browser.GetComponent<BoxCollider>();
-                if (box)
+                UIDocument doc = browser.GetComponent<UIDocument>();
+                if(doc)
                 {
-                    box.size = new Vector3(pageWidth, pageHeight, 0.01f);
-                    box.center = new Vector3(0, 0, 0.01f);
+                    doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
                 }
             }
             SetLoadedIfNot();
@@ -155,6 +153,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterBrowser" +  PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions;
         }
 
         internal override void Init(List<object> constructorProperties = null)

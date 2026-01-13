@@ -286,6 +286,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.velocity, PropertyName.angularVelocity, PropertyName.mass, PropertyName.drag, PropertyName.angularDrag, PropertyName.isKinematic, PropertyName.useGravity, PropertyName.centerOfMass, PropertyName.collisionDetectionMode, PropertyName.freezePositionX, PropertyName.freezePositionY, PropertyName.freezePositionZ, PropertyName.freezeRotationX, PropertyName.freezeRotationY, PropertyName.freezeRotationZ, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterRigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

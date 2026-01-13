@@ -14,13 +14,14 @@ using Unity.VisualScripting;
 using Banter.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
-
+#if BANTER_ORA
+using SideQuest.Ora;
+#endif
 namespace Banter.SDK
 {
     public class BanterLink : MonoBehaviour
     {
         public BanterPipe pipe;
-        public static string pipeName => GeneratePipeName();
         public BanterScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
@@ -30,9 +31,6 @@ namespace Banter.SDK
 
         void Start()
         {
-            scene = BanterScene.Instance();
-            SetupPipe();
-
             scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -84,8 +82,9 @@ namespace Banter.SDK
             }
             else if (msg.StartsWith(APICommands.ONLOAD))
             {
-                _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
-                scene.SetLoaded();
+                // Debug.Log("HERERER! " +msg); 
+                // _ = scene.OnLoad(GetMsgData(msg, APICommands.ONLOAD));
+                // scene.SetLoaded();
             }
             else if (msg.StartsWith(APICommands.NOTHING_20S))
             {
@@ -358,6 +357,18 @@ namespace Banter.SDK
                 {
                     _ = scene.QueryComponents(GetMsgData(msg, APICommands.QUERY_COMPONENTS), id);
                 }
+                else if (msg.StartsWith(APICommands.GET_BOUNDS))
+                {
+                    scene.GetJsBounds(GetMsgData(msg, APICommands.GET_BOUNDS), id);
+                }
+                else if (msg.StartsWith(APICommands.INLINE_OBJECT))
+                {
+                    scene.InlineJsObject(GetMsgData(msg, APICommands.INLINE_OBJECT), id);
+                }
+                else if (msg.StartsWith(APICommands.INLINE_CRAWL))
+                {
+                    scene.InlineJsCrawl(GetMsgData(msg, APICommands.INLINE_CRAWL), id);
+                }
                 // Asset System Commands
                 else if (msg.StartsWith(APICommands.CREATE_ASSET))
                 {
@@ -603,6 +614,7 @@ namespace Banter.SDK
             //end of debug stuff
 #endif
 
+
             if (msg.StartsWith(APICommands.REQUEST_ID))
             {
                 var startLength = (APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID).Length;
@@ -622,17 +634,22 @@ namespace Banter.SDK
                 ParseCommand(msg);
             }
         }
-        void SetupPipe()
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            pipe = new AndroidPipe();
-#else
-            pipe = new ElectronPipe(pipeName);
-#endif
 
+#if BANTER_ORA
+        public void SetupPipe(OraView view, OraManager manager)
+        {
+            // #if UNITY_ANDROID && !UNITY_EDITOR
+            //             pipe = new AndroidPipe();
+            // #else
+            //             pipe = new ElectronPipe(pipeName);
+            // #endif
+
+            scene = BanterScene.Instance();
+            pipe = new BanterPipe(this, view, manager);
             batchUpdater = new BatchUpdater(pipe);
             pipe.Start(() =>
             {
+                Debug.Log("HERER3 pipe.Start(() =>");
                 Connected?.Invoke(this, EventArgs.Empty);
             }, msg =>
             {
@@ -669,32 +686,7 @@ namespace Banter.SDK
                 }
             });
         }
-
-        private static string _pipeName;
-        private static string GeneratePipeName()
-        {
-            if (_pipeName == null)
-            {
-                _pipeName = Guid.NewGuid().ToString().Replace("-", "");
-            }
-            return $"banterPipe{_pipeName}";
-        }
-
-        void OnDestroy()
-        {
-            if (pipe != null)
-            {
-                pipe.Stop();
-            }
-        }
-
-        void OnApplicationQuit()
-        {
-            if (pipe != null)
-            {
-                pipe.Stop();
-            }
-        }
+#endif
 
         
         Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
@@ -746,11 +738,14 @@ namespace Banter.SDK
         public async Task LoadUrl(string url)
         {
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + url);
-            pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
+#if BANTER_ORA
+            pipe.view.LoadUrl(url);
+#endif
+            // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
             scene.state = SceneState.NONE;
-            LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
+            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
             await new WaitUntil(() => scene.state >= SceneState.SCENE_READY);
-            LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
+            // LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
             scene.SetLoaded();
         }
 
@@ -769,43 +764,43 @@ namespace Banter.SDK
                     case PropertyName.position:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.localPosition:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.eulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.localEulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                     case PropertyName.rotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.w + ""));
                             break;
                         }
                     case PropertyName.localRotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z + MessageDelimiters.TERTIARY + value.w);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.w + ""));
                             break;
                         }
                     case PropertyName.localScale:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + value.x + MessageDelimiters.TERTIARY + value.y + MessageDelimiters.TERTIARY + value.z);
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
                             break;
                         }
                 }
@@ -836,14 +831,14 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiModel", new CustomEventArgs("", new object[] { glb }));
 #endif
-            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + glb);
+            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + glb);
         }
         public void OnAiImage(string image)
         {
 #if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
 #endif
-            Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + image);
+            Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + image);
         }
         public void OnBase64ToCDN(long image)
         {
@@ -1014,10 +1009,10 @@ namespace Banter.SDK
 
         public void CheckPipe()
         {
-            if (!pipe.GetIsConnected())
-            {
-                SetupPipe();
-            }
+            // if (!pipe.GetIsConnected())
+            // {
+            //     SetupPipe();
+            // }
         }
 
         #region Asset System Handlers
@@ -1205,9 +1200,9 @@ namespace Banter.SDK
         #endregion
 
         #region Legacy stuff
-        public void ToggleDevTools()
+        public void ToggleDevTools(bool open)
         {
-            pipe.Send(APICommands.TOGGLE_DEV_TOOLS);
+            pipe.view.ToggleDevTools(open);
         }
         public void HideDevTools()
         {

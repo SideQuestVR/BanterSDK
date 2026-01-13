@@ -70,6 +70,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterColliderEvents";
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

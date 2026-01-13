@@ -37,11 +37,38 @@ namespace Banter.SDK
 
         [Tooltip("Enable to generate mipmaps for the texture (improves texture scaling).")]
         [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
-
+        
         Texture2D defaultTexture;
         Texture2D mainTex;
 
         bool UpdateCallbackRan = false;
+
+        private static Dictionary<string, Material> materialCache = new Dictionary<string, Material>();
+
+        public static void ClearCache()
+        {
+            foreach (var mat in materialCache)
+            {
+                Destroy(mat.Value);
+            }
+            materialCache.Clear();
+        }
+        
+        private Material GetCachedMaterial()
+        {
+            var signature = GetSignature();
+            if(materialCache.ContainsKey(signature))
+            {
+                return materialCache[signature];
+            }
+            else
+            {
+                var material = new Material(shaderType == ShaderType.Custom && !string.IsNullOrEmpty(shaderName) ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                materialCache.Add(signature, material);
+                return material;
+            }
+            
+        }
         internal override void StartStuff()
         {
             if(!UpdateCallbackRan)
@@ -75,7 +102,7 @@ namespace Banter.SDK
                 }
                 if (changedProperties?.Contains(PropertyName.shaderName) ?? false)
                 {
-                    var material = new Material(shaderType == ShaderType.Custom ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                    var material = GetCachedMaterial();
                     _renderer.sharedMaterial = material;
                 }
                 if (changedProperties?.Contains(PropertyName.texture) ?? false)
@@ -190,6 +217,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.shaderName, PropertyName.texture, PropertyName.color, PropertyName.side, PropertyName.generateMipMaps, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterMaterial" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps;
         }
 
         internal override void Init(List<object> constructorProperties = null)

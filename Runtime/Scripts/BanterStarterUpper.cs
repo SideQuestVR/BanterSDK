@@ -7,9 +7,13 @@ using UnityEngine;
 using UnityEngine.SpatialTracking;
 using Banter.Utilities.Async;
 using Debug = UnityEngine.Debug;
-using TLab.WebView;
 using UnityEngine.UI;
+using System.Collections;
+#if BANTER_ORA
+using SideQuest.Ora;
+using SideQuest.Ora.WebRTC;
 
+#endif
 
 
 #if BANTER_VISUAL_SCRIPTING
@@ -40,8 +44,6 @@ namespace Banter.SDK
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-        
-        public static Browser browser;
         void Awake()
         {
             // Safe mode?
@@ -56,7 +58,7 @@ namespace Banter.SDK
                 LogLine.Do("SAFE MODE is set on");
                 PlayerPrefs.SetInt("SafeModeOff", 1);
             }
-            
+
 #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
             BasisLoadHandler.OnGameStart();
@@ -71,43 +73,83 @@ namespace Banter.SDK
                     currentCoroutine = StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
+                Debug.Log("BanterStarterUpper initialized");
             }
 
             scene = BanterScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
+
 #if !BANTER_EDITOR
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
             SetupExtraEvents();
             SetupCamera();
             SpawnPlayers();
+            StartCoroutine(OpenPageDev());
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
 #endif
-#if UNITY_STANDALONE || UNITY_EDITOR
-            Kill();
-            StartElectronBrowser();
-#else
-            StartBrowserWindow();
+#if BANTER_ORA
+            var oraManager = gameObject.GetComponent<OraManager>();
+            if (!oraManager)
+            {
+                oraManager = gameObject.AddComponent<OraManager>();
+            }
+            oraManager.oraAudioManager = gameObject.GetComponent<OraAudioManager>();
+            if (!oraManager.oraAudioManager)
+            {
+                oraManager.oraAudioManager = gameObject.AddComponent<OraAudioManager>();
+            }
+            oraManager.oraWebRTCManager = gameObject.GetComponent<OraWebRTCManager>();
+            if (!oraManager.oraWebRTCManager)
+            {
+                oraManager.oraWebRTCManager = gameObject.AddComponent<OraWebRTCManager>();
+            }
+            oraManager.hardwareKeyboardInput = gameObject.GetComponent<HardwareKeyboardInput>();
+            if (!oraManager.hardwareKeyboardInput)
+            {
+                oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
+            }
+            var oraView = gameObject.GetComponent<OraView>();
+            if (!oraView)
+            {
+                oraView = gameObject.AddComponent<OraView>();
+            }
+
+            oraView.openBrowser = openBrowser;
+            SetupBrowserLink(oraView, oraManager);
 #endif
-            SetupBrowserLink();
-#if UNITY_STANDALONE || UNITY_EDITOR
-    EventHandler args = null;
-    args = (arg0, arg1) =>
-    {
-        scene.link.Connected -= args;
-        UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-        {
-            StartBrowserWindow();
-        });
-    };
-    scene.link.Connected += args;
-#endif
+            // #if UNITY_STANDALONE || UNITY_EDITOR
+            //             Kill();
+            //             StartElectronBrowser();
+            // #else
+            //             StartBrowserWindow();
+            // #endif
+            // #if UNITY_STANDALONE || UNITY_EDITOR
+            //     EventHandler args = null;
+            //     args = (arg0, arg1) =>
+            //     {
+            //         scene.link.Connected -= args;
+            //         UnityMainThreadTaskScheduler.Default.Enqueue(() =>
+            //         {
+            //             StartBrowserWindow();
+            //         });
+            //     };
+            //     scene.link.Connected += args;
+            // #endif
 
 #if BANTER_EDITOR
             scene.loadingManager.feetTransform = _feetTransform;
 #endif
             scene.ResetLoadingProgress();
+        }
+        
+        IEnumerator OpenPageDev()
+        {
+            yield return new WaitForSeconds(2);
+#if BANTER_ORA
+            scene.link.pipe.view.LoadUrl("http://localhost:42068");
+#endif
         }
 
         Vector3 RandomSpawnPoint()
@@ -186,7 +228,7 @@ namespace Banter.SDK
 
         private void OnApplicationQuit()
         {
-            Kill(true);
+            // Kill(true);
         }
 
         void OnDestroy()
@@ -207,11 +249,14 @@ namespace Banter.SDK
             {
             }
         }
-        private void SetupBrowserLink()
+#if BANTER_ORA
+        private void SetupBrowserLink(OraView view, OraManager manager)
         {
             scene.link = gameObject.AddComponent<BanterLink>();
+            scene.link.SetupPipe(view, manager);
             scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BanterStarterUpper)}.{nameof(SetupBrowserLink)}"));
         }
+#endif
         public void CancelLoading()
         {
             if (scene.HasLoadFailed())
@@ -241,100 +286,22 @@ namespace Banter.SDK
             }
         }
 
+        private static bool _devToolsEnabled = false;
         public static void ToggleDevTools()
         {
 #if UNITY_EDITOR
-            var devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
-            devToolsEnabled = !devToolsEnabled;
-            UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, devToolsEnabled);
+            _devToolsEnabled = UnityEditor.EditorPrefs.GetBool(BANTER_DEVTOOLS_ENABLED, false);
+            _devToolsEnabled = !_devToolsEnabled;
+            UnityEditor.EditorPrefs.SetBool(BANTER_DEVTOOLS_ENABLED, _devToolsEnabled);
 
-            LogLine.Do($"Banter DevTools " + (devToolsEnabled ? "enabled." : "disabled."));
+            LogLine.Do($"Banter DevTools " + (_devToolsEnabled ? "enabled." : "disabled."));
+#else
+            _devToolsEnabled = ! _devToolsEnabled;
 #endif
             if (Application.isPlaying)
             {
-                BanterScene.Instance().link.ToggleDevTools();
+                BanterScene.Instance().link.ToggleDevTools(_devToolsEnabled);
             }
-        }
-
-        private void StartElectronBrowser()
-        {
-            Kill();
-#if !BANTER_EDITOR
-            var isProd = false;
-#else
-            var isProd = true;
-#endif
-
-#if UNITY_EDITOR
-            var Eargs = (isProd ? "--prod true " : "") + "--bebug " + (openBrowser ? "--openbrowser " : "") + "--pipename " +
-                BanterLink.pipeName + " --root " + "\"" + Path.Join(Application.dataPath, WEB_ROOT) + "\"";
-            processId = StartProcess.Do(LogLine.browserColor, Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link"),
-                Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\banter-link.exe"),
-                Eargs,
-                LogTag.BanterBrowser);
-#else
-            processId = StartProcess.Do(LogLine.browserColor, Directory.GetCurrentDirectory() + "\\banter-link",
-                Directory.GetCurrentDirectory() + "\\banter-link\\banter-link.exe",
-                "--bebug --prod true " + (openBrowser ? "--openbrowser " : "") + "--pipename " + BanterLink.pipeName,
-                LogTag.BanterBrowser);
-#endif
-                   
-        }
-        public static int spaceBrowserWidth = 1024;
-        public static int spaceBrowserHeight = 768;
-
-        Vector2Int lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
-        public static Texture2D browserTexture;
-        void StartBrowserWindow()
-        {
-#if UNITY_EDITOR
-            var injectFile = Path.GetFullPath("Packages\\com.sidequest.banter\\Editor\\banter-link\\inject.js");
-#else
-            var injectFile = Path.Combine(Directory.GetCurrentDirectory(), "banter-link", "inject.js");
-#endif
-           
-#if UNITY_ANDROID
-            browser = gameObject.AddComponent<WebView>();
-#else
-            browser = gameObject.AddComponent<ElectronView>();
-#endif
-            browser.texSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
-            browser.viewSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
-            browser.fps = 30;
-            browser.preloadScript = injectFile;
-            browser.captureMode = CaptureMode.HardwareBuffer;
-            var downloadOption = new Download.Option();
-            downloadOption.Update(Download.Directory.Download, "BanterLink");
-            browser.downloadOption = downloadOption;
-            browser.onCapture.AddListener((tex) =>
-            {
-                mainWWindowId = browser.winId;
-                browserTexture = tex;
-                if (_browserRenderer != null)
-                {
-                    _browserRenderer.texture = browserTexture;
-                    var inputlistener = _browserRenderer.gameObject.GetComponent<BrowserInputListener>();
-                    if( inputlistener)
-                        inputlistener.browser = browser;
-                    
-                }
-#if BANTER_VISUAL_SCRIPTING
-                EventBus.Trigger("OnSpaceBrowserTexture", new CustomEventArgs(null, new object[] { tex }));
-#endif
-            });
-            browser.Init();
-        }
-
-        public static async Task SetMainWindowPort(Action<int> portCallback)
-        {
-            if (browser == null)
-            {
-                await new WaitUntil(() => browser != null);
-            }
-            browser.onNativeReady.AddListener(() => {
-                mainWWindowPort = browser.StartSocketServer();
-                portCallback?.Invoke(mainWWindowPort);
-            });
         }
 
         private void Kill(bool force = false)
@@ -409,19 +376,6 @@ namespace Banter.SDK
         {
             scene.FixedUpdate();
         }
-
-        void Update()
-        {
-            if (spaceBrowserWidth != lastSize.x || spaceBrowserHeight != lastSize.y)
-            {
-                lastSize = new Vector2Int(spaceBrowserWidth, spaceBrowserHeight);
-                browser.Resize(lastSize, lastSize);
-            }
-            browser?.UpdateFrame();
-            browser?.DispatchMessageQueue();
-            FragmentCapture.GarbageCollect();
-        }
-
 
         [RuntimeInitializeOnLoadMethod]
         private static void OnLoad()

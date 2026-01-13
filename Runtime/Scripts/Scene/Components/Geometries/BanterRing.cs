@@ -104,6 +104,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.innerRadius, PropertyName.outerRadius, PropertyName.thetaSegments, PropertyName.phiSegments, PropertyName.thetaStart, PropertyName.thetaLength, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterRing" +  PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

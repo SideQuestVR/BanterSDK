@@ -3,6 +3,7 @@ namespace Banter.SDK
     public enum ComponentType
     {
         Transform,
+        BanterAOBaking,
         BanterApple,
         BanterAssetBundle,
         BanterAttachedObject,
@@ -50,6 +51,7 @@ namespace Banter.SDK
         BanterRigidbody,
         BanterRing,
         BanterScherk,
+        BanterSkinnedMeshRenderer,
         BanterSnail,
         BanterSphere,
         SphereCollider,

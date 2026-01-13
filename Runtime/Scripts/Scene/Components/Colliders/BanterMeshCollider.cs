@@ -66,6 +66,10 @@ namespace Banter.SDK
         {
 
         }
+        internal override string GetSignature()
+        {
+            return "MeshCollider" +  PropertyName.convex + convex + PropertyName.isTrigger + isTrigger;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

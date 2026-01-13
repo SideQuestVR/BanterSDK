@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Siccity.GLTFUtility;
+using System.Threading.Tasks;
 
 namespace Banter.SDK
 {
@@ -68,6 +69,27 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal int childrenLayer;
         bool loadStarted;
 
+         private static Dictionary<string, Task<byte[]>> gltfCache = new Dictionary<string, Task<byte[]>>();
+        public static void ClearCache()
+        {
+            gltfCache.Clear();
+        }
+
+        private Task<byte[]> GetCachedGLTF()
+        {
+            var signature = GetSignature();
+            if (gltfCache.ContainsKey(signature))
+            {
+                return gltfCache[signature];
+            }
+            else
+            {
+                var gltf = Get.Bytes(url);
+                gltfCache.Add(signature, gltf);
+                return gltf;
+            }
+        }
+
         internal override void StartStuff()
         {
             LogLine.Do("Warning: Using BanterGLTF is not recommended for production use. It is slow and not optimized.");
@@ -111,7 +133,8 @@ namespace Banter.SDK
             loadStarted = true;
             try
             {
-                Importer.ImportGLBAsync(await Get.Bytes(url), new ImportSettings(), (go, animations) =>
+                SetLoadedIfNot();
+                Importer.ImportGLBAsync(await GetCachedGLTF(), new ImportSettings(), (go, animations) =>
                 {
                     try
                     {
@@ -195,12 +218,11 @@ namespace Banter.SDK
                                 // need to add support fo sq-overridecolor default setting maybe? 
                             }
                         }
-                        SetLoadedIfNot();
                         loadStarted = false;
                     }
                     catch (Exception e)
                     {
-                        SetLoadedIfNot(false, e.Message + " - " + url);
+                        SetLoadedIfNot(true, e.Message + " - " + url);
                         Destroy(go);
                         loadStarted = false;
                     }
@@ -209,7 +231,7 @@ namespace Banter.SDK
             catch (Exception e)
             {
                 Debug.LogError(e + " " + url);
-                SetLoadedIfNot(false, e.Message);
+                SetLoadedIfNot(true, e.Message);
                 loadStarted = false;
             }
         }
@@ -262,6 +284,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.generateMipMaps, PropertyName.addColliders, PropertyName.nonConvexColliders, PropertyName.slippery, PropertyName.climbable, PropertyName.legacyRotate, PropertyName.childrenLayer, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterGLTF" +  PropertyName.url + url + PropertyName.generateMipMaps + generateMipMaps + PropertyName.addColliders + addColliders + PropertyName.nonConvexColliders + nonConvexColliders + PropertyName.slippery + slippery + PropertyName.climbable + climbable + PropertyName.legacyRotate + legacyRotate + PropertyName.childrenLayer + childrenLayer;
         }
 
         internal override void Init(List<object> constructorProperties = null)

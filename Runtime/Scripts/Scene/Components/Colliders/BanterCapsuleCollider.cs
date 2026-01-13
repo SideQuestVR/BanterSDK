@@ -70,6 +70,10 @@ namespace Banter.SDK
         {
 
         }
+        internal override string GetSignature()
+        {
+            return "CapsuleCollider" +  PropertyName.isTrigger + isTrigger + PropertyName.radius + radius + PropertyName.height + height;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {

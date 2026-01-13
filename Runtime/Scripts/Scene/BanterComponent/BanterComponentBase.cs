@@ -14,6 +14,7 @@ namespace Banter.SDK
         internal abstract void WatchProperties(PropertyName[] properties);
         internal abstract void Init(List<object> constructorProperties = null);
         internal abstract void ReSetup();
+        internal abstract string GetSignature();
         public void Refresh() => ReSetup();
         internal abstract void StartStuff();
         internal abstract void DestroyStuff();

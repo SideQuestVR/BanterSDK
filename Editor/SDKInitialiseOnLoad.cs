@@ -8,6 +8,7 @@ using System.IO.Compression;
 using LongBunnyLabs;
 using Unity.EditorCoroutines.Editor;
 using UnityEditor.Build;
+using System.Linq;
 
 namespace Banter.SDKEditor
 {
@@ -30,16 +31,13 @@ namespace Banter.SDKEditor
                 }
             }
 #if !BANTER_EDITOR
-#if !UNITY_2022
             ImportBasisPackages();
-#endif
+            ImportOraPackage();
             SetupLayersAndTags();
             SetApiCompatibilityLevel();
             CreateWebRoot();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
-
-            
 #endif
         }
 
@@ -55,14 +53,60 @@ namespace Banter.SDKEditor
                 }
             }
         }
+        static void AddScriptDefine(string define)
+        {
+            var buildTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
+            var symbols = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
+            symbols = string.Join(";", symbols.Split(";").Where(d => !string.IsNullOrWhiteSpace(d)));
+            PlayerSettings.SetScriptingDefineSymbols(buildTarget, symbols + ";" + define);
+        }
         static void SetApiCompatibilityLevel()
         {
             var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
-            if( level == ApiCompatibilityLevel.NET_Unity_4_8)
+            if (level == ApiCompatibilityLevel.NET_Unity_4_8)
             {
                 return;
             }
             PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
+        }
+        static void ImportOraPackage()
+        {
+            var packageName = "com.sidequest.ora";
+            if (Directory.Exists("Packages/" + packageName))
+            {
+#if !BANTER_ORA
+                AddScriptDefine("BANTER_ORA");
+#endif
+                return;
+            }
+            ProjectPrefs.DeleteKey("hasAlreadyAttemptedOra");
+            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?  (Required)", "OK", "Cancel"))
+            {
+                return;
+            }
+            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/OraPackage");
+            string zipPath = Path.Combine(zipDirectory, $"com.sidequest.ora.zip");
+            string extractRoot = Path.Combine(projectRoot, "Packages");
+            string extractPath = Path.Combine(extractRoot, packageName);
+
+            if (Directory.Exists(extractPath))
+                Directory.Delete(extractPath, true);
+
+            ZipFile.ExtractToDirectory(zipPath, extractRoot);            
+            
+            // Modify manifest.json
+            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
+            string json = File.ReadAllText(manifestPath);
+
+            var jObject = JObject.Parse(json);
+            var dependencies = (JObject)jObject["dependencies"];
+
+            dependencies[packageName] = $"file:{packageName}";
+
+            File.WriteAllText(manifestPath, jObject.ToString());
+            AssetDatabase.Refresh();   
+            AddScriptDefine("BANTER_ORA");
         }
         static void ImportBasisPackages()
         {
@@ -71,8 +115,13 @@ namespace Banter.SDKEditor
                Directory.Exists("Packages/com.basis.odinserializer"))
             {
 #if !BASIS_BUNDLE_MANAGEMENT
-                PlayerSettings.SetScriptingDefineSymbolsForGroup(EditorUserBuildSettings.selectedBuildTargetGroup, "BASIS_BUNDLE_MANAGEMENT");
+                AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
 #endif
+                return;
+            }
+            ProjectPrefs.DeleteKey("hasAlreadyAttemptedBasis");
+            if (!EditorUtility.DisplayDialog("Install Basis", "Install the Basis packages? (Required)", "OK", "Cancel"))
+            {
                 return;
             }
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
@@ -95,7 +144,6 @@ namespace Banter.SDKEditor
                     Directory.Delete(extractPath, true);
 
                 ZipFile.ExtractToDirectory(zipPath, extractRoot);
-                Debug.Log($"Extracted {packageName} to {extractPath}");
             }
 
             // Modify manifest.json
@@ -112,8 +160,7 @@ namespace Banter.SDKEditor
 
             File.WriteAllText(manifestPath, jObject.ToString());
             AssetDatabase.Refresh();
-            Debug.Log("All Basis packages installed and manifest.json updated.");
-            PlayerSettings.SetScriptingDefineSymbols(NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup), "BASIS_BUNDLE_MANAGEMENT");
+            AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
         }
         static void CreateWebRoot()
         {

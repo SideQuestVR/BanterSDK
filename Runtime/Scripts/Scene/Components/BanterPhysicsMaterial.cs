@@ -125,6 +125,10 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.dynamicFriction, PropertyName.staticFriction, PropertyName.bounciness, PropertyName.frictionCombine, PropertyName.bounceCombine, };
             UpdateCallback(changedProperties);
         }
+        internal override string GetSignature()
+        {
+            return "BanterPhysicsMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction + PropertyName.bounciness + bounciness + PropertyName.frictionCombine + frictionCombine + PropertyName.bounceCombine + bounceCombine;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {
