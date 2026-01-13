@@ -1202,7 +1202,9 @@ namespace Banter.SDK
         #region Legacy stuff
         public void ToggleDevTools(bool open)
         {
+#if BANTER_ORA
             pipe.view.ToggleDevTools(open);
+#endif
         }
         public void HideDevTools()
         {
