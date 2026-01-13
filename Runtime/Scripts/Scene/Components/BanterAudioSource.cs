@@ -8,57 +8,6 @@ using PropertyName = Banter.SDK.PropertyName;
 
 namespace Banter.SDK
 {
-
-    /* 
-    #### Banter Audio Source
-    Load an audio file from a URL, or from a list of files in the editor.
-
-    **Properties**
-    - `volume` - The volume of the audio source.
-    - `pitch` - The pitch of the audio source.
-    - `mute` - Is the audio source muted?
-    - `loop` - Should the audio source loop?
-    - `bypassEffects` - Bypass effects?
-    - `bypassListenerEffects` - Bypass listener effects?
-    - `bypassReverbZones` - Bypass reverb zones?
-    - `playOnAwake` - Should the audio source play on awake?
-
-    **Methods**
-    ```js
-    // PlayOneShot - Play a clip from the list of clips.
-    audioSource.PlayOneShot(index: number);
-    ```
-    ```js
-    // PlayOneShotFromUrl - Play a clip from a URL.
-    audioSource.PlayOneShotFromUrl(url: string);
-    ```
-    ```js
-    // Play - Play the current audio clip.
-    audioSource.Play();
-    ```
-
-    **Code Example**
-    ```js
-        const volume = 1;
-        const pitch = 1;
-        const mute = false;
-        const loop = false;
-        const bypassEffects = false;
-        const bypassListenerEffects = false;
-        const bypassReverbZones = false;
-        const playOnAwake = false;
-
-        const gameObject = new BS.GameObject("MyAudioSource"); 
-        const audioSource = await gameObject.AddComponent(new BS.BanterAudioSource(volume, pitch, mute, loop, bypassEffects, bypassListenerEffects, bypassReverbZones, playOnAwake));
-        // ...
-        audioSource.Play();
-        // ...
-        audioSource.PlayOneShot(0);
-        // ...
-        audioSource.PlayOneShotFromUrl("https://example.com/music.mp3");
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -106,8 +55,34 @@ namespace Banter.SDK
         [Method]
         public async Task _PlayOneShotFromUrl(string url)
         {
-            var audio = await Get.Audio(url);
-            _source.PlayOneShot(audio);
+            AudioClip audio = null;
+
+            // Check if url is an asset reference (starts with "asset_")
+            if (!string.IsNullOrEmpty(url) && url.StartsWith("asset_"))
+            {
+                // It's an asset reference - look it up in the asset registry
+                audio = BanterAssetRegistry.Instance.GetAsset<AudioClip>(url);
+
+                if (audio != null)
+                {
+                    Debug.Log($"Using audio clip asset from registry: {url}");
+                }
+                else
+                {
+                    Debug.LogWarning($"Audio clip asset not found in registry: {url}");
+                    return;
+                }
+            }
+            else
+            {
+                // Original URL-based audio loading
+                audio = await Get.Audio(url);
+            }
+
+            if (audio != null)
+            {
+                _source.PlayOneShot(audio);
+            }
         }
         [Method]
         public void _Play()
@@ -124,6 +99,11 @@ namespace Banter.SDK
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupAudio(changedProperties);
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         void SetupAudio(List<PropertyName> changedProperties)
         {
@@ -196,6 +176,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.volume, PropertyName.pitch, PropertyName.mute, PropertyName.loop, PropertyName.bypassEffects, PropertyName.bypassListenerEffects, PropertyName.bypassReverbZones, PropertyName.playOnAwake, PropertyName.spatialBlend, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterAudioSource" +  PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
         }
 
         internal override void Init(List<object> constructorProperties = null)

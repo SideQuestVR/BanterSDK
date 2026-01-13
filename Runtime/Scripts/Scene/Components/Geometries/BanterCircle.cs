@@ -14,16 +14,22 @@ namespace Banter.SDK
 
 
         [Tooltip("The radius of the circle")]
-        [See(initial = "1")][SerializeField] internal float radius;
+        [See(initial = "1")][SerializeField] internal float radius = 1;
         [Tooltip("The number of segments that make up the circle")]
-        [See(initial = "1")][SerializeField] internal int segments;
+        [See(initial = "16")][SerializeField] internal int segments = 16;
         [Tooltip("The starting angle of the circle in radians")]
-        [See(initial = "0")][SerializeField] internal float thetaStart;
+        [See(initial = "0")][SerializeField] internal float thetaStart = 0;
         [Tooltip("The length of the angle of the circle in radians")]
         [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength = Mathf.PI * 2;
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
 
         void SetupGeometry()
@@ -40,19 +46,21 @@ namespace Banter.SDK
             geometry.segments = segments;
             geometry.thetaStart = thetaStart;
             geometry.thetaLength = thetaLength;
-
             if (shouldSetGeometry)
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -86,6 +94,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.radius, PropertyName.segments, PropertyName.thetaStart, PropertyName.thetaLength, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterCircle" +  PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

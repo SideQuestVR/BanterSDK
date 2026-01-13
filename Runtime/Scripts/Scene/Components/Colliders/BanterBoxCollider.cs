@@ -5,24 +5,6 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Box Collider
-    Add a box shaped physics collider to the object.
-
-    **Properties**
-    - `isTrigger` - If the collider is a trigger.
-    - `center` - The center of the box.
-    - `size` - The size of the box.
-
-    **Code Example**
-    ```js
-        const isTrigger = false;
-        const center = new BS.Vector3(0,0,0);
-        const size = new BS.Vector3(1,1,1);
-        const gameObject = new GameObject("MyBoxCollider"); 
-        const boxCollider = await gameObject.AddComponent(new BS.BanterBoxCollider(isTrigger, center, size));
-    ```
-    */
     [WatchComponent(typeof(BoxCollider))]
     [RequireComponent(typeof(BoxCollider))]
     [RequireComponent(typeof(BanterObjectId))]
@@ -69,6 +51,10 @@ namespace Banter.SDK
         internal override void ReSetup()
         {
 
+        }
+        internal override string GetSignature()
+        {
+            return "BoxCollider" +  PropertyName.isTrigger + isTrigger + PropertyName.center + center + PropertyName.size + size;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -186,6 +172,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

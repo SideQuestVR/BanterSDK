@@ -70,6 +70,10 @@ namespace Banter.SDK
         {
 
         }
+        internal override string GetSignature()
+        {
+            return "CapsuleCollider" +  PropertyName.isTrigger + isTrigger + PropertyName.radius + radius + PropertyName.height + height;
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {
@@ -186,6 +190,11 @@ namespace Banter.SDK
 
         internal override void WatchProperties(PropertyName[] properties)
         {
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return componentType;
         }
         // END BANTER COMPILED CODE 
     }

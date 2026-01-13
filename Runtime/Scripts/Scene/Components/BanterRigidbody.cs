@@ -8,75 +8,6 @@ using PropertyName = Banter.SDK.PropertyName;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Rigidbody
-    This component will add a rigidbody to the object and set the mass, drag, angular drag, is kinematic, use gravity, center of mass, collision detection mode, velocity, angular velocity, freeze position and freeze rotation of the rigidbody.
-
-    **Properties**
-     - `mass` - The mass of the rigidbody.
-     - `drag` - The drag of the rigidbody.
-     - `angularDrag` - The angular drag of the rigidbody.
-     - `isKinematic` - Whether the rigidbody is kinematic.
-     - `useGravity` - Whether the rigidbody uses gravity.
-     - `centerOfMass` - The center of mass of the rigidbody.
-     - `collisionDetectionMode` - The collision detection mode of the rigidbody.
-     - `velocity` - The velocity of the rigidbody.
-     - `angularVelocity` - The angular velocity of the rigidbody.
-     - `freezePositionX` - Whether to freeze the position on the x axis.
-     - `freezePositionY` - Whether to freeze the position on the y axis.
-     - `freezePositionZ` - Whether to freeze the position on the z axis.
-     - `freezeRotationX` - Whether to freeze the rotation on the x axis.
-     - `freezeRotationY` - Whether to freeze the rotation on the y axis.
-     - `freezeRotationZ` - Whether to freeze the rotation on the z axis.
-
-     **Methods**
-     ```js
-    // AddForce - Add a force to the rigidbody.
-    rigidBody.AddForce(force: BS.Vector3, mode: BS.ForceMode);
-    ```
-    ```js
-    // MovePosition - Move the position of the rigidbody.
-    rigidBody.MovePosition(position: BS.Vector3);
-    ```
-    ```js
-    // MoveRotation - Move the rotation of the rigidbody.
-    rigidBody.MoveRotation(rotation: BS.Quaternion);
-    ```
-    ```js
-    // AddForceValues - Add a force to the rigidbody.
-    rigidBody.AddForceValues(x: float, y: float, z: float, mode: BS.ForceMode);
-    ```
-    ```js
-    // Sleep - Put the rigidbody to sleep.
-    rigidBody.Sleep();
-    ```
-    ```js
-    // AddExplosionForce - Add an explosion force to the rigidbody.
-    rigidBody.AddExplosionForce(explosionForce: float, explosionPosition: BS.Vector3, explosionRadius: float, upwardsModifier: float, mode: BS.ForceMode);
-    ```
-
-
-    **Code Example**
-    ```js
-        const mass = 1;
-        const drag = 0;
-        const angularDrag = 0.05;
-        const isKinematic = false;
-        const useGravity = true;
-        const centerOfMass = new BS.Vector3(0,0,0);
-        const collisionDetectionMode = BS.CollisionDetectionMode.Continuous;
-        const velocity = new BS.Vector3(0,0,0);
-        const angularVelocity = new BS.Vector3(0,0,0);
-        const freezePositionX = false;
-        const freezePositionY = false;
-        const freezePositionZ = false;
-        const freezeRotationX = false;
-        const freezeRotationY = false;
-        const freezeRotationZ = false;
-        const gameObject = new BS.GameObject("MyRigidbody");
-        const rigidBody = await gameObject.AddComponent(new BS.BanterRigidbody(mass, drag, angularDrag, isKinematic, useGravity, centerOfMass, collisionDetectionMode, velocity, angularVelocity, freezePositionX, freezePositionY, freezePositionZ, freezeRotationX, freezeRotationY, freezeRotationZ));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -131,6 +62,7 @@ namespace Banter.SDK
         [Method]
         public void _AddForce(Vector3 force, ForceMode mode)
         {
+            Debug.Log("AddForce: " + force + " - " + mode);
             _rigidbody.AddForce(force, mode);
         }
         [Method]
@@ -154,9 +86,49 @@ namespace Banter.SDK
             _rigidbody.Sleep();
         }
         [Method]
+        public void _WakeUp()
+        {
+            _rigidbody.WakeUp();
+        }
+        [Method]
         public void _AddExplosionForce(float explosionForce, Vector3 explosionPosition, float explosionRadius, float upwardsModifier, ForceMode mode)
         {
             _rigidbody.AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
+        }
+        [Method]
+        public void _AddTorque(Vector3 torque, ForceMode mode)
+        {
+            _rigidbody.AddTorque(torque, mode);
+        }
+        [Method(overload = "Values")]
+        public void _AddTorque(float x, float y, float z, ForceMode mode)
+        {
+            _rigidbody.AddTorque(x, y, z, mode);
+        }
+        [Method]
+        public void _AddRelativeForce(Vector3 force, ForceMode mode)
+        {
+            _rigidbody.AddRelativeForce(force, mode);
+        }
+        [Method]
+        public void _AddRelativeTorque(Vector3 torque, ForceMode mode)
+        {
+            _rigidbody.AddRelativeTorque(torque, mode);
+        }
+        [Method]
+        public void _AddForceAtPosition(Vector3 force, Vector3 position, ForceMode mode)
+        {
+            _rigidbody.AddForceAtPosition(force, position, mode);
+        }
+        [Method]
+        public void _ResetCenterOfMass()
+        {
+            _rigidbody.ResetCenterOfMass();
+        }
+        [Method]
+        public void _ResetInertiaTensor()
+        {
+            _rigidbody.ResetInertiaTensor();
         }
 
         Rigidbody _rigidbody;
@@ -180,11 +152,11 @@ namespace Banter.SDK
             }
             if (changedProperties?.Contains(PropertyName.drag) ?? false)
             {
-                _rigidbody.drag = drag;
+                _rigidbody.linearDamping = drag;
             }
             if (changedProperties?.Contains(PropertyName.angularDrag) ?? false)
             {
-                _rigidbody.angularDrag = angularDrag;
+                _rigidbody.angularDamping = angularDrag;
             }
             if (changedProperties?.Contains(PropertyName.isKinematic) ?? false)
             {
@@ -204,9 +176,9 @@ namespace Banter.SDK
             }
             if (changedProperties?.Contains(PropertyName.velocity) ?? false)
             {
-                _rigidbody.velocity = velocity;
+                _rigidbody.linearVelocity = velocity;
             }
-            if (changedProperties?.Contains(PropertyName.velocity) ?? false)
+            if (changedProperties?.Contains(PropertyName.angularVelocity) ?? false)
             {
                 _rigidbody.angularVelocity = angularVelocity;
             }
@@ -259,6 +231,17 @@ namespace Banter.SDK
                 Destroy(_rigidbody);
             }
         }
+
+        internal override void UpdateStuff()
+        {
+            velocity = _rigidbody.linearVelocity;
+            angularVelocity = _rigidbody.angularVelocity;
+        }
+
+        public override UnityEngine.Object GetReferenceObject()
+        {
+            return _rigidbody;
+        }
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 Velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
         public UnityEngine.Vector3 AngularVelocity { get { return angularVelocity; } set { angularVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.angularVelocity }); } }
@@ -302,6 +285,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.velocity, PropertyName.angularVelocity, PropertyName.mass, PropertyName.drag, PropertyName.angularDrag, PropertyName.isKinematic, PropertyName.useGravity, PropertyName.centerOfMass, PropertyName.collisionDetectionMode, PropertyName.freezePositionX, PropertyName.freezePositionY, PropertyName.freezePositionZ, PropertyName.freezeRotationX, PropertyName.freezeRotationY, PropertyName.freezeRotationZ, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterRigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -355,9 +342,41 @@ namespace Banter.SDK
         {
             _Sleep();
         }
+        void WakeUp()
+        {
+            _WakeUp();
+        }
         void AddExplosionForce(float explosionForce, Vector3 explosionPosition, float explosionRadius, float upwardsModifier, ForceMode mode)
         {
             _AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
+        }
+        void AddTorque(Vector3 torque, ForceMode mode)
+        {
+            _AddTorque(torque, mode);
+        }
+        void AddTorque(float x, float y, float z, ForceMode mode)
+        {
+            _AddTorque(x, y, z, mode);
+        }
+        void AddRelativeForce(Vector3 force, ForceMode mode)
+        {
+            _AddRelativeForce(force, mode);
+        }
+        void AddRelativeTorque(Vector3 torque, ForceMode mode)
+        {
+            _AddRelativeTorque(torque, mode);
+        }
+        void AddForceAtPosition(Vector3 force, Vector3 position, ForceMode mode)
+        {
+            _AddForceAtPosition(force, position, mode);
+        }
+        void ResetCenterOfMass()
+        {
+            _ResetCenterOfMass();
+        }
+        void ResetInertiaTensor()
+        {
+            _ResetInertiaTensor();
         }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
@@ -395,6 +414,11 @@ namespace Banter.SDK
                 Sleep();
                 return null;
             }
+            else if (methodName == "WakeUp" && parameters.Count == 0)
+            {
+                WakeUp();
+                return null;
+            }
             else if (methodName == "AddExplosionForce" && parameters.Count == 5 && parameters[0] is float && parameters[1] is Vector3 && parameters[2] is float && parameters[3] is float && parameters[4] is int)
             {
                 var explosionForce = (float)parameters[0];
@@ -403,6 +427,54 @@ namespace Banter.SDK
                 var upwardsModifier = (float)parameters[3];
                 var mode = (ForceMode)parameters[4];
                 AddExplosionForce(explosionForce, explosionPosition, explosionRadius, upwardsModifier, mode);
+                return null;
+            }
+            else if (methodName == "AddTorque" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
+            {
+                var torque = (Vector3)parameters[0];
+                var mode = (ForceMode)parameters[1];
+                AddTorque(torque, mode);
+                return null;
+            }
+            else if (methodName == "AddTorque" && parameters.Count == 4 && parameters[0] is float && parameters[1] is float && parameters[2] is float && parameters[3] is int)
+            {
+                var x = (float)parameters[0];
+                var y = (float)parameters[1];
+                var z = (float)parameters[2];
+                var mode = (ForceMode)parameters[3];
+                AddTorque(x, y, z, mode);
+                return null;
+            }
+            else if (methodName == "AddRelativeForce" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
+            {
+                var force = (Vector3)parameters[0];
+                var mode = (ForceMode)parameters[1];
+                AddRelativeForce(force, mode);
+                return null;
+            }
+            else if (methodName == "AddRelativeTorque" && parameters.Count == 2 && parameters[0] is Vector3 && parameters[1] is int)
+            {
+                var torque = (Vector3)parameters[0];
+                var mode = (ForceMode)parameters[1];
+                AddRelativeTorque(torque, mode);
+                return null;
+            }
+            else if (methodName == "AddForceAtPosition" && parameters.Count == 3 && parameters[0] is Vector3 && parameters[1] is Vector3 && parameters[2] is int)
+            {
+                var force = (Vector3)parameters[0];
+                var position = (Vector3)parameters[1];
+                var mode = (ForceMode)parameters[2];
+                AddForceAtPosition(force, position, mode);
+                return null;
+            }
+            else if (methodName == "ResetCenterOfMass" && parameters.Count == 0)
+            {
+                ResetCenterOfMass();
+                return null;
+            }
+            else if (methodName == "ResetInertiaTensor" && parameters.Count == 0)
+            {
+                ResetInertiaTensor();
                 return null;
             }
             else
@@ -741,7 +813,7 @@ namespace Banter.SDK
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        void Tick(object sender, EventArgs e) { SyncProperties(); }
+        void Tick(object sender, EventArgs e) { SyncProperties(); UpdateStuff(); }
 
         internal override void WatchProperties(PropertyName[] properties)
         {

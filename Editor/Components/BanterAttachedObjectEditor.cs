@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("uid, attachmentPosition, attachmentRotation, attachmentType, avatarAttachmentType, avatarAttachmentPoint, attachmentPoint, autoSync, jointAvatar, ");
+            var seeFields = new Label("uid, attachmentPosition, attachmentRotation, attachmentType, avatarAttachmentType, avatarAttachmentPoint, attachmentPoint, autoSync, jointAvatar, autoAttach, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

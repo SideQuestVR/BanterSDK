@@ -73,3 +73,4 @@ crashlytics-build.properties
 
 # Samples.meta is auto created if Samples~ becomes Samples
 Samples.meta
+node_modules

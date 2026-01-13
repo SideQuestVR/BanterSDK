@@ -26,11 +26,17 @@ namespace Banter.SDK
         [Tooltip("Angle length of the cone in radians")]
         [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength = Mathf.PI * 2f;
 
-        
-        
+
+
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
 
         void SetupGeometry()
@@ -42,8 +48,9 @@ namespace Banter.SDK
                 shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BanterGeometry>();
             }
-            geometry.geometryType = GeometryType.ConeGeometry;
-            geometry.radius = radius;
+            geometry.geometryType = GeometryType.CylinderGeometry;
+            geometry.radiusTop = 0;
+            geometry.radiusBottom = radius;
             geometry.height = height;
             geometry.radialSegments = radialSegments;
             geometry.heightSegments = heightSegments;
@@ -54,14 +61,17 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -98,6 +108,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.radius, PropertyName.height, PropertyName.radialSegments, PropertyName.heightSegments, PropertyName.openEnded, PropertyName.thetaStart, PropertyName.thetaLength, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterCone" +  PropertyName.radius + radius + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

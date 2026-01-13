@@ -1,4 +1,5 @@
 #if BANTER_VISUAL_SCRIPTING
+using System;
 using Unity.VisualScripting;
 using Banter.SDK;
 using UnityEngine;
@@ -8,6 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Trigger VisualScriptingEvent")]
     [UnitShortTitle("Trigger VisualScriptingEvent")]
     [UnitCategory("Banter\\Utils")]
+    [Obsolete("Use Visual Scripting Relay instead")]
     [TypeIcon(typeof(BanterObjectId))]
     public class TriggerUnityEvent : Unit
     {

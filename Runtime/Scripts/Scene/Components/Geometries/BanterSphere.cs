@@ -24,10 +24,11 @@ namespace Banter.SDK
         [See(initial = "0")][SerializeField] internal float thetaStart;
         [Tooltip("Length of the vertical segments in radians")]
         [See(initial = "Math.PI")][SerializeField] internal float thetaLength = Mathf.PI;
-        
+
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
         }
 
         void SetupGeometry()
@@ -51,14 +52,22 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+        }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -95,6 +104,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.radius, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.phiStart, PropertyName.phiLength, PropertyName.thetaStart, PropertyName.thetaLength, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterSphere" +  PropertyName.radius + radius + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

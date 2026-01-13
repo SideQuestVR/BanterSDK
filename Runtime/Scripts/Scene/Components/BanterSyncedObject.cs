@@ -53,6 +53,11 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -97,6 +102,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterSyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned;
         }
 
         internal override void Init(List<object> constructorProperties = null)

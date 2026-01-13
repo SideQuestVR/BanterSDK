@@ -6,6 +6,7 @@ using UnityEngine.Events;
 
 namespace Banter.VisualScripting
 {
+    [AddComponentMenu("")]
     public class VisualScriptingEvent : MonoBehaviour
     {
         public UnityEvent OnCustomEvent;

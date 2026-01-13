@@ -27,8 +27,8 @@ public class BatchUpdater
         lock (_updates)
         {
             if (_updates.Count > 0)
-            {
-                _pipe.Send(MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY + string.Join(MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY, _updates));
+            { 
+                _pipe.Send(MessageDelimiters.BATCH + string.Join(MessageDelimiters.BATCH, _updates));
                 _updates.Clear();
             }
         }

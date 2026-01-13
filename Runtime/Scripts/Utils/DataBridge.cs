@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace Banter.SDK
 {
@@ -14,5 +15,10 @@ namespace Banter.SDK
 
         public Action<BanterAttachment> AttachObject = _ => { };
         public Action<BanterAttachment> DetachObject = _ => { };
+
+        public Action<long> CloneAvatar = _ => { };
+
+        public Action<(string eventName, KeyValuePair<string,string>[] keyValues)> SendTelemetry = _ => { };
+        
     }
 }

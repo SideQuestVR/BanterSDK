@@ -8,10 +8,12 @@ namespace Banter.SDK
     {
         public string propertyName;
         public string initial;
-        public WatchAttribute([CallerMemberName] string propertyName = "", string initial = "")
+        public bool isAssetReference;
+        public WatchAttribute([CallerMemberName] string propertyName = "", string initial = "", bool isAssetReference = false)
         {
             this.propertyName = propertyName;
             this.initial = initial;
+            this.isAssetReference = isAssetReference;
         }
     }
 }

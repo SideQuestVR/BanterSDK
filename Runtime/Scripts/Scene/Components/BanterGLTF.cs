@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Siccity.GLTFUtility;
+using System.Threading.Tasks;
 
 namespace Banter.SDK
 {
@@ -63,7 +64,31 @@ namespace Banter.SDK
         // this to true automaticaly.
         [Tooltip("Enable to rotate the model for compatibility with legacy GLTF forward direction.")]
         [See(initial = "false")][SerializeField] internal bool legacyRotate;
+
+        [Tooltip("Set child objects to a specific layer - 0 to disable.")]
+        [See(initial = "0")][SerializeField] internal int childrenLayer;
         bool loadStarted;
+
+         private static Dictionary<string, Task<byte[]>> gltfCache = new Dictionary<string, Task<byte[]>>();
+        public static void ClearCache()
+        {
+            gltfCache.Clear();
+        }
+
+        private Task<byte[]> GetCachedGLTF()
+        {
+            var signature = GetSignature();
+            if (gltfCache.ContainsKey(signature))
+            {
+                return gltfCache[signature];
+            }
+            else
+            {
+                var gltf = Get.Bytes(url);
+                gltfCache.Add(signature, gltf);
+                return gltf;
+            }
+        }
 
         internal override void StartStuff()
         {
@@ -108,7 +133,8 @@ namespace Banter.SDK
             loadStarted = true;
             try
             {
-                Importer.ImportGLBAsync(await Get.Bytes(url), new ImportSettings(), (go, animations) =>
+                SetLoadedIfNot();
+                Importer.ImportGLBAsync(await GetCachedGLTF(), new ImportSettings(), (go, animations) =>
                 {
                     try
                     {
@@ -136,6 +162,7 @@ namespace Banter.SDK
                         {
                             var collider = t.name.Contains("sq-collider");
                             var nonconvexcollider = t.name.Contains("sq-nonconvexcollider");
+                            t.gameObject.layer = childrenLayer;
                             if (collider || nonconvexcollider && (t.gameObject.GetComponent<Renderer>() != null))
                             {
                                 t.gameObject.AddComponent<BanterObjectId>();
@@ -182,7 +209,7 @@ namespace Banter.SDK
                                 }
                                 if (slippery)
                                 {
-                                    collider.material = new PhysicMaterial()
+                                    collider.material = new PhysicsMaterial()
                                     {
                                         dynamicFriction = 0,
                                         staticFriction = 0
@@ -191,12 +218,11 @@ namespace Banter.SDK
                                 // need to add support fo sq-overridecolor default setting maybe? 
                             }
                         }
-                        SetLoadedIfNot();
                         loadStarted = false;
                     }
                     catch (Exception e)
                     {
-                        SetLoadedIfNot(false, e.Message + " - " + url);
+                        SetLoadedIfNot(true, e.Message + " - " + url);
                         Destroy(go);
                         loadStarted = false;
                     }
@@ -205,13 +231,21 @@ namespace Banter.SDK
             catch (Exception e)
             {
                 Debug.LogError(e + " " + url);
-                SetLoadedIfNot(false, e.Message);
+                SetLoadedIfNot(true, e.Message);
                 loadStarted = false;
             }
         }
         internal override void DestroyStuff()
         {
-            KillGLTF(gameObject);
+            if (gameObject)
+            {
+                KillGLTF(gameObject);
+            }
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -225,6 +259,7 @@ namespace Banter.SDK
         public System.Boolean Slippery { get { return slippery; } set { slippery = value; UpdateCallback(new List<PropertyName> { PropertyName.slippery }); } }
         public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
         public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
+        public System.Int32 ChildrenLayer { get { return childrenLayer; } set { childrenLayer = value; UpdateCallback(new List<PropertyName> { PropertyName.childrenLayer }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -247,8 +282,12 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.generateMipMaps, PropertyName.addColliders, PropertyName.nonConvexColliders, PropertyName.slippery, PropertyName.climbable, PropertyName.legacyRotate, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.generateMipMaps, PropertyName.addColliders, PropertyName.nonConvexColliders, PropertyName.slippery, PropertyName.climbable, PropertyName.legacyRotate, PropertyName.childrenLayer, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterGLTF" +  PropertyName.url + url + PropertyName.generateMipMaps + generateMipMaps + PropertyName.addColliders + addColliders + PropertyName.nonConvexColliders + nonConvexColliders + PropertyName.slippery + slippery + PropertyName.climbable + climbable + PropertyName.legacyRotate + legacyRotate + PropertyName.childrenLayer + childrenLayer;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -355,6 +394,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.legacyRotate);
                     }
                 }
+                if (values[i] is BanterInt)
+                {
+                    var valchildrenLayer = (BanterInt)values[i];
+                    if (valchildrenLayer.n == PropertyName.childrenLayer)
+                    {
+                        childrenLayer = valchildrenLayer.x;
+                        changedProperties.Add(PropertyName.childrenLayer);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -441,6 +489,18 @@ namespace Banter.SDK
                     name = PropertyName.legacyRotate,
                     type = PropertyType.Bool,
                     value = legacyRotate,
+                    componentType = ComponentType.BanterGLTF,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.childrenLayer,
+                    type = PropertyType.Int,
+                    value = childrenLayer,
                     componentType = ComponentType.BanterGLTF,
                     oid = oid,
                     cid = cid

@@ -8,22 +8,6 @@ using PropertyName = Banter.SDK.PropertyName;
 
 namespace Banter.SDK
 {
-    /* 
-    #### Banter Physic Material
-    This component will add a physic material to the object and set the dynamic and static friction of the material.
-
-    **Properties**
-     - `dynamicFriction` - The dynamic friction of the material.
-     - `staticFriction` - The static friction of the material.
-
-    **Code Example**
-    ```js
-        const dynamicFriction = 1;
-        const staticFriction = 1;
-        const gameObject = new BS.GameObject("MyPhysicMaterial");
-        const physicMaterial = await gameObject.AddComponent(new BS.BanterPhysicMaterial(dynamicFriction, staticFriction));
-    ```
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -36,7 +20,7 @@ namespace Banter.SDK
         [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
         [See(initial = "1")][SerializeField] internal float staticFriction = 1;
 
-        PhysicMaterial _material;
+        PhysicsMaterial _material;
         Collider _collider;
         internal override void StartStuff()
         {
@@ -46,13 +30,18 @@ namespace Banter.SDK
         {
             SetupPhysicMaterial(changedProperties);
         }
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         void SetupPhysicMaterial(List<PropertyName> changedProperties = null)
         {
             if (GetComponent<MeshFilter>())
             {
                 if (_material == null)
                 {
-                    _material = new PhysicMaterial();
+                    _material = new PhysicsMaterial();
                 }
                 if (_collider == null)
                 {
@@ -76,8 +65,8 @@ namespace Banter.SDK
                 {
                     _collider.material = _material;
                     _collider.material.bounciness = 0;
-                    _collider.material.frictionCombine = PhysicMaterialCombine.Minimum;
-                    _collider.material.bounceCombine = PhysicMaterialCombine.Minimum;
+                    _collider.material.frictionCombine = PhysicsMaterialCombine.Minimum;
+                    _collider.material.bounceCombine = PhysicsMaterialCombine.Minimum;
                 }
             }
             SetLoadedIfNot();
@@ -117,6 +106,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.dynamicFriction, PropertyName.staticFriction, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterPhysicMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction;
         }
 
         internal override void Init(List<object> constructorProperties = null)

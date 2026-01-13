@@ -71,7 +71,7 @@ namespace Banter.VisualScripting
             // Setting the value on our port.
             // id = ValueInput("Return ID", string.Empty);
 
-            result = ValueOutput<UpdateScores>("Error Data");
+            result = ValueOutput<string>("Error Data");
         }
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
@@ -82,7 +82,8 @@ namespace Banter.VisualScripting
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
         {
-            flow.SetValue(result, data.arguments[0]);
+            var errorData = data.arguments != null && data.arguments.Length > 0 ? data.arguments[0] : null;
+            flow.SetValue(result, errorData?.ToString());
         }
     }
 }

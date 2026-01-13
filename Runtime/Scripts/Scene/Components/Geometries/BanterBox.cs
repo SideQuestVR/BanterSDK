@@ -25,6 +25,12 @@ namespace Banter.SDK
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
 
         void SetupGeometry()
@@ -47,14 +53,18 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
+           
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -90,6 +100,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.width, PropertyName.height, PropertyName.depth, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.depthSegments, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterBox" +  PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments;
         }
 
         internal override void Init(List<object> constructorProperties = null)

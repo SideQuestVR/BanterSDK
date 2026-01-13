@@ -2,41 +2,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using TMPro;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
 namespace Banter.SDK
 {
-
-    /* 
-    #### Banter Asset Bundle
-    Load an asset bundle into Banter which contains a scene or a collection of prefabs.
-
-    **Properties**
-    - `windowsUrl` - The URL to the Windows asset bundle.
-    - `osxUrl` - The URL to the OSX asset bundle.
-    - `linuxUrl` - The URL to the Linux asset bundle.
-    - `androidUrl` - The URL to the Android asset bundle.
-    - `iosUrl` - The URL to the iOS asset bundle.
-    - `vosUrl` - The URL to the Vision OS asset bundle.
-    - `isScene` - If the asset bundle is a scene or a collection of prefabs.
-    - `legacyShaderFix` - If the asset bundle requires a legacy shader/lighting fix like we had in the past with AFRAME.
-
-    **Code Example**
-    ```js
-        const windowsUrl = "https://example.bant.ing/windows.banter";
-        const osxUrl = null; // Not implemented yet...
-        const linuxUrl = null; // Not implemented yet...
-        const androidUrl = "https://example.bant.ing/android.banter";
-        const iosUrl = null; // Not implemented yet...
-        const vosUrl = null; // Not implemented yet...
-        const isScene = true;
-        const legacyShaderFix = false;
-        const gameObject = new BS.GameObject("MyAssetBundle"); 
-        const assetBundle = await gameObject.AddComponent(new BS.BanterAssetBundle(windowsUrl, osxUrl, linuxUrl, androidUrl, iosUrl, vosUrl, isScene, legacyShaderFix));
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -73,6 +48,11 @@ namespace Banter.SDK
         internal override void StartStuff()
         {
             // _ = SetupBundle();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         private async Task SetupBundle(List<PropertyName> changedProperties)
         {
@@ -137,7 +117,11 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.windowsUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress =>
+                {
+                    this.progress?.Invoke(progress);
+                });
+                    
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }
@@ -242,6 +226,46 @@ namespace Banter.SDK
                             if (canvas.renderMode == RenderMode.WorldSpace)
                             {
                                 canvas.worldCamera = Camera.main;
+                                if (!canvas.GetComponent<BoxCollider>())
+                                {
+                                    var box = canvas.AddComponent<BoxCollider>();
+                                    var rt = canvas.GetComponent<RectTransform>();
+                                    box.isTrigger = true;
+                                    box.size = new Vector3(rt.rect.width, rt.rect.height, 0.01f);
+                                    box.center = new Vector3(0f, 0f, 0.015f);
+                                    
+                                    // Founds some spaces that have huge canvases with no rectT scaling, so cap it
+                                    if (rt.localScale.x >= 1f && rt.rect.width > 10f)
+                                    {
+                                        box.enabled = false;
+                                    }
+                                }
+                                var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
+                                if(trackedDeviceRaycaster)
+                                    Destroy(trackedDeviceRaycaster);
+                                var graphicsRaycaster = canvas.gameObject.GetComponent<GraphicRaycaster>();
+                                if(graphicsRaycaster)
+                                    Destroy(graphicsRaycaster);
+                            }
+                        }
+
+                        // Replace font assets on TMP UI text
+                        var tmpmat = TMP_Settings.defaultFontAsset;
+                        var tmpui = transform.gameObject.GetComponent<TextMeshProUGUI>();
+                        {
+                            if (tmpui != null)
+                            {
+                                tmpui.font = tmpmat;
+                                tmpui.UpdateFontAsset();
+                                tmpui.ForceMeshUpdate();
+                            }
+                        }
+                        var tmptext = transform.gameObject.GetComponent<TMP_Text>();
+                        {
+                            if (tmptext != null)
+                            {
+                                tmptext.font = tmpmat;
+                                tmptext.ForceMeshUpdate();
                             }
                         }
                     }
@@ -250,7 +274,12 @@ namespace Banter.SDK
         }
         async Task _Unload()
         {
-            await assetBundle.UnloadAsync(true);
+            try
+            {
+                await assetBundle.UnloadAsync(true);
+            }catch(Exception e){
+                Debug.Log(e.Message); 
+            }
             assetBundle = null;
             if (isScene)
             {
@@ -278,7 +307,10 @@ namespace Banter.SDK
             }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            _ = Unload();
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             _ = SetupBundle(changedProperties);
@@ -316,6 +348,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, PropertyName.legacyShaderFix, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterAssetBundle" +  PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
         }
 
         internal override void Init(List<object> constructorProperties = null)

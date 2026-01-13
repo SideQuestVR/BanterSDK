@@ -2,37 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UIElements;
 
 namespace Banter.SDK
 {
-    // [Serializable]
-    // public class BrowserObject
-    // {
-    //     public bool enabled;
-    //     public string url;
-    //     public string instanceId;
-    //     public bool remote;
-    //     public float pixelsPerUnit;
-    //     public float width;
-    //     public float height;
-    //     public int mipMaps;
-    //     public BrowserAction[] afterLoadActions;
-    // }
-
-    // [Serializable]
-    // public static class BrowserActionType
-    // {
-    //     public const string click2d = "click2d";
-    //     public const string click = "click";
-    //     public const string keypress = "keypress";
-    //     public const string scroll = "scroll";
-    //     public const string delayseconds = "delayseconds";
-    //     public const string runscript = "runscript";
-    //     public const string goback = "goback";
-    //     public const string goforward = "goforward";
-    //     public const string postmessage = "postmessage";
-    // }
-
     [Serializable]
     public class BrowserAction
     {
@@ -46,35 +19,7 @@ namespace Banter.SDK
         public string strParam3;
         public string strParam4;
     }
-    /* 
-    #### Banter Browser
-    A browser component that can be added to a GameObject to display a webpage.
 
-    **Properties**
-    - `url` - The URL of the webpage to display.
-    - `mipMaps` - The number of mipmaps to use.
-    - `pixelsPerUnit` - The number of pixels per unit.
-    - `actions` - A list of actions to run after the page has loaded.
-
-    **Methods**
-    - `ToggleInteraction(enabled: boolean)` - Toggles the interaction of the browser.
-    - `RunActions(actions: string)` - Runs a list of actions on the browser.
-
-    **Code Example**
-    ```js
-        const url = "https://www.google.com";
-        const mipMaps = 4;
-        const pixelsPerUnit = 1200;
-        const actions = "click2d,0.5,0.5";
-        const gameObject = new BS.GameObject("MyBrowser"); 
-        const browser = await gameObject.AddComponent(new BS.BanterBrowser(url, mipMaps, pixelsPerUnit, actions));
-        // ...
-        browser.ToggleInteraction(true);
-        // ...
-        browser.RunActions("click2d,0.5,0.5");
-    ```
-
-    */
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
@@ -90,10 +35,10 @@ namespace Banter.SDK
         [See(initial = "1200")][SerializeField] internal float pixelsPerUnit = 1200;
 
         [Tooltip("The width of the browser page in pixels")]
-        [See(initial = "1024")][SerializeField] internal float pageWidth = 1024;
+        [See(initial = "1024")][SerializeField] internal float pageWidth = 1280;
 
         [Tooltip("The height of the browser page in pixels")]
-        [See(initial = "576")][SerializeField] internal float pageHeight = 576;
+        [See(initial = "576")][SerializeField] internal float pageHeight = 720;
 
         [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
         [See(initial = "")][SerializeField] internal string actions;
@@ -124,6 +69,11 @@ namespace Banter.SDK
             OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
         }
 
+        internal override void UpdateStuff()
+        {
+            
+        }
+
         private void SetupBrowser(List<PropertyName> changedProperties = null)
         {
             if (browser == null)
@@ -137,27 +87,37 @@ namespace Banter.SDK
                 browser.SendMessage("RunActions", actions);
             }
 
-            if (changedProperties?.Contains(PropertyName.url) ?? true)
+            if (changedProperties?.Contains(PropertyName.url) ?? true && !string.IsNullOrEmpty(url))
             {
                 browser.SendMessage("LoadUrl", url);
             }
-            if (changedProperties?.Contains(PropertyName.mipMaps) ?? true)
-            {
-                browser.SendMessage("SetMipMaps", mipMaps);
-            }
-            if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? true)
-            {
-                browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
-            }
+            // if (changedProperties?.Contains(PropertyName.mipMaps) ?? true)
+            // {
+            //     browser.SendMessage("SetMipMaps", mipMaps);
+            // }
+            // if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? true)
+            // {
+            //     browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
+            // }
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
             {
-                RectTransform rt = browser.GetComponent(typeof(RectTransform)) as RectTransform;
-                rt.sizeDelta = new Vector2(pageWidth, pageHeight);
+                UIDocument doc = browser.GetComponent<UIDocument>();
+                if(doc)
+                {
+                    doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
+                }
             }
             SetLoadedIfNot();
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            if (browser != null)
+            {
+                Destroy(browser);
+                browser = null;
+            }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupBrowser(changedProperties);
@@ -193,6 +153,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterBrowser" +  PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions;
         }
 
         internal override void Init(List<object> constructorProperties = null)

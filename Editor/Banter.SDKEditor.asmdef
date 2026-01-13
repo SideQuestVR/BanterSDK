@@ -3,6 +3,7 @@
     "rootNamespace": "Banter.SDKEditor",
     "references": [
         "GUID:478a2357cc57436488a56e564b08d223",
+        "GUID:96338e729defced4d8d19cacd9eb0503",
         "GUID:21b0c8d1703a94250bfac916590cea4f",
         "GUID:54cb1906aeb4e4264bc1d2aa3818a43f",
         "GUID:ea715009a4efd4c6cbc85be3ae097dd3",
@@ -13,7 +14,8 @@
         "GUID:f06555f75b070af458a003d92f9efb00",
         "GUID:7cd3a65c85d0c264eb3581defd7f2c63",
         "GUID:b4ae365a73764ee478adc74cb89832fe",
-        "GUID:dde09067b7f7a054ca208a3c17c8f7c5"
+        "GUID:dde09067b7f7a054ca208a3c17c8f7c5",
+        "GUID:fe5c9d210f6859a4eac877d630830953"
     ],
     "includePlatforms": [
         "Editor"

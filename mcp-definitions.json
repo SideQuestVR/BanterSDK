@@ -1,0 +1,14 @@
+[
+    {
+        "name": "get-child-objects",
+        "title": "Get Child Objects",
+        "description": "Get all the child objects in the scene for a given parent, use 0 for the root objects.",
+        "inputSchema": {
+            "parentId": {
+                "type": "string",
+                "description": "The id of the parent or '0' for the root."
+            }
+        },
+        "javascript": "const objs = Object.values(BS.BanterScene.GetInstance().objects); return JSON.stringify(objs.filter(obj=>obj.parent === parentId).map(obj=>({name: obj.name, unityId: obj.unityId, children: objs.filter(_obj=>Number(_obj.parent) === Number(obj.unityId)).map(obj=>({name: obj.name, unityId: obj.unityId, numberOfChildren: objs.filter(_obj=>Number(_obj.parent) === Number(obj.unityId)).length}))})))"
+    }
+]

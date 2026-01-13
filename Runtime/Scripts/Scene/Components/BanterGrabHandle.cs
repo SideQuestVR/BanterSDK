@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Banter.FlexaBody;
 using UnityEngine;
 public enum BanterGrabType
 {
@@ -16,6 +17,10 @@ namespace Banter.SDK
     [WatchComponent]
     public class BanterGrabHandle : BanterComponentBase
     {
+        GrabHandle grabHandle;
+
+        bool grabHandleAdded;
+        bool worldObjectAdded;
 
         [Tooltip("Defines the type of grab interaction (Point, Cylinder, Ball, Soft).")]
         [See(initial = "0")][SerializeField] internal BanterGrabType grabType;
@@ -25,19 +30,57 @@ namespace Banter.SDK
 
         internal override void DestroyStuff()
         {
-            // throw new NotImplementedException();
+#if BANTER_FLEX
+            if (worldObjectAdded && grabHandle.WorldObj)
+            {
+                Destroy(grabHandle.WorldObj);
+            }
+            if (grabHandle && grabHandleAdded)
+            {
+                Destroy(grabHandle);
+            }
+#endif
+
         }
 
+
+        internal override void UpdateStuff()
+        {
+            
+        }
         internal override void StartStuff()
         {
-            scene.events.OnGrabHandle.Invoke(this);
             SetLoadedIfNot();
-            // throw new NotImplementedException();
+#if BANTER_FLEX
+            grabHandle = GetComponent<GrabHandle>();
+            if (grabHandle == null)
+            {
+                grabHandleAdded = true;
+                grabHandle = gameObject.AddComponent<GrabHandle>();
+            }
+
+            grabHandle.Col = GetComponent<Collider>();
+            grabHandle.GrabType = (GrabType)GrabType;
+            grabHandle._grabRadius = GrabRadius;
+            Rigidbody rb = grabHandle.Col.attachedRigidbody;
+            if(rb)
+            {
+                grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
+                if (!grabHandle.WorldObj)
+                {
+                    worldObjectAdded = true;
+                    grabHandle.WorldObj = rb.gameObject.AddComponent<WorldObject>();
+                }
+            }
+#endif
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            // SetupPhysicMaterial(changedProperties);
+            if (changedProperties.Contains(PropertyName.grabType) && grabHandle)
+            {
+                grabHandle.GrabType = (GrabType)grabType;
+            }
         }
         // BANTER COMPILED CODE 
         public BanterGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
@@ -66,6 +109,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.grabType, PropertyName.grabRadius, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterGrabHandle" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
         }
 
         internal override void Init(List<object> constructorProperties = null)

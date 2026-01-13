@@ -32,6 +32,7 @@ namespace Banter.SDK
                 SetLoadedIfNot();
             }
         }
+        internal override void UpdateStuff() {}
         // BANTER COMPILED CODE 
         BanterScene _scene;
         public BanterScene scene
@@ -56,6 +57,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterInvertedMesh";
         }
 
         internal override void Init(List<object> constructorProperties = null)

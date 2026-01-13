@@ -74,6 +74,7 @@ namespace DigitalRuby.Tween
         {
             if (root == null && Application.isPlaying)
             {
+                
                 root = GameObject.Find("DigitalRubyTween");
                 if (root == null || root.GetComponent<TweenFactory>() == null)
                 {
@@ -121,6 +122,11 @@ namespace DigitalRuby.Tween
                     tweens.RemoveAt(i);
                 }
             }
+        }
+
+        private void OnDestroy()
+        {
+            root = null;
         }
 
         /// <summary>

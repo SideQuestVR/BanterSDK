@@ -21,6 +21,12 @@ namespace Banter.SDK
         internal override void StartStuff()
         {
             SetupGeometry();
+            SetLoadedIfNot();
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
 
         void SetupGeometry()
@@ -32,7 +38,7 @@ namespace Banter.SDK
                 shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BanterGeometry>();
             }
-            geometry.geometryType = GeometryType.BoxGeometry;
+            geometry.geometryType = GeometryType.PlaneGeometry;
             geometry.width = width;
             geometry.height = height;
             geometry.widthSegments = widthSegments;
@@ -41,14 +47,22 @@ namespace Banter.SDK
             {
                 geometry.SetGeometry();
             }
-            var material = GetComponent<BanterMaterial>();
-            if (material == null)
-            {
-                gameObject.AddComponent<BanterMaterial>();
-            }
         }
 
-        internal override void DestroyStuff() { }
+        internal override void DestroyStuff()
+        {
+            var geometry = GetComponent<BanterGeometry>();
+            if (geometry)
+            {
+                Destroy(geometry);
+            }
+            var material = GetComponent<BanterMaterial>();
+            if (material)
+            {
+                Destroy(material);
+            }
+
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -82,6 +96,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.width, PropertyName.height, PropertyName.widthSegments, PropertyName.heightSegments, };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterPlane" +  PropertyName.width + width + PropertyName.height + height + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments;
         }
 
         internal override void Init(List<object> constructorProperties = null)

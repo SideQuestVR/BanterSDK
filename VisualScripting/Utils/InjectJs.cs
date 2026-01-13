@@ -27,7 +27,13 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var code = flow.GetValue<string>(jsCode);
                 var returnCode = flow.GetValue<string>(returnId);
-                BanterScene.Instance().link.pipe.Send(APICommands.INJECT_JS + MessageDelimiters.PRIMARY + returnCode + MessageDelimiters.SECONDARY + code);
+#if BANTER_ORA
+                BanterScene.Instance().link.pipe.view.EvaluateJS(code,
+                    s =>
+                    {
+                        BanterScene.Instance().events.OnJsCallbackRecieved.Invoke(returnCode, s, true);
+                    });
+#endif
 
                 return outputTrigger;
             });

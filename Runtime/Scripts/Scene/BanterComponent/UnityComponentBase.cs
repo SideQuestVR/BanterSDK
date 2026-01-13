@@ -27,6 +27,12 @@ namespace Banter.SDK
         {
             // throw new NotImplementedException();
         }
+        
+
+        internal override void UpdateStuff()
+        {
+            
+        }
 
         internal override void Init(List<object> constructorProperties = null)
         {
@@ -34,6 +40,11 @@ namespace Banter.SDK
         }
 
         internal override void ReSetup()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        internal override string GetSignature()
         {
             throw new System.NotImplementedException();
         }

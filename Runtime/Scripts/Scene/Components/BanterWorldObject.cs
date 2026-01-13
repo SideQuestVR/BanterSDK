@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Banter.FlexaBody;
 using UnityEngine;
 
 namespace Banter.SDK
@@ -16,27 +17,43 @@ namespace Banter.SDK
         /// This array is automatically populated when colliders are collected.
         /// </summary>
         [Tooltip("Automatically populated array of colliders associated with this object.")]
-        public Collider[] colliders;
-        [Method]
-        public void _CollectColliders()
-        {
-            scene.events.OnWorldObjectCollectColliders.Invoke(this);
-        }
+
+        WorldObject worldObj;
+
+        bool worldObjectAdded;
 
         internal override void DestroyStuff()
         {
-            // throw new NotImplementedException();
+#if BANTER_FLEX
+            if (worldObjectAdded && worldObj)
+            {
+                Destroy(worldObj);
+            }
+#endif
         }
 
         internal override void StartStuff()
         {
-            scene.events.OnWorldObject.Invoke(this);
+#if BANTER_FLEX
+            worldObj = GetComponent<WorldObject>();
+            if (worldObj == null)
+            {
+                worldObjectAdded = true;
+                worldObj = gameObject.AddComponent<WorldObject>();
+            }
+            worldObj.RB = GetComponent<Rigidbody>();
             SetLoadedIfNot();
+#endif
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             // SetupPhysicMaterial(changedProperties);
+        }
+
+        internal override void UpdateStuff()
+        {
+            
         }
         // BANTER COMPILED CODE 
         BanterScene _scene;
@@ -62,6 +79,10 @@ namespace Banter.SDK
         {
             List<PropertyName> changedProperties = new List<PropertyName>() { };
             UpdateCallback(changedProperties);
+        }
+        internal override string GetSignature()
+        {
+            return "BanterWorldObject";
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -95,22 +116,9 @@ namespace Banter.SDK
             DestroyStuff();
         }
 
-        void CollectColliders()
-        {
-            _CollectColliders();
-        }
         internal override object CallMethod(string methodName, List<object> parameters)
         {
-
-            if (methodName == "CollectColliders" && parameters.Count == 0)
-            {
-                CollectColliders();
-                return null;
-            }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
         internal override void Deserialise(List<object> values)

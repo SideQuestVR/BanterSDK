@@ -31,7 +31,7 @@ namespace Banter.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("targetPosition, autoConfigureConnectedAnchor, xMotion, yMotion, zMotion, ");
+            var seeFields = new Label("targetPosition, autoConfigureConnectedAnchor, xMotion, yMotion, zMotion, angularXMotion, angularYMotion, angularZMotion, anchor, axis, secondaryAxis, connectedAnchor, targetRotation, targetVelocity, targetAngularVelocity, enableCollision, enablePreprocessing, breakForce, breakTorque, connectedMassScale, massScale, rotationDriveMode, configuredInWorldSpace, swapBodies, connectedBody, linearLimit, lowAngularXLimit, highAngularXLimit, angularYLimit, angularZLimit, xDrive, yDrive, zDrive, angularXDrive, angularYZDrive, slerpDrive, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
