@@ -5,7 +5,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
@@ -41,6 +43,16 @@ namespace Banter.SDKEditor
     }
     public class SqEditorAppApi
     {
+        // Static HttpClient for connection pooling and better performance
+        private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler
+        {
+            // Disable automatic decompression to avoid conflicts
+            AutomaticDecompression = System.Net.DecompressionMethods.None
+        })
+        {
+            Timeout = TimeSpan.FromMinutes(10) // Global timeout
+        };
+
         /// <summary>
         /// Create a new instance
         /// </summary>
@@ -484,41 +496,104 @@ namespace Banter.SDKEditor
 
         private IEnumerator UploadFileInternal(string url, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
         {
-            using (UnityWebRequest req = new UnityWebRequest(new Uri(url)))
+            // Start the async upload task
+            var uploadTask = UploadFileWithRetryAsync(url, data, name, maxRetries: 3);
+
+            // Wait for the task to complete (bridges async/await with coroutine)
+            while (!uploadTask.IsCompleted)
             {
-                req.method = "PUT";
-                req.uploadHandler = new UploadHandlerRaw(data);
-                yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
-                    yield break;
-                }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error} {req.downloadHandler.text}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                }
+                yield return null;
+            }
+
+            // Check for exceptions
+            if (uploadTask.IsFaulted)
+            {
+                var ex = uploadTask.Exception?.InnerException ?? uploadTask.Exception;
+                OnError?.Invoke(ex);
+                yield break;
+            }
+
+            // Return the response code
+            OnCompleted?.Invoke(uploadTask.Result);
+        }
+
+        private async Task<long> UploadFileWithRetryAsync(string url, byte[] data, string name, int maxRetries = 3)
+        {
+            int attempt = 0;
+            Exception lastException = null;
+
+            while (attempt < maxRetries)
+            {
+                attempt++;
                 try
                 {
-                    OnCompleted?.Invoke(req.responseCode);
-                    yield break;
+                    LogLine.Do($"Uploading {data.Length} bytes to {url} (attempt {attempt}/{maxRetries})");
+
+                    using (var content = new ByteArrayContent(data))
+                    using (var request = new HttpRequestMessage(HttpMethod.Put, url))
+                    {
+                        request.Content = content;
+
+                        // Set timeout for this specific request
+                        using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+                        {
+                            var response = await _httpClient.SendAsync(request, cts.Token);
+
+                            // Handle HTTP errors
+                            if (!response.IsSuccessStatusCode)
+                            {
+                                var responseBody = await response.Content.ReadAsStringAsync();
+
+                                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized ||
+                                    response.StatusCode == System.Net.HttpStatusCode.Forbidden)
+                                {
+                                    throw new SqEditorApiAuthException((int)response.StatusCode,
+                                        $"HTTP {response.StatusCode}: {response.ReasonPhrase} - {responseBody}");
+                                }
+
+                                throw new SqEditorApiException(
+                                    $"HTTP {response.StatusCode}: {response.ReasonPhrase} - {responseBody}");
+                            }
+
+                            LogLine.Do($"Upload completed successfully (attempt {attempt})");
+                            return (long)response.StatusCode;
+                        }
+                    }
+                }
+                catch (HttpRequestException ex)
+                {
+                    lastException = ex;
+                    LogLine.Do($"Upload failed with HttpRequestException: {ex.Message}");
+                }
+                catch (TaskCanceledException ex)
+                {
+                    lastException = ex;
+                    LogLine.Do($"Upload timeout after 5 minutes: {ex.Message}");
+                }
+                catch (SqEditorApiAuthException)
+                {
+                    // Don't retry auth exceptions
+                    throw;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine("Failed deserializing response from API", ex);
-                    OnError?.Invoke(ex);
-                    yield break;
+                    lastException = ex;
+                    LogLine.Do($"Upload failed with exception: {ex.Message}");
+                }
+
+                // If this wasn't the last attempt, wait before retrying with exponential backoff
+                if (attempt < maxRetries)
+                {
+                    var delaySeconds = Math.Pow(2, attempt); // 2, 4, 8 seconds
+                    LogLine.Do($"Retrying in {delaySeconds} seconds...");
+                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
                 }
             }
+
+            // All retries exhausted
+            throw new SqEditorApiNetworkException(
+                $"Upload failed after {maxRetries} attempts. Last error: {lastException?.Message}",
+                lastException);
         }
 
         private IEnumerator AttachToCommmunity(Action OnCompleted, Action<Exception> OnError, long CommunitiesId, long fileId, string name, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
