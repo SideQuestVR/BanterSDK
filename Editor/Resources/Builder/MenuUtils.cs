@@ -35,28 +35,16 @@ namespace Banter.SDKEditor
         [MenuItem("Banter/Uninstall SDK")]
         static void UninstallBanter()
         {
-            AddAndRemoveRequest request = Client.AddAndRemove(new string[0]{ }, new string[] {"com.basis.bundlemanagement", "com.basis.sdk", "com.basis.odinserializer", "com.sidequest.ora", "com.sidequest.banter" });
+            RemoveRequest request = Client.Remove("com.sidequest.banter");
             while(!request.IsCompleted)
             {
                 
             }
-            // if(Directory.Exists("Packages/com.basis.bundlemanagement"))
-            // {
-            //     Directory.Delete("Packages/com.basis.bundlemanagement", true);
-            // }
-            // if(Directory.Exists("Packages/com.basis.sdk"))
-            // {
-            //     Directory.Delete("Packages/com.basis.sdk", true);
-            // }
-            // if(Directory.Exists("Packages/com.basis.odinserializer"))
-            // {
-            //     Directory.Delete("Packages/com.basis.odinserializer", true);
-            // }
-            // RemoveRequest request = Client.Remove("com.sidequest.ora");
-            // while(!request.IsCompleted)
-            // {
+            AddAndRemoveRequest request = Client.AddAndRemove(new string[0]{ }, new string[] {"com.sidequest.banter", "com.basis.bundlemanagement", "com.basis.sdk", "com.basis.odinserializer", "com.sidequest.ora" });
+            while(!request.IsCompleted)
+            {
                 
-            // }
+            }
             EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
             EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
         }
