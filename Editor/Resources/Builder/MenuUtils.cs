@@ -40,7 +40,7 @@ namespace Banter.SDKEditor
             {
                 
             }
-            AddAndRemoveRequest request = Client.AddAndRemove(new string[0]{ }, new string[] {"com.sidequest.banter", "com.basis.bundlemanagement", "com.basis.sdk", "com.basis.odinserializer", "com.sidequest.ora" });
+            AddAndRemoveRequest request = Client.AddAndRemove(new string[0]{ }, new string[] {"com.basis.bundlemanagement", "com.basis.sdk", "com.basis.odinserializer", "com.sidequest.ora" });
             while(!request.IsCompleted)
             {
                 
