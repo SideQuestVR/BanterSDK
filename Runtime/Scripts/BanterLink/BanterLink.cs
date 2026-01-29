@@ -133,17 +133,18 @@ namespace Banter.SDK
             {
                 scene.state = SceneState.SCENE_START;
             }
-            else if (msg.StartsWith(APICommands.DOM_READY))
-            {
-                scene.state = SceneState.DOM_READY;
-                scene.events.OnDomReady.Invoke();
-                scene.SetLoaded();
-            }
+            // else if (msg.StartsWith(APICommands.DOM_READY))
+            // {
+            //     scene.state = SceneState.DOM_READY;
+            //     scene.events.OnDomReady.Invoke();
+            //     scene.SetLoaded();
+            // }
             else if (msg.StartsWith(APICommands.SCENE_READY))
             {
                 scene.state = SceneState.SCENE_READY;
                 scene.events.OnSceneReady.Invoke();
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
+                await new WaitForSeconds(2);
                 await new WaitUntil(() =>
                 {
                     scene.SetLoaded();
