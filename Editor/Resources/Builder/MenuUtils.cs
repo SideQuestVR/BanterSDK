@@ -46,7 +46,7 @@ namespace Banter.SDKEditor
                 
             }
             RemoveRequest request3 = Client.Remove("com.basis.bundlemanagement");
-            while(!request4.IsCompleted)
+            while(!request3.IsCompleted)
             {
                 
             }
