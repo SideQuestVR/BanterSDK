@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEditor;
 using Banter.SDK;
+using System.IO;
+using UnityEditor.PackageManager;
 
 namespace Banter.SDKEditor
 {
@@ -27,5 +29,31 @@ namespace Banter.SDKEditor
             Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
             Selection.activeObject = go;
         }
+
+#if !BANTER_EDITOR
+        [MenuItem("Banter/Uninstall SDK")]
+        static void UninstallBanter()
+        {
+            EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
+            EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
+            if(Directory.Exists("Packages/com.basis.bundlemanagement"))
+            {
+                Directory.Delete("Packages/com.basis.bundlemanagement");
+            }
+            if(Directory.Exists("Packages/com.basis.sdk"))
+            {
+                Directory.Delete("Packages/com.basis.sdk");
+            }
+            if(Directory.Exists("Packages/com.basis.odinserializer"))
+            {
+                Directory.Delete("Packages/com.basis.odinserializer");
+            }
+            if (Directory.Exists("Packages/com.sidequest.ora"))
+            {
+                Directory.Delete("Packages/com.sidequest.ora");
+            }
+            Client.Remove("com.sidequest.banter");
+        }
+#endif
     }
 }
