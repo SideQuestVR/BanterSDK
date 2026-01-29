@@ -36,6 +36,7 @@ namespace Banter.SDKEditor
             SetupLayersAndTags();
             SetApiCompatibilityLevel();
             CreateWebRoot();
+            // CreateUninstaller();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
@@ -118,8 +119,23 @@ namespace Banter.SDKEditor
 //             ";
 
 //             var packageJson = $@"
-            
-//             ";
+//             {{
+//                 ""name"": ""com.sidequest.banteruninstaller"",
+//                 ""version"": ""0.0.1"",
+//                 ""displayName"": ""Banter SDK Uninstaller"",
+//                 ""description"": ""Removing the Banter SDK"",
+//                 ""unity"": ""2022.3"",
+//                 ""unityRelease"": ""39f1"",
+//                 ""hideInEditor"": false,
+//                 ""documentationUrl"": ""https://bantervr.com/documentation"",
+//                 ""dependencies"": {{
+//                 }},
+//                 ""author"": {{
+//                     ""name"": ""SideQuest"",
+//                     ""email"": ""banter@sidequestvr.com"",
+//                     ""url"": ""https://bantervr.com""
+//                 }}
+//             }}";
 
 //             if (!Directory.Exists("Packages/com.sidequest.banteruninstaller"))
 //             {
