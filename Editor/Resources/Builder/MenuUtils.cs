@@ -35,12 +35,12 @@ namespace Banter.SDKEditor
         [MenuItem("Banter/Uninstall SDK")]
         static void UninstallBanter()
         {
-             bool userResponse = EditorDialog.DisplayDecisionDialog(
+             bool userResponse = UnityEditor.EditorDialog.DisplayDecisionDialog(
                 "Uninstall Banter SDK",
                 "Are you sure? This will restart the unity editor.",
                 "Affirmative",
                 "Negative",
-                DialogIconType.Info);
+                UnityEditor.DialogIconType.Info);
 
             if (!userResponse) return;
             RemoveRequest request = Client.Remove("com.sidequest.banter");
