@@ -3,6 +3,7 @@ using UnityEditor;
 using Banter.SDK;
 using System.IO;
 using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
 
 namespace Banter.SDKEditor
 {
@@ -34,6 +35,11 @@ namespace Banter.SDKEditor
         [MenuItem("Banter/Uninstall SDK")]
         static void UninstallBanter()
         {
+            RemoveRequest request = Client.Remove("com.sidequest.banter");
+            while(!request.IsCompleted)
+            {
+                
+            }
             EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
             EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
             if(Directory.Exists("Packages/com.basis.bundlemanagement"))
@@ -52,7 +58,6 @@ namespace Banter.SDKEditor
             {
                 Directory.Delete("Packages/com.sidequest.ora");
             }
-            Client.Remove("com.sidequest.banter");
         }
 #endif
     }
