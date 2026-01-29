@@ -40,8 +40,6 @@ namespace Banter.SDKEditor
             {
                 
             }
-            EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
-            EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
             if(Directory.Exists("Packages/com.basis.bundlemanagement"))
             {
                 Directory.Delete("Packages/com.basis.bundlemanagement");
@@ -58,6 +56,8 @@ namespace Banter.SDKEditor
             {
                 Directory.Delete("Packages/com.sidequest.ora");
             }
+            EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
+            EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
         }
 #endif
     }

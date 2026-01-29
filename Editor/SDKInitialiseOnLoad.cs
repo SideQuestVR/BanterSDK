@@ -18,7 +18,7 @@ namespace Banter.SDKEditor
         static InitialiseOnLoad()
         {
             var renderPipeline = UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline;
-            if( renderPipeline != null)
+            if (renderPipeline != null)
             {
                 if (!EditorUtility.DisplayDialog("WRONG RENDER PIPELINE", "This project was created with URP but needs to use BiRP. Please select 3D(Built in Render Pipeline) in a new project and discard this one.", "OK", "Close Unity"))
                 {
@@ -69,6 +69,104 @@ namespace Banter.SDKEditor
             }
             PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
         }
+//         static void CreateUninstaller()
+//         {
+//             var script = $@"
+// using UnityEditor;
+// using System.IO;
+// using UnityEditor.PackageManager;
+// using UnityEditor.PackageManager.Requests;
+// namespace Banter.SDKEditor
+// {{
+//     public class UninstallBanter
+//     {{
+// // #if !BANTER_EDITOR
+//         [MenuItem(""Banter/Uninstall SDK"")]
+//         static void UninstallBanter()
+//         {{
+//             RemoveRequest request = Client.Remove(""com.sidequest.banter"");
+//             while(!request.IsCompleted)
+//             {{
+                
+//             }}
+//             EditUtils.RemoveCompileDefine(""BANTER_ORA"", new BuildTargetGroup[] {{ BuildTargetGroup.Android, BuildTargetGroup.Standalone }});
+//             EditUtils.RemoveCompileDefine(""BASIS_BUNDLE_MANAGEMENT"", new BuildTargetGroup[] {{ BuildTargetGroup.Android, BuildTargetGroup.Standalone }});
+//             if(Directory.Exists(""Packages/com.basis.bundlemanagement""))
+//             {{
+//                 Directory.Delete(""Packages/com.basis.bundlemanagement"");
+//             }}
+//             if(Directory.Exists(""Packages/com.basis.sdk""))
+//             {{
+//                 Directory.Delete(""Packages/com.basis.sdk"");
+//             }}
+//             if(Directory.Exists(""Packages/com.basis.odinserializer""))
+//             {{
+//                 Directory.Delete(""Packages/com.basis.odinserializer"");
+//             }}
+//             if (Directory.Exists(""Packages/com.sidequest.ora""))
+//             {{
+//                 Directory.Delete(""Packages/com.sidequest.ora"");
+//             }}
+//             if (Directory.Exists(""Packages/com.sidequest.banteruninstaller""))
+//             {{
+//                 Directory.Delete(""Packages/com.sidequest.banteruninstaller"");
+//             }}
+//         }}
+// // #endif
+//     }}
+// }}
+//             ";
+
+//             var packageJson = $@"
+            
+//             ";
+
+//             if (!Directory.Exists("Packages/com.sidequest.banteruninstaller"))
+//             {
+//                 Directory.CreateDirectory("Packages/com.sidequest.banteruninstaller");
+//             }
+//             if (!Directory.Exists("Packages/com.sidequest.banteruninstaller/Editor"))
+//             {
+//                 Directory.CreateDirectory("Packages/com.sidequest.banteruninstaller/Editor");
+//             }
+//             if(!File.Exists("Packages/com.sidequest.banteruninstaller/pacakge.json"))
+//             {
+//                 File.WriteAllText("Packages/com.sidequest.banteruninstaller/pacakge.json", packageJson);
+//             }
+//             if(!File.Exists("Packages/com.sidequest.banteruninstaller/Editor/UninstallBanter.cs"))
+//             {
+//                 File.WriteAllText("Packages/com.sidequest.banteruninstaller/Editor/UninstallBanter.cs", script);
+//             }
+//         }
+#if !BANTER_EDITOR
+        [MenuItem("Banter/Uninstall SDK")]
+        static void UninstallBanter()
+        {
+            RemoveRequest request = Client.Remove("com.sidequest.banter");
+            while(!request.IsCompleted)
+            {
+                
+            }
+            EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
+            EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
+            if(Directory.Exists("Packages/com.basis.bundlemanagement"))
+            {
+                Directory.Delete("Packages/com.basis.bundlemanagement");
+            }
+            if(Directory.Exists("Packages/com.basis.sdk"))
+            {
+                Directory.Delete("Packages/com.basis.sdk");
+            }
+            if(Directory.Exists("Packages/com.basis.odinserializer"))
+            {
+                Directory.Delete("Packages/com.basis.odinserializer");
+            }
+            if (Directory.Exists("Packages/com.sidequest.ora"))
+            {
+                Directory.Delete("Packages/com.sidequest.ora");
+            }
+        }
+#endif
         static void ImportOraPackage()
         {
             var packageName = "com.sidequest.ora";
