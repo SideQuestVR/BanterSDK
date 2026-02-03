@@ -4,11 +4,12 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
+    [DefaultExecutionOrder(-9999)]
     public class DontDestroyOnLoad : MonoBehaviour
     {
-        void Start()
+        void Awake()
         {
-            DontDestroyOnLoad(this);
+            DontDestroyOnLoad(this.gameObject);
         }
     }
 }

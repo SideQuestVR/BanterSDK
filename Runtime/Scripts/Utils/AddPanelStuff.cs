@@ -36,14 +36,12 @@ public class AddPanelStuff : MonoBehaviour
             _raycaster = GetComponent<PanelRaycaster>();
             if (_raycaster != null)
             {
-                Debug.Log($"[AddPanelStuff] Assigning PanelRaycaster's panel to {gameObject.name} UIDocument's runtimePanel.");
                 _raycaster.panel = uIDocument.runtimePanel;
             }
 
             var eventHandler = GetComponent<PanelEventHandler>();
             if (eventHandler != null)
             {
-                Debug.Log($"[AddPanelStuff] Assigning PanelEventHandler's panel to {gameObject.name} UIDocument's runtimePanel.");
                 eventHandler.panel = uIDocument.runtimePanel;
             }
 

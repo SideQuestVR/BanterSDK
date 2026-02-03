@@ -1998,8 +1998,11 @@ namespace Banter.SDK
                 }
                 await ResetScene();
                 await ShowSpaceImage(url);
+                Debug.Log("Before LoadUrl");
                 await link.LoadUrl(url);
+                Debug.Log("After LoadUrl");
                 await new WaitUntil(() => loaded);
+                Debug.Log("After WaitUntil(() => loaded)");
                 LoadingStatus = "Please wait, loading live space...";
                 if (HasLoadFailed())
                 {
