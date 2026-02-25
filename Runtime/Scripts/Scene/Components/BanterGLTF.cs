@@ -133,7 +133,7 @@ namespace Banter.SDK
             loadStarted = true;
             try
             {
-                SetLoadedIfNot();
+                //SetLoadedIfNot();
                 Importer.ImportGLBAsync(await GetCachedGLTF(), new ImportSettings(), (go, animations) =>
                 {
                     try
