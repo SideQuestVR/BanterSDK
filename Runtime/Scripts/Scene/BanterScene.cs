@@ -536,6 +536,16 @@ namespace Banter.SDK
                      headers
                  );
                  var responseContext = JsonUtility.FromJson<YtResponseContext>(videoInfo);
+                 if (responseContext.videoDetails != null)
+                 {
+                     responseContext.videoDetails.title = responseContext.videoDetails.title?.Replace("|", "") ?? "";
+                     responseContext.videoDetails.shortDescription = responseContext.videoDetails.shortDescription?.Replace("|", "").Replace("\n", " ").Replace("\r", "") ?? "";
+                     if (responseContext.videoDetails.thumbnail?.thumbnails != null)
+                     {
+                         foreach (var t in responseContext.videoDetails.thumbnail.thumbnails)
+                             t.url = t.url?.Replace("|", "") ?? "";
+                     }
+                 }
                  var cleanJson = JsonUtility.ToJson(responseContext);
                  link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
              }, $"{nameof(BanterScene)}.{nameof(YtInfo)}"));
