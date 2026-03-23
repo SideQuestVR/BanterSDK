@@ -7,8 +7,9 @@ Create interactive 3D VR spaces using JavaScript. The Banter SDK provides a comp
 ## Quick Start
 
 ```js
-// Get the scene singleton
+// Wait for the BS code to initialise. BS wont be available before this callback.
 window.addEventListener("bs-loaded", ()=> {
+    // Get the scene singleton
     const scene = BS.BanterScene.GetInstance();
     
     // Wait for the scene to be ready
