@@ -249,6 +249,8 @@ namespace Banter.SDKEditor
         /// </summary>
         [JsonProperty("upload_uri")]
         public string UploadURI { get; set; }
+        
+        [JsonProperty("contentType")] public string ContentType { get; set; }
 
         /// <summary>
         /// A URL to upload the file to

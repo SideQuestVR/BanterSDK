@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -471,7 +472,7 @@ namespace Banter.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => { }, OnError);
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError);
 
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
@@ -488,15 +489,15 @@ namespace Banter.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => { }, OnError);
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError);
             OnCompleted?.Invoke(_uploadRequest);
 
         }
 
-        private IEnumerator UploadFileInternal(string url, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
+        private IEnumerator UploadFileInternal(SqEditorCreateUpload upload, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
         {
             // Start the async upload task
-            var uploadTask = UploadFileWithRetryAsync(url, data, name, maxRetries: 3);
+            var uploadTask = UploadFileWithRetryAsync(upload, data, name, maxRetries: 3);
 
             // Wait for the task to complete (bridges async/await with coroutine)
             while (!uploadTask.IsCompleted)
@@ -516,7 +517,7 @@ namespace Banter.SDKEditor
             OnCompleted?.Invoke(uploadTask.Result);
         }
 
-        private async Task<long> UploadFileWithRetryAsync(string url, byte[] data, string name, int maxRetries = 3)
+        private async Task<long> UploadFileWithRetryAsync(SqEditorCreateUpload upload, byte[] data, string name, int maxRetries = 3)
         {
             int attempt = 0;
             Exception lastException = null;
@@ -526,12 +527,14 @@ namespace Banter.SDKEditor
                 attempt++;
                 try
                 {
-                    LogLine.Do($"Uploading {data.Length} bytes to {url} (attempt {attempt}/{maxRetries})");
+                    LogLine.Do($"Uploading {data.Length} bytes to {upload.UploadURI} (attempt {attempt}/{maxRetries})");
 
                     using (var content = new ByteArrayContent(data))
-                    using (var request = new HttpRequestMessage(HttpMethod.Put, url))
+                    using (var request = new HttpRequestMessage(HttpMethod.Put, upload.UploadURI))
                     {
                         request.Content = content;
+                        if (!string.IsNullOrEmpty(upload.ContentType))
+                            request.Content.Headers.ContentType = new MediaTypeHeaderValue(upload.ContentType);
 
                         // Set timeout for this specific request
                         using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
