@@ -620,7 +620,7 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name), Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name).Replace(".",""), Name = name }, (u) =>
 
             {
                 if (u == null)
