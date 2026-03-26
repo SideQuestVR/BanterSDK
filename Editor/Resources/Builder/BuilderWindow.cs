@@ -12,7 +12,8 @@ using System.Threading;
 using Banter.SDKEditor;
 using Unity.EditorCoroutines.Editor;
 using System.Collections;
-using UnityEngine.Networking;
+using System.Net.Http;
+using System.Text;
 using UnityEditor.UIElements;
 using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
@@ -49,6 +50,8 @@ public class KitObjectAndPath
 
 public class BuilderWindow : EditorWindow
 {
+    private static readonly HttpClient _httpClient = new HttpClient();
+
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
     [SerializeField] private StyleSheet _mainWindowStyleSheet = default;
 
@@ -372,18 +375,12 @@ public class BuilderWindow : EditorWindow
 
     public IEnumerator Texture(string url, Action<Texture2D> callback)
     {
-        using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
-        {
-            yield return uwr.SendWebRequest();
-            if (uwr.result != UnityWebRequest.Result.Success)
-            {
-                throw new System.Exception(uwr.error);
-            }
-            else
-            {
-                callback(DownloadHandlerTexture.GetContent(uwr));
-            }
-        }
+        var task = _httpClient.GetByteArrayAsync(url);
+        while (!task.IsCompleted) yield return null;
+        if (task.IsFaulted) throw task.Exception.InnerException ?? task.Exception;
+        var tex = new Texture2D(1, 1);
+        tex.LoadImage(task.Result);
+        callback(tex);
     }
 
     void SelectKit(int selectedIndex) {
@@ -1191,39 +1188,46 @@ public class BuilderWindow : EditorWindow
     }
     public IEnumerator Json<T>(string url, Action<T> callback)
     {
-        UnityWebRequest uwr = UnityWebRequest.Get(url);
-        yield return uwr.SendWebRequest();
-        if (uwr.result != UnityWebRequest.Result.Success)
-        {
-            throw new System.Exception(uwr.error);
-        }
-        else
-        {
-            callback(JsonUtility.FromJson<T>(uwr.downloadHandler.text));
-        }
+        var task = _httpClient.GetAsync(url);
+        while (!task.IsCompleted) yield return null;
+        if (task.IsFaulted) throw task.Exception.InnerException ?? task.Exception;
+        var response = task.Result;
+        if (!response.IsSuccessStatusCode)
+            throw new System.Exception(response.StatusCode + ": " + response.ReasonPhrase);
+        var readTask = response.Content.ReadAsStringAsync();
+        while (!readTask.IsCompleted) yield return null;
+        if (readTask.IsFaulted) throw readTask.Exception.InnerException ?? readTask.Exception;
+        callback(JsonUtility.FromJson<T>(readTask.Result));
     }
+
     public IEnumerator Json<T>(string url, T postData, Action<string> callback, Dictionary<string, string> headers = null)
     {
-        UnityWebRequest uwr = UnityWebRequest.Put(url, JsonUtility.ToJson(postData));
-        uwr.method = "POST";
+        var json = JsonUtility.ToJson(postData);
+        var request = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new StringContent(json, Encoding.UTF8, "application/json")
+        };
         if (headers != null)
         {
             foreach (var header in headers)
             {
-                uwr.SetRequestHeader(header.Key, header.Value);
+                if (!header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
+                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
         }
-        yield return uwr.SendWebRequest();
-
-        if (uwr.result != UnityWebRequest.Result.Success)
+        var task = _httpClient.SendAsync(request);
+        while (!task.IsCompleted) yield return null;
+        if (task.IsFaulted) throw task.Exception.InnerException ?? task.Exception;
+        var response = task.Result;
+        if (!response.IsSuccessStatusCode)
         {
-            Debug.LogError(url + ":" + JsonUtility.ToJson(postData));
-            throw new System.Exception(uwr.error);
+            Debug.LogError(url + ":" + json);
+            throw new System.Exception(response.StatusCode + ": " + response.ReasonPhrase);
         }
-        else
-        {
-            callback(uwr.downloadHandler.text);
-        }
+        var readTask = response.Content.ReadAsStringAsync();
+        while (!readTask.IsCompleted) yield return null;
+        if (readTask.IsFaulted) throw readTask.Exception.InnerException ?? readTask.Exception;
+        callback(readTask.Result);
     }
     private IEnumerator PopulateExistingKits(Action callback = null) {
         if(sq.User == null) {

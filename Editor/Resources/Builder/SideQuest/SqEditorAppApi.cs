@@ -11,7 +11,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Networking;
 using Debug = System.Diagnostics.Debug;
 using Unity.EditorCoroutines.Editor;
 
@@ -95,7 +94,7 @@ namespace Banter.SDKEditor
             yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
             {
                 OnCompleted?.Invoke(av);
-            }, OnError, true, false, "PATCH");
+            }, OnError, true, false, "PUT");
         }
         public IEnumerator GetAvatars(Action<List<SqEditorAvatar>> OnCompleted, Action<Exception> OnError)
         {
@@ -104,7 +103,7 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars?author_id=me", OnCompleted, OnError, true);
+            yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars/mine", OnCompleted, OnError, true);
         }
         
          public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
@@ -621,7 +620,7 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name), Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name).Replace(".",""), Name = name }, (u) =>
 
             {
                 if (u == null)
@@ -670,7 +669,7 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("User refresh token is missing, logging user out"));
                 yield break;
             }
-            yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token", $"grant_type=refresh_token&refresh_token={UnityWebRequest.EscapeURL(Data.Token?.RefreshToken)}&client_id={Data.Token?.ClientId}",
+            yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token", $"grant_type=refresh_token&refresh_token={Uri.EscapeDataString(Data.Token?.RefreshToken)}&client_id={Data.Token?.ClientId}",
                 (a) =>
                 {
                     if (a == null || a.AccessToken == null)
@@ -687,185 +686,128 @@ namespace Banter.SDKEditor
 
         private IEnumerator PostFormEncodedStringNoAuth<T>(string urlPath, string data, Action<T> OnCompleted, Action<Exception> OnError)
         {
-            using (UnityWebRequest req = new UnityWebRequest(new Uri(Config.RootApiUri, urlPath)))
+            var content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
+            var task = _httpClient.PostAsync(new Uri(Config.RootApiUri, urlPath), content);
+            while (!task.IsCompleted) yield return null;
+            if (task.IsFaulted)
             {
-                req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(data))
-                {
-                    contentType = "application/x-www-form-urlencoded"
-                };
-                req.method = "POST";
-                req.downloadHandler = new DownloadHandlerBuffer();
-
-                yield return req.SendWebRequest();
-
-                if (req.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
-                    yield break;
-                }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                }
-
-                var resStr = req.downloadHandler.text;
-                if (string.IsNullOrWhiteSpace(resStr))
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                else
-                {
-                    try
-                    {
-                        OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-                        yield break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Failed deserializing response from API", ex);
-                        OnError?.Invoke(ex);
-                        yield break;
-                    }
-                }
+                OnError(new SqEditorApiNetworkException(task.Exception.InnerException?.Message ?? task.Exception.Message));
+                yield break;
+            }
+            var response = task.Result;
+            if (!response.IsSuccessStatusCode)
+            {
+                OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {response.ReasonPhrase}"));
+                yield break;
+            }
+            var readTask = response.Content.ReadAsStringAsync();
+            while (!readTask.IsCompleted) yield return null;
+            if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
+            var resStr = readTask.Result;
+            if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
+            try
+            {
+                OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Failed deserializing response from API", ex);
+                OnError?.Invoke(ex);
             }
         }
 
         private IEnumerator JsonGet<T>(string urlPath, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true)
         {
-            using (UnityWebRequest req = UnityWebRequest.Get(new Uri(Config.RootApiUri, urlPath)))
+            string authToken = null;
+            if (Data?.Token != null && withAuth)
             {
-                req.SetRequestHeader("Content-Type", "application/json");
-                if (Data?.Token != null && withAuth)
-                {
-                    string authToken = null;
-                    Exception error = null;
-                    yield return GetAuthToken((a) => authToken = a, (e) => error = e);
-                    if (error != null)
-                    {
-                        OnError?.Invoke(error);
-                        yield break;
-                    }
-                    req.SetRequestHeader("Authorization", "Bearer " + authToken);
-                }
-
-                yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
-                    yield break;
-                }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                }
-                var resStr = req.downloadHandler.text;
-                if (string.IsNullOrWhiteSpace(resStr))
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                else
-                {
-                    try
-                    {
-                        OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-                        yield break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Failed deserializing response from API", ex);
-                        OnError?.Invoke(ex);
-                        yield break;
-                    }
-                }
+                Exception error = null;
+                yield return GetAuthToken((a) => authToken = a, (e) => error = e);
+                if (error != null) { OnError?.Invoke(error); yield break; }
+            }
+            var request = new HttpRequestMessage(HttpMethod.Get, new Uri(Config.RootApiUri, urlPath));
+            request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            if (authToken != null)
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+            var task = _httpClient.SendAsync(request);
+            while (!task.IsCompleted) yield return null;
+            if (task.IsFaulted)
+            {
+                OnError(new SqEditorApiNetworkException(task.Exception.InnerException?.Message ?? task.Exception.Message));
+                yield break;
+            }
+            var response = task.Result;
+            if (!response.IsSuccessStatusCode)
+            {
+                OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {response.ReasonPhrase}"));
+                yield break;
+            }
+            var readTask = response.Content.ReadAsStringAsync();
+            while (!readTask.IsCompleted) yield return null;
+            if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
+            var resStr = readTask.Result;
+            if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
+            try
+            {
+                OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Failed deserializing response from API", ex);
+                OnError?.Invoke(ex);
             }
         }
         
         
         private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, string method = "POST")
         {
-            // The whole UnitytWebRequest.Put then changing method to POST thing is a janky workaround for JSON posting being broken in Unity...
             var uri = new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath);
-            using (UnityWebRequest req = UnityWebRequest.Put(uri, JsonConvert.SerializeObject(data)))
+            string authToken = null;
+            if (Data?.Token != null && withAuth)
             {
-                req.method = method;
-                req.SetRequestHeader("Content-Type", "application/json");
-                if (Data?.Token != null && withAuth)
-                {
-                    string authToken = null;
-                    Exception error = null;
-                    yield return GetAuthToken((a) => authToken = a, (e) => error = e);
-                    if (error != null)
-                    {
-                        OnError?.Invoke(error);
-                        yield break;
-                    }
-                    req.SetRequestHeader("Authorization", "Bearer " + authToken);
-                }
-
-                yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
-                    yield break;
-                }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {uri} {req.error} {req.downloadHandler.text}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {uri} {req.error} {req.downloadHandler.text}"));
-                        yield break;
-                    }
-                }
-                if (req.responseCode == 204)
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                var resStr = req.downloadHandler.text;
-                if (string.IsNullOrWhiteSpace(resStr))
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                else
-                {
-                    try
-                    {
-                        OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-                        yield break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Failed deserializing response from API", ex);
-                        OnError?.Invoke(ex);
-                        yield break;
-                    }
-                }
+                Exception error = null;
+                yield return GetAuthToken((a) => authToken = a, (e) => error = e);
+                if (error != null) { OnError?.Invoke(error); yield break; }
+            }
+            var request = new HttpRequestMessage(new HttpMethod(method), uri)
+            {
+                Content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json")
+            };
+            if (authToken != null)
+                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
+            var task = _httpClient.SendAsync(request);
+            while (!task.IsCompleted) yield return null;
+            if (task.IsFaulted)
+            {
+                OnError(new SqEditorApiNetworkException(task.Exception.InnerException?.Message ?? task.Exception.Message));
+                yield break;
+            }
+            var response = task.Result;
+            if (!response.IsSuccessStatusCode)
+            {
+                var errReadTask = response.Content.ReadAsStringAsync();
+                while (!errReadTask.IsCompleted) yield return null;
+                OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {uri} {response.ReasonPhrase} {errReadTask.Result}"));
+                yield break;
+            }
+            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+            {
+                OnCompleted?.Invoke(default(T));
+                yield break;
+            }
+            var readTask = response.Content.ReadAsStringAsync();
+            while (!readTask.IsCompleted) yield return null;
+            if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
+            var resStr = readTask.Result;
+            if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
+            try
+            {
+                OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Failed deserializing response from API", ex);
+                OnError?.Invoke(ex);
             }
         }
 

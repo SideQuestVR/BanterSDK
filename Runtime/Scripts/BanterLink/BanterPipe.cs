@@ -22,7 +22,6 @@ public class BanterPipe
     public void Start(Action connectedCallback, Action<string> msgCallback)
     {
         manager?.browserConnected.AddListener(() => connectedCallback());
-        UnityEngine.Debug.Log("view.browserMessage.AddListener");
         view.browserMessage.AddListener((reqId, command, data) =>
         {
             msgCallback(data);

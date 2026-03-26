@@ -43,6 +43,7 @@ namespace Banter.SDK
         [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
         [See(initial = "")][SerializeField] internal string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
+        public bool IsStreamingBrowser = false;
         [Method]
         public void _ToggleInteraction(bool enabled)
         {
@@ -79,12 +80,12 @@ namespace Banter.SDK
             if (browser == null)
             {
 #if BANTER_EDITOR
-                browser = Instantiate(Resources.Load<GameObject>("Prefabs/BanterBrowserBuild"), transform);
+                browser = Instantiate(Resources.Load<GameObject>(IsStreamingBrowser?"Prefabs/BanterBrowserStreaming":"Prefabs/BanterBrowserBuild"), transform);
 #else
                 browser = Instantiate(Resources.Load<GameObject>("Prefabs/BanterBrowser"), transform);
 #endif
                 browser.name = "BanterBrowser";
-                browser.SendMessage("RunActions", actions);
+                browser.SendMessage("RunActions", string.IsNullOrEmpty(actions)?"":actions);
             }
 
             if (changedProperties?.Contains(PropertyName.url) ?? true && !string.IsNullOrEmpty(url))

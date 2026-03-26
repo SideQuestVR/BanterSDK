@@ -133,22 +133,24 @@ namespace Banter.SDK
             {
                 scene.state = SceneState.SCENE_START;
             }
-            else if (msg.StartsWith(APICommands.DOM_READY))
-            {
-                scene.state = SceneState.DOM_READY;
-                scene.events.OnDomReady.Invoke();
-                scene.SetLoaded();
-            }
+            // else if (msg.StartsWith(APICommands.DOM_READY))
+            // {
+            //     scene.state = SceneState.DOM_READY;
+            //     scene.events.OnDomReady.Invoke();
+            //     scene.SetLoaded();
+            // }
             else if (msg.StartsWith(APICommands.SCENE_READY))
             {
                 scene.state = SceneState.SCENE_READY;
                 scene.events.OnSceneReady.Invoke();
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
+                await new WaitForSeconds(2);
                 await new WaitUntil(() =>
                 {
                     scene.SetLoaded();
                     return scene.loaded;
-                });
+                });                
+                LogLine.Do(LogLine.banterColor, LogTag.Banter, "After Banter Scene Loaded.");
                 OnUnitySceneLoaded();
                 _ = TaskRunner.Run(async () =>
                 {
@@ -613,7 +615,10 @@ namespace Banter.SDK
             }
             //end of debug stuff
 #endif
-
+            if(msg.StartsWith(APICommands.SCENE_READY))
+            {
+                Debug.Log("got scene ready");
+            }
 
             if (msg.StartsWith(APICommands.REQUEST_ID))
             {
@@ -649,7 +654,6 @@ namespace Banter.SDK
             batchUpdater = new BatchUpdater(pipe);
             pipe.Start(() =>
             {
-                Debug.Log("HERER3 pipe.Start(() =>");
                 Connected?.Invoke(this, EventArgs.Empty);
             }, msg =>
             {

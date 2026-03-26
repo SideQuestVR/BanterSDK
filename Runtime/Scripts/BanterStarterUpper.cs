@@ -73,7 +73,6 @@ namespace Banter.SDK
                     currentCoroutine = StartCoroutine(unitySched.Coroutine());
                 }
                 initialized = true;
-                Debug.Log("BanterStarterUpper initialized");
             }
 
             scene = BanterScene.Instance();
