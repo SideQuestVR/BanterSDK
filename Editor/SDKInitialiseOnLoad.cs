@@ -279,7 +279,7 @@ namespace Banter.SDKEditor
                     }
                 }
 
-                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers/Tags", "Do you want to setup Banter layers and tags automatically?\nThese are required when using Banter specific features.\n Please back up your project first!" + (missingLayers.Count > 0 ? "\n\nLayers:\n" : "") + string.Join(", ", missingLayers) + (missingTags.Count > 0 ? "\n\nTags:\n" : "") + string.Join(", ", missingTags), "Yes", "No"))
+                if (isMissing)
                 {
                     foreach (var layer in layersToAdd)
                     {
