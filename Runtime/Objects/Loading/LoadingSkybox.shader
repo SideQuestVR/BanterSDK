@@ -19,6 +19,7 @@ Shader "Banter/LoadingSkybox" {
             #pragma vertex vert
             #pragma fragment frag
             #pragma target 2.0
+            #pragma multi_compile_instancing
     
             #include "UnityCG.cginc"
     
@@ -61,6 +62,7 @@ Shader "Banter/LoadingSkybox" {
     
             fixed4 frag (v2f i) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
                 half4 tex = texCUBE (_Tex, i.texcoord);
                 half3 c = DecodeHDR (tex, _Tex_HDR);
                 c = c * _Tint.rgb * unity_ColorSpaceDouble.rgb;

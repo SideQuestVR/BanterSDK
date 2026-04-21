@@ -36,6 +36,7 @@ Shader "Banter/LoadingCageNew"
             #pragma fragment frag
             #pragma target 3.0
             #pragma only_renderers d3d11 glcore gles3 vulkan
+            #pragma multi_compile_instancing
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -64,6 +65,7 @@ Shader "Banter/LoadingCageNew"
                 float2 uv0        : TEXCOORD0;
                 float2 uv1        : TEXCOORD1;
                 float2 uv2        : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
@@ -74,6 +76,7 @@ Shader "Banter/LoadingCageNew"
                 float2 uv2            : TEXCOORD2;
                 float3 worldPos       : TEXCOORD3;
                 float3 tangentViewDir : TEXCOORD4;
+                UNITY_VERTEX_OUTPUT_STEREO
             };
 
             float3 HSVToRGB(float3 c)
@@ -96,6 +99,8 @@ Shader "Banter/LoadingCageNew"
             Varyings vert(Attributes input)
             {
                 Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
                 VertexPositionInputs posInputs  = GetVertexPositionInputs(input.positionOS.xyz);
                 VertexNormalInputs   normInputs = GetVertexNormalInputs(input.normalOS, input.tangentOS);
@@ -119,8 +124,9 @@ Shader "Banter/LoadingCageNew"
 
             half4 frag(Varyings input) : SV_Target
             {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 // World-space view direction (equivalent to normalize(UnityWorldSpaceViewDir(worldPos)))
-                float3 worldViewDir = normalize(_WorldSpaceCameraPos.xyz - input.worldPos);
+                float3 worldViewDir = normalize(GetCameraPositionWS() - input.worldPos);
 
                 // Panoramic (equirectangular) UV from world view direction
                 float2 panoUV = float2(
