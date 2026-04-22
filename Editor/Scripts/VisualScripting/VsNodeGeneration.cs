@@ -147,7 +147,10 @@ namespace Banter.SDKEditor
             "Banter.VisualScripting",
             
             // Picavoxel
-            "GarethIW.PicaVoxelInfinity"
+            "GarethIW.PicaVoxelInfinity",
+
+            // Colombia
+            "com.sidequest.columbia.VisualScripting"
         };
 
         public static readonly List<Type> typeAllowList = new List<Type>() {

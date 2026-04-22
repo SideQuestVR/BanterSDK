@@ -265,8 +265,9 @@ namespace Banter.SDKEditor
                     bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
                     bool isBanterVs = id?.StartsWith("Banter.VisualScripting.") ?? false;
                     bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;
-                    
-                    var notAllowed = !(id == null || isVs || isBanterVs || isPicaVoxelVs || VsStubsAllowed.members.Contains(id));
+                    bool isColombiaVs = id?.StartsWith("SideQuest.Columbia.VisualScripting.") ?? false;
+
+                    var notAllowed = !(id == null || isVs || isBanterVs || isPicaVoxelVs || isColombiaVs || VsStubsAllowed.members.Contains(id));
                     return notAllowed;
                 }).ToList();
 
