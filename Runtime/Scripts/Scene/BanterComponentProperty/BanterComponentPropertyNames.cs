@@ -39,6 +39,7 @@ namespace Banter.SDK
         autoSync,
         jointAvatar,
         autoAttach,
+        isSeat,
         volume,
         pitch,
         mute,

@@ -26,6 +26,7 @@ namespace Banter.SDK
         public bool autoSync = false;
         public bool jointAvatar = true;
         public bool autoAttach = false;
+        public bool isSeat = false;
 
         public UnityAndBanterObject attachedObject;
     }
@@ -63,6 +64,9 @@ namespace Banter.SDK
 
         [Tooltip("Automatically attach the object to the avatar.")]
         [See(initial = "false")][SerializeField] internal bool autoAttach = false;
+
+        [Tooltip("Indicates this attached object is a seat, enabling seated pose for the local player.")]
+        [See(initial = "false")][SerializeField] internal bool isSeat = false;
 
 
         [SerializeField] [HideInInspector] BanterAttachment attachment = new BanterAttachment();
@@ -143,6 +147,10 @@ namespace Banter.SDK
             {
                 attachment.autoAttach = autoAttach;
             }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.isSeat))
+            {
+                attachment.isSeat = isSeat;
+            }
         }
         // BANTER COMPILED CODE 
         public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
@@ -155,6 +163,7 @@ namespace Banter.SDK
         public System.Boolean AutoSync { get { return autoSync; } set { autoSync = value; UpdateCallback(new List<PropertyName> { PropertyName.autoSync }); } }
         public System.Boolean JointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
         public System.Boolean AutoAttach { get { return autoAttach; } set { autoAttach = value; UpdateCallback(new List<PropertyName> { PropertyName.autoAttach }); } }
+        public System.Boolean IsSeat { get { return isSeat; } set { isSeat = value; UpdateCallback(new List<PropertyName> { PropertyName.isSeat }); } }
 
         BanterScene _scene;
         public BanterScene scene
@@ -177,12 +186,12 @@ namespace Banter.SDK
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, PropertyName.autoAttach, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, PropertyName.autoAttach, PropertyName.isSeat, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "BanterAttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach;
+            return "BanterAttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -340,6 +349,15 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.autoAttach);
                     }
                 }
+                if (values[i] is BanterBool)
+                {
+                    var valisSeat = (BanterBool)values[i];
+                    if (valisSeat.n == PropertyName.isSeat)
+                    {
+                        isSeat = valisSeat.x;
+                        changedProperties.Add(PropertyName.isSeat);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -462,6 +480,18 @@ namespace Banter.SDK
                     name = PropertyName.autoAttach,
                     type = PropertyType.Bool,
                     value = autoAttach,
+                    componentType = ComponentType.BanterAttachedObject,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BanterComponentPropertyUpdate()
+                {
+                    name = PropertyName.isSeat,
+                    type = PropertyType.Bool,
+                    value = isSeat,
                     componentType = ComponentType.BanterAttachedObject,
                     oid = oid,
                     cid = cid
