@@ -1704,30 +1704,51 @@ public class BuilderWindow : EditorWindow
             dropAvatarContainer.style.display = DisplayStyle.None;
             AvatarInfoCard.style.display = DisplayStyle.Flex;
             SelectAvatar.text = avatarGameObject.name;
-            var bones = AvatarBoneNames.AvatarBoneNamesMapping;
-            currentFlexaPose = GetFlexaPose();            
-            foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
-            {
-                if (t.GetComponent<Renderer>() != null && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
-                {
-                    headGameObjects.Add(t.gameObject);
-                    var list = (ListView)HeadObjectList.Children().First();
-                    list.Rebuild();
-                }
-                if (bones.ContainsKey(t.name))
-                {
-                    switch (bones[t.name])
-                    {
-                        case AvatarBoneName.HEAD:
-                            currentFlexaPose.headTransform = t;
-                            break;
-                        case AvatarBoneName.LEFTLEG_FOOT:
-                            currentFlexaPose.leftFootTransform = t;
-                            break;
-                        case AvatarBoneName.RIGHTLEG_FOOT:
-                            currentFlexaPose.rightFootTransform = t;
-                            break;
+            currentFlexaPose = GetFlexaPose();
 
+            var humanoidAnim = avatarGameObject.GetComponent<Animator>();
+            if (humanoidAnim != null && humanoidAnim.isHuman)
+            {
+                currentFlexaPose.headTransform = humanoidAnim.GetBoneTransform(HumanBodyBones.Head);
+                currentFlexaPose.leftFootTransform = humanoidAnim.GetBoneTransform(HumanBodyBones.LeftFoot);
+                currentFlexaPose.rightFootTransform = humanoidAnim.GetBoneTransform(HumanBodyBones.RightFoot);
+                foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
+                {
+                    if (t.GetComponent<Renderer>() != null && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
+                    {
+                        headGameObjects.Add(t.gameObject);
+                        var list = (ListView)HeadObjectList.Children().First();
+                        list.Rebuild();
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                var bones = AvatarBoneNames.AvatarBoneNamesMapping;
+                foreach (var t in avatarGameObject.GetComponentsInChildren<Transform>())
+                {
+                    if (t.GetComponent<Renderer>() != null && t.name.ToLower().Contains("head") && headGameObjects.Count == 0)
+                    {
+                        headGameObjects.Add(t.gameObject);
+                        var list = (ListView)HeadObjectList.Children().First();
+                        list.Rebuild();
+                    }
+                    if (bones.ContainsKey(t.name))
+                    {
+                        switch (bones[t.name])
+                        {
+                            case AvatarBoneName.HEAD:
+                                currentFlexaPose.headTransform = t;
+                                break;
+                            case AvatarBoneName.LEFTLEG_FOOT:
+                                currentFlexaPose.leftFootTransform = t;
+                                break;
+                            case AvatarBoneName.RIGHTLEG_FOOT:
+                                currentFlexaPose.rightFootTransform = t;
+                                break;
+
+                        }
                     }
                 }
             }
@@ -1897,7 +1918,13 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("No avatar selected, please select an avatar.");
             return false;
         }
-        
+
+        var humanoidAnim = avatarGameObject.GetComponent<Animator>();
+        if (humanoidAnim != null && humanoidAnim.isHuman)
+        {
+            return ValidateHumanoidAvatar(humanoidAnim);
+        }
+
         var bones = AvatarBoneNames.AvatarBoneNamesMapping;
         var hasBones = new Dictionary<AvatarBoneName, Transform>();
 
@@ -1935,6 +1962,40 @@ public class BuilderWindow : EditorWindow
             return false;
         }
         MissingBones.text = "";
+        return true;
+    }
+
+    bool ValidateHumanoidAvatar(Animator anim)
+    {
+        // Required bones (Hips, Spine, arms, legs, Head) are guaranteed when isHuman == true.
+        // Just surface any unmapped optional bones as an info note; always pass.
+        var optional = new[]
+        {
+            HumanBodyBones.Neck,
+            HumanBodyBones.Chest, HumanBodyBones.UpperChest,
+            HumanBodyBones.LeftShoulder, HumanBodyBones.RightShoulder,
+            HumanBodyBones.LeftToes, HumanBodyBones.RightToes,
+            HumanBodyBones.LeftThumbProximal, HumanBodyBones.LeftThumbIntermediate, HumanBodyBones.LeftThumbDistal,
+            HumanBodyBones.LeftIndexProximal, HumanBodyBones.LeftIndexIntermediate, HumanBodyBones.LeftIndexDistal,
+            HumanBodyBones.LeftMiddleProximal, HumanBodyBones.LeftMiddleIntermediate, HumanBodyBones.LeftMiddleDistal,
+            HumanBodyBones.LeftRingProximal, HumanBodyBones.LeftRingIntermediate, HumanBodyBones.LeftRingDistal,
+            HumanBodyBones.LeftLittleProximal, HumanBodyBones.LeftLittleIntermediate, HumanBodyBones.LeftLittleDistal,
+            HumanBodyBones.RightThumbProximal, HumanBodyBones.RightThumbIntermediate, HumanBodyBones.RightThumbDistal,
+            HumanBodyBones.RightIndexProximal, HumanBodyBones.RightIndexIntermediate, HumanBodyBones.RightIndexDistal,
+            HumanBodyBones.RightMiddleProximal, HumanBodyBones.RightMiddleIntermediate, HumanBodyBones.RightMiddleDistal,
+            HumanBodyBones.RightRingProximal, HumanBodyBones.RightRingIntermediate, HumanBodyBones.RightRingDistal,
+            HumanBodyBones.RightLittleProximal, HumanBodyBones.RightLittleIntermediate, HumanBodyBones.RightLittleDistal,
+            HumanBodyBones.LeftEye, HumanBodyBones.RightEye,
+        };
+        var missing = optional.Where(b => anim.GetBoneTransform(b) == null).Select(b => b.ToString()).ToList();
+        if (missing.Count > 0)
+        {
+            MissingBones.text = "Humanoid avatar (" + avatarGameObject.name + "). Optional bones not mapped on the Avatar — fingers/eyes/toes/etc. will fall back gracefully:\n\n<color=#AFAFAF>" + string.Join(", ", missing) + "</color>";
+        }
+        else
+        {
+            MissingBones.text = "";
+        }
         return true;
     }
     bool AnyBoneHasScale()
