@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Audio;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
@@ -40,6 +41,7 @@ namespace Banter.SDK
 
         [Tooltip("Enables a legacy shader fix for compatibility with older lighting models.")]
         [See(initial = "false")][SerializeField] internal bool legacyShaderFix = false;
+
 
         [Tooltip("The loaded asset bundle.")]
         public AssetBundle assetBundle;
@@ -219,6 +221,11 @@ namespace Banter.SDK
                         if (audioListener != null)
                         {
                             Destroy(audioListener);
+                        }
+                        var audioSource = transform.gameObject.GetComponent<AudioSource>();
+                        if (audioSource != null && scene.settings.SpaceAudioGroup != null)
+                        {
+                            audioSource.outputAudioMixerGroup = scene.settings.SpaceAudioGroup;
                         }
                         var canvas = transform.gameObject.GetComponent<Canvas>();
                         if (canvas != null)

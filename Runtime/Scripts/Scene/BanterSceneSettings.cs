@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Audio;
 
 namespace Banter.SDK
 {
@@ -80,6 +81,7 @@ namespace Banter.SDK
         public Transform Body = null;
         public Transform Cockpit = null;
         public Transform parentTransform = null;
+        public AudioMixerGroup SpaceAudioGroup;
         public BanterAssetBundle SceneAssetBundle;
         public List<BanterAssetBundle> KitBundles = new List<BanterAssetBundle>();
         public Dictionary<string, BanterAssetBundle> KitPaths = new Dictionary<string, BanterAssetBundle>();
