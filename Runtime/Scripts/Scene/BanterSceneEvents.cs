@@ -50,6 +50,7 @@ public class BanterSceneEvents
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
     public UnityEvent<string, string, bool> OnJsCallbackRecieved = new UnityEvent<string, string, bool>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
+    public UnityEvent<string, string> OnGuestAvatarSet = new UnityEvent<string, string>();
     public UnityEvent<string, int, int, Color> OnToast = new UnityEvent<string, int, int, Color>();
 
     #region Physics Settings
