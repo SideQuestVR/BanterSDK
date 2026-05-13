@@ -359,6 +359,96 @@ namespace Banter.SDK
             {"mixamorig:RightHandThumb3", AvatarBoneName.RIGHTARM_HAND_THUMB3 },
 
 
+            //Character Creator (CC3+ / CC4 / CC5) — Reallusion CC_Base_* naming.
+            //Spine chain choice: HIPS=Hip, SPINE=Spine01, CHEST=Spine02. Skips Waist
+            //(short connector) and NeckTwist02 (short pre-head). Spine01 and Spine02 are
+            //the two main torso bones and roughly equal length.
+            {"CC_Base_Head", AvatarBoneName.HEAD },
+            {"CC_Base_NeckTwist01", AvatarBoneName.NECK },
+            {"CC_Base_Hip", AvatarBoneName.HIPS },
+            {"CC_Base_Spine01", AvatarBoneName.SPINE },
+            {"CC_Base_Spine02", AvatarBoneName.CHEST },
+
+            {"CC_Base_L_Clavicle", AvatarBoneName.LEFTARM_SHOULDER },
+            {"CC_Base_L_Upperarm", AvatarBoneName.LEFTARM_UPPER },
+            {"CC_Base_L_Forearm", AvatarBoneName.LEFTARM_LOWER },
+            {"CC_Base_L_Hand", AvatarBoneName.LEFTARM_HAND },
+            {"CC_Base_L_Thigh", AvatarBoneName.LEFTLEG_UPPER },
+            {"CC_Base_L_Calf", AvatarBoneName.LEFTLEG_LOWER },
+            {"CC_Base_L_Foot", AvatarBoneName.LEFTLEG_FOOT },
+            {"CC_Base_L_ToeBase", AvatarBoneName.LEFTLEG_TOES },
+
+            {"CC_Base_R_Clavicle", AvatarBoneName.RIGHTARM_SHOULDER },
+            {"CC_Base_R_Upperarm", AvatarBoneName.RIGHTARM_UPPER },
+            {"CC_Base_R_Forearm", AvatarBoneName.RIGHTARM_LOWER },
+            {"CC_Base_R_Hand", AvatarBoneName.RIGHTARM_HAND },
+            {"CC_Base_R_Thigh", AvatarBoneName.RIGHTLEG_UPPER },
+            {"CC_Base_R_Calf", AvatarBoneName.RIGHTLEG_LOWER },
+            {"CC_Base_R_Foot", AvatarBoneName.RIGHTLEG_FOOT },
+            {"CC_Base_R_ToeBase", AvatarBoneName.RIGHTLEG_TOES },
+
+            // CC4/CC5 finger naming (numeric 1/2/3, no "Finger" infix)
+            {"CC_Base_L_Thumb1", AvatarBoneName.LEFTARM_HAND_THUMB1 },
+            {"CC_Base_L_Thumb2", AvatarBoneName.LEFTARM_HAND_THUMB2 },
+            {"CC_Base_L_Thumb3", AvatarBoneName.LEFTARM_HAND_THUMB3 },
+            {"CC_Base_L_Index1", AvatarBoneName.LEFTARM_HAND_INDEX1 },
+            {"CC_Base_L_Index2", AvatarBoneName.LEFTARM_HAND_INDEX2 },
+            {"CC_Base_L_Index3", AvatarBoneName.LEFTARM_HAND_INDEX3 },
+            {"CC_Base_L_Mid1", AvatarBoneName.LEFTARM_HAND_MIDDLE1 },
+            {"CC_Base_L_Mid2", AvatarBoneName.LEFTARM_HAND_MIDDLE2 },
+            {"CC_Base_L_Mid3", AvatarBoneName.LEFTARM_HAND_MIDDLE3 },
+            {"CC_Base_L_Ring1", AvatarBoneName.LEFTARM_HAND_RING1 },
+            {"CC_Base_L_Ring2", AvatarBoneName.LEFTARM_HAND_RING2 },
+            {"CC_Base_L_Ring3", AvatarBoneName.LEFTARM_HAND_RING3 },
+            {"CC_Base_L_Pinky1", AvatarBoneName.LEFTARM_HAND_PINKY1 },
+            {"CC_Base_L_Pinky2", AvatarBoneName.LEFTARM_HAND_PINKY2 },
+            {"CC_Base_L_Pinky3", AvatarBoneName.LEFTARM_HAND_PINKY3 },
+
+            {"CC_Base_R_Thumb1", AvatarBoneName.RIGHTARM_HAND_THUMB1 },
+            {"CC_Base_R_Thumb2", AvatarBoneName.RIGHTARM_HAND_THUMB2 },
+            {"CC_Base_R_Thumb3", AvatarBoneName.RIGHTARM_HAND_THUMB3 },
+            {"CC_Base_R_Index1", AvatarBoneName.RIGHTARM_HAND_INDEX1 },
+            {"CC_Base_R_Index2", AvatarBoneName.RIGHTARM_HAND_INDEX2 },
+            {"CC_Base_R_Index3", AvatarBoneName.RIGHTARM_HAND_INDEX3 },
+            {"CC_Base_R_Mid1", AvatarBoneName.RIGHTARM_HAND_MIDDLE1 },
+            {"CC_Base_R_Mid2", AvatarBoneName.RIGHTARM_HAND_MIDDLE2 },
+            {"CC_Base_R_Mid3", AvatarBoneName.RIGHTARM_HAND_MIDDLE3 },
+            {"CC_Base_R_Ring1", AvatarBoneName.RIGHTARM_HAND_RING1 },
+            {"CC_Base_R_Ring2", AvatarBoneName.RIGHTARM_HAND_RING2 },
+            {"CC_Base_R_Ring3", AvatarBoneName.RIGHTARM_HAND_RING3 },
+            {"CC_Base_R_Pinky1", AvatarBoneName.RIGHTARM_HAND_PINKY1 },
+            {"CC_Base_R_Pinky2", AvatarBoneName.RIGHTARM_HAND_PINKY2 },
+            {"CC_Base_R_Pinky3", AvatarBoneName.RIGHTARM_HAND_PINKY3 },
+
+            // CC3+ legacy finger naming ("Finger" infix, 0/1/2 suffix). Some older CC3+
+            // exports use this style. Thumb naming is consistent across versions.
+            {"CC_Base_L_IndexFinger0", AvatarBoneName.LEFTARM_HAND_INDEX1 },
+            {"CC_Base_L_IndexFinger1", AvatarBoneName.LEFTARM_HAND_INDEX2 },
+            {"CC_Base_L_IndexFinger2", AvatarBoneName.LEFTARM_HAND_INDEX3 },
+            {"CC_Base_L_MidFinger0", AvatarBoneName.LEFTARM_HAND_MIDDLE1 },
+            {"CC_Base_L_MidFinger1", AvatarBoneName.LEFTARM_HAND_MIDDLE2 },
+            {"CC_Base_L_MidFinger2", AvatarBoneName.LEFTARM_HAND_MIDDLE3 },
+            {"CC_Base_L_RingFinger0", AvatarBoneName.LEFTARM_HAND_RING1 },
+            {"CC_Base_L_RingFinger1", AvatarBoneName.LEFTARM_HAND_RING2 },
+            {"CC_Base_L_RingFinger2", AvatarBoneName.LEFTARM_HAND_RING3 },
+            {"CC_Base_L_PinkyFinger0", AvatarBoneName.LEFTARM_HAND_PINKY1 },
+            {"CC_Base_L_PinkyFinger1", AvatarBoneName.LEFTARM_HAND_PINKY2 },
+            {"CC_Base_L_PinkyFinger2", AvatarBoneName.LEFTARM_HAND_PINKY3 },
+
+            {"CC_Base_R_IndexFinger0", AvatarBoneName.RIGHTARM_HAND_INDEX1 },
+            {"CC_Base_R_IndexFinger1", AvatarBoneName.RIGHTARM_HAND_INDEX2 },
+            {"CC_Base_R_IndexFinger2", AvatarBoneName.RIGHTARM_HAND_INDEX3 },
+            {"CC_Base_R_MidFinger0", AvatarBoneName.RIGHTARM_HAND_MIDDLE1 },
+            {"CC_Base_R_MidFinger1", AvatarBoneName.RIGHTARM_HAND_MIDDLE2 },
+            {"CC_Base_R_MidFinger2", AvatarBoneName.RIGHTARM_HAND_MIDDLE3 },
+            {"CC_Base_R_RingFinger0", AvatarBoneName.RIGHTARM_HAND_RING1 },
+            {"CC_Base_R_RingFinger1", AvatarBoneName.RIGHTARM_HAND_RING2 },
+            {"CC_Base_R_RingFinger2", AvatarBoneName.RIGHTARM_HAND_RING3 },
+            {"CC_Base_R_PinkyFinger0", AvatarBoneName.RIGHTARM_HAND_PINKY1 },
+            {"CC_Base_R_PinkyFinger1", AvatarBoneName.RIGHTARM_HAND_PINKY2 },
+            {"CC_Base_R_PinkyFinger2", AvatarBoneName.RIGHTARM_HAND_PINKY3 },
+
+
             //RPM
             {AvatarBoneStringName.NECK, AvatarBoneName.NECK },
             {AvatarBoneStringName.HIPS, AvatarBoneName.HIPS },
