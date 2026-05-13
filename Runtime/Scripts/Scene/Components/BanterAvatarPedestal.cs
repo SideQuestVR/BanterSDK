@@ -99,6 +99,7 @@ namespace Banter.SDK
                     
 #if BASIS_BUNDLE_MANAGEMENT
                     _loadableBundle = new BasisLoadableBundle();
+                    Debug.Log($"Pedestal avatar url: {Get.GetUrl(EnvType.PROD, UrlType.CDN)}/file/{a.high_avatar_files_id}/high.bee, author: {a.author_users_id}");
                     _loadableBundle.UnlockPassword = a.author_users_id + "42069";
                     _loadableBundle.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = $"{Get.GetUrl(EnvType.PROD, UrlType.CDN)}/file/{a.high_avatar_files_id}/high.bee";
                     CancellationToken cancellationToken = new CancellationToken();
