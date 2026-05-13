@@ -28,6 +28,8 @@ namespace Banter.SDK
         [Tooltip("The ID of the avatar")]
         [See(initial = "0")][SerializeField] internal long avatarId;
 
+        public SqAvatar AvatarDetails = null;
+        
 #if BASIS_BUNDLE_MANAGEMENT
         BasisLoadableBundle _loadableBundle;
 #endif
@@ -84,6 +86,9 @@ namespace Banter.SDK
                 
                 try
                 {
+                    SetLoadedIfNot(true);
+                    _loadStarted = false;
+                    
                     if (transform.childCount > 0)
                     {
                         //KillAvatar(transform.GetChild(0).gameObject);
@@ -96,6 +101,8 @@ namespace Banter.SDK
                         LogLine.Do("Invalid uavatarId");
                         return;
                     }
+
+                    AvatarDetails = a;
                     
 #if BASIS_BUNDLE_MANAGEMENT
                     _loadableBundle = new BasisLoadableBundle();
