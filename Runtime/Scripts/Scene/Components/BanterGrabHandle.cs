@@ -10,6 +10,13 @@ public enum BanterGrabType
     Ball,
     Soft
 }
+
+public enum BanterGrabHand
+{
+    Either,
+    LeftOnly,
+    RightOnly
+}
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
@@ -27,6 +34,9 @@ namespace Banter.SDK
 
         [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
         [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
+
+        [Tooltip("Restrict which hand can grab this handle. Not networked — editor/local only.")]
+        [SerializeField] internal BanterGrabHand grabHand = BanterGrabHand.Either;
 
         internal override void DestroyStuff()
         {
@@ -62,6 +72,8 @@ namespace Banter.SDK
             grabHandle.Col = GetComponent<Collider>();
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;
+            grabHandle.HandRestricted = grabHand != BanterGrabHand.Either;
+            grabHandle.AllowedHand   = grabHand == BanterGrabHand.RightOnly ? HandID.Right : HandID.Left;
             Rigidbody rb = grabHandle.Col.attachedRigidbody;
             if(rb)
             {
