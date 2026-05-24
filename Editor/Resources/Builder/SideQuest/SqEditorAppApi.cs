@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -95,7 +95,7 @@ namespace Banter.SDKEditor
             yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
             {
                 OnCompleted?.Invoke(av);
-            }, OnError, true, false, "PATCH");
+            }, OnError, true, false, "PUT");
         }
         public IEnumerator GetAvatars(Action<List<SqEditorAvatar>> OnCompleted, Action<Exception> OnError)
         {
@@ -126,7 +126,7 @@ namespace Banter.SDKEditor
             yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true}, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false,"PATCH");
+            }, OnError, true, false);
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
@@ -533,6 +533,7 @@ namespace Banter.SDKEditor
                     using (var request = new HttpRequestMessage(HttpMethod.Put, url))
                     {
                         request.Content = content;
+                        content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(GetMimeType(name));
 
                         // Set timeout for this specific request
                         using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
@@ -888,6 +889,26 @@ namespace Banter.SDKEditor
                 {
                     Debug.WriteLine("Failed to load data file", ex);
                 }
+            }
+        }
+
+        private string GetMimeType(string fileName)
+        {
+            var ext = Path.GetExtension(fileName)?.ToLower();
+            switch (ext)
+            {
+				case ".html": return "text/html";
+				case ".js": return "application/javascript";
+                case ".glb": return "model/gltf-binary";
+                case ".gltf": return "model/gltf+json";
+                case ".png": return "image/png";
+                case ".jpg":
+                case ".jpeg": return "image/jpeg";
+                case ".gif": return "image/gif";
+                case ".zip": return "application/zip";
+                case ".json": return "application/json";
+                case ".txt": return "text/plain";
+                default: return "application/octet-stream";
             }
         }
 
