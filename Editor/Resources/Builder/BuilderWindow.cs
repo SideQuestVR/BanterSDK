@@ -1195,7 +1195,8 @@ public class BuilderWindow : EditorWindow
         yield return uwr.SendWebRequest();
         if (uwr.result != UnityWebRequest.Result.Success)
         {
-            throw new System.Exception(uwr.error);
+            string errorMsg = $"HTTP/{uwr.responseCode}: {uwr.error}";
+            throw new System.Exception(errorMsg);
         }
         else
         {
@@ -1218,7 +1219,8 @@ public class BuilderWindow : EditorWindow
         if (uwr.result != UnityWebRequest.Result.Success)
         {
             Debug.LogError(url + ":" + JsonUtility.ToJson(postData));
-            throw new System.Exception(uwr.error);
+            string errorMsg = $"HTTP/{uwr.responseCode}: {uwr.error}";
+            throw new System.Exception(errorMsg);
         }
         else
         {
@@ -1329,8 +1331,15 @@ public class BuilderWindow : EditorWindow
                     {
                         status.AddStatus("Avatar attached successfully.");
                         Debug.Log("Avatar attached successfully.");
-                        EditorCoroutineUtility.StartCoroutine(sq.SelectAvatar(() => { }, Debug.LogException, slot.UserAvatarId), this);
-                        callback();
+                        EditorCoroutineUtility.StartCoroutine(sq.SelectAvatar(() =>
+                        {
+                            callback();
+                        }, e =>
+                        {
+                            status.AddStatus("Failed to select avatar: " + e);
+                            Debug.LogError("Failed to select avatar: " + e);
+                            callback();
+                        }, slot.UserAvatarId), this);
                     }, e =>
                     {
                         status.AddStatus("Failed to attach avatar: " + e);
