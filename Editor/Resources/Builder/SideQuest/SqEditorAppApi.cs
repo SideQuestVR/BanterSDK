@@ -107,14 +107,14 @@ namespace Banter.SDKEditor
             yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars?author_id=me", OnCompleted, OnError, true);
         }
         
-         public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected, bool isPublic)
+         public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
         {
             if (Data.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true, IsPublic = isPublic}, OnCompleted, OnError, true, false);
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true}, OnCompleted, OnError, true, false);
         }
         public IEnumerator SelectAvatar(Action OnCompleted, Action<Exception> OnError, long userAvatarId)
         {
