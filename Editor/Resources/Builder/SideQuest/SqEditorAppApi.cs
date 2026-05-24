@@ -126,7 +126,7 @@ namespace Banter.SDKEditor
             yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true}, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false,"PUT");
+            }, OnError, true, false);
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
@@ -897,6 +897,8 @@ namespace Banter.SDKEditor
             var ext = Path.GetExtension(fileName)?.ToLower();
             switch (ext)
             {
+				case ".html": return "text/html";
+				case ".js": return "application/javascript";
                 case ".glb": return "model/gltf-binary";
                 case ".gltf": return "model/gltf+json";
                 case ".png": return "image/png";
