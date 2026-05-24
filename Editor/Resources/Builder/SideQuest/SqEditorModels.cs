@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -492,6 +492,9 @@ namespace Banter.SDKEditor
         
         [JsonProperty("is_selected")]
         public bool IsSelected { get; set; }
+
+        [JsonProperty("is_public", NullValueHandling = NullValueHandling.Ignore)]
+        public bool? IsPublic { get; set; }
     }
     
     public class SqAvatarSlotSelect
