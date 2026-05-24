@@ -1330,7 +1330,14 @@ public class BuilderWindow : EditorWindow
                     EditorCoroutineUtility.StartCoroutine(sq.AttachAvatar((slot) =>
                     {
                         status.AddStatus("Avatar attached successfully.");
-                        Debug.Log("Avatar attached successfully.");
+                        Debug.Log("Avatar attached successfully.");                        
+						if (slot == null)
+                        {
+                            status.AddStatus("Failed to select avatar: attach response was empty.");
+                            Debug.LogError("Failed to select avatar: attach response was empty.");
+                            callback();
+                            return;
+                        }
                         EditorCoroutineUtility.StartCoroutine(sq.SelectAvatar(() =>
                         {
                             callback();
