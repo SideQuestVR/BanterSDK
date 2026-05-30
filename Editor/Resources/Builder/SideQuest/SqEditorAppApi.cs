@@ -50,7 +50,7 @@ namespace Banter.SDKEditor
             AutomaticDecompression = System.Net.DecompressionMethods.None
         })
         {
-            Timeout = TimeSpan.FromMinutes(10) // Global timeout
+            Timeout = TimeSpan.FromMinutes(20) // Global timeout
         };
 
         /// <summary>
@@ -537,7 +537,7 @@ namespace Banter.SDKEditor
                             request.Content.Headers.ContentType = new MediaTypeHeaderValue(upload.ContentType);
 
                         // Set timeout for this specific request
-                        using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+                        using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)))
                         {
                             var response = await _httpClient.SendAsync(request, cts.Token);
 
