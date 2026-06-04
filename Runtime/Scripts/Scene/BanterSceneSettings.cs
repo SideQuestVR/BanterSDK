@@ -42,9 +42,9 @@ namespace Banter.SDK
         public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
         
         // Physics settings
-        private float _physicsMoveSpeed = 4f;
-        public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
-        private float _physicsMoveAcceleration = 4.6f;
+        private float _physicsMoveSpeed = 2f;
+        public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { Debug.Log($"[MoveSpeed] _physicsMoveSpeed={value}"); _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
+        private float _physicsMoveAcceleration = 1f;
         public float PhysicsMoveAcceleration { get { return _physicsMoveAcceleration; } set { _physicsMoveAcceleration = value; scene.events.OnPhysicsMoveAccelerationChanged.Invoke(value); } }
         private float _physicsAirControlSpeed = 3.8f;
         public float PhysicsAirControlSpeed { get { return _physicsAirControlSpeed; } set { _physicsAirControlSpeed = value; scene.events.OnPhysicsAirControlSpeedChanged.Invoke(value); } }
@@ -155,8 +155,8 @@ namespace Banter.SDK
             ClippingPlane = new Vector2(0.02f, 1500.0f);
             SpawnPoint = Vector4.zero;
             
-            PhysicsMoveSpeed = 4f;
-            PhysicsMoveAcceleration = 4.6f;
+            PhysicsMoveSpeed = 2f;
+            PhysicsMoveAcceleration = 1f;
             PhysicsAirControlSpeed = 3.8f;
             PhysicsAirControlAcceleration = 6;
             PhysicsDrag = 0;
