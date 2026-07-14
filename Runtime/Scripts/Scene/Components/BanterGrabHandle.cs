@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter.FlexaBody;
+using SideQuest.FlexaBody;
 using UnityEngine;
 public enum BanterGrabType
 {
@@ -72,8 +72,6 @@ namespace Banter.SDK
             grabHandle.Col = GetComponent<Collider>();
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;
-            grabHandle.HandRestricted = grabHand != BanterGrabHand.Either;
-            grabHandle.AllowedHand   = grabHand == BanterGrabHand.RightOnly ? HandID.Right : HandID.Left;
             Rigidbody rb = grabHandle.Col.attachedRigidbody;
             if(rb)
             {

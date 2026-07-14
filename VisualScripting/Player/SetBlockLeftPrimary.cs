@@ -1,7 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using Banter.SDK;
-using Banter.FlexaBody;
+using SideQuest.FlexaBody;
 
 namespace Banter.VisualScripting
 {

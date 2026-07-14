@@ -12,7 +12,7 @@ using UnityEngine.Events;
 using UnityEngine.XR;
 using Banter.Utilities.Async;
 
-using Banter.FlexaBody;
+using SideQuest.FlexaBody;
 
 
 

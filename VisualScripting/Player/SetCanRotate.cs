@@ -2,7 +2,7 @@
 using Unity.VisualScripting;
 using UnityEngine;
 using Banter.SDK;
-using Banter.FlexaBody;
+using SideQuest.FlexaBody;
 
 namespace Banter.VisualScripting
 {

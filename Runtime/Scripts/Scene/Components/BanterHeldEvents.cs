@@ -1,7 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter.FlexaBody;
+using SideQuest.FlexaBody;
 using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
