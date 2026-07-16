@@ -194,14 +194,18 @@ namespace Banter.SDK
                 }
                 var reference = SceneManager.GetSceneByName(sceneName);
 
+                // Re-resolve shaders from bundle materials via Shader.Find().
+                // Compiled shaders in asset bundles may be incompatible with the
+                // current project context. Re-finding by name forces the project's
+                // compiled shader version to be used instead.
+                // Shader remapper removed — the root cause of bundle shaders not
+                // rendering was project configuration (BRG stripping + URP pipeline
+                // asset settings), not shader incompatibility.
+
                 foreach (GameObject thisgo in reference.GetRootGameObjects())
                 {
                     foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
                     {
-                        // if (legacyShaderFix)
-                        // {
-                        //     transform.gameObject.AddComponent<FixLegacyShaders>();
-                        // }
                         var inputModule = transform.gameObject.GetComponent<StandaloneInputModule>();
                         if (inputModule != null)
                         {
