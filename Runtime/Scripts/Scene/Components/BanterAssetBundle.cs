@@ -251,12 +251,12 @@ namespace Banter.SDK
                                         box.enabled = false;
                                     }
                                 }
-                                var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
-                                if(trackedDeviceRaycaster)
-                                    Destroy(trackedDeviceRaycaster);
-                                var graphicsRaycaster = canvas.gameObject.GetComponent<GraphicRaycaster>();
-                                if(graphicsRaycaster)
-                                    Destroy(graphicsRaycaster);
+                                // Ensure stock raycasters are present for XRPointerInputModule's
+                                // RaycastAll() to find Canvas worldspace hits.
+                                if (!canvas.GetComponent<UnityEngine.InputSystem.UI.TrackedDeviceRaycaster>())
+                                    canvas.gameObject.AddComponent<UnityEngine.InputSystem.UI.TrackedDeviceRaycaster>();
+                                if (!canvas.GetComponent<GraphicRaycaster>())
+                                    canvas.gameObject.AddComponent<GraphicRaycaster>();
                             }
                         }
 
