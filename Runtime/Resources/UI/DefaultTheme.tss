@@ -1,0 +1,5 @@
+@import url("unity-theme://default");
+VisualElement {}
+.unity-label {
+    color: white;
+}

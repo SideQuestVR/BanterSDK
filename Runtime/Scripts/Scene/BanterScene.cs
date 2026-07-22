@@ -1842,6 +1842,11 @@ namespace Banter.SDK
             }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
+                if (settings == null)
+                {
+                    Debug.LogWarning("[Banter] AddJsObject called before settings initialized, skipping");
+                    return;
+                }
                 // try
                 // {
                     var go = new GameObject(parts[2]);
@@ -2284,6 +2289,11 @@ namespace Banter.SDK
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
+                 if (settings == null)
+                 {
+                     Debug.LogWarning("[Banter] SetSettings called before settings initialized, skipping");
+                     return;
+                 }
                  foreach (var part in settingsParts)
                  {
                      var setting = part.Split(MessageDelimiters.SECONDARY);

@@ -138,7 +138,8 @@ namespace Banter.SDK
             // #endif
 
 #if BANTER_EDITOR
-            scene.loadingManager.feetTransform = _feetTransform;
+            if (scene.loadingManager != null)
+                scene.loadingManager.feetTransform = _feetTransform;
 #endif
             scene.ResetLoadingProgress();
         }

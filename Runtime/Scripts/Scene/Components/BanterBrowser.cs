@@ -1,8 +1,13 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
+#if BANTER_ORA
+using Newtonsoft.Json.Linq;
+using SideQuest.Ora;
+#endif
 
 namespace Banter.SDK
 {
@@ -18,6 +23,25 @@ namespace Banter.SDK
         public string strParam2;
         public string strParam3;
         public string strParam4;
+    }
+
+    [Serializable]
+    public class BrowserActions
+    {
+        public BrowserAction[] actions;
+    }
+
+    public static class BrowserActionType
+    {
+        public const string click2d = "click2d";
+        public const string click = "click";
+        public const string keypress = "keypress";
+        public const string scroll = "scroll";
+        public const string delayseconds = "delayseconds";
+        public const string runscript = "runscript";
+        public const string goback = "goback";
+        public const string goforward = "goforward";
+        public const string postmessage = "postmessage";
     }
 
     [DefaultExecutionOrder(-1)]
@@ -44,35 +68,68 @@ namespace Banter.SDK
         [See(initial = "")][SerializeField] internal string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         public bool IsStreamingBrowser = false;
+
+        GameObject browser;
+#if BANTER_ORA
+        OraView _oraView;
+        Coroutine _actionsCoroutine;
+        List<BrowserAction> _pendingActions = new List<BrowserAction>();
+
+        const string BANTER_DISPATCH_MESSAGE_TEMPLATE =
+            @"window.dispatchEvent(new CustomEvent('bantermessage', { detail: { message: '{0}' } }));";
+#endif
+
         [Method]
         public void _ToggleInteraction(bool enabled)
         {
-            browser.SendMessage("ToggleInteraction", enabled);
+#if BANTER_ORA
+            if (browser != null)
+            {
+                var handler = browser.GetComponent<UIToolkitInputHandler>();
+                if (handler != null)
+                    handler.enabled = enabled;
+            }
+#endif
         }
+
         [Method]
         public void _ToggleKeyboard(bool enabled)
         {
-            browser.SendMessage("ToggleKeyboard", enabled);
+            // Keyboard open/close is handled by BrowserKeyboardHandler via OraManager events
         }
+
         [Method]
         public void _RunActions(string actions)
         {
-            browser.SendMessage("RunActions", actions);
+#if BANTER_ORA
+            if (string.IsNullOrWhiteSpace(actions) || _oraView == null)
+                return;
+            try
+            {
+                var actionList = JObject.Parse(actions).ToObject<BrowserActions>();
+                _pendingActions.AddRange(actionList.actions);
+                if (_actionsCoroutine == null)
+                    _actionsCoroutine = StartCoroutine(RunActionsCoroutine());
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[BanterBrowser] Failed to parse actions: {actions}");
+                Debug.LogException(e);
+            }
+#endif
         }
-        GameObject browser;
 
         internal override void StartStuff()
         {
             if (BanterStarterUpper.SafeMode)
                 return;
-            
+
             SetupBrowser();
             OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
         }
 
         internal override void UpdateStuff()
         {
-            
         }
 
         private void SetupBrowser(List<PropertyName> changedProperties = null)
@@ -80,39 +137,142 @@ namespace Banter.SDK
             if (browser == null)
             {
 #if BANTER_EDITOR
-                browser = Instantiate(Resources.Load<GameObject>(IsStreamingBrowser?"Prefabs/BanterBrowserStreaming":"Prefabs/BanterBrowserBuild"), transform);
+                browser = Instantiate(Resources.Load<GameObject>(IsStreamingBrowser ? "Prefabs/BanterBrowserStreaming" : "Prefabs/BanterBrowserBuild"), transform);
 #else
                 browser = Instantiate(Resources.Load<GameObject>("Prefabs/BanterBrowser"), transform);
 #endif
                 browser.name = "BanterBrowser";
-                browser.SendMessage("RunActions", string.IsNullOrEmpty(actions)?"":actions);
+
+#if BANTER_ORA
+                _oraView = browser.GetComponent<OraView>();
+                if (_oraView != null)
+                    _oraView.browserMessage.AddListener(OnBrowserMessage);
+#endif
+
+                if (!string.IsNullOrEmpty(actions))
+                    _RunActions(actions);
             }
 
-            if (changedProperties?.Contains(PropertyName.url) ?? true && !string.IsNullOrEmpty(url))
+#if BANTER_ORA
+            if ((changedProperties?.Contains(PropertyName.url) ?? true) && !string.IsNullOrEmpty(url))
             {
-                browser.SendMessage("LoadUrl", url);
+                _oraView?.LoadUrl(url);
             }
-            // if (changedProperties?.Contains(PropertyName.mipMaps) ?? true)
-            // {
-            //     browser.SendMessage("SetMipMaps", mipMaps);
-            // }
-            // if (changedProperties?.Contains(PropertyName.pixelsPerUnit) ?? true)
-            // {
-            //     browser.SendMessage("SetPixelsPerUnit", pixelsPerUnit);
-            // }
+#endif
+
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
             {
                 UIDocument doc = browser.GetComponent<UIDocument>();
-                if(doc)
-                {
+                if (doc)
                     doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
-                }
             }
             SetLoadedIfNot();
         }
 
+#if BANTER_ORA
+        void OnBrowserMessage(string arg0, string type, string data)
+        {
+            if (data != null)
+                OnReceiveBrowserMessage?.Invoke(data);
+            else
+                Debug.LogWarning("[BanterBrowser] Received empty browser message");
+        }
+
+        IEnumerator RunActionsCoroutine()
+        {
+            while (_pendingActions.Count > 0)
+            {
+                var action = _pendingActions[0];
+                _pendingActions.RemoveAt(0);
+                switch (action.actionType)
+                {
+                    case BrowserActionType.delayseconds:
+                        if (action.numParam1 > 0)
+                            yield return new WaitForSeconds(action.numParam1);
+                        break;
+                    case BrowserActionType.goback:
+                        _oraView.GoBack();
+                        break;
+                    case BrowserActionType.goforward:
+                        _oraView.GoForward();
+                        break;
+                    case BrowserActionType.click2d:
+                        try
+                        {
+                            _oraView.MouseInput((int)action.numParam1, (int)action.numParam2, "MouseDown");
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.LogError("[BanterBrowser] click2d failed");
+                            Debug.LogException(ex);
+                        }
+                        break;
+                    case BrowserActionType.runscript:
+                        if (!string.IsNullOrWhiteSpace(action.strParam1))
+                        {
+                            try
+                            {
+                                _oraView.EvaluateJS(action.strParam1, result =>
+                                    Debug.Log($"[BanterBrowser] JS '{action.strParam1}' returned '{result}'"));
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError($"[BanterBrowser] runscript failed: {action.strParam1}");
+                                Debug.LogException(ex);
+                            }
+                        }
+                        break;
+                    case BrowserActionType.keypress:
+                        if (!string.IsNullOrEmpty(action.strParam1))
+                        {
+                            try
+                            {
+                                _oraView.KeyInput(action.strParam1.Replace("Space", " "), OraKeyFlags.None);
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogWarning($"[BanterBrowser] keypress '{action.strParam1}' failed: {ex.Message}");
+                            }
+                        }
+                        break;
+                    case BrowserActionType.postmessage:
+                        if (!string.IsNullOrWhiteSpace(action.strParam1))
+                        {
+                            try
+                            {
+                                var msg = action.strParam1.Replace("\\", "\\\\").Replace("'", "\\'");
+                                _oraView.EvaluateJS(BANTER_DISPATCH_MESSAGE_TEMPLATE.Replace("{0}", msg));
+                            }
+                            catch (Exception ex)
+                            {
+                                Debug.LogError("[BanterBrowser] postmessage failed");
+                                Debug.LogException(ex);
+                            }
+                        }
+                        break;
+                    default:
+                        Debug.LogWarning($"[BanterBrowser] Unknown action type: {action.actionType}");
+                        break;
+                }
+            }
+            _actionsCoroutine = null;
+        }
+#endif
+
         internal override void DestroyStuff()
         {
+#if BANTER_ORA
+            if (_oraView != null)
+                _oraView.browserMessage.RemoveListener(OnBrowserMessage);
+            _oraView = null;
+
+            if (_actionsCoroutine != null)
+            {
+                StopCoroutine(_actionsCoroutine);
+                _actionsCoroutine = null;
+            }
+#endif
+
             if (browser != null)
             {
                 Destroy(browser);
