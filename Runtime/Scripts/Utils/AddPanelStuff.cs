@@ -5,16 +5,20 @@ using UnityEngine.UIElements;
 public class AddPanelStuff : MonoBehaviour
 {
     [SerializeField] private UIDocument uIDocument;
-    
+
     private PanelRaycaster _raycaster;
 
+    /// <summary>
+    /// Fired when a UITK panel's runtime panel becomes ready. Subscribers receive the IPanel.
+    /// Used by UIInputLock to auto-register panels for text field focus monitoring.
+    /// </summary>
+    public static event Action<IPanel> PanelReady;
 
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         Invoke(nameof(WaitForRuntimePanel),1f);
     }
-    
+
     public void Reset()
     {
         WaitForRuntimePanel();
@@ -24,13 +28,13 @@ public class AddPanelStuff : MonoBehaviour
     {
         if (uIDocument == null)
             uIDocument = GetComponent<UIDocument>();
-        
+
         if (uIDocument.runtimePanel == null)
         {
             Invoke(nameof(WaitForRuntimePanel),0.5f);
             return;
         }
-        
+
         if (uIDocument != null)
         {
             _raycaster = GetComponent<PanelRaycaster>();
@@ -46,6 +50,8 @@ public class AddPanelStuff : MonoBehaviour
             }
 
             uIDocument.runtimePanel.selectableGameObject = gameObject;
+
+            PanelReady?.Invoke(uIDocument.runtimePanel);
         }
     }
 }

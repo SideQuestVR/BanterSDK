@@ -109,6 +109,7 @@ namespace Banter.SDK
             {
                 oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
             }
+            oraManager.SubscribeHardwareKeyboard();
             var oraView = gameObject.GetComponent<OraView>();
             if (!oraView)
             {
