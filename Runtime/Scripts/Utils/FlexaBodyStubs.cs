@@ -3,7 +3,7 @@
 
 #if !BANTER_FLEX
 
-namespace Banter.FlexaBody
+namespace SideQuest.FlexaBody
 {
     /// <summary> List of functions to block input to </summary>
     [System.Serializable]
