@@ -10,6 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 1209142392357174380}
   - component: {fileID: 1209142392357174383}
+  - component: {fileID: 3274537853769622993}
+  - component: {fileID: 5540821356506643718}
+  - component: {fileID: 7554997023624962468}
+  - component: {fileID: 4277964056185154052}
+  - component: {fileID: 1717470401910635748}
   m_Layer: 0
   m_Name: BanterStarterUpper
   m_TagString: Untagged
@@ -24,13 +29,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1209142392357174382}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &1209142392357174383
 MonoBehaviour:
@@ -44,7 +49,169 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0ea650143d0bdc45bdabf2b06a20094, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  numberOfRemotePlayers: 1
+  numberOfRemotePlayers: 0
   spawnPoint: {x: 0, y: 0, z: 0}
   spawnRotation: 0
-  startWebServer: 1
+  openBrowser: 0
+  _feetTransform: {fileID: 0}
+  _browserRenderer: {fileID: 0}
+--- !u!114 &3274537853769622993
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1672baa21b03cd944b7bc599dc0d729e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Greenfield.SceneEvents::Greenfield.SceneEvents.BanterSceneEventHandler
+  _headTransform: {fileID: 0}
+  _mover: {fileID: 0}
+  _teleporter: {fileID: 0}
+--- !u!114 &5540821356506643718
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: feb5e5dead6d5514a8c5ed0fcd9b9f06, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  oraAudioManager: {fileID: 0}
+  oraWebRTCManager: {fileID: 0}
+  hardwareKeyboardInput: {fileID: 0}
+  enableTcpDebugLogging: 0
+  objectsForXR: []
+  objectsFor2D: []
+  cameraForXR: {fileID: 0}
+  cameraFor2D: {fileID: 0}
+  browserConnected:
+    m_PersistentCalls:
+      m_Calls: []
+  windowCreated:
+    m_PersistentCalls:
+      m_Calls: []
+  windowDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+  keyboardOpen:
+    m_PersistentCalls:
+      m_Calls: []
+  keyboardClose:
+    m_PersistentCalls:
+      m_Calls: []
+  enableMcp: 0
+  mcpPort: 42068
+  staticFolder: 
+  customMcpDocs: {fileID: 0}
+  customMcpSummary: {fileID: 0}
+  customMcpDefinition: {fileID: 0}
+  remoteDebuggingEnabled: 0
+  remoteDebuggingPort: 42067
+  remoteAllowOrigins: '*'
+  connected: 0
+--- !u!114 &7554997023624962468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 56fdc6b83ed3d14428d9cf7eea6d2900, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  id: 
+  url: https://g.bant.ing
+  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/123.0.6269.2 Safari/537.36
+  customInjectedJavascript: {fileID: 2811297602134710623, guid: 6e2f39fba1ddf64448b6891aad72c9f1, type: 3}
+  injectShims: 1
+  injectMediaAndWebRTC: 1
+  injectAudioSourceRedirection: 0
+  blockedDomains: []
+  size: {x: 1024, y: 768}
+  renderMode: 1
+  uiToolkitElementClass: 
+  sizingMode: 1
+  scaleTransform: {fileID: 0}
+  actualSize: {x: 1024, y: 768}
+  disableTouchScroll: 0
+  openDevTools: 1
+  openBrowser: 0
+  showLogs: 0
+  userMedia:
+    texture: {fileID: 0}
+    audioListener: {fileID: 0}
+    audioSource: {fileID: 0}
+  displayMedia:
+    texture: {fileID: 0}
+    audioListener: {fileID: 0}
+    audioSource: {fileID: 0}
+  textureChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  domReady:
+    m_PersistentCalls:
+      m_Calls: []
+  addressChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  loadStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  loadFailed:
+    m_PersistentCalls:
+      m_Calls: []
+  browserMessage:
+    m_PersistentCalls:
+      m_Calls: []
+  userMediaStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  userMediaEnded:
+    m_PersistentCalls:
+      m_Calls: []
+  texture2D: {fileID: 0}
+  initialised: 0
+  cachedScale: {x: 0, y: 0, z: 0}
+  cachedRect: {x: 0, y: 0}
+  cachedUIElementBounds: {x: 0, y: 0}
+  loadOnInitialised: 1
+--- !u!114 &4277964056185154052
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9230d02a892eb304c8554cd84d9097d0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  audioReceiverPrefab: {fileID: 0}
+  sampleRate: 48000
+  channels: 2
+  autoCreateReceivers: 1
+  showDebugInfo: 0
+--- !u!114 &1717470401910635748
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 93ae841e7d4c74245bd934813638a3a8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  webrtcPeerPrefab: {fileID: 0}
+  showDebugInfo: 1
