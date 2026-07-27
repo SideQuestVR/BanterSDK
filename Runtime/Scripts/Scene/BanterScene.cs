@@ -1971,8 +1971,9 @@ namespace Banter.SDK
         }
         public async Task OpenLoadingScreen(string url)
         {
-            loadingManager?.Preload();
-            await loadingManager?.LoadIn(url);
+            if (loadingManager == null) return;
+            loadingManager.Preload();
+            await loadingManager.LoadIn(url);
         }
         public async Task ShowSpaceImage(string url)
         {
@@ -2032,7 +2033,8 @@ namespace Banter.SDK
                 
                 await Task.Delay(2500);
 
-                await loadingManager?.LoadOut();
+                if (loadingManager != null)
+                    await loadingManager.LoadOut();
                 loading = false;
             }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}"));
             await loadUrlTaskCompletionSource.Task;
