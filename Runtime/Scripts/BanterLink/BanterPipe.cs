@@ -22,6 +22,8 @@ public class BanterPipe
     public void Start(Action connectedCallback, Action<string> msgCallback)
     {
         manager?.browserConnected.AddListener(() => connectedCallback());
+        if (manager != null && manager.connected)
+            connectedCallback();
         view.browserMessage.AddListener((reqId, command, data) =>
         {
             msgCallback(data);
