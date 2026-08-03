@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 1209142392357174380}
   - component: {fileID: 1209142392357174383}
   - component: {fileID: 3274537853769622993}
+  - component: {fileID: 9008851918676777434}
   - component: {fileID: 5540821356506643718}
   - component: {fileID: 7554997023624962468}
   - component: {fileID: 4277964056185154052}
@@ -70,6 +71,23 @@ MonoBehaviour:
   _headTransform: {fileID: 0}
   _mover: {fileID: 0}
   _teleporter: {fileID: 0}
+  _grapple: {fileID: 0}
+  _settingsInstance: {fileID: 0}
+--- !u!114 &9008851918676777434
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f67fa88c40a64d343b960f95f7407c4f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Greenfield.AttachmentSystem::Greenfield.AttachmentSystem.AttachmentsSystem
+  _flexaBall: {fileID: 0}
+  _flexaMover: {fileID: 0}
+  _physicsHands: {fileID: 0}
 --- !u!114 &5540821356506643718
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -128,7 +146,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   id: 
-  url: https://g.bant.ing
+  url: about:blank
   userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
     like Gecko) Chrome/123.0.6269.2 Safari/537.36
   customInjectedJavascript: {fileID: 2811297602134710623, guid: 6e2f39fba1ddf64448b6891aad72c9f1, type: 3}
@@ -145,7 +163,7 @@ MonoBehaviour:
   disableTouchScroll: 0
   openDevTools: 1
   openBrowser: 0
-  showLogs: 0
+  showLogs: 1
   userMedia:
     texture: {fileID: 0}
     audioListener: {fileID: 0}
@@ -183,7 +201,7 @@ MonoBehaviour:
   cachedScale: {x: 0, y: 0, z: 0}
   cachedRect: {x: 0, y: 0}
   cachedUIElementBounds: {x: 0, y: 0}
-  loadOnInitialised: 1
+  loadOnInitialised: 0
 --- !u!114 &4277964056185154052
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -214,4 +232,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   webrtcPeerPrefab: {fileID: 0}
-  showDebugInfo: 1
+  showDebugInfo: 0
