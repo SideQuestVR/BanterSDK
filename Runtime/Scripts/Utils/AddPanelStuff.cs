@@ -10,9 +10,16 @@ public class AddPanelStuff : MonoBehaviour
 
     /// <summary>
     /// Fired when a UITK panel's runtime panel becomes ready. Subscribers receive the IPanel.
-    /// Used by UIInputLock to auto-register panels for text field focus monitoring.
+    /// Used by UIInputLock to auto-register panels for text field focus monitoring and by
+    /// VirtualKeyboard to auto-wire TextFields.
     /// </summary>
     public static event Action<IPanel> PanelReady;
+
+    /// <summary>
+    /// Announce a panel that was bound manually (without an AddPanelStuff component),
+    /// e.g. the Greenfield menu, so PanelReady subscribers still hear about it.
+    /// </summary>
+    public static void NotifyPanelReady(IPanel panel) => PanelReady?.Invoke(panel);
 
     void Start()
     {
