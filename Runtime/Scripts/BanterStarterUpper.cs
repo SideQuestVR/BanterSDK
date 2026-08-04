@@ -387,8 +387,28 @@ namespace Banter.SDK
                     TaskScheduler.UnobservedTaskException +=
                 (object sender, UnobservedTaskExceptionEventArgs args) =>
                     {
-                        Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
                         args.SetObserved();
+
+                        // Teardown noise: aborted overlapped IO (Win32 995 from killed process
+                        // pipes / closed handles), cancelled or disposed background reads. These
+                        // surface via the finalizer long after shutdown started — not actionable.
+                        bool benignTeardown = true;
+                        foreach (var inner in args.Exception.Flatten().InnerExceptions)
+                        {
+                            if (inner is not (System.IO.IOException
+                                or System.OperationCanceledException
+                                or System.ObjectDisposedException
+                                or System.Threading.ThreadAbortException))
+                            {
+                                benignTeardown = false;
+                                break;
+                            }
+                        }
+
+                        if (benignTeardown)
+                            return;
+
+                        Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
                     };
         }
     }
