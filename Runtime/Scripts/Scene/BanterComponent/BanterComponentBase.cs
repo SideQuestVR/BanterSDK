@@ -31,7 +31,10 @@ namespace Banter.SDK
             return this;
         }
 
-        [HideInInspector]public UnityEvent<float> progress = new UnityEvent<float>();
+        // NonSerialized: listeners are only ever added from code (HideInInspector since forever),
+        // and serializing it clashes with generated subclass fields named "progress"
+        // (e.g. BanterAOBaking) — Unity logs "same field name serialized multiple times" per build.
+        [NonSerialized][HideInInspector] public UnityEvent<float> progress = new UnityEvent<float>();
         [HideInInspector]public UnityEvent<bool, string> loaded = new UnityEvent<bool, string>();
         internal bool _loaded;
         public bool IsLoaded => _loaded;
