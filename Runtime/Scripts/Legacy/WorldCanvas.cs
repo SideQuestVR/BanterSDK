@@ -11,6 +11,8 @@ public class WorldCanvas : MonoBehaviour
         {
             canvas.renderMode = RenderMode.WorldSpace;
             canvas.worldCamera = Camera.main;
+            if (!canvas.GetComponent<Banter.SDK.CanvasCameraBinder>())
+                canvas.gameObject.AddComponent<Banter.SDK.CanvasCameraBinder>();
         }
     }
 

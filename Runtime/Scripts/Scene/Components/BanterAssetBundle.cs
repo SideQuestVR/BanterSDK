@@ -237,6 +237,10 @@ namespace Banter.SDK
                             if (canvas.renderMode == RenderMode.WorldSpace)
                             {
                                 canvas.worldCamera = Camera.main;
+                                // Keep the binding alive: a null/stale worldCamera silently kills
+                                // TrackedDeviceRaycaster (Quest races XR camera activation).
+                                if (!canvas.GetComponent<CanvasCameraBinder>())
+                                    canvas.gameObject.AddComponent<CanvasCameraBinder>();
                                 if (!canvas.GetComponent<BoxCollider>())
                                 {
                                     var box = canvas.AddComponent<BoxCollider>();

@@ -57,6 +57,8 @@ namespace Banter.SDK
                         if (canvas.renderMode == RenderMode.WorldSpace)
                         {
                             canvas.worldCamera = Camera.main;
+                            if (!canvas.GetComponent<CanvasCameraBinder>())
+                                canvas.gameObject.AddComponent<CanvasCameraBinder>();
                             if (!canvas.GetComponent<BoxCollider>())
                             {
                                 var box = canvas.gameObject.AddComponent<BoxCollider>();
