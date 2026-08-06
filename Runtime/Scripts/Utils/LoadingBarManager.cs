@@ -164,22 +164,30 @@ namespace Banter.SDK
             _hasLastFeetPosition = true;
         }
 
+        [Tooltip("Cage offset from the player's feet, in the player's facing space " +
+                 "(x = right, y = up, z = forward). Negative Z sits the cage back behind the " +
+                 "player, negative Y lowers it.")]
+        [SerializeField] Vector3 _cageOffset = new Vector3(0f, -0.1f, -0.2f);
+
         /// <summary>Centers the cage on the player (feet transform when assigned, else camera
-        /// position dropped to floor height) and yaws it so the player faces its front —
-        /// teleports can change the player's rotation, not just position.</summary>
+        /// position dropped to floor height), yaws it so the player faces its front, then applies
+        /// _cageOffset in that facing space. Teleports can change rotation, not just position.</summary>
         public void MoveToPlayer()
         {
-            if (TryGetPlayerFloorPosition(out var floor))
-                transform.position = floor;
-
+            // Resolve facing first so the offset is applied in the player's yaw space.
+            var yaw = transform.rotation;
             var cam = Camera.main;
             if (cam != null)
             {
                 var flatForward = cam.transform.forward;
                 flatForward.y = 0;
                 if (flatForward.sqrMagnitude > 0.001f)
-                    transform.rotation = Quaternion.LookRotation(flatForward.normalized);
+                    yaw = Quaternion.LookRotation(flatForward.normalized);
             }
+            transform.rotation = yaw;
+
+            if (TryGetPlayerFloorPosition(out var floor))
+                transform.position = floor + yaw * _cageOffset;
         }
         async Task CustomLoadSkybox()
         {

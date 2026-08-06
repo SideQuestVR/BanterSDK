@@ -9,6 +9,8 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: LoadingBar
   m_Shader: {fileID: 4800000, guid: 072e9d72f9c25314a965ad7a6b5446a0, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
   m_ValidKeywords: []
   m_InvalidKeywords:
   - _ALPHAPREMULTIPLY_ON
@@ -19,6 +21,7 @@ Material:
   m_CustomRenderQueue: 4999
   stringTagMap: {}
   disabledShaderPasses: []
+  m_LockedProperties: 
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -88,10 +91,11 @@ Material:
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 0}
-    - _Color1: {r: 0, g: 0, b: 0, a: 1}
-    - _Color2: {r: 0.066037714, g: 0.066037714, b: 0.066037714, a: 1}
+    - _Color1: {r: 0.4251958, g: 0.77311593, b: 0.990566, a: 1}
+    - _Color2: {r: 0.42352945, g: 0.7725491, b: 0.9921569, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _KeyboardPosition: {r: 0, g: 0, b: 0, a: 0}
     - _KeyboardRotation: {r: 0, g: 0, b: 0, a: 0}
     - _KeyboardScale: {r: 1, g: 1, b: 1, a: 0}
   m_BuildTextureStacks: []
+  m_AllowLocking: 1
