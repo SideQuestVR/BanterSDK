@@ -31,6 +31,9 @@ namespace Banter.SDK
         public TMPro.TextMeshPro loadingText;
         public UnityEvent onCancel = new UnityEvent();
         public UnityEvent onDone = new UnityEvent();
+        [Tooltip("Fires when the cage begins its load-out (opening) transition. Greenfield uses " +
+                 "this to unfreeze player physics as the cage dissolves, so any settle is hidden.")]
+        public UnityEvent onLoadOutStarted = new UnityEvent();
         public GameObject loadFailed;
         public Transform spinner;
         BanterScene scene;
@@ -114,32 +117,30 @@ namespace Banter.SDK
             state = LoadingState.Loaded;
         }
 
-        // Teleport following via feet-jump detection ONLY — deliberately NOT via the
-        // OnTeleport scene event. The rig teleports through Rigidbody.position, which lands
-        // after the next physics step; moving the cage eagerly on the event put it at the
-        // destination frames BEFORE the player visibly moved, flashing the scene around them.
-        // A feet jump beyond what locomotion can do in one frame is a teleport of some kind
-        // (script/JS, controller arc, respawn safety net), and it is detected in LateUpdate
-        // of exactly the frame the rig visibly moves — cage and player render together.
-        const float k_TeleportSnapDistance = 1.5f;
-        Vector3 _lastFeetPosition;
-        bool _hasLastFeetPosition;
+        // Cage follows the player every frame while up (see LateUpdate) — deliberately in
+        // LateUpdate, NOT the OnTeleport event: the rig teleports through Rigidbody.position,
+        // which lands after the next physics step, so reading position here (post-physics)
+        // keeps the cage in sync with what's actually rendered, teleports included.
 
-        /// <summary>Player floor position: feet transform when assigned AND alive at runtime,
-        /// else the camera dropped to floor height. The feet reference has proven fragile
-        /// (null at runtime in the scene setup), and the camera jumps with the rig anyway.</summary>
+        /// <summary>Player floor position: centred HORIZONTALLY on the head (camera) so the cage
+        /// surrounds where the player actually is — the feet transform is the rig origin, which on
+        /// Quest is offset from the head by the room-scale standing position (that offset was
+        /// putting the cage off to the side on first load). Height comes from the feet transform
+        /// when available, else the head dropped by standing height.</summary>
         bool TryGetPlayerFloorPosition(out Vector3 position)
         {
-            if (feetTransform)
-            {
-                position = feetTransform.position;
-                return true;
-            }
-
             var cam = Camera.main;
             if (cam != null)
             {
-                position = cam.transform.position + Vector3.down * 1.55f;
+                var head = cam.transform.position;
+                float floorY = feetTransform ? feetTransform.position.y : head.y - 1.55f;
+                position = new Vector3(head.x, floorY, head.z);
+                return true;
+            }
+
+            if (feetTransform)
+            {
+                position = feetTransform.position;
                 return true;
             }
 
@@ -147,47 +148,91 @@ namespace Banter.SDK
             return false;
         }
 
-        void LateUpdate()
-        {
-            if (!TryGetPlayerFloorPosition(out var feet))
-                return;
-            // Only carry the cage while it's actually in use (loading in/up/out) — but keep
-            // tracking the feet while idle, so the position isn't stale when the next load
-            // starts (a stale value would read as a phantom jump on the first frame).
-            if (state != LoadingState.Unloaded &&
-                _hasLastFeetPosition &&
-                (feet - _lastFeetPosition).sqrMagnitude > k_TeleportSnapDistance * k_TeleportSnapDistance)
-            {
-                MoveToPlayer();
-            }
-            _lastFeetPosition = feet;
-            _hasLastFeetPosition = true;
-        }
-
         [Tooltip("Cage offset from the player's feet, in the player's facing space " +
                  "(x = right, y = up, z = forward). Negative Z sits the cage back behind the " +
                  "player, negative Y lowers it.")]
         [SerializeField] Vector3 _cageOffset = new Vector3(0f, -0.1f, -0.2f);
 
-        /// <summary>Centers the cage on the player (feet transform when assigned, else camera
-        /// position dropped to floor height), yaws it so the player faces its front, then applies
-        /// _cageOffset in that facing space. Teleports can change rotation, not just position.</summary>
-        public void MoveToPlayer()
-        {
-            // Resolve facing first so the offset is applied in the player's yaw space.
-            var yaw = transform.rotation;
-            var cam = Camera.main;
-            if (cam != null)
-            {
-                var flatForward = cam.transform.forward;
-                flatForward.y = 0;
-                if (flatForward.sqrMagnitude > 0.001f)
-                    yaw = Quaternion.LookRotation(flatForward.normalized);
-            }
-            transform.rotation = yaw;
+        // The cage SNAPS to the player (position + facing) rather than tracking continuously —
+        // continuous tracking spun/swam the cage with the head, which is sickness-inducing. Each
+        // (re)placement or teleport does one immediate snap. The FIRST space load additionally
+        // keeps snapping on an interval for a couple of seconds, because the Quest camera facing
+        // isn't settled at spawn and a single snap lands wrong; later teleports get just the one.
+        const float k_TeleportDist = 1.5f;
+        const float k_SnapInterval = 0.5f;
+        const float k_FirstLoadFollowWindow = 2f;
+        bool _firstLoadComplete;
+        float _followWindowUntil = float.NegativeInfinity;
+        float _nextSnapTime = float.NegativeInfinity;
+        Vector3 _lastFollowPos;
+        bool _hasFollowPos;
 
+        void LateUpdate()
+        {
+            if (state == LoadingState.Unloaded)
+            {
+                _hasFollowPos = false;
+                return;
+            }
+
+            // Detect a teleport (big position jump) and begin a fresh follow from the new spawn.
             if (TryGetPlayerFloorPosition(out var floor))
-                transform.position = floor + yaw * _cageOffset;
+            {
+                if (_hasFollowPos &&
+                    (floor - _lastFollowPos).sqrMagnitude > k_TeleportDist * k_TeleportDist)
+                    BeginFollow();
+                _lastFollowPos = floor;
+                _hasFollowPos = true;
+            }
+
+            // Periodic re-snap during the follow window (first load only — window is 0 otherwise).
+            if (Time.unscaledTime >= _nextSnapTime && Time.unscaledTime <= _followWindowUntil)
+            {
+                SnapToPlayer();
+                _nextSnapTime = Time.unscaledTime + k_SnapInterval;
+            }
+        }
+
+        /// <summary>Snap the cage to the player now, and (first load only) keep re-snapping on an
+        /// interval for a short window so a not-yet-settled camera is caught. Called on
+        /// open/preload and on teleport.</summary>
+        public void MoveToPlayer() => BeginFollow();
+
+        void BeginFollow()
+        {
+            SnapToPlayer();
+            _followWindowUntil = Time.unscaledTime + (_firstLoadComplete ? 0f : k_FirstLoadFollowWindow);
+            _nextSnapTime = Time.unscaledTime + k_SnapInterval;
+            if (TryGetPlayerFloorPosition(out var floor))
+            {
+                _lastFollowPos = floor;
+                _hasFollowPos = true;
+            }
+        }
+
+        void SnapToPlayer()
+        {
+            UpdateYaw();
+            ApplyPosition();
+        }
+
+        /// <summary>Yaw the cage to the player's flat look direction (camera), applied only at
+        /// snap moments so it doesn't spin as the player turns while caged.</summary>
+        void UpdateYaw()
+        {
+            var cam = Camera.main;
+            if (cam == null)
+                return;
+            var forward = cam.transform.forward;
+            forward.y = 0f;
+            if (forward.sqrMagnitude > 0.001f)
+                transform.rotation = Quaternion.LookRotation(forward.normalized);
+        }
+
+        void ApplyPosition()
+        {
+            if (TryGetPlayerFloorPosition(out var floor))
+                transform.position = floor + transform.rotation * _cageOffset;
         }
         async Task CustomLoadSkybox()
         {
@@ -353,6 +398,8 @@ namespace Banter.SDK
                 return;
             }
             state = LoadingState.Loading;
+            _firstLoadComplete = true; // camera is long settled by the first open; short grace hereafter
+            onLoadOutStarted.Invoke();
             loadingSphere.clip = loadOut;
             loadingSphere.Play();
             loadingBar.SetActive(false);
