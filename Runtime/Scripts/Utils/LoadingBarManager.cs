@@ -47,6 +47,23 @@ namespace Banter.SDK
             }
             spinner.Rotate(0, 0, -3 * speed);
         }
+        // All script writes go through the renderer's INSTANCED material, never sharedMaterial:
+        // sharedMaterial writes mutate the .mat asset in the editor, which is why the loading
+        // cage materials kept showing up as modified after every run (a Banter classic). A
+        // MaterialPropertyBlock is NOT an option here — the LoadIn/LoadOut/first-load clips
+        // animate material._DissolveAmount/._Tint on this same renderer, and block values
+        // would override (freeze) the animated ones. The animation instantiates the material
+        // at runtime anyway; this just shares that instance.
+        Material _progressMaterial;
+        Material ProgressMaterial =>
+            _progressMaterial != null ? _progressMaterial : _progressMaterial = loadingProgress.material;
+
+        void OnDestroy()
+        {
+            if (_progressMaterial != null)
+                Destroy(_progressMaterial);
+        }
+
         void Awake()
         {
             scene = BanterScene.Instance();
@@ -54,8 +71,47 @@ namespace Banter.SDK
                 Debug.LogWarning("[Cage] feetTransform is not assigned — falling back to camera position for cage placement.");
             SetCanCancel(false);
             _ = CustomLoadSkybox();
-            // Preload();
-            SetLoadProgress("Welcome to Banter", 0, "Getting things ready...", false);
+            SetLoadProgress("Welcome", 0, "Getting things ready...", false);
+        }
+
+        void Start()
+        {
+            ShowOpaqueImmediately();
+        }
+
+        /// <summary>
+        /// Present the cage fully opaque the moment the app starts, so the empty scene is never
+        /// visible before the first space load. Marks state Loaded so the first LoadIn is a
+        /// no-op — otherwise LoadIn's clip fades _DissolveAmount 1 to 0 (invisible to opaque),
+        /// flashing the empty startup scene during that fade. The first LoadOut then reveals
+        /// the loaded space as normal.
+        /// </summary>
+        void ShowOpaqueImmediately()
+        {
+            MoveToPlayer();
+
+            if (loadingBar != null)
+            {
+                loadingBar.SetActive(true);
+                loadingBar.GetComponent<RotateLoading>()?.MoveInFront();
+            }
+            loadingSphere.transform.parent.GetComponent<RotateLoading>()?.MoveInFront();
+
+            if (maskTextures != null && maskTextures.Length > 0)
+            {
+                var mask = maskTextures[UnityEngine.Random.Range(0, maskTextures.Length - 1)];
+                ProgressMaterial.SetTexture("_DisolveGuide", mask);
+                ProgressMaterial.SetTexture("_ThumbDisolveGuide", mask);
+            }
+            ProgressMaterial.SetFloat("_DissolveLoadAmount", 0);
+            ProgressMaterial.SetFloat("_DissolveAmount", 0); // 0 = fully opaque
+
+            // Block the player in, as LoadIn would.
+            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = true;
+            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = true;
+            teleportWall.SetActive(true);
+
+            state = LoadingState.Loaded;
         }
 
         // Teleport following via feet-jump detection ONLY — deliberately NOT via the
@@ -133,11 +189,11 @@ namespace Banter.SDK
                 if (File.Exists(filepath))
                 {
                     var tex = await Get.Texture("file://" + filepath);
-                    loadingProgress.sharedMaterial.SetTexture("_Pano", tex);
+                    ProgressMaterial.SetTexture("_Pano", tex);
                 }
                 else
                 {
-                    loadingProgress.sharedMaterial.SetTexture("_Pano", defaultLoadingImage);
+                    ProgressMaterial.SetTexture("_Pano", defaultLoadingImage);
                 }
             }
             catch { }
@@ -145,7 +201,7 @@ namespace Banter.SDK
         public void ResetLoadingProgress()
         {
             loadingBarInner.localScale = new Vector3(0, 1, 1);
-            loadingProgress.sharedMaterial.SetFloat("_DissolveAmount", 0);
+            ProgressMaterial.SetFloat("_DissolveAmount", 0);
         }
         public void SetCanCancel(bool canCancel)
         {
@@ -161,10 +217,10 @@ namespace Banter.SDK
                 {
                     spaceImage = MipMaps.Do(spaceImage);
                     spaceImage.wrapMode = TextureWrapMode.Clamp;
-                    loadingProgress.sharedMaterial.SetTexture("_Thumb", spaceImage);
+                    ProgressMaterial.SetTexture("_Thumb", spaceImage);
                     TweenFactory.Tween("loadingImage", 0, 1, 6f, TweenScaleFunctions.CubicEaseOut, (f) =>
                     {
-                        loadingProgress.sharedMaterial.SetFloat("_DissolveLoadAmount", f.CurrentValue);
+                        ProgressMaterial.SetFloat("_DissolveLoadAmount", f.CurrentValue);
                     });
                 }
                 else
@@ -258,9 +314,9 @@ namespace Banter.SDK
             loadingBar.GetComponent<RotateLoading>().MoveInFront();
             loadingSphere.transform.parent.GetComponent<RotateLoading>().MoveInFront();
             var mask = maskTextures[UnityEngine.Random.Range(0, maskTextures.Length - 1)];
-            loadingProgress.sharedMaterial.SetTexture("_DisolveGuide", mask);
-            loadingProgress.sharedMaterial.SetTexture("_ThumbDisolveGuide", mask);
-            loadingProgress.sharedMaterial.SetFloat("_DissolveLoadAmount", 0);
+            ProgressMaterial.SetTexture("_DisolveGuide", mask);
+            ProgressMaterial.SetTexture("_ThumbDisolveGuide", mask);
+            ProgressMaterial.SetFloat("_DissolveLoadAmount", 0);
             SetLoadProgress("Loading", 0, scene.LoadingStatus, true);
         }
         public async Task LoadIn(string url)
