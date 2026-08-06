@@ -50,10 +50,80 @@ namespace Banter.SDK
         void Awake()
         {
             scene = BanterScene.Instance();
+            if (feetTransform == null)
+                Debug.LogWarning("[Cage] feetTransform is not assigned — falling back to camera position for cage placement.");
             SetCanCancel(false);
             _ = CustomLoadSkybox();
             // Preload();
             SetLoadProgress("Welcome to Banter", 0, "Getting things ready...", false);
+        }
+
+        // Teleport following via feet-jump detection ONLY — deliberately NOT via the
+        // OnTeleport scene event. The rig teleports through Rigidbody.position, which lands
+        // after the next physics step; moving the cage eagerly on the event put it at the
+        // destination frames BEFORE the player visibly moved, flashing the scene around them.
+        // A feet jump beyond what locomotion can do in one frame is a teleport of some kind
+        // (script/JS, controller arc, respawn safety net), and it is detected in LateUpdate
+        // of exactly the frame the rig visibly moves — cage and player render together.
+        const float k_TeleportSnapDistance = 1.5f;
+        Vector3 _lastFeetPosition;
+        bool _hasLastFeetPosition;
+
+        /// <summary>Player floor position: feet transform when assigned AND alive at runtime,
+        /// else the camera dropped to floor height. The feet reference has proven fragile
+        /// (null at runtime in the scene setup), and the camera jumps with the rig anyway.</summary>
+        bool TryGetPlayerFloorPosition(out Vector3 position)
+        {
+            if (feetTransform)
+            {
+                position = feetTransform.position;
+                return true;
+            }
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                position = cam.transform.position + Vector3.down * 1.55f;
+                return true;
+            }
+
+            position = default;
+            return false;
+        }
+
+        void LateUpdate()
+        {
+            if (!TryGetPlayerFloorPosition(out var feet))
+                return;
+            // Only carry the cage while it's actually in use (loading in/up/out) — but keep
+            // tracking the feet while idle, so the position isn't stale when the next load
+            // starts (a stale value would read as a phantom jump on the first frame).
+            if (state != LoadingState.Unloaded &&
+                _hasLastFeetPosition &&
+                (feet - _lastFeetPosition).sqrMagnitude > k_TeleportSnapDistance * k_TeleportSnapDistance)
+            {
+                MoveToPlayer();
+            }
+            _lastFeetPosition = feet;
+            _hasLastFeetPosition = true;
+        }
+
+        /// <summary>Centers the cage on the player (feet transform when assigned, else camera
+        /// position dropped to floor height) and yaws it so the player faces its front —
+        /// teleports can change the player's rotation, not just position.</summary>
+        public void MoveToPlayer()
+        {
+            if (TryGetPlayerFloorPosition(out var floor))
+                transform.position = floor;
+
+            var cam = Camera.main;
+            if (cam != null)
+            {
+                var flatForward = cam.transform.forward;
+                flatForward.y = 0;
+                if (flatForward.sqrMagnitude > 0.001f)
+                    transform.rotation = Quaternion.LookRotation(flatForward.normalized);
+            }
         }
         async Task CustomLoadSkybox()
         {
@@ -182,16 +252,7 @@ namespace Banter.SDK
         public Transform feetTransform;
         public void Preload()
         {
-            if (feetTransform)
-            {
-                transform.position = feetTransform.position;
-            }
-            else
-            {
-                var pos = Camera.main.transform.position;
-                pos.y -= 1.55f;
-                transform.position = pos;
-            }
+            MoveToPlayer();
             ResetLoadingProgress();
             loadingBar.SetActive(true);
             loadingBar.GetComponent<RotateLoading>().MoveInFront();

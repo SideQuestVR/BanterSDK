@@ -139,7 +139,9 @@ namespace Banter.SDK
             // #endif
 
 #if BANTER_EDITOR
-            if (scene.loadingManager != null)
+            // Hand our feet reference to the loading cage — but never clobber a reference
+            // the cage already has with null when ours isn't wired up in the scene.
+            if (scene.loadingManager != null && _feetTransform != null)
                 scene.loadingManager.feetTransform = _feetTransform;
 #endif
             scene.ResetLoadingProgress();
