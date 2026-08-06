@@ -56,7 +56,7 @@ namespace Banter.SDKEditor
             if (!File.Exists(SETTINGS_ASSET_PATH))
             {
                 DialogMessage = "Visual Scripting is not initialized. Please navigate to the Visual Scripting settings in the Unity project settings to initialize.\n" +
-                    "Then, re-run 'Configure Visual Scripting' in the Banter Bundle Builder's Tools menu.";
+                    "Then, re-run 'Configure Visual Scripting' in the Altspace Builder's Tools menu.";
                 if (!Application.isBatchMode)
                     UnityEditor.EditorUtility.DisplayDialog("Visual Scripting Settings Not Found", DialogMessage, "OK");
                 Debug.LogError(DialogMessage);

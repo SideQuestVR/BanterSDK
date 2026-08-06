@@ -461,7 +461,51 @@ namespace Banter.SDKEditor
             }
         }
 
-        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        /// <summary>
+        /// PUT body that reports how far it has got as it streams, so callers can
+        /// show real upload progress instead of a stepped guess.
+        /// Note: this counts bytes handed to the transport, not bytes acknowledged
+        /// by the server, so it can reach 100% slightly before the PUT returns.
+        /// </summary>
+        private sealed class ProgressableByteArrayContent : HttpContent
+        {
+            private const int ChunkSize = 64 * 1024;
+            private readonly byte[] _data;
+            private readonly Action<float> _onProgress;
+
+            public ProgressableByteArrayContent(byte[] data, string contentType, Action<float> onProgress)
+            {
+                _data = data;
+                _onProgress = onProgress;
+                if (!string.IsNullOrEmpty(contentType))
+                    Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            }
+
+            protected override async Task SerializeToStreamAsync(Stream stream, System.Net.TransportContext context)
+            {
+                if (_data.Length == 0)
+                {
+                    _onProgress?.Invoke(1f);
+                    return;
+                }
+                var sent = 0;
+                while (sent < _data.Length)
+                {
+                    var count = Math.Min(ChunkSize, _data.Length - sent);
+                    await stream.WriteAsync(_data, sent, count);
+                    sent += count;
+                    _onProgress?.Invoke((float)sent / _data.Length);
+                }
+            }
+
+            protected override bool TryComputeLength(out long length)
+            {
+                length = _data.Length;
+                return true;
+            }
+        }
+
+        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
             yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
@@ -472,12 +516,12 @@ namespace Banter.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError);
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
 
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
 
-        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError)
+        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
             UnityEngine.Debug.Log("Before Upload");
@@ -489,19 +533,31 @@ namespace Banter.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError);
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
             OnCompleted?.Invoke(_uploadRequest);
 
         }
 
-        private IEnumerator UploadFileInternal(SqEditorCreateUpload upload, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
+        private IEnumerator UploadFileInternal(SqEditorCreateUpload upload, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError, Action<float> OnProgress = null)
         {
+            // The upload runs on a worker thread, so it may not touch UI. It only
+            // ever writes this cell; the coroutine below reads it on the main
+            // thread each frame and is the only thing that calls OnProgress.
+            var latest = new float[1];
+
             // Start the async upload task
-            var uploadTask = UploadFileWithRetryAsync(upload, data, name, maxRetries: 3);
+            var uploadTask = UploadFileWithRetryAsync(upload, data, name, maxRetries: 3, onProgress: p => latest[0] = p);
 
             // Wait for the task to complete (bridges async/await with coroutine)
+            var lastReported = -1f;
             while (!uploadTask.IsCompleted)
             {
+                var current = latest[0];
+                if (OnProgress != null && current - lastReported >= 0.01f)
+                {
+                    lastReported = current;
+                    OnProgress(current);
+                }
                 yield return null;
             }
 
@@ -517,7 +573,7 @@ namespace Banter.SDKEditor
             OnCompleted?.Invoke(uploadTask.Result);
         }
 
-        private async Task<long> UploadFileWithRetryAsync(SqEditorCreateUpload upload, byte[] data, string name, int maxRetries = 3)
+        private async Task<long> UploadFileWithRetryAsync(SqEditorCreateUpload upload, byte[] data, string name, int maxRetries = 3, Action<float> onProgress = null)
         {
             int attempt = 0;
             Exception lastException = null;
@@ -529,12 +585,13 @@ namespace Banter.SDKEditor
                 {
                     LogLine.Do($"Uploading {data.Length} bytes to {upload.UploadURI} (attempt {attempt}/{maxRetries})");
 
-                    using (var content = new ByteArrayContent(data))
+                    // A retry re-sends from the start, so rewind the bar too.
+                    onProgress?.Invoke(0f);
+
+                    using (var content = new ProgressableByteArrayContent(data, upload.ContentType, onProgress))
                     using (var request = new HttpRequestMessage(HttpMethod.Put, upload.UploadURI))
                     {
                         request.Content = content;
-                        if (!string.IsNullOrEmpty(upload.ContentType))
-                            request.Content.Headers.ContentType = new MediaTypeHeaderValue(upload.ContentType);
 
                         // Set timeout for this specific request
                         using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)))

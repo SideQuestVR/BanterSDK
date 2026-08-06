@@ -4,7 +4,11 @@
     padding-top: 16px;
     padding-bottom: 16px;
     background-image: url('project://database/Packages/com.sidequest.banter/Editor/Images/Main%20content.png?fileID=2800000&guid=40c599547cb1d0a4d94990b9692ca9f0&type=3#Main content');
-    -unity-background-scale-mode: scale-and-crop;
+    -unity-slice-left: 48;
+    -unity-slice-top: 48;
+    -unity-slice-right: 48;
+    -unity-slice-bottom: 48;
+    -unity-slice-scale: 0.25;
     margin-bottom: -12px;
 }
 
@@ -22,7 +26,7 @@
 
 .unity-toggle.switch .unity-label {
     font-size: 15px;
-    color: rgb(143, 143, 143);
+    color: rgb(153, 153, 153);
 }
 
 .unity-toggle.switch .unity-toggle__input {
@@ -31,14 +35,14 @@
     height: 20px;
     min-width: 40px;
     max-width: 40px;
-    background-color: rgb(47, 47, 47);
+    background-color: rgb(51, 51, 51);
     border-radius: 10px;
     padding: 0;
     margin: 0;
 }
 
 .unity-toggle.switch:checked .unity-toggle__input {
-    background-color: rgb(178, 59, 239);
+    background-color: rgb(41, 162, 166);
 }
 
 .unity-toggle.switch .unity-toggle__checkmark {

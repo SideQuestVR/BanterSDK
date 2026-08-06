@@ -1,1 +1,164 @@
+/* AltspaceVR Builder - shared utilities.
+   Palette from the AltspaceVR UI Style Guide:
+     primary #29A2A6  hover #33C7CC  pressed #137D80  link text #39E0E6
+     negative #B31932 / #D93751 / #801224
+     background #1A1A1A  bar #333333  deactivated #4D4D4D
+     text #FFFFFF / #999999 / #808080
+
+   NOTE: EditorComponents/Label.uss declares `color: white!important` on
+   .unity-label. The text-colour rules below therefore need both !important and
+   a higher specificity (.unity-label.alt-*) to win - a bare .alt-muted loses. */
+
+/* Varela Round is the AltspaceVR UI face. Single weight by design - the guide
+   builds hierarchy from size and colour only, never from bold. */
+:root {
+    -unity-font-definition: resource('UI/Fonts/VarelaRound-Regular');
+}
+
 VisualElement {}
+
+.unity-label.alt-link,
+.alt-link {
+    color: #39E0E6 !important;
+    cursor: link;
+}
+
+.unity-label.alt-muted,
+.alt-muted {
+    color: #999999 !important;
+}
+
+/* Signed-in identity: account glyph immediately left of "Hi <Name>!".
+   The whole logged-in block must fit the fixed 60px header, so heights here
+   are tight on purpose - it used to total 75px and spill into the tab row. */
+.unity-label.alt-account {
+    height: 22px;
+    min-height: 22px;
+    margin: 0;
+    padding-left: 26px;
+    padding-right: 0;
+    font-size: 14px;
+    -unity-text-align: middle-left;
+    background-image: resource('UI/Images/icon-account');
+    background-repeat: no-repeat;
+    background-size: 18px 18px;
+    background-position: left 0px center;
+}
+
+.unity-label.alt-placeholder,
+.alt-placeholder {
+    color: #808080 !important;
+}
+
+.unity-label.alt-negative,
+.alt-negative {
+    color: #E6455F !important;
+}
+
+/* Text-input / dropdown row background */
+.alt-field {
+    background-color: #333333;
+    border-radius: 5px;
+}
+
+/* Primary call-to-action pill. Drawn with border-radius rather than a bitmap
+   so it stays crisp at any size - replaces the old ButtonSmall.png glow. */
+.alt-pill {
+    background-color: #29A2A6;
+    border-radius: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.alt-pill:hover {
+    background-color: #33C7CC;
+}
+
+.alt-pill:active {
+    background-color: #137D80;
+}
+
+.alt-pill-negative {
+    background-color: #B31932;
+}
+
+.alt-pill-negative:hover {
+    background-color: #D93751;
+}
+
+.alt-pill-negative:active {
+    background-color: #801224;
+}
+
+/* Pill caption. padding-left reserves the glyph column so the centred text
+   can never run under the icon, whatever string C# assigns at runtime. */
+.unity-label.alt-pill-label,
+.alt-pill-label {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding-left: 44px;
+    padding-right: 16px;
+    font-size: 13px;
+    -unity-text-align: middle-center;
+    color: #FFFFFF !important;
+    cursor: link;
+    background-repeat: no-repeat;
+    background-size: 15px 15px;
+    background-position: left 17px center;
+}
+
+/* No glyph - text centres across the whole pill. Must follow .alt-pill-label. */
+.unity-label.alt-pill-label-plain,
+.alt-pill-label-plain {
+    padding-left: 16px;
+}
+
+/* Tab: glyph above, caption below, both centred in a fixed 101px column */
+/* Vertical rhythm inside a tab, top to bottom:
+     2px  gap
+    18px  glyph
+     6px  gap
+    ~16px caption (padding-top 26 = 2 + 18 + 6)
+    20px  clearance before the indicator bar                                 */
+.unity-label.alt-tab-label {
+    width: 101px;
+    padding-top: 26px;
+    padding-bottom: 20px;
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    -unity-text-align: upper-center;
+    cursor: link;
+}
+
+.alt-tab-icon {
+    position: absolute;
+    left: 50%;
+    top: 2px;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+/* Stacked toggles: fixed label column + capped width keeps every switch on
+   the same vertical line regardless of label length or checked state. */
+.unity-toggle.alt-toggle {
+    max-width: 300px;
+    margin-left: 5%;
+    margin-right: 5%;
+    margin-top: 4px;
+    margin-bottom: 4px;
+    justify-content: space-between;
+}
+
+/* Buttons that carry a leading glyph. Unity 2022.2+ background-position.
+   Specificity must beat `.unity-button { padding: 5px }` in Button.uss. */
+.unity-button.alt-btn-icon {
+    background-repeat: no-repeat;
+    background-size: 15px 15px;
+    background-position: left 12px center;
+    padding-left: 34px;
+}
