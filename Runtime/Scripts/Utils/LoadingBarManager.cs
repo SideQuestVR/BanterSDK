@@ -399,6 +399,12 @@ namespace Banter.SDK
             }
             state = LoadingState.Loading;
             _firstLoadComplete = true; // camera is long settled by the first open; short grace hereafter
+            // Disable the cage floor/geometry colliders BEFORE unfreeze (onLoadOutStarted) so the
+            // freshly-dynamic loco-ball settles on the real world floor instead of squishing against
+            // the cage floor for the whole ~1.5s dissolve. (Previously disabled 1.5s later in
+            // HideCollider, which was the load-out squish source.) The teleport wall still lingers.
+            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = false;
+            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = false;
             onLoadOutStarted.Invoke();
             loadingSphere.clip = loadOut;
             loadingSphere.Play();
@@ -415,9 +421,9 @@ namespace Banter.SDK
 
         async Task HideCollider()
         {
+            // Cage floor/geometry colliders are now disabled up-front in LoadOut (before unfreeze) so
+            // they can't squish the freshly-dynamic rig; only the teleport wall lingers through the dissolve.
             await new WaitForSeconds(1.5f);
-            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = false;
-            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = false;
             teleportWall.SetActive(false);
         }
     }
