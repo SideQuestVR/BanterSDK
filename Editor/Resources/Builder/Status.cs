@@ -33,7 +33,7 @@ public class Status
     }
     public void AddStatus(string text, string dateString = null, bool skipWrite = false)
     {
-        var val = "<color=\"orange\">" + (dateString == null ? DateTime.Now.ToString("HH:mm:ss") : dateString) + ": <color=\"white\">" + text;
+        var val = "<color=#999999>" + (dateString == null ? DateTime.Now.ToString("HH:mm:ss") : dateString) + ": <color=#FFFFFF>" + text;
         statusMessages.Insert(0, val);
         statusBar.text = "STATUS: " + val;
         if (statusMessages.Count > 300)
@@ -56,8 +56,20 @@ public class Status
         statusMessages.Clear();
         buildProgress.Rebuild();
     }
+    /// <summary>
+    /// Show the in-window upload bar. <paramref name="pct"/> is 0-100.
+    /// Must be called from the main thread.
+    /// </summary>
+    public void ShowProgress(string title, float pct)
+    {
+        buildProgressBar.style.display = DisplayStyle.Flex;
+        buildProgressBar.title = title;
+        buildProgressBar.value = UnityEngine.Mathf.Clamp(pct, 0f, 100f);
+    }
+
     public void HideProgressBar()
     {
         buildProgressBar.style.display = DisplayStyle.None;
+        buildProgressBar.value = 0f;
     }
 }

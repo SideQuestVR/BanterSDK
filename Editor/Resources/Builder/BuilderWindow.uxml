@@ -1,155 +1,171 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/UI/EditorComponents.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#EditorComponents" />
-    <ui:VisualElement style="background-image: resource(&apos;UI/Images/Slate_BG 1&apos;); height: 100%; background-color: rgb(0, 0, 0); -unity-background-scale-mode: scale-and-crop; -unity-background-image-tint-color: rgb(168, 168, 168); flex-direction: column; position: relative; left: 0; top: 0; right: 0; bottom: 0;">
+    <ui:VisualElement style="background-color: rgb(26, 26, 26); height: 100%; flex-direction: column; position: relative; left: 0; top: 0; right: 0; bottom: 0;">
         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; height: 60px; max-height: 60px; align-items: stretch; align-self: auto; min-height: 60px;">
-            <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_Logo_No_BG_V2copy 1&apos;); -unity-background-scale-mode: scale-to-fit; margin-left: 10px; margin-top: 10px; margin-bottom: 0; min-height: 50px; -unity-text-align: upper-left; min-width: 150px; max-height: 50px;" />
+            <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_Logo_No_BG_V2copy 1&apos;); -unity-background-scale-mode: scale-to-fit; margin-left: 14px; margin-top: 12px; margin-bottom: 0; min-height: 40px; -unity-text-align: upper-left; min-width: 200px; max-height: 40px;" />
             <ui:VisualElement style="flex-grow: 0; padding-top: 15px;">
                 <ui:VisualElement name="OpenLink" style="flex-grow: 1; flex-direction: row; height: 20px; min-height: 20px;">
-                    <ui:Label tabindex="-1" text="Sign In: open " parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 16px; margin-right: 0; padding-right: 0;" />
-                    <ui:Label text="sdq.st/link" display-tooltip-when-elided="true" style="cursor: link; font-size: 16px; color: rgb(0, 172, 255); -unity-text-align: upper-center; margin-right: 30px; margin-left: 0; padding-left: 0;" />
+                    <ui:Label tabindex="-1" text="Sign In: open " parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 14px; margin-right: 0; padding-right: 0;" />
+                    <ui:Label text="sdq.st/link" display-tooltip-when-elided="true" class="alt-link" style="font-size: 14px; -unity-text-align: upper-center; margin-right: 30px; margin-left: 0; padding-left: 0;" />
                 </ui:VisualElement>
-                <ui:Label text="put in 129735" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 0; padding-bottom: 10px; font-size: 16px; display: flex; align-self: auto; min-height: auto; white-space: normal; max-width: none; margin-right: 30px; height: 75px; flex-direction: column; align-items: stretch; text-overflow: clip; margin-top: 0;" />
-                <ui:VisualElement name="LoggedInView" style="flex-grow: 1; align-items: flex-end; justify-content: space-between; padding-right: 30px; min-height: 40px; display: none;">
-                    <ui:Label text="Signed In As: Shane Harris" display-tooltip-when-elided="true" name="SignedInStatus" style="padding-top: 10px; padding-bottom: 0; -unity-text-align: upper-center; margin-bottom: 0; min-height: 20px;" />
-                    <ui:Label text="Sign out" display-tooltip-when-elided="true" name="SignOut" style="padding-top: 0; padding-bottom: 10px; cursor: link; color: rgb(0, 172, 255); margin-top: 0; min-height: 20px;" />
+                <ui:Label text="put in 129735" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 0; padding-bottom: 10px; font-size: 14px; display: flex; align-self: auto; min-height: auto; white-space: normal; max-width: none; margin-right: 30px; height: 75px; flex-direction: column; align-items: stretch; text-overflow: clip; margin-top: 0;" />
+                <ui:VisualElement name="LoggedInView" style="flex-grow: 0; align-items: flex-end; justify-content: flex-start; padding-right: 30px; display: none;">
+                    <ui:Label text="Hi there!" display-tooltip-when-elided="true" name="SignedInStatus" class="alt-account" />
+                    <ui:Label text="Sign out" display-tooltip-when-elided="true" name="SignOut" class="alt-link" style="font-size: 12px; margin-top: 2px; padding-top: 0; padding-bottom: 0; padding-left: 0; padding-right: 0; min-height: 16px;" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:VisualElement name="Nav" style="height: 80px; min-height: 80px;">
-            <ui:VisualElement name="Tabs" style="flex-direction: row; justify-content: space-around; margin-left: 5%; margin-right: 5%; margin-top: 0; margin-bottom: 0; border-bottom-width: 1px; border-bottom-color: rgba(217, 217, 217, 0.1);">
-                <ui:Label text="Space" display-tooltip-when-elided="true" name="SpaceTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
-                <ui:Label text="Avatar" display-tooltip-when-elided="true" name="AvatarTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
-                <ui:Label text="Logs" display-tooltip-when-elided="true" name="LogsTab" style="font-size: 18px; padding-left: 20px; padding-right: 20px; padding-top: 20px; padding-bottom: 20px; width: 101px; -unity-text-align: upper-center; cursor: link;" />
+        <!-- Single-section layout for now: Avatar is hidden and Logs moved to the
+             bottom of SpaceSection, so there is nothing left to navigate between.
+             Set display back to flex (and AvatarSection/LogsSection likewise, plus
+             restore the saved-tab block in TabsManager.cs) to bring tabs back. -->
+        <ui:VisualElement name="Nav" style="height: 80px; min-height: 80px; display: none;">
+            <ui:VisualElement name="Tabs" style="flex-direction: row; justify-content: space-around; margin-left: 5%; margin-right: 5%; margin-top: 0; margin-bottom: 0; border-bottom-width: 1px; border-bottom-color: rgba(255, 255, 255, 0.1);">
+                <ui:Label text="SPACE" display-tooltip-when-elided="true" name="SpaceTab" class="alt-tab-label">
+                    <ui:VisualElement class="alt-tab-icon" style="background-image: resource(&apos;UI/Images/icon-worlds&apos;);" />
+                </ui:Label>
+                <ui:Label text="AVATAR" display-tooltip-when-elided="true" name="AvatarTab" class="alt-tab-label">
+                    <ui:VisualElement class="alt-tab-icon" style="background-image: resource(&apos;UI/Images/icon-avatar&apos;);" />
+                </ui:Label>
+                <ui:Label text="LOGS" display-tooltip-when-elided="true" name="LogsTab" class="alt-tab-label">
+                    <ui:VisualElement class="alt-tab-icon" style="background-image: resource(&apos;UI/Images/icon-logs&apos;);" />
+                </ui:Label>
             </ui:VisualElement>
-            <ui:VisualElement name="ActiveTab" style="background-image: resource(&apos;UI/Images/Rectangle 2&apos;); height: 20px; width: 90px; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; left: 80px; position: relative; margin-top: 0; top: -10.5px;" />
+            <ui:VisualElement name="ActiveTab" style="background-image: resource(&apos;UI/Images/Rectangle 2&apos;); height: 8px; width: 90px; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; left: 80px; position: relative; margin-top: 0; top: -2px;" />
         </ui:VisualElement>
-        <ui:VisualElement name="TabSections" style="width: 400%; flex-direction: row; min-width: 400%; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; border-bottom-color: rgb(197, 197, 197); margin-bottom: 33px; left: 0;">
+        <ui:VisualElement name="TabSections" style="width: 400%; flex-direction: row; min-width: 400%; transition-timing-function: ease-out-back; transition-duration: 0.5s; transition-property: left; margin-bottom: 33px; left: 0;">
             <ui:VisualElement name="SpaceSection" style="min-width: auto; min-height: auto; display: flex; width: 25%;">
                 <ui:ScrollView horizontal-scroller-visibility="Hidden" style="margin-bottom: 0;">
                     <ui:VisualElement name="dropAreaContainer" style="flex-grow: 1;">
                         <ui:VisualElement style="position: absolute; background-image: resource(&apos;UI/Images/uploadcube 1&apos;); width: 93px; height: 93px; left: 50%; margin-left: -46.5px;" />
-                        <ui:VisualElement name="dropArea" tooltip="Drop a scene file here to build a normal asset bunlde, or drop multiple prefab files here to make a kit bundle." style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; margin-bottom: 20px; -unity-background-image-tint-color: rgb(255, 255, 255);">
+                        <ui:VisualElement name="dropArea" tooltip="Drop a scene file here to build a normal asset bunlde, or drop multiple prefab files here to make a kit bundle." style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5; margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; margin-bottom: 20px;">
                             <ui:Label text="Drop Scene/Prefab files &#10;here to start." display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label tabindex="-1" text="Scene Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitle" style="-unity-font-style: bold; font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
-                        <ui:Button text="Reset" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetScreen" style="height: 30px; padding-left: 15px; padding-right: 15px; margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
+                    <ui:Label tabindex="-1" text="Scene Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitle" style="font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
+                        <ui:Button text="RESET" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetScreen" class="alt-btn-icon" style="margin-top: 0; margin-bottom: 10px; margin-right: 30px; background-image: resource(&apos;UI/Images/icon-refresh&apos;);" />
                     </ui:Label>
                     <ui:VisualElement name="scenePathParent" style="flex-grow: 1; flex-direction: row; padding-bottom: 10px;">
-                        <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin" style="display: flex; color: rgb(143, 143, 143); margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 14px;" />
+                        <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin alt-muted" style="display: flex; margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 12px;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInViewScene" style="display: flex; margin-bottom: 0;">
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                             <ui:Label tabindex="-1" text="Space Slug:" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 25px; margin-top: 0; font-size: 14px;" />
                             <ui:VisualElement style="flex-grow: 1;">
-                                <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 0;">
+                                <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 0;">
                                     <ui:VisualElement name="spaceSlugPlaceholder" style="width: 100%;">
-                                        <ui:Label text="space-subdomain" display-tooltip-when-elided="true" name="SpaceSlugPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px;" />
+                                        <ui:Label text="space-subdomain" display-tooltip-when-elided="true" name="SpaceSlugPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px;" />
                                         <ui:TextField picking-mode="Ignore" value="filler text" name="SpaceSlug" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
                                     </ui:VisualElement>
-                                    <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; border-left-width: 0.5px; border-left-color: rgba(168, 168, 168, 0.1); padding-left: 10px; font-size: 12px; color: rgb(255, 255, 255);" />
+                                    <ui:Label text=".bant.ing" display-tooltip-when-elided="true" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; border-left-width: 0.5px; border-left-color: rgba(255, 255, 255, 0.1); padding-left: 10px; font-size: 12px; color: rgb(255, 255, 255);" />
                                 </ui:VisualElement>
                                 <ui:VisualElement style="flex-direction: row;">
                                     <ui:Label text="Don&apos;t have a space yet? " display-tooltip-when-elided="true" style="margin-left: 5%; margin-right: 0; margin-bottom: 20px; font-size: 12px;" />
-                                    <ui:Label text="Create One." display-tooltip-when-elided="true" name="CreateSpace" style="cursor: link; font-size: 12px; color: rgb(0, 172, 255);" />
+                                    <ui:Label text="Create One." display-tooltip-when-elided="true" name="CreateSpace" class="alt-link" style="font-size: 12px;" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInViewPrefab" style="flex-grow: 1; display: none;">
-                        <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 0;">
+                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 0;">
                             <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Select or Create New..." display-tooltip-when-elided="true" name="KitSelectPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                <ui:Label text="Select or Create New..." display-tooltip-when-elided="true" name="KitSelectPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
                                 <ui:DropdownField name="ExistingDropDown" style="color: white;" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
                             <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Kit Name" display-tooltip-when-elided="true" name="KitNamePlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                <ui:Label text="Kit Name" display-tooltip-when-elided="true" name="KitNamePlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
                                 <ui:TextField picking-mode="Ignore" name="KitName" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
                             <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Kit Description" display-tooltip-when-elided="true" name="KitDescPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                <ui:Label text="Kit Description" display-tooltip-when-elided="true" name="KitDescPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
                                 <ui:TextField picking-mode="Ignore" name="KitDescription" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
                             <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Select Category..." display-tooltip-when-elided="true" name="KitCategoryPlaceholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; color: rgb(88, 88, 88); position: absolute; top: 5px; display: flex;" />
+                                <ui:Label text="Select Category..." display-tooltip-when-elided="true" name="KitCategoryPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
                                 <ui:DropdownField name="KitCategoryDropDown" style="color: white;" />
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; background-color: rgb(38, 38, 38); border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
+                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
                             <ui:VisualElement style="width: 100%;">
                                 <uie:ObjectField type="UnityEngine.Texture2D, UnityEngine.CoreModule" label="Select a cover image:" name="MarkitCoverImage" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:ListView focusable="true" name="kitItemList" style="display: none; margin-left: 5%; margin-right: 5%; margin-top: 16px; margin-bottom: 16px;" />
-                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" style="display: none; margin-bottom: 20px; max-width: none; align-items: stretch; justify-content: flex-start; position: relative; overflow: hidden; flex-direction: column; flex-wrap: nowrap; margin-left: 48px; margin-right: 48px;" />
-                    <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
+                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" class="alt-btn-icon" style="display: none; margin-left: 48px; margin-right: 48px; margin-bottom: 20px; background-image: resource(&apos;UI/Images/icon-delete&apos;);" />
+                    <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" class="alt-muted" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
                     <ui:VisualElement name="BuildOptions" style="flex-grow: 1;">
-                        <ui:Toggle label="Auto Upload:" value="false" name="autoUpload" style="margin-top: 0; justify-content: flex-start; display: none; margin-left: 5%; margin-right: 5%;" />
-                        <ui:Toggle label="Android:" value="true" name="buildForAndroid" style="margin-top: 5px; justify-content: flex-start; margin-left: 5%; margin-right: 5%;" />
-                        <ui:Toggle label="Windows:" value="true" name="buildForWindows" style="margin-bottom: 5px; justify-content: flex-start; margin-left: 5%; margin-right: 5%;" />
+                        <ui:Toggle label="Auto Upload" value="false" name="autoUpload" class="alt-toggle" style="display: none;" />
+                        <ui:Toggle label="Android" value="true" name="buildForAndroid" class="alt-toggle" />
+                        <ui:Toggle label="Windows" value="true" name="buildForWindows" class="alt-toggle" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInCTAScene" style="display: flex; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
-                        <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 244.5px; height: 94.5px; margin-left: 0; cursor: initial; margin-top: 0; padding-top: 2px; padding-bottom: 2px;">
-                            <ui:Label text="Build it Now!" display-tooltip-when-elided="true" name="buildButton" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                        <ui:VisualElement class="alt-pill" style="width: 215px; height: 40px; margin-left: 10px; cursor: initial; margin-top: 0;">
+                            <ui:Label text="BUILD" display-tooltip-when-elided="true" name="buildButton" class="alt-pill-label" style="background-image: resource(&apos;UI/Images/icon-build&apos;);" />
                         </ui:VisualElement>
                         <ui:VisualElement name="ExtraUploadButtons" style="flex-grow: 1; flex-direction: row;">
-                            <ui:Button text="Upload HTML+JS" display-tooltip-when-elided="true" name="UploadWebOnly" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
-                            <ui:Button text="Upload All" display-tooltip-when-elided="true" name="UploadEverything" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
+                            <ui:Button text="UPLOAD HTML+JS" display-tooltip-when-elided="true" name="UploadWebOnly" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;background-image: resource(&apos;UI/Images/icon-upload&apos;);" />
+                            <ui:Button text="UPLOAD ALL" display-tooltip-when-elided="true" name="UploadEverything" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;background-image: resource(&apos;UI/Images/icon-upload&apos;);" />
                         </ui:VisualElement>
-                        <ui:Button text="WebRoot Folder" display-tooltip-when-elided="true" name="OpenWebRoot" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; margin-left: 12px; margin-right: 12px;" />
+                        <ui:Button text="WEBROOT FOLDER" display-tooltip-when-elided="true" name="OpenWebRoot" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px; background-image: resource(&apos;UI/Images/icon-folder&apos;);" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInCTAKit" style="display: none; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
                         <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center; display: flex;">
-                            <ui:Button text="Delete Kit" display-tooltip-when-elided="true" name="DeleteKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; border-left-color: rgb(224, 83, 83); border-right-color: rgb(224, 83, 83); border-top-color: rgb(224, 83, 83); border-bottom-color: rgb(224, 83, 83); display: none;" />
-                            <ui:Button text="Update Details" display-tooltip-when-elided="true" name="UploadWebOnlyKit" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px; display: none;" />
-                            <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
-                                <ui:Label text="Build &amp; Upload" display-tooltip-when-elided="true" name="UploadEverythingKit" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                            <ui:Button text="DELETE KIT" display-tooltip-when-elided="true" name="DeleteKit" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;border-left-color: rgb(179, 25, 50); border-right-color: rgb(179, 25, 50); border-top-color: rgb(179, 25, 50); border-bottom-color: rgb(179, 25, 50); display: none; background-image: resource(&apos;UI/Images/icon-delete&apos;);" />
+                            <ui:Button text="UPDATE DETAILS" display-tooltip-when-elided="true" name="UploadWebOnlyKit" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;display: none; background-image: resource(&apos;UI/Images/icon-edit&apos;);" />
+                            <ui:VisualElement class="alt-pill" style="width: 215px; height: 40px; margin-left: 0; cursor: initial; margin-top: 0; margin-bottom: 0;">
+                                <ui:Label text="BUILD &amp; UPLOAD" display-tooltip-when-elided="true" name="UploadEverythingKit" class="alt-pill-label" style="background-image: resource(&apos;UI/Images/icon-upload&apos;);" />
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
+                    <ui:VisualElement style="height: 1px; background-color: rgba(255, 255, 255, 0.1); margin-left: 5%; margin-right: 5%; margin-top: 28px; margin-bottom: 14px;" />
+                    <ui:Label tabindex="-1" text="LOGS" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 12px; letter-spacing: 1px; margin-left: 5%; margin-bottom: 8px;" />
+                    <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: auto; min-height: 150px; max-height: none; margin-left: 5%; margin-right: 5%; background-color: rgb(51, 51, 51); border-top-left-radius: 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; margin-bottom: 12px; padding-top: 10px; padding-bottom: 10px;" />
+                    <ui:VisualElement style="flex-direction: row; justify-content: center; margin-left: 5%; margin-right: 5%; margin-bottom: 24px;">
+                        <ui:Button text="CLEAR LOGS" display-tooltip-when-elided="true" name="clearLogs" class="alt-btn-icon" style="width: 160px; margin-left: 0; margin-right: 0; background-image: resource(&apos;UI/Images/icon-refresh&apos;);" />
+                    </ui:VisualElement>
                 </ui:ScrollView>
             </ui:VisualElement>
-            <ui:VisualElement name="AvatarSection" style="display: flex; width: 25%;">
+            <ui:VisualElement name="AvatarSection" style="display: none; width: 25%;">
                 <ui:ScrollView horizontal-scroller-visibility="Hidden">
                     <ui:VisualElement name="dropAvatarContainer" style="flex-grow: 1; display: flex;">
                         <ui:VisualElement style="position: absolute; background-image: resource(&apos;UI/Images/CapsuleMan_2D&apos;); width: 93px; height: 93px; left: 50%; margin-left: -46.5px;" />
-                        <ui:VisualElement name="dropAvatarArea" tooltip="Drop a GameObject here that is the root of your avatar. " style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-background-scale-mode: stretch-to-fill; border-left-width: 0; border-right-width: 0; border-top-width: 0; border-bottom-width: 0; border-left-color: rgb(219, 118, 34); border-right-color: rgb(219, 119, 35); border-top-color: rgb(236, 19, 133); border-bottom-color: rgb(236, 19, 133); margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; -unity-slice-left: 0; -unity-slice-top: 0; -unity-slice-right: 0; -unity-slice-bottom: 0; margin-bottom: 20px; -unity-background-image-tint-color: rgb(255, 255, 255);">
+                        <ui:VisualElement name="dropAvatarArea" tooltip="Drop a GameObject here that is the root of your avatar. " style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5; margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; margin-bottom: 20px;">
                             <ui:Label text="Drop an avatar GameObject &#10;from the hierarchy to start." display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="AvatarInfoCard" style="flex-grow: 1; display: flex;">
-                        <ui:Label tabindex="-1" text="Avatar Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitleAvatar" style="-unity-font-style: bold; font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
-                            <ui:Button text="Reset" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetAvatarScreen" style="height: 30px; padding-left: 15px; padding-right: 15px; margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
+                        <ui:Label tabindex="-1" text="Avatar Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitleAvatar" style="font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
+                            <ui:Button text="RESET" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetAvatarScreen" class="alt-btn-icon" style="margin-top: 0; margin-bottom: 10px; margin-right: 30px; background-image: resource(&apos;UI/Images/icon-refresh&apos;);" />
                         </ui:Label>
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: flex-start; align-items: stretch;">
                             <ui:VisualElement style="flex-grow: 0;">
                                 <ui:Label tabindex="-1" text="Selected Avatar" parse-escape-sequences="true" display-tooltip-when-elided="true" style="padding-left: 30px; margin-bottom: 0;" />
-                                <ui:Label tabindex="-1" text="GameObject3" parse-escape-sequences="true" display-tooltip-when-elided="true" name="SelectAvatar" style="padding-left: 30px; margin-bottom: 10px; color: rgb(156, 156, 156);" />
+                                <ui:Label tabindex="-1" text="GameObject3" parse-escape-sequences="true" display-tooltip-when-elided="true" name="SelectAvatar" class="alt-muted" style="padding-left: 30px; margin-bottom: 10px;" />
                             </ui:VisualElement>
-                            <ui:Button text="Show" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ShowAvatar" style="padding-right: 15px; padding-left: 15px; height: 30px;" />
+                            <ui:Button text="SHOW" parse-escape-sequences="true" display-tooltip-when-elided="true" name="ShowAvatar" style="margin-top: 0;" />
                         </ui:VisualElement>
                         <ui:VisualElement name="HeadObjectList" style="flex-grow: 1; flex-direction: column; justify-content: space-between; padding-right: 30px; padding-bottom: 10px; padding-left: 30px;" />
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 10px;">
                             <ui:VisualElement style="flex-grow: 1;">
                                 <ui:Label tabindex="-1" text="Center Eye Position" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px;" />
-                                <ui:Label tabindex="-1" text="Not Selected" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CenterEyePoseLabel" style="margin-left: 30px; margin-top: 10px; color: rgb(156, 156, 156);" />
+                                <ui:Label tabindex="-1" text="Not Selected" parse-escape-sequences="true" display-tooltip-when-elided="true" name="CenterEyePoseLabel" class="alt-muted" style="margin-left: 30px; margin-top: 10px;" />
                                 <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                                     <ui:Button text="Reset Position" display-tooltip-when-elided="true" name="CenterEyePosReset" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 30px; margin-right: 0; max-height: 24px; max-width: 100px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
                                 </ui:VisualElement>
                             </ui:VisualElement>
-                            <ui:Button text="Change" display-tooltip-when-elided="true" name="SelectCenterEye" style="padding-top: 5px; padding-bottom: 5px; margin-top: 10px; margin-bottom: 10px; padding-left: 15px; padding-right: 15px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 0; margin-right: 0; max-height: 36px;" />
+                            <ui:Button text="CHANGE" display-tooltip-when-elided="true" name="SelectCenterEye" style="margin-top: 10px; margin-bottom: 10px; margin-left: 0; margin-right: 0;" />
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 10px;">
                             <ui:VisualElement style="flex-grow: 1;">
                                 <ui:Label tabindex="-1" text="Left Foot Ground Pose " parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px;" />
-                                <ui:Label tabindex="-1" text="Not Selected" parse-escape-sequences="true" display-tooltip-when-elided="true" name="LeftFootPoseLabel" style="margin-left: 30px; margin-top: 10px; color: rgb(156, 156, 156);" />
+                                <ui:Label tabindex="-1" text="Not Selected" parse-escape-sequences="true" display-tooltip-when-elided="true" name="LeftFootPoseLabel" class="alt-muted" style="margin-left: 30px; margin-top: 10px;" />
                                 <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                                     <ui:Button text="Reset Pos" display-tooltip-when-elided="true" name="LeftFootPosReset" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 30px; margin-right: 0; max-height: 24px; max-width: 80px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
                                     <ui:Button text="Reset Rot" display-tooltip-when-elided="true" name="LeftFootRotReset" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 10px; margin-right: 0; max-height: 24px; max-width: 80px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
@@ -157,12 +173,12 @@
                                 </ui:VisualElement>
                                 <ui:Button text="Mirror Right Pos" display-tooltip-when-elided="true" name="LeftFootMirror" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 30px; margin-right: 0; max-height: 24px; max-width: 108px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
                             </ui:VisualElement>
-                            <ui:Button text="Change" display-tooltip-when-elided="true" name="SelectLeftFoot" style="padding-top: 5px; padding-bottom: 5px; margin-top: 10px; margin-bottom: 10px; padding-left: 15px; padding-right: 15px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 0; margin-right: 0; max-height: 36px;" />
+                            <ui:Button text="CHANGE" display-tooltip-when-elided="true" name="SelectLeftFoot" style="margin-top: 10px; margin-bottom: 10px; margin-left: 0; margin-right: 0;" />
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 30px;">
                             <ui:VisualElement style="flex-grow: 1;">
                                 <ui:Label tabindex="-1" text="Right Foot Ground Pose" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 30px; margin-top: 10px;" />
-                                <ui:Label tabindex="-1" text="Not Selected" parse-escape-sequences="true" display-tooltip-when-elided="true" name="RightFootPoseLabel" style="margin-left: 30px; margin-top: 10px; color: rgb(156, 156, 156);" />
+                                <ui:Label tabindex="-1" text="Not Selected" parse-escape-sequences="true" display-tooltip-when-elided="true" name="RightFootPoseLabel" class="alt-muted" style="margin-left: 30px; margin-top: 10px;" />
                                 <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                                     <ui:Button text="Reset Pos" display-tooltip-when-elided="true" name="RightFootPosReset" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 30px; margin-right: 0; max-height: 24px; max-width: 80px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
                                     <ui:Button text="Reset Rot" display-tooltip-when-elided="true" name="RightFootRotReset" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 10px; margin-right: 0; max-height: 24px; max-width: 80px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
@@ -170,7 +186,7 @@
                                 </ui:VisualElement>
                                 <ui:Button text="Mirror Left Pos" display-tooltip-when-elided="true" name="RightFootMirror" style="padding-top: 3px; padding-bottom: 3px; margin-top: 10px; margin-bottom: 10px; padding-left: 10px; padding-right: 10px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 30px; margin-right: 0; max-height: 24px; max-width: 105px; height: 24px; display: none; border-top-left-radius: 12px; border-top-right-radius: 12px; border-bottom-right-radius: 12px; border-bottom-left-radius: 12px;" />
                             </ui:VisualElement>
-                            <ui:Button text="Change" display-tooltip-when-elided="true" name="SelectRightFoot" style="padding-top: 5px; padding-bottom: 5px; margin-top: 10px; margin-bottom: 10px; padding-left: 15px; padding-right: 15px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 12px; margin-left: 0; margin-right: 0; max-height: 36px;" />
+                            <ui:Button text="CHANGE" display-tooltip-when-elided="true" name="SelectRightFoot" style="margin-top: 10px; margin-bottom: 10px; margin-left: 0; margin-right: 0;" />
                         </ui:VisualElement>
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; padding-right: 30px; padding-bottom: 30px;">
                             <ui:VisualElement style="flex-grow: 1;">
@@ -182,51 +198,50 @@
                                 </ui:VisualElement>
                             </ui:VisualElement>
                         </ui:VisualElement>
-                        <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 244.5px; height: 94.5px; margin-left: 30px; cursor: initial; margin-top: 0; padding-top: 2px; padding-bottom: 2px;">
-                            <ui:Label text="Build &amp; Upload it Now!" display-tooltip-when-elided="true" name="buildAvatarButton" style="-unity-text-align: middle-center; height: 100%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255);" />
+                        <ui:VisualElement class="alt-pill" style="width: 215px; height: 40px; margin-left: 30px; cursor: initial; margin-top: 0;">
+                            <ui:Label text="BUILD &amp; UPLOAD" display-tooltip-when-elided="true" name="buildAvatarButton" class="alt-pill-label" style="background-image: resource(&apos;UI/Images/icon-build&apos;);" />
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MissingBones" style="-unity-font-style: normal; font-size: 12px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end; padding-bottom: 10px; white-space: normal; color: rgb(255, 255, 255);" />
+                    <ui:Label tabindex="-1" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MissingBones" class="alt-negative" style="-unity-font-style: normal; font-size: 12px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end; padding-bottom: 10px; white-space: normal;" />
                 </ui:ScrollView>
             </ui:VisualElement>
-            <ui:VisualElement name="LogsSection" style="display: flex; width: 25%;">
-                <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: auto; min-height: auto; max-height: none; margin-left: 5%; margin-right: 5%; background-color: rgba(0, 0, 0, 0.49); border-top-left-radius: 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; margin-bottom: 50px; padding-top: 10px; padding-bottom: 10px;" />
-                <ui:VisualElement style="flex-direction: row; justify-content: center; margin-left: 5%; margin-right: 5%;">
-                    <ui:Button text="Clear Logs" display-tooltip-when-elided="true" name="clearLogs" style="flex-direction: row; width: 152px; padding-left: 10px; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; margin-left: 0; margin-right: 0; font-size: 15px; -unity-font-style: normal; height: 30px;" />
-                </ui:VisualElement>
-                <ui:ProgressBar title="BUILDING..." name="buildProgressBar" style="display: none; padding-top: 5px;" />
-            </ui:VisualElement>
+            <!-- Logs now live at the bottom of SpaceSection. This element is kept
+                 (empty, hidden) because TabsManager.cs queries it by name. -->
+            <ui:VisualElement name="LogsSection" style="display: none; width: 25%;" />
         </ui:VisualElement>
-        <ui:Label text="STATUS: Idle" display-tooltip-when-elided="true" name="StatusBar" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 5px; padding-left: 5%; padding-right: 5%; padding-top: 5px; padding-bottom: 5px; font-size: 14px; justify-content: flex-start; position: absolute; bottom: 0; width: 100%;" />
+        <!-- Upload progress. Pinned above the status bar rather than living in the
+             scroll view, so it stays on screen for the whole upload. -->
+        <ui:ProgressBar title="Uploading..." name="buildProgressBar" style="display: none; position: absolute; bottom: 34px; left: 0; right: 0; width: 100%;" />
+        <ui:Label text="STATUS: Idle" display-tooltip-when-elided="true" name="StatusBar" style="margin-left: 0; margin-right: 0; margin-top: 0; margin-bottom: 5px; padding-left: 5%; padding-right: 5%; padding-top: 5px; padding-bottom: 5px; font-size: 12px; justify-content: flex-start; position: absolute; bottom: 0; width: 100%; background-color: rgb(51, 51, 51);" />
     </ui:VisualElement>
     <ui:VisualElement name="BuildConfirm" style="display: none; flex-grow: 1; position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);">
-        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-background-scale-mode: scale-and-crop;">
-            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 30px; margin-top: 30px;" />
-            <ui:Label tabindex="-1" text="Check the following info to make sure everything is correct before you continue." parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 18px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5;">
+            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 24px; margin-top: 30px;" />
+            <ui:Label tabindex="-1" text="Check the following info to make sure everything is correct before you continue." parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 14px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
             <ui:VisualElement style="width: 100%; margin-top: 45px; margin-left: 24px;">
-                <ui:Label tabindex="-1" text="Build Mode: " name="ConfirmBuildMode" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
-                <ui:Label tabindex="-1" text="Scene File: " name="ConfirmSceneFile" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
-                <ui:Label tabindex="-1" text="Space: " name="ConfirmSpaceCode" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
-                <ui:Label tabindex="-1" text="Kit Bundle: " name="ConfirmKitBundle" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
-                <ui:Label tabindex="-1" text="Kit Bundle ID: " name="ConfirmKitBundleID" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
-                <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 0; font-size: 16px; color: rgb(143, 143, 143);" />
+                <ui:Label tabindex="-1" text="Build Mode: " name="ConfirmBuildMode" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
+                <ui:Label tabindex="-1" text="Scene File: " name="ConfirmSceneFile" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
+                <ui:Label tabindex="-1" text="Space: " name="ConfirmSpaceCode" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
+                <ui:Label tabindex="-1" text="Kit Bundle: " name="ConfirmKitBundle" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
+                <ui:Label tabindex="-1" text="Kit Bundle ID: " name="ConfirmKitBundleID" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
+                <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
-                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelBuild" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
-                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
-                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmBuild" style="-unity-text-align: middle-center; height: 80%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255); width: 80%; margin-top: 6px;" />
+                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelBuild" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;background-image: resource(&apos;UI/Images/icon-close&apos;);" />
+                <ui:VisualElement class="alt-pill" style="width: 150px; height: 40px; margin-left: 8px; cursor: initial; margin-top: 0; margin-bottom: 0;">
+                    <ui:Label text="CONFIRM" display-tooltip-when-elided="true" name="ConfirmBuild" class="alt-pill-label alt-pill-label-plain" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
     <ui:VisualElement name="DeleteConfirm" style="display: none; flex-grow: 1; position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);">
-        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-background-scale-mode: scale-and-crop;">
-            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 30px; margin-top: 30px;" />
-            <ui:Label tabindex="-1" text="Do you want to delete this kit?" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 18px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
+        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5;">
+            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 24px; margin-top: 30px;" />
+            <ui:Label tabindex="-1" text="Do you want to delete this kit?" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 14px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
-                <ui:Button text="Cancel" display-tooltip-when-elided="true" name="CancelDelete" style="padding-top: 9px; padding-bottom: 9px; margin-top: 10px; margin-bottom: 10px; padding-left: 25px; padding-right: 25px; -unity-font-style: normal; border-bottom-width: 1px; border-top-width: 1px; border-right-width: 1px; border-left-width: 1px; font-size: 15px;" />
-                <ui:VisualElement style="background-image: resource(&apos;UI/Images/ButtonSmall&apos;); width: 163px; height: 63px; margin-left: 0; cursor: initial; margin-top: 0; align-items: center; justify-content: flex-start; margin-bottom: 0; padding-top: 2px; padding-bottom: 2px;">
-                    <ui:Label text="Confirm" display-tooltip-when-elided="true" name="ConfirmDelete" style="-unity-text-align: middle-center; height: 80%; font-size: 15px; margin-left: 0; cursor: link; color: rgb(255, 255, 255); width: 80%; margin-top: 6px;" />
+                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelDelete" class="alt-btn-icon" style="margin-top: 8px; margin-bottom: 8px;background-image: resource(&apos;UI/Images/icon-close&apos;);" />
+                <ui:VisualElement class="alt-pill alt-pill-negative" style="width: 165px; height: 40px; margin-left: 8px; cursor: initial; margin-top: 0; margin-bottom: 0;">
+                    <ui:Label text="DELETE" display-tooltip-when-elided="true" name="ConfirmDelete" class="alt-pill-label" style="background-image: resource(&apos;UI/Images/icon-delete&apos;);" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

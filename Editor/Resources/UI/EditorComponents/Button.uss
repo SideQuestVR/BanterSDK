@@ -1,24 +1,41 @@
+/* Secondary button per the AltspaceVR style guide: flat pill, transparent
+   fill, 1px white outline. One height and one radius for every button in the
+   window - sizing lives here, not in per-button inline styles. */
 .unity-button {
-    padding: 5px;
+    height: 26px;
+    min-height: 26px;
+    max-height: 26px;
+    padding-left: 14px;
+    padding-right: 14px;
+    padding-top: 0;
+    padding-bottom: 0;
     display: flex;
     overflow: hidden;
     font-size: 12px;
     color: white;
     background-color: transparent;
     border-width: 1px;
-    border-radius: 18px;
-    border-color: white;
-    margin: 5px 12px;
+    border-radius: 13px;
+    border-color: rgba(255, 255, 255, 0.55);
+    margin: 6px 6px;
     cursor: link;
-    -unity-font-style: bold;
+    -unity-text-align: middle-center;
 }
 
 .unity-button-primary {
-    border-color: #E93392;
+    border-color: #29A2A6;
 }
-/* .unity-button:hover {
-    background-color: rgba(255,255,255,0.1);
-} */
-/* .unity-button:active {
-    background-color: rgba(255,255,255,0.3);
-} */
+
+/* Style guide: hover = 33% white wash, pressed = 11% white wash */
+.unity-button:hover {
+    background-color: rgba(255, 255, 255, 0.33);
+    border-color: #FFFFFF;
+}
+
+.unity-button:active {
+    background-color: rgba(255, 255, 255, 0.11);
+}
+
+.unity-button:disabled {
+    opacity: 0.33;
+}

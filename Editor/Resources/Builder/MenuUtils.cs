@@ -12,7 +12,7 @@ namespace Banter.SDKEditor
         // Add a menu item to create custom GameObjects.
         // Priority 10 ensures it is grouped with the other menu items of the same kind
         // and propagated to the hierarchy dropdown and hierarchy context menus.
-        [MenuItem("GameObject/Banter/BanterStarterUpper", false, 10)]
+        [MenuItem("GameObject/Altspace/BanterStarterUpper", false, 10)]
         static void CreateBanterStarterUpper(MenuCommand menuCommand)
         {
             var exists = GameObject.FindObjectOfType<BanterStarterUpper>();
@@ -32,11 +32,11 @@ namespace Banter.SDKEditor
         }
 
 #if !BANTER_EDITOR
-        [MenuItem("Banter/Uninstall SDK")]
+        [MenuItem("Altspace/Uninstall SDK")]
         static void UninstallBanter()
         {
              bool userResponse = EditorUtility.DisplayDialog(
-                "Uninstall Banter SDK",
+                "Uninstall Altspace SDK",
                 "Are you sure? This will restart the unity editor.",
                 "Affirmative",
                 "Negative");

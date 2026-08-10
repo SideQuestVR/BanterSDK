@@ -68,7 +68,7 @@ public class LoginManager
     }
     public void SetBuildButtonText()
     {
-        buildButton.text = autoUpload.value && sq.User != null ? "Build & Upload it Now!" : "Build it Now!";
+        buildButton.text = autoUpload.value && sq.User != null ? "BUILD & UPLOAD" : "BUILD";
     }
 
     public void GetCode()

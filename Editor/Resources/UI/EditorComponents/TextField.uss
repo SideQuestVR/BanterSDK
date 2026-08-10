@@ -64,5 +64,5 @@
 }
 .unity-list-view__empty-label {
     margin: 5px 12px;
-    color: #8f8f8f;
+    color: #999999;
 }

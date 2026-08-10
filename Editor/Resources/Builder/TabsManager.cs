@@ -33,10 +33,17 @@ public class TabsManager
         var avatarSection = rootVisualElement.Q<VisualElement>("AvatarSection");
         var logsSection = rootVisualElement.Q<VisualElement>("LogsSection");
 
-        if (EditorPrefs.HasKey("BanterBuilder_BanterActiveTab"))
-        {
-            activeTabName = (ActiveTab)System.Enum.Parse(typeof(ActiveTab), EditorPrefs.GetString("BanterBuilder_BanterActiveTab"));
-        }
+        // Avatar and Logs are hidden for now (Logs content moved to the bottom of
+        // the Space section), so the tab bar is not shown. Ignore any previously
+        // saved tab - restoring "Avatar" or "Logs" would scroll TabSections to an
+        // empty page the user has no way to navigate back from.
+        // To bring tabs back, restore the saved-tab read below and un-hide Nav,
+        // AvatarSection and LogsSection in BuilderWindow.uxml.
+        activeTabName = ActiveTab.Space;
+        // if (EditorPrefs.HasKey("BanterBuilder_BanterActiveTab"))
+        // {
+        //     activeTabName = (ActiveTab)System.Enum.Parse(typeof(ActiveTab), EditorPrefs.GetString("BanterBuilder_BanterActiveTab"));
+        // }
 
         spaceTab.RegisterCallback<MouseUpEvent>((e) =>
         {

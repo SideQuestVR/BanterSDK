@@ -178,18 +178,18 @@ public class BuilderWindow : EditorWindow
     FlexaPose currentFlexaPose;
 
 
-    [MenuItem("Banter/Banter Builder")]
+    [MenuItem("Altspace/Altspace Builder")]
     public static void ShowMainWindow()
     {
         Type inspectorType = Type.GetType("UnityEditor.InspectorWindow,UnityEditor.dll");
         BuilderWindow window = EditorWindow.GetWindow<BuilderWindow>(new Type[] { inspectorType });
         window.minSize = new Vector2(450, 200);
-        window.titleContent = new GUIContent("Banter Builder");
+        window.titleContent = new GUIContent("Altspace Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
     }
 
 
 #if BANTER_EDITOR
-    [MenuItem("Banter/Tools/Compile Everything")]
+    [MenuItem("Altspace/Tools/Compile Everything")]
     public static void CompileEverything()
     {
         // OnCompileAll.Invoke();
@@ -197,34 +197,34 @@ public class BuilderWindow : EditorWindow
         OnCompileInjection.Invoke();
         OnCompileElectron.Invoke();
     }
-    [MenuItem("Banter/Tools/Compile C# Components")]
+    [MenuItem("Altspace/Tools/Compile C# Components")]
     public static void CompileAllComponents()
     {
         OnCompileAll.Invoke();
     }
-    [MenuItem("Banter/Tools/Clear C# Components")]
+    [MenuItem("Altspace/Tools/Clear C# Components")]
     public static void ClearAllComponents()
     {
         OnClearAll.Invoke();
     }
-    [MenuItem("Banter/Tools/Compile Electron")]
+    [MenuItem("Altspace/Tools/Compile Electron")]
     public static void CompileElectron()
     {
         OnCompileElectron.Invoke();
     }
-    [MenuItem("Banter/Tools/Compile Injection")]
+    [MenuItem("Altspace/Tools/Compile Injection")]
     public static void CompileInjection()
     {
         OnCompileInjection.Invoke();
     }
 #else
-    [MenuItem("Banter/Tools/Setup Layers")]
+    [MenuItem("Altspace/Tools/Setup Layers")]
     public static void SetupLayersAndTags()
     {
         InitialiseOnLoad.SetupLayersAndTags();
     }
 #endif
-    [MenuItem("Banter/Tools/Toggle Dev Tools")]
+    [MenuItem("Altspace/Tools/Toggle Dev Tools")]
     public static void ToggleDevTools()
     {
         BanterStarterUpper.ToggleDevTools();
@@ -233,14 +233,14 @@ public class BuilderWindow : EditorWindow
 #if BANTER_VISUAL_SCRIPTING
 
 #if BANTER_EDITOR
-    [MenuItem("Banter/Tools/Configure Visual Scripting")]
+    [MenuItem("Altspace/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         OnVisualScript.Invoke();
     }
         //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
 #else // BANTER_EDITOR
-    [MenuItem("Banter/Tools/Configure Visual Scripting")]
+    [MenuItem("Altspace/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         VsNodeGeneration.SetVSTypesAndAssemblies();
@@ -249,7 +249,7 @@ public class BuilderWindow : EditorWindow
 #endif // BANTER_EDITOR
 
 #if BANTER_EDITOR
-    [MenuItem("Banter/Tools/Domain Reload")]
+    [MenuItem("Altspace/Tools/Domain Reload")]
     public static void DomainReload()
     {
         EditorUtility.RequestScriptReload();
@@ -328,7 +328,7 @@ public class BuilderWindow : EditorWindow
         RefreshView(); 
     }
 
-    [MenuItem("Banter/Tools/Clear All Asset Bundles")]
+    [MenuItem("Altspace/Tools/Clear All Asset Bundles")]
     public static void ClearAllAssetBundles()
     {
         // Fetch all asset paths in the project
@@ -1119,7 +1119,7 @@ public class BuilderWindow : EditorWindow
             image.style.width = 50;
             image.style.height = 50;
             image.style.flexShrink = 0;
-            label.style.color = new Color(0.560f, 0.560f, 0.560f);
+            label.style.color = new Color(0.6f, 0.6f, 0.6f);
             label.style.textOverflow = TextOverflow.Ellipsis;
             label.style.fontSize = 16;
             label.style.unityTextAlign = TextAnchor.MiddleLeft;
@@ -1290,7 +1290,7 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadAvatar(Action callback)
     {
         Debug.Log("Uploading avatar0...");
-        // EditorUtility.DisplayProgressBar("Banter Upload", "Uploading avatar...", 0.1f);
+        // EditorUtility.DisplayProgressBar("Altspace Upload", "Uploading avatar...", 0.1f);
         var path = "AssetBundles";
         var files = Directory.GetFiles(path, "*.BEE", SearchOption.TopDirectoryOnly);
         if (files.Length == 0)
@@ -1302,13 +1302,14 @@ public class BuilderWindow : EditorWindow
             yield break;
         }
         Debug.Log("Uploading avatar..." + files[0]);
+        BeginUploadProgress(2);
         long avatarFileId = -1;
-        yield return UploadFile(Path.GetFileName(files[0]), null, fileId => avatarFileId = fileId, files[0]);
+        yield return UploadFile(Path.GetFileName(files[0]), null, fileId => avatarFileId = fileId, files[0], NextUploadStep("Uploading avatar"));
         Debug.Log("Avatar File ID: " + avatarFileId);
         if (avatarFileId == -1)
         {
             status.AddStatus("Failed to upload avatar file.");
-            EditorUtility.ClearProgressBar();
+            HideProgressBar();
             callback();
             yield break;
         }
@@ -1317,7 +1318,7 @@ public class BuilderWindow : EditorWindow
         ObjectScreenshotter.CaptureGameObject(avatarGameObject, screenpath, 512, true, 1, 31);
         Debug.Log("Uploading screenshot...");
         long screenshotfileid = -1;
-        yield return UploadFile(Path.GetFileName(screenpath), null, fileId => screenshotfileid = fileId, screenpath);
+        yield return UploadFile(Path.GetFileName(screenpath), null, fileId => screenshotfileid = fileId, screenpath, NextUploadStep("Uploading screenshot"));
         Debug.Log($"Screenshot uploaded as {screenshotfileid}");
 
         if (selectedExistingAvatar == null)
@@ -1366,19 +1367,17 @@ public class BuilderWindow : EditorWindow
                 }, selectedExistingAvatar.AvatarId, avatarFileId, avatarFileId, screenshotfileid == -1 ? 0 : screenshotfileid, avatarGameObject.name,
                 avatarIsPublicToggle.value), this);
         }
-        // EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
-        // EditorUtility.ClearProgressBar();
+        EndUploadProgress("Upload complete");
     }
 
     private IEnumerator UploadWebOnly(Action callback)
     {
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading web files...", 0.1f);
-        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
-        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+        BeginUploadProgress(3);
+        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
+        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
+        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
         callback();
-        EditorUtility.ClearProgressBar();
+        EndUploadProgress("Upload complete");
     }
     private Texture2D CopyIt(Texture2D source) {
         RenderTexture renderTex = RenderTexture.GetTemporary(
@@ -1404,23 +1403,25 @@ public class BuilderWindow : EditorWindow
     }
 
     private IEnumerator UploadKit(Action callback, bool skipUpload = false) {
-        EditorUtility.DisplayProgressBar("Banter Upload", skipUpload ? "Updating Kit details..." : "Uploading kitbundle_standalonewindows_" + GetKitName() + ".banter...", 0.1f);
         long androidFileId = 0;
         long windowsFileId = 0;
         long coverFileId = 0;
         long[] imageIds = new long[kitObjectList.Count];
+
+        // 2 bundles (unless we are only refreshing kit details) + cover + one image per item
+        BeginUploadProgress((skipUpload ? 0 : 2) + 1 + kitObjectList.Count);
+
         if(!skipUpload) {
-            yield return UploadFile("kitbundle_standalonewindows_" + GetKitName() + ".banter", null, fileId => windowsFileId = fileId);
-            EditorUtility.DisplayProgressBar("Banter Upload", "Uploading kitbundle_android_" + GetKitName() + ".banter...", 0.5f);
-            yield return UploadFile("kitbundle_android_" + GetKitName() + ".banter", null, fileId => androidFileId = fileId);
-            EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded", 0.99f);
+            yield return UploadFile("kitbundle_standalonewindows_" + GetKitName() + ".banter", null, fileId => windowsFileId = fileId, null, NextUploadStep("Uploading windows kit bundle"));
+            yield return UploadFile("kitbundle_android_" + GetKitName() + ".banter", null, fileId => androidFileId = fileId, null, NextUploadStep("Uploading android kit bundle"));
         }
 
-        yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId);
+        yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId, null, NextUploadStep("Uploading cover image"));
 
         for(int i = 0; i < kitObjectList.Count; i++) {
             // TODO this sucks - Replace with something bespoke like this: https://gist.github.com/mickdekkers/5c3c62539c057010d4497f9865060e20
-            yield return UploadFile("prefab_image.png", kitObjectList[i].texture.EncodeToPNG(), fileId => imageIds[i] = fileId);
+            var index = i;
+            yield return UploadFile("prefab_image.png", kitObjectList[i].texture.EncodeToPNG(), fileId => imageIds[index] = fileId, null, NextUploadStep("Uploading item image"));
         }
 
         string createdKitId = null;
@@ -1447,10 +1448,10 @@ public class BuilderWindow : EditorWindow
             createdKitId = kitResponse.rows[0].id;
         }, headers);
 
-        status.AddStatus("Uploaded kit to Banter Markit");
+        status.AddStatus("Uploaded kit to Altspace Markit");
         EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
         callback();
-        EditorUtility.ClearProgressBar();
+        EndUploadProgress("Upload complete");
 
     }
     private IEnumerator DeleteKit(Action callback) {
@@ -1472,7 +1473,7 @@ public class BuilderWindow : EditorWindow
                 }catch{}
                 uploadWebOnlyKit.style.display = DisplayStyle.None;
                 deleteKit.style.display = DisplayStyle.None;
-                status.AddStatus("Deleted kit from Banter Markit");
+                status.AddStatus("Deleted kit from Altspace Markit");
                 callback();
             }), this);
             
@@ -1480,22 +1481,17 @@ public class BuilderWindow : EditorWindow
     }
     private IEnumerator UploadEverything(Action callback)
     {
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploading everything...", 0.1f);
-        yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded windows.banter...", 0.5f);
-        yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded android.banter...", 0.9f);
-        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded index.html...", 0.92f);
-        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded script.js...", 0.95f);
-        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any);
-        EditorUtility.DisplayProgressBar("Banter Upload", "Uploaded bullshcript.js...", 0.99f);
+        BeginUploadProgress(5);
+        yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.banter"));
+        yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.banter"));
+        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
+        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
+        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
         callback();
-        EditorUtility.ClearProgressBar();
+        EndUploadProgress("Upload complete");
     }
 
-    private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null)
+    private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null, Action<float> onProgress = null)
     {
         var file = path == null ? (Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name) : path;
         if (File.Exists(file) || bytes != null)
@@ -1518,11 +1514,11 @@ public class BuilderWindow : EditorWindow
         {
             status.AddStatus("FAILED UPLOADING " + name);
             Debug.LogException(e);
-        });
+        }, onProgress);
         Debug.Log("Uploading1: " + file);
     }
 
-    private IEnumerator UploadFileToCommunity(string name, UploadAssetType type, UploadAssetTypePlatform platform)
+    private IEnumerator UploadFileToCommunity(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
     {
         var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
         if (File.Exists(file))
@@ -1542,7 +1538,7 @@ public class BuilderWindow : EditorWindow
         {
             status.AddStatus("FAILED UPLOADING " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
             Debug.LogException(e);
-        }, type, platform);
+        }, type, platform, onProgress);
     }
 
     public void Remove(VisualElement element)
@@ -2160,13 +2156,11 @@ public class BuilderWindow : EditorWindow
                     Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
                 }
 
-                buildProgressBar.value = 25;
                 List<string> names = new List<string>();
 
 
                 for (int i = 0; i < buildTargets.Length; i++)
                 {
-                    buildProgressBar.value += 25;
                     if (buildTargetFlags[i])
                     {
                         string newAssetBundleName = "bundle";
@@ -2217,13 +2211,9 @@ public class BuilderWindow : EditorWindow
                 {
                     EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
                 }
-                buildProgressBar.value = 100;
-                var task = new Task(async () =>
-                {
-                    await new WaitForSeconds(5);
-                    HideProgressBar();
-                });
-                task.Start();
+                // The bar is upload-only now; BuildPipeline shows Unity's own
+                // popup while building. (This used to poke the bar from a
+                // background Task, which touched UI off the main thread.)
                 if (mode == BanterBuilderBundleMode.Kit)
                 {
                     status.AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
@@ -2262,8 +2252,44 @@ public class BuilderWindow : EditorWindow
             }
         };
     }
+    // ---- in-window upload progress -------------------------------------------
+    // Building already gets Unity's own popup, so this bar is upload-only.
+    // An upload is a series of files; each file owns an equal slice of the bar
+    // and its byte-level callback fills that slice, so a large asset bundle
+    // still animates instead of sitting on one number.
+    int uploadStepIndex;
+    int uploadStepTotal;
+
+    void BeginUploadProgress(int totalSteps)
+    {
+        uploadStepIndex = 0;
+        uploadStepTotal = Mathf.Max(1, totalSteps);
+    }
+
+    Action<float> NextUploadStep(string label)
+    {
+        uploadStepIndex++;
+        var step = uploadStepIndex;
+        var title = $"{label}  ({step}/{uploadStepTotal})";
+        status.ShowProgress(title, 100f * (step - 1) / uploadStepTotal);
+        return fraction => status.ShowProgress(title,
+            100f * ((step - 1) + Mathf.Clamp01(fraction)) / uploadStepTotal);
+    }
+
+    void EndUploadProgress(string label)
+    {
+        status.ShowProgress(label, 100f);
+        EditorCoroutineUtility.StartCoroutine(HideProgressBarAfter(3f), this);
+    }
+
+    IEnumerator HideProgressBarAfter(float seconds)
+    {
+        yield return new EditorWaitForSeconds(seconds);
+        HideProgressBar();
+    }
+
     void HideProgressBar()
     {
-        buildProgressBar.style.display = DisplayStyle.None;
+        status.HideProgressBar();
     }
 }

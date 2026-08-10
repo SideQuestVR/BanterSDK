@@ -9,16 +9,15 @@ public class URPToBuiltIn : EditorWindow
     private string[] options = new string[] { "Standard", "Mobile/Diffuse" };
     private int selectedIndex = 0;
 
-    [MenuItem("Banter/Tools/URP/URPToBuiltIn")]
+    [MenuItem("Altspace/Tools/URP/URPToBuiltIn")]
     public static void OpenWindow()
     {
         URPToBuiltIn window = GetWindow<URPToBuiltIn>();
-        window.titleContent = new GUIContent("Convery URP materials to Built-In");
+        window.titleContent = new GUIContent("Convert URP materials to Built-In");
     }
 
     public void OnEnable()
     {
-        rootVisualElement.styleSheets.Add(AssetDatabase.LoadAssetAtPath<StyleSheet>("Assets/Editor/Builder/dnd.uss"));
         var container = new VisualElement();
         // var toggleContainer = new VisualElement();
 
