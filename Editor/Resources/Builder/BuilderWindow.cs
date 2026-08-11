@@ -1481,16 +1481,25 @@ public class BuilderWindow : EditorWindow
     }
     private IEnumerator UploadEverything(Action callback)
     {
-        BeginUploadProgress(5);
-        // windows.banter / android.banter carry encrypted Basis (.bee) content now, but keep the .banter
-        // name for the upload API. Missing files are skipped, so only the platforms built get uploaded.
-        yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.banter"));
-        yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.banter"));
-        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
-        callback();
-        EndUploadProgress("Upload complete");
+        // callback runs in finally so it always fires — even if an upload step throws — restoring
+        // button state and releasing the assembly-reload lock the scene build hands off (see
+        // BuildAssetBundles). A leaked lock would wedge script recompilation until an editor restart.
+        try
+        {
+            BeginUploadProgress(5);
+            // windows.banter / android.banter carry encrypted Basis (.bee) content now, but keep the .banter
+            // name for the upload API. Missing files are skipped, so only the platforms built get uploaded.
+            yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.banter"));
+            yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.banter"));
+            yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
+            yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
+            yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+            EndUploadProgress("Upload complete");
+        }
+        finally
+        {
+            callback?.Invoke();
+        }
     }
 
     private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null, Action<float> onProgress = null)
@@ -2142,118 +2151,145 @@ public class BuilderWindow : EditorWindow
         }
         ShowBuildConfirm();
         confirmCallback = async () => {
+            // Basis' scene build switches the active build target, which schedules a domain reload.
+            // That reload is deferred until this async method yields — at which point it destroys the
+            // continuation and the auto-upload coroutine before they run (build succeeds, nothing
+            // uploads, no error). Lock reloads across the scene build + upload and release only once the
+            // upload finishes (handed to its completion callback) or here on any early exit, so the
+            // reload lands after we're done. Kit builds don't switch targets, so they never lock.
+            bool reloadLockHeld = false;
+            bool lockHandedToUpload = false;
+            try
+            {
 #if BANTER_VISUAL_SCRIPTING
-            if (!ValidateVisualScripting.CheckVsNodes())
-            {
-                status.AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
-                return;
-            }
-            else
-            {
-                status.AddStatus("Visual Scripting check passed!");
-            }
-#endif
-            if (!skipUpload) {
-                status.AddStatus("Build started...");
-
-                if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
+                if (!ValidateVisualScripting.CheckVsNodes())
                 {
-                    Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
-                }
-
-                List<string> names = new List<string>();
-
-                if (mode == BanterBuilderBundleMode.Scene)
-                {
-                    // Greenfield spaces build to per-platform encrypted Basis bundles, still named
-                    // windows.banter / android.banter (SideQuest upload keys off the extension). The
-                    // runtime tells encrypted .bee content from a legacy raw AssetBundle by its header.
-#if BASIS_BUNDLE_MANAGEMENT
-                    names = await BuildSpaceBeeBundles();
-                    if (names.Count == 0)
-                    {
-                        status.AddStatus("Build failed. See the console for details.");
-                        return;
-                    }
-#else
-                    status.AddStatus("Basis packages missing, please reinstall.");
+                    status.AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
                     return;
-#endif
                 }
                 else
                 {
-                    for (int i = 0; i < buildTargets.Length; i++)
+                    status.AddStatus("Visual Scripting check passed!");
+                }
+#endif
+                if (!skipUpload) {
+                    status.AddStatus("Build started...");
+
+                    if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
                     {
-                        if (buildTargetFlags[i])
+                        Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
+                    }
+
+                    List<string> names = new List<string>();
+
+                    if (mode == BanterBuilderBundleMode.Scene)
+                    {
+                        // Greenfield spaces build to per-platform encrypted Basis bundles, still named
+                        // windows.banter / android.banter (SideQuest upload keys off the extension). The
+                        // runtime tells encrypted .bee content from a legacy raw AssetBundle by its header.
+#if BASIS_BUNDLE_MANAGEMENT
+                        EditorApplication.LockReloadAssemblies();
+                        reloadLockHeld = true;
+                        names = await BuildSpaceBeeBundles();
+                        if (names.Count == 0)
                         {
-                            string platform = buildTargets[i].ToString().ToLower();
-                            AssetBundleBuild abb = new AssetBundleBuild();
-                            string newAssetBundleName = "kitbundle_" + platform + "_" + GetKitName() + ".banter";
-                            status.AddStatus("Building: " + newAssetBundleName);
-                            abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
-                            abb.assetBundleName = newAssetBundleName;
-                            CustomSceneProcessor.isBuildingAssetBundles = true;
-                            BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
-                            CustomSceneProcessor.isBuildingAssetBundles = false;
-                            names.Add(newAssetBundleName);
-                            if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
+                            status.AddStatus("Build failed. See the console for details.");
+                            return;
+                        }
+#else
+                        status.AddStatus("Basis packages missing, please reinstall.");
+                        return;
+#endif
+                    }
+                    else
+                    {
+                        for (int i = 0; i < buildTargets.Length; i++)
+                        {
+                            if (buildTargetFlags[i])
                             {
-                                File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
+                                string platform = buildTargets[i].ToString().ToLower();
+                                AssetBundleBuild abb = new AssetBundleBuild();
+                                string newAssetBundleName = "kitbundle_" + platform + "_" + GetKitName() + ".banter";
+                                status.AddStatus("Building: " + newAssetBundleName);
+                                abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
+                                abb.assetBundleName = newAssetBundleName;
+                                CustomSceneProcessor.isBuildingAssetBundles = true;
+                                BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
+                                CustomSceneProcessor.isBuildingAssetBundles = false;
+                                names.Add(newAssetBundleName);
+                                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
+                                {
+                                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
+                                }
                             }
                         }
                     }
+
+                    if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
+                    {
+                        File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+                    }
+                    if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
+                    {
+                        File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
+                    }
+                    if (names.Count > 0 && !autoUpload.value)
+                    {
+                        EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
+                    }
+                    // The bar is upload-only now; BuildPipeline shows Unity's own
+                    // popup while building. (This used to poke the bar from a
+                    // background Task, which touched UI off the main thread.)
+                    if (mode == BanterBuilderBundleMode.Kit)
+                    {
+                        status.AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
+                        File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
+                    }
+                    status.AddStatus("Build finished.");
                 }
 
-                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
+                if (autoUpload.value && sq.User != null)
                 {
-                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+                    if (mode == BanterBuilderBundleMode.Scene) {
+                        if (string.IsNullOrEmpty(spaceSlug.text)) {
+                            status.AddStatus("No space slug provided, please enter a slug to upload.");
+                            return;
+                        }
+                        uploadWebOnly.SetEnabled(false);
+                        uploadEverything.SetEnabled(false);
+                        // Hand the reload lock to the upload: it releases in UploadEverything's callback
+                        // (which always fires, even on failure), so the deferred reload lands only after
+                        // the upload is done rather than mid-flight.
+                        bool unlockAfterUpload = reloadLockHeld;
+                        lockHandedToUpload = reloadLockHeld;
+                        EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+                        {
+                            status.AddStatus("Upload complete.");
+                            uploadWebOnly.SetEnabled(true);
+                            uploadEverything.SetEnabled(true);
+                            if (unlockAfterUpload) EditorApplication.UnlockReloadAssemblies();
+                        }), this);
+                    } else {
+                        if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1) {
+                            status.AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
+                            return;
+                        }
+                        uploadEverythingKit.SetEnabled(false);
+                        EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
+                        {
+                            status.AddStatus("Upload complete.");
+                            uploadEverythingKit.SetEnabled(true);
+                        }, skipUpload), this);
+                    }
                 }
-                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
-                {
-                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
-                }
-                if (names.Count > 0 && !autoUpload.value)
-                {
-                    EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
-                }
-                // The bar is upload-only now; BuildPipeline shows Unity's own
-                // popup while building. (This used to poke the bar from a
-                // background Task, which touched UI off the main thread.)
-                if (mode == BanterBuilderBundleMode.Kit)
-                {
-                    status.AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
-                    File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
-                }
-                status.AddStatus("Build finished.");
             }
-
-            if (autoUpload.value && sq.User != null)
+            finally
             {
-                if (mode == BanterBuilderBundleMode.Scene) {
-                    if (string.IsNullOrEmpty(spaceSlug.text)) {
-                        status.AddStatus("No space slug provided, please enter a slug to upload.");
-                        return;
-                    }
-                    uploadWebOnly.SetEnabled(false);
-                    uploadEverything.SetEnabled(false);
-                    EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
-                    {
-                        status.AddStatus("Upload complete.");
-                        uploadWebOnly.SetEnabled(true);
-                        uploadEverything.SetEnabled(true);
-                    }), this);
-                } else {
-                    if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1) {
-                        status.AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
-                        return;
-                    }
-                    uploadEverythingKit.SetEnabled(false);
-                    EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
-                    {
-                        status.AddStatus("Upload complete.");
-                        uploadEverythingKit.SetEnabled(true);
-                    }, skipUpload), this);
-                }
+                // Safety net: if we locked reloads but never handed the unlock to an upload coroutine
+                // (early return, no upload, or an exception), release it here so reloads never stay
+                // locked (which would otherwise wedge script recompilation until an editor restart).
+                if (reloadLockHeld && !lockHandedToUpload)
+                    EditorApplication.UnlockReloadAssemblies();
             }
         };
     }
