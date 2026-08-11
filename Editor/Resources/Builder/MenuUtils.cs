@@ -47,21 +47,21 @@ namespace Banter.SDKEditor
             {
                 
             }
-            if(Directory.Exists("Packages/com.basis.bundlemanagement"))
+            // Keep this list in sync with InitialiseOnLoad.BasisPackages (the set the installer extracts).
+            string[] embeddedPackages = new string[]
             {
-                Directory.Delete("Packages/com.basis.bundlemanagement", true);
-            }
-            if(Directory.Exists("Packages/com.basis.sdk"))
+                "com.basis.common",
+                "com.basis.sdk",
+                "com.basis.bundlemanagement",
+                "com.sidequest.thirdparty.bouncycastle",
+                "com.sidequest.ora",
+            };
+            foreach (string packageName in embeddedPackages)
             {
-                Directory.Delete("Packages/com.basis.sdk", true);
-            }
-            if(Directory.Exists("Packages/com.basis.odinserializer"))
-            {
-                Directory.Delete("Packages/com.basis.odinserializer", true);
-            }
-            if (Directory.Exists("Packages/com.sidequest.ora"))
-            {
-                Directory.Delete("Packages/com.sidequest.ora", true);
+                if (Directory.Exists("Packages/" + packageName))
+                {
+                    Directory.Delete("Packages/" + packageName, true);
+                }
             }
             EditUtils.RemoveCompileDefine("BANTER_ORA", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });
             EditUtils.RemoveCompileDefine("BASIS_BUNDLE_MANAGEMENT", new BuildTargetGroup[] { BuildTargetGroup.Android, BuildTargetGroup.Standalone });

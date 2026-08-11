@@ -2093,7 +2093,10 @@ public class BuilderWindow : EditorWindow
                 BuildTarget.Android,
                 BuildTarget.StandaloneWindows,
             };
-            await BasisBundleBuild.GameObjectBundleBuild(basisProp, buildTargets, true, sq.User.UserId + "42069"); // lol this isn't final
+            // TODO(greenfield): Phase-2 builder rework — replace userId+"42069" with the single greenfield key
+            // and drop the SideQuest CDN upload. Signature adapted to upstream Basis (leading Image arg, tuple return);
+            // BasisProp kept intentionally (no far-LOD / no glTF fallback in Greenfield).
+            await BasisBundleBuild.GameObjectBundleBuild("", basisProp, buildTargets, true, sq.User.UserId + "42069");
             var path = "AssetBundles";
             var files = Directory.GetFiles(path, "*.txt", SearchOption.TopDirectoryOnly);
             foreach (var file in files)

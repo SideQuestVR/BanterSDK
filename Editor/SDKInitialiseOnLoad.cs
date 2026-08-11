@@ -50,12 +50,14 @@ namespace Banter.SDKEditor
         }
         static void SetApiCompatibilityLevel()
         {
+            // Upstream Basis targets .NET Standard 2.1 (ApiCompatibilityLevel.NET_Standard). The old
+            // Banter fork ran on NET_Unity_4_8; forcing that here would break the upstream packages.
             var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
-            if (level == ApiCompatibilityLevel.NET_Unity_4_8)
+            if (level == ApiCompatibilityLevel.NET_Standard)
             {
                 return;
             }
-            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
+            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Standard);
         }
 //         static void CreateUninstaller()
 //         {
@@ -151,7 +153,6 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
-            ProjectPrefs.DeleteKey("hasAlreadyAttemptedOra");
             if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?  (Required)", "OK", "Cancel"))
             {
                 return;
@@ -180,18 +181,42 @@ namespace Banter.SDKEditor
             AssetDatabase.Refresh();   
             AddScriptDefine("BANTER_ORA");
         }
+        // The Basis packages (and BouncyCastle, which Basis' bundle encryption needs) are shipped as
+        // zips under BasisPackages/ and extracted into the consumer's Packages/ folder as embedded
+        // (file:) packages. Upstream Basis pulls these via VRChat's VPM, which Greenfield doesn't use,
+        // so we vendor and extract them directly. Registry-resolvable deps (glTFast, Animation Rigging,
+        // URP, Addressables, Mathematics, ...) are declared in package.json instead and resolve
+        // automatically — they don't belong here.
+        static readonly string[] BasisPackages = new string[]
+        {
+            "com.basis.common",
+            "com.basis.sdk",
+            "com.basis.bundlemanagement",
+            "com.sidequest.thirdparty.bouncycastle",
+        };
+
         static void ImportBasisPackages()
         {
-            if (Directory.Exists("Packages/com.basis.bundlemanagement") &&
-               Directory.Exists("Packages/com.basis.sdk") &&
-               Directory.Exists("Packages/com.basis.odinserializer"))
+            bool allPresent = true;
+            foreach (string packageName in BasisPackages)
+            {
+                if (!Directory.Exists("Packages/" + packageName))
+                {
+                    allPresent = false;
+                    break;
+                }
+            }
+            if (allPresent)
             {
 #if !BASIS_BUNDLE_MANAGEMENT
                 AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
 #endif
                 return;
             }
-            ProjectPrefs.DeleteKey("hasAlreadyAttemptedBasis");
+            // NB: don't touch ProjectPrefs here — it lazily creates/loads an .asset via AssetDatabase,
+            // which NREs when this [InitializeOnLoad] static ctor runs during a fresh project's first
+            // import (the DB isn't ready yet). The old hasAlreadyAttempted* keys were write-only dead
+            // code anyway.
             if (!EditorUtility.DisplayDialog("Install Basis", "Install the Basis packages? (Required)", "OK", "Cancel"))
             {
                 return;
@@ -199,12 +224,7 @@ namespace Banter.SDKEditor
             string projectRoot = Directory.GetParent(Application.dataPath).FullName;
             string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
 
-            string[] packages = new string[]
-            {
-                "com.basis.bundlemanagement",
-                "com.basis.sdk",
-                "com.basis.odinserializer"
-            };
+            string[] packages = BasisPackages;
 
             foreach (string packageName in packages)
             {

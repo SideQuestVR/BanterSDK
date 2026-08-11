@@ -15,7 +15,10 @@
     "com.unity.xr.legacyinputhelpers": "1.4.4",
     "com.unity.xr.management": "4.2.0",
     "com.unity.xr.openxr": "1.8.2",
-    "com.unity.burst": "1.8.26"
+    "com.unity.burst": "1.8.26",
+    "com.unity.render-pipelines.universal": "17.4.0",
+    "com.unity.cloud.gltfast": "6.14.1",
+    "com.unity.animation.rigging": "1.4.1"
   },
   "keywords": [
     "world-building",

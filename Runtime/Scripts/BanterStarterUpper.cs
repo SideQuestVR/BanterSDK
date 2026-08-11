@@ -61,7 +61,7 @@ namespace Banter.SDK
 
 #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
-            BasisLoadHandler.OnGameStart();
+            _ = BasisLoadHandler.EnsureInitializationComplete();
 #endif
             if (!initialized)
             {

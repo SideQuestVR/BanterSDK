@@ -17,8 +17,10 @@ namespace Banter.SDK
                     return gameObject.AddComponent<BanterAttachedObject>();
                 case ComponentType.BanterAudioSource:
                     return gameObject.AddComponent<BanterAudioSource>();
-                case ComponentType.BanterAvatarPedestal:
-                    return gameObject.AddComponent<BanterAvatarPedestal>();
+                // BanterAvatarPedestal disabled for Greenfield Basis migration (component tilde'd out).
+                // Enum member kept for ComponentType ordinal/protocol stability.
+                // case ComponentType.BanterAvatarPedestal:
+                //     return gameObject.AddComponent<BanterAvatarPedestal>();
                 case ComponentType.BanterBillboard:
                     return gameObject.AddComponent<BanterBillboard>();
                 case ComponentType.BanterBox:
