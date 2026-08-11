@@ -1,12 +1,12 @@
 {
-  "name": "com.sidequest.banter",
+  "name": "com.sidequest.creator-sdk",
   "version": "3.2.1",
-  "displayName": "Banter SDK",
-  "description": "This Module contains the Banter SDK used for building spaces in the bantaverse.",
-  "unity": "2022.3",
-  "unityRelease": "39f1",
+  "displayName": "SideQuest Creator SDK",
+  "description": "This Module contains the SideQuest Creator SDK used for building spaces in the bantaverse.",
+  "unity": "6000.4",
+  "unityRelease": "4f1",
   "hideInEditor": false,
-  "documentationUrl": "https://bantervr.com/documentation",
+  "documentationUrl": "https://sidequestvr.com/",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.textmeshpro": "3.0.9",
@@ -31,13 +31,13 @@
   ],
   "author": {
     "name": "SideQuest",
-    "url": "https://bantervr.com",
-    "email": "banter@sidequestvr.com"
+    "url": "https://sidequestvr.com",
+    "email": "socialsdk@sidequestvr.com"
   },
   "samples": [
     {
       "displayName": "Basics",
-      "description": "Learn how to use Banter components in your spaces! Contains many worlds to explore.\n\n1. Basics: Learn how to build Banter spaces.\n2. Gadgets: Fun tools to add to your world!\n3. Gravity Maze: An example space that manipulates gravity.\n4. Networking: Learn how to use Banter networking components.\n5. AI Builder: Generate dynamic images and models in Banter!",
+      "description": "Learn how to use SideQuest Creator components in your worlds! \n\n1. Basics: Learn how to build worlds.\n2. Gadgets: Fun tools to add to your world!\n3. Gravity Maze: An example space that manipulates gravity.\n4. Networking: Learn how to use networking components.",
       "path": "Samples~/GettingStarted"
     },
     {
