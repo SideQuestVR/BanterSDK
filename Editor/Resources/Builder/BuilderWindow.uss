@@ -9,12 +9,6 @@
    .unity-label. The text-colour rules below therefore need both !important and
    a higher specificity (.unity-label.alt-*) to win - a bare .alt-muted loses. */
 
-/* Varela Round is the AltspaceVR UI face. Single weight by design - the guide
-   builds hierarchy from size and colour only, never from bold. */
-:root {
-    -unity-font-definition: resource('UI/Fonts/VarelaRound-Regular');
-}
-
 VisualElement {}
 
 .unity-label.alt-link,
