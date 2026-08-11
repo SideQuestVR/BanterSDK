@@ -2285,22 +2285,11 @@ public class BuilderWindow : EditorWindow
             return produced;
         }
 
-        // Open the target scene, remembering what was open so we can restore it. Modified scenes were
-        // already saved by the confirm gate (SaveCurrentModifiedScenesIfUserWantsTo) before we got here.
+        // Remember what was open so we can restore it. Modified scenes were already saved by the confirm
+        // gate (SaveCurrentModifiedScenesIfUserWantsTo) before we got here.
         string previouslyOpen = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
         bool reopenNeeded = previouslyOpen != scenePath;
-        UnityEngine.SceneManagement.Scene scene = reopenNeeded
-            ? EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single)
-            : UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-
-        // Throwaway BasisContentBase on its own root — SceneBundleBuild needs one to derive the scene
-        // and bundle description. CustomSceneProcessor strips it from the shipped copy.
-        var markerGo = new GameObject(CustomSceneProcessor.SceneBeeBuildMarkerName);
-        var marker = markerGo.AddComponent<BasisProp>();
-        marker.BasisBundleDescription = new BasisBundleDescription
-        {
-            AssetBundleName = string.IsNullOrEmpty(spaceSlug.text) ? "GreenfieldSpace" : spaceSlug.text,
-        };
+        string descriptionName = string.IsNullOrEmpty(spaceSlug.text) ? "GreenfieldSpace" : spaceSlug.text;
 
         string scratch = Path.Combine(Path.GetTempPath(), "GreenfieldSpaceBee");
         string prevDir = settings.AssetBundleDirectory;
@@ -2316,6 +2305,17 @@ public class BuilderWindow : EditorWindow
                 // SideQuest upload API keys off that extension. The runtime tells the two apart by content.
                 string outName = (target == BuildTarget.Android ? "android" : "windows") + ".banter";
                 status.AddStatus("Building: " + outName);
+
+                // Reopen the scene fresh for every platform. SceneBundleBuild renames/reloads the scene
+                // asset during the build and CustomSceneProcessor strips our marker from it, so any
+                // GameObject reference held across a build goes stale (MissingReferenceException). Acquire
+                // the marker anew each time from a freshly loaded scene. SceneBundleBuild needs a
+                // BasisContentBase in the scene to derive the scene + bundle description from.
+                EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+                GameObject markerGo = GameObject.Find(CustomSceneProcessor.SceneBeeBuildMarkerName)
+                                      ?? new GameObject(CustomSceneProcessor.SceneBeeBuildMarkerName);
+                BasisProp marker = markerGo.GetComponent<BasisProp>() ?? markerGo.AddComponent<BasisProp>();
+                marker.BasisBundleDescription = new BasisBundleDescription { AssetBundleName = descriptionName };
 
                 // Fresh scratch per platform so the single .bee produced is unambiguous, and Basis'
                 // password sidecar / staging litter never reaches WebRoot.
@@ -2373,12 +2373,15 @@ public class BuilderWindow : EditorWindow
             settings.OpenFolderOnDisc = prevOpen;
             if (Directory.Exists(scratch)) { try { Directory.Delete(scratch, true); } catch { /* scratch tidy-up only */ } }
 
-            // SceneBundleBuild saved the scene with the marker in it — strip it and persist the clean scene.
-            if (markerGo != null) DestroyImmediate(markerGo);
-            if (scene.IsValid())
+            // The builds saved the marker into the scene asset — reopen, strip it, and persist a clean
+            // scene, then restore whatever the user had open.
+            UnityEngine.SceneManagement.Scene cleanup = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            GameObject leftover = GameObject.Find(CustomSceneProcessor.SceneBeeBuildMarkerName);
+            if (leftover != null)
             {
-                EditorSceneManager.MarkSceneDirty(scene);
-                EditorSceneManager.SaveScene(scene);
+                DestroyImmediate(leftover);
+                EditorSceneManager.MarkSceneDirty(cleanup);
+                EditorSceneManager.SaveScene(cleanup);
             }
             if (reopenNeeded && !string.IsNullOrEmpty(previouslyOpen))
                 EditorSceneManager.OpenScene(previouslyOpen, OpenSceneMode.Single);
