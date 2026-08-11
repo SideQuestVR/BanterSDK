@@ -178,16 +178,32 @@ namespace Banter.SDK
         }
 
 
-        // Encrypted .bee bundles decrypt through Basis; raw (.banter / anything else) download as-is.
-        // The URL is already resolved to a concrete file (the .bee-then-.banter probe happens in the
-        // injection JS before the URL reaches us), so we branch purely on the extension we're handed.
+        // Space scene bundles may be Basis-encrypted (.bee content) or a legacy raw AssetBundle — both
+        // hosted under the same ".banter" name, because the SideQuest upload API keys off that extension.
+        // So we can't branch on the URL; we branch on content. A raw Unity bundle begins with the ASCII
+        // "Unity" signature ("UnityFS"/"UnityWeb"/...); a .bee begins with an encrypted length header. Peek
+        // the first bytes (a small ranged request) and route accordingly, falling back to raw if unsure.
+        // Only scene bundles are ever encrypted — kits and other bundles are always raw, so skip the peek.
         private async Task<AssetBundle> LoadPlatformBundle(string url, Action<float> progress = null)
         {
 #if BASIS_BUNDLE_MANAGEMENT
-            if (!string.IsNullOrEmpty(url) && url.EndsWith(".bee", StringComparison.OrdinalIgnoreCase))
-                return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress);
+            if (isScene && !string.IsNullOrEmpty(url))
+            {
+                byte[] head = await Get.PeekHeader(url, 8);
+                if (head != null && !LooksLikeUnityBundle(head))
+                    return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress);
+            }
 #endif
             return await Get.AssetBundle(url, progress);
+        }
+
+        // Unity AssetBundle files begin with an ASCII signature: "UnityFS" (current), also
+        // "UnityWeb"/"UnityRaw"/"UnityArchive". A Basis .bee never starts with "Unity".
+        private static bool LooksLikeUnityBundle(byte[] head)
+        {
+            return head.Length >= 5
+                && head[0] == (byte)'U' && head[1] == (byte)'n' && head[2] == (byte)'i'
+                && head[3] == (byte)'t' && head[4] == (byte)'y';
         }
 
         private async Task SetupSceneBundle()

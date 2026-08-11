@@ -1482,10 +1482,10 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadEverything(Action callback)
     {
         BeginUploadProgress(5);
-        // Spaces now ship as per-platform encrypted Basis .bee bundles. Missing files are skipped, so
-        // only the platforms actually built get uploaded. (.banter still loads for already-hosted spaces.)
-        yield return UploadFileToCommunity("windows.bee", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.bee"));
-        yield return UploadFileToCommunity("android.bee", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.bee"));
+        // windows.banter / android.banter carry encrypted Basis (.bee) content now, but keep the .banter
+        // name for the upload API. Missing files are skipped, so only the platforms built get uploaded.
+        yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.banter"));
+        yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.banter"));
         yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
         yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
         yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
@@ -2165,9 +2165,9 @@ public class BuilderWindow : EditorWindow
 
                 if (mode == BanterBuilderBundleMode.Scene)
                 {
-                    // Greenfield spaces build to per-platform encrypted Basis .bee bundles
-                    // (windows.bee / android.bee) instead of raw renamed AssetBundles (.banter).
-                    // The runtime loader still falls back to .banter for already-hosted spaces.
+                    // Greenfield spaces build to per-platform encrypted Basis bundles, still named
+                    // windows.banter / android.banter (SideQuest upload keys off the extension). The
+                    // runtime tells encrypted .bee content from a legacy raw AssetBundle by its header.
 #if BASIS_BUNDLE_MANAGEMENT
                     names = await BuildSpaceBeeBundles();
                     if (names.Count == 0)
@@ -2259,9 +2259,11 @@ public class BuilderWindow : EditorWindow
     }
 #if BASIS_BUNDLE_MANAGEMENT
     /// <summary>
-    /// Builds the selected scene into per-platform encrypted Basis <c>.bee</c> bundles
-    /// (<c>windows.bee</c> / <c>android.bee</c>) in WebRoot via Basis' <c>SceneBundleBuild</c>, using
-    /// the shared Greenfield key. Replaces the legacy raw-AssetBundle <c>.banter</c> scene build.
+    /// Builds the selected scene into per-platform encrypted Basis bundles, written to WebRoot as
+    /// <c>windows.banter</c> / <c>android.banter</c> (the SideQuest upload API keys off that extension,
+    /// so the encrypted <c>.bee</c> content keeps the <c>.banter</c> name; the runtime distinguishes the
+    /// two by content). Built via Basis' <c>SceneBundleBuild</c> using the shared Greenfield key,
+    /// replacing the legacy raw-AssetBundle scene build.
     ///
     /// <c>SceneBundleBuild</c> bundles the *open* scene (it derives the scene from a
     /// <see cref="BasisContentBase"/> in it), whereas the builder tracks a scene *asset path* — so we
@@ -2310,7 +2312,9 @@ public class BuilderWindow : EditorWindow
             {
                 if (!buildTargetFlags[i]) continue;
                 BuildTarget target = buildTargets[i];
-                string outName = (target == BuildTarget.Android ? "android" : "windows") + ".bee";
+                // Encrypted Basis (.bee) content, but hosted under the legacy ".banter" name — the
+                // SideQuest upload API keys off that extension. The runtime tells the two apart by content.
+                string outName = (target == BuildTarget.Android ? "android" : "windows") + ".banter";
                 status.AddStatus("Building: " + outName);
 
                 // Fresh scratch per platform so the single .bee produced is unambiguous, and Basis'

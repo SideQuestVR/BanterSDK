@@ -322,6 +322,32 @@ namespace Banter.SDK
             }
         }
 
+        /// <summary>
+        /// Fetches the first <paramref name="count"/> bytes of <paramref name="url"/> via an HTTP Range
+        /// request — used to sniff a bundle's format (raw Unity AssetBundle vs encrypted Basis .bee)
+        /// without pulling the whole file. Returns null on failure. Assumes the host honours Range (the
+        /// SideQuest CDN does — Basis' own connector prefetch relies on it); a host that ignores it would
+        /// return the full body, which we still slice down to the header.
+        /// </summary>
+        public static async Task<byte[]> PeekHeader(string url, int count)
+        {
+            using (UnityWebRequest uwr = UnityWebRequest.Get(url))
+            {
+                uwr.SetRequestHeader("Range", "bytes=0-" + (count - 1));
+                await uwr.SendWebRequest();
+                if (uwr.result != UnityWebRequest.Result.Success)
+                    return null;
+                byte[] data = uwr.downloadHandler.data;
+                if (data == null || data.Length == 0)
+                    return null;
+                if (data.Length <= count)
+                    return data;
+                byte[] head = new byte[count];
+                Array.Copy(data, head, count);
+                return head;
+            }
+        }
+
 #if BASIS_BUNDLE_MANAGEMENT
         /// <summary>
         /// Downloads (or reads from disk), decrypts and loads an encrypted Basis <c>.bee</c> bundle,
