@@ -18,7 +18,12 @@ class CustomSceneProcessor : IProcessSceneWithReport
     public void OnProcessScene(UnityEngine.SceneManagement.Scene scene, BuildReport report)
     {
 #if !BANTER_EDITOR
-        if (isBuildingAssetBundles)
+        // Strip any authoring-time BanterStarterUpper from every space bundle — raw AND .bee. It's
+        // re-added at runtime by the bootstrap; if one ships in the bundle its Awake fires on scene load
+        // and sets up a second, broken browser link (BanterPipe.Start NRE), killing scene JS and space
+        // navigation. This used to only run for raw builds (isBuildingAssetBundles), so .bee scenes
+        // shipped it and broke — hence the same scene loading fine as a raw AssetBundle but not as a .bee.
+        if (isBuildingAssetBundles || isBuildingSceneBee)
         {
             LogLine.Do("Removing existing BanterStarterUpper if it exists, it will be added at runtime.");
             BanterStarterUpper[] everything = GameObject.FindObjectsOfType<BanterStarterUpper>();
