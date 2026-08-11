@@ -18,7 +18,12 @@
     "com.unity.burst": "1.8.26",
     "com.unity.render-pipelines.universal": "17.4.0",
     "com.unity.cloud.gltfast": "6.14.1",
-    "com.unity.animation.rigging": "1.4.1"
+    "com.unity.animation.rigging": "1.4.1",
+    "com.basis.bundlemanagement": "0.0.1",
+    "com.basis.common": "0.0.1",
+    "com.basis.sdk": "0.0.1",
+    "com.sidequest.ora": "0.0.2",
+    "com.sidequest.thirdparty.bouncycastle": "2.5.0"
   },
   "keywords": [
     "world-building",
@@ -26,8 +31,8 @@
   ],
   "author": {
     "name": "SideQuest",
-    "email": "banter@sidequestvr.com",
-    "url": "https://bantervr.com"
+    "url": "https://bantervr.com",
+    "email": "banter@sidequestvr.com"
   },
   "samples": [
     {
