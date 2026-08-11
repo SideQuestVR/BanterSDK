@@ -322,6 +322,41 @@ namespace Banter.SDK
             }
         }
 
+#if BASIS_BUNDLE_MANAGEMENT
+        /// <summary>
+        /// Downloads (or reads from disk), decrypts and loads an encrypted Basis <c>.bee</c> bundle,
+        /// returning a plain <see cref="AssetBundle"/> the caller owns and unloads — the encrypted
+        /// counterpart to <see cref="AssetBundle(string, Action{float})"/>.
+        ///
+        /// Reuses Basis' full download/cache/decrypt/section-split pipeline via
+        /// <c>BasisBeeManagement.HandleBundleAndMetaLoading</c>, but with an unregistered wrapper: that
+        /// method only fills <c>wrapper.AssetBundle</c>, it never touches Basis' LoadedBundles registry
+        /// or scene-unload bookkeeping (those live in the LoadSceneBundle callers we deliberately skip).
+        /// So the bundle's lifecycle is ours, exactly like the raw <c>.banter</c> path — Basis just does
+        /// the crypto and disk caching. <paramref name="url"/> may be http(s) or a local path / file://.
+        /// </summary>
+        public static async Task<AssetBundle> EncryptedAssetBundle(string url, string password, Action<float> progress = null)
+        {
+            await BasisLoadHandler.EnsureInitializationComplete();
+
+            var loadable = new BasisLoadableBundle { UnlockPassword = password };
+            loadable.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = url;
+
+            var wrapper = new BasisTrackedBundleWrapper { AssetBundle = null, LoadableBundle = loadable };
+            var report = new BasisProgressReport();
+            if (progress != null)
+                report.OnProgressReport += (_, percent, __) => progress(percent / 100f);
+
+            await BasisBeeManagement.HandleBundleAndMetaLoading(
+                wrapper, report, System.Threading.CancellationToken.None);
+
+            if (wrapper.AssetBundle == null)
+                throw new Exception("Unable to decrypt/load encrypted bundle from " + url);
+
+            return wrapper.AssetBundle;
+        }
+#endif
+
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)
         {
             if (objectCache.TryGetValue(url, out Object value))

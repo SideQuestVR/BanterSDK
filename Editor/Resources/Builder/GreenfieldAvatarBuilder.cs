@@ -20,9 +20,9 @@ namespace Banter.SDKEditor
     /// </summary>
     public class GreenfieldAvatarBuilder : EditorWindow
     {
-        // Must match the key the runtime loader decrypts with (Greenfield AvatarService._greenfieldKey).
-        // TODO(greenfield): source per-bundle from the server once custom uploads land.
-        private const string DefaultEncryptionKey = "greenfield";
+        // The one shared Greenfield bundle key, centralised in the SDK so build and runtime can't
+        // drift. Seeds the editable key field below; a mismatch would fail decryption silently.
+        private const string DefaultEncryptionKey = Banter.SDK.GreenfieldBundleCrypto.Password;
 
         private const string OutputFolderPrefKey = "Greenfield_AvatarBuilder_OutputFolder";
 

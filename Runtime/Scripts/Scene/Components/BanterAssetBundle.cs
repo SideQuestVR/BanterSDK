@@ -119,7 +119,7 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.windowsUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(windowsUrl, progress: progress =>
+                assetBundle = await LoadPlatformBundle(windowsUrl, progress: progress =>
                 {
                     this.progress?.Invoke(progress);
                 });
@@ -131,7 +131,7 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.osxUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await LoadPlatformBundle(osxUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }
@@ -139,7 +139,7 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.linuxUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await LoadPlatformBundle(linuxUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }
@@ -147,7 +147,7 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.androidUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await LoadPlatformBundle(androidUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }
@@ -155,7 +155,7 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.vosUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await LoadPlatformBundle(vosUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }
@@ -163,7 +163,7 @@ namespace Banter.SDK
             if(changedProperties.Contains(PropertyName.iosUrl))
             {
                 isLoading = true;
-                assetBundle = await Get.AssetBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
+                assetBundle = await LoadPlatformBundle(iosUrl, progress: progress => this.progress?.Invoke(progress));
                 await AfterBundleLoad();
                 SetLoadedIfNot();
             }
@@ -177,6 +177,18 @@ namespace Banter.SDK
             isLoading = false;
         }
 
+
+        // Encrypted .bee bundles decrypt through Basis; raw (.banter / anything else) download as-is.
+        // The URL is already resolved to a concrete file (the .bee-then-.banter probe happens in the
+        // injection JS before the URL reaches us), so we branch purely on the extension we're handed.
+        private async Task<AssetBundle> LoadPlatformBundle(string url, Action<float> progress = null)
+        {
+#if BASIS_BUNDLE_MANAGEMENT
+            if (!string.IsNullOrEmpty(url) && url.EndsWith(".bee", StringComparison.OrdinalIgnoreCase))
+                return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress);
+#endif
+            return await Get.AssetBundle(url, progress);
+        }
 
         private async Task SetupSceneBundle()
         {

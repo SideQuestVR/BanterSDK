@@ -1482,8 +1482,10 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadEverything(Action callback)
     {
         BeginUploadProgress(5);
-        yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.banter"));
-        yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.banter"));
+        // Spaces now ship as per-platform encrypted Basis .bee bundles. Missing files are skipped, so
+        // only the platforms actually built get uploaded. (.banter still loads for already-hosted spaces.)
+        yield return UploadFileToCommunity("windows.bee", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.bee"));
+        yield return UploadFileToCommunity("android.bee", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.bee"));
         yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
         yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
         yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
@@ -2139,7 +2141,7 @@ public class BuilderWindow : EditorWindow
             return;
         }
         ShowBuildConfirm();
-        confirmCallback = () => {
+        confirmCallback = async () => {
 #if BANTER_VISUAL_SCRIPTING
             if (!ValidateVisualScripting.CheckVsNodes())
             {
@@ -2161,44 +2163,44 @@ public class BuilderWindow : EditorWindow
 
                 List<string> names = new List<string>();
 
-
-                for (int i = 0; i < buildTargets.Length; i++)
+                if (mode == BanterBuilderBundleMode.Scene)
                 {
-                    if (buildTargetFlags[i])
+                    // Greenfield spaces build to per-platform encrypted Basis .bee bundles
+                    // (windows.bee / android.bee) instead of raw renamed AssetBundles (.banter).
+                    // The runtime loader still falls back to .banter for already-hosted spaces.
+#if BASIS_BUNDLE_MANAGEMENT
+                    names = await BuildSpaceBeeBundles();
+                    if (names.Count == 0)
                     {
-                        string newAssetBundleName = "bundle";
-                        string platform = buildTargets[i].ToString().ToLower();
-                        AssetBundleBuild abb = new AssetBundleBuild();
-
-                        if (mode == BanterBuilderBundleMode.Scene)
+                        status.AddStatus("Build failed. See the console for details.");
+                        return;
+                    }
+#else
+                    status.AddStatus("Basis packages missing, please reinstall.");
+                    return;
+#endif
+                }
+                else
+                {
+                    for (int i = 0; i < buildTargets.Length; i++)
+                    {
+                        if (buildTargetFlags[i])
                         {
-                            string[] parts = scenePath.Split("/");// parts[parts.Length - 1].Split(".")[0].ToLower() + "_" +
-                            newAssetBundleName = (platform == "standalonewindows" ? "windows" : "android") + ".banter"; // + "_" + DateTime.Now.ToString("dd-MM-yyyy_hh-mm-ss")
-                            status.AddStatus("Building: " + newAssetBundleName);
-
-                            AssetImporter.GetAtPath(scenePath).SetAssetBundleNameAndVariant(newAssetBundleName, string.Empty);
-                            abb.assetNames = new[] { scenePath };
-                        }
-                        else if (mode == BanterBuilderBundleMode.Kit)
-                        {
-                            newAssetBundleName = "kitbundle_" + platform + "_" + GetKitName() + ".banter";
+                            string platform = buildTargets[i].ToString().ToLower();
+                            AssetBundleBuild abb = new AssetBundleBuild();
+                            string newAssetBundleName = "kitbundle_" + platform + "_" + GetKitName() + ".banter";
                             status.AddStatus("Building: " + newAssetBundleName);
                             abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
+                            abb.assetBundleName = newAssetBundleName;
+                            CustomSceneProcessor.isBuildingAssetBundles = true;
+                            BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
+                            CustomSceneProcessor.isBuildingAssetBundles = false;
+                            names.Add(newAssetBundleName);
+                            if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
+                            {
+                                File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
+                            }
                         }
-                        else
-                        {
-                            continue;
-                        }
-                        abb.assetBundleName = newAssetBundleName;
-                        CustomSceneProcessor.isBuildingAssetBundles = true;
-                        BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
-                        CustomSceneProcessor.isBuildingAssetBundles = false;
-                        names.Add(newAssetBundleName);
-                        if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
-                        {
-                            File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
-                        }
-
                     }
                 }
 
@@ -2255,6 +2257,135 @@ public class BuilderWindow : EditorWindow
             }
         };
     }
+#if BASIS_BUNDLE_MANAGEMENT
+    /// <summary>
+    /// Builds the selected scene into per-platform encrypted Basis <c>.bee</c> bundles
+    /// (<c>windows.bee</c> / <c>android.bee</c>) in WebRoot via Basis' <c>SceneBundleBuild</c>, using
+    /// the shared Greenfield key. Replaces the legacy raw-AssetBundle <c>.banter</c> scene build.
+    ///
+    /// <c>SceneBundleBuild</c> bundles the *open* scene (it derives the scene from a
+    /// <see cref="BasisContentBase"/> in it), whereas the builder tracks a scene *asset path* — so we
+    /// open the scene, drop in a throwaway <c>BasisProp</c> for it to hang the description off, build
+    /// each platform into a scratch dir, and lift just the <c>.bee</c> out. The marker is stripped from
+    /// the shipped copy by <see cref="CustomSceneProcessor"/> and removed from the source scene here.
+    /// Returns the produced file names (empty on failure).
+    /// </summary>
+    private async Task<List<string>> BuildSpaceBeeBundles()
+    {
+        var produced = new List<string>();
+        string webRoot = Path.Join(assetBundleRoot, assetBundleDirectory);
+
+        BasisAssetBundleObject settings =
+            AssetDatabase.LoadAssetAtPath<BasisAssetBundleObject>(BasisAssetBundleObject.AssetBundleObject);
+        if (settings == null)
+        {
+            status.AddStatus("Basis build settings asset not found. Is Basis installed?");
+            return produced;
+        }
+
+        // Open the target scene, remembering what was open so we can restore it. Modified scenes were
+        // already saved by the confirm gate (SaveCurrentModifiedScenesIfUserWantsTo) before we got here.
+        string previouslyOpen = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
+        bool reopenNeeded = previouslyOpen != scenePath;
+        UnityEngine.SceneManagement.Scene scene = reopenNeeded
+            ? EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single)
+            : UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+
+        // Throwaway BasisContentBase on its own root — SceneBundleBuild needs one to derive the scene
+        // and bundle description. CustomSceneProcessor strips it from the shipped copy.
+        var markerGo = new GameObject(CustomSceneProcessor.SceneBeeBuildMarkerName);
+        var marker = markerGo.AddComponent<BasisProp>();
+        marker.BasisBundleDescription = new BasisBundleDescription
+        {
+            AssetBundleName = string.IsNullOrEmpty(spaceSlug.text) ? "GreenfieldSpace" : spaceSlug.text,
+        };
+
+        string scratch = Path.Combine(Path.GetTempPath(), "GreenfieldSpaceBee");
+        string prevDir = settings.AssetBundleDirectory;
+        bool prevOpen = settings.OpenFolderOnDisc;
+
+        try
+        {
+            for (int i = 0; i < buildTargets.Length; i++)
+            {
+                if (!buildTargetFlags[i]) continue;
+                BuildTarget target = buildTargets[i];
+                string outName = (target == BuildTarget.Android ? "android" : "windows") + ".bee";
+                status.AddStatus("Building: " + outName);
+
+                // Fresh scratch per platform so the single .bee produced is unambiguous, and Basis'
+                // password sidecar / staging litter never reaches WebRoot.
+                if (Directory.Exists(scratch)) Directory.Delete(scratch, true);
+                Directory.CreateDirectory(scratch);
+                settings.AssetBundleDirectory = scratch;
+                settings.OpenFolderOnDisc = false;
+
+                bool ok;
+                string message;
+                CustomSceneProcessor.isBuildingSceneBee = true;
+                try
+                {
+                    (ok, message) = await BasisBundleBuild.SceneBundleBuild(
+                        Image: "",
+                        BasisContentBase: marker,
+                        Targets: new List<BuildTarget> { target },
+                        useProvidedPassword: true,
+                        OverriddenPassword: GreenfieldBundleCrypto.Password);
+                }
+                finally
+                {
+                    CustomSceneProcessor.isBuildingSceneBee = false;
+                }
+
+                if (!ok)
+                {
+                    status.AddStatus("Build failed (" + outName + "): " + message);
+                    return produced;
+                }
+
+                string bee = Directory
+                    .GetFiles(scratch, "*" + settings.BasisEncryptedExtension, SearchOption.AllDirectories)
+                    .FirstOrDefault();
+                if (string.IsNullOrEmpty(bee))
+                {
+                    status.AddStatus("Build produced no " + settings.BasisEncryptedExtension + " for " + outName + ".");
+                    return produced;
+                }
+
+                string dest = Path.Combine(webRoot, outName);
+                File.Copy(bee, dest, true);
+                produced.Add(outName);
+            }
+        }
+        catch (Exception e)
+        {
+            status.AddStatus("Space build failed: " + e.Message);
+            Debug.LogException(e);
+            produced.Clear();
+        }
+        finally
+        {
+            settings.AssetBundleDirectory = prevDir;
+            settings.OpenFolderOnDisc = prevOpen;
+            if (Directory.Exists(scratch)) { try { Directory.Delete(scratch, true); } catch { /* scratch tidy-up only */ } }
+
+            // SceneBundleBuild saved the scene with the marker in it — strip it and persist the clean scene.
+            if (markerGo != null) DestroyImmediate(markerGo);
+            if (scene.IsValid())
+            {
+                EditorSceneManager.MarkSceneDirty(scene);
+                EditorSceneManager.SaveScene(scene);
+            }
+            if (reopenNeeded && !string.IsNullOrEmpty(previouslyOpen))
+                EditorSceneManager.OpenScene(previouslyOpen, OpenSceneMode.Single);
+
+            AssetDatabase.Refresh();
+        }
+
+        return produced;
+    }
+#endif
+
     // ---- in-window upload progress -------------------------------------------
     // Building already gets Unity's own popup, so this bar is upload-only.
     // An upload is a series of files; each file owns an equal slice of the bar
