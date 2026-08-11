@@ -153,7 +153,6 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
-            ProjectPrefs.DeleteKey("hasAlreadyAttemptedOra");
             if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?  (Required)", "OK", "Cancel"))
             {
                 return;
@@ -214,7 +213,10 @@ namespace Banter.SDKEditor
 #endif
                 return;
             }
-            ProjectPrefs.DeleteKey("hasAlreadyAttemptedBasis");
+            // NB: don't touch ProjectPrefs here — it lazily creates/loads an .asset via AssetDatabase,
+            // which NREs when this [InitializeOnLoad] static ctor runs during a fresh project's first
+            // import (the DB isn't ready yet). The old hasAlreadyAttempted* keys were write-only dead
+            // code anyway.
             if (!EditorUtility.DisplayDialog("Install Basis", "Install the Basis packages? (Required)", "OK", "Cancel"))
             {
                 return;
