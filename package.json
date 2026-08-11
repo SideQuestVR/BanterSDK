@@ -1,10 +1,10 @@
 {
   "name": "com.sidequest.creator-sdk",
-  "version": "3.2.3",
+  "version": "3.2.4",
   "displayName": "SideQuest Creator SDK",
   "description": "This Module contains the SideQuest Creator SDK used for building spaces in the bantaverse.",
   "unity": "6000.3",
-  "unityRelease": "21f1",
+  "unityRelease": "10f1",
   "hideInEditor": false,
   "documentationUrl": "https://sidequestvr.com/",
   "dependencies": {
