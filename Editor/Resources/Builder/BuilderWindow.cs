@@ -2347,8 +2347,7 @@ public class BuilderWindow : EditorWindow
                 }
 
                 // Basis writes to {AssetBundleDirectory}/{MakeSafeFolderName(name)}/{guid}.BEE. Lift the
-                // newest .bee out of that exact folder into WebRoot, then delete the folder — that also
-                // removes the plaintext password sidecar Basis drops next to it.
+                // newest .bee out of that exact folder into WebRoot.
                 string beeFolder = Path.Combine(basisOutRoot, BasisBundleBuild.MakeSafeFolderName(descriptionName));
                 string bee = Directory.Exists(beeFolder)
                     ? Directory
@@ -2363,7 +2362,14 @@ public class BuilderWindow : EditorWindow
                 }
 
                 File.Copy(bee, Path.Combine(webRoot, outName), true);
-                try { Directory.Delete(beeFolder, true); } catch { /* leftover tidy-up only */ }
+                // Never leave the plaintext password sidecar Basis drops next to the .bee lying around.
+                // (Leave the .bee itself — Basis reveals this folder, so it should show the built bundle.)
+                try
+                {
+                    foreach (string sidecar in Directory.GetFiles(beeFolder, settings.ProtectedPasswordFileName + "*.txt"))
+                        File.Delete(sidecar);
+                }
+                catch { /* sidecar tidy-up only */ }
                 produced.Add(outName);
             }
         }
