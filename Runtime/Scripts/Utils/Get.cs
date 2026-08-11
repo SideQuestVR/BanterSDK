@@ -336,7 +336,10 @@ namespace Banter.SDK
                 uwr.SetRequestHeader("Range", "bytes=0-" + (count - 1));
                 await uwr.SendWebRequest();
                 if (uwr.result != UnityWebRequest.Result.Success)
+                {
+                    Debug.LogWarning($"[Greenfield/BEE] PeekHeader failed for {url}: {uwr.result} (HTTP {uwr.responseCode}) {uwr.error}");
                     return null;
+                }
                 byte[] data = uwr.downloadHandler.data;
                 if (data == null || data.Length == 0)
                     return null;

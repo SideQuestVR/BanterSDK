@@ -190,11 +190,34 @@ namespace Banter.SDK
             if (isScene && !string.IsNullOrEmpty(url))
             {
                 byte[] head = await Get.PeekHeader(url, 8);
-                if (head != null && !LooksLikeUnityBundle(head))
+                bool looksUnity = head != null && LooksLikeUnityBundle(head);
+                Debug.Log($"[Greenfield/BEE] Bundle sniff for {url}: " +
+                          (head == null
+                              ? "header peek FAILED (null) — falling back to raw AssetBundle load."
+                              : $"header=[{DescribeHeader(head)}], looksLikeUnity={looksUnity} → " +
+                                (looksUnity ? "raw AssetBundle load." : "Basis encrypted (.bee) decrypt.")));
+                if (head != null && !looksUnity)
                     return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress);
+            }
+            else
+            {
+                Debug.Log($"[Greenfield/BEE] Skipping .bee sniff (isScene={isScene}, url={(string.IsNullOrEmpty(url) ? "<empty>" : url)}) — raw AssetBundle load.");
             }
 #endif
             return await Get.AssetBundle(url, progress);
+        }
+
+        // Compact "UnityFS | 55 6E 69 74 79 46 53 00" style dump of the sniffed header for logging.
+        private static string DescribeHeader(byte[] head)
+        {
+            var ascii = new System.Text.StringBuilder(head.Length);
+            var hex = new System.Text.StringBuilder(head.Length * 3);
+            foreach (byte b in head)
+            {
+                ascii.Append(b >= 0x20 && b < 0x7F ? (char)b : '.');
+                hex.Append(b.ToString("X2")).Append(' ');
+            }
+            return ascii + " | " + hex.ToString().TrimEnd();
         }
 
         // Unity AssetBundle files begin with an ASCII signature: "UnityFS" (current), also
