@@ -2291,9 +2291,15 @@ public class BuilderWindow : EditorWindow
         bool reopenNeeded = previouslyOpen != scenePath;
         string descriptionName = string.IsNullOrEmpty(spaceSlug.text) ? "GreenfieldSpace" : spaceSlug.text;
 
-        string scratch = Path.Combine(Path.GetTempPath(), "GreenfieldSpaceBee");
-        string prevDir = settings.AssetBundleDirectory;
-        bool prevOpen = settings.OpenFolderOnDisc;
+        // We can't redirect where Basis writes the .bee: BasisSceneBuildName renames the scene asset
+        // mid-build, which reloads the Basis settings object (and in a consuming project it's a read-only
+        // package asset), so an in-memory AssetBundleDirectory override is discarded. So Basis writes to
+        // its own default ({AssetBundleDirectory}/{name}/{guid}.BEE); we read that location and lift the
+        // .bee out afterwards. AssetBundleDirectory is typically "./AssetBundles" (relative to the project).
+        string projectRoot = Path.GetDirectoryName(Application.dataPath);
+        string basisOutRoot = Path.IsPathRooted(settings.AssetBundleDirectory)
+            ? settings.AssetBundleDirectory
+            : Path.GetFullPath(Path.Combine(projectRoot, settings.AssetBundleDirectory));
 
         try
         {
@@ -2316,13 +2322,6 @@ public class BuilderWindow : EditorWindow
                                       ?? new GameObject(CustomSceneProcessor.SceneBeeBuildMarkerName);
                 BasisProp marker = markerGo.GetComponent<BasisProp>() ?? markerGo.AddComponent<BasisProp>();
                 marker.BasisBundleDescription = new BasisBundleDescription { AssetBundleName = descriptionName };
-
-                // Fresh scratch per platform so the single .bee produced is unambiguous, and Basis'
-                // password sidecar / staging litter never reaches WebRoot.
-                if (Directory.Exists(scratch)) Directory.Delete(scratch, true);
-                Directory.CreateDirectory(scratch);
-                settings.AssetBundleDirectory = scratch;
-                settings.OpenFolderOnDisc = false;
 
                 bool ok;
                 string message;
@@ -2347,17 +2346,24 @@ public class BuilderWindow : EditorWindow
                     return produced;
                 }
 
-                string bee = Directory
-                    .GetFiles(scratch, "*" + settings.BasisEncryptedExtension, SearchOption.AllDirectories)
-                    .FirstOrDefault();
+                // Basis writes to {AssetBundleDirectory}/{MakeSafeFolderName(name)}/{guid}.BEE. Lift the
+                // newest .bee out of that exact folder into WebRoot, then delete the folder — that also
+                // removes the plaintext password sidecar Basis drops next to it.
+                string beeFolder = Path.Combine(basisOutRoot, BasisBundleBuild.MakeSafeFolderName(descriptionName));
+                string bee = Directory.Exists(beeFolder)
+                    ? Directory
+                        .GetFiles(beeFolder, "*" + settings.BasisEncryptedExtension, SearchOption.TopDirectoryOnly)
+                        .OrderByDescending(File.GetLastWriteTimeUtc)
+                        .FirstOrDefault()
+                    : null;
                 if (string.IsNullOrEmpty(bee))
                 {
-                    status.AddStatus("Build produced no " + settings.BasisEncryptedExtension + " for " + outName + ".");
+                    status.AddStatus("Build produced no " + settings.BasisEncryptedExtension + " in " + beeFolder + " for " + outName + ".");
                     return produced;
                 }
 
-                string dest = Path.Combine(webRoot, outName);
-                File.Copy(bee, dest, true);
+                File.Copy(bee, Path.Combine(webRoot, outName), true);
+                try { Directory.Delete(beeFolder, true); } catch { /* leftover tidy-up only */ }
                 produced.Add(outName);
             }
         }
@@ -2369,10 +2375,6 @@ public class BuilderWindow : EditorWindow
         }
         finally
         {
-            settings.AssetBundleDirectory = prevDir;
-            settings.OpenFolderOnDisc = prevOpen;
-            if (Directory.Exists(scratch)) { try { Directory.Delete(scratch, true); } catch { /* scratch tidy-up only */ } }
-
             // The builds saved the marker into the scene asset — reopen, strip it, and persist a clean
             // scene, then restore whatever the user had open.
             UnityEngine.SceneManagement.Scene cleanup = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
