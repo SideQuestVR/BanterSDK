@@ -2321,6 +2321,36 @@ public class BuilderWindow : EditorWindow
             return produced;
         }
 
+        // Suppress Basis' post-build "reveal output folder in Explorer" popup. Basis reads
+        // OpenFolderOnDisc from whatever asset BasisAssetBundleObject.AssetBundleObject points at, and
+        // re-loads it mid-build — so an in-memory flip doesn't stick, and in a consuming project the real
+        // asset is a read-only package asset we can't edit. That path is a mutable static string, though,
+        // so we point it at a throwaway on-disk clone of the settings with OpenFolderOnDisc off. The clone
+        // is a writable Assets asset, so the value survives Basis' mid-build reload. Restored + the clone
+        // deleted in finally.
+        string origSettingsPath = BasisAssetBundleObject.AssetBundleObject;
+        string tempSettingsPath = null;
+        if (settings.OpenFolderOnDisc)
+        {
+            try
+            {
+                BasisAssetBundleObject quiet = UnityEngine.Object.Instantiate(settings);
+                quiet.OpenFolderOnDisc = false;
+                string p = "Assets/__GreenfieldSpaceBuildSettings.asset";
+                AssetDatabase.DeleteAsset(p); // clear any leftover from an interrupted build
+                AssetDatabase.CreateAsset(quiet, p);
+                BasisAssetBundleObject.AssetBundleObject = p;
+                tempSettingsPath = p;
+                settings = quiet; // use the clone's values below — the same ones Basis now reads
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Greenfield] Couldn't suppress Basis output-folder reveal; continuing: " + e.Message);
+                BasisAssetBundleObject.AssetBundleObject = origSettingsPath;
+                tempSettingsPath = null;
+            }
+        }
+
         // Remember what was open so we can restore it. Modified scenes were already saved by the confirm
         // gate (SaveCurrentModifiedScenesIfUserWantsTo) before we got here.
         string previouslyOpen = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
@@ -2417,6 +2447,11 @@ public class BuilderWindow : EditorWindow
         }
         finally
         {
+            // Restore the real Basis settings path and drop the temporary quiet-settings clone.
+            BasisAssetBundleObject.AssetBundleObject = origSettingsPath;
+            if (tempSettingsPath != null)
+                AssetDatabase.DeleteAsset(tempSettingsPath);
+
             // The builds saved the marker into the scene asset — reopen, strip it, and persist a clean
             // scene, then restore whatever the user had open.
             UnityEngine.SceneManagement.Scene cleanup = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
