@@ -40,7 +40,6 @@ namespace Banter.SDKEditor
         private Label _selectedLabel;
         private Label _validationLabel;
         private TextField _nameField;
-        private TextField _keyField;
         private Toggle _windowsToggle;
         private Toggle _androidToggle;
         private Label _outputPathLabel;
@@ -191,7 +190,15 @@ namespace Banter.SDKEditor
             var title = new Label("Avatar Build");
             title.style.fontSize = 18;
             titleRow.Add(title);
-            var reset = MakeIconButton("RESET", "UI/Images/icon-refresh", () => { _avatarGo = null; RefreshState(); SetStatus("Idle"); });
+            var reset = MakeIconButton("RESET", "UI/Images/icon-refresh", () =>
+            {
+                // Clear the name too, so the next dropped prefab re-seeds it (TrySetAvatar only fills a blank name).
+                _avatarGo = null;
+                _avatarName = "";
+                if (_nameField != null) _nameField.value = "";
+                RefreshState();
+                SetStatus("Idle");
+            });
             titleRow.Add(reset);
             card.Add(titleRow);
 
@@ -213,12 +220,6 @@ namespace Banter.SDKEditor
             _nameField = new TextField { value = _avatarName };
             _nameField.RegisterValueChangedCallback(e => { _avatarName = e.newValue; RefreshBuildEnabled(); });
             card.Add(_nameField);
-
-            // Encryption key
-            card.Add(MakeSectionLabel("Encryption Key"));
-            _keyField = new TextField { value = DefaultEncryptionKey };
-            _keyField.tooltip = "The shared Greenfield key. Must match the key the runtime loader decrypts with.";
-            card.Add(_keyField);
 
             // Build targets
             card.Add(MakeSectionLabel("Build Targets"));
@@ -404,7 +405,9 @@ namespace Banter.SDKEditor
             }
             Directory.CreateDirectory(_outputFolder);
 
-            string key = string.IsNullOrEmpty(_keyField.value) ? DefaultEncryptionKey : _keyField.value;
+            // The bundle key is the single shared Greenfield one now (centralised in GreenfieldBundleCrypto);
+            // there's no longer a per-build override field.
+            string key = DefaultEncryptionKey;
 
             // BasisProp is Greenfield's content component (no far-LOD / no glTF fallback path).
             BasisProp prop = _avatarGo.GetComponent<BasisProp>();
@@ -464,7 +467,7 @@ namespace Banter.SDKEditor
             {
                 string bundleFolder = Path.Combine(_outputFolder, BasisBundleBuild.MakeSafeFolderName(_avatarName));
                 CleanPasswordSidecar(bundleFolder, settings.ProtectedPasswordFileName);
-                SetStatus($"Built '{_avatarName}'.  Key: \"{key}\"");
+                SetStatus($"Built '{_avatarName}'.");
                 if (Directory.Exists(bundleFolder))
                     EditorUtility.RevealInFinder(bundleFolder);
             }
