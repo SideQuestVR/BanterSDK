@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Stop Speech To Text")]
     [UnitShortTitle("StopSTT")]
     [UnitCategory("Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class StopSTT : Unit
     {
         [DoNotSerialize]

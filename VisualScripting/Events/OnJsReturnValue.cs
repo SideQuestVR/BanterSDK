@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On BullSchript Callback Received")]
     [UnitShortTitle("On BS Callback")]
     [UnitCategory("Events\\Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnJsReturnValue : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

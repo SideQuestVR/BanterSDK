@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Spacing")]
     [UnitShortTitle("Get UI Spacing")]
     [UnitCategory("Banter\\UI\\Styles\\Spacing")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUISpacing : Unit
     {
         [DoNotSerialize]

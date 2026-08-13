@@ -23,20 +23,20 @@ namespace Banter.SDK
     /// <summary>
     /// Central registry for all assets in the Banter scene.
     /// Manages asset lifecycle, reference counting, and provides lookup functionality.
-    /// Singleton pattern - use BanterAssetRegistry.Instance
+    /// Singleton pattern - use BSAssetRegistry.Instance
     /// </summary>
-    public class BanterAssetRegistry : MonoBehaviour
+    public class BSAssetRegistry : MonoBehaviour
     {
-        private static BanterAssetRegistry _instance;
+        private static BSAssetRegistry _instance;
 
-        public static BanterAssetRegistry Instance
+        public static BSAssetRegistry Instance
         {
             get
             {
                 if (_instance == null)
                 {
-                    var go = new GameObject("BanterAssetRegistry");
-                    _instance = go.AddComponent<BanterAssetRegistry>();
+                    var go = new GameObject("BSAssetRegistry");
+                    _instance = go.AddComponent<BSAssetRegistry>();
                     DontDestroyOnLoad(go);
                 }
                 return _instance;

@@ -23,7 +23,7 @@ namespace Banter.SDK
     */
     [WatchComponent(typeof(MeshCollider))]
     [RequireComponent(typeof(MeshCollider))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSMeshCollider : UnityComponentBase
     {
         [See(initial = "false")][SerializeField] internal bool convex;

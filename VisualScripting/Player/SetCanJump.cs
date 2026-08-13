@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Can Jump")]
     [UnitShortTitle("Set Can Jump")]
     [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanJump : Unit
     {
         [DoNotSerialize]

@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Can Grab")]
     [UnitShortTitle("Set Can Grab")]
     [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanGrab : Unit
     {
         [DoNotSerialize]

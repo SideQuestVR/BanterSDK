@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Select File")]
     [UnitShortTitle("On Select File")]
     [UnitCategory("Events\\Banter\\Files")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSelectFile : EventUnit<CustomEventArgs>
     {
 

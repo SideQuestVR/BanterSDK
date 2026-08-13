@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(FixedJoint))]
     [RequireComponent(typeof(FixedJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSFixedJoint : UnityComponentBase
     {
         [Tooltip("The anchor point of the joint in local space.")]

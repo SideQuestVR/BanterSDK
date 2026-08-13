@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Base64 To CDN")]
     [UnitShortTitle("Base64ToCDN")]
     [UnitCategory("Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class Base64ToCDN : Unit
     {
         [DoNotSerialize]

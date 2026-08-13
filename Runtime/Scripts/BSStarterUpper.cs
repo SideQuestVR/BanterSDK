@@ -23,7 +23,7 @@ using Unity.VisualScripting;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1001)]
-    public class BanterStarterUpper : MonoBehaviour
+    public class BSStarterUpper : MonoBehaviour
     {
         [SerializeField] int numberOfRemotePlayers = 1;
         [SerializeField] Vector3 spawnPoint;
@@ -255,9 +255,9 @@ namespace Banter.SDK
 #if BANTER_ORA
         private void SetupBrowserLink(OraView view, OraManager manager)
         {
-            scene.link = gameObject.AddComponent<BanterLink>();
+            scene.link = gameObject.AddComponent<BSLink>();
             scene.link.SetupPipe(view, manager);
-            scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BanterStarterUpper)}.{nameof(SetupBrowserLink)}"));
+            scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BSStarterUpper)}.{nameof(SetupBrowserLink)}"));
         }
 #endif
         public void CancelLoading()
@@ -265,7 +265,7 @@ namespace Banter.SDK
             if (scene.HasLoadFailed())
             {
                 scene.LoadingStatus = "Couldn't load home space, loading fallback...";
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BanterStarterUpper)}.{nameof(CancelLoading)}.Failed"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BSStarterUpper)}.{nameof(CancelLoading)}.Failed"));
             }
             else
             {
@@ -275,7 +275,7 @@ namespace Banter.SDK
                     scene.LoadingStatus = "Loading canceled, falling back to lobby";
                     LogLine.Do("Taking you to your home...");
                     scene.Cancel("User cancelled loading", true);
-                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BanterStarterUpper)}.{nameof(CancelLoading)}.LoadingCanceled"));
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BSStarterUpper)}.{nameof(CancelLoading)}.LoadingCanceled"));
                 }
 
                 // The below allows canceling from outside loading screen

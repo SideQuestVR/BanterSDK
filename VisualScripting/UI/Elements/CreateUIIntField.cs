@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Int Field")]
     [UnitShortTitle("Create UI Int Field")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIIntField : Unit
     {
         [DoNotSerialize]

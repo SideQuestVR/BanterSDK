@@ -7,7 +7,7 @@ namespace Banter.SDK
 {
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1)]
-    public class BanterObjectId : MonoBehaviour
+    public class BSObjectId : MonoBehaviour
     {
         [Tooltip("A unique identifier for this object within the Banter system.")]
         public string Id;
@@ -55,7 +55,7 @@ namespace Banter.SDK
         //     }
         //     catch (Exception)
         //     {
-        //         // Debug.LogError("BanterObjectId: " + e.Message);
+        //         // Debug.LogError("BSObjectId: " + e.Message);
         //     }
         // }
 
@@ -71,7 +71,7 @@ namespace Banter.SDK
 #endif
         private bool IsDuplicateId(string id)
         {
-            var all = GameObject.FindObjectsOfType<BanterObjectId>();
+            var all = GameObject.FindObjectsOfType<BSObjectId>();
             foreach (var u in all)
                 if (u != this && u.Id == id)
                     return true;

@@ -15,7 +15,7 @@ namespace Banter.SDK
         const invertedMesh = await gameObject.AddComponent(new BS.BSInvertedMesh());
     ```
     */
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSInvertedMesh : BanterComponentBase
     {

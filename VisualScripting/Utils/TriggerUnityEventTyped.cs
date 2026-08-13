@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Trigger Visual Scripting Relay")]
     [UnitShortTitle("Trigger VS Relay")]
     [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class TriggerUnityEventTyped : Unit
     {
         [SerializeAs(nameof(dataType))]

@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Camera Snap")]
     [UnitShortTitle("On Camera Snap")]
     [UnitCategory("Events\\Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnCameraSnap : EventUnit<CustomEventArgs>
     {
 

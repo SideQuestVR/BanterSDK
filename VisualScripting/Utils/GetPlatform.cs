@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Platform")]
     [UnitShortTitle("Get Platform")]
     [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetPlatform : Unit
     {
         [DoNotSerialize]

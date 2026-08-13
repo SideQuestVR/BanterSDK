@@ -16,7 +16,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Menu Browser URL")]
     [UnitShortTitle("Menu Browser URL")]
     [UnitCategory("Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetMenuBrowserUrl : Unit
     {
         [DoNotSerialize]

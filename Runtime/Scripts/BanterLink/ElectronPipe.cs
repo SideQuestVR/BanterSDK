@@ -191,7 +191,7 @@
 //                         {
 //                             if (toSendQueue.TryDequeue(out var data))
 //                             {
-//                                 data = BanterStarterUpper.mainWWindowId > 0 ? BanterStarterUpper.mainWWindowId + MessageDelimiters.WINDOW + data: data;
+//                                 data = BSStarterUpper.mainWWindowId > 0 ? BSStarterUpper.mainWWindowId + MessageDelimiters.WINDOW + data: data;
 //                                 byte[] b = Encoding.UTF8.GetBytes(data);
 //                                 byte[] blen = BitConverter.GetBytes(b.Length);
 //                                 byte[] concat = new byte[b.Length + blen.Length];

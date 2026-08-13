@@ -17,7 +17,7 @@ namespace Banter.SDK
         Double
     }
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSMaterial : BanterComponentBase
     {
@@ -140,7 +140,7 @@ namespace Banter.SDK
                 if (!string.IsNullOrEmpty(texture) && texture.StartsWith("asset_"))
                 {
                     // It's an asset reference - look it up in the asset registry
-                    var asset = BanterAssetRegistry.Instance.GetAsset<Texture2D>(texture);
+                    var asset = BSAssetRegistry.Instance.GetAsset<Texture2D>(texture);
 
                     if (asset != null)
                     {

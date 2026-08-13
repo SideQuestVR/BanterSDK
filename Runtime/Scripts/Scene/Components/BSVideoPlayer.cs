@@ -9,7 +9,7 @@ using PropertyName = Banter.SDK.PropertyName;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
     public class BSVideoPlayer : BanterComponentBase

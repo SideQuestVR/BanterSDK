@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Label")]
     [UnitShortTitle("Create UI Label")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUILabel : Unit
     {
         [DoNotSerialize]

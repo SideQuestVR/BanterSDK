@@ -7,6 +7,6 @@ namespace Banter.SDK
     /// asset bundles and Visual Scripting graphs keep resolving. Do not use in new code.</summary>
     [Obsolete("Renamed to BSSpiral. Kept for content compatibility.")]
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterSpiral : BSSpiral { }
 }

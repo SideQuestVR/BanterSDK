@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     // [UnitTitle("Send Haptic Impulse")]
     // [UnitShortTitle("Haptics")]
     // [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SendHapticImpulse : Unit
     {
         [DoNotSerialize]

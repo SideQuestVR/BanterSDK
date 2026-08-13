@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
     public class BSGrababble : BanterComponentBase

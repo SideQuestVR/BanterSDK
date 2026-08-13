@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Text Field")]
     [UnitShortTitle("Create UI Text Field")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUITextField : Unit
     {
         [DoNotSerialize]

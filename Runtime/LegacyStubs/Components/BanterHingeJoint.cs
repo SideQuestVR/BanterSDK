@@ -8,6 +8,6 @@ namespace Banter.SDK
     [Obsolete("Renamed to BSHingeJoint. Kept for content compatibility.")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(HingeJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterHingeJoint : BSHingeJoint { }
 }

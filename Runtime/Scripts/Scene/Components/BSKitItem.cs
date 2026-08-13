@@ -9,7 +9,7 @@ using UnityEngine.Networking;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSKitItem : BanterComponentBase
     {

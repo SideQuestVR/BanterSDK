@@ -44,7 +44,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Flexbox")]
     [UnitShortTitle("Set UI Flexbox")]
     [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIFlexbox : Unit
     {
         [DoNotSerialize]

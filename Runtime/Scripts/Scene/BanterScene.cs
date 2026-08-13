@@ -82,7 +82,7 @@ namespace Banter.SDK
         public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
 
         public bool externalLoadFailed;
-        public BanterLink link;
+        public BSLink link;
         public BanterSceneEvents events;
         public BanterSceneSettings settings;
         static BanterScene _instance;
@@ -261,7 +261,7 @@ namespace Banter.SDK
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
         {
-            var interaction = obj.GetComponent<BanterPlayerEvents>();
+            var interaction = obj.GetComponent<BSPlayerEvents>();
             if (interaction != null)
             {
                 interaction.onClick.Invoke(point, normal);
@@ -619,7 +619,7 @@ namespace Banter.SDK
         #endregion
 
         #region Manage Banter Objects
-        public void AddBanterObject(GameObject gameObject, BanterObjectId banterObjectId, bool skipChangeFlush = false)
+        public void AddBanterObject(GameObject gameObject, BSObjectId banterObjectId, bool skipChangeFlush = false)
         {
             var oid = gameObject.GetInstanceID();
             if (!objects.ContainsKey(oid))
@@ -815,7 +815,7 @@ namespace Banter.SDK
         }
         public void RegisterComponentOnMainThread(GameObject go, BanterComponentBase comp)
         {
-            var obj = go.GetComponent<BanterObjectId>();
+            var obj = go.GetComponent<BSObjectId>();
             var cid = comp.GetInstanceID();
             BanterComponent banterComp = null;
             if (obj != null)
@@ -859,7 +859,7 @@ namespace Banter.SDK
         }
         public void UnregisterComponentOnMainThread(GameObject go, BanterComponentBase comp)
         {
-            var obj = go.GetComponent<BanterObjectId>();
+            var obj = go.GetComponent<BSObjectId>();
             if (obj != null)
             {
                 obj.mainThreadComponentMap.Remove(comp.GetInstanceID());
@@ -1130,7 +1130,7 @@ namespace Banter.SDK
                     {
                         if (t != banterObject.transform)
                         {
-                            t.gameObject.AddComponent<BanterObjectId>();
+                            t.gameObject.AddComponent<BSObjectId>();
                         }
                     }
                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_CRAWL);
@@ -1160,7 +1160,7 @@ namespace Banter.SDK
                     var child = banterObject.transform.Find(path);
                     if(child)
                     {
-                        child.gameObject.AddComponent<BanterObjectId>();
+                        child.gameObject.AddComponent<BSObjectId>();
                         await new WaitForEndOfFrame();
                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_OBJECT + MessageDelimiters.PRIMARY + child.gameObject.GetInstanceID());
                     }
@@ -1383,7 +1383,7 @@ namespace Banter.SDK
                         newObject = GameObject.Instantiate(gameObject);
                     }
                     
-                    var objectId = newObject.GetComponent<BanterObjectId>();
+                    var objectId = newObject.GetComponent<BSObjectId>();
                     objectId.GenerateId(true);
                     newObject.transform.parent = settings.parentTransform;
                     AddBanterObject(newObject, objectId);
@@ -1628,7 +1628,7 @@ namespace Banter.SDK
                  var gameObject = GetGameObject(oid);
                  if (gameObject != null)
                  {
-                     // Should trigger OnDestroy on BanterObjectId to clean the object up.
+                     // Should trigger OnDestroy on BSObjectId to clean the object up.
                      // Calling set active so that OnDestroy is called.
                      gameObject.SetActive(true);
                      GameObject.Destroy(GetGameObject(oid));
@@ -1893,7 +1893,7 @@ namespace Banter.SDK
                         go.transform.localRotation = rotation;
                     }
                     go.transform.localScale = new Vector3(NumberFormat.Parse(parts[16]), NumberFormat.Parse(parts[17]), NumberFormat.Parse(parts[18]));
-                    var objId = go.AddComponent<BanterObjectId>();
+                    var objId = go.AddComponent<BSObjectId>();
                     objId.jsId = parts[0];
                     AddBanterObject(go, objId, true);
                     link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));

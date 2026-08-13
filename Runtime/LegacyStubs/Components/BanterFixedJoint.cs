@@ -8,6 +8,6 @@ namespace Banter.SDK
     [Obsolete("Renamed to BSFixedJoint. Kept for content compatibility.")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(FixedJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterFixedJoint : BSFixedJoint { }
 }

@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Release")]
     [UnitShortTitle("On Release")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnRelease : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

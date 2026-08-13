@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Block Right Secondary")]
     [UnitShortTitle("Block Right Secondary")]
     [UnitCategory("Banter\\Player\\Input")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetBlockRightSecondary : Unit
     {
         [DoNotSerialize]

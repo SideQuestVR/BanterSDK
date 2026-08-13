@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Slider")]
     [UnitShortTitle("Create UI Slider")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUISlider : Unit
     {
         [DoNotSerialize]

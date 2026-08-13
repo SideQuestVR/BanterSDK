@@ -31,7 +31,7 @@ namespace Banter.SDK
         public UnityAndBanterObject attachedObject;
     }
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSAttachedObject : BanterComponentBase
     {

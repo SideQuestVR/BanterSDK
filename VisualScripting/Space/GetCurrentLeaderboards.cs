@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get the Current Leaderboard")]
     [UnitShortTitle("GetCurrentLeaderboard")]
     [UnitCategory("Banter\\Leaderboard")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetCurrentLeaderboard : Unit
     {
         [DoNotSerialize]

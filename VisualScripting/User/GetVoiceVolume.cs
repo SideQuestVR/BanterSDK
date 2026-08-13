@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get the voice volume of the Local User")]
     [UnitShortTitle("GetVoiceVolume")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetVoiceVolume : Unit
     {
         [DoNotSerialize]
@@ -19,7 +19,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             volume = ValueOutput<float>("Volume", flow => {
-                return BanterStarterUpper.voiceVolume;
+                return BSStarterUpper.voiceVolume;
             });
         }
     }

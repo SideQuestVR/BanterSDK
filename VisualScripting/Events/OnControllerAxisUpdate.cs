@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Controller Axis Update")]
     [UnitShortTitle("Axis Update")]
     [UnitCategory("Events\\Banter\\Controller")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnControllerAxisUpdate : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

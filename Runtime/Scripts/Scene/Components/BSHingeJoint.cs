@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(HingeJoint))]
     [RequireComponent(typeof(HingeJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSHingeJoint : UnityComponentBase
     {
         [Tooltip("The anchor point of the joint in local space.")]

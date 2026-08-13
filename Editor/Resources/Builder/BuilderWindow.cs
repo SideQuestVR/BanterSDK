@@ -227,7 +227,7 @@ public class BuilderWindow : EditorWindow
     [MenuItem("Altspace/Tools/Toggle Dev Tools")]
     public static void ToggleDevTools()
     {
-        BanterStarterUpper.ToggleDevTools();
+        BSStarterUpper.ToggleDevTools();
     }
 
 #if BANTER_VISUAL_SCRIPTING

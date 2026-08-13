@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(ConfigurableJoint))]
     [RequireComponent(typeof(ConfigurableJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSConfigurableJoint : UnityComponentBase
     {
         [Tooltip("The target position of the joint in world space.")]

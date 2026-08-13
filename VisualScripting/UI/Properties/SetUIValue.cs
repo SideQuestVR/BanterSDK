@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Value")]
     [UnitShortTitle("Set UI Value")]
     [UnitCategory("Banter\\UI\\Properties\\Value")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIValue : Unit
     {
         [DoNotSerialize]

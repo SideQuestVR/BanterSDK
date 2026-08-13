@@ -45,7 +45,7 @@ namespace Banter.SDK
     }
 
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSBrowser : BanterComponentBase
     {
@@ -121,7 +121,7 @@ namespace Banter.SDK
 
         internal override void StartStuff()
         {
-            if (BanterStarterUpper.SafeMode)
+            if (BSStarterUpper.SafeMode)
                 return;
 
             SetupBrowser();

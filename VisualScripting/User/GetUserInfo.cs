@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get User Info")]
     [UnitShortTitle("Get User")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserInfo : Unit
     {
         [DoNotSerialize]
@@ -54,7 +54,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Local User Info")]
     [UnitShortTitle("Get Local User")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetLocalUserInfo : Unit
     {
         [DoNotSerialize]

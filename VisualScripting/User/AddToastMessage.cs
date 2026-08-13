@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Add Toast Message")]
     [UnitShortTitle("Add Toast Message")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class AddToastMessage : Unit
     {
         [DoNotSerialize]

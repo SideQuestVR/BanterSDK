@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load Quest Home")]
     [UnitShortTitle("Load Quest Home")]
     [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadQuestHome : Unit
     {
         [DoNotSerialize]

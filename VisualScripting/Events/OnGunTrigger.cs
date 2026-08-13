@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On GunTrigger")]
     [UnitShortTitle("On GunTrigger")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnGunTrigger : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

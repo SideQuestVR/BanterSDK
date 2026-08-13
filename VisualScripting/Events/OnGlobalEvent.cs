@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Global Event")]
     [UnitShortTitle("On Global Event")]
     [UnitCategory("Events\\Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnGlobalEvent : EventUnit<CustomEventArgs>
     {
 

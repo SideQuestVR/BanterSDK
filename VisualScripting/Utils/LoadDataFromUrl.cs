@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load Texture from URL")]
     [UnitShortTitle("Load Texture")]
     [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadTextureUrl : Unit
     {
         [DoNotSerialize]
@@ -86,7 +86,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load Text from URL")]
     [UnitShortTitle("Load Text")]
     [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadTextUrl : Unit
     {
         [DoNotSerialize]
@@ -156,7 +156,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load Audio from URL")]
     [UnitShortTitle("Load Audio")]
     [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadAudioUrl : Unit
     {
         [DoNotSerialize]
@@ -223,7 +223,7 @@ namespace Banter.VisualScripting
     [UnitShortTitle("Load glTF")]
     [UnitCategory("Banter")]
     [Obsolete("Use BSGLTF Set Url")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadGltfUrl : Unit
     {
         [DoNotSerialize]

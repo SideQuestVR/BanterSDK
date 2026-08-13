@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Click")]
     [UnitShortTitle("On Click")]
     [UnitCategory("Events\\Banter\\PlayerEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

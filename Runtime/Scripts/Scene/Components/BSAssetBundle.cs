@@ -14,7 +14,7 @@ using UnityEngine.UI;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSAssetBundle : BanterComponentBase
     {
@@ -267,7 +267,7 @@ namespace Banter.SDK
                         {
                             Destroy(eventSystem);
                         }
-                        var starterUpper = transform.gameObject.GetComponent<BanterStarterUpper>();
+                        var starterUpper = transform.gameObject.GetComponent<BSStarterUpper>();
                         if (starterUpper != null)
                         {
                             Destroy(starterUpper);

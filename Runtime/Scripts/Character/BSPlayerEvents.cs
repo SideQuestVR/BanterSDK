@@ -5,7 +5,7 @@ using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class BanterPlayerEvents : MonoBehaviour
+public class BSPlayerEvents : MonoBehaviour
 {
     [Foldout("Click", true)]
     public UnityEvent<Vector3, Vector3> onClick;

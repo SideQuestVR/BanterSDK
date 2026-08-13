@@ -7,6 +7,6 @@ namespace Banter.SDK
     /// asset bundles and Visual Scripting graphs keep resolving. Do not use in new code.</summary>
     [Obsolete("Renamed to BSCapsuleCollider. Kept for content compatibility.")]
     [RequireComponent(typeof(CapsuleCollider))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterCapsuleCollider : BSCapsuleCollider { }
 }

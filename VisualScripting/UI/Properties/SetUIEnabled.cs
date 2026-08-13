@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Enabled")]
     [UnitShortTitle("Set UI Enabled")]
     [UnitCategory("Banter\\UI\\Properties\\State")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIEnabled : Unit
     {
         [DoNotSerialize]

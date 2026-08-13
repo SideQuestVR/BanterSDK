@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Border")]
     [UnitShortTitle("Set UI Border")]
     [UnitCategory("Banter\\UI\\Styles\\Border")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIBorder : Unit
     {
         [DoNotSerialize]

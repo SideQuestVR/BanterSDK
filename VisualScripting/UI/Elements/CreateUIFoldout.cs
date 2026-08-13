@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Foldout")]
     [UnitShortTitle("Create UI Foldout")]
     [UnitCategory("Banter\\UI\\Elements\\Containers")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIFoldout : Unit
     {
         [DoNotSerialize]

@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On BanterTriggerEnter Event Received")]
     [UnitShortTitle("On BanterTriggerEnter")]
     [UnitCategory("Events\\Banter\\Trigger")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnBanterTriggerEnter : TriggerEventUnit
     {
         public override Type MessageListenerType => typeof(UnityOnTriggerEnterMessageListener);

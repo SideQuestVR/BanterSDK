@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Button")]
     [UnitShortTitle("Create UI Button")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIButton : Unit
     {
         [DoNotSerialize]

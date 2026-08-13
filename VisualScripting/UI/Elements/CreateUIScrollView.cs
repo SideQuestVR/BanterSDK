@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI ScrollView")]
     [UnitShortTitle("Create UI ScrollView")]
     [UnitCategory("Banter\\UI\\Elements\\Containers")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIScrollView : Unit
     {
         [DoNotSerialize]

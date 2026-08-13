@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Destroy UI Element")]
     [UnitShortTitle("Destroy UI Element")]
     [UnitCategory("Banter\\UI\\Hierarchy")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class DestroyUIElement : Unit
     {
         [DoNotSerialize]

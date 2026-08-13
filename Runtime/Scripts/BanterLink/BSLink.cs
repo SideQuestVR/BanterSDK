@@ -19,7 +19,7 @@ using SideQuest.Ora;
 #endif
 namespace Banter.SDK
 {
-    public class BanterLink : MonoBehaviour
+    public class BSLink : MonoBehaviour
     {
         public BanterPipe pipe;
         public BanterScene scene;
@@ -38,7 +38,7 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
                     EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
 #endif
-                }, $"{nameof(BanterLink)}.{nameof(Start)}"));
+                }, $"{nameof(BSLink)}.{nameof(Start)}"));
             });
         }
 
@@ -90,7 +90,7 @@ namespace Banter.SDK
             {
                 scene.state = SceneState.NOTHING_20S;
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "No objects yet after 30 seconds...");
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => timeoutDisplay = Time.time, $"{nameof(BanterLink)}.{nameof(ParseCommand)}.NOTHING_20S"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => timeoutDisplay = Time.time, $"{nameof(BSLink)}.{nameof(ParseCommand)}.NOTHING_20S"));
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😅😬", 0, "No objects loaded yet after 20 seconds...", true);
             }
             else if (msg.StartsWith(APICommands.NOTHING))
@@ -159,7 +159,7 @@ namespace Banter.SDK
                     {
                         scene.LogMissing();
                     }
-                }, $"{nameof(BanterLink)}.{nameof(ParseCommand)}.SCENE_READY Delay");
+                }, $"{nameof(BSLink)}.{nameof(ParseCommand)}.SCENE_READY Delay");
             }
             else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
             {
@@ -183,7 +183,7 @@ namespace Banter.SDK
             }
             else if (UIElementBridge.IsUICommand(msg))
             {
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => UIElementBridge.HandleMessage(msg), $"{nameof(BanterLink)}.{nameof(ParseCommand)}.UIElementBridge.IsUICommand"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => UIElementBridge.HandleMessage(msg), $"{nameof(BSLink)}.{nameof(ParseCommand)}.UIElementBridge.IsUICommand"));
             }
             else
             {
@@ -574,7 +574,7 @@ namespace Banter.SDK
                 {
                     Debug.Log("[Banter] Unknown parse legacy message: " + msg);
                 }
-            }, $"{nameof(BanterLink)}.{nameof(ParseLegacy)}"));
+            }, $"{nameof(BSLink)}.{nameof(ParseLegacy)}"));
         }
         void Update()
         {
@@ -1075,7 +1075,7 @@ namespace Banter.SDK
             try
             {
                 string assetId = data.Trim();
-                BanterAssetRegistry.Instance.UnregisterAsset(assetId);
+                BSAssetRegistry.Instance.UnregisterAsset(assetId);
                 Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
             }
             catch (Exception ex)
@@ -1093,7 +1093,7 @@ namespace Banter.SDK
             try
             {
                 string assetId = data.Trim();
-                var metadata = BanterAssetRegistry.Instance.GetMetadata(assetId);
+                var metadata = BSAssetRegistry.Instance.GetMetadata(assetId);
 
                 if (metadata.HasValue)
                 {
@@ -1120,7 +1120,7 @@ namespace Banter.SDK
             if (string.IsNullOrEmpty(url))
             {
                 Debug.LogError($"Cannot create texture asset without URL: {assetId}");
-                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                BSAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
                 return;
             }
 
@@ -1137,15 +1137,15 @@ namespace Banter.SDK
                 }
 
                 // Register the loaded texture
-                BanterAssetRegistry.Instance.RegisterAsset(texture, AssetType.Texture2D, url, tag);
-                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+                BSAssetRegistry.Instance.RegisterAsset(texture, AssetType.Texture2D, url, tag);
+                BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
 
                 Debug.Log($"Successfully loaded texture asset: {assetId} ({texture.width}x{texture.height})");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to create texture asset {assetId}: {ex.Message}");
-                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+                BSAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
             }
         }
 
@@ -1154,7 +1154,7 @@ namespace Banter.SDK
             if (string.IsNullOrEmpty(url))
             {
                 Debug.LogError($"Cannot create audio clip asset without URL: {assetId}");
-                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                BSAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
                 return;
             }
 
@@ -1171,15 +1171,15 @@ namespace Banter.SDK
                 }
 
                 // Register the loaded audio clip
-                BanterAssetRegistry.Instance.RegisterAsset(audioClip, AssetType.AudioClip, url, tag);
-                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+                BSAssetRegistry.Instance.RegisterAsset(audioClip, AssetType.AudioClip, url, tag);
+                BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
 
                 Debug.Log($"Successfully loaded audio clip asset: {assetId} ({audioClip.length}s)");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to create audio clip asset {assetId}: {ex.Message}");
-                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+                BSAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
             }
         }
 
@@ -1189,15 +1189,15 @@ namespace Banter.SDK
             {
                 // Create a new material
                 var material = new Material(Shader.Find("Standard"));
-                BanterAssetRegistry.Instance.RegisterAsset(material, AssetType.Material, url, tag);
-                BanterAssetRegistry.Instance.MarkAssetLoaded(assetId);
+                BSAssetRegistry.Instance.RegisterAsset(material, AssetType.Material, url, tag);
+                BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
 
                 Debug.Log($"Created material asset: {assetId}");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to create material asset {assetId}: {ex.Message}");
-                BanterAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+                BSAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
             }
         }
 

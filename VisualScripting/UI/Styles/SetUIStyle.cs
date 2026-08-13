@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Style")]
     [UnitShortTitle("Set UI Style")]
     [UnitCategory("Banter\\UI\\Styles")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIStyle : Unit
     {
         [DoNotSerialize]

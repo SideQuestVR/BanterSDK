@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load UXML Asset")]
     [UnitShortTitle("Load UXML Asset")]
     [UnitCategory("Banter\\UI\\UXML")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadUXMLAsset : Unit
     {
         private const string LogPrefix = "[LoadUXMLAsset]";

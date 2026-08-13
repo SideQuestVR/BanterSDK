@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On UI Change")]
     [UnitShortTitle("On UI Change")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIChange : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

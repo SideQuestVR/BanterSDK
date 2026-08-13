@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Can Move")]
     [UnitShortTitle("Set Can Move")]
     [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanMove : Unit
     {
         [DoNotSerialize]

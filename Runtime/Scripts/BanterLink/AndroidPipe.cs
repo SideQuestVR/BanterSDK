@@ -17,7 +17,7 @@
 
 //             try
 //             {
-//                 _ = BanterStarterUpper.SetMainWindowPort(port =>
+//                 _ = BSStarterUpper.SetMainWindowPort(port =>
 //                 { 
 //                     UnityEngine.Debug.Log("BanterSocketClient gonna connect to port " + port);
 //                     if (port <= 0)
@@ -66,7 +66,7 @@
 //             if (activity != null)
 //             {
 //                 OutgoingLogger.Add();
-//                 BanterStarterUpper.browser?.SendMsg(msg);
+//                 BSStarterUpper.browser?.SendMsg(msg);
 //                 // activity.Call("sendMessage", msg);
 //             }
 //         }

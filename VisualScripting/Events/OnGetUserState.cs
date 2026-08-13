@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Get User State")]
     [UnitShortTitle("Get User State")]
     [UnitCategory("Events\\Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnGetUserState : EventUnit<CustomEventArgs>
     {
 

@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Users")]
     [UnitShortTitle("Get Users")]
     [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUsers : Unit
     {
         [DoNotSerialize]

@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Progress Bar")]
     [UnitShortTitle("Create UI Progress Bar")]
     [UnitCategory("Banter\\UI\\Elements\\Display")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIProgressBar : Unit
     {
         [DoNotSerialize]

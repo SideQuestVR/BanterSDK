@@ -17,7 +17,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Position")]
     [UnitShortTitle("Set UI Position")]
     [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIPosition : Unit
     {
         [DoNotSerialize]

@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Ai SpeechToText")]
     [UnitShortTitle("On Ai SpeechToText")]
     [UnitCategory("Events\\Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSTT : EventUnit<CustomEventArgs>
     {
 

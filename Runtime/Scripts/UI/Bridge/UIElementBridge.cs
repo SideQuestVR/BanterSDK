@@ -70,7 +70,7 @@ namespace Banter.UI.Bridge
         private Dictionary<VisualElement, string> _elementToId = new Dictionary<VisualElement, string>(); // Reverse lookup for O(1) element ID retrieval
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
         public UIDocument mainDocument;
-        public BanterLink banterLink;
+        public BSLink banterLink;
         
         // Store event callbacks for unregistration
         private Dictionary<(string elementId, UIEventType eventType), object> _registeredCallbacks = new Dictionary<(string, UIEventType), object>();
@@ -2326,7 +2326,7 @@ namespace Banter.UI.Bridge
             }
             else
             {
-                Debug.LogWarning($"[UIElementBridge] BanterLink not found, cannot send: {message}");
+                Debug.LogWarning($"[UIElementBridge] BSLink not found, cannot send: {message}");
             }
         }
         

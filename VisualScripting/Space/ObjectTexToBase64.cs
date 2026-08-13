@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("GameObject texture to Base64")]
     [UnitShortTitle("ObjectTextureToBase64")]
     [UnitCategory("Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class ObjectTexToBase64 : Unit
     {
         [DoNotSerialize]

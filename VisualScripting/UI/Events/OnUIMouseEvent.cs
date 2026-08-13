@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On UI Mouse Event")]
     [UnitShortTitle("On UI Mouse Event")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIMouseEvent : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

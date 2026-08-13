@@ -14,7 +14,7 @@ namespace Banter.SDK
         public bool kinematicIfNotOwned;
     }
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSSyncedObject : BanterComponentBase
     {
@@ -45,10 +45,10 @@ namespace Banter.SDK
             return scene.data.NSODoIOwn(synced, banterObjectId);
         }
         BanterSynced synced;
-        BanterObjectId banterObjectId;
+        BSObjectId banterObjectId;
         internal override void StartStuff()
         {
-            banterObjectId = GetComponent<BanterObjectId>();
+            banterObjectId = GetComponent<BSObjectId>();
             UpdateCallback(null);
             SetLoadedIfNot();
         }

@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Appearance")]
     [UnitShortTitle("Get UI Appearance")]
     [UnitCategory("Banter\\UI\\Styles\\Appearance")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIAppearance : Unit
     {
         [DoNotSerialize]

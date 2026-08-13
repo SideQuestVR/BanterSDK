@@ -33,11 +33,11 @@ namespace Banter.SDKEditor
         {
             if (change == PlayModeStateChange.ExitingEditMode)
             {
-                if (Object.FindObjectOfType<BanterStarterUpper>() == null)
+                if (Object.FindObjectOfType<BSStarterUpper>() == null)
                 {
-                    Debug.LogWarning("BanterStarterUpper not found, adding one.");
-                    var go = new GameObject("BanterStarterUpper");
-                    go.AddComponent<BanterStarterUpper>();
+                    Debug.LogWarning("BSStarterUpper not found, adding one.");
+                    var go = new GameObject("BSStarterUpper");
+                    go.AddComponent<BSStarterUpper>();
                 }
             }
         }

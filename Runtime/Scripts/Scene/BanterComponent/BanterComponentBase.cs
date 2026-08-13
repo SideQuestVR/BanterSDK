@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace Banter.SDK
 {
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public abstract class BanterComponentBase : MonoBehaviour
     {
         public string jsId;

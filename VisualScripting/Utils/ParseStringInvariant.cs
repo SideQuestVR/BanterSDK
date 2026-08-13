@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("String To Float Invariant Culture")]
     [UnitShortTitle("String To Float")]
     [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class ParseStringInvariant : Unit
     {
         [DoNotSerialize]

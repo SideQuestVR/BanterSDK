@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(CharacterJoint))]
     [RequireComponent(typeof(CharacterJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSCharacterJoint : UnityComponentBase
     {
         [Tooltip("The anchor point of the joint in local space.")]

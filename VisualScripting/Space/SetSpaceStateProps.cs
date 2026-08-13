@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Space State Property")]
     [UnitShortTitle("Set Space Prop")]
     [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetSpaceStateProp : Unit
     {
         [DoNotSerialize]

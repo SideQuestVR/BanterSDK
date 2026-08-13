@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Local User Language")]
     [UnitShortTitle("Get User Language")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserLanguage : Unit
     {
         [DoNotSerialize]

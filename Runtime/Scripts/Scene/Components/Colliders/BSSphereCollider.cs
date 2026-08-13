@@ -23,7 +23,7 @@ namespace Banter.SDK
     */
     [WatchComponent(typeof(SphereCollider))]
     [RequireComponent(typeof(SphereCollider))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSSphereCollider : UnityComponentBase
     {
         [See(initial = "false")][SerializeField] internal bool isTrigger;

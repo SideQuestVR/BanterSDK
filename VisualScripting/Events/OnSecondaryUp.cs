@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On SecondaryUp")]
     [UnitShortTitle("On SecondaryUp")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSecondaryUp : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

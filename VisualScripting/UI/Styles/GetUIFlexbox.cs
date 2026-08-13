@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Flexbox")]
     [UnitShortTitle("Get UI Flexbox")]
     [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIFlexbox : Unit
     {
         [DoNotSerialize]

@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Clear Scores on a Leaderboard")]
     [UnitShortTitle("ClearScores")]
     [UnitCategory("Banter\\Leaderboard")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class ClearScores : Unit
     {
         [DoNotSerialize]

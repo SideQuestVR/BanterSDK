@@ -4,10 +4,10 @@ using Banter.SDK;
 using Unity.VisualScripting;
 using UnityEngine;
 
-[RequireComponent(typeof(BanterObjectId))]
+[RequireComponent(typeof(BSObjectId))]
 public class ControllerHeldEvents : Controllable {
 
-    public BanterPlayerEvents banterEvents;
+    public BSPlayerEvents banterEvents;
     public override void OnTrigger(float input) {
         EventBus.Trigger("OnTrigger", new CustomEventArgs(gameObject.GetInstanceID().ToString(), new object[] { input, handID == HandID.Left ? HandSide.LEFT : HandSide.RIGHT }));
         banterEvents.onTrigger?.Invoke(input, handID == HandID.Left ? HandSide.LEFT : HandSide.RIGHT);

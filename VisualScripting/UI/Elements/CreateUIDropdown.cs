@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Dropdown")]
     [UnitShortTitle("Create UI Dropdown")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIDropdown : Unit
     {
         [DoNotSerialize]

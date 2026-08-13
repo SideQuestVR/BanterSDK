@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Receive Browser Message")]
     [UnitShortTitle("On Receive Browser Message")]
     [UnitCategory("Events\\Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnReceiveBrowserMessage : EventUnit<CustomEventArgs>
     {
 

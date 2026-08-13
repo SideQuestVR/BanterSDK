@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("UnEscape Url")]
     [UnitShortTitle("UnEscape Url")]
     [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class UnEscapeUrl : Unit
     {
         [DoNotSerialize]

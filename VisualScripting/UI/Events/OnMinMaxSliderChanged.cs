@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On MinMax Slider Changed")]
     [UnitShortTitle("On MinMax Slider Changed")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnMinMaxSliderChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

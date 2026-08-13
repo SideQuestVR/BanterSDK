@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Toggle")]
     [UnitShortTitle("Create UI Toggle")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIToggle : Unit
     {
         [DoNotSerialize]

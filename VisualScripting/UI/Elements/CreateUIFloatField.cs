@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Float Field")]
     [UnitShortTitle("Create UI Float Field")]
     [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIFloatField : Unit
     {
         [DoNotSerialize]

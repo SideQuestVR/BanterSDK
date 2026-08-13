@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Select file (GLB/JPG/PNG)")]
     [UnitShortTitle("SelectFile")]
     [UnitCategory("Banter\\Files")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SelectFile : Unit
     {
         [DoNotSerialize]

@@ -11,7 +11,7 @@ namespace Banter.SDK
     {
         public Func<bool> IsSpaceFavourited = () => false;
         public Func<bool> IsSpaceOwner = () => false;
-        public Func<BanterSynced, BanterObjectId, bool> NSODoIOwn = (_, _) => false;
+        public Func<BanterSynced, BSObjectId, bool> NSODoIOwn = (_, _) => false;
 
         public Action<BanterAttachment> AttachObject = _ => { };
         public Action<BanterAttachment> DetachObject = _ => { };

@@ -14,7 +14,7 @@ namespace Banter.SDK
         const events = await gameObject.AddComponent(new BS.BSColliderEvents());
     ```
     */
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSColliderEvents : BanterComponentBase
     {

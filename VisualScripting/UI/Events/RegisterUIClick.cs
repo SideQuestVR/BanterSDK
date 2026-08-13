@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Register UI Click")]
     [UnitShortTitle("Register UI Click")]
     [UnitCategory("Banter\\UI\\Events")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class RegisterUIClick : Unit
     {
         [DoNotSerialize]

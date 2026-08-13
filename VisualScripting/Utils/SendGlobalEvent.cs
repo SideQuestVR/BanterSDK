@@ -15,7 +15,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Trigger Global Event")]
     [UnitShortTitle("Trigger Global Event")]
     [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SendGlobalEvent : Unit
     {        
          [SerializeAs(nameof(argumentCount))]

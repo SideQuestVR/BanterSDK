@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On SecondaryDown")]
     [UnitShortTitle("On SecondaryDown")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSecondaryDown : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

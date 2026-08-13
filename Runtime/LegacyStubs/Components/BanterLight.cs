@@ -8,6 +8,6 @@ namespace Banter.SDK
     [Obsolete("Renamed to BSLight. Kept for content compatibility.")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(Light))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterLight : BSLight { }
 }

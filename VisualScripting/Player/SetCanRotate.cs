@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Can Rotate")]
     [UnitShortTitle("Set Can Rotate")]
     [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanRotate : Unit
     {
         [DoNotSerialize]

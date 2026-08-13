@@ -10,8 +10,8 @@ public class BanterPipe
 #if BANTER_ORA
     public OraView view;
     OraManager manager;
-    BanterLink link;
-    public BanterPipe(BanterLink link, OraView view, OraManager manager)
+    BSLink link;
+    public BanterPipe(BSLink link, OraView view, OraManager manager)
     {
         this.manager = manager;
         this.view = view;

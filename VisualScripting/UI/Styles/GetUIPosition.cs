@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Position")]
     [UnitShortTitle("Get UI Position")]
     [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIPosition : Unit
     {
         [DoNotSerialize]

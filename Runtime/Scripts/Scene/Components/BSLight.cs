@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(Light))]
     [RequireComponent(typeof(Light))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSLight : UnityComponentBase
     {
         [Tooltip("The type of light (0 = Point, 1 = Directional, 2 = Spot).")]

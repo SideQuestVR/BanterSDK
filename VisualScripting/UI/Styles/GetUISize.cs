@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Size")]
     [UnitShortTitle("Get UI Size")]
     [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUISize : Unit
     {
         [DoNotSerialize]

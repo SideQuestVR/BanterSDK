@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Property")]
     [UnitShortTitle("Get UI Property")]
     [UnitCategory("Banter\\UI\\Properties")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIProperty : Unit
     {
         [DoNotSerialize]

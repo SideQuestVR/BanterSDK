@@ -13,7 +13,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Process UXML Tree")]
     [UnitShortTitle("Process UXML Tree")]
     [UnitCategory("Banter\\UI\\UXML")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class ProcessUXMLTree : Unit
     {
         private const string LogPrefix = "[ProcessUXMLTree]";

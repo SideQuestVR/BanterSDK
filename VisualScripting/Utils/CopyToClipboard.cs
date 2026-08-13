@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Copy Text To Clipboard")]
     [UnitShortTitle("CopyToClipboard")]
     [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CopyToClipboard : Unit
     {
         [DoNotSerialize]

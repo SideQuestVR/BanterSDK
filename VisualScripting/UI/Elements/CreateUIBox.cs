@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Box")]
     [UnitShortTitle("Create UI Box")]
     [UnitCategory("Banter\\UI\\Elements\\Containers")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIBox : Unit
     {
         [DoNotSerialize]

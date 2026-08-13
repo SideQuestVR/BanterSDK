@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Background")]
     [UnitShortTitle("Get UI Background")]
     [UnitCategory("Banter\\UI\\Styles\\Appearance")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIBackground : Unit
     {
         [DoNotSerialize]

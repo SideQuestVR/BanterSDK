@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On UI Keyboard Event")]
     [UnitShortTitle("On UI Keyboard Event")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIKeyboardEvent : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

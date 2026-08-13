@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Menu Browser Open URL")]
     [UnitShortTitle("Menu Browser Nav")]
     [UnitCategory("Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class MenuOpenUrl : Unit
     {
         [DoNotSerialize]
@@ -38,7 +38,7 @@ namespace Banter.VisualScripting
     [UnitShortTitle("World Browser Nav")]
     [UnitCategory("Banter")]
     [Obsolete("Use BSBrowser Set Url")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class WorldOpenUrl : Unit
     {
         [DoNotSerialize]

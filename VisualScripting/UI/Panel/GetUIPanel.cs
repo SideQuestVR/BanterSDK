@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get UI Panel")]
     [UnitShortTitle("Get UI Panel")]
     [UnitCategory("Banter\\UI\\Panel")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIPanel : Unit
     {
         [DoNotSerialize]

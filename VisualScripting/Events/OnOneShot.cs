@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On One Shot")]
     [UnitShortTitle("On One Shot")]
     [UnitCategory("Events\\Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnOneShot : EventUnit<CustomEventArgs>
     {
 

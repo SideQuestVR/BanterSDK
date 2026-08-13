@@ -12,18 +12,18 @@ namespace Banter.SDKEditor
         // Add a menu item to create custom GameObjects.
         // Priority 10 ensures it is grouped with the other menu items of the same kind
         // and propagated to the hierarchy dropdown and hierarchy context menus.
-        [MenuItem("GameObject/Altspace/BanterStarterUpper", false, 10)]
+        [MenuItem("GameObject/Altspace/BSStarterUpper", false, 10)]
         static void CreateBanterStarterUpper(MenuCommand menuCommand)
         {
-            var exists = GameObject.FindObjectOfType<BanterStarterUpper>();
+            var exists = GameObject.FindObjectOfType<BSStarterUpper>();
             if (exists != null)
             {
-                Debug.LogWarning("BanterStarterUpper already exists in the scene.", exists);
+                Debug.LogWarning("BSStarterUpper already exists in the scene.", exists);
                 return;
             }
             // Create a custom game object
-            GameObject go = new GameObject("BanterStarterUpper");
-            go.AddComponent<BanterStarterUpper>();
+            GameObject go = new GameObject("BSStarterUpper");
+            go.AddComponent<BSStarterUpper>();
             // Ensure it gets reparented if this was a context click (otherwise does nothing)
             GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
             // Register the creation in the undo system

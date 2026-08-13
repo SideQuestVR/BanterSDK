@@ -8,6 +8,6 @@ namespace Banter.SDK
     [Obsolete("Renamed to BSSpringJoint. Kept for content compatibility.")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(SpringJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterSpringJoint : BSSpringJoint { }
 }

@@ -9,7 +9,7 @@ using PropertyName = Banter.SDK.PropertyName;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
     public class BSAudioSource : BanterComponentBase
@@ -61,7 +61,7 @@ namespace Banter.SDK
             if (!string.IsNullOrEmpty(url) && url.StartsWith("asset_"))
             {
                 // It's an asset reference - look it up in the asset registry
-                audio = BanterAssetRegistry.Instance.GetAsset<AudioClip>(url);
+                audio = BSAssetRegistry.Instance.GetAsset<AudioClip>(url);
 
                 if (audio != null)
                 {

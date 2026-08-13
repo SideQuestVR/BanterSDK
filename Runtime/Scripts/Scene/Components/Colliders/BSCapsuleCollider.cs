@@ -25,7 +25,7 @@ namespace Banter.SDK
     */
     [WatchComponent(typeof(CapsuleCollider))]
     [RequireComponent(typeof(CapsuleCollider))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSCapsuleCollider : UnityComponentBase
     {
         [See(initial = "false")][SerializeField] internal bool isTrigger = false;

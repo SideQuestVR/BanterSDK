@@ -40,7 +40,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Typography")]
     [UnitShortTitle("Set UI Typography")]
     [UnitCategory("Banter\\UI\\Styles\\Typography")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUITypography : Unit
     {
         [DoNotSerialize]

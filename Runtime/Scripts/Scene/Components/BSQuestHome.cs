@@ -30,7 +30,7 @@ namespace Banter.SDK
     */
     [DefaultExecutionOrder(-1)]
     [WatchComponent]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSQuestHome : BanterComponentBase
     {
         [Tooltip("The URL of the Quest Home APK file to be loaded.")]
@@ -179,7 +179,7 @@ namespace Banter.SDK
 
                 UpdateLoadingStatus("Quest Home loaded successfully!", 1.0f);
 
-                // SetLoadedIfNot triggers callbacks that may require BanterLink
+                // SetLoadedIfNot triggers callbacks that may require BSLink
                 // Wrap in try-catch for standalone usage (e.g., via QuestHomeLoader)
                 try
                 {

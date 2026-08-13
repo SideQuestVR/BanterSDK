@@ -12,7 +12,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Create UI Image")]
     [UnitShortTitle("Create UI Image")]
     [UnitCategory("Banter\\UI\\Elements\\Display")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIImage : Unit
     {
         [DoNotSerialize]

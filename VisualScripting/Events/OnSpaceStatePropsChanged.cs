@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Space State Properties Changed")]
     [UnitShortTitle("Space State Changed")]
     [UnitCategory("Events\\Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSpaceStatePropsChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

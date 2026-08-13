@@ -9,7 +9,7 @@ namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
     [WatchComponent]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
 
     public class BSText : BanterComponentBase
     {

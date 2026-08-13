@@ -9,7 +9,7 @@ using UnityEngine.Events;
 namespace Banter.SDK
 {
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSHeldEvents : BanterComponentBase
     {
@@ -53,7 +53,7 @@ namespace Banter.SDK
         [Tooltip("Blocks the right controller's trigger input.")]
         [See(initial = "false")][SerializeField] internal bool blockRightTrigger = false;
 
-        BanterPlayerEvents banterPlayerEvents;
+        BSPlayerEvents banterPlayerEvents;
         bool banterPlayerEventsAdded;
 
         ControllerHeldEvents controllerHeldEvents;
@@ -106,10 +106,10 @@ namespace Banter.SDK
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (!gameObject.GetComponent<BanterPlayerEvents>())
+            if (!gameObject.GetComponent<BSPlayerEvents>())
             {
                 banterPlayerEventsAdded = true;
-                banterPlayerEvents = gameObject.AddComponent<BanterPlayerEvents>();
+                banterPlayerEvents = gameObject.AddComponent<BSPlayerEvents>();
             }
 
             controllerHeldEvents = GetComponent<ControllerHeldEvents>();

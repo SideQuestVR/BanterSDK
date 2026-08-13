@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Toggle Changed")]
     [UnitShortTitle("On Toggle Changed")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnToggleChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

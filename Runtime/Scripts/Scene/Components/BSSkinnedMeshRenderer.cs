@@ -34,7 +34,7 @@ namespace Banter.SDK
     }
 
     [DefaultExecutionOrder(-1)]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
     public class BSSkinnedMeshRenderer : BanterComponentBase
     {
@@ -58,7 +58,7 @@ namespace Banter.SDK
         [Tooltip("The quality level of the skinned mesh (0=Auto, 1=Low, 2=Medium, 3=High).")]
         [See(initial = "0")][SerializeField] internal int quality = 0;
 
-        BanterObjectId _rootBoneObjectId;
+        BSObjectId _rootBoneObjectId;
 
         public SkinnedMeshRenderer SkinnedMeshRenderer
         {
@@ -125,10 +125,10 @@ namespace Banter.SDK
             var rootBone = _skinnedMeshRenderer.rootBone;
             rootBoneInstanceId = rootBone.gameObject.GetInstanceID();
 
-            _rootBoneObjectId = rootBone.GetComponent<BanterObjectId>();
+            _rootBoneObjectId = rootBone.GetComponent<BSObjectId>();
             if (_rootBoneObjectId == null)
             {
-                _rootBoneObjectId = rootBone.gameObject.AddComponent<BanterObjectId>();
+                _rootBoneObjectId = rootBone.gameObject.AddComponent<BSObjectId>();
             }
         }
 

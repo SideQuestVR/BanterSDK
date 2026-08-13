@@ -10,7 +10,7 @@ namespace Banter.VisualScripting
     [UnitShortTitle("Trigger VisualScriptingEvent")]
     [UnitCategory("Banter\\Utils")]
     [Obsolete("Use Visual Scripting Relay instead")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class TriggerUnityEvent : Unit
     {
         [DoNotSerialize]

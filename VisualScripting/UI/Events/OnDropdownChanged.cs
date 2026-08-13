@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Dropdown Changed")]
     [UnitShortTitle("On Dropdown Changed")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnDropdownChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

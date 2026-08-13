@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Ai Model")]
     [UnitShortTitle("On Ai Model")]
     [UnitCategory("Events\\Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnAiModel : EventUnit<CustomEventArgs>
     {
 

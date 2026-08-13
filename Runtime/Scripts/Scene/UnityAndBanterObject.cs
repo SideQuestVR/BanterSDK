@@ -8,6 +8,6 @@ namespace Banter.SDK
     {
         public GameObject gameObject;
         public BanterObject banterObject;
-        public BanterObjectId id;
+        public BSObjectId id;
     }
 }

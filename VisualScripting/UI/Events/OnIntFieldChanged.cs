@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Int Field Changed")]
     [UnitShortTitle("On Int Field Changed")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnIntFieldChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

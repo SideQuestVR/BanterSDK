@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Lock Player Position")]
     [UnitShortTitle("Lock Player")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class LockPlayer : Unit
     {
         [DoNotSerialize]
@@ -29,7 +29,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Unlock Player Position")]
     [UnitShortTitle("Unlock Player")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class UnlockPlayer : Unit
     {
         [DoNotSerialize]

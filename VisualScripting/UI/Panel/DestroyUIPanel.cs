@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Destroy UI Panel")]
     [UnitShortTitle("Destroy UI Panel")]
     [UnitCategory("Banter\\UI\\Panel")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class DestroyUIPanel : Unit
     {
         [DoNotSerialize]

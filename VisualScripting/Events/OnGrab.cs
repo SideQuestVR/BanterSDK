@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Grab")]
     [UnitShortTitle("On Grab")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnGrab : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

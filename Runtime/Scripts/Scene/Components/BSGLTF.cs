@@ -36,7 +36,7 @@ namespace Banter.SDK
     */
     [DefaultExecutionOrder(-1)]
     [WatchComponent]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
 
     public class BSGLTF : BanterComponentBase
     {
@@ -165,7 +165,7 @@ namespace Banter.SDK
                             t.gameObject.layer = childrenLayer;
                             if (collider || nonconvexcollider && (t.gameObject.GetComponent<Renderer>() != null))
                             {
-                                t.gameObject.AddComponent<BanterObjectId>();
+                                t.gameObject.AddComponent<BSObjectId>();
                                 try
                                 {
                                     var col = t.gameObject.AddComponent<BSMeshCollider>();

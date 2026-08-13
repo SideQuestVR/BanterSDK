@@ -8,6 +8,6 @@ namespace Banter.SDK
     [Obsolete("Renamed to BSConfigurableJoint. Kept for content compatibility.")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(ConfigurableJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BanterConfigurableJoint : BSConfigurableJoint { }
 }

@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent(typeof(SpringJoint))]
     [RequireComponent(typeof(SpringJoint))]
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     public class BSSpringJoint : UnityComponentBase
     {
         [Tooltip("The anchor point of the joint in local space.")]

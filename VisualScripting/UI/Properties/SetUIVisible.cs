@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set UI Visible")]
     [UnitShortTitle("Set UI Visible")]
     [UnitCategory("Banter\\UI\\Properties\\State")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIVisible : Unit
     {
         [DoNotSerialize]

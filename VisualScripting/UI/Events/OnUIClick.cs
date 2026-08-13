@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On UI Click")]
     [UnitShortTitle("On UI Click")]
     [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

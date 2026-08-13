@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Space URL")]
     [UnitShortTitle("Space URL")]
     [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetSpaceURL : Unit
     {
         [DoNotSerialize]

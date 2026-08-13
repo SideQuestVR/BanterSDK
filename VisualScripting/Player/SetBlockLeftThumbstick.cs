@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set Block Left Thumbstick")]
     [UnitShortTitle("Block Left Thumbstick")]
     [UnitCategory("Banter\\Player\\Input")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetBlockLeftThumbstick : Unit
     {
         [DoNotSerialize]

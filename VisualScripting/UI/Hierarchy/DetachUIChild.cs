@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Detach UI Child")]
     [UnitShortTitle("Detach UI Child")]
     [UnitCategory("Banter\\UI\\Hierarchy")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class DetachUIChild : Unit
     {
         [DoNotSerialize]

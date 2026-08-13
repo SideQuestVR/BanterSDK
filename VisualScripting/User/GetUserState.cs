@@ -11,7 +11,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get User State")]
     [UnitShortTitle("User State")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserState : Unit
     {
         [DoNotSerialize]
@@ -47,7 +47,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get Local User State")]
     [UnitShortTitle("Local User State")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetLocalUserState : Unit
     {
         [DoNotSerialize]
@@ -75,7 +75,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Get User Saved Value")]
     [UnitShortTitle("GetUserSavedValue")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUserSavedValue : Unit
     {
         [DoNotSerialize]
@@ -112,7 +112,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Set User Saved Value")]
     [UnitShortTitle("SetUserSavedValue")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUserSavedValue : Unit
     {
         [DoNotSerialize]
@@ -153,7 +153,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Remove User Saved Value")]
     [UnitShortTitle("RemoveUserSavedValue")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class RemoveUserSavedValue : Unit
     {
         [DoNotSerialize]

@@ -7,7 +7,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Controller Button Released")]
     [UnitShortTitle("Button Released")]
     [UnitCategory("Events\\Banter\\Controller")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnControllerButtonReleased : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

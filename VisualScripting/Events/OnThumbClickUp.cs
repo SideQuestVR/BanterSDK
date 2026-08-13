@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On ThumbClickUp")]
     [UnitShortTitle("On ThumbClickUp")]
     [UnitCategory("Events\\Banter\\HeldEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnThumbClickUp : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]

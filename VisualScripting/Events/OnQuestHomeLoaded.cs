@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("On Quest Home Loaded")]
     [UnitShortTitle("On Quest Home Loaded")]
     [UnitCategory("Events\\Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnQuestHomeLoaded : EventUnit<QuestHomeLoadedEventArgs>
     {
         [DoNotSerialize]

@@ -8,7 +8,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Add Force To Player")]
     [UnitShortTitle("Add Player Force")]
     [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [TypeIcon(typeof(BSObjectId))]
     public class AddPlayerForce : Unit
     {
         [DoNotSerialize]
