@@ -372,6 +372,40 @@ namespace BS
             ProgressMaterial.SetFloat("_DissolveLoadAmount", 0);
             SetLoadProgress("Loading", 0, scene.LoadingStatus, true);
         }
+        /// <summary>
+        /// Longest we will wait, in REAL seconds, for a cage clip to finish. The clips are well
+        /// under a second; this is purely a safety net.
+        /// </summary>
+        const float k_ClipTimeout = 5f;
+
+        /// <summary>
+        /// Wait for the cage clip to finish, but never longer than <paramref name="maxSeconds"/> of
+        /// real time. The legacy Animation component advances on SCALED time, so a space that left
+        /// Time.timeScale at 0 (settable from JS via BSScene.TimeScale) parks this await forever —
+        /// verified: a 0.25s clip was still "playing" after 4s of real time at timeScale 0. Because
+        /// both LoadIn and LoadOut sit behind this wait, that wedged the entire load behind an
+        /// opaque cage. Bounding it means the worst case is a skipped animation, not a dead app.
+        /// </summary>
+        async Task WaitForClip(bool dissolveIfTimedOut)
+        {
+            var deadline = Time.unscaledTime + k_ClipTimeout;
+            await new WaitUntil(() => !loadingSphere.isPlaying || Time.unscaledTime >= deadline);
+
+            if (!loadingSphere.isPlaying)
+                return;
+
+            LogLine.Err($"[LOADING] Cage clip '{(loadingSphere.clip != null ? loadingSphere.clip.name : "?")}' " +
+                        $"did not finish within {k_ClipTimeout}s (Time.timeScale={Time.timeScale}). " +
+                        "Forcing it to complete so the load cannot wedge.");
+            loadingSphere.Stop();
+            if (dissolveIfTimedOut)
+            {
+                // Snap the cage to fully dissolved, otherwise stopping mid-clip would leave the
+                // player looking at an opaque shell around a world that has actually loaded.
+                ProgressMaterial.SetFloat("_DissolveAmount", 1f);
+            }
+        }
+
         public async Task LoadIn(string url)
         {
             if (state == LoadingState.Loaded)
@@ -386,7 +420,7 @@ namespace BS
             teleportWall.SetActive(true);
             loadingSphere.clip = loadIn;
             loadingSphere.Play();
-            await new WaitUntil(() => !loadingSphere.isPlaying);
+            await WaitForClip(dissolveIfTimedOut: false); // cage should stay opaque after LoadIn
             state = LoadingState.Loaded;
         }
 
@@ -415,7 +449,7 @@ namespace BS
             }
             lastLoadingPercent = 0f;
             _ = HideCollider();
-            await new WaitUntil(() => !loadingSphere.isPlaying);  // 
+            await WaitForClip(dissolveIfTimedOut: true); // cage must end up open, clip or no clip
             state = LoadingState.Unloaded;
         }
 

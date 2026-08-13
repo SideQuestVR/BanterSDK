@@ -137,6 +137,19 @@ namespace BS
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
         static ConcurrentDictionary<string,UnityEngine.Object> objectCache = new ConcurrentDictionary<string,UnityEngine.Object>();
 
+        // UnityWebRequest.timeout defaults to 0, which means "wait forever". A half-open socket
+        // (flaky wifi, captive portal, stalled CDN) therefore never completes, and because a
+        // space's load is gated on every component reporting loaded, one stuck request hangs the
+        // whole world load with no error and no recovery.
+        //
+        // These are TOTAL request deadlines, so they are only safe on small payloads. Large
+        // downloads (asset bundles, audio) must not use a total deadline — a slow-but-healthy
+        // connection would be killed mid-download. Those use the stall detector below instead.
+        const int SMALL_REQUEST_TIMEOUT_SECONDS = 30;
+
+        /// <summary>Seconds a large download may make zero progress before we treat it as stalled.</summary>
+        const float LARGE_DOWNLOAD_STALL_SECONDS = 60f;
+
         public static void Clear()
         {
             foreach (var obj in objectCache)
@@ -162,6 +175,7 @@ namespace BS
             }
             using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
             {
+                uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
                 await uwr.SendWebRequest();
                 if (uwr.result != UnityWebRequest.Result.Success)
                 {
@@ -237,6 +251,7 @@ namespace BS
         public static async Task<byte[]> Bytes(string url)
         {
             UnityWebRequest uwr = UnityWebRequest.Get(url);
+            uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
             await uwr.SendWebRequest();
             if (uwr.result != UnityWebRequest.Result.Success)
             {
@@ -250,6 +265,7 @@ namespace BS
         public static async Task<T> Json<T>(string url)
         {
             UnityWebRequest uwr = UnityWebRequest.Get(url);
+            uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
             await uwr.SendWebRequest();
             if (uwr.result != UnityWebRequest.Result.Success)
             {
@@ -263,6 +279,7 @@ namespace BS
         public static async Task<string> Text(string url)
         {
             UnityWebRequest uwr = UnityWebRequest.Get(url);
+            uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
             await uwr.SendWebRequest();
 
             if (uwr.result != UnityWebRequest.Result.Success)
@@ -281,15 +298,28 @@ namespace BS
             hash.Append(url);
             using (UnityWebRequest head = UnityWebRequest.Head(url))
             {
+                head.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
                 await head.SendWebRequest();
-                var headers = head.GetResponseHeaders();
-                if (headers.ContainsKey("Last-Modified"))
+                // A failed HEAD returns null headers. This used to NullReference on the line below
+                // and surface as a generic bundle failure. The cache key just falls back to the URL
+                // alone, which is the same thing that happens when the host sends neither header.
+                var headers = head.result == UnityWebRequest.Result.Success
+                    ? head.GetResponseHeaders()
+                    : null;
+                if (headers == null)
                 {
-                    hash.Append(headers["Last-Modified"]);
+                    LogLine.Do("HEAD failed for " + url + " (" + head.error + ") — versioning bundle by URL only.");
                 }
-                if (headers.ContainsKey("ETag"))
+                else
                 {
-                    hash.Append(headers["ETag"]);
+                    if (headers.ContainsKey("Last-Modified"))
+                    {
+                        hash.Append(headers["Last-Modified"]);
+                    }
+                    if (headers.ContainsKey("ETag"))
+                    {
+                        hash.Append(headers["ETag"]);
+                    }
                 }
             }
             using (UnityWebRequest web = UnityWebRequestAssetBundle.GetAssetBundle(url, hash))
@@ -297,10 +327,30 @@ namespace BS
                 progress?.Invoke(0f);
                 _ = web.SendWebRequest();
 
+                // Deliberately NOT web.timeout: that is a total deadline and would kill a healthy
+                // but slow download of a large bundle. Instead fail only when the transfer makes no
+                // progress at all for a sustained period. Realtime clock + WaitForSecondsRealtime so
+                // a space that set Time.timeScale = 0 cannot freeze this loop.
+                var lastBytes = web.downloadedBytes;
+                var lastProgressAt = Time.realtimeSinceStartup;
+
                 while (!web.isDone)
                 {
                     progress?.Invoke(web.downloadProgress);
-                    await new WaitForSeconds(.1f);
+
+                    if (web.downloadedBytes != lastBytes)
+                    {
+                        lastBytes = web.downloadedBytes;
+                        lastProgressAt = Time.realtimeSinceStartup;
+                    }
+                    else if (Time.realtimeSinceStartup - lastProgressAt > LARGE_DOWNLOAD_STALL_SECONDS)
+                    {
+                        web.Abort();
+                        throw new Exception($"Asset bundle download stalled: no data for " +
+                                            $"{LARGE_DOWNLOAD_STALL_SECONDS}s after {lastBytes} bytes from {url}");
+                    }
+
+                    await new WaitForSecondsRealtime(.1f);
                 }
                 progress?.Invoke(1f);
                 if (web.result != UnityWebRequest.Result.Success)
@@ -333,6 +383,7 @@ namespace BS
         {
             using (UnityWebRequest uwr = UnityWebRequest.Get(url))
             {
+                uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
                 uwr.SetRequestHeader("Range", "bytes=0-" + (count - 1));
                 await uwr.SendWebRequest();
                 if (uwr.result != UnityWebRequest.Result.Success)
@@ -416,10 +467,29 @@ namespace BS
             using (UnityWebRequest web = UnityWebRequestMultimedia.GetAudioClip(url, aType))
             {
                 _ = web.SendWebRequest();
+
+                // Same stall detector as the asset-bundle path: audio can be large, so bound it on
+                // "no progress" rather than a total deadline.
+                var lastBytes = web.downloadedBytes;
+                var lastProgressAt = Time.realtimeSinceStartup;
+
                 while (!web.isDone)
                 {
                     progress?.Invoke(web.downloadProgress);
-                    await new WaitForSeconds(.05f);
+
+                    if (web.downloadedBytes != lastBytes)
+                    {
+                        lastBytes = web.downloadedBytes;
+                        lastProgressAt = Time.realtimeSinceStartup;
+                    }
+                    else if (Time.realtimeSinceStartup - lastProgressAt > LARGE_DOWNLOAD_STALL_SECONDS)
+                    {
+                        web.Abort();
+                        throw new System.Exception($"Audio download stalled: no data for " +
+                                                   $"{LARGE_DOWNLOAD_STALL_SECONDS}s after {lastBytes} bytes from {url}");
+                    }
+
+                    await new WaitForSecondsRealtime(.05f);
                 }
                 if (web.result != UnityWebRequest.Result.Success)
                 {
