@@ -60,7 +60,7 @@ public class BuilderWindow : EditorWindow
 
     public const string SQ_API_CLIENT_ID_TEST = "client_85b087d9975cb8ca5bb575a2";
 
-    public bool isTestEnvironment = false;
+    public bool isTestEnvironment = true;
 
     public static UnityEvent OnCompileAll = new UnityEvent();
     public static UnityEvent OnClearAll = new UnityEvent();
@@ -83,7 +83,10 @@ public class BuilderWindow : EditorWindow
     Label statusBar;
 
     Label codeText;
-    TextField spaceSlug;
+    DropdownField worldDropdown;
+    Label worldUrlLabel;
+    List<SqEditorWorld> worlds = new List<SqEditorWorld>();
+    SqEditorWorld selectedWorld;
     Label statusText;
     Button uploadWebOnly;
     Button uploadEverything;
@@ -317,6 +320,7 @@ public class BuilderWindow : EditorWindow
         loginManager.OnLoginCompleted += () =>
         {
             EditorCoroutineUtility.StartCoroutine(CheckKitUserExists(), this);
+            EditorCoroutineUtility.StartCoroutine(RefreshWorlds(), this);
             RefreshView(true);
             avatarGameObject = AvatarRef.Instance.avatarGameObject;
             RefreshAvatarView(true);
@@ -860,7 +864,7 @@ public class BuilderWindow : EditorWindow
         linkPage.RegisterCallback<MouseUpEvent>((e) => OpenLinkPage());
 
         var createSpace = rootVisualElement.Q<Label>("CreateSpace");
-        createSpace.RegisterCallback<MouseUpEvent>((e) => OpenSpaceCreation());
+        createSpace.RegisterCallback<MouseUpEvent>((e) => OpenCreateWorld());
         var openWebRoot = rootVisualElement.Q<Button>("OpenWebRoot");
         dropAreaContainer = rootVisualElement.Q<VisualElement>("dropAreaContainer");
         dropAvatarContainer = rootVisualElement.Q<VisualElement>("dropAvatarContainer");
@@ -939,8 +943,6 @@ public class BuilderWindow : EditorWindow
             kitCategories = categories.rows;
             kitCategoryDropDown.choices = categories.rows.Select(k => k.name).ToList();
         }), this);
-        var spaceSlugPlaceholder = rootVisualElement.Q<Label>("SpaceSlugPlaceholder");
-
         kitName = rootVisualElement.Q<TextField>("KitName");
         var kitNamePlaceholder = rootVisualElement.Q<Label>("KitNamePlaceholder");
         kitName.RegisterValueChangedCallback((e) =>
@@ -991,7 +993,8 @@ public class BuilderWindow : EditorWindow
         EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
 
         codeText = rootVisualElement.Q<Label>("LoginCode");
-        spaceSlug = rootVisualElement.Q<TextField>("SpaceSlug");
+        worldDropdown = rootVisualElement.Q<DropdownField>("WorldDropdown");
+        worldUrlLabel = rootVisualElement.Q<Label>("WorldUrl");
         statusText = rootVisualElement.Q<Label>("SignedInStatus");
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
         uploadWebOnlyKit = rootVisualElement.Q<Button>("UploadWebOnlyKit");
@@ -1002,19 +1005,26 @@ public class BuilderWindow : EditorWindow
         loggedInViewScene = rootVisualElement.Q<VisualElement>("LoggedInViewScene");
         loggedInViewPrefab = rootVisualElement.Q<VisualElement>("LoggedInViewPrefab");
 
-        spaceSlug.RegisterValueChangedCallback((e) =>
+        // Selecting a world in the dropdown sets the active world (by index → worlds list) and remembers it.
+        worldDropdown.RegisterValueChangedCallback((e) =>
         {
-            ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, e.newValue);
-            ProjectPrefs.SetString("BanterBuilder_spaceSlug", e.newValue);
+            int idx = worldDropdown.index;
+            selectedWorld = (idx >= 0 && idx < worlds.Count) ? worlds[idx] : null;
+            if (selectedWorld != null)
+                ProjectPrefs.SetString("BanterBuilder_selectedWorldId", selectedWorld.WorldId.ToString());
+            UpdateWorldUrlLabel();
         });
 
-        spaceSlug.value = ProjectPrefs.GetString("BanterBuilder_spaceSlug", "");
-        ShowSpaceSlugPlaceholder(spaceSlugPlaceholder, spaceSlug.value);
+        // Populate the dropdown from the API if already signed in; otherwise it fills in on login-complete
+        // (see loginManager.OnLoginCompleted). RefreshWorlds re-selects the last-used world when present.
+        if (sq != null && sq.User != null)
+            EditorCoroutineUtility.StartCoroutine(RefreshWorlds(), this);
+
         uploadWebOnly.clicked += () =>
         {
-            if (string.IsNullOrEmpty(spaceSlug.text))
+            if (!HasSelectedWorld)
             {
-                status.AddStatus("No space slug provided, please enter a slug.");
+                status.AddStatus("No world selected, please select or create a world.");
                 return;
             }
             ShowBuildConfirm();
@@ -1033,9 +1043,9 @@ public class BuilderWindow : EditorWindow
 
         uploadEverything.RegisterCallback<MouseUpEvent>((e) =>
         {
-            if (string.IsNullOrEmpty(spaceSlug.text))
+            if (!HasSelectedWorld)
             {
-                status.AddStatus("No space slug provided, please enter a slug.");
+                status.AddStatus("No world selected, please select or create a world.");
                 return;
             }
             ShowBuildConfirm();
@@ -1374,9 +1384,9 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadWebOnly(Action callback)
     {
         BeginUploadProgress(3);
-        yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-        yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-        yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+        yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
+        yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
+        yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
         callback();
         EndUploadProgress("Upload complete");
     }
@@ -1487,14 +1497,15 @@ public class BuilderWindow : EditorWindow
         // BuildAssetBundles). A leaked lock would wedge script recompilation until an editor restart.
         try
         {
-            BeginUploadProgress(5);
-            // windows.banter / android.banter carry encrypted Basis (.bee) content now, but keep the .banter
-            // name for the upload API. Missing files are skipped, so only the platforms built get uploaded.
-            yield return UploadFileToCommunity("windows.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Windows, NextUploadStep("Uploading windows.banter"));
-            yield return UploadFileToCommunity("android.banter", UploadAssetType.AssetBundle, UploadAssetTypePlatform.Android, NextUploadStep("Uploading android.banter"));
-            yield return UploadFileToCommunity("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-            yield return UploadFileToCommunity("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-            yield return UploadFileToCommunity("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+            BeginUploadProgress(4);
+            // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as world.asset.
+            // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
+            // to legacy per-platform windows.banter / android.banter for spaces that predate it. Missing
+            // file is skipped.
+            yield return UploadWorldFile("world.asset", UploadAssetType.WorldAsset, UploadAssetTypePlatform.Any, NextUploadStep("Uploading world.asset"));
+            yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
+            yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
+            yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
             EndUploadProgress("Upload complete");
         }
         finally
@@ -1530,7 +1541,9 @@ public class BuilderWindow : EditorWindow
         Debug.Log("Uploading1: " + file);
     }
 
-    private IEnumerator UploadFileToCommunity(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
+    // Uploads a WebRoot file and attaches it to the selected world (world.asset, index.html, script.js…),
+    // via /v2/worlds/{worlds_id}/assets/type/{type}/platform/{platform}. Callers pass platform Any (0).
+    private IEnumerator UploadWorldFile(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
     {
         var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
         if (File.Exists(file))
@@ -1543,12 +1556,14 @@ public class BuilderWindow : EditorWindow
             yield break;
         }
         var data = File.ReadAllBytes(file);
-        yield return sq.UploadFileToCommunity(name, data, spaceSlug.text, (text) =>
+        string slug = SelectedWorldSlug;
+        string baseUrl = string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + slug + ".bant.ing") : SelectedWorldUrl;
+        yield return sq.UploadFileToWorld(name, data, selectedWorld?.WorldId, slug, (text) =>
         {
-            status.AddStatus("Uploaded " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
+            status.AddStatus("Uploaded " + file + " to " + baseUrl + "/" + name);
         }, e =>
         {
-            status.AddStatus("FAILED UPLOADING " + file + " to https://" + spaceSlug.text + ".bant.ing/" + name);
+            status.AddStatus("FAILED UPLOADING " + file + " to " + baseUrl + "/" + name);
             Debug.LogException(e);
         }, type, platform, onProgress);
     }
@@ -1831,6 +1846,92 @@ public class BuilderWindow : EditorWindow
     {
         Application.OpenURL("https://sidequestvr.com/account/settings/link-sidequest");
     }
+
+    // The selected world's slug + full hosting URL (null if none selected), and a readiness guard. These
+    // replace the old free-text space-slug field; scene uploads key off the selected world.
+    private string SelectedWorldSlug => selectedWorld?.Slug;
+    private string SelectedWorldUrl => selectedWorld?.SpaceUrl;
+    private bool HasSelectedWorld => selectedWorld != null && !string.IsNullOrEmpty(selectedWorld.Slug);
+
+    // Shows the selected world's hosting URL under the dropdown (blank when nothing's selected).
+    private void UpdateWorldUrlLabel()
+    {
+        if (worldUrlLabel == null)
+            return;
+        worldUrlLabel.text = SelectedWorldUrl ?? "";
+    }
+
+    /// <summary>
+    /// (Re)loads the signed-in user's worlds into the dropdown. Preserves/restores the selection: prefers
+    /// <paramref name="selectWorldId"/> (e.g. a freshly-created world), else the last-used world from prefs,
+    /// else the first world. Safe to call repeatedly.
+    /// </summary>
+    private IEnumerator RefreshWorlds(string selectWorldId = null)
+    {
+        if (sq == null || sq.User == null)
+            yield break;
+
+        string preferId = !string.IsNullOrEmpty(selectWorldId)
+            ? selectWorldId
+            : ProjectPrefs.GetString("BanterBuilder_selectedWorldId", "");
+
+        yield return sq.ListWorlds(list =>
+        {
+            worlds = list ?? new List<SqEditorWorld>();
+            worldDropdown.choices = worlds.Select(w => w.Name).ToList();
+
+            int idx = -1;
+            if (!string.IsNullOrEmpty(preferId))
+                idx = worlds.FindIndex(w => w.WorldId == preferId);
+            if (idx < 0 && worlds.Count > 0)
+                idx = 0;
+
+            worldDropdown.index = idx;
+            // Set selectedWorld directly too — the index setter only fires the value-changed callback when
+            // the displayed string actually changes, which isn't guaranteed on a refresh.
+            selectedWorld = idx >= 0 ? worlds[idx] : null;
+            if (selectedWorld != null)
+                ProjectPrefs.SetString("BanterBuilder_selectedWorldId", selectedWorld.WorldId.ToString());
+            if (worlds.Count == 0)
+                worldDropdown.value = "No worlds — create one";
+            UpdateWorldUrlLabel();
+        }, e =>
+        {
+            status.AddStatus("Failed to load worlds: " + e.Message);
+            Debug.LogException(e);
+        });
+    }
+
+    /// <summary>
+    /// Opens the "create world" modal, then creates the world, refreshes the list and selects the new one.
+    /// </summary>
+    private void OpenCreateWorld()
+    {
+        if (sq == null || sq.User == null)
+        {
+            status.AddStatus("Sign in before creating a world.");
+            return;
+        }
+        CreateWorldWindow.Open(name =>
+            EditorCoroutineUtility.StartCoroutine(CreateWorldRoutine(name), this));
+    }
+
+    private IEnumerator CreateWorldRoutine(string name)
+    {
+        status.AddStatus("Creating world '" + name + "'…");
+        SqEditorWorld created = null;
+        yield return sq.CreateWorld(name, w => created = w, e =>
+        {
+            status.AddStatus("Failed to create world: " + e.Message);
+            Debug.LogException(e);
+        });
+        if (created == null)
+            yield break;
+
+        status.AddStatus("Created world '" + created.Name + "'.");
+        // Reload the list from the API (authoritative) and select the just-created world.
+        yield return RefreshWorlds(created.WorldId);
+    }
     private void ShowBuildConfirm()
     {
         buildConfirm.style.display = DisplayStyle.Flex;
@@ -1842,7 +1943,7 @@ public class BuilderWindow : EditorWindow
         confirmSceneFile.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
         confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
         confirmSpaceCode.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
-        confirmSpaceCode.text = "<color=\"white\">Space:</color> https://" + spaceSlug.text + ".bant.ing";
+        confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".bant.ing") : SelectedWorldUrl);
         confirmKitNumber.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
@@ -2185,9 +2286,9 @@ public class BuilderWindow : EditorWindow
 
                     if (mode == BSBuilderBundleMode.Scene)
                     {
-                        // Greenfield spaces build to per-platform encrypted Basis bundles, still named
-                        // windows.banter / android.banter (SideQuest upload keys off the extension). The
-                        // runtime tells encrypted .bee content from a legacy raw AssetBundle by its header.
+                        // Greenfield spaces build to a single platform-agnostic encrypted Basis bundle
+                        // (world.asset). Every platform loads it and ranged-GETs its own section; the
+                        // runtime falls back to legacy per-platform windows.banter / android.banter.
 #if BASIS_BUNDLE_MANAGEMENT
                         EditorApplication.LockReloadAssemblies();
                         reloadLockHeld = true;
@@ -2252,8 +2353,8 @@ public class BuilderWindow : EditorWindow
                 if (autoUpload.value && sq.User != null)
                 {
                     if (mode == BSBuilderBundleMode.Scene) {
-                        if (string.IsNullOrEmpty(spaceSlug.text)) {
-                            status.AddStatus("No space slug provided, please enter a slug to upload.");
+                        if (!HasSelectedWorld) {
+                            status.AddStatus("No world selected, please select or create a world to upload.");
                             return;
                         }
                         uploadWebOnly.SetEnabled(false);
@@ -2296,18 +2397,19 @@ public class BuilderWindow : EditorWindow
     }
 #if BASIS_BUNDLE_MANAGEMENT
     /// <summary>
-    /// Builds the selected scene into per-platform encrypted Basis bundles, written to WebRoot as
-    /// <c>windows.banter</c> / <c>android.banter</c> (the SideQuest upload API keys off that extension,
-    /// so the encrypted <c>.bee</c> content keeps the <c>.banter</c> name; the runtime distinguishes the
-    /// two by content). Built via Basis' <c>SceneBundleBuild</c> using the shared Greenfield key,
-    /// replacing the legacy raw-AssetBundle scene build.
+    /// Builds the selected scene into a single platform-agnostic encrypted Basis bundle, written to
+    /// WebRoot as <c>world.asset</c>. Basis' build pipeline already concatenates every requested platform
+    /// into one <c>.BEE</c> (behind a <c>BasisBundleConnector</c> header of per-platform byte ranges), and
+    /// the runtime ranged-GETs only the section it needs — so we pass all checked targets to a single
+    /// <c>SceneBundleBuild</c> call, exactly as the avatar builder does, rather than one file per platform.
+    /// Uses the shared Greenfield key.
     ///
     /// <c>SceneBundleBuild</c> bundles the *open* scene (it derives the scene from a
     /// <see cref="BasisContentBase"/> in it), whereas the builder tracks a scene *asset path* — so we
-    /// open the scene, drop in a throwaway <c>BasisProp</c> for it to hang the description off, build
-    /// each platform into a scratch dir, and lift just the <c>.bee</c> out. The marker is stripped from
-    /// the shipped copy by <see cref="CustomSceneProcessor"/> and removed from the source scene here.
-    /// Returns the produced file names (empty on failure).
+    /// open the scene, drop in a throwaway <c>BasisProp</c> for it to hang the description off, build into
+    /// a scratch dir, and lift just the <c>.bee</c> out. The marker is stripped from the shipped copy by
+    /// <see cref="CustomSceneProcessor"/> and removed from the source scene here. Returns the produced
+    /// file names (empty on failure).
     /// </summary>
     private async Task<List<string>> BuildSpaceBeeBundles()
     {
@@ -2356,7 +2458,7 @@ public class BuilderWindow : EditorWindow
         // gate (SaveCurrentModifiedScenesIfUserWantsTo) before we got here.
         string previouslyOpen = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
         bool reopenNeeded = previouslyOpen != scenePath;
-        string descriptionName = string.IsNullOrEmpty(spaceSlug.text) ? "GreenfieldSpace" : spaceSlug.text;
+        string descriptionName = string.IsNullOrEmpty(SelectedWorldSlug) ? "GreenfieldSpace" : SelectedWorldSlug;
 
         // We can't redirect where Basis writes the .bee: BasisSceneBuildName renames the scene asset
         // mid-build, which reloads the Basis settings object (and in a consuming project it's a read-only
@@ -2370,75 +2472,84 @@ public class BuilderWindow : EditorWindow
 
         try
         {
+            // One combined build over every selected platform. Basis' BuildBundle loops the targets and
+            // CombineFiles concatenates each platform's section into a single .BEE behind a
+            // BasisBundleConnector header of byte ranges; the runtime ranged-GETs only the section it needs.
+            // So a single SceneBundleBuild call (all targets) yields one platform-agnostic world.asset,
+            // rather than one file per platform. (This is exactly how the avatar builder builds.)
+            var targets = new List<BuildTarget>();
             for (int i = 0; i < buildTargets.Length; i++)
+                if (buildTargetFlags[i]) targets.Add(buildTargets[i]);
+
+            if (targets.Count == 0)
             {
-                if (!buildTargetFlags[i]) continue;
-                BuildTarget target = buildTargets[i];
-                // Encrypted Basis (.bee) content, but hosted under the legacy ".banter" name — the
-                // SideQuest upload API keys off that extension. The runtime tells the two apart by content.
-                string outName = (target == BuildTarget.Android ? "android" : "windows") + ".banter";
-                status.AddStatus("Building: " + outName);
-
-                // Reopen the scene fresh for every platform. SceneBundleBuild renames/reloads the scene
-                // asset during the build and CustomSceneProcessor strips our marker from it, so any
-                // GameObject reference held across a build goes stale (MissingReferenceException). Acquire
-                // the marker anew each time from a freshly loaded scene. SceneBundleBuild needs a
-                // BasisContentBase in the scene to derive the scene + bundle description from.
-                EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
-                GameObject markerGo = GameObject.Find(CustomSceneProcessor.SceneBeeBuildMarkerName)
-                                      ?? new GameObject(CustomSceneProcessor.SceneBeeBuildMarkerName);
-                BasisProp marker = markerGo.GetComponent<BasisProp>() ?? markerGo.AddComponent<BasisProp>();
-                marker.BasisBundleDescription = new BasisBundleDescription { AssetBundleName = descriptionName };
-
-                bool ok;
-                string message;
-                CustomSceneProcessor.isBuildingSceneBee = true;
-                try
-                {
-                    (ok, message) = await BasisBundleBuild.SceneBundleBuild(
-                        Image: "",
-                        BasisContentBase: marker,
-                        Targets: new List<BuildTarget> { target },
-                        useProvidedPassword: true,
-                        OverriddenPassword: GreenfieldBundleCrypto.Password);
-                }
-                finally
-                {
-                    CustomSceneProcessor.isBuildingSceneBee = false;
-                }
-
-                if (!ok)
-                {
-                    status.AddStatus("Build failed (" + outName + "): " + message);
-                    return produced;
-                }
-
-                // Basis writes to {AssetBundleDirectory}/{MakeSafeFolderName(name)}/{guid}.BEE. Lift the
-                // newest .bee out of that exact folder into WebRoot.
-                string beeFolder = Path.Combine(basisOutRoot, BasisBundleBuild.MakeSafeFolderName(descriptionName));
-                string bee = Directory.Exists(beeFolder)
-                    ? Directory
-                        .GetFiles(beeFolder, "*" + settings.BasisEncryptedExtension, SearchOption.TopDirectoryOnly)
-                        .OrderByDescending(File.GetLastWriteTimeUtc)
-                        .FirstOrDefault()
-                    : null;
-                if (string.IsNullOrEmpty(bee))
-                {
-                    status.AddStatus("Build produced no " + settings.BasisEncryptedExtension + " in " + beeFolder + " for " + outName + ".");
-                    return produced;
-                }
-
-                File.Copy(bee, Path.Combine(webRoot, outName), true);
-                // Never leave the plaintext password sidecar Basis drops next to the .bee lying around.
-                // (Leave the .bee itself — Basis reveals this folder, so it should show the built bundle.)
-                try
-                {
-                    foreach (string sidecar in Directory.GetFiles(beeFolder, settings.ProtectedPasswordFileName + "*.txt"))
-                        File.Delete(sidecar);
-                }
-                catch { /* sidecar tidy-up only */ }
-                produced.Add(outName);
+                status.AddStatus("No build targets selected.");
+                return produced;
             }
+
+            const string outName = "world.asset";
+            status.AddStatus("Building: " + outName + " (" + string.Join(", ", targets) + ")");
+
+            // Open the scene once and drop in the throwaway BasisProp SceneBundleBuild hangs the scene +
+            // description off. A single build call sidesteps the old per-platform loop's marker-staleness
+            // problem (SceneBundleBuild reloads the scene asset and CustomSceneProcessor strips the marker
+            // during the build, so a marker reference couldn't survive into a second call). The marker is
+            // read once here, stripped from every shipped section by CustomSceneProcessor, and removed from
+            // the source scene asset in the finally block.
+            EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            GameObject markerGo = GameObject.Find(CustomSceneProcessor.SceneBeeBuildMarkerName)
+                                  ?? new GameObject(CustomSceneProcessor.SceneBeeBuildMarkerName);
+            BasisProp marker = markerGo.GetComponent<BasisProp>() ?? markerGo.AddComponent<BasisProp>();
+            marker.BasisBundleDescription = new BasisBundleDescription { AssetBundleName = descriptionName };
+
+            bool ok;
+            string message;
+            CustomSceneProcessor.isBuildingSceneBee = true;
+            try
+            {
+                (ok, message) = await BasisBundleBuild.SceneBundleBuild(
+                    Image: "",
+                    BasisContentBase: marker,
+                    Targets: targets,
+                    useProvidedPassword: true,
+                    OverriddenPassword: GreenfieldBundleCrypto.Password);
+            }
+            finally
+            {
+                CustomSceneProcessor.isBuildingSceneBee = false;
+            }
+
+            if (!ok)
+            {
+                status.AddStatus("Build failed (" + outName + "): " + message);
+                return produced;
+            }
+
+            // Basis writes to {AssetBundleDirectory}/{MakeSafeFolderName(name)}/{guid}.BEE. Lift the newest
+            // .bee out of that exact folder into WebRoot as the single combined world.asset.
+            string beeFolder = Path.Combine(basisOutRoot, BasisBundleBuild.MakeSafeFolderName(descriptionName));
+            string bee = Directory.Exists(beeFolder)
+                ? Directory
+                    .GetFiles(beeFolder, "*" + settings.BasisEncryptedExtension, SearchOption.TopDirectoryOnly)
+                    .OrderByDescending(File.GetLastWriteTimeUtc)
+                    .FirstOrDefault()
+                : null;
+            if (string.IsNullOrEmpty(bee))
+            {
+                status.AddStatus("Build produced no " + settings.BasisEncryptedExtension + " in " + beeFolder + ".");
+                return produced;
+            }
+
+            File.Copy(bee, Path.Combine(webRoot, outName), true);
+            // Never leave the plaintext password sidecar Basis drops next to the .bee lying around.
+            // (Leave the .bee itself — Basis reveals this folder, so it should show the built bundle.)
+            try
+            {
+                foreach (string sidecar in Directory.GetFiles(beeFolder, settings.ProtectedPasswordFileName + "*.txt"))
+                    File.Delete(sidecar);
+            }
+            catch { /* sidecar tidy-up only */ }
+            produced.Add(outName);
         }
         catch (Exception e)
         {

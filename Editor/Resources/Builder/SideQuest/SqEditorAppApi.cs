@@ -28,7 +28,10 @@ namespace BS.SDKEditor
     {
         AssetBundle = 1,
         Index = 2,
-        Js = 3
+        Js = 3,
+        // A single platform-agnostic combined bundle (world.asset). Attached to a world with platform 0
+        // (Any) via /v2/worlds/{id}/assets/type/4/platform/0 (see AttachToWorld).
+        WorldAsset = 4
     }
 
     public enum UploadAssetTypePlatform
@@ -72,6 +75,37 @@ namespace BS.SDKEditor
             {
                 return Data.User;
             }
+        }
+
+        /// <summary>
+        /// Lists the signed-in user's worlds (GET /v2/worlds?users_id={me}&amp;limit={limit}). The user id
+        /// comes from the token, which always carries it (works even before the profile is fetched).
+        /// </summary>
+        public IEnumerator ListWorlds(Action<List<SqEditorWorld>> OnCompleted, Action<Exception> OnError, int limit = 50)
+        {
+            if (Data?.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            long usersId = Data.Token.UserId;
+            yield return JsonGet<List<SqEditorWorld>>($"/v2/worlds?users_id={usersId}&limit={limit}",
+                (worlds) => OnCompleted?.Invoke(worlds ?? new List<SqEditorWorld>()), OnError, true);
+        }
+
+        /// <summary>
+        /// Creates a new world owned by the signed-in user (POST /v2/worlds) and returns the created world.
+        /// </summary>
+        public IEnumerator CreateWorld(string name, Action<SqEditorWorld> OnCompleted, Action<Exception> OnError, int status = 1000, int maxOccupancy = 20)
+        {
+            if (Data?.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorWorld>("/v2/worlds",
+                new SqEditorCreateWorldRequest { Name = name, Status = status, MaxOccupancy = maxOccupancy },
+                OnCompleted, OnError, true, false);
         }
         public IEnumerator PostAvatar(Action<SqEditorAvatar> OnCompleted, Action<Exception> OnError, long highId, long lowId, long screenshotId, string name, bool ispublic)
         {
@@ -521,6 +555,27 @@ namespace BS.SDKEditor
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
 
+        /// <summary>
+        /// Uploads a file and attaches it to a WORLD (the greenfield space model): CDN /create-upload scoped
+        /// to the world, PUT the bytes, then attach via PUT /v2/worlds/{worlds_id}/assets/type/{type}/platform/{platform}.
+        /// For the combined world.asset bundle pass assetType=WorldAsset and platform=Any (0).
+        /// </summary>
+        public IEnumerator UploadFileToWorld(string name, byte[] data, string worldsId, string worldSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, Action<float> OnProgress = null)
+        {
+            SqEditorCreateUpload _uploadRequest = null;
+            yield return GetWorldUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, worldsId, worldSlug);
+
+            if (_uploadRequest == null)
+            {
+                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                yield break;
+            }
+
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
+
+            yield return AttachToWorld(() => OnCompleted?.Invoke(_uploadRequest), OnError, worldsId, _uploadRequest.FileId, name, assetType, assetPlatform);
+        }
+
         public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
@@ -671,6 +726,44 @@ namespace BS.SDKEditor
                 }
                 OnCompleted?.Invoke();
             }, OnError, true, false, "PUT");
+        }
+
+        // Attaches an already-uploaded file to a world. The world route always carries the /platform segment
+        // (unlike the community route), and platform must be 0/Any for index.html, script.js and world.asset.
+        private IEnumerator AttachToWorld(Action OnCompleted, Action<Exception> OnError, string worldsId, long fileId, string name, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorCreateUpload>($"/v2/worlds/{worldsId}/assets/type/{(int)assetType}/platform/{(int)assetPlatform}", new SqEditorCreateUploadDone() { FileId = fileId, Name = name }, (u) =>
+            {
+                if (u == null)
+                {
+                    OnError?.Invoke(new SqEditorApiException("Request could not be retrieved"));
+                    return;
+                }
+                OnCompleted?.Invoke();
+            }, OnError, true, false, "PUT");
+        }
+
+        private IEnumerator GetWorldUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string worldsId, string worldSlug)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateWorldUploadRequest() { WorldId = worldsId, WorldSlug = worldSlug, Size = numOfBytes, Type = Path.GetExtension(name).Replace(".", ""), Name = name }, (u) =>
+            {
+                if (u == null)
+                {
+                    OnError?.Invoke(new SqEditorApiException("Request could not be retrieved"));
+                    return;
+                }
+                OnCompleted?.Invoke(u);
+            }, OnError, true, true);
         }
 
         private IEnumerator GetUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string spaceSlug)

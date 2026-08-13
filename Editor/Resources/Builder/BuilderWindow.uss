@@ -156,3 +156,34 @@ VisualElement {}
     background-position: left 12px center;
     padding-left: 34px;
 }
+
+/* Dropdown styled to match the dark .alt-field text inputs (a bare DropdownField
+   otherwise renders as plain text on the window background). Reusable: add the
+   `alt-dropdown` class to any DropdownField. */
+.alt-dropdown {
+    margin-top: 0;
+    margin-bottom: 3px;
+}
+.alt-dropdown .unity-base-popup-field__input,
+.alt-dropdown .unity-popup-field__input {
+    background-color: #333333;
+    border-width: 0;
+    border-radius: 5px;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 10px;
+    padding-right: 8px;
+    min-height: 26px;
+}
+.alt-dropdown .unity-base-popup-field__input:hover,
+.alt-dropdown .unity-popup-field__input:hover {
+    background-color: #3d3d3d;
+}
+.alt-dropdown .unity-base-popup-field__text {
+    color: white;
+    font-size: 12px;
+    -unity-text-align: middle-left;
+}
+.alt-dropdown .unity-base-popup-field__arrow {
+    -unity-background-image-tint-color: rgba(255, 255, 255, 0.6);
+}
