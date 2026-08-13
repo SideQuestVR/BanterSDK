@@ -299,10 +299,15 @@ public class BuilderWindow : EditorWindow
         avatarGameObject = AvatarRef.Instance.avatarGameObject;
         SetupAvatarUI();
         status = new Status(statusBar, buildProgress, buildProgressBar);
-        // buildProgress.bindItem = (e, i) =>
-        // {
-        //     // (e as Label).text = status.statusMessages[i].ToLower();
-        // };
+        // Restored: this was commented out in "status gone?" (bb1dedf4), which left the Logs field
+        // rendering blank rows (makeItem builds a Label, but with no bindItem its text is never set).
+        // Guard the index — Rebuild can bind a transiently out-of-range i if the backing list changes
+        // between makeItem and bindItem, which is the likely reason it was disabled.
+        buildProgress.bindItem = (e, i) =>
+        {
+            if (e is Label label && i >= 0 && i < status.statusMessages.Count)
+                label.text = status.statusMessages[i];
+        };
         buildProgress.itemsSource = status.statusMessages;
         buildProgress.Rebuild();
         loginManager = new LoginManager(sq, autoUpload, codeText, linkPage, loggedInView, statusText, buildButton, rootVisualElement.Q<VisualElement>("ExtraUploadButtons"), rootVisualElement.Q<Label>("SignOut"));
