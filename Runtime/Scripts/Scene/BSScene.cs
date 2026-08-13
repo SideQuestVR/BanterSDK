@@ -779,40 +779,88 @@ namespace BS
         {
             return (loadUrlTaskCompletionSource?.Task.IsCanceled ?? false) || (loadUrlTaskCompletionSource?.Task.IsFaulted ?? false) || externalLoadFailed;
         }
+        /// <summary>
+        /// Single pass over the component set. Pure — no side effects — so it is safe to call on a
+        /// timer. A finished component counts as a whole 1; an unfinished one contributes its own
+        /// download progress. Uses the snapshot's length as the total so the count and the sum can
+        /// never disagree because the dictionary was mutated mid-walk.
+        /// </summary>
+        void ComputeLoadProgress(out int loadedCount, out int totalCount, out float combinedPercentage,
+                                 out bool allAssetBundlesLoaded)
+        {
+            var banterArray = banterComponents.ToArray();
+            totalCount = banterArray.Length;
+            loadedCount = 0;
+            combinedPercentage = 0f;
+            allAssetBundlesLoaded = true;
+
+            foreach (var entry in banterArray)
+            {
+                var component = entry.Value;
+                if (component.loaded)
+                {
+                    loadedCount++;
+                    combinedPercentage += 1;
+                }
+                else
+                {
+                    combinedPercentage += component.progress;
+                    if (component.type == ComponentType.AssetBundle)
+                    {
+                        allAssetBundlesLoaded = false;
+                    }
+                }
+            }
+        }
+
+        void PushLoadProgress(int loadedCount, int totalCount, float combinedPercentage)
+        {
+            if (combinedPercentage == 0 || totalCount == 0)
+            {
+                loadingManager?.SetLoadProgress("Loading", 0, LoadingStatus, true, loadingTexture);
+            }
+            else
+            {
+                var percentDisplay = (Mathf.Round(combinedPercentage / totalCount * 10000) / 100).ToString("0.00");
+                loadingManager?.SetLoadProgress("Loading " + $"({loadedCount}/{totalCount})",
+                    combinedPercentage / totalCount, percentDisplay + "%...", true, loadingTexture);
+            }
+            loadingTexture = null;
+        }
+
+        /// <summary>
+        /// Refreshes the loading bar ONLY. Deliberately does not touch <see cref="loaded"/> or
+        /// <see cref="bundlesLoaded"/> — those are the load gate, and driving them from a UI tick
+        /// would let the gate open early (before any component registers, loadedCount and
+        /// totalCount are both 0, which reads as "everything is done").
+        ///
+        /// This exists because nothing recomputed progress while the space was actually streaming
+        /// in: SetLoaded was only called on loadStarted, on domReady, and then from a poll that
+        /// does not begin until after SCENE_READY plus a 2s delay. The bar therefore sat at 0 for
+        /// the whole download and only animated at the very end.
+        /// </summary>
+        public void UpdateLoadProgress()
+        {
+            if (HasLoadFailed())
+            {
+                return;
+            }
+            ComputeLoadProgress(out var loadedCount, out var totalCount, out var combinedPercentage, out _);
+            PushLoadProgress(loadedCount, totalCount, combinedPercentage);
+        }
+
         public void SetLoaded()
         {
             if (HasLoadFailed())
             {
                 return;
             }
-            var totalComponents = banterComponents.Count;
-            var combinedPercentage = 0f;
-            var banterArray = banterComponents.ToArray();
-            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY) && banterArray.Where(x => x.Value.type == ComponentType.AssetBundle && !x.Value.loaded).Count() == 0;
-            var loadedComponents = banterArray.Where(x =>
-            {
-                if (!x.Value.loaded)
-                {
-                    combinedPercentage += x.Value.progress;
-                }
-                else
-                {
-                    combinedPercentage += 1;
-                }
-                return x.Value.loaded;
-            });
-            var loadedComponentsCount = loadedComponents.Count();
-            loaded = loadedComponentsCount == totalComponents;
-            var percentDisplay = (Mathf.Round(combinedPercentage / totalComponents * 10000) / 100).ToString("0.00");
-            if (combinedPercentage == 0 || totalComponents == 0)
-            {
-                loadingManager?.SetLoadProgress("Loading", 0, LoadingStatus, true, loadingTexture);
-            }
-            else
-            {
-                loadingManager?.SetLoadProgress("Loading " + $"({loadedComponentsCount}/{totalComponents})", combinedPercentage / totalComponents, percentDisplay + "%...", true, loadingTexture);
-            }
-            loadingTexture = null;
+            ComputeLoadProgress(out var loadedCount, out var totalCount, out var combinedPercentage,
+                                out var allAssetBundlesLoaded);
+            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY)
+                            && allAssetBundlesLoaded;
+            loaded = loadedCount == totalCount;
+            PushLoadProgress(loadedCount, totalCount, combinedPercentage);
         }
         public void RegisterComponentOnMainThread(GameObject go, BSComponentBase comp)
         {
