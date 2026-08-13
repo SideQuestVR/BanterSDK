@@ -179,14 +179,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSAudioSource" +  PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
+            return "AudioSource" +  PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSAudioSource);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.AudioSource);
 
 
             oid = gameObject.GetInstanceID();
@@ -350,7 +350,7 @@ namespace Banter.SDK
                     name = PropertyName.volume,
                     type = PropertyType.Float,
                     value = volume,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -362,7 +362,7 @@ namespace Banter.SDK
                     name = PropertyName.pitch,
                     type = PropertyType.Float,
                     value = pitch,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -374,7 +374,7 @@ namespace Banter.SDK
                     name = PropertyName.mute,
                     type = PropertyType.Bool,
                     value = mute,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -386,7 +386,7 @@ namespace Banter.SDK
                     name = PropertyName.loop,
                     type = PropertyType.Bool,
                     value = loop,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -398,7 +398,7 @@ namespace Banter.SDK
                     name = PropertyName.bypassEffects,
                     type = PropertyType.Bool,
                     value = bypassEffects,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -410,7 +410,7 @@ namespace Banter.SDK
                     name = PropertyName.bypassListenerEffects,
                     type = PropertyType.Bool,
                     value = bypassListenerEffects,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -422,7 +422,7 @@ namespace Banter.SDK
                     name = PropertyName.bypassReverbZones,
                     type = PropertyType.Bool,
                     value = bypassReverbZones,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -434,7 +434,7 @@ namespace Banter.SDK
                     name = PropertyName.playOnAwake,
                     type = PropertyType.Bool,
                     value = playOnAwake,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });
@@ -446,7 +446,7 @@ namespace Banter.SDK
                     name = PropertyName.spatialBlend,
                     type = PropertyType.Float,
                     value = spatialBlend,
-                    componentType = ComponentType.BSAudioSource,
+                    componentType = ComponentType.AudioSource,
                     oid = oid,
                     cid = cid
                 });

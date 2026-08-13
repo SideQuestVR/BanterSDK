@@ -83,14 +83,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSStreetView" +  PropertyName.panoId + panoId;
+            return "StreetView" +  PropertyName.panoId + panoId;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSStreetView);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.StreetView);
 
 
             oid = gameObject.GetInstanceID();
@@ -150,7 +150,7 @@ namespace Banter.SDK
                     name = PropertyName.panoId,
                     type = PropertyType.String,
                     value = panoId,
-                    componentType = ComponentType.BSStreetView,
+                    componentType = ComponentType.StreetView,
                     oid = oid,
                     cid = cid
                 });

@@ -127,14 +127,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSPhysicsMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction + PropertyName.bounciness + bounciness + PropertyName.frictionCombine + frictionCombine + PropertyName.bounceCombine + bounceCombine;
+            return "PhysicsMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction + PropertyName.bounciness + bounciness + PropertyName.frictionCombine + frictionCombine + PropertyName.bounceCombine + bounceCombine;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSPhysicsMaterial);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.PhysicsMaterial);
 
 
             oid = gameObject.GetInstanceID();
@@ -230,7 +230,7 @@ namespace Banter.SDK
                     name = PropertyName.dynamicFriction,
                     type = PropertyType.Float,
                     value = dynamicFriction,
-                    componentType = ComponentType.BSPhysicsMaterial,
+                    componentType = ComponentType.PhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });
@@ -242,7 +242,7 @@ namespace Banter.SDK
                     name = PropertyName.staticFriction,
                     type = PropertyType.Float,
                     value = staticFriction,
-                    componentType = ComponentType.BSPhysicsMaterial,
+                    componentType = ComponentType.PhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });
@@ -254,7 +254,7 @@ namespace Banter.SDK
                     name = PropertyName.bounciness,
                     type = PropertyType.Float,
                     value = bounciness,
-                    componentType = ComponentType.BSPhysicsMaterial,
+                    componentType = ComponentType.PhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });
@@ -266,7 +266,7 @@ namespace Banter.SDK
                     name = PropertyName.frictionCombine,
                     type = PropertyType.Int,
                     value = frictionCombine,
-                    componentType = ComponentType.BSPhysicsMaterial,
+                    componentType = ComponentType.PhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });
@@ -278,7 +278,7 @@ namespace Banter.SDK
                     name = PropertyName.bounceCombine,
                     type = PropertyType.Int,
                     value = bounceCombine,
-                    componentType = ComponentType.BSPhysicsMaterial,
+                    componentType = ComponentType.PhysicsMaterial,
                     oid = oid,
                     cid = cid
                 });

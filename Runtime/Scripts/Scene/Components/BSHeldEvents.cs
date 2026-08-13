@@ -208,14 +208,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSHeldEvents" +  PropertyName.sensitivity + sensitivity + PropertyName.fireRate + fireRate + PropertyName.auto + auto + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
+            return "HeldEvents" +  PropertyName.sensitivity + sensitivity + PropertyName.fireRate + fireRate + PropertyName.auto + auto + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSHeldEvents);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.HeldEvents);
 
 
             oid = gameObject.GetInstanceID();
@@ -383,7 +383,7 @@ namespace Banter.SDK
                     name = PropertyName.sensitivity,
                     type = PropertyType.Float,
                     value = sensitivity,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -395,7 +395,7 @@ namespace Banter.SDK
                     name = PropertyName.fireRate,
                     type = PropertyType.Float,
                     value = fireRate,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -407,7 +407,7 @@ namespace Banter.SDK
                     name = PropertyName.auto,
                     type = PropertyType.Bool,
                     value = auto,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -419,7 +419,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftPrimary,
                     type = PropertyType.Bool,
                     value = blockLeftPrimary,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -431,7 +431,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftSecondary,
                     type = PropertyType.Bool,
                     value = blockLeftSecondary,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -443,7 +443,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightPrimary,
                     type = PropertyType.Bool,
                     value = blockRightPrimary,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -455,7 +455,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightSecondary,
                     type = PropertyType.Bool,
                     value = blockRightSecondary,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -467,7 +467,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftThumbstick,
                     type = PropertyType.Bool,
                     value = blockLeftThumbstick,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -479,7 +479,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftThumbstickClick,
                     type = PropertyType.Bool,
                     value = blockLeftThumbstickClick,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -491,7 +491,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightThumbstick,
                     type = PropertyType.Bool,
                     value = blockRightThumbstick,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -503,7 +503,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightThumbstickClick,
                     type = PropertyType.Bool,
                     value = blockRightThumbstickClick,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -515,7 +515,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftTrigger,
                     type = PropertyType.Bool,
                     value = blockLeftTrigger,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });
@@ -527,7 +527,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightTrigger,
                     type = PropertyType.Bool,
                     value = blockRightTrigger,
-                    componentType = ComponentType.BSHeldEvents,
+                    componentType = ComponentType.HeldEvents,
                     oid = oid,
                     cid = cid
                 });

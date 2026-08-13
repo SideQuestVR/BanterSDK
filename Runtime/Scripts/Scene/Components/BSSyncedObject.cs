@@ -105,14 +105,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSSyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned;
+            return "SyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSSyncedObject);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.SyncedObject);
 
 
             oid = gameObject.GetInstanceID();
@@ -229,7 +229,7 @@ namespace Banter.SDK
                     name = PropertyName.syncPosition,
                     type = PropertyType.Bool,
                     value = syncPosition,
-                    componentType = ComponentType.BSSyncedObject,
+                    componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -241,7 +241,7 @@ namespace Banter.SDK
                     name = PropertyName.syncRotation,
                     type = PropertyType.Bool,
                     value = syncRotation,
-                    componentType = ComponentType.BSSyncedObject,
+                    componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -253,7 +253,7 @@ namespace Banter.SDK
                     name = PropertyName.takeOwnershipOnCollision,
                     type = PropertyType.Bool,
                     value = takeOwnershipOnCollision,
-                    componentType = ComponentType.BSSyncedObject,
+                    componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -265,7 +265,7 @@ namespace Banter.SDK
                     name = PropertyName.takeOwnershipOnGrab,
                     type = PropertyType.Bool,
                     value = takeOwnershipOnGrab,
-                    componentType = ComponentType.BSSyncedObject,
+                    componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -277,7 +277,7 @@ namespace Banter.SDK
                     name = PropertyName.kinematicIfNotOwned,
                     type = PropertyType.Bool,
                     value = kinematicIfNotOwned,
-                    componentType = ComponentType.BSSyncedObject,
+                    componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid
                 });

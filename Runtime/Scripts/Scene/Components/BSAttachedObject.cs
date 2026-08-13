@@ -191,14 +191,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSAttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat;
+            return "AttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSAttachedObject);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.AttachedObject);
 
 
             oid = gameObject.GetInstanceID();
@@ -372,7 +372,7 @@ namespace Banter.SDK
                     name = PropertyName.uid,
                     type = PropertyType.String,
                     value = uid,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -384,7 +384,7 @@ namespace Banter.SDK
                     name = PropertyName.attachmentPosition,
                     type = PropertyType.Vector3,
                     value = attachmentPosition,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -396,7 +396,7 @@ namespace Banter.SDK
                     name = PropertyName.attachmentRotation,
                     type = PropertyType.Quaternion,
                     value = attachmentRotation,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -408,7 +408,7 @@ namespace Banter.SDK
                     name = PropertyName.attachmentType,
                     type = PropertyType.Int,
                     value = attachmentType,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -420,7 +420,7 @@ namespace Banter.SDK
                     name = PropertyName.avatarAttachmentType,
                     type = PropertyType.Int,
                     value = avatarAttachmentType,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -432,7 +432,7 @@ namespace Banter.SDK
                     name = PropertyName.avatarAttachmentPoint,
                     type = PropertyType.Int,
                     value = avatarAttachmentPoint,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -444,7 +444,7 @@ namespace Banter.SDK
                     name = PropertyName.attachmentPoint,
                     type = PropertyType.Int,
                     value = attachmentPoint,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -456,7 +456,7 @@ namespace Banter.SDK
                     name = PropertyName.autoSync,
                     type = PropertyType.Bool,
                     value = autoSync,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -468,7 +468,7 @@ namespace Banter.SDK
                     name = PropertyName.jointAvatar,
                     type = PropertyType.Bool,
                     value = jointAvatar,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -480,7 +480,7 @@ namespace Banter.SDK
                     name = PropertyName.autoAttach,
                     type = PropertyType.Bool,
                     value = autoAttach,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });
@@ -492,7 +492,7 @@ namespace Banter.SDK
                     name = PropertyName.isSeat,
                     type = PropertyType.Bool,
                     value = isSeat,
-                    componentType = ComponentType.BSAttachedObject,
+                    componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
                 });

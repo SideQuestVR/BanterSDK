@@ -106,14 +106,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSTorusKnot" +  PropertyName.radius + radius + PropertyName.tube + tube + PropertyName.radialSegments + radialSegments + PropertyName.tubularSegments + tubularSegments + PropertyName.p + p + PropertyName.q + q;
+            return "TorusKnot" +  PropertyName.radius + radius + PropertyName.tube + tube + PropertyName.radialSegments + radialSegments + PropertyName.tubularSegments + tubularSegments + PropertyName.p + p + PropertyName.q + q;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSTorusKnot);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.TorusKnot);
 
 
             oid = gameObject.GetInstanceID();
@@ -218,7 +218,7 @@ namespace Banter.SDK
                     name = PropertyName.radius,
                     type = PropertyType.Float,
                     value = radius,
-                    componentType = ComponentType.BSTorusKnot,
+                    componentType = ComponentType.TorusKnot,
                     oid = oid,
                     cid = cid
                 });
@@ -230,7 +230,7 @@ namespace Banter.SDK
                     name = PropertyName.tube,
                     type = PropertyType.Float,
                     value = tube,
-                    componentType = ComponentType.BSTorusKnot,
+                    componentType = ComponentType.TorusKnot,
                     oid = oid,
                     cid = cid
                 });
@@ -242,7 +242,7 @@ namespace Banter.SDK
                     name = PropertyName.radialSegments,
                     type = PropertyType.Int,
                     value = radialSegments,
-                    componentType = ComponentType.BSTorusKnot,
+                    componentType = ComponentType.TorusKnot,
                     oid = oid,
                     cid = cid
                 });
@@ -254,7 +254,7 @@ namespace Banter.SDK
                     name = PropertyName.tubularSegments,
                     type = PropertyType.Int,
                     value = tubularSegments,
-                    componentType = ComponentType.BSTorusKnot,
+                    componentType = ComponentType.TorusKnot,
                     oid = oid,
                     cid = cid
                 });
@@ -266,7 +266,7 @@ namespace Banter.SDK
                     name = PropertyName.p,
                     type = PropertyType.Int,
                     value = p,
-                    componentType = ComponentType.BSTorusKnot,
+                    componentType = ComponentType.TorusKnot,
                     oid = oid,
                     cid = cid
                 });
@@ -278,7 +278,7 @@ namespace Banter.SDK
                     name = PropertyName.q,
                     type = PropertyType.Int,
                     value = q,
-                    componentType = ComponentType.BSTorusKnot,
+                    componentType = ComponentType.TorusKnot,
                     oid = oid,
                     cid = cid
                 });

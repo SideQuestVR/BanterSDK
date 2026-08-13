@@ -88,14 +88,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSScherk" +  PropertyName.stacks + stacks + PropertyName.slices + slices;
+            return "Scherk" +  PropertyName.stacks + stacks + PropertyName.slices + slices;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSScherk);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Scherk);
 
 
             oid = gameObject.GetInstanceID();
@@ -164,7 +164,7 @@ namespace Banter.SDK
                     name = PropertyName.stacks,
                     type = PropertyType.Int,
                     value = stacks,
-                    componentType = ComponentType.BSScherk,
+                    componentType = ComponentType.Scherk,
                     oid = oid,
                     cid = cid
                 });
@@ -176,7 +176,7 @@ namespace Banter.SDK
                     name = PropertyName.slices,
                     type = PropertyType.Int,
                     value = slices,
-                    componentType = ComponentType.BSScherk,
+                    componentType = ComponentType.Scherk,
                     oid = oid,
                     cid = cid
                 });

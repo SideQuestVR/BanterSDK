@@ -60,14 +60,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSInvertedMesh";
+            return "InvertedMesh";
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSInvertedMesh);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.InvertedMesh);
 
 
             oid = gameObject.GetInstanceID();

@@ -359,14 +359,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSGeometry" +  PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints;
+            return "Geometry" +  PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSGeometry);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Geometry);
 
 
             oid = gameObject.GetInstanceID();
@@ -696,7 +696,7 @@ namespace Banter.SDK
                     name = PropertyName.geometryType,
                     type = PropertyType.Int,
                     value = geometryType,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -708,7 +708,7 @@ namespace Banter.SDK
                     name = PropertyName.parametricType,
                     type = PropertyType.Int,
                     value = parametricType,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -720,7 +720,7 @@ namespace Banter.SDK
                     name = PropertyName.width,
                     type = PropertyType.Float,
                     value = width,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -732,7 +732,7 @@ namespace Banter.SDK
                     name = PropertyName.height,
                     type = PropertyType.Float,
                     value = height,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -744,7 +744,7 @@ namespace Banter.SDK
                     name = PropertyName.depth,
                     type = PropertyType.Float,
                     value = depth,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -756,7 +756,7 @@ namespace Banter.SDK
                     name = PropertyName.widthSegments,
                     type = PropertyType.Int,
                     value = widthSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -768,7 +768,7 @@ namespace Banter.SDK
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
                     value = heightSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -780,7 +780,7 @@ namespace Banter.SDK
                     name = PropertyName.depthSegments,
                     type = PropertyType.Int,
                     value = depthSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -792,7 +792,7 @@ namespace Banter.SDK
                     name = PropertyName.radius,
                     type = PropertyType.Float,
                     value = radius,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -804,7 +804,7 @@ namespace Banter.SDK
                     name = PropertyName.segments,
                     type = PropertyType.Int,
                     value = segments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -816,7 +816,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
                     value = thetaStart,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -828,7 +828,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,
                     value = thetaLength,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -840,7 +840,7 @@ namespace Banter.SDK
                     name = PropertyName.phiStart,
                     type = PropertyType.Float,
                     value = phiStart,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -852,7 +852,7 @@ namespace Banter.SDK
                     name = PropertyName.phiLength,
                     type = PropertyType.Float,
                     value = phiLength,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -864,7 +864,7 @@ namespace Banter.SDK
                     name = PropertyName.radialSegments,
                     type = PropertyType.Int,
                     value = radialSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -876,7 +876,7 @@ namespace Banter.SDK
                     name = PropertyName.openEnded,
                     type = PropertyType.Bool,
                     value = openEnded,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -888,7 +888,7 @@ namespace Banter.SDK
                     name = PropertyName.radiusTop,
                     type = PropertyType.Float,
                     value = radiusTop,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -900,7 +900,7 @@ namespace Banter.SDK
                     name = PropertyName.radiusBottom,
                     type = PropertyType.Float,
                     value = radiusBottom,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -912,7 +912,7 @@ namespace Banter.SDK
                     name = PropertyName.innerRadius,
                     type = PropertyType.Float,
                     value = innerRadius,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -924,7 +924,7 @@ namespace Banter.SDK
                     name = PropertyName.outerRadius,
                     type = PropertyType.Float,
                     value = outerRadius,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -936,7 +936,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaSegments,
                     type = PropertyType.Int,
                     value = thetaSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -948,7 +948,7 @@ namespace Banter.SDK
                     name = PropertyName.phiSegments,
                     type = PropertyType.Int,
                     value = phiSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -960,7 +960,7 @@ namespace Banter.SDK
                     name = PropertyName.tube,
                     type = PropertyType.Float,
                     value = tube,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -972,7 +972,7 @@ namespace Banter.SDK
                     name = PropertyName.tubularSegments,
                     type = PropertyType.Int,
                     value = tubularSegments,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -984,7 +984,7 @@ namespace Banter.SDK
                     name = PropertyName.arc,
                     type = PropertyType.Float,
                     value = arc,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -996,7 +996,7 @@ namespace Banter.SDK
                     name = PropertyName.p,
                     type = PropertyType.Int,
                     value = p,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -1008,7 +1008,7 @@ namespace Banter.SDK
                     name = PropertyName.q,
                     type = PropertyType.Int,
                     value = q,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -1020,7 +1020,7 @@ namespace Banter.SDK
                     name = PropertyName.stacks,
                     type = PropertyType.Int,
                     value = stacks,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -1032,7 +1032,7 @@ namespace Banter.SDK
                     name = PropertyName.slices,
                     type = PropertyType.Int,
                     value = slices,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -1044,7 +1044,7 @@ namespace Banter.SDK
                     name = PropertyName.detail,
                     type = PropertyType.Float,
                     value = detail,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });
@@ -1056,7 +1056,7 @@ namespace Banter.SDK
                     name = PropertyName.parametricPoints,
                     type = PropertyType.String,
                     value = parametricPoints,
-                    componentType = ComponentType.BSGeometry,
+                    componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid
                 });

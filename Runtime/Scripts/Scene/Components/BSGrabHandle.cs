@@ -122,14 +122,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSGrabHandle" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
+            return "GrabHandle" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSGrabHandle);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.GrabHandle);
 
 
             oid = gameObject.GetInstanceID();
@@ -198,7 +198,7 @@ namespace Banter.SDK
                     name = PropertyName.grabType,
                     type = PropertyType.Int,
                     value = grabType,
-                    componentType = ComponentType.BSGrabHandle,
+                    componentType = ComponentType.GrabHandle,
                     oid = oid,
                     cid = cid
                 });
@@ -210,7 +210,7 @@ namespace Banter.SDK
                     name = PropertyName.grabRadius,
                     type = PropertyType.Float,
                     value = grabRadius,
-                    componentType = ComponentType.BSGrabHandle,
+                    componentType = ComponentType.GrabHandle,
                     oid = oid,
                     cid = cid
                 });

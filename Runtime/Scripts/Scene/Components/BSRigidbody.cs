@@ -258,7 +258,7 @@ namespace Banter.SDK
         public System.Boolean FreezeRotationX { get { return freezeRotationX; } set { freezeRotationX = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationX }); } }
         public System.Boolean FreezeRotationY { get { return freezeRotationY; } set { freezeRotationY = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationY }); } }
         public System.Boolean FreezeRotationZ { get { return freezeRotationZ; } set { freezeRotationZ = value; UpdateCallback(new List<PropertyName> { PropertyName.freezeRotationZ }); } }
-        [Header("SYNC BANTERRIGIDBODY TO JS")]
+        [Header("SYNC RIGIDBODY TO JS")]
         public bool _velocity;
         public bool _angularVelocity;
 
@@ -288,14 +288,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSRigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
+            return "Rigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSRigidbody);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Rigidbody);
 
             scene.Tick += Tick;
             oid = gameObject.GetInstanceID();
@@ -637,7 +637,7 @@ namespace Banter.SDK
                     name = PropertyName.velocity,
                     type = PropertyType.Vector3,
                     value = velocity,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -649,7 +649,7 @@ namespace Banter.SDK
                     name = PropertyName.angularVelocity,
                     type = PropertyType.Vector3,
                     value = angularVelocity,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -661,7 +661,7 @@ namespace Banter.SDK
                     name = PropertyName.mass,
                     type = PropertyType.Float,
                     value = mass,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -673,7 +673,7 @@ namespace Banter.SDK
                     name = PropertyName.drag,
                     type = PropertyType.Float,
                     value = drag,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -685,7 +685,7 @@ namespace Banter.SDK
                     name = PropertyName.angularDrag,
                     type = PropertyType.Float,
                     value = angularDrag,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -697,7 +697,7 @@ namespace Banter.SDK
                     name = PropertyName.isKinematic,
                     type = PropertyType.Bool,
                     value = isKinematic,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -709,7 +709,7 @@ namespace Banter.SDK
                     name = PropertyName.useGravity,
                     type = PropertyType.Bool,
                     value = useGravity,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -721,7 +721,7 @@ namespace Banter.SDK
                     name = PropertyName.centerOfMass,
                     type = PropertyType.Vector3,
                     value = centerOfMass,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -733,7 +733,7 @@ namespace Banter.SDK
                     name = PropertyName.collisionDetectionMode,
                     type = PropertyType.Int,
                     value = collisionDetectionMode,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -745,7 +745,7 @@ namespace Banter.SDK
                     name = PropertyName.freezePositionX,
                     type = PropertyType.Bool,
                     value = freezePositionX,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -757,7 +757,7 @@ namespace Banter.SDK
                     name = PropertyName.freezePositionY,
                     type = PropertyType.Bool,
                     value = freezePositionY,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -769,7 +769,7 @@ namespace Banter.SDK
                     name = PropertyName.freezePositionZ,
                     type = PropertyType.Bool,
                     value = freezePositionZ,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -781,7 +781,7 @@ namespace Banter.SDK
                     name = PropertyName.freezeRotationX,
                     type = PropertyType.Bool,
                     value = freezeRotationX,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -793,7 +793,7 @@ namespace Banter.SDK
                     name = PropertyName.freezeRotationY,
                     type = PropertyType.Bool,
                     value = freezeRotationY,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });
@@ -805,7 +805,7 @@ namespace Banter.SDK
                     name = PropertyName.freezeRotationZ,
                     type = PropertyType.Bool,
                     value = freezeRotationZ,
-                    componentType = ComponentType.BSRigidbody,
+                    componentType = ComponentType.Rigidbody,
                     oid = oid,
                     cid = cid
                 });

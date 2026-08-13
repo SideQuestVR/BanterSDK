@@ -107,14 +107,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSSphere" +  PropertyName.radius + radius + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Sphere" +  PropertyName.radius + radius + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSSphere);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Sphere);
 
 
             oid = gameObject.GetInstanceID();
@@ -228,7 +228,7 @@ namespace Banter.SDK
                     name = PropertyName.radius,
                     type = PropertyType.Float,
                     value = radius,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });
@@ -240,7 +240,7 @@ namespace Banter.SDK
                     name = PropertyName.widthSegments,
                     type = PropertyType.Int,
                     value = widthSegments,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });
@@ -252,7 +252,7 @@ namespace Banter.SDK
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
                     value = heightSegments,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });
@@ -264,7 +264,7 @@ namespace Banter.SDK
                     name = PropertyName.phiStart,
                     type = PropertyType.Float,
                     value = phiStart,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });
@@ -276,7 +276,7 @@ namespace Banter.SDK
                     name = PropertyName.phiLength,
                     type = PropertyType.Float,
                     value = phiLength,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });
@@ -288,7 +288,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
                     value = thetaStart,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });
@@ -300,7 +300,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,
                     value = thetaLength,
-                    componentType = ComponentType.BSSphere,
+                    componentType = ComponentType.Sphere,
                     oid = oid,
                     cid = cid
                 });

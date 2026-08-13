@@ -97,14 +97,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSCircle" +  PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Circle" +  PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSCircle);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Circle);
 
 
             oid = gameObject.GetInstanceID();
@@ -191,7 +191,7 @@ namespace Banter.SDK
                     name = PropertyName.radius,
                     type = PropertyType.Float,
                     value = radius,
-                    componentType = ComponentType.BSCircle,
+                    componentType = ComponentType.Circle,
                     oid = oid,
                     cid = cid
                 });
@@ -203,7 +203,7 @@ namespace Banter.SDK
                     name = PropertyName.segments,
                     type = PropertyType.Int,
                     value = segments,
-                    componentType = ComponentType.BSCircle,
+                    componentType = ComponentType.Circle,
                     oid = oid,
                     cid = cid
                 });
@@ -215,7 +215,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
                     value = thetaStart,
-                    componentType = ComponentType.BSCircle,
+                    componentType = ComponentType.Circle,
                     oid = oid,
                     cid = cid
                 });
@@ -227,7 +227,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,
                     value = thetaLength,
-                    componentType = ComponentType.BSCircle,
+                    componentType = ComponentType.Circle,
                     oid = oid,
                     cid = cid
                 });

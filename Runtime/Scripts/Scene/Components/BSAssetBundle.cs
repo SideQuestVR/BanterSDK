@@ -417,14 +417,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSAssetBundle" +  PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
+            return "AssetBundle" +  PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSAssetBundle);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.AssetBundle);
 
 
             oid = gameObject.GetInstanceID();
@@ -547,7 +547,7 @@ namespace Banter.SDK
                     name = PropertyName.windowsUrl,
                     type = PropertyType.String,
                     value = windowsUrl,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -559,7 +559,7 @@ namespace Banter.SDK
                     name = PropertyName.osxUrl,
                     type = PropertyType.String,
                     value = osxUrl,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -571,7 +571,7 @@ namespace Banter.SDK
                     name = PropertyName.linuxUrl,
                     type = PropertyType.String,
                     value = linuxUrl,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -583,7 +583,7 @@ namespace Banter.SDK
                     name = PropertyName.androidUrl,
                     type = PropertyType.String,
                     value = androidUrl,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -595,7 +595,7 @@ namespace Banter.SDK
                     name = PropertyName.iosUrl,
                     type = PropertyType.String,
                     value = iosUrl,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -607,7 +607,7 @@ namespace Banter.SDK
                     name = PropertyName.vosUrl,
                     type = PropertyType.String,
                     value = vosUrl,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -619,7 +619,7 @@ namespace Banter.SDK
                     name = PropertyName.isScene,
                     type = PropertyType.Bool,
                     value = isScene,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });
@@ -631,7 +631,7 @@ namespace Banter.SDK
                     name = PropertyName.legacyShaderFix,
                     type = PropertyType.Bool,
                     value = legacyShaderFix,
-                    componentType = ComponentType.BSAssetBundle,
+                    componentType = ComponentType.AssetBundle,
                     oid = oid,
                     cid = cid
                 });

@@ -317,14 +317,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSBrowser" +  PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions;
+            return "Browser" +  PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSBrowser);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Browser);
 
 
             oid = gameObject.GetInstanceID();
@@ -463,7 +463,7 @@ namespace Banter.SDK
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
-                    componentType = ComponentType.BSBrowser,
+                    componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid
                 });
@@ -475,7 +475,7 @@ namespace Banter.SDK
                     name = PropertyName.mipMaps,
                     type = PropertyType.Int,
                     value = mipMaps,
-                    componentType = ComponentType.BSBrowser,
+                    componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid
                 });
@@ -487,7 +487,7 @@ namespace Banter.SDK
                     name = PropertyName.pixelsPerUnit,
                     type = PropertyType.Float,
                     value = pixelsPerUnit,
-                    componentType = ComponentType.BSBrowser,
+                    componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid
                 });
@@ -499,7 +499,7 @@ namespace Banter.SDK
                     name = PropertyName.pageWidth,
                     type = PropertyType.Float,
                     value = pageWidth,
-                    componentType = ComponentType.BSBrowser,
+                    componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid
                 });
@@ -511,7 +511,7 @@ namespace Banter.SDK
                     name = PropertyName.pageHeight,
                     type = PropertyType.Float,
                     value = pageHeight,
-                    componentType = ComponentType.BSBrowser,
+                    componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid
                 });
@@ -523,7 +523,7 @@ namespace Banter.SDK
                     name = PropertyName.actions,
                     type = PropertyType.String,
                     value = actions,
-                    componentType = ComponentType.BSBrowser,
+                    componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid
                 });

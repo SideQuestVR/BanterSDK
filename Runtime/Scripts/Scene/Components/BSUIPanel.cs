@@ -871,14 +871,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSUIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
+            return "UIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSUIPanel);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.UIPanel);
 
 
             oid = gameObject.GetInstanceID();
@@ -1033,7 +1033,7 @@ namespace Banter.SDK
                     name = PropertyName.resolution,
                     type = PropertyType.Vector2,
                     value = resolution,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1045,7 +1045,7 @@ namespace Banter.SDK
                     name = PropertyName.screenSpace,
                     type = PropertyType.Bool,
                     value = screenSpace,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1057,7 +1057,7 @@ namespace Banter.SDK
                     name = PropertyName.enableHaptics,
                     type = PropertyType.Bool,
                     value = enableHaptics,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1069,7 +1069,7 @@ namespace Banter.SDK
                     name = PropertyName.clickHaptic,
                     type = PropertyType.Vector2,
                     value = clickHaptic,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1081,7 +1081,7 @@ namespace Banter.SDK
                     name = PropertyName.enterHaptic,
                     type = PropertyType.Vector2,
                     value = enterHaptic,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1093,7 +1093,7 @@ namespace Banter.SDK
                     name = PropertyName.exitHaptic,
                     type = PropertyType.Vector2,
                     value = exitHaptic,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1105,7 +1105,7 @@ namespace Banter.SDK
                     name = PropertyName.enableSounds,
                     type = PropertyType.Bool,
                     value = enableSounds,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1117,7 +1117,7 @@ namespace Banter.SDK
                     name = PropertyName.clickSoundUrl,
                     type = PropertyType.String,
                     value = clickSoundUrl,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1129,7 +1129,7 @@ namespace Banter.SDK
                     name = PropertyName.enterSoundUrl,
                     type = PropertyType.String,
                     value = enterSoundUrl,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });
@@ -1141,7 +1141,7 @@ namespace Banter.SDK
                     name = PropertyName.exitSoundUrl,
                     type = PropertyType.String,
                     value = exitSoundUrl,
-                    componentType = ComponentType.BSUIPanel,
+                    componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid
                 });

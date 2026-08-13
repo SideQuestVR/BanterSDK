@@ -222,14 +222,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSMaterial" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps + PropertyName.cacheBust + cacheBust;
+            return "Material" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps + PropertyName.cacheBust + cacheBust;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSMaterial);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Material);
 
 
             oid = gameObject.GetInstanceID();
@@ -334,7 +334,7 @@ namespace Banter.SDK
                     name = PropertyName.shaderName,
                     type = PropertyType.String,
                     value = shaderName,
-                    componentType = ComponentType.BSMaterial,
+                    componentType = ComponentType.Material,
                     oid = oid,
                     cid = cid
                 });
@@ -346,7 +346,7 @@ namespace Banter.SDK
                     name = PropertyName.texture,
                     type = PropertyType.String,
                     value = texture,
-                    componentType = ComponentType.BSMaterial,
+                    componentType = ComponentType.Material,
                     oid = oid,
                     cid = cid
                 });
@@ -358,7 +358,7 @@ namespace Banter.SDK
                     name = PropertyName.color,
                     type = PropertyType.Vector4,
                     value = color,
-                    componentType = ComponentType.BSMaterial,
+                    componentType = ComponentType.Material,
                     oid = oid,
                     cid = cid
                 });
@@ -370,7 +370,7 @@ namespace Banter.SDK
                     name = PropertyName.side,
                     type = PropertyType.Int,
                     value = side,
-                    componentType = ComponentType.BSMaterial,
+                    componentType = ComponentType.Material,
                     oid = oid,
                     cid = cid
                 });
@@ -382,7 +382,7 @@ namespace Banter.SDK
                     name = PropertyName.generateMipMaps,
                     type = PropertyType.Bool,
                     value = generateMipMaps,
-                    componentType = ComponentType.BSMaterial,
+                    componentType = ComponentType.Material,
                     oid = oid,
                     cid = cid
                 });
@@ -394,7 +394,7 @@ namespace Banter.SDK
                     name = PropertyName.cacheBust,
                     type = PropertyType.String,
                     value = cacheBust,
-                    componentType = ComponentType.BSMaterial,
+                    componentType = ComponentType.Material,
                     oid = oid,
                     cid = cid
                 });

@@ -143,14 +143,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSText" +  PropertyName.text + text + PropertyName.color + color + PropertyName.horizontalAlignment + horizontalAlignment + PropertyName.verticalAlignment + verticalAlignment + PropertyName.fontSize + fontSize + PropertyName.richText + richText + PropertyName.enableWordWrapping + enableWordWrapping + PropertyName.rectTransformSizeDelta + rectTransformSizeDelta;
+            return "Text" +  PropertyName.text + text + PropertyName.color + color + PropertyName.horizontalAlignment + horizontalAlignment + PropertyName.verticalAlignment + verticalAlignment + PropertyName.fontSize + fontSize + PropertyName.richText + richText + PropertyName.enableWordWrapping + enableWordWrapping + PropertyName.rectTransformSizeDelta + rectTransformSizeDelta;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSText);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Text);
 
 
             oid = gameObject.GetInstanceID();
@@ -273,7 +273,7 @@ namespace Banter.SDK
                     name = PropertyName.text,
                     type = PropertyType.String,
                     value = text,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -285,7 +285,7 @@ namespace Banter.SDK
                     name = PropertyName.color,
                     type = PropertyType.Vector4,
                     value = color,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -297,7 +297,7 @@ namespace Banter.SDK
                     name = PropertyName.horizontalAlignment,
                     type = PropertyType.Int,
                     value = horizontalAlignment,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -309,7 +309,7 @@ namespace Banter.SDK
                     name = PropertyName.verticalAlignment,
                     type = PropertyType.Int,
                     value = verticalAlignment,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -321,7 +321,7 @@ namespace Banter.SDK
                     name = PropertyName.fontSize,
                     type = PropertyType.Float,
                     value = fontSize,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -333,7 +333,7 @@ namespace Banter.SDK
                     name = PropertyName.richText,
                     type = PropertyType.Bool,
                     value = richText,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -345,7 +345,7 @@ namespace Banter.SDK
                     name = PropertyName.enableWordWrapping,
                     type = PropertyType.Bool,
                     value = enableWordWrapping,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });
@@ -357,7 +357,7 @@ namespace Banter.SDK
                     name = PropertyName.rectTransformSizeDelta,
                     type = PropertyType.Vector2,
                     value = rectTransformSizeDelta,
-                    componentType = ComponentType.BSText,
+                    componentType = ComponentType.Text,
                     oid = oid,
                     cid = cid
                 });

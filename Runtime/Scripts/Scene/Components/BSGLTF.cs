@@ -287,14 +287,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSGLTF" +  PropertyName.url + url + PropertyName.generateMipMaps + generateMipMaps + PropertyName.addColliders + addColliders + PropertyName.nonConvexColliders + nonConvexColliders + PropertyName.slippery + slippery + PropertyName.climbable + climbable + PropertyName.legacyRotate + legacyRotate + PropertyName.childrenLayer + childrenLayer;
+            return "GLTF" +  PropertyName.url + url + PropertyName.generateMipMaps + generateMipMaps + PropertyName.addColliders + addColliders + PropertyName.nonConvexColliders + nonConvexColliders + PropertyName.slippery + slippery + PropertyName.climbable + climbable + PropertyName.legacyRotate + legacyRotate + PropertyName.childrenLayer + childrenLayer;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSGLTF);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.GLTF);
 
 
             oid = gameObject.GetInstanceID();
@@ -417,7 +417,7 @@ namespace Banter.SDK
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -429,7 +429,7 @@ namespace Banter.SDK
                     name = PropertyName.generateMipMaps,
                     type = PropertyType.Bool,
                     value = generateMipMaps,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -441,7 +441,7 @@ namespace Banter.SDK
                     name = PropertyName.addColliders,
                     type = PropertyType.Bool,
                     value = addColliders,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -453,7 +453,7 @@ namespace Banter.SDK
                     name = PropertyName.nonConvexColliders,
                     type = PropertyType.Bool,
                     value = nonConvexColliders,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -465,7 +465,7 @@ namespace Banter.SDK
                     name = PropertyName.slippery,
                     type = PropertyType.Bool,
                     value = slippery,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -477,7 +477,7 @@ namespace Banter.SDK
                     name = PropertyName.climbable,
                     type = PropertyType.Bool,
                     value = climbable,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -489,7 +489,7 @@ namespace Banter.SDK
                     name = PropertyName.legacyRotate,
                     type = PropertyType.Bool,
                     value = legacyRotate,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });
@@ -501,7 +501,7 @@ namespace Banter.SDK
                     name = PropertyName.childrenLayer,
                     type = PropertyType.Int,
                     value = childrenLayer,
-                    componentType = ComponentType.BSGLTF,
+                    componentType = ComponentType.GLTF,
                     oid = oid,
                     cid = cid
                 });

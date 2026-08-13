@@ -109,14 +109,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSPhysicMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction;
+            return "PhysicMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSPhysicMaterial);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.PhysicMaterial);
 
 
             oid = gameObject.GetInstanceID();
@@ -185,7 +185,7 @@ namespace Banter.SDK
                     name = PropertyName.dynamicFriction,
                     type = PropertyType.Float,
                     value = dynamicFriction,
-                    componentType = ComponentType.BSPhysicMaterial,
+                    componentType = ComponentType.PhysicMaterial,
                     oid = oid,
                     cid = cid
                 });
@@ -197,7 +197,7 @@ namespace Banter.SDK
                     name = PropertyName.staticFriction,
                     type = PropertyType.Float,
                     value = staticFriction,
-                    componentType = ComponentType.BSPhysicMaterial,
+                    componentType = ComponentType.PhysicMaterial,
                     oid = oid,
                     cid = cid
                 });

@@ -7,133 +7,129 @@ namespace Banter.SDK
         {
             switch (componentType)
             {
-                case ComponentType.BSAOBaking:
+                case ComponentType.AOBaking:
                     return gameObject.AddComponent<BSAOBaking>();
-                case ComponentType.BSApple:
+                case ComponentType.Apple:
                     return gameObject.AddComponent<BSApple>();
-                case ComponentType.BSAssetBundle:
+                case ComponentType.AssetBundle:
                     return gameObject.AddComponent<BSAssetBundle>();
-                case ComponentType.BSAttachedObject:
+                case ComponentType.AttachedObject:
                     return gameObject.AddComponent<BSAttachedObject>();
-                case ComponentType.BSAudioSource:
+                case ComponentType.AudioSource:
                     return gameObject.AddComponent<BSAudioSource>();
-                // BanterAvatarPedestal disabled for Greenfield Basis migration (component tilde'd out).
-                // Enum member kept for ComponentType ordinal/protocol stability.
-                // case ComponentType.BanterAvatarPedestal:
-                //     return gameObject.AddComponent<BanterAvatarPedestal>();
-                case ComponentType.BSBillboard:
+                case ComponentType.Billboard:
                     return gameObject.AddComponent<BSBillboard>();
-                case ComponentType.BSBox:
+                case ComponentType.Box:
                     return gameObject.AddComponent<BSBox>();
                 case ComponentType.BoxCollider:
                     return gameObject.AddComponent<BSBoxCollider>();
-                case ComponentType.BSBrowser:
+                case ComponentType.Browser:
                     return gameObject.AddComponent<BSBrowser>();
                 case ComponentType.CapsuleCollider:
                     return gameObject.AddComponent<BSCapsuleCollider>();
-                case ComponentType.BSCatenoid:
+                case ComponentType.Catenoid:
                     return gameObject.AddComponent<BSCatenoid>();
                 case ComponentType.CharacterJoint:
                     return gameObject.AddComponent<BSCharacterJoint>();
-                case ComponentType.BSCircle:
+                case ComponentType.Circle:
                     return gameObject.AddComponent<BSCircle>();
-                case ComponentType.BSColliderEvents:
+                case ComponentType.ColliderEvents:
                     return gameObject.AddComponent<BSColliderEvents>();
-                case ComponentType.BSCone:
+                case ComponentType.Cone:
                     return gameObject.AddComponent<BSCone>();
                 case ComponentType.ConfigurableJoint:
                     return gameObject.AddComponent<BSConfigurableJoint>();
-                case ComponentType.BSCylinder:
+                case ComponentType.Cylinder:
                     return gameObject.AddComponent<BSCylinder>();
-                case ComponentType.BSFermet:
+                case ComponentType.Fermet:
                     return gameObject.AddComponent<BSFermet>();
                 case ComponentType.FixedJoint:
                     return gameObject.AddComponent<BSFixedJoint>();
-                case ComponentType.BSGeometry:
+                case ComponentType.Geometry:
                     return gameObject.AddComponent<BSGeometry>();
-                case ComponentType.BSGLTF:
+                case ComponentType.GLTF:
                     return gameObject.AddComponent<BSGLTF>();
-                case ComponentType.BSGrababble:
+                case ComponentType.Grababble:
                     return gameObject.AddComponent<BSGrababble>();
-                case ComponentType.BSGrabHandle:
+                case ComponentType.GrabHandle:
                     return gameObject.AddComponent<BSGrabHandle>();
-                case ComponentType.BSHeldEvents:
+                case ComponentType.HeldEvents:
                     return gameObject.AddComponent<BSHeldEvents>();
-                case ComponentType.BSHelicoid:
+                case ComponentType.Helicoid:
                     return gameObject.AddComponent<BSHelicoid>();
                 case ComponentType.HingeJoint:
                     return gameObject.AddComponent<BSHingeJoint>();
-                case ComponentType.BSHorn:
+                case ComponentType.Horn:
                     return gameObject.AddComponent<BSHorn>();
-                case ComponentType.BSInvertedMesh:
+                case ComponentType.InvertedMesh:
                     return gameObject.AddComponent<BSInvertedMesh>();
-                case ComponentType.BSKitItem:
+                case ComponentType.KitItem:
                     return gameObject.AddComponent<BSKitItem>();
-                case ComponentType.BSKlein:
+                case ComponentType.Klein:
                     return gameObject.AddComponent<BSKlein>();
                 case ComponentType.Light:
                     return gameObject.AddComponent<BSLight>();
-                case ComponentType.BSMaterial:
+                case ComponentType.Material:
                     return gameObject.AddComponent<BSMaterial>();
                 case ComponentType.MeshCollider:
                     return gameObject.AddComponent<BSMeshCollider>();
-                case ComponentType.BSMirror:
+                case ComponentType.Mirror:
                     return gameObject.AddComponent<BSMirror>();
-                case ComponentType.BSMobius:
+                case ComponentType.Mobius:
                     return gameObject.AddComponent<BSMobius>();
-                case ComponentType.BSMobius3d:
+                case ComponentType.Mobius3d:
                     return gameObject.AddComponent<BSMobius3d>();
-                case ComponentType.BSMonoBehaviour:
+                case ComponentType.MonoBehaviour:
                     return gameObject.AddComponent<BSMonoBehaviour>();
-                case ComponentType.BSNatica:
+                case ComponentType.Natica:
                     return gameObject.AddComponent<BSNatica>();
-                case ComponentType.BSPhysicMaterial:
+                case ComponentType.PhysicMaterial:
                     return gameObject.AddComponent<BSPhysicMaterial>();
-                case ComponentType.BSPhysicsMaterial:
+                case ComponentType.PhysicsMaterial:
                     return gameObject.AddComponent<BSPhysicsMaterial>();
-                case ComponentType.BSPillow:
+                case ComponentType.Pillow:
                     return gameObject.AddComponent<BSPillow>();
-                case ComponentType.BSPlane:
+                case ComponentType.Plane:
                     return gameObject.AddComponent<BSPlane>();
-                case ComponentType.BSPortal:
+                case ComponentType.Portal:
                     return gameObject.AddComponent<BSPortal>();
-                case ComponentType.BSQuestHome:
+                case ComponentType.QuestHome:
                     return gameObject.AddComponent<BSQuestHome>();
-                case ComponentType.BSRigidbody:
+                case ComponentType.Rigidbody:
                     return gameObject.AddComponent<BSRigidbody>();
-                case ComponentType.BSRing:
+                case ComponentType.Ring:
                     return gameObject.AddComponent<BSRing>();
-                case ComponentType.BSScherk:
+                case ComponentType.Scherk:
                     return gameObject.AddComponent<BSScherk>();
-                case ComponentType.BSSkinnedMeshRenderer:
+                case ComponentType.SkinnedMeshRenderer:
                     return gameObject.AddComponent<BSSkinnedMeshRenderer>();
-                case ComponentType.BSSnail:
+                case ComponentType.Snail:
                     return gameObject.AddComponent<BSSnail>();
-                case ComponentType.BSSphere:
+                case ComponentType.Sphere:
                     return gameObject.AddComponent<BSSphere>();
                 case ComponentType.SphereCollider:
                     return gameObject.AddComponent<BSSphereCollider>();
-                case ComponentType.BSSpiral:
+                case ComponentType.Spiral:
                     return gameObject.AddComponent<BSSpiral>();
-                case ComponentType.BSSpring:
+                case ComponentType.Spring:
                     return gameObject.AddComponent<BSSpring>();
                 case ComponentType.SpringJoint:
                     return gameObject.AddComponent<BSSpringJoint>();
-                case ComponentType.BSStreetView:
+                case ComponentType.StreetView:
                     return gameObject.AddComponent<BSStreetView>();
-                case ComponentType.BSSyncedObject:
+                case ComponentType.SyncedObject:
                     return gameObject.AddComponent<BSSyncedObject>();
-                case ComponentType.BSText:
+                case ComponentType.Text:
                     return gameObject.AddComponent<BSText>();
-                case ComponentType.BSTorus:
+                case ComponentType.Torus:
                     return gameObject.AddComponent<BSTorus>();
-                case ComponentType.BSTorusKnot:
+                case ComponentType.TorusKnot:
                     return gameObject.AddComponent<BSTorusKnot>();
-                case ComponentType.BSUIPanel:
+                case ComponentType.UIPanel:
                     return gameObject.AddComponent<BSUIPanel>();
-                case ComponentType.BSVideoPlayer:
+                case ComponentType.VideoPlayer:
                     return gameObject.AddComponent<BSVideoPlayer>();
-                case ComponentType.BSWorldObject:
+                case ComponentType.WorldObject:
                     return gameObject.AddComponent<BSWorldObject>();
                 default:
                     return null;

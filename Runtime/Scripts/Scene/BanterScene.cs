@@ -787,7 +787,7 @@ namespace Banter.SDK
             var totalComponents = banterComponents.Count;
             var combinedPercentage = 0f;
             var banterArray = banterComponents.ToArray();
-            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY) && banterArray.Where(x => x.Value.type == ComponentType.BSAssetBundle && !x.Value.loaded).Count() == 0;
+            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY) && banterArray.Where(x => x.Value.type == ComponentType.AssetBundle && !x.Value.loaded).Count() == 0;
             var loadedComponents = banterArray.Where(x =>
             {
                 if (!x.Value.loaded)

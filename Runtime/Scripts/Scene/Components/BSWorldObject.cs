@@ -82,14 +82,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSWorldObject";
+            return "WorldObject";
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSWorldObject);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.WorldObject);
 
 
             oid = gameObject.GetInstanceID();

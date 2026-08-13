@@ -220,14 +220,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSAOBaking" +  PropertyName.subdivisionLevel + subdivisionLevel + PropertyName.sampleCount + sampleCount + PropertyName.aoIntensity + aoIntensity + PropertyName.aoBias + aoBias + PropertyName.aoRadius + aoRadius + PropertyName.hideSourceObjects + hideSourceObjects + PropertyName.targetShaderName + targetShaderName + PropertyName.isProcessing + isProcessing + PropertyName.progress + progress;
+            return "AOBaking" +  PropertyName.subdivisionLevel + subdivisionLevel + PropertyName.sampleCount + sampleCount + PropertyName.aoIntensity + aoIntensity + PropertyName.aoBias + aoBias + PropertyName.aoRadius + aoRadius + PropertyName.hideSourceObjects + hideSourceObjects + PropertyName.targetShaderName + targetShaderName + PropertyName.isProcessing + isProcessing + PropertyName.progress + progress;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSAOBaking);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.AOBaking);
 
 
             oid = gameObject.GetInstanceID();
@@ -390,7 +390,7 @@ namespace Banter.SDK
                     name = PropertyName.subdivisionLevel,
                     type = PropertyType.Int,
                     value = subdivisionLevel,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -402,7 +402,7 @@ namespace Banter.SDK
                     name = PropertyName.sampleCount,
                     type = PropertyType.Int,
                     value = sampleCount,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -414,7 +414,7 @@ namespace Banter.SDK
                     name = PropertyName.aoIntensity,
                     type = PropertyType.Float,
                     value = aoIntensity,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -426,7 +426,7 @@ namespace Banter.SDK
                     name = PropertyName.aoBias,
                     type = PropertyType.Float,
                     value = aoBias,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -438,7 +438,7 @@ namespace Banter.SDK
                     name = PropertyName.aoRadius,
                     type = PropertyType.Float,
                     value = aoRadius,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -450,7 +450,7 @@ namespace Banter.SDK
                     name = PropertyName.hideSourceObjects,
                     type = PropertyType.Bool,
                     value = hideSourceObjects,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -462,7 +462,7 @@ namespace Banter.SDK
                     name = PropertyName.targetShaderName,
                     type = PropertyType.String,
                     value = targetShaderName,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -474,7 +474,7 @@ namespace Banter.SDK
                     name = PropertyName.isProcessing,
                     type = PropertyType.Bool,
                     value = isProcessing,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });
@@ -486,7 +486,7 @@ namespace Banter.SDK
                     name = PropertyName.progress,
                     type = PropertyType.Float,
                     value = progress,
-                    componentType = ComponentType.BSAOBaking,
+                    componentType = ComponentType.AOBaking,
                     oid = oid,
                     cid = cid
                 });

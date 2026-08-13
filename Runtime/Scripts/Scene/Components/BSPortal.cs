@@ -144,14 +144,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSPortal" +  PropertyName.url + url + PropertyName.instance + instance;
+            return "Portal" +  PropertyName.url + url + PropertyName.instance + instance;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSPortal);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Portal);
 
 
             oid = gameObject.GetInstanceID();
@@ -220,7 +220,7 @@ namespace Banter.SDK
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
-                    componentType = ComponentType.BSPortal,
+                    componentType = ComponentType.Portal,
                     oid = oid,
                     cid = cid
                 });
@@ -232,7 +232,7 @@ namespace Banter.SDK
                     name = PropertyName.instance,
                     type = PropertyType.String,
                     value = instance,
-                    componentType = ComponentType.BSPortal,
+                    componentType = ComponentType.Portal,
                     oid = oid,
                     cid = cid
                 });

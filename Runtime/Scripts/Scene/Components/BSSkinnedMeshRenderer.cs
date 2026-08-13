@@ -271,14 +271,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSSkinnedMeshRenderer" +  PropertyName.blendShapes + blendShapes + PropertyName.bones + bones + PropertyName.rootBoneInstanceId + rootBoneInstanceId + PropertyName.updateWhenOffscreen + updateWhenOffscreen + PropertyName.skinnedMotionVectors + skinnedMotionVectors + PropertyName.quality + quality;
+            return "SkinnedMeshRenderer" +  PropertyName.blendShapes + blendShapes + PropertyName.bones + bones + PropertyName.rootBoneInstanceId + rootBoneInstanceId + PropertyName.updateWhenOffscreen + updateWhenOffscreen + PropertyName.skinnedMotionVectors + skinnedMotionVectors + PropertyName.quality + quality;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSSkinnedMeshRenderer);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.SkinnedMeshRenderer);
 
 
             oid = gameObject.GetInstanceID();
@@ -416,7 +416,7 @@ namespace Banter.SDK
                     name = PropertyName.blendShapes,
                     type = PropertyType.String,
                     value = blendShapes,
-                    componentType = ComponentType.BSSkinnedMeshRenderer,
+                    componentType = ComponentType.SkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -428,7 +428,7 @@ namespace Banter.SDK
                     name = PropertyName.bones,
                     type = PropertyType.String,
                     value = bones,
-                    componentType = ComponentType.BSSkinnedMeshRenderer,
+                    componentType = ComponentType.SkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -440,7 +440,7 @@ namespace Banter.SDK
                     name = PropertyName.rootBoneInstanceId,
                     type = PropertyType.Int,
                     value = rootBoneInstanceId,
-                    componentType = ComponentType.BSSkinnedMeshRenderer,
+                    componentType = ComponentType.SkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -452,7 +452,7 @@ namespace Banter.SDK
                     name = PropertyName.updateWhenOffscreen,
                     type = PropertyType.Bool,
                     value = updateWhenOffscreen,
-                    componentType = ComponentType.BSSkinnedMeshRenderer,
+                    componentType = ComponentType.SkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -464,7 +464,7 @@ namespace Banter.SDK
                     name = PropertyName.skinnedMotionVectors,
                     type = PropertyType.Bool,
                     value = skinnedMotionVectors,
-                    componentType = ComponentType.BSSkinnedMeshRenderer,
+                    componentType = ComponentType.SkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });
@@ -476,7 +476,7 @@ namespace Banter.SDK
                     name = PropertyName.quality,
                     type = PropertyType.Int,
                     value = quality,
-                    componentType = ComponentType.BSSkinnedMeshRenderer,
+                    componentType = ComponentType.SkinnedMeshRenderer,
                     oid = oid,
                     cid = cid
                 });

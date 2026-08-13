@@ -73,14 +73,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSMonoBehaviour" +  PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
+            return "MonoBehaviour" +  PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSMonoBehaviour);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.MonoBehaviour);
 
 
             oid = gameObject.GetInstanceID();
@@ -167,7 +167,7 @@ namespace Banter.SDK
                     name = PropertyName.fps,
                     type = PropertyType.Int,
                     value = fps,
-                    componentType = ComponentType.BSMonoBehaviour,
+                    componentType = ComponentType.MonoBehaviour,
                     oid = oid,
                     cid = cid
                 });
@@ -179,7 +179,7 @@ namespace Banter.SDK
                     name = PropertyName.startFunction,
                     type = PropertyType.String,
                     value = startFunction,
-                    componentType = ComponentType.BSMonoBehaviour,
+                    componentType = ComponentType.MonoBehaviour,
                     oid = oid,
                     cid = cid
                 });
@@ -191,7 +191,7 @@ namespace Banter.SDK
                     name = PropertyName.updateFunction,
                     type = PropertyType.String,
                     value = updateFunction,
-                    componentType = ComponentType.BSMonoBehaviour,
+                    componentType = ComponentType.MonoBehaviour,
                     oid = oid,
                     cid = cid
                 });
@@ -203,7 +203,7 @@ namespace Banter.SDK
                     name = PropertyName.destroyFunction,
                     type = PropertyType.String,
                     value = destroyFunction,
-                    componentType = ComponentType.BSMonoBehaviour,
+                    componentType = ComponentType.MonoBehaviour,
                     oid = oid,
                     cid = cid
                 });

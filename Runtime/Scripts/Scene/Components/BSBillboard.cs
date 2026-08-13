@@ -108,14 +108,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSBillboard" +  PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
+            return "Billboard" +  PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSBillboard);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Billboard);
 
 
             oid = gameObject.GetInstanceID();
@@ -202,7 +202,7 @@ namespace Banter.SDK
                     name = PropertyName.smoothing,
                     type = PropertyType.Float,
                     value = smoothing,
-                    componentType = ComponentType.BSBillboard,
+                    componentType = ComponentType.Billboard,
                     oid = oid,
                     cid = cid
                 });
@@ -214,7 +214,7 @@ namespace Banter.SDK
                     name = PropertyName.enableXAxis,
                     type = PropertyType.Bool,
                     value = enableXAxis,
-                    componentType = ComponentType.BSBillboard,
+                    componentType = ComponentType.Billboard,
                     oid = oid,
                     cid = cid
                 });
@@ -226,7 +226,7 @@ namespace Banter.SDK
                     name = PropertyName.enableYAxis,
                     type = PropertyType.Bool,
                     value = enableYAxis,
-                    componentType = ComponentType.BSBillboard,
+                    componentType = ComponentType.Billboard,
                     oid = oid,
                     cid = cid
                 });
@@ -238,7 +238,7 @@ namespace Banter.SDK
                     name = PropertyName.enableZAxis,
                     type = PropertyType.Bool,
                     value = enableZAxis,
-                    componentType = ComponentType.BSBillboard,
+                    componentType = ComponentType.Billboard,
                     oid = oid,
                     cid = cid
                 });

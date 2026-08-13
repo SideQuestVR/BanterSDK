@@ -119,14 +119,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSCylinder" +  PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Cylinder" +  PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSCylinder);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Cylinder);
 
 
             oid = gameObject.GetInstanceID();
@@ -249,7 +249,7 @@ namespace Banter.SDK
                     name = PropertyName.radiusTop,
                     type = PropertyType.Float,
                     value = radiusTop,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -261,7 +261,7 @@ namespace Banter.SDK
                     name = PropertyName.radiusBottom,
                     type = PropertyType.Float,
                     value = radiusBottom,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -273,7 +273,7 @@ namespace Banter.SDK
                     name = PropertyName.height,
                     type = PropertyType.Float,
                     value = height,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -285,7 +285,7 @@ namespace Banter.SDK
                     name = PropertyName.radialSegments,
                     type = PropertyType.Int,
                     value = radialSegments,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -297,7 +297,7 @@ namespace Banter.SDK
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
                     value = heightSegments,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -309,7 +309,7 @@ namespace Banter.SDK
                     name = PropertyName.openEnded,
                     type = PropertyType.Bool,
                     value = openEnded,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -321,7 +321,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
                     value = thetaStart,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });
@@ -333,7 +333,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,
                     value = thetaLength,
-                    componentType = ComponentType.BSCylinder,
+                    componentType = ComponentType.Cylinder,
                     oid = oid,
                     cid = cid
                 });

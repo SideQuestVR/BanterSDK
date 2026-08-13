@@ -224,14 +224,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSGrababble" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius + PropertyName.gunTriggerSensitivity + gunTriggerSensitivity + PropertyName.gunTriggerFireRate + gunTriggerFireRate + PropertyName.gunTriggerAutoFire + gunTriggerAutoFire + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
+            return "Grababble" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius + PropertyName.gunTriggerSensitivity + gunTriggerSensitivity + PropertyName.gunTriggerFireRate + gunTriggerFireRate + PropertyName.gunTriggerAutoFire + gunTriggerAutoFire + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSGrababble);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Grababble);
 
 
             oid = gameObject.GetInstanceID();
@@ -417,7 +417,7 @@ namespace Banter.SDK
                     name = PropertyName.grabType,
                     type = PropertyType.Int,
                     value = grabType,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -429,7 +429,7 @@ namespace Banter.SDK
                     name = PropertyName.grabRadius,
                     type = PropertyType.Float,
                     value = grabRadius,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -441,7 +441,7 @@ namespace Banter.SDK
                     name = PropertyName.gunTriggerSensitivity,
                     type = PropertyType.Float,
                     value = gunTriggerSensitivity,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -453,7 +453,7 @@ namespace Banter.SDK
                     name = PropertyName.gunTriggerFireRate,
                     type = PropertyType.Float,
                     value = gunTriggerFireRate,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -465,7 +465,7 @@ namespace Banter.SDK
                     name = PropertyName.gunTriggerAutoFire,
                     type = PropertyType.Bool,
                     value = gunTriggerAutoFire,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -477,7 +477,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftPrimary,
                     type = PropertyType.Bool,
                     value = blockLeftPrimary,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -489,7 +489,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftSecondary,
                     type = PropertyType.Bool,
                     value = blockLeftSecondary,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -501,7 +501,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightPrimary,
                     type = PropertyType.Bool,
                     value = blockRightPrimary,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -513,7 +513,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightSecondary,
                     type = PropertyType.Bool,
                     value = blockRightSecondary,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -525,7 +525,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftThumbstick,
                     type = PropertyType.Bool,
                     value = blockLeftThumbstick,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -537,7 +537,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftThumbstickClick,
                     type = PropertyType.Bool,
                     value = blockLeftThumbstickClick,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -549,7 +549,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightThumbstick,
                     type = PropertyType.Bool,
                     value = blockRightThumbstick,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -561,7 +561,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightThumbstickClick,
                     type = PropertyType.Bool,
                     value = blockRightThumbstickClick,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -573,7 +573,7 @@ namespace Banter.SDK
                     name = PropertyName.blockLeftTrigger,
                     type = PropertyType.Bool,
                     value = blockLeftTrigger,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });
@@ -585,7 +585,7 @@ namespace Banter.SDK
                     name = PropertyName.blockRightTrigger,
                     type = PropertyType.Bool,
                     value = blockRightTrigger,
-                    componentType = ComponentType.BSGrababble,
+                    componentType = ComponentType.Grababble,
                     oid = oid,
                     cid = cid
                 });

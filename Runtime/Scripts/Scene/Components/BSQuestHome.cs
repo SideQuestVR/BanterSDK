@@ -885,14 +885,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSQuestHome" +  PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
+            return "QuestHome" +  PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSQuestHome);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.QuestHome);
 
 
             oid = gameObject.GetInstanceID();
@@ -970,7 +970,7 @@ namespace Banter.SDK
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
-                    componentType = ComponentType.BSQuestHome,
+                    componentType = ComponentType.QuestHome,
                     oid = oid,
                     cid = cid
                 });
@@ -982,7 +982,7 @@ namespace Banter.SDK
                     name = PropertyName.addColliders,
                     type = PropertyType.Bool,
                     value = addColliders,
-                    componentType = ComponentType.BSQuestHome,
+                    componentType = ComponentType.QuestHome,
                     oid = oid,
                     cid = cid
                 });
@@ -994,7 +994,7 @@ namespace Banter.SDK
                     name = PropertyName.climbable,
                     type = PropertyType.Bool,
                     value = climbable,
-                    componentType = ComponentType.BSQuestHome,
+                    componentType = ComponentType.QuestHome,
                     oid = oid,
                     cid = cid
                 });

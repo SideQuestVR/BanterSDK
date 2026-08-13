@@ -228,7 +228,7 @@ namespace Banter.SDK
         public System.Boolean IsPrepared { get { return isPrepared; } set { isPrepared = value; UpdateCallback(new List<PropertyName> { PropertyName.isPrepared }); } }
         public System.Boolean IsMuted { get { return isMuted; } set { isMuted = value; UpdateCallback(new List<PropertyName> { PropertyName.isMuted }); } }
         public System.Single Duration { get { return duration; } set { duration = value; UpdateCallback(new List<PropertyName> { PropertyName.duration }); } }
-        [Header("SYNC BANTERVIDEOPLAYER TO JS")]
+        [Header("SYNC VIDEOPLAYER TO JS")]
         public bool _time;
 
         BanterScene _scene;
@@ -257,14 +257,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSVideoPlayer" +  PropertyName.time + time + PropertyName.url + url + PropertyName.volume + volume + PropertyName.loop + loop + PropertyName.playOnAwake + playOnAwake + PropertyName.skipOnDrop + skipOnDrop + PropertyName.waitForFirstFrame + waitForFirstFrame + PropertyName.isPlaying + isPlaying + PropertyName.isLooping + isLooping + PropertyName.isPrepared + isPrepared + PropertyName.isMuted + isMuted + PropertyName.duration + duration;
+            return "VideoPlayer" +  PropertyName.time + time + PropertyName.url + url + PropertyName.volume + volume + PropertyName.loop + loop + PropertyName.playOnAwake + playOnAwake + PropertyName.skipOnDrop + skipOnDrop + PropertyName.waitForFirstFrame + waitForFirstFrame + PropertyName.isPlaying + isPlaying + PropertyName.isLooping + isLooping + PropertyName.isPrepared + isPrepared + PropertyName.isMuted + isMuted + PropertyName.duration + duration;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSVideoPlayer);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.VideoPlayer);
 
             scene.Tick += Tick;
             oid = gameObject.GetInstanceID();
@@ -454,7 +454,7 @@ namespace Banter.SDK
                     name = PropertyName.time,
                     type = PropertyType.Float,
                     value = time,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -466,7 +466,7 @@ namespace Banter.SDK
                     name = PropertyName.url,
                     type = PropertyType.String,
                     value = url,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -478,7 +478,7 @@ namespace Banter.SDK
                     name = PropertyName.volume,
                     type = PropertyType.Float,
                     value = volume,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -490,7 +490,7 @@ namespace Banter.SDK
                     name = PropertyName.loop,
                     type = PropertyType.Bool,
                     value = loop,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -502,7 +502,7 @@ namespace Banter.SDK
                     name = PropertyName.playOnAwake,
                     type = PropertyType.Bool,
                     value = playOnAwake,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -514,7 +514,7 @@ namespace Banter.SDK
                     name = PropertyName.skipOnDrop,
                     type = PropertyType.Bool,
                     value = skipOnDrop,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -526,7 +526,7 @@ namespace Banter.SDK
                     name = PropertyName.waitForFirstFrame,
                     type = PropertyType.Bool,
                     value = waitForFirstFrame,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -538,7 +538,7 @@ namespace Banter.SDK
                     name = PropertyName.isPlaying,
                     type = PropertyType.Bool,
                     value = isPlaying,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -550,7 +550,7 @@ namespace Banter.SDK
                     name = PropertyName.isLooping,
                     type = PropertyType.Bool,
                     value = isLooping,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -562,7 +562,7 @@ namespace Banter.SDK
                     name = PropertyName.isPrepared,
                     type = PropertyType.Bool,
                     value = isPrepared,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -574,7 +574,7 @@ namespace Banter.SDK
                     name = PropertyName.isMuted,
                     type = PropertyType.Bool,
                     value = isMuted,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });
@@ -586,7 +586,7 @@ namespace Banter.SDK
                     name = PropertyName.duration,
                     type = PropertyType.Float,
                     value = duration,
-                    componentType = ComponentType.BSVideoPlayer,
+                    componentType = ComponentType.VideoPlayer,
                     oid = oid,
                     cid = cid
                 });

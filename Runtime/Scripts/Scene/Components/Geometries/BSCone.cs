@@ -111,14 +111,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSCone" +  PropertyName.radius + radius + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Cone" +  PropertyName.radius + radius + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSCone);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Cone);
 
 
             oid = gameObject.GetInstanceID();
@@ -232,7 +232,7 @@ namespace Banter.SDK
                     name = PropertyName.radius,
                     type = PropertyType.Float,
                     value = radius,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });
@@ -244,7 +244,7 @@ namespace Banter.SDK
                     name = PropertyName.height,
                     type = PropertyType.Float,
                     value = height,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });
@@ -256,7 +256,7 @@ namespace Banter.SDK
                     name = PropertyName.radialSegments,
                     type = PropertyType.Int,
                     value = radialSegments,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });
@@ -268,7 +268,7 @@ namespace Banter.SDK
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
                     value = heightSegments,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });
@@ -280,7 +280,7 @@ namespace Banter.SDK
                     name = PropertyName.openEnded,
                     type = PropertyType.Bool,
                     value = openEnded,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });
@@ -292,7 +292,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
                     value = thetaStart,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });
@@ -304,7 +304,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,
                     value = thetaLength,
-                    componentType = ComponentType.BSCone,
+                    componentType = ComponentType.Cone,
                     oid = oid,
                     cid = cid
                 });

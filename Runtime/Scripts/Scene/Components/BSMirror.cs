@@ -124,14 +124,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSMirror" +  PropertyName.renderTextureSize + renderTextureSize + PropertyName.cameraClear + cameraClear + PropertyName.backgroundColor + backgroundColor;
+            return "Mirror" +  PropertyName.renderTextureSize + renderTextureSize + PropertyName.cameraClear + cameraClear + PropertyName.backgroundColor + backgroundColor;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSMirror);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Mirror);
 
 
             oid = gameObject.GetInstanceID();
@@ -233,7 +233,7 @@ namespace Banter.SDK
                     name = PropertyName.renderTextureSize,
                     type = PropertyType.Int,
                     value = renderTextureSize,
-                    componentType = ComponentType.BSMirror,
+                    componentType = ComponentType.Mirror,
                     oid = oid,
                     cid = cid
                 });
@@ -245,7 +245,7 @@ namespace Banter.SDK
                     name = PropertyName.cameraClear,
                     type = PropertyType.Int,
                     value = cameraClear,
-                    componentType = ComponentType.BSMirror,
+                    componentType = ComponentType.Mirror,
                     oid = oid,
                     cid = cid
                 });
@@ -257,7 +257,7 @@ namespace Banter.SDK
                     name = PropertyName.backgroundColor,
                     type = PropertyType.String,
                     value = backgroundColor,
-                    componentType = ComponentType.BSMirror,
+                    componentType = ComponentType.Mirror,
                     oid = oid,
                     cid = cid
                 });

@@ -106,14 +106,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSRing" +  PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Ring" +  PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSRing);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Ring);
 
 
             oid = gameObject.GetInstanceID();
@@ -218,7 +218,7 @@ namespace Banter.SDK
                     name = PropertyName.innerRadius,
                     type = PropertyType.Float,
                     value = innerRadius,
-                    componentType = ComponentType.BSRing,
+                    componentType = ComponentType.Ring,
                     oid = oid,
                     cid = cid
                 });
@@ -230,7 +230,7 @@ namespace Banter.SDK
                     name = PropertyName.outerRadius,
                     type = PropertyType.Float,
                     value = outerRadius,
-                    componentType = ComponentType.BSRing,
+                    componentType = ComponentType.Ring,
                     oid = oid,
                     cid = cid
                 });
@@ -242,7 +242,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaSegments,
                     type = PropertyType.Int,
                     value = thetaSegments,
-                    componentType = ComponentType.BSRing,
+                    componentType = ComponentType.Ring,
                     oid = oid,
                     cid = cid
                 });
@@ -254,7 +254,7 @@ namespace Banter.SDK
                     name = PropertyName.phiSegments,
                     type = PropertyType.Int,
                     value = phiSegments,
-                    componentType = ComponentType.BSRing,
+                    componentType = ComponentType.Ring,
                     oid = oid,
                     cid = cid
                 });
@@ -266,7 +266,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
                     value = thetaStart,
-                    componentType = ComponentType.BSRing,
+                    componentType = ComponentType.Ring,
                     oid = oid,
                     cid = cid
                 });
@@ -278,7 +278,7 @@ namespace Banter.SDK
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,
                     value = thetaLength,
-                    componentType = ComponentType.BSRing,
+                    componentType = ComponentType.Ring,
                     oid = oid,
                     cid = cid
                 });

@@ -99,14 +99,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSPlane" +  PropertyName.width + width + PropertyName.height + height + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments;
+            return "Plane" +  PropertyName.width + width + PropertyName.height + height + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSPlane);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Plane);
 
 
             oid = gameObject.GetInstanceID();
@@ -193,7 +193,7 @@ namespace Banter.SDK
                     name = PropertyName.width,
                     type = PropertyType.Float,
                     value = width,
-                    componentType = ComponentType.BSPlane,
+                    componentType = ComponentType.Plane,
                     oid = oid,
                     cid = cid
                 });
@@ -205,7 +205,7 @@ namespace Banter.SDK
                     name = PropertyName.height,
                     type = PropertyType.Float,
                     value = height,
-                    componentType = ComponentType.BSPlane,
+                    componentType = ComponentType.Plane,
                     oid = oid,
                     cid = cid
                 });
@@ -217,7 +217,7 @@ namespace Banter.SDK
                     name = PropertyName.widthSegments,
                     type = PropertyType.Int,
                     value = widthSegments,
-                    componentType = ComponentType.BSPlane,
+                    componentType = ComponentType.Plane,
                     oid = oid,
                     cid = cid
                 });
@@ -229,7 +229,7 @@ namespace Banter.SDK
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
                     value = heightSegments,
-                    componentType = ComponentType.BSPlane,
+                    componentType = ComponentType.Plane,
                     oid = oid,
                     cid = cid
                 });

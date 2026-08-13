@@ -128,14 +128,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSKitItem" +  PropertyName.path + path + PropertyName.resetTransform + resetTransform;
+            return "KitItem" +  PropertyName.path + path + PropertyName.resetTransform + resetTransform;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSKitItem);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.KitItem);
 
 
             oid = gameObject.GetInstanceID();
@@ -204,7 +204,7 @@ namespace Banter.SDK
                     name = PropertyName.path,
                     type = PropertyType.String,
                     value = path,
-                    componentType = ComponentType.BSKitItem,
+                    componentType = ComponentType.KitItem,
                     oid = oid,
                     cid = cid
                 });
@@ -216,7 +216,7 @@ namespace Banter.SDK
                     name = PropertyName.resetTransform,
                     type = PropertyType.Bool,
                     value = resetTransform,
-                    componentType = ComponentType.BSKitItem,
+                    componentType = ComponentType.KitItem,
                     oid = oid,
                     cid = cid
                 });

@@ -103,14 +103,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSBox" +  PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments;
+            return "Box" +  PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments;
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSBox);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Box);
 
 
             oid = gameObject.GetInstanceID();
@@ -215,7 +215,7 @@ namespace Banter.SDK
                     name = PropertyName.width,
                     type = PropertyType.Float,
                     value = width,
-                    componentType = ComponentType.BSBox,
+                    componentType = ComponentType.Box,
                     oid = oid,
                     cid = cid
                 });
@@ -227,7 +227,7 @@ namespace Banter.SDK
                     name = PropertyName.height,
                     type = PropertyType.Float,
                     value = height,
-                    componentType = ComponentType.BSBox,
+                    componentType = ComponentType.Box,
                     oid = oid,
                     cid = cid
                 });
@@ -239,7 +239,7 @@ namespace Banter.SDK
                     name = PropertyName.depth,
                     type = PropertyType.Float,
                     value = depth,
-                    componentType = ComponentType.BSBox,
+                    componentType = ComponentType.Box,
                     oid = oid,
                     cid = cid
                 });
@@ -251,7 +251,7 @@ namespace Banter.SDK
                     name = PropertyName.widthSegments,
                     type = PropertyType.Int,
                     value = widthSegments,
-                    componentType = ComponentType.BSBox,
+                    componentType = ComponentType.Box,
                     oid = oid,
                     cid = cid
                 });
@@ -263,7 +263,7 @@ namespace Banter.SDK
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
                     value = heightSegments,
-                    componentType = ComponentType.BSBox,
+                    componentType = ComponentType.Box,
                     oid = oid,
                     cid = cid
                 });
@@ -275,7 +275,7 @@ namespace Banter.SDK
                     name = PropertyName.depthSegments,
                     type = PropertyType.Int,
                     value = depthSegments,
-                    componentType = ComponentType.BSBox,
+                    componentType = ComponentType.Box,
                     oid = oid,
                     cid = cid
                 });

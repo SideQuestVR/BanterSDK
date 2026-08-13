@@ -72,14 +72,14 @@ namespace Banter.SDK
         }
         internal override string GetSignature()
         {
-            return "BSColliderEvents";
+            return "ColliderEvents";
         }
 
         internal override void Init(List<object> constructorProperties = null)
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.BSColliderEvents);
+            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.ColliderEvents);
 
 
             oid = gameObject.GetInstanceID();
