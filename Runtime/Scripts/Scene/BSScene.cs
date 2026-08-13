@@ -822,7 +822,9 @@ namespace BS
             else
             {
                 var percentDisplay = (Mathf.Round(combinedPercentage / totalCount * 10000) / 100).ToString("0.00");
-                loadingManager?.SetLoadProgress("Loading " + $"({loadedCount}/{totalCount})",
+                // Count only, no total: the total keeps climbing as the page streams more objects
+                // in, so "12/40" then "12/95" reads like going backwards.
+                loadingManager?.SetLoadProgress($"Loading ({loadedCount})",
                     combinedPercentage / totalCount, percentDisplay + "%...", true, loadingTexture);
             }
             loadingTexture = null;
