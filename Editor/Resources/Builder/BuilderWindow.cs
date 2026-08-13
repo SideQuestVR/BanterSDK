@@ -1503,11 +1503,11 @@ public class BuilderWindow : EditorWindow
         try
         {
             BeginUploadProgress(4);
-            // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as world.asset.
+            // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
             // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
             // to legacy per-platform windows.banter / android.banter for spaces that predate it. Missing
             // file is skipped.
-            yield return UploadWorldFile("world.asset", UploadAssetType.WorldAsset, UploadAssetTypePlatform.Any, NextUploadStep("Uploading world.asset"));
+            yield return UploadWorldFile("asset.world", UploadAssetType.WorldAsset, UploadAssetTypePlatform.Any, NextUploadStep("Uploading asset.world"));
             yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
             yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
             yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
@@ -1546,7 +1546,7 @@ public class BuilderWindow : EditorWindow
         Debug.Log("Uploading1: " + file);
     }
 
-    // Uploads a WebRoot file and attaches it to the selected world (world.asset, index.html, script.js…),
+    // Uploads a WebRoot file and attaches it to the selected world (asset.world, index.html, script.js…),
     // via /v2/worlds/{worlds_id}/assets/type/{type}/platform/{platform}. Callers pass platform Any (0).
     private IEnumerator UploadWorldFile(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
     {
@@ -2292,7 +2292,7 @@ public class BuilderWindow : EditorWindow
                     if (mode == BSBuilderBundleMode.Scene)
                     {
                         // Greenfield spaces build to a single platform-agnostic encrypted Basis bundle
-                        // (world.asset). Every platform loads it and ranged-GETs its own section; the
+                        // (asset.world). Every platform loads it and ranged-GETs its own section; the
                         // runtime falls back to legacy per-platform windows.banter / android.banter.
 #if BASIS_BUNDLE_MANAGEMENT
                         EditorApplication.LockReloadAssemblies();
@@ -2403,7 +2403,7 @@ public class BuilderWindow : EditorWindow
 #if BASIS_BUNDLE_MANAGEMENT
     /// <summary>
     /// Builds the selected scene into a single platform-agnostic encrypted Basis bundle, written to
-    /// WebRoot as <c>world.asset</c>. Basis' build pipeline already concatenates every requested platform
+    /// WebRoot as <c>asset.world</c>. Basis' build pipeline already concatenates every requested platform
     /// into one <c>.BEE</c> (behind a <c>BasisBundleConnector</c> header of per-platform byte ranges), and
     /// the runtime ranged-GETs only the section it needs — so we pass all checked targets to a single
     /// <c>SceneBundleBuild</c> call, exactly as the avatar builder does, rather than one file per platform.
@@ -2480,7 +2480,7 @@ public class BuilderWindow : EditorWindow
             // One combined build over every selected platform. Basis' BuildBundle loops the targets and
             // CombineFiles concatenates each platform's section into a single .BEE behind a
             // BasisBundleConnector header of byte ranges; the runtime ranged-GETs only the section it needs.
-            // So a single SceneBundleBuild call (all targets) yields one platform-agnostic world.asset,
+            // So a single SceneBundleBuild call (all targets) yields one platform-agnostic asset.world,
             // rather than one file per platform. (This is exactly how the avatar builder builds.)
             var targets = new List<BuildTarget>();
             for (int i = 0; i < buildTargets.Length; i++)
@@ -2492,7 +2492,7 @@ public class BuilderWindow : EditorWindow
                 return produced;
             }
 
-            const string outName = "world.asset";
+            const string outName = "asset.world";
             status.AddStatus("Building: " + outName + " (" + string.Join(", ", targets) + ")");
 
             // Open the scene once and drop in the throwaway BasisProp SceneBundleBuild hangs the scene +
@@ -2531,7 +2531,7 @@ public class BuilderWindow : EditorWindow
             }
 
             // Basis writes to {AssetBundleDirectory}/{MakeSafeFolderName(name)}/{guid}.BEE. Lift the newest
-            // .bee out of that exact folder into WebRoot as the single combined world.asset.
+            // .bee out of that exact folder into WebRoot as the single combined asset.world.
             string beeFolder = Path.Combine(basisOutRoot, BasisBundleBuild.MakeSafeFolderName(descriptionName));
             string bee = Directory.Exists(beeFolder)
                 ? Directory
