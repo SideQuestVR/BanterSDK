@@ -7,7 +7,7 @@ JavaScript SDK for creating 3D VR spaces. All APIs under `BS` namespace.
 ## Scene
 
 ```
-BS.BanterScene.GetInstance() -> BanterScene
+BS.Scene.GetInstance() -> Scene
 ```
 
 ### Properties
@@ -835,7 +835,7 @@ obj.On("drop", (e) => console.log("Dropped"));
 
 ### Scene initialization
 ```js
-const scene = BS.BanterScene.GetInstance();
+const scene = BS.Scene.GetInstance();
 scene.On("unity-loaded", () => {
     // Scene ready
 });

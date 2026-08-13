@@ -2,14 +2,18 @@
 
 Create interactive 3D VR spaces using JavaScript. The Banter SDK provides a complete API for building multiplayer virtual reality experiences.
 
-> **Component names dropped the `Banter` prefix.** `BS.BanterBrowser` is now `BS.Browser`,
-> `BS.BanterGLTF` is now `BS.GLTF`, and so on. The examples below use the new names.
+> **The `Banter` prefix is gone from the API.** `BS.BanterBrowser` is now `BS.Browser`,
+> `BS.BanterGLTF` is now `BS.GLTF`, and the scene singleton is `BS.Scene.GetInstance()`.
+> The examples below use the new names.
 >
-> Existing scripts keep working: every previous component name remains as a deprecated alias,
-> including the `BS.ComponentType` members (`BS.CT.BanterBrowser` still resolves to
-> `BS.CT.Browser`). The aliases are subclasses of the new classes and override
-> `Symbol.hasInstance`, so `instanceof` holds in both directions. Component ids on the wire are
-> unchanged. New components added after this rename will not get an alias.
+> Existing scripts keep working. Every previous name remains as a deprecated alias, including
+> the `BS.ComponentType` members — `BS.CT.BanterBrowser` still resolves to `BS.CT.Browser`.
+> `BS.BanterScene` is a plain alias, so it is literally the same class as `BS.Scene`.
+> The component aliases are subclasses that override `Symbol.hasInstance`, so `instanceof`
+> holds in both directions there too.
+>
+> Component ids on the wire are unchanged. Components added after this rename will not get an
+> alias.
 
 ---
 
@@ -17,7 +21,7 @@ Create interactive 3D VR spaces using JavaScript. The Banter SDK provides a comp
 
 ```js
 // Get the scene singleton
-const scene = BS.BanterScene.GetInstance();
+const scene = BS.Scene.GetInstance();
 
 // Wait for the scene to be ready
 scene.On("unity-loaded", () => {
@@ -50,8 +54,8 @@ scene.On("unity-loaded", () => {
 
 ## Core Concepts
 
-### BanterScene
-The scene is the top-level singleton that manages all GameObjects, components, users, and communication with Unity. Access it via `BS.BanterScene.GetInstance()`.
+### Scene
+The scene is the top-level singleton that manages all GameObjects, components, users, and communication with Unity. Access it via `BS.Scene.GetInstance()`.
 
 ### GameObject
 GameObjects are the basic building blocks - containers that hold components. Create them with `new BS.GameObject({...})`. Every GameObject has a Transform for position, rotation, and scale.
@@ -64,12 +68,12 @@ Every GameObject has a transform controlling its position, rotation, and scale i
 
 ---
 
-## BanterScene API
+## Scene API
 
 ### Getting the Scene
 
 ```js
-const scene = BS.BanterScene.GetInstance();
+const scene = BS.Scene.GetInstance();
 ```
 
 ### Properties

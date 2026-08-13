@@ -10,7 +10,7 @@ Set Parent Tag to "Respawn".
 
 ## Core Pattern
 ```js
-const scene = BS.BanterScene.GetInstance();
+const scene = BS.Scene.GetInstance();
 const obj = new BS.GameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
 obj.AddComponent(new BS.ComponentName({prop: value}));
 obj.On("event", (e) => {});
