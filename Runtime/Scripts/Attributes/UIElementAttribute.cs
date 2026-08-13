@@ -7,7 +7,9 @@ namespace Banter.UICodeGen
     /// Marks a class as a UI element for code generation.
     /// This will generate TypeScript bindings for the UI element.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class)]
+    // Inherited = false so the deprecated Banter-prefixed subclasses are not picked up by the
+    // UI generator as elements in their own right.
+    [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public class UIElementAttribute : Attribute
     {
         public Type ElementType { get; }
