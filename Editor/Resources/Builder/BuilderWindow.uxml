@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Packages/com.sidequest.banter/Editor/Resources/UI/EditorComponents.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#EditorComponents" />
+    <Style src="project://database/Packages/com.sidequest.creator-sdk/Editor/Resources/UI/EditorComponents.uss?fileID=7433441132597879392&amp;guid=9de4f8823a497764eaf2304534fc3f7c&amp;type=3#EditorComponents" />
     <ui:VisualElement style="background-color: rgb(26, 26, 26); height: 100%; flex-direction: column; position: relative; left: 0; top: 0; right: 0; bottom: 0;">
         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: space-between; height: 60px; max-height: 60px; align-items: stretch; align-self: auto; min-height: 60px;">
             <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_Logo_No_BG_V2copy 1&apos;); -unity-background-scale-mode: scale-to-fit; margin-left: 14px; margin-top: 12px; margin-bottom: 0; min-height: 40px; -unity-text-align: upper-left; min-width: 200px; max-height: 40px;" />

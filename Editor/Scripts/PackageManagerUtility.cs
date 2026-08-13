@@ -12,7 +12,7 @@ namespace BS.SDKEditor
     [InitializeOnLoad]
     public static class PackageManagerUtility
     {
-        public const string PACKAGE_NAME = "com.sidequest.banter";
+        public const string PACKAGE_NAME = "com.sidequest.creator-sdk";
         public const string PACKAGE_DIRECTORY_PATH = "Packages/" + PACKAGE_NAME;
 
         public static PackageInfo localPackageInfo => PackageInfo.FindForAssetPath(PACKAGE_DIRECTORY_PATH);

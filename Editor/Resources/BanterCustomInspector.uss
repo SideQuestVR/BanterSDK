@@ -3,7 +3,7 @@
     padding-right: 25px;
     padding-top: 16px;
     padding-bottom: 16px;
-    background-image: url('project://database/Packages/com.sidequest.banter/Editor/Images/Main%20content.png?fileID=2800000&guid=40c599547cb1d0a4d94990b9692ca9f0&type=3#Main content');
+    background-image: url('project://database/Packages/com.sidequest.creator-sdk/Editor/Images/Main%20content.png?fileID=2800000&guid=40c599547cb1d0a4d94990b9692ca9f0&type=3#Main content');
     -unity-slice-left: 48;
     -unity-slice-top: 48;
     -unity-slice-right: 48;

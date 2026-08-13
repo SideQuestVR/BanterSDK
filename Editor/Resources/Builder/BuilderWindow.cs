@@ -296,10 +296,10 @@ public class BuilderWindow : EditorWindow
         avatarGameObject = AvatarRef.Instance.avatarGameObject;
         SetupAvatarUI();
         status = new Status(statusBar, buildProgress, buildProgressBar);
-        buildProgress.bindItem = (e, i) =>
-        {
-            (e as Label).text = status.statusMessages[i].ToLower();
-        };
+        // buildProgress.bindItem = (e, i) =>
+        // {
+        //     // (e as Label).text = status.statusMessages[i].ToLower();
+        // };
         buildProgress.itemsSource = status.statusMessages;
         buildProgress.Rebuild();
         loginManager = new LoginManager(sq, autoUpload, codeText, linkPage, loggedInView, statusText, buildButton, rootVisualElement.Q<VisualElement>("ExtraUploadButtons"), rootVisualElement.Q<Label>("SignOut"));
