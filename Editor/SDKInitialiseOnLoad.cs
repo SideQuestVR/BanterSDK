@@ -65,7 +65,7 @@ namespace BS.SDKEditor
             if (Directory.Exists(webRoot))
                 return;
             Directory.CreateDirectory(webRoot);
-            File.WriteAllText(webRoot + "/index.html", "<html android-bundle windows-bundle><head>");
+            File.WriteAllText(webRoot + "/index.html", "<html world-asset><head>");
 #endif
         }
 
