@@ -57,7 +57,7 @@ namespace Banter.UI.Elements
             switch (propertyName)
             {
                 case "scrollPosition":
-                    var bVec = new BanterVector2();
+                    var bVec = new BSVector2();
                     bVec.Deserialise(propertyValue);
                     ScrollPosition = (Vector2)bVec;
                     return true;

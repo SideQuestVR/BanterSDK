@@ -12,7 +12,7 @@ namespace Banter.SDK
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
-    public class BSVideoPlayer : BanterComponentBase
+    public class BSVideoPlayer : BSComponentBase
     {
         [Tooltip("The URL of the video to be played.")]
         [See(initial = "")][SerializeField] internal string url;
@@ -231,14 +231,14 @@ namespace Banter.SDK
         [Header("SYNC VIDEOPLAYER TO JS")]
         public bool _time;
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -281,7 +281,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -332,108 +332,108 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valtime = (BanterFloat)values[i];
+                    var valtime = (BSFloat)values[i];
                     if (valtime.n == PropertyName.time)
                     {
                         time = valtime.x;
                         changedProperties.Add(PropertyName.time);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valurl = (BanterString)values[i];
+                    var valurl = (BSString)values[i];
                     if (valurl.n == PropertyName.url)
                     {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valvolume = (BanterFloat)values[i];
+                    var valvolume = (BSFloat)values[i];
                     if (valvolume.n == PropertyName.volume)
                     {
                         volume = valvolume.x;
                         changedProperties.Add(PropertyName.volume);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valloop = (BanterBool)values[i];
+                    var valloop = (BSBool)values[i];
                     if (valloop.n == PropertyName.loop)
                     {
                         loop = valloop.x;
                         changedProperties.Add(PropertyName.loop);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valplayOnAwake = (BanterBool)values[i];
+                    var valplayOnAwake = (BSBool)values[i];
                     if (valplayOnAwake.n == PropertyName.playOnAwake)
                     {
                         playOnAwake = valplayOnAwake.x;
                         changedProperties.Add(PropertyName.playOnAwake);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valskipOnDrop = (BanterBool)values[i];
+                    var valskipOnDrop = (BSBool)values[i];
                     if (valskipOnDrop.n == PropertyName.skipOnDrop)
                     {
                         skipOnDrop = valskipOnDrop.x;
                         changedProperties.Add(PropertyName.skipOnDrop);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valwaitForFirstFrame = (BanterBool)values[i];
+                    var valwaitForFirstFrame = (BSBool)values[i];
                     if (valwaitForFirstFrame.n == PropertyName.waitForFirstFrame)
                     {
                         waitForFirstFrame = valwaitForFirstFrame.x;
                         changedProperties.Add(PropertyName.waitForFirstFrame);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisPlaying = (BanterBool)values[i];
+                    var valisPlaying = (BSBool)values[i];
                     if (valisPlaying.n == PropertyName.isPlaying)
                     {
                         isPlaying = valisPlaying.x;
                         changedProperties.Add(PropertyName.isPlaying);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisLooping = (BanterBool)values[i];
+                    var valisLooping = (BSBool)values[i];
                     if (valisLooping.n == PropertyName.isLooping)
                     {
                         isLooping = valisLooping.x;
                         changedProperties.Add(PropertyName.isLooping);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisPrepared = (BanterBool)values[i];
+                    var valisPrepared = (BSBool)values[i];
                     if (valisPrepared.n == PropertyName.isPrepared)
                     {
                         isPrepared = valisPrepared.x;
                         changedProperties.Add(PropertyName.isPrepared);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisMuted = (BanterBool)values[i];
+                    var valisMuted = (BSBool)values[i];
                     if (valisMuted.n == PropertyName.isMuted)
                     {
                         isMuted = valisMuted.x;
                         changedProperties.Add(PropertyName.isMuted);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valduration = (BanterFloat)values[i];
+                    var valduration = (BSFloat)values[i];
                     if (valduration.n == PropertyName.duration)
                     {
                         duration = valduration.x;
@@ -446,10 +446,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if ((_time) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.time,
                     type = PropertyType.Float,
@@ -461,7 +461,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.url,
                     type = PropertyType.String,
@@ -473,7 +473,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.volume,
                     type = PropertyType.Float,
@@ -485,7 +485,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.loop,
                     type = PropertyType.Bool,
@@ -497,7 +497,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.playOnAwake,
                     type = PropertyType.Bool,
@@ -509,7 +509,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.skipOnDrop,
                     type = PropertyType.Bool,
@@ -521,7 +521,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.waitForFirstFrame,
                     type = PropertyType.Bool,
@@ -533,7 +533,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isPlaying,
                     type = PropertyType.Bool,
@@ -545,7 +545,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isLooping,
                     type = PropertyType.Bool,
@@ -557,7 +557,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isPrepared,
                     type = PropertyType.Bool,
@@ -569,7 +569,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isMuted,
                     type = PropertyType.Bool,
@@ -581,7 +581,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.duration,
                     type = PropertyType.Float,

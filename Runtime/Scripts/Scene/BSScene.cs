@@ -68,14 +68,15 @@ namespace Banter.SDK
         public const string SettingsLocked = "SettingsLocked";
         public const string PhysicsSettingsLocked = "PhysicsSettingsLocked";
     }
-    public class BanterScene
+    [RenamedFrom("Banter.SDK.BanterScene")]
+    public class BSScene
     {
-        //private static readonly BlockingCollection<List<BanterComponentPropertyUpdate>> _propertyUpdateBatchQueue = new BlockingCollection<List<BanterComponentPropertyUpdate>>();
-        //private static readonly List<BanterComponentPropertyUpdate> _propertyUpdateQueue = new List<BanterComponentPropertyUpdate>();
+        //private static readonly BlockingCollection<List<BSComponentPropertyUpdate>> _propertyUpdateBatchQueue = new BlockingCollection<List<BSComponentPropertyUpdate>>();
+        //private static readonly List<BSComponentPropertyUpdate> _propertyUpdateQueue = new List<BSComponentPropertyUpdate>();
         //private List<string> _changes = new List<string>();
-        //private static BlockingCollection<BanterComponentPropertyUpdate> _propertyUpdateQueue = new BlockingCollection<BanterComponentPropertyUpdate>();
+        //private static BlockingCollection<BSComponentPropertyUpdate> _propertyUpdateQueue = new BlockingCollection<BSComponentPropertyUpdate>();
         ConcurrentDictionary<int, UnityAndBanterObject> objects = new ConcurrentDictionary<int, UnityAndBanterObject>();
-        ConcurrentDictionary<int, BanterComponent> banterComponents = new ConcurrentDictionary<int, BanterComponent>();
+        ConcurrentDictionary<int, BSComponent> banterComponents = new ConcurrentDictionary<int, BSComponent>();
         public static string ORIGINAL_HOME_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
@@ -83,9 +84,9 @@ namespace Banter.SDK
 
         public bool externalLoadFailed;
         public BSLink link;
-        public BanterSceneEvents events;
-        public BanterSceneSettings settings;
-        static BanterScene _instance;
+        public BSSceneEvents events;
+        public BSSceneSettings settings;
+        static BSScene _instance;
         public event EventHandler Tick;
         //public bool dirty = true;
         public SpawnPointData spawnPoint;
@@ -154,7 +155,7 @@ namespace Banter.SDK
 
         //only to be accessed in main thread!
         private Task activeTask = null;
-        private List<BanterComponentPropertyUpdate> _pendingQueue;// = new List<BanterComponentPropertyUpdate>();
+        private List<BSComponentPropertyUpdate> _pendingQueue;// = new List<BSComponentPropertyUpdate>();
 
         public void EnqueueChange(string change)
         {
@@ -195,7 +196,7 @@ namespace Banter.SDK
                             Debug.LogWarning("unlock failed on activeTaskLocked in activeTask!");
                         }
                     }
-                }, $"{nameof(BanterScene)}.{nameof(StartQ)}");
+                }, $"{nameof(BSScene)}.{nameof(StartQ)}");
             }
             finally
             {
@@ -206,7 +207,7 @@ namespace Banter.SDK
             }
         }
 
-        private void EnqueuePropertyUpdates(List<BanterComponentPropertyUpdate> updates)
+        private void EnqueuePropertyUpdates(List<BSComponentPropertyUpdate> updates)
         {
             if (updates.Count > 0)
             {
@@ -215,7 +216,7 @@ namespace Banter.SDK
                 {
                     if (_pendingQueue == null)
                     {
-                        _pendingQueue = new List<BanterComponentPropertyUpdate>();
+                        _pendingQueue = new List<BSComponentPropertyUpdate>();
                     }
                     _pendingQueue.AddRange(updates);
                 }
@@ -230,11 +231,11 @@ namespace Banter.SDK
             }
         }
 
-        public BanterScene()
+        public BSScene()
         {
             InstanceID = Guid.NewGuid();
             users = new List<UserData>();
-            events = new BanterSceneEvents();
+            events = new BSSceneEvents();
             _instance = this;
             inputActionAsset = Resources.Load<InputActionAsset>("BanterInputActions");
             inputActionAsset.Enable();
@@ -292,8 +293,8 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 await new WaitUntil(() => state == SceneState.UNITY_READY);
-                EventBus.Trigger("OnUserJoined", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
-            }, $"{nameof(BanterScene)}.{nameof(AddUser)}"));
+                EventBus.Trigger("OnUserJoined", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+            }, $"{nameof(BSScene)}.{nameof(AddUser)}"));
 #endif
         }
         public void RemoveUser(UserData user)
@@ -306,8 +307,8 @@ namespace Banter.SDK
 #if BANTER_VISUAL_SCRIPTING
            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
-                EventBus.Trigger("OnUserLeft", new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
-            }, $"{nameof(BanterScene)}.{nameof(RemoveUser)}"));
+                EventBus.Trigger("OnUserLeft", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+            }, $"{nameof(BSScene)}.{nameof(RemoveUser)}"));
 #endif
         }
         public void LookedAtMirror()
@@ -317,17 +318,17 @@ namespace Banter.SDK
         }
         public void OpenPage(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnPageOpened.Invoke(msg), $"{nameof(BanterScene)}.{nameof(OpenPage)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnPageOpened.Invoke(msg), $"{nameof(BSScene)}.{nameof(OpenPage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OPEN_PAGE);
         }
         public void StartTTS(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStarted.Invoke(msg == "1"), $"{nameof(BanterScene)}.{nameof(StartTTS)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStarted.Invoke(msg == "1"), $"{nameof(BSScene)}.{nameof(StartTTS)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.START_TTS);
         }
         public void StopTTS(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStoped.Invoke(msg), $"{nameof(BanterScene)}.{nameof(StopTTS)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStoped.Invoke(msg), $"{nameof(BSScene)}.{nameof(StopTTS)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.STOP_TTS);
         }
         public void AiImage(string msg, int reqId)
@@ -341,7 +342,7 @@ namespace Banter.SDK
                     SendError(reqId, "AIIMAGE: Message is malformed: " + msg);
                     return;
                 }
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])), $"{nameof(BanterScene)}.{nameof(AiImage)}"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])), $"{nameof(BSScene)}.{nameof(AiImage)}"));
             }
             catch (Exception e)
             {
@@ -393,7 +394,7 @@ namespace Banter.SDK
                     return;
                 }
                 var force = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAddPlayerForce.Invoke(force, (ForceMode)int.Parse(parts[3])), $"{nameof(BanterScene)}.{nameof(AddPlayerForce)}"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAddPlayerForce.Invoke(force, (ForceMode)int.Parse(parts[3])), $"{nameof(BSScene)}.{nameof(AddPlayerForce)}"));
             }
             catch (Exception e)
             {
@@ -412,7 +413,7 @@ namespace Banter.SDK
                     SendError(reqId, "AIMODEL: Message is malformed: " + msg);
                     return;
                 }
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiModel.Invoke(parts[0], (AiModelSimplify)int.Parse(parts[1]), int.Parse(parts[2])), $"{nameof(BanterScene)}.{nameof(AiModel)}"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiModel.Invoke(parts[0], (AiModelSimplify)int.Parse(parts[1]), int.Parse(parts[2])), $"{nameof(BSScene)}.{nameof(AiModel)}"));
             }
             catch (Exception e)
             {
@@ -423,7 +424,7 @@ namespace Banter.SDK
         public void Base64ToCDN(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]), $"{nameof(BanterScene)}.{nameof(Base64ToCDN)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]), $"{nameof(BSScene)}.{nameof(Base64ToCDN)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
         public string GameObjectTextureToBase64(GameObject obj, int materialIndex)
@@ -465,7 +466,7 @@ namespace Banter.SDK
         }
         public void SelectFile(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)), $"{nameof(BanterScene)}.{nameof(SelectFile)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)), $"{nameof(BSScene)}.{nameof(SelectFile)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SELECT_FILE);
         }
         public void Gravity(string msg, int reqId)
@@ -478,14 +479,14 @@ namespace Banter.SDK
                 return;
             }
             var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Physics.gravity = gravity, $"{nameof(BanterScene)}.{nameof(Gravity)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Physics.gravity = gravity, $"{nameof(BSScene)}.{nameof(Gravity)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = NumberFormat.Parse(msg);
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Time.timeScale = timeScale, $"{nameof(BanterScene)}.{nameof(TimeScale)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Time.timeScale = timeScale, $"{nameof(BSScene)}.{nameof(TimeScale)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
         // public void PlayerSpeed(string msg, int reqId)
@@ -500,7 +501,7 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  handler.Invoke();
-             }, $"{nameof(BanterScene)}.{nameof(LockThing)}"));
+             }, $"{nameof(BSScene)}.{nameof(LockThing)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + command);
         }
         public void Teleport(string msg, int reqId)
@@ -519,7 +520,7 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  events.OnTeleport.Invoke(point, rotation, stopVelocity, isSpawn);
-             }, $"{nameof(BanterScene)}.{nameof(Teleport)}"));
+             }, $"{nameof(BSScene)}.{nameof(Teleport)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TELEPORT);
         }
         public void YtInfo(string youtubeId, int reqId)
@@ -548,7 +549,7 @@ namespace Banter.SDK
                  }
                  var cleanJson = JsonUtility.ToJson(responseContext);
                  link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.YT_INFO + MessageDelimiters.TERTIARY + cleanJson); // + MessageDelimiters.TERTIARY + mainFunction + MessageDelimiters.TERTIARY + subFunction 
-             }, $"{nameof(BanterScene)}.{nameof(YtInfo)}"));
+             }, $"{nameof(BSScene)}.{nameof(YtInfo)}"));
         }
         #endregion
 
@@ -624,7 +625,7 @@ namespace Banter.SDK
             var oid = gameObject.GetInstanceID();
             if (!objects.ContainsKey(oid))
             {
-                var banterObject = new BanterObject() { oid = oid };
+                var banterObject = new BSObject() { oid = oid };
                 var unityAndBanterObject = new UnityAndBanterObject()
                 {
                     gameObject = gameObject,
@@ -639,7 +640,7 @@ namespace Banter.SDK
                 }
             }
         }
-        public BanterObject GetBanterObject(int objectId)
+        public BSObject GetBanterObject(int objectId)
         {
             UnityAndBanterObject value;
             if (objects.TryGetValue(objectId, out value))
@@ -657,12 +658,12 @@ namespace Banter.SDK
                 objects.TryRemove(oid, out _);
             }
         }
-        public BanterComponent AddBanterComponent(int objectId, int componetId, string linkId, ComponentType type)
+        public BSComponent AddBanterComponent(int objectId, int componetId, string linkId, ComponentType type)
         {
             var uBanterObject = GetObject(objectId);
             if (uBanterObject.banterObject != null)
             {
-                var component = new BanterComponent()
+                var component = new BSComponent()
                 {
                     cid = componetId,
                     type = type,
@@ -679,14 +680,14 @@ namespace Banter.SDK
                      {
                          component.loaded = banterComponent._loaded;
                      }
-                 }, $"{nameof(BanterScene)}.{nameof(AddBanterComponent)}"));
+                 }, $"{nameof(BSScene)}.{nameof(AddBanterComponent)}"));
                 return component;
             }
             return null;
         }
-        public BanterComponent GetBanterComponent(int componetId)
+        public BSComponent GetBanterComponent(int componetId)
         {
-            BanterComponent value;
+            BSComponent value;
             if (banterComponents.TryGetValue(componetId, out value))
             {
                 return value;
@@ -722,9 +723,9 @@ namespace Banter.SDK
         }
 
         /// <summary>
-        /// Get a BanterComponentBase by its JavaScript ID
+        /// Get a BSComponentBase by its JavaScript ID
         /// </summary>
-        public BanterComponentBase GetComponentByJsId(string jsId)
+        public BSComponentBase GetComponentByJsId(string jsId)
         {
             if (string.IsNullOrEmpty(jsId))
                 return null;
@@ -751,8 +752,8 @@ namespace Banter.SDK
         public void RegisterBanterMonoscript(int oid, int cid, ComponentType type)
         {
             // TODO: is there a better way to register these components? Maybe not...
-            var initials = new List<BanterComponentPropertyUpdate>{
-                    new BanterComponentPropertyUpdate(){
+            var initials = new List<BSComponentPropertyUpdate>{
+                    new BSComponentPropertyUpdate(){
                         name = PropertyName.hasUnity,
                         type = PropertyType.Bool,
                         value = true,
@@ -813,11 +814,11 @@ namespace Banter.SDK
             }
             loadingTexture = null;
         }
-        public void RegisterComponentOnMainThread(GameObject go, BanterComponentBase comp)
+        public void RegisterComponentOnMainThread(GameObject go, BSComponentBase comp)
         {
             var obj = go.GetComponent<BSObjectId>();
             var cid = comp.GetInstanceID();
-            BanterComponent banterComp = null;
+            BSComponent banterComp = null;
             if (obj != null)
             {
                 obj.mainThreadComponentMap.Add(cid, comp);
@@ -839,7 +840,7 @@ namespace Banter.SDK
                     else
                     {
                         // This is caught in the AddBanterComponent method instead. 
-                        // Debug.LogError("BanterComponent is null: " + go.GetInstanceID() + " : " + cid + " : " + comp.name);
+                        // Debug.LogError("BSComponent is null: " + go.GetInstanceID() + " : " + cid + " : " + comp.name);
                     }
                     link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
@@ -857,7 +858,7 @@ namespace Banter.SDK
                 });
             }
         }
-        public void UnregisterComponentOnMainThread(GameObject go, BanterComponentBase comp)
+        public void UnregisterComponentOnMainThread(GameObject go, BSComponentBase comp)
         {
             var obj = go.GetComponent<BSObjectId>();
             if (obj != null)
@@ -882,7 +883,7 @@ namespace Banter.SDK
                 return;
             }
 
-            var sheetFerMainThread = new List<Tuple<BanterComponentBase, List<object>>>();
+            var sheetFerMainThread = new List<Tuple<BSComponentBase, List<object>>>();
 
             for (int i = 1; i < sendBackParts.Length; i++)
             {
@@ -898,7 +899,7 @@ namespace Banter.SDK
                 var sendBack = int.Parse(sendBackParts[0]) == 1;
                 try
                 {
-                    BanterComponentBase unityComp = null;
+                    BSComponentBase unityComp = null;
                     gameObject.id?.mainThreadComponentMap.TryGetValue(int.Parse(componentId), out unityComp);
                     if (unityComp == null)
                     {
@@ -907,7 +908,7 @@ namespace Banter.SDK
                     }
                     var banterComp = GetBanterComponent(int.Parse(componentId));
                     var objs = SetComponentProperties(2, parts, banterComp, msg);
-                    sheetFerMainThread.Add(new Tuple<BanterComponentBase, List<object>>(unityComp, objs));
+                    sheetFerMainThread.Add(new Tuple<BSComponentBase, List<object>>(unityComp, objs));
                     if (banterComp != null)
                     {
                         if (sendBack)
@@ -941,7 +942,7 @@ namespace Banter.SDK
                          Debug.LogError("[Banter] Error updating component: " + e.Message + ": " + msg);
                      }
                  }
-             }, $"{nameof(BanterScene)}.{nameof(UpdateJsComponent)}"));
+             }, $"{nameof(BSScene)}.{nameof(UpdateJsComponent)}"));
         }
         public async void CallMethodOnJsComponent(string msg, int reqId, string full)
         {
@@ -1069,7 +1070,7 @@ namespace Banter.SDK
                     {
                         banterObject.SetActive(int.Parse(msgParts[1]) == 1);
                         SendObjectUpdate(banterObject, reqId);
-                    }, $"{nameof(BanterScene)}.{nameof(SetJsObjectActive)}"));
+                    }, $"{nameof(BSScene)}.{nameof(SetJsObjectActive)}"));
                 }
                 else
                 {
@@ -1099,7 +1100,7 @@ namespace Banter.SDK
                 {
                     banterObject.id.Id = msgParts[1];
                     SendObjectUpdate(banterObject.gameObject, reqId);
-                }, $"{nameof(BanterScene)}.{nameof(SetJsObjectNetworkId)}"));
+                }, $"{nameof(BSScene)}.{nameof(SetJsObjectNetworkId)}"));
             }
             else
             {
@@ -1134,7 +1135,7 @@ namespace Banter.SDK
                         }
                     }
                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_CRAWL);
-                }, $"{nameof(BanterScene)}.{nameof(InlineJsCrawl)}"));
+                }, $"{nameof(BSScene)}.{nameof(InlineJsCrawl)}"));
             }
             else
             {
@@ -1168,7 +1169,7 @@ namespace Banter.SDK
                     {
                         SendError(reqId, "INLINE_OBJECT: Could not find child at path: " + path);
                     }
-                }, $"{nameof(BanterScene)}.{nameof(InlineJsObject)}"));
+                }, $"{nameof(BSScene)}.{nameof(InlineJsObject)}"));
             }
             else
             {
@@ -1223,7 +1224,7 @@ namespace Banter.SDK
                          link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + "null");
                      }
 
-                 }, $"{nameof(BanterScene)}.{nameof(GetJsBounds)}"));
+                 }, $"{nameof(BSScene)}.{nameof(GetJsBounds)}"));
             }
             else
             {
@@ -1248,7 +1249,7 @@ namespace Banter.SDK
                  {
                      banterObject.tag = msgParts[1];
                      SendObjectUpdate(banterObject, reqId);
-                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
+                 }, $"{nameof(BSScene)}.{nameof(SetJsObjectName)}"));
             }
             else
             {
@@ -1272,7 +1273,7 @@ namespace Banter.SDK
                  {
                      banterObject.name = msgParts[1];
                      SendObjectUpdate(banterObject, reqId);
-                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectName)}"));
+                 }, $"{nameof(BSScene)}.{nameof(SetJsObjectName)}"));
             }
             else
             {
@@ -1297,7 +1298,7 @@ namespace Banter.SDK
 
                      banterObject.layer = int.Parse(msgParts[1]);
                      SendObjectUpdate(banterObject, reqId);
-                 }, $"{nameof(BanterScene)}.{nameof(SetJsObjectLayer)}"));
+                 }, $"{nameof(BSScene)}.{nameof(SetJsObjectLayer)}"));
 
             }
             else
@@ -1337,7 +1338,7 @@ namespace Banter.SDK
 
                  if (didHit)
                      link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
-             }, $"{nameof(BanterScene)}.{nameof(PhysicsRaycast)}"));
+             }, $"{nameof(BSScene)}.{nameof(PhysicsRaycast)}"));
         }
         public void InstantiateJsObject(string msg, int reqId)
         {
@@ -1403,7 +1404,7 @@ namespace Banter.SDK
                     }
                     await new WaitForEndOfFrame();
                     SendObjectUpdate(newObject, reqId);
-                 }, $"{nameof(BanterScene)}.{nameof(InstantiateJsObject)}"));
+                 }, $"{nameof(BSScene)}.{nameof(InstantiateJsObject)}"));
             }
             else
             {
@@ -1412,7 +1413,7 @@ namespace Banter.SDK
         }
         public void SendBrowserMessage(string msg, int reqId)
         {
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnMenuBrowserMessage.Invoke(msg), $"{nameof(BanterScene)}.{nameof(SendBrowserMessage)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnMenuBrowserMessage.Invoke(msg), $"{nameof(BSScene)}.{nameof(SendBrowserMessage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SEND_MENU_BROWSER_MESSAGE);
         }
         public void AddJsComponent(string msg, int reqId)
@@ -1444,7 +1445,7 @@ namespace Banter.SDK
                  {
                      return;
                  }
-                 var comp = BanterComponentFromType.CreateComponent(gameObject, componentType);
+                 var comp = BSComponentFromType.CreateComponent(gameObject, componentType);
                  comp.jsId = linkId;
                  if (comp == null)
                  {
@@ -1461,9 +1462,9 @@ namespace Banter.SDK
 
                  var constructorProps = SetComponentProperties(3, parts, banterComp, msg);
                  comp.Init(constructorProps);
-             }, $"{nameof(BanterScene)}.{nameof(AddJsComponent)}"));
+             }, $"{nameof(BSScene)}.{nameof(AddJsComponent)}"));
         }
-        private List<object> SetComponentProperties(int startIndex, string[] parts, BanterComponent banterComp, string msg = null)
+        private List<object> SetComponentProperties(int startIndex, string[] parts, BSComponent banterComp, string msg = null)
         {
             var updates = new List<object>();
             for (int i = startIndex; i < parts.Length; i++)
@@ -1486,17 +1487,17 @@ namespace Banter.SDK
                     {
                         case PropertyType.String:
                             var valString = propParts[2];
-                            updates.Add(new BanterString() { n = name, x = valString });
+                            updates.Add(new BSString() { n = name, x = valString });
                             banterComp.UpdateProperty(name, valString);
                             break;
                         case PropertyType.Bool:
                             var valBool = propParts[2] == "1";
-                            updates.Add(new BanterBool() { n = name, x = valBool });
+                            updates.Add(new BSBool() { n = name, x = valBool });
                             banterComp.UpdateProperty(name, valBool);
                             break;
                         case PropertyType.Float:
                             var valFloat = NumberFormat.Parse(propParts[2]);
-                            updates.Add(new BanterFloat() { n = name, x = valFloat });
+                            updates.Add(new BSFloat() { n = name, x = valFloat });
                             banterComp.UpdateProperty(name, valFloat);
                             break;
                         case PropertyType.Int:
@@ -1505,13 +1506,13 @@ namespace Banter.SDK
                                 propParts[2] = "0";
                             }
                             var valInt = int.Parse(propParts[2]);
-                            updates.Add(new BanterInt() { n = name, x = valInt });
+                            updates.Add(new BSInt() { n = name, x = valInt });
                             banterComp.UpdateProperty(name, valInt);
                             break;
                         case PropertyType.Vector2:
                             var valVector2X = NumberFormat.Parse(propParts[2]);
                             var valVector2Y = NumberFormat.Parse(propParts[3]);
-                            updates.Add(new BanterVector2() { n = name, x = valVector2X, y = valVector2Y });
+                            updates.Add(new BSVector2() { n = name, x = valVector2X, y = valVector2Y });
                             banterComp.UpdateProperty(name, new Vector2(valVector2X, valVector2Y));
                             break;
                         case PropertyType.Vector3:
@@ -1519,7 +1520,7 @@ namespace Banter.SDK
                             var valVector3X = NumberFormat.Parse(propParts[2]);
                             var valVector3Y = NumberFormat.Parse(propParts[3]);
                             var valVector3Z = NumberFormat.Parse(propParts[4]);
-                            updates.Add(new BanterVector3() { n = name, x = valVector3X, y = valVector3Y, z = valVector3Z });
+                            updates.Add(new BSVector3() { n = name, x = valVector3X, y = valVector3Y, z = valVector3Z });
                             banterComp.UpdateProperty(name, new Vector3(valVector3X, valVector3Y, valVector3Z));
                             break;
                         case PropertyType.Vector4:
@@ -1529,7 +1530,7 @@ namespace Banter.SDK
                             var valVector4Y = NumberFormat.Parse(propParts[3]);
                             var valVector4Z = NumberFormat.Parse(propParts[4]);
                             var valVector4W = NumberFormat.Parse(propParts[5]);
-                            updates.Add(new BanterVector4() { n = name, x = valVector4X, y = valVector4Y, z = valVector4Z, w = valVector4W });
+                            updates.Add(new BSVector4() { n = name, x = valVector4X, y = valVector4Y, z = valVector4Z, w = valVector4W });
                             banterComp.UpdateProperty(name, new Vector4(valVector4X, valVector4Y, valVector4Z, valVector4W));
                             break;
                         case PropertyType.Vector5:
@@ -1539,7 +1540,7 @@ namespace Banter.SDK
                             var valVector5Z = NumberFormat.Parse(propParts[4]);
                             var valVector5W = NumberFormat.Parse(propParts[5]);
                             var valVector5V = NumberFormat.Parse(propParts[6]);
-                            updates.Add(new BanterVector5() { n = name, x = valVector5X, y = valVector5Y, z = valVector5Z, w = valVector5W, v = valVector5V });
+                            updates.Add(new BSVector5() { n = name, x = valVector5X, y = valVector5Y, z = valVector5Z, w = valVector5W, v = valVector5V });
                             banterComp.UpdateProperty(name, new Vector5(valVector5X, valVector5Y, valVector5Z, valVector5W, valVector5V));
                             break;
                     }
@@ -1569,7 +1570,7 @@ namespace Banter.SDK
                  {
                      banterObject.transform.SetParent(parentObject.transform, int.Parse(msgParts[2]) == 1);
                      SendObjectUpdate(banterObject, reqId);
-                 }, $"{nameof(BanterScene)}.{nameof(SetParent)}"));
+                 }, $"{nameof(BSScene)}.{nameof(SetParent)}"));
             }
         }
         public async Task WaitForEndOfFrame(int reqId)
@@ -1588,7 +1589,7 @@ namespace Banter.SDK
                 {
                     Debug.LogError("[Banter] Error updating object: " + e.Message + ", " + msg);
                 }
-            }, $"{nameof(BanterScene)}.{nameof(UpdateJsObject)}"));
+            }, $"{nameof(BSScene)}.{nameof(UpdateJsObject)}"));
         }
         // TODO: Lets look at what this is doing and why, it could be better to propagate updates back to the object another way
         void SendObjectUpdate(int oid, int reqId)
@@ -1636,10 +1637,10 @@ namespace Banter.SDK
                  else
                  {
                      // GameObject is null, killing the banter object now.
-                     BanterScene.Instance().DestroyBanterObject(oid);
+                     BSScene.Instance().DestroyBanterObject(oid);
                  }
 
-             }, $"{nameof(BanterScene)}.{nameof(DestroyJsObject)}"));
+             }, $"{nameof(BSScene)}.{nameof(DestroyJsObject)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
         }
         public void DestroyJsComponent(int cid, int reqId)
@@ -1668,7 +1669,7 @@ namespace Banter.SDK
                      {
                          DestroyBanterComponent(cid);
                      }
-                 }, $"{nameof(BanterScene)}.{nameof(DestroyJsComponent)}"));
+                 }, $"{nameof(BSScene)}.{nameof(DestroyJsComponent)}"));
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
             }
         }
@@ -1731,7 +1732,7 @@ namespace Banter.SDK
                     }
                 }
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
-            }, $"{nameof(BanterScene)}.{nameof(WatchJsTransform)}"));
+            }, $"{nameof(BSScene)}.{nameof(WatchJsTransform)}"));
         }
 
         public void SetJsTransform(string msg, int reqId)
@@ -1829,7 +1830,7 @@ namespace Banter.SDK
                     }
                 }
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
-            }, $"{nameof(BanterScene)}.{nameof(SetJsTransform)}"));
+            }, $"{nameof(BSScene)}.{nameof(SetJsTransform)}"));
         }
         public void AddJsObject(string msg, int reqId)
         {
@@ -1908,7 +1909,7 @@ namespace Banter.SDK
                 // {
                 //     Debug.LogError("[Banter] Add Object after act: " + msg + " : " + e.Message);
                 // }
-            }, $"{nameof(BanterScene)}.{nameof(AddJsObject)}"));
+            }, $"{nameof(BSScene)}.{nameof(AddJsObject)}"));
         }
         public void Cancel(string message, bool isUserCancel = false)
         {
@@ -1917,7 +1918,7 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     Cancel(message, isUserCancel);
-                }, $"{nameof(BanterScene)}.{nameof(Cancel)}"));
+                }, $"{nameof(BSScene)}.{nameof(Cancel)}"));
                 return;
             }
             loaded = true;
@@ -1939,7 +1940,7 @@ namespace Banter.SDK
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  _ = settings?.Reset();
-             }, $"{nameof(BanterScene)}.{nameof(ResetSceneAbilitySettings)}"));
+             }, $"{nameof(BSScene)}.{nameof(ResetSceneAbilitySettings)}"));
         }
         public async Task ResetScene()
         {
@@ -1959,7 +1960,7 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     events.OnSceneReset.Invoke();
-                }, $"{nameof(BanterScene)}.{nameof(ResetScene)}"));
+                }, $"{nameof(BSScene)}.{nameof(ResetScene)}"));
                 // This seems to be a bug in 2022, hard crash without this line.
                 GameObject.FindObjectsOfType<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
                 // await Resources.UnloadUnusedAssets();
@@ -2029,14 +2030,14 @@ namespace Banter.SDK
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
                     events.OnUnitySceneLoad.Invoke(url);
-                }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
+                }, $"{nameof(BSScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
                 
                 await Task.Delay(2500);
 
                 if (loadingManager != null)
                     await loadingManager.LoadOut();
                 loading = false;
-            }, $"{nameof(BanterScene)}.{nameof(LoadUrl)}"));
+            }, $"{nameof(BSScene)}.{nameof(LoadUrl)}"));
             await loadUrlTaskCompletionSource.Task;
         }
         public async Task OnLoad(string instanceId)
@@ -2051,9 +2052,9 @@ namespace Banter.SDK
                      _ = settings.Reset();
                      settings.Destroy();
                  }
-                 settings = new BanterSceneSettings(instanceId);
+                 settings = new BSSceneSettings(instanceId);
                  events.OnLoad.Invoke();
-             }, $"{nameof(BanterScene)}.{nameof(OnLoad)}"));
+             }, $"{nameof(BSScene)}.{nameof(OnLoad)}"));
             // TODO: This wont work with 5 ms, but I tested it hundreds of times at 10ms and it never 
             // failed at that level. Maybe it is because the other thread stuff above? I think so. 
             // Maybe it will fail on android? Or other slower computers? Making it 100 for good measure.
@@ -2150,8 +2151,8 @@ namespace Banter.SDK
         //  then buffered updates will then be handled all at once.
         //todo: make sure that there aren't too many out-of-Tick things being enqueued
         //private bool bufferUpdates = false;
-        private List<BanterComponentPropertyUpdate> _tickBuffer = null;
-        public void SetFromUnityProperties(List<BanterComponentPropertyUpdate> properties, Action callback = null, string name = "")
+        private List<BSComponentPropertyUpdate> _tickBuffer = null;
+        public void SetFromUnityProperties(List<BSComponentPropertyUpdate> properties, Action callback = null, string name = "")
         {
             if (properties.Count > 0)
             {
@@ -2176,9 +2177,9 @@ namespace Banter.SDK
         }
 
 
-        private void DoPropertyUpdateQueue(List<BanterComponentPropertyUpdate> toProcess)
+        private void DoPropertyUpdateQueue(List<BSComponentPropertyUpdate> toProcess)
         {
-            List<BanterComponentPropertyUpdate> toReenqueue = null;
+            List<BSComponentPropertyUpdate> toReenqueue = null;
             for (int i = 0; i < toProcess.Count; i++)
             {
                 var property = toProcess[i];
@@ -2199,7 +2200,7 @@ namespace Banter.SDK
                     // LogLine.Do(Color.red, LogTag.Banter, "Component not found for property: " + property.name + " (" + property.type + ") on " + property.componentType + " for component " + property.cid + " on object " + property.oid);
                     if (toReenqueue == null)
                     {
-                        toReenqueue = new List<BanterComponentPropertyUpdate>();
+                        toReenqueue = new List<BSComponentPropertyUpdate>();
                     }
                     toReenqueue.Add(property);
                     //ReEnque(property);
@@ -2211,52 +2212,52 @@ namespace Banter.SDK
                  {
                      Debug.LogWarning($"Having to reenqueue {toReenqueue.Count}");
                      EnqueuePropertyUpdates(toReenqueue);
-                 }, $"{nameof(BanterScene)}.{nameof(DoPropertyUpdateQueue)}"));
+                 }, $"{nameof(BSScene)}.{nameof(DoPropertyUpdateQueue)}"));
             }
         }
 
-        public string Serialise(BanterComponentProperty prop, BanterComponent comp)
+        public string Serialise(BSComponentProperty prop, BSComponent comp)
         {
             string returnValue = null;
             if (prop.value is bool)
             {
-                var propValue = (BanterBool)(bool)prop.value;
+                var propValue = (BSBool)(bool)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
             else if (prop.value is float)
             {
-                var propValue = (BanterFloat)(float)prop.value;
+                var propValue = (BSFloat)(float)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
             else if (prop.value is int)
             {
-                var propValue = (BanterInt)(int)prop.value;
+                var propValue = (BSInt)(int)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
             else if (prop.value is Vector2)
             {
-                var propValue = (BanterVector2)(Vector2)prop.value;
+                var propValue = (BSVector2)(Vector2)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
             else if (prop.value is Vector3)
             {
-                var propValue = (BanterVector3)(Vector3)prop.value;
+                var propValue = (BSVector3)(Vector3)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
             else if (prop.value is Vector4)
             {
-                var propValue = (BanterVector4)(Vector4)prop.value;
+                var propValue = (BSVector4)(Vector4)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
             else if (prop.value is Quaternion)
             {
-                var propValue = (BanterVector4)(Quaternion)prop.value;
+                var propValue = (BSVector4)(Quaternion)prop.value;
                 propValue.n = prop.name;
                 returnValue = propValue.Serialise();
             }
@@ -2276,7 +2277,7 @@ namespace Banter.SDK
         #region Utilities and startup methods
         public void FixedUpdate()
         {
-            _tickBuffer = new List<BanterComponentPropertyUpdate>();
+            _tickBuffer = new List<BSComponentPropertyUpdate>();
             Tick?.Invoke(null, null);
             EnqueuePropertyUpdates(_tickBuffer);
             _tickBuffer = null;
@@ -2414,7 +2415,7 @@ namespace Banter.SDK
                          }
                      }
                  }
-             }, $"{nameof(BanterScene)}.{nameof(SetSettings)}"));
+             }, $"{nameof(BSScene)}.{nameof(SetSettings)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SCENE_SETTINGS);
         }
         public void FlushObjectToChanges(int oid, int cid = 0, ComponentType ct = 0)
@@ -2440,11 +2441,11 @@ namespace Banter.SDK
             //    _propertyUpdateQueue.Clear();
             //}
         }
-        public static BanterScene Instance()
+        public static BSScene Instance()
         {
             if (_instance == null)
             {
-                _instance = new BanterScene();
+                _instance = new BSScene();
             }
             return _instance;
         }
@@ -2477,7 +2478,7 @@ namespace Banter.SDK
                     actualPart = AvatarBoneName.HIPS;
                     break;
             }
-            var attachment = new BanterAttachment();
+            var attachment = new BSAttachment();
             attachment.uid = whoToShow;
             attachment.attachmentPosition = gameObject.gameObject.transform.localPosition;
             attachment.attachmentRotation = gameObject.gameObject.transform.localRotation;
@@ -2513,7 +2514,7 @@ namespace Banter.SDK
                          Debug.LogError("[Banter] Error setting child color: " + path + " - " + e.Message);
                      }
                  }
-             }, $"{nameof(BanterScene)}.{nameof(LegacySetChildColor)}"));
+             }, $"{nameof(BSScene)}.{nameof(LegacySetChildColor)}"));
         }
         public void LegacySetVideoUrl(GameObject gameObject, string url, string id)
         {
@@ -2533,7 +2534,7 @@ namespace Banter.SDK
                      };
                      video.prepareCompleted += callback;
                  }
-             }, $"{nameof(BanterScene)}.{nameof(LegacySetVideoUrl)}"));
+             }, $"{nameof(BSScene)}.{nameof(LegacySetVideoUrl)}"));
         }
 
         #region ActionsSystem Control Methods
@@ -2681,7 +2682,7 @@ namespace Banter.SDK
                     }
                 }
                 link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
-            }, $"{nameof(BanterScene)}.{nameof(SendHapticImpulse)}"));
+            }, $"{nameof(BSScene)}.{nameof(SendHapticImpulse)}"));
         }
         #endregion
 

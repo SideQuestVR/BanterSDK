@@ -47,14 +47,14 @@ namespace Banter.SDK
                 return _componentType;
             }
         }
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -96,7 +96,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -116,27 +116,27 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisTrigger = (BanterBool)values[i];
+                    var valisTrigger = (BSBool)values[i];
                     if (valisTrigger.n == PropertyName.isTrigger)
                     {
                         componentType.isTrigger = valisTrigger.x;
                         changedProperties.Add(PropertyName.isTrigger);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valradius = (BanterFloat)values[i];
+                    var valradius = (BSFloat)values[i];
                     if (valradius.n == PropertyName.radius)
                     {
                         componentType.radius = valradius.x;
                         changedProperties.Add(PropertyName.radius);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valheight = (BanterFloat)values[i];
+                    var valheight = (BSFloat)values[i];
                     if (valheight.n == PropertyName.height)
                     {
                         componentType.height = valheight.x;
@@ -148,10 +148,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isTrigger,
                     type = PropertyType.Bool,
@@ -163,7 +163,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.radius,
                     type = PropertyType.Float,
@@ -175,7 +175,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.height,
                     type = PropertyType.Float,

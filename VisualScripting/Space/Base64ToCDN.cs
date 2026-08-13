@@ -32,7 +32,7 @@ namespace Banter.VisualScripting
                 var _fileName = flow.GetValue<string>(fileName);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnBase64ToCDN.Invoke(_base64Image,  _fileName);
+                    BSScene.Instance().events.OnBase64ToCDN.Invoke(_base64Image,  _fileName);
                 }, $"{nameof(Base64ToCDN)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

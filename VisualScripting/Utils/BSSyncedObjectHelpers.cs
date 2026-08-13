@@ -10,7 +10,8 @@ namespace Banter.VisualScripting
     [UnitCategory("Banter/Components/Banter Synced Object")]
     [Obsolete("Use BSSyncedObject _TakeOwnership()")]
     [TypeIcon(typeof(BSSyncedObject))]
-    public class BanterSyncedObjectTakeOwnership : Unit
+    [RenamedFrom("Banter.VisualScripting.BanterSyncedObjectTakeOwnership")]
+    public class BSSyncedObjectTakeOwnership : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
@@ -42,7 +43,8 @@ namespace Banter.VisualScripting
     [UnitCategory("Banter/Components/Banter Synced Object")]
     [Obsolete("Use BSSyncedObject _DoIOwn()")]
     [TypeIcon(typeof(BSSyncedObject))]
-    public class BanterSyncedObjectDoIOwn : Unit
+    [RenamedFrom("Banter.VisualScripting.BanterSyncedObjectDoIOwn")]
+    public class BSSyncedObjectDoIOwn : Unit
     {
         [DoNotSerialize]
         [NullMeansSelf]

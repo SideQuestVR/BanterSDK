@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Audio;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public class BanterSceneSettings
+    [RenamedFrom("Banter.SDK.BanterSceneSettings")]
+    public class BSSceneSettings
     {
         private bool _EnableDevTools = true;
         public bool EnableDevTools { get { return _EnableDevTools; } set { _EnableDevTools = value; scene.events.OnEnableDevToolsChanged.Invoke(value); } }
@@ -88,15 +90,15 @@ namespace Banter.SDK
         // public Dictionary<string, string> CachedFiles = new Dictionary<string, string>();
         public bool isDestroying { get; private set; } = false;
         public DateTime? destroyedAt { get; private set; } = null;
-        private BanterScene scene;
+        private BSScene scene;
 
-        public BanterSceneSettings(string instanceId)
+        public BSSceneSettings(string instanceId)
         {
             this.instanceId = instanceId;
             var newParent = new GameObject(instanceId);
             newParent.AddComponent<DontDestroyOnLoad>();
             parentTransform = newParent.transform;
-            scene = BanterScene.Instance();
+            scene = BSScene.Instance();
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Creating instance: " + instanceId);
         }
         public string instanceId { get; private set; }

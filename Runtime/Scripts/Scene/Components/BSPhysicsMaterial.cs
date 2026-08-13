@@ -12,7 +12,7 @@ namespace Banter.SDK
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
-    public class BSPhysicsMaterial : BanterComponentBase
+    public class BSPhysicsMaterial : BSComponentBase
     {
         [Tooltip("The dynamic friction of the material, affecting movement when in contact with another surface.")]
         [See(initial = "1")][SerializeField] internal float dynamicFriction = 1;
@@ -101,14 +101,14 @@ namespace Banter.SDK
         public UnityEngine.PhysicsMaterialCombine FrictionCombine { get { return frictionCombine; } set { frictionCombine = value; UpdateCallback(new List<PropertyName> { PropertyName.frictionCombine }); } }
         public UnityEngine.PhysicsMaterialCombine BounceCombine { get { return bounceCombine; } set { bounceCombine = value; UpdateCallback(new List<PropertyName> { PropertyName.bounceCombine }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -151,7 +151,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -171,45 +171,45 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valdynamicFriction = (BanterFloat)values[i];
+                    var valdynamicFriction = (BSFloat)values[i];
                     if (valdynamicFriction.n == PropertyName.dynamicFriction)
                     {
                         dynamicFriction = valdynamicFriction.x;
                         changedProperties.Add(PropertyName.dynamicFriction);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valstaticFriction = (BanterFloat)values[i];
+                    var valstaticFriction = (BSFloat)values[i];
                     if (valstaticFriction.n == PropertyName.staticFriction)
                     {
                         staticFriction = valstaticFriction.x;
                         changedProperties.Add(PropertyName.staticFriction);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valbounciness = (BanterFloat)values[i];
+                    var valbounciness = (BSFloat)values[i];
                     if (valbounciness.n == PropertyName.bounciness)
                     {
                         bounciness = valbounciness.x;
                         changedProperties.Add(PropertyName.bounciness);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valfrictionCombine = (BanterInt)values[i];
+                    var valfrictionCombine = (BSInt)values[i];
                     if (valfrictionCombine.n == PropertyName.frictionCombine)
                     {
                         frictionCombine = (PhysicsMaterialCombine)valfrictionCombine.x;
                         changedProperties.Add(PropertyName.frictionCombine);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valbounceCombine = (BanterInt)values[i];
+                    var valbounceCombine = (BSInt)values[i];
                     if (valbounceCombine.n == PropertyName.bounceCombine)
                     {
                         bounceCombine = (PhysicsMaterialCombine)valbounceCombine.x;
@@ -222,10 +222,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.dynamicFriction,
                     type = PropertyType.Float,
@@ -237,7 +237,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.staticFriction,
                     type = PropertyType.Float,
@@ -249,7 +249,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.bounciness,
                     type = PropertyType.Float,
@@ -261,7 +261,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.frictionCombine,
                     type = PropertyType.Int,
@@ -273,7 +273,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.bounceCombine,
                     type = PropertyType.Int,

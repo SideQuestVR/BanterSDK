@@ -21,8 +21,8 @@ namespace Banter.SDK
 {
     public class BSLink : MonoBehaviour
     {
-        public BanterPipe pipe;
-        public BanterScene scene;
+        public BSPipe pipe;
+        public BSScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
         BatchUpdater batchUpdater;
@@ -649,8 +649,8 @@ namespace Banter.SDK
             //             pipe = new ElectronPipe(pipeName);
             // #endif
 
-            scene = BanterScene.Instance();
-            pipe = new BanterPipe(this, view, manager);
+            scene = BSScene.Instance();
+            pipe = new BSPipe(this, view, manager);
             batchUpdater = new BatchUpdater(pipe);
             pipe.Start(() =>
             {
@@ -754,7 +754,7 @@ namespace Banter.SDK
         }
 
 
-        public void OnTransformUpdate(int oid, List<BanterComponentPropertyUpdate> updates)
+        public void OnTransformUpdate(int oid, List<BSComponentPropertyUpdate> updates)
         {
             StringBuilder updatesString = new StringBuilder();
             if (updates.Count < 1)
@@ -822,7 +822,7 @@ namespace Banter.SDK
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Unity Scene Loaded.");
             Send(APICommands.EVENT + APICommands.UNITY_LOADED + MessageDelimiters.PRIMARY);
         }
-        public void OnMonoBehaviourLifeCycle(int cid, BanterMonoBehaviourLifeCycle lifeCycle)
+        public void OnMonoBehaviourLifeCycle(int cid, BSMonoBehaviourLifeCycle lifeCycle)
         {
             Send(APICommands.EVENT + APICommands.MONO_BEHAVIOUR + MessageDelimiters.PRIMARY + cid + MessageDelimiters.PRIMARY + (int)lifeCycle);
         }

@@ -47,7 +47,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSBrowser : BanterComponentBase
+    public class BSBrowser : BSComponentBase
     {
         [Tooltip("The URL of the webpage to display")]
         [See(initial = "")][SerializeField] internal string url;
@@ -125,7 +125,7 @@ namespace Banter.SDK
                 return;
 
             SetupBrowser();
-            OnReceiveBrowserMessage.AddListener((message) => BanterScene.Instance().link.OnReceiveBrowserMessage(this, message));
+            OnReceiveBrowserMessage.AddListener((message) => BSScene.Instance().link.OnReceiveBrowserMessage(this, message));
         }
 
         internal override void UpdateStuff()
@@ -291,14 +291,14 @@ namespace Banter.SDK
         public System.Single PageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
         public System.String Actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -341,7 +341,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -395,54 +395,54 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valurl = (BanterString)values[i];
+                    var valurl = (BSString)values[i];
                     if (valurl.n == PropertyName.url)
                     {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valmipMaps = (BanterInt)values[i];
+                    var valmipMaps = (BSInt)values[i];
                     if (valmipMaps.n == PropertyName.mipMaps)
                     {
                         mipMaps = valmipMaps.x;
                         changedProperties.Add(PropertyName.mipMaps);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valpixelsPerUnit = (BanterFloat)values[i];
+                    var valpixelsPerUnit = (BSFloat)values[i];
                     if (valpixelsPerUnit.n == PropertyName.pixelsPerUnit)
                     {
                         pixelsPerUnit = valpixelsPerUnit.x;
                         changedProperties.Add(PropertyName.pixelsPerUnit);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valpageWidth = (BanterFloat)values[i];
+                    var valpageWidth = (BSFloat)values[i];
                     if (valpageWidth.n == PropertyName.pageWidth)
                     {
                         pageWidth = valpageWidth.x;
                         changedProperties.Add(PropertyName.pageWidth);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valpageHeight = (BanterFloat)values[i];
+                    var valpageHeight = (BSFloat)values[i];
                     if (valpageHeight.n == PropertyName.pageHeight)
                     {
                         pageHeight = valpageHeight.x;
                         changedProperties.Add(PropertyName.pageHeight);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valactions = (BanterString)values[i];
+                    var valactions = (BSString)values[i];
                     if (valactions.n == PropertyName.actions)
                     {
                         actions = valactions.x;
@@ -455,10 +455,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.url,
                     type = PropertyType.String,
@@ -470,7 +470,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.mipMaps,
                     type = PropertyType.Int,
@@ -482,7 +482,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.pixelsPerUnit,
                     type = PropertyType.Float,
@@ -494,7 +494,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.pageWidth,
                     type = PropertyType.Float,
@@ -506,7 +506,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.pageHeight,
                     type = PropertyType.Float,
@@ -518,7 +518,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.actions,
                     type = PropertyType.String,

@@ -26,13 +26,13 @@ public class PlayerEmulator : MonoBehaviour
     private Vector3 offset;
     private int grabbableLayer = 1 << 20;
     private int clickableLayer = 1 << 5;
-    private BanterScene scene;
+    private BSScene scene;
     private bool ctrlPressed = false;
     public float SmoothTurnSpeed = 90f;
     public static float TurnSpeed = 0f;
     void Awake()
     {
-        scene = BanterScene.Instance();
+        scene = BSScene.Instance();
     }
 
     void Start()

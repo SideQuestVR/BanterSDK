@@ -11,7 +11,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSKitItem : BanterComponentBase
+    public class BSKitItem : BSComponentBase
     {
         [Tooltip("The location of the prefab in the kit object. Must match the path in the asset bundle (always lowercase).")]
         [See(initial = "")][SerializeField] internal string path = "";
@@ -102,14 +102,14 @@ namespace Banter.SDK
         public System.String Path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
         public System.Boolean ResetTransform { get { return resetTransform; } set { resetTransform = value; UpdateCallback(new List<PropertyName> { PropertyName.resetTransform }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -152,7 +152,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -172,18 +172,18 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valpath = (BanterString)values[i];
+                    var valpath = (BSString)values[i];
                     if (valpath.n == PropertyName.path)
                     {
                         path = valpath.x;
                         changedProperties.Add(PropertyName.path);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valresetTransform = (BanterBool)values[i];
+                    var valresetTransform = (BSBool)values[i];
                     if (valresetTransform.n == PropertyName.resetTransform)
                     {
                         resetTransform = valresetTransform.x;
@@ -196,10 +196,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.path,
                     type = PropertyType.String,
@@ -211,7 +211,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.resetTransform,
                     type = PropertyType.Bool,

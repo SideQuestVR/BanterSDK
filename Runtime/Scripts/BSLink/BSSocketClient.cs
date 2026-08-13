@@ -4,8 +4,10 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Unity.VisualScripting;
 
-public class BanterSocketClient
+[RenamedFrom("Banter.SDK.BanterSocketClient")]
+public class BSSocketClient
 {
     private const int MagicNumber = unchecked((int)0xDEADBEEF);
     private TcpClient client;
@@ -21,7 +23,7 @@ public class BanterSocketClient
         get => client?.Connected ?? false;
     }
 
-    public BanterSocketClient()
+    public BSSocketClient()
     {
     }
 
@@ -41,7 +43,7 @@ public class BanterSocketClient
                 MessageReceived += onMessageReceived;
             }
 
-            _ = Banter.SDK.TaskRunner.Run(async () => await ListenForMessages(), $"{nameof(BanterSocketClient)}.{nameof(ConnectAsync)}");
+            _ = Banter.SDK.TaskRunner.Run(async () => await ListenForMessages(), $"{nameof(BSSocketClient)}.{nameof(ConnectAsync)}");
         }
         catch (Exception ex)
         {
@@ -62,7 +64,7 @@ public class BanterSocketClient
                 }
             }
 
-            LogLine.Do("BanterSocketClient no longer listening for messages");
+            LogLine.Do("BSSocketClient no longer listening for messages");
         }
         catch (Exception ex)
         {

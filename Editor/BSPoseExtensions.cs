@@ -1,8 +1,10 @@
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public static class BanterPoseExtensions
+    [RenamedFrom("Banter.SDKEditor.BanterPoseExtensions")]
+    public static class BSPoseExtensions
     {
         /// <summary> Transforms direction from local space to world space </summary>
         public static Vector3 TransformDirection(this Pose pose, Vector3 localDirection)

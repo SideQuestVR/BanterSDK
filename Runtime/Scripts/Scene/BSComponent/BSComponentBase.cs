@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
     [RequireComponent(typeof(BSObjectId))]
-    public abstract class BanterComponentBase : MonoBehaviour
+    [RenamedFrom("Banter.SDK.BanterComponentBase")]
+    public abstract class BSComponentBase : MonoBehaviour
     {
         public string jsId;
         internal abstract void Deserialise(List<object> values);

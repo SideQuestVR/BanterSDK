@@ -5,12 +5,12 @@
 // using Banter.Utilities.Async;
 // namespace Banter.SDK
 // {
-//     public class AndroidPipe : BanterPipe
+//     public class AndroidPipe : BSPipe
 //     {
 //         AndroidJavaObject activity;
 
 //         private CountingLogger fromAndroid = new CountingLogger("AndroidPipe: from android -> unity");
-//         private BanterSocketClient socketClient;
+//         private BSSocketClient socketClient;
 //         public override void Start(Action connectedCallback, Action<string> msgCallback)
 //         {
 //             activity = new AndroidJavaObject("quest.side.wtf.MainActivity");
@@ -19,12 +19,12 @@
 //             {
 //                 _ = BSStarterUpper.SetMainWindowPort(port =>
 //                 { 
-//                     UnityEngine.Debug.Log("BanterSocketClient gonna connect to port " + port);
+//                     UnityEngine.Debug.Log("BSSocketClient gonna connect to port " + port);
 //                     if (port <= 0)
 //                     {
 //                         throw new Exception("Failed to get port from android socket server");
 //                     }
-//                     socketClient = new BanterSocketClient();
+//                     socketClient = new BSSocketClient();
 //                     socketClient.ConnectAsync("localhost", port, (msg) =>
 //                     {
 //                         msgCallback(msg);
@@ -33,7 +33,7 @@
 //                         try
 //                         {
 //                             await x;
-//                             UnityEngine.Debug.Log("BanterSocketClient connected");
+//                             UnityEngine.Debug.Log("BSSocketClient connected");
 //                             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => { connectedCallback(); }, $"{nameof(AndroidPipe)}.{nameof(Start)}"));
 //                         }
 //                         catch (Exception e)

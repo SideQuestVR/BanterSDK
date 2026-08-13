@@ -12,7 +12,7 @@ namespace Banter.SDK
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
-    public class BSRigidbody : BanterComponentBase
+    public class BSRigidbody : BSComponentBase
     {
         [Tooltip("The mass of the rigidbody, affecting its inertia and interactions with forces.")]
         [See(initial = "1")][SerializeField] internal float mass;
@@ -262,14 +262,14 @@ namespace Banter.SDK
         public bool _velocity;
         public bool _angularVelocity;
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -312,7 +312,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -488,135 +488,135 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valvelocity = (BanterVector3)values[i];
+                    var valvelocity = (BSVector3)values[i];
                     if (valvelocity.n == PropertyName.velocity)
                     {
                         velocity = new Vector3(valvelocity.x, valvelocity.y, valvelocity.z);
                         changedProperties.Add(PropertyName.velocity);
                     }
                 }
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valangularVelocity = (BanterVector3)values[i];
+                    var valangularVelocity = (BSVector3)values[i];
                     if (valangularVelocity.n == PropertyName.angularVelocity)
                     {
                         angularVelocity = new Vector3(valangularVelocity.x, valangularVelocity.y, valangularVelocity.z);
                         changedProperties.Add(PropertyName.angularVelocity);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valmass = (BanterFloat)values[i];
+                    var valmass = (BSFloat)values[i];
                     if (valmass.n == PropertyName.mass)
                     {
                         mass = valmass.x;
                         changedProperties.Add(PropertyName.mass);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valdrag = (BanterFloat)values[i];
+                    var valdrag = (BSFloat)values[i];
                     if (valdrag.n == PropertyName.drag)
                     {
                         drag = valdrag.x;
                         changedProperties.Add(PropertyName.drag);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valangularDrag = (BanterFloat)values[i];
+                    var valangularDrag = (BSFloat)values[i];
                     if (valangularDrag.n == PropertyName.angularDrag)
                     {
                         angularDrag = valangularDrag.x;
                         changedProperties.Add(PropertyName.angularDrag);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisKinematic = (BanterBool)values[i];
+                    var valisKinematic = (BSBool)values[i];
                     if (valisKinematic.n == PropertyName.isKinematic)
                     {
                         isKinematic = valisKinematic.x;
                         changedProperties.Add(PropertyName.isKinematic);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valuseGravity = (BanterBool)values[i];
+                    var valuseGravity = (BSBool)values[i];
                     if (valuseGravity.n == PropertyName.useGravity)
                     {
                         useGravity = valuseGravity.x;
                         changedProperties.Add(PropertyName.useGravity);
                     }
                 }
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valcenterOfMass = (BanterVector3)values[i];
+                    var valcenterOfMass = (BSVector3)values[i];
                     if (valcenterOfMass.n == PropertyName.centerOfMass)
                     {
                         centerOfMass = new Vector3(valcenterOfMass.x, valcenterOfMass.y, valcenterOfMass.z);
                         changedProperties.Add(PropertyName.centerOfMass);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valcollisionDetectionMode = (BanterInt)values[i];
+                    var valcollisionDetectionMode = (BSInt)values[i];
                     if (valcollisionDetectionMode.n == PropertyName.collisionDetectionMode)
                     {
                         collisionDetectionMode = (CollisionDetectionMode)valcollisionDetectionMode.x;
                         changedProperties.Add(PropertyName.collisionDetectionMode);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valfreezePositionX = (BanterBool)values[i];
+                    var valfreezePositionX = (BSBool)values[i];
                     if (valfreezePositionX.n == PropertyName.freezePositionX)
                     {
                         freezePositionX = valfreezePositionX.x;
                         changedProperties.Add(PropertyName.freezePositionX);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valfreezePositionY = (BanterBool)values[i];
+                    var valfreezePositionY = (BSBool)values[i];
                     if (valfreezePositionY.n == PropertyName.freezePositionY)
                     {
                         freezePositionY = valfreezePositionY.x;
                         changedProperties.Add(PropertyName.freezePositionY);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valfreezePositionZ = (BanterBool)values[i];
+                    var valfreezePositionZ = (BSBool)values[i];
                     if (valfreezePositionZ.n == PropertyName.freezePositionZ)
                     {
                         freezePositionZ = valfreezePositionZ.x;
                         changedProperties.Add(PropertyName.freezePositionZ);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valfreezeRotationX = (BanterBool)values[i];
+                    var valfreezeRotationX = (BSBool)values[i];
                     if (valfreezeRotationX.n == PropertyName.freezeRotationX)
                     {
                         freezeRotationX = valfreezeRotationX.x;
                         changedProperties.Add(PropertyName.freezeRotationX);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valfreezeRotationY = (BanterBool)values[i];
+                    var valfreezeRotationY = (BSBool)values[i];
                     if (valfreezeRotationY.n == PropertyName.freezeRotationY)
                     {
                         freezeRotationY = valfreezeRotationY.x;
                         changedProperties.Add(PropertyName.freezeRotationY);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valfreezeRotationZ = (BanterBool)values[i];
+                    var valfreezeRotationZ = (BSBool)values[i];
                     if (valfreezeRotationZ.n == PropertyName.freezeRotationZ)
                     {
                         freezeRotationZ = valfreezeRotationZ.x;
@@ -629,10 +629,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if ((_velocity) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.velocity,
                     type = PropertyType.Vector3,
@@ -644,7 +644,7 @@ namespace Banter.SDK
             }
             if ((_angularVelocity) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.angularVelocity,
                     type = PropertyType.Vector3,
@@ -656,7 +656,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.mass,
                     type = PropertyType.Float,
@@ -668,7 +668,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.drag,
                     type = PropertyType.Float,
@@ -680,7 +680,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.angularDrag,
                     type = PropertyType.Float,
@@ -692,7 +692,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isKinematic,
                     type = PropertyType.Bool,
@@ -704,7 +704,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.useGravity,
                     type = PropertyType.Bool,
@@ -716,7 +716,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.centerOfMass,
                     type = PropertyType.Vector3,
@@ -728,7 +728,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.collisionDetectionMode,
                     type = PropertyType.Int,
@@ -740,7 +740,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.freezePositionX,
                     type = PropertyType.Bool,
@@ -752,7 +752,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.freezePositionY,
                     type = PropertyType.Bool,
@@ -764,7 +764,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.freezePositionZ,
                     type = PropertyType.Bool,
@@ -776,7 +776,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.freezeRotationX,
                     type = PropertyType.Bool,
@@ -788,7 +788,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.freezeRotationY,
                     type = PropertyType.Bool,
@@ -800,7 +800,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.freezeRotationZ,
                     type = PropertyType.Bool,

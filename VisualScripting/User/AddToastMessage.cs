@@ -34,7 +34,7 @@ namespace Banter.VisualScripting
                 var _timeout = flow.GetValue<int>(timeout);
                 var _delay = flow.GetValue<int>(delay);
                 
-                BanterScene.Instance().events.OnToast?.Invoke(_message, _timeout, _delay, _color);
+                BSScene.Instance().events.OnToast?.Invoke(_message, _timeout, _delay, _color);
 
                 return outputTrigger;
             });

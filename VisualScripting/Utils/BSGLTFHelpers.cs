@@ -10,7 +10,8 @@ namespace Banter.VisualScripting
     [UnitCategory("Banter/Components/Banter glTF")]
     [Obsolete("Use BSGLTF IsLoaded instead")]
     [TypeIcon(typeof(BSGLTF))]
-    public class BanterGLTFIsLoaded : Unit
+    [RenamedFrom("Banter.VisualScripting.BanterGLTFIsLoaded")]
+    public class BSGLTFIsLoaded : Unit
     {
         [DoNotSerialize]
         [NullMeansSelf]

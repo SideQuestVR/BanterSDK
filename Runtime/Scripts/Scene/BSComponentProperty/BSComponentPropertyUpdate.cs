@@ -2,11 +2,13 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
     [System.Serializable]
-    public class BanterComponentPropertyUpdate : BanterComponentPropertyBase
+    [RenamedFrom("Banter.SDK.BanterComponentPropertyUpdate")]
+    public class BSComponentPropertyUpdate : BSComponentPropertyBase
     {
         public int oid;
         public int cid;

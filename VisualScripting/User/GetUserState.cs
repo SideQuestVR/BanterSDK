@@ -34,7 +34,7 @@ namespace Banter.VisualScripting
         private Transform GetUserDataTransform(Flow f)
         {
             var value = f.GetValue<string>(idOrName);
-            var data = BanterScene.Instance().users.FirstOrDefault(user => user.id == value || user.name == value || user.uid == value);
+            var data = BSScene.Instance().users.FirstOrDefault(user => user.id == value || user.name == value || user.uid == value);
 
             if (data == null)
             {
@@ -60,13 +60,13 @@ namespace Banter.VisualScripting
         {
             userPosition = ValueOutput("Position", (f) =>
             {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
                 return (data != null) ? data.Head.transform.position : Vector3.zero;
             });
 
             userRotation = ValueOutput("Rotation", (f) =>
             {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
                 return (data != null) ? data.Head.transform.rotation : Quaternion.identity;
             });
         }
@@ -96,7 +96,7 @@ namespace Banter.VisualScripting
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnGetUserState.Invoke(_key, _uid);
+                    BSScene.Instance().events.OnGetUserState.Invoke(_key, _uid);
                 }, $"{nameof(GetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -136,7 +136,7 @@ namespace Banter.VisualScripting
                 var _uid = flow.GetValue<string>(uid);
                 var _value = flow.GetValue<string>(value);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnSetUserState.Invoke(_key, _uid, _value);
+                    BSScene.Instance().events.OnSetUserState.Invoke(_key, _uid, _value);
                 }, $"{nameof(SetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
@@ -174,7 +174,7 @@ namespace Banter.VisualScripting
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnRemoveUserState.Invoke(_key, _uid);
+                    BSScene.Instance().events.OnRemoveUserState.Invoke(_key, _uid);
                 }, $"{nameof(RemoveUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

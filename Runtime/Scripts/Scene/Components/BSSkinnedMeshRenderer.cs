@@ -36,7 +36,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSSkinnedMeshRenderer : BanterComponentBase
+    public class BSSkinnedMeshRenderer : BSComponentBase
     {
         SkinnedMeshRenderer _skinnedMeshRenderer;
 
@@ -245,14 +245,14 @@ namespace Banter.SDK
         public System.Boolean SkinnedMotionVectors { get { return skinnedMotionVectors; } set { skinnedMotionVectors = value; UpdateCallback(new List<PropertyName> { PropertyName.skinnedMotionVectors }); } }
         public System.Int32 Quality { get { return quality; } set { quality = value; UpdateCallback(new List<PropertyName> { PropertyName.quality }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -295,7 +295,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -348,54 +348,54 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valblendShapes = (BanterString)values[i];
+                    var valblendShapes = (BSString)values[i];
                     if (valblendShapes.n == PropertyName.blendShapes)
                     {
                         blendShapes = valblendShapes.x;
                         changedProperties.Add(PropertyName.blendShapes);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valbones = (BanterString)values[i];
+                    var valbones = (BSString)values[i];
                     if (valbones.n == PropertyName.bones)
                     {
                         bones = valbones.x;
                         changedProperties.Add(PropertyName.bones);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valrootBoneInstanceId = (BanterInt)values[i];
+                    var valrootBoneInstanceId = (BSInt)values[i];
                     if (valrootBoneInstanceId.n == PropertyName.rootBoneInstanceId)
                     {
                         rootBoneInstanceId = valrootBoneInstanceId.x;
                         changedProperties.Add(PropertyName.rootBoneInstanceId);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valupdateWhenOffscreen = (BanterBool)values[i];
+                    var valupdateWhenOffscreen = (BSBool)values[i];
                     if (valupdateWhenOffscreen.n == PropertyName.updateWhenOffscreen)
                     {
                         updateWhenOffscreen = valupdateWhenOffscreen.x;
                         changedProperties.Add(PropertyName.updateWhenOffscreen);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valskinnedMotionVectors = (BanterBool)values[i];
+                    var valskinnedMotionVectors = (BSBool)values[i];
                     if (valskinnedMotionVectors.n == PropertyName.skinnedMotionVectors)
                     {
                         skinnedMotionVectors = valskinnedMotionVectors.x;
                         changedProperties.Add(PropertyName.skinnedMotionVectors);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valquality = (BanterInt)values[i];
+                    var valquality = (BSInt)values[i];
                     if (valquality.n == PropertyName.quality)
                     {
                         quality = valquality.x;
@@ -408,10 +408,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blendShapes,
                     type = PropertyType.String,
@@ -423,7 +423,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.bones,
                     type = PropertyType.String,
@@ -435,7 +435,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.rootBoneInstanceId,
                     type = PropertyType.Int,
@@ -447,7 +447,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.updateWhenOffscreen,
                     type = PropertyType.Bool,
@@ -459,7 +459,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.skinnedMotionVectors,
                     type = PropertyType.Bool,
@@ -471,7 +471,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.quality,
                     type = PropertyType.Int,

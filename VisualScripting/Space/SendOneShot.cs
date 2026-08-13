@@ -32,7 +32,7 @@ namespace Banter.VisualScripting
                 var _data = flow.GetValue<string>(data);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnOneShot.Invoke(_data, _allInstances);
+                    BSScene.Instance().events.OnOneShot.Invoke(_data, _allInstances);
                 }, $"{nameof(SendOneShot)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

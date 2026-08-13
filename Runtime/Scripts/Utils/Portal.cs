@@ -6,10 +6,10 @@ namespace Banter.SDK
     {
         bool CanActivate = false;
         public string url;
-        BanterSceneEvents sceneEvents;
+        BSSceneEvents sceneEvents;
         async void Start()
         {
-            sceneEvents = BanterScene.Instance().events;
+            sceneEvents = BSScene.Instance().events;
             await new WaitForSeconds(0.5f);
             CanActivate = true;
         }

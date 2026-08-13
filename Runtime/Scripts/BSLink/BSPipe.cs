@@ -4,14 +4,16 @@ using System.Threading.Tasks;
 using Banter.SDK;
 #if BANTER_ORA
 using SideQuest.Ora;
+using Unity.VisualScripting;
 #endif
-public class BanterPipe
+[RenamedFrom("Banter.SDK.BanterPipe")]
+public class BSPipe
 {
 #if BANTER_ORA
     public OraView view;
     OraManager manager;
     BSLink link;
-    public BanterPipe(BSLink link, OraView view, OraManager manager)
+    public BSPipe(BSLink link, OraView view, OraManager manager)
     {
         this.manager = manager;
         this.view = view;

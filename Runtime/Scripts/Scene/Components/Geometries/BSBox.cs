@@ -8,7 +8,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSBox : BanterComponentBase
+    public class BSBox : BSComponentBase
     {
         [Tooltip("The width of the box.")]
         [See(initial = "1")][SerializeField] internal float width;
@@ -77,14 +77,14 @@ namespace Banter.SDK
         public System.Int32 HeightSegments { get { return heightSegments; } set { heightSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.heightSegments }); } }
         public System.Int32 DepthSegments { get { return depthSegments; } set { depthSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.depthSegments }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -127,7 +127,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -147,54 +147,54 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valwidth = (BanterFloat)values[i];
+                    var valwidth = (BSFloat)values[i];
                     if (valwidth.n == PropertyName.width)
                     {
                         width = valwidth.x;
                         changedProperties.Add(PropertyName.width);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valheight = (BanterFloat)values[i];
+                    var valheight = (BSFloat)values[i];
                     if (valheight.n == PropertyName.height)
                     {
                         height = valheight.x;
                         changedProperties.Add(PropertyName.height);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valdepth = (BanterFloat)values[i];
+                    var valdepth = (BSFloat)values[i];
                     if (valdepth.n == PropertyName.depth)
                     {
                         depth = valdepth.x;
                         changedProperties.Add(PropertyName.depth);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valwidthSegments = (BanterInt)values[i];
+                    var valwidthSegments = (BSInt)values[i];
                     if (valwidthSegments.n == PropertyName.widthSegments)
                     {
                         widthSegments = valwidthSegments.x;
                         changedProperties.Add(PropertyName.widthSegments);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valheightSegments = (BanterInt)values[i];
+                    var valheightSegments = (BSInt)values[i];
                     if (valheightSegments.n == PropertyName.heightSegments)
                     {
                         heightSegments = valheightSegments.x;
                         changedProperties.Add(PropertyName.heightSegments);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valdepthSegments = (BanterInt)values[i];
+                    var valdepthSegments = (BSInt)values[i];
                     if (valdepthSegments.n == PropertyName.depthSegments)
                     {
                         depthSegments = valdepthSegments.x;
@@ -207,10 +207,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.width,
                     type = PropertyType.Float,
@@ -222,7 +222,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.height,
                     type = PropertyType.Float,
@@ -234,7 +234,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.depth,
                     type = PropertyType.Float,
@@ -246,7 +246,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.widthSegments,
                     type = PropertyType.Int,
@@ -258,7 +258,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
@@ -270,7 +270,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.depthSegments,
                     type = PropertyType.Int,

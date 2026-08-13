@@ -28,7 +28,7 @@ namespace Banter.VisualScripting
                 var _detectSpeech = flow.GetValue<bool>(detectSpeech);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnTTsStarted.Invoke(_detectSpeech);
+                    BSScene.Instance().events.OnTTsStarted.Invoke(_detectSpeech);
                 }, $"{nameof(StartSTT)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

@@ -3,7 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using SideQuest.FlexaBody;
 using UnityEngine;
-public enum BanterGrabType
+using Unity.VisualScripting;
+[RenamedFrom("Banter.SDK.BanterGrabType")]
+public enum BSGrabType
 {
     Point,
     Cylinder,
@@ -11,7 +13,8 @@ public enum BanterGrabType
     Soft
 }
 
-public enum BanterGrabHand
+[RenamedFrom("Banter.SDK.BanterGrabHand")]
+public enum BSGrabHand
 {
     Either,
     LeftOnly,
@@ -22,7 +25,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSGrabHandle : BanterComponentBase
+    public class BSGrabHandle : BSComponentBase
     {
         GrabHandle grabHandle;
 
@@ -30,13 +33,13 @@ namespace Banter.SDK
         bool worldObjectAdded;
 
         [Tooltip("Defines the type of grab interaction (Point, Cylinder, Ball, Soft).")]
-        [See(initial = "0")][SerializeField] internal BanterGrabType grabType;
+        [See(initial = "0")][SerializeField] internal BSGrabType grabType;
 
         [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
         [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
 
         [Tooltip("Restrict which hand can grab this handle. Not networked — editor/local only.")]
-        [SerializeField] internal BanterGrabHand grabHand = BanterGrabHand.Either;
+        [SerializeField] internal BSGrabHand grabHand = BSGrabHand.Either;
 
         internal override void DestroyStuff()
         {
@@ -93,17 +96,17 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public BanterGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
+        public BSGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
         public System.Single GrabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -146,7 +149,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -166,18 +169,18 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valgrabType = (BanterInt)values[i];
+                    var valgrabType = (BSInt)values[i];
                     if (valgrabType.n == PropertyName.grabType)
                     {
-                        grabType = (BanterGrabType)valgrabType.x;
+                        grabType = (BSGrabType)valgrabType.x;
                         changedProperties.Add(PropertyName.grabType);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valgrabRadius = (BanterFloat)values[i];
+                    var valgrabRadius = (BSFloat)values[i];
                     if (valgrabRadius.n == PropertyName.grabRadius)
                     {
                         grabRadius = valgrabRadius.x;
@@ -190,10 +193,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.grabType,
                     type = PropertyType.Int,
@@ -205,7 +208,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.grabRadius,
                     type = PropertyType.Float,

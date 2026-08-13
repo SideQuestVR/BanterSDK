@@ -24,7 +24,7 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnGetLeaderBoard.Invoke();
+                    BSScene.Instance().events.OnGetLeaderBoard.Invoke();
                 }, $"{nameof(GetCurrentLeaderboard)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

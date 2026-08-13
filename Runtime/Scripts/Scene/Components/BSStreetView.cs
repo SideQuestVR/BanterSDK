@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSStreetView : BanterComponentBase
+    public class BSStreetView : BSComponentBase
     {
         [Tooltip("The panoId of the Street View location to be displayed.")]
         [See(initial = "")][SerializeField] internal string panoId = "";
@@ -57,14 +57,14 @@ namespace Banter.SDK
         // BANTER COMPILED CODE 
         public System.String PanoId { get { return panoId; } set { panoId = value; UpdateCallback(new List<PropertyName> { PropertyName.panoId }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -107,7 +107,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -127,9 +127,9 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valpanoId = (BanterString)values[i];
+                    var valpanoId = (BSString)values[i];
                     if (valpanoId.n == PropertyName.panoId)
                     {
                         panoId = valpanoId.x;
@@ -142,10 +142,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.panoId,
                     type = PropertyType.String,

@@ -21,7 +21,8 @@ using LongBunnyLabs;
 using System.Runtime.InteropServices;
 using Unity.VisualScripting;
 
-public enum BanterBuilderBundleMode
+[RenamedFrom("Banter.SDKEditor.BanterBuilderBundleMode")]
+public enum BSBuilderBundleMode
 {
     None = 0,
     Scene = 1,
@@ -69,7 +70,7 @@ public class BuilderWindow : EditorWindow
     public static UnityEvent OnCompileAllComponents = new UnityEvent();
     private BuildTarget[] buildTargets = new BuildTarget[] { BuildTarget.Android, BuildTarget.StandaloneWindows };
     private bool[] buildTargetFlags = new bool[] { true, true };
-    BanterBuilderBundleMode mode = BanterBuilderBundleMode.None;
+    BSBuilderBundleMode mode = BSBuilderBundleMode.None;
     Label scenePathLabel;
     VisualElement scenePathParent;
     // Label mainTitle;
@@ -907,7 +908,7 @@ public class BuilderWindow : EditorWindow
         var resetScreen = rootVisualElement.Q<Button>("resetScreen");
         resetScreen.RegisterCallback<MouseUpEvent>((e) =>
         {
-            mode = BanterBuilderBundleMode.None;
+            mode = BSBuilderBundleMode.None;
             scenePath = "";
             kitObjectList.Clear();
             kitListView.Rebuild();
@@ -1175,13 +1176,13 @@ public class BuilderWindow : EditorWindow
         LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
         {
-            mode = BanterBuilderBundleMode.Scene;
+            mode = BSBuilderBundleMode.Scene;
         }
         else
         {
             if (kitObjectList.Count > 0)
             {
-                mode = BanterBuilderBundleMode.Kit;
+                mode = BSBuilderBundleMode.Kit;
             }
         }
 
@@ -1641,7 +1642,7 @@ public class BuilderWindow : EditorWindow
         if (isScene)
         {
             scenePathLabel.text = scenePath = sceneFile;
-            mode = BanterBuilderBundleMode.Scene;
+            mode = BSBuilderBundleMode.Scene;
         }
         else
         {
@@ -1661,7 +1662,7 @@ public class BuilderWindow : EditorWindow
             }
             if (kitObjectList.Count > 0)
             {
-                mode = BanterBuilderBundleMode.Kit;
+                mode = BSBuilderBundleMode.Kit;
             }
             numberOfItems.text = "Number of items: " + kitObjectList.Count;
         }
@@ -1773,7 +1774,7 @@ public class BuilderWindow : EditorWindow
         numberOfItems.style.display = DisplayStyle.None;
         dropAreaContainer.style.display = DisplayStyle.None;
         MainTitle.style.display = DisplayStyle.None;
-        if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count > 0)
+        if (mode == BSBuilderBundleMode.Kit && kitObjectList.Count > 0)
         {
             removeSelected.style.display = DisplayStyle.Flex;
             kitListView.style.display = DisplayStyle.Flex;
@@ -1790,7 +1791,7 @@ public class BuilderWindow : EditorWindow
             MainTitle.text = "Kit Build";
             MainTitle.style.display = DisplayStyle.Flex;
         }
-        else if (mode == BanterBuilderBundleMode.Scene)
+        else if (mode == BSBuilderBundleMode.Scene)
         {
             scenePathParent.style.display = DisplayStyle.Flex;
             scenePathLabel.text = "<color=\"white\">Scene:</color> " + scenePath;
@@ -1833,16 +1834,16 @@ public class BuilderWindow : EditorWindow
     private void ShowBuildConfirm()
     {
         buildConfirm.style.display = DisplayStyle.Flex;
-        confirmBuildMode.text = "<color=\"white\">Build Mode:</color> " + (mode == BanterBuilderBundleMode.Scene ? "Scene Bundle" : "Kit Bundle");
-        confirmKitBundle.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmBuildMode.text = "<color=\"white\">Build Mode:</color> " + (mode == BSBuilderBundleMode.Scene ? "Scene Bundle" : "Kit Bundle");
+        confirmKitBundle.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitBundle.text = "<color=\"white\">Kit Name:</color> " + kitName.value;
-        confirmKitBundleID.style.display = mode == BanterBuilderBundleMode.Kit && !string.IsNullOrEmpty(selectedKitId) ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmKitBundleID.style.display = mode == BSBuilderBundleMode.Kit && !string.IsNullOrEmpty(selectedKitId) ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitBundleID.text = "<color=\"white\">Kit Bundle ID:</color> " + selectedKitId;
-        confirmSceneFile.style.display = mode == BanterBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmSceneFile.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
         confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
-        confirmSpaceCode.style.display = mode == BanterBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmSpaceCode.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
         confirmSpaceCode.text = "<color=\"white\">Space:</color> https://" + spaceSlug.text + ".bant.ing";
-        confirmKitNumber.style.display = mode == BanterBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmKitNumber.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
    void AddRemoveFlexaHead()
@@ -2130,17 +2131,17 @@ public class BuilderWindow : EditorWindow
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
-        if (mode == BanterBuilderBundleMode.None)
+        if (mode == BSBuilderBundleMode.None)
         {
             status.AddStatus("Nothing to build...");
             return;
         }
-        if (mode == BanterBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
+        if (mode == BSBuilderBundleMode.Scene && string.IsNullOrWhiteSpace(scenePath))
         {
             status.AddStatus("No scene selected...");
             return;
         }
-        if (mode == BanterBuilderBundleMode.Kit && kitObjectList.Count < 1)
+        if (mode == BSBuilderBundleMode.Kit && kitObjectList.Count < 1)
         {
             status.AddStatus("No objects selected...");
             return;
@@ -2182,7 +2183,7 @@ public class BuilderWindow : EditorWindow
 
                     List<string> names = new List<string>();
 
-                    if (mode == BanterBuilderBundleMode.Scene)
+                    if (mode == BSBuilderBundleMode.Scene)
                     {
                         // Greenfield spaces build to per-platform encrypted Basis bundles, still named
                         // windows.banter / android.banter (SideQuest upload keys off the extension). The
@@ -2240,7 +2241,7 @@ public class BuilderWindow : EditorWindow
                     // The bar is upload-only now; BuildPipeline shows Unity's own
                     // popup while building. (This used to poke the bar from a
                     // background Task, which touched UI off the main thread.)
-                    if (mode == BanterBuilderBundleMode.Kit)
+                    if (mode == BSBuilderBundleMode.Kit)
                     {
                         status.AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
                         File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
@@ -2250,7 +2251,7 @@ public class BuilderWindow : EditorWindow
 
                 if (autoUpload.value && sq.User != null)
                 {
-                    if (mode == BanterBuilderBundleMode.Scene) {
+                    if (mode == BSBuilderBundleMode.Scene) {
                         if (string.IsNullOrEmpty(spaceSlug.text)) {
                             status.AddStatus("No space slug provided, please enter a slug to upload.");
                             return;

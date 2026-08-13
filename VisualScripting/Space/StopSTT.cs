@@ -28,7 +28,7 @@ namespace Banter.VisualScripting
                 var _returnId = flow.GetValue<string>(returnId);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnTTsStoped.Invoke(_returnId);
+                    BSScene.Instance().events.OnTTsStoped.Invoke(_returnId);
                 }, $"{nameof(StopSTT)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

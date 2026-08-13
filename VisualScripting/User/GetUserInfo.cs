@@ -24,7 +24,7 @@ namespace Banter.VisualScripting
             idOrName = ValueInput("id, uid, or name", string.Empty);
 
             info = ValueOutput("Name", (f) => {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => 
+                var data = BSScene.Instance().users.FirstOrDefault(user => 
                 {
                     var value = f.GetValue<string>(idOrName);
 
@@ -38,7 +38,7 @@ namespace Banter.VisualScripting
                 {
                     return null;
                 }
-                return new BanterUser()
+                return new BSUser()
                 {
                     name = data.name,
                     id = data.id,
@@ -64,12 +64,12 @@ namespace Banter.VisualScripting
         {
             info = ValueOutput("User Info", (f) =>
             {
-                var data = BanterScene.Instance().users.FirstOrDefault(user => user.isLocal);
+                var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
                 if (data == null)
                 {
                     return null;
                 }
-                return new BanterUser()
+                return new BSUser()
                 {
                     name = data.name,
                     id = data.id,

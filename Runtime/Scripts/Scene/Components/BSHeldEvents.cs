@@ -11,7 +11,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSHeldEvents : BanterComponentBase
+    public class BSHeldEvents : BSComponentBase
     {
 
         [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
@@ -182,14 +182,14 @@ namespace Banter.SDK
         public System.Boolean BlockLeftTrigger { get { return blockLeftTrigger; } set { blockLeftTrigger = value; UpdateCallback(new List<PropertyName> { PropertyName.blockLeftTrigger }); } }
         public System.Boolean BlockRightTrigger { get { return blockRightTrigger; } set { blockRightTrigger = value; UpdateCallback(new List<PropertyName> { PropertyName.blockRightTrigger }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -232,7 +232,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -252,117 +252,117 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valsensitivity = (BanterFloat)values[i];
+                    var valsensitivity = (BSFloat)values[i];
                     if (valsensitivity.n == PropertyName.sensitivity)
                     {
                         sensitivity = valsensitivity.x;
                         changedProperties.Add(PropertyName.sensitivity);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valfireRate = (BanterFloat)values[i];
+                    var valfireRate = (BSFloat)values[i];
                     if (valfireRate.n == PropertyName.fireRate)
                     {
                         fireRate = valfireRate.x;
                         changedProperties.Add(PropertyName.fireRate);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valauto = (BanterBool)values[i];
+                    var valauto = (BSBool)values[i];
                     if (valauto.n == PropertyName.auto)
                     {
                         auto = valauto.x;
                         changedProperties.Add(PropertyName.auto);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockLeftPrimary = (BanterBool)values[i];
+                    var valblockLeftPrimary = (BSBool)values[i];
                     if (valblockLeftPrimary.n == PropertyName.blockLeftPrimary)
                     {
                         blockLeftPrimary = valblockLeftPrimary.x;
                         changedProperties.Add(PropertyName.blockLeftPrimary);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockLeftSecondary = (BanterBool)values[i];
+                    var valblockLeftSecondary = (BSBool)values[i];
                     if (valblockLeftSecondary.n == PropertyName.blockLeftSecondary)
                     {
                         blockLeftSecondary = valblockLeftSecondary.x;
                         changedProperties.Add(PropertyName.blockLeftSecondary);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockRightPrimary = (BanterBool)values[i];
+                    var valblockRightPrimary = (BSBool)values[i];
                     if (valblockRightPrimary.n == PropertyName.blockRightPrimary)
                     {
                         blockRightPrimary = valblockRightPrimary.x;
                         changedProperties.Add(PropertyName.blockRightPrimary);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockRightSecondary = (BanterBool)values[i];
+                    var valblockRightSecondary = (BSBool)values[i];
                     if (valblockRightSecondary.n == PropertyName.blockRightSecondary)
                     {
                         blockRightSecondary = valblockRightSecondary.x;
                         changedProperties.Add(PropertyName.blockRightSecondary);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockLeftThumbstick = (BanterBool)values[i];
+                    var valblockLeftThumbstick = (BSBool)values[i];
                     if (valblockLeftThumbstick.n == PropertyName.blockLeftThumbstick)
                     {
                         blockLeftThumbstick = valblockLeftThumbstick.x;
                         changedProperties.Add(PropertyName.blockLeftThumbstick);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockLeftThumbstickClick = (BanterBool)values[i];
+                    var valblockLeftThumbstickClick = (BSBool)values[i];
                     if (valblockLeftThumbstickClick.n == PropertyName.blockLeftThumbstickClick)
                     {
                         blockLeftThumbstickClick = valblockLeftThumbstickClick.x;
                         changedProperties.Add(PropertyName.blockLeftThumbstickClick);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockRightThumbstick = (BanterBool)values[i];
+                    var valblockRightThumbstick = (BSBool)values[i];
                     if (valblockRightThumbstick.n == PropertyName.blockRightThumbstick)
                     {
                         blockRightThumbstick = valblockRightThumbstick.x;
                         changedProperties.Add(PropertyName.blockRightThumbstick);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockRightThumbstickClick = (BanterBool)values[i];
+                    var valblockRightThumbstickClick = (BSBool)values[i];
                     if (valblockRightThumbstickClick.n == PropertyName.blockRightThumbstickClick)
                     {
                         blockRightThumbstickClick = valblockRightThumbstickClick.x;
                         changedProperties.Add(PropertyName.blockRightThumbstickClick);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockLeftTrigger = (BanterBool)values[i];
+                    var valblockLeftTrigger = (BSBool)values[i];
                     if (valblockLeftTrigger.n == PropertyName.blockLeftTrigger)
                     {
                         blockLeftTrigger = valblockLeftTrigger.x;
                         changedProperties.Add(PropertyName.blockLeftTrigger);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valblockRightTrigger = (BanterBool)values[i];
+                    var valblockRightTrigger = (BSBool)values[i];
                     if (valblockRightTrigger.n == PropertyName.blockRightTrigger)
                     {
                         blockRightTrigger = valblockRightTrigger.x;
@@ -375,10 +375,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.sensitivity,
                     type = PropertyType.Float,
@@ -390,7 +390,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.fireRate,
                     type = PropertyType.Float,
@@ -402,7 +402,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.auto,
                     type = PropertyType.Bool,
@@ -414,7 +414,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockLeftPrimary,
                     type = PropertyType.Bool,
@@ -426,7 +426,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockLeftSecondary,
                     type = PropertyType.Bool,
@@ -438,7 +438,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockRightPrimary,
                     type = PropertyType.Bool,
@@ -450,7 +450,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockRightSecondary,
                     type = PropertyType.Bool,
@@ -462,7 +462,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockLeftThumbstick,
                     type = PropertyType.Bool,
@@ -474,7 +474,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockLeftThumbstickClick,
                     type = PropertyType.Bool,
@@ -486,7 +486,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockRightThumbstick,
                     type = PropertyType.Bool,
@@ -498,7 +498,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockRightThumbstickClick,
                     type = PropertyType.Bool,
@@ -510,7 +510,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockLeftTrigger,
                     type = PropertyType.Bool,
@@ -522,7 +522,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.blockRightTrigger,
                     type = PropertyType.Bool,

@@ -5,10 +5,10 @@ using Banter.SDK;
 
 public class BatchUpdater
 {
-    BanterPipe _pipe;
+    BSPipe _pipe;
     List<string> _updates = new List<string>();
     Timer _timer;
-    public BatchUpdater(BanterPipe pipe)
+    public BatchUpdater(BSPipe pipe)
     {
         _pipe = pipe;
         _timer = SetInterval(() => Tick(), 11);

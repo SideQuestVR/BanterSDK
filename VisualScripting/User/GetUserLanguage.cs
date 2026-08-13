@@ -19,7 +19,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             info = ValueOutput("Language", (f) => {
-                return BanterScene.Instance().events.GetUserLanguage();
+                return BSScene.Instance().events.GetUserLanguage();
             });
         }
     }

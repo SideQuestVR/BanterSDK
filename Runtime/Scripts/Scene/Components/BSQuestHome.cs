@@ -31,7 +31,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BSObjectId))]
-    public class BSQuestHome : BanterComponentBase
+    public class BSQuestHome : BSComponentBase
     {
         [Tooltip("The URL of the Quest Home APK file to be loaded.")]
         [See(initial = "")][SerializeField] internal string url;
@@ -859,14 +859,14 @@ namespace Banter.SDK
         public System.Boolean AddColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
         public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -909,7 +909,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -929,27 +929,27 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valurl = (BanterString)values[i];
+                    var valurl = (BSString)values[i];
                     if (valurl.n == PropertyName.url)
                     {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valaddColliders = (BanterBool)values[i];
+                    var valaddColliders = (BSBool)values[i];
                     if (valaddColliders.n == PropertyName.addColliders)
                     {
                         addColliders = valaddColliders.x;
                         changedProperties.Add(PropertyName.addColliders);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valclimbable = (BanterBool)values[i];
+                    var valclimbable = (BSBool)values[i];
                     if (valclimbable.n == PropertyName.climbable)
                     {
                         climbable = valclimbable.x;
@@ -962,10 +962,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.url,
                     type = PropertyType.String,
@@ -977,7 +977,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.addColliders,
                     type = PropertyType.Bool,
@@ -989,7 +989,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.climbable,
                     type = PropertyType.Bool,

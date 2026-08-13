@@ -16,7 +16,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             isFavourited = ValueOutput<bool>("isFavourited", flow => {
-                return BanterScene.Instance().data.IsSpaceFavourited();
+                return BSScene.Instance().data.IsSpaceFavourited();
             });
         }
     }

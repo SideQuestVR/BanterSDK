@@ -1,6 +1,8 @@
+using Unity.VisualScripting;
 namespace Banter.SDK
 {
-    public class BanterUser
+    [RenamedFrom("Banter.SDK.BanterUser")]
+    public class BSUser
     {
         public string name;
         public string id;

@@ -1,9 +1,11 @@
 using UnityEngine;
+using Unity.VisualScripting;
 namespace Banter.SDK
 {
-    public class BanterComponentFromType
+    [RenamedFrom("Banter.SDK.BanterComponentFromType")]
+    public class BSComponentFromType
     {
-        public static BanterComponentBase CreateComponent(GameObject gameObject, ComponentType componentType)
+        public static BSComponentBase CreateComponent(GameObject gameObject, ComponentType componentType)
         {
             switch (componentType)
             {

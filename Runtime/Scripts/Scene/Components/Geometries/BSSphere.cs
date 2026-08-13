@@ -8,7 +8,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSSphere : BanterComponentBase
+    public class BSSphere : BSComponentBase
     {
         [Tooltip("Radius of the sphere")]
         [See(initial = "1")][SerializeField] internal float radius;
@@ -81,14 +81,14 @@ namespace Banter.SDK
         public System.Single ThetaStart { get { return thetaStart; } set { thetaStart = value; UpdateCallback(new List<PropertyName> { PropertyName.thetaStart }); } }
         public System.Single ThetaLength { get { return thetaLength; } set { thetaLength = value; UpdateCallback(new List<PropertyName> { PropertyName.thetaLength }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -131,7 +131,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -151,63 +151,63 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valradius = (BanterFloat)values[i];
+                    var valradius = (BSFloat)values[i];
                     if (valradius.n == PropertyName.radius)
                     {
                         radius = valradius.x;
                         changedProperties.Add(PropertyName.radius);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valwidthSegments = (BanterInt)values[i];
+                    var valwidthSegments = (BSInt)values[i];
                     if (valwidthSegments.n == PropertyName.widthSegments)
                     {
                         widthSegments = valwidthSegments.x;
                         changedProperties.Add(PropertyName.widthSegments);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valheightSegments = (BanterInt)values[i];
+                    var valheightSegments = (BSInt)values[i];
                     if (valheightSegments.n == PropertyName.heightSegments)
                     {
                         heightSegments = valheightSegments.x;
                         changedProperties.Add(PropertyName.heightSegments);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valphiStart = (BanterFloat)values[i];
+                    var valphiStart = (BSFloat)values[i];
                     if (valphiStart.n == PropertyName.phiStart)
                     {
                         phiStart = valphiStart.x;
                         changedProperties.Add(PropertyName.phiStart);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valphiLength = (BanterFloat)values[i];
+                    var valphiLength = (BSFloat)values[i];
                     if (valphiLength.n == PropertyName.phiLength)
                     {
                         phiLength = valphiLength.x;
                         changedProperties.Add(PropertyName.phiLength);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valthetaStart = (BanterFloat)values[i];
+                    var valthetaStart = (BSFloat)values[i];
                     if (valthetaStart.n == PropertyName.thetaStart)
                     {
                         thetaStart = valthetaStart.x;
                         changedProperties.Add(PropertyName.thetaStart);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valthetaLength = (BanterFloat)values[i];
+                    var valthetaLength = (BSFloat)values[i];
                     if (valthetaLength.n == PropertyName.thetaLength)
                     {
                         thetaLength = valthetaLength.x;
@@ -220,10 +220,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.radius,
                     type = PropertyType.Float,
@@ -235,7 +235,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.widthSegments,
                     type = PropertyType.Int,
@@ -247,7 +247,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.heightSegments,
                     type = PropertyType.Int,
@@ -259,7 +259,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.phiStart,
                     type = PropertyType.Float,
@@ -271,7 +271,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.phiLength,
                     type = PropertyType.Float,
@@ -283,7 +283,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.thetaStart,
                     type = PropertyType.Float,
@@ -295,7 +295,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.thetaLength,
                     type = PropertyType.Float,

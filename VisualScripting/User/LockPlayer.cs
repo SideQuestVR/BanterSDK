@@ -19,7 +19,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                BanterScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(true);
+                BSScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(true);
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
@@ -41,7 +41,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                BanterScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(false);
+                BSScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(false);
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");

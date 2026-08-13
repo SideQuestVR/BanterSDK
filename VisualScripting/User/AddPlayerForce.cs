@@ -28,7 +28,7 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var _force = flow.GetValue<Vector3>(force);
                 var _forceMode = flow.GetValue<ForceMode>(forceMode);
-                BanterScene.Instance().events.OnAddPlayerForce?.Invoke(_force, _forceMode);
+                BSScene.Instance().events.OnAddPlayerForce?.Invoke(_force, _forceMode);
 
                 return outputTrigger;
             });

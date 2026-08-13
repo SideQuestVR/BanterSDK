@@ -16,7 +16,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             spaceUrl = ValueOutput<string>("spaceUrl", flow => {
-                return BanterScene.Instance().CurrentUrl;
+                return BSScene.Instance().CurrentUrl;
             });
         }
     }

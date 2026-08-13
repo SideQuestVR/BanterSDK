@@ -8,7 +8,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSMobius : BanterComponentBase
+    public class BSMobius : BSComponentBase
     {
         [Tooltip("The number of stacks to divide the shape into.")]
         [See(initial = "5")][SerializeField] internal int stacks = 5;
@@ -62,14 +62,14 @@ namespace Banter.SDK
         public System.Int32 Stacks { get { return stacks; } set { stacks = value; UpdateCallback(new List<PropertyName> { PropertyName.stacks }); } }
         public System.Int32 Slices { get { return slices; } set { slices = value; UpdateCallback(new List<PropertyName> { PropertyName.slices }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -112,7 +112,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -132,18 +132,18 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valstacks = (BanterInt)values[i];
+                    var valstacks = (BSInt)values[i];
                     if (valstacks.n == PropertyName.stacks)
                     {
                         stacks = valstacks.x;
                         changedProperties.Add(PropertyName.stacks);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valslices = (BanterInt)values[i];
+                    var valslices = (BSInt)values[i];
                     if (valslices.n == PropertyName.slices)
                     {
                         slices = valslices.x;
@@ -156,10 +156,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.stacks,
                     type = PropertyType.Int,
@@ -171,7 +171,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.slices,
                     type = PropertyType.Int,

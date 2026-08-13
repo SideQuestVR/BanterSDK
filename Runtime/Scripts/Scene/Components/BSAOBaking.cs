@@ -54,7 +54,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSAOBaking : BanterComponentBase
+    public class BSAOBaking : BSComponentBase
     {
         [Tooltip("Subdivision level: 0=none, 1=4x, 2=16x, 3=64x triangles")]
         [See(initial = "1")][SerializeField] internal int subdivisionLevel = 1;
@@ -194,14 +194,14 @@ namespace Banter.SDK
         public System.Boolean IsProcessing { get { return isProcessing; } set { isProcessing = value; UpdateCallback(new List<PropertyName> { PropertyName.isProcessing }); } }
         public System.Single Progress { get { return progress; } set { progress = value; UpdateCallback(new List<PropertyName> { PropertyName.progress }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -244,7 +244,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -295,81 +295,81 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valsubdivisionLevel = (BanterInt)values[i];
+                    var valsubdivisionLevel = (BSInt)values[i];
                     if (valsubdivisionLevel.n == PropertyName.subdivisionLevel)
                     {
                         subdivisionLevel = valsubdivisionLevel.x;
                         changedProperties.Add(PropertyName.subdivisionLevel);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valsampleCount = (BanterInt)values[i];
+                    var valsampleCount = (BSInt)values[i];
                     if (valsampleCount.n == PropertyName.sampleCount)
                     {
                         sampleCount = valsampleCount.x;
                         changedProperties.Add(PropertyName.sampleCount);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valaoIntensity = (BanterFloat)values[i];
+                    var valaoIntensity = (BSFloat)values[i];
                     if (valaoIntensity.n == PropertyName.aoIntensity)
                     {
                         aoIntensity = valaoIntensity.x;
                         changedProperties.Add(PropertyName.aoIntensity);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valaoBias = (BanterFloat)values[i];
+                    var valaoBias = (BSFloat)values[i];
                     if (valaoBias.n == PropertyName.aoBias)
                     {
                         aoBias = valaoBias.x;
                         changedProperties.Add(PropertyName.aoBias);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valaoRadius = (BanterFloat)values[i];
+                    var valaoRadius = (BSFloat)values[i];
                     if (valaoRadius.n == PropertyName.aoRadius)
                     {
                         aoRadius = valaoRadius.x;
                         changedProperties.Add(PropertyName.aoRadius);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valhideSourceObjects = (BanterBool)values[i];
+                    var valhideSourceObjects = (BSBool)values[i];
                     if (valhideSourceObjects.n == PropertyName.hideSourceObjects)
                     {
                         hideSourceObjects = valhideSourceObjects.x;
                         changedProperties.Add(PropertyName.hideSourceObjects);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valtargetShaderName = (BanterString)values[i];
+                    var valtargetShaderName = (BSString)values[i];
                     if (valtargetShaderName.n == PropertyName.targetShaderName)
                     {
                         targetShaderName = valtargetShaderName.x;
                         changedProperties.Add(PropertyName.targetShaderName);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisProcessing = (BanterBool)values[i];
+                    var valisProcessing = (BSBool)values[i];
                     if (valisProcessing.n == PropertyName.isProcessing)
                     {
                         isProcessing = valisProcessing.x;
                         changedProperties.Add(PropertyName.isProcessing);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valprogress = (BanterFloat)values[i];
+                    var valprogress = (BSFloat)values[i];
                     if (valprogress.n == PropertyName.progress)
                     {
                         progress = valprogress.x;
@@ -382,10 +382,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.subdivisionLevel,
                     type = PropertyType.Int,
@@ -397,7 +397,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.sampleCount,
                     type = PropertyType.Int,
@@ -409,7 +409,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.aoIntensity,
                     type = PropertyType.Float,
@@ -421,7 +421,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.aoBias,
                     type = PropertyType.Float,
@@ -433,7 +433,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.aoRadius,
                     type = PropertyType.Float,
@@ -445,7 +445,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.hideSourceObjects,
                     type = PropertyType.Bool,
@@ -457,7 +457,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.targetShaderName,
                     type = PropertyType.String,
@@ -469,7 +469,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isProcessing,
                     type = PropertyType.Bool,
@@ -481,7 +481,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.progress,
                     type = PropertyType.Float,

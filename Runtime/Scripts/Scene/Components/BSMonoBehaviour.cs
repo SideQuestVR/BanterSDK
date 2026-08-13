@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public enum BanterMonoBehaviourLifeCycle
+    [RenamedFrom("Banter.SDK.BanterMonoBehaviourLifeCycle")]
+    public enum BSMonoBehaviourLifeCycle
     {
         Start,
         Update,
@@ -15,7 +17,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSMonoBehaviour : BanterComponentBase
+    public class BSMonoBehaviour : BSComponentBase
     {
         [See(initial = "20")][SerializeField] internal int fps = 20;
 
@@ -47,14 +49,14 @@ namespace Banter.SDK
         public System.String UpdateFunction { get { return updateFunction; } set { updateFunction = value; UpdateCallback(new List<PropertyName> { PropertyName.updateFunction }); } }
         public System.String DestroyFunction { get { return destroyFunction; } set { destroyFunction = value; UpdateCallback(new List<PropertyName> { PropertyName.destroyFunction }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -97,7 +99,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -117,36 +119,36 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valfps = (BanterInt)values[i];
+                    var valfps = (BSInt)values[i];
                     if (valfps.n == PropertyName.fps)
                     {
                         fps = valfps.x;
                         changedProperties.Add(PropertyName.fps);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valstartFunction = (BanterString)values[i];
+                    var valstartFunction = (BSString)values[i];
                     if (valstartFunction.n == PropertyName.startFunction)
                     {
                         startFunction = valstartFunction.x;
                         changedProperties.Add(PropertyName.startFunction);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valupdateFunction = (BanterString)values[i];
+                    var valupdateFunction = (BSString)values[i];
                     if (valupdateFunction.n == PropertyName.updateFunction)
                     {
                         updateFunction = valupdateFunction.x;
                         changedProperties.Add(PropertyName.updateFunction);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valdestroyFunction = (BanterString)values[i];
+                    var valdestroyFunction = (BSString)values[i];
                     if (valdestroyFunction.n == PropertyName.destroyFunction)
                     {
                         destroyFunction = valdestroyFunction.x;
@@ -159,10 +161,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.fps,
                     type = PropertyType.Int,
@@ -174,7 +176,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.startFunction,
                     type = PropertyType.String,
@@ -186,7 +188,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.updateFunction,
                     type = PropertyType.String,
@@ -198,7 +200,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.destroyFunction,
                     type = PropertyType.String,

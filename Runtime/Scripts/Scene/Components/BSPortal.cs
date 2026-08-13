@@ -7,7 +7,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSPortal : BanterComponentBase
+    public class BSPortal : BSComponentBase
     {
 
         public static string[] defaultPortalLandscapes = new string[]{
@@ -32,10 +32,10 @@ namespace Banter.SDK
 
         MaterialPropertyBlock block;
         GameObject portal;
-        BanterSceneEvents sceneEvents;
+        BSSceneEvents sceneEvents;
         internal override void StartStuff()
         {
-            sceneEvents = BanterScene.Instance().events;
+            sceneEvents = BSScene.Instance().events;
             block = new MaterialPropertyBlock();
             _ = SetupPortal();
         }
@@ -118,14 +118,14 @@ namespace Banter.SDK
         public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
         public System.String Instance { get { return instance; } set { instance = value; UpdateCallback(new List<PropertyName> { PropertyName.instance }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -168,7 +168,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -188,18 +188,18 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valurl = (BanterString)values[i];
+                    var valurl = (BSString)values[i];
                     if (valurl.n == PropertyName.url)
                     {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valinstance = (BanterString)values[i];
+                    var valinstance = (BSString)values[i];
                     if (valinstance.n == PropertyName.instance)
                     {
                         instance = valinstance.x;
@@ -212,10 +212,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.url,
                     type = PropertyType.String,
@@ -227,7 +227,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.instance,
                     type = PropertyType.String,

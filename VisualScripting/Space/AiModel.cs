@@ -36,7 +36,7 @@ namespace Banter.VisualScripting
                 var _textureSize = flow.GetValue<int>(textureSize);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnAiModel.Invoke(_base64Image, _simplify, _textureSize);
+                    BSScene.Instance().events.OnAiModel.Invoke(_base64Image, _simplify, _textureSize);
                 }, $"{nameof(AiModel)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

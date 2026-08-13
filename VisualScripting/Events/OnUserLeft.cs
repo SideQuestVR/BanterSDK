@@ -9,7 +9,7 @@ namespace Banter.VisualScripting
     [UnitShortTitle("User Left")]
     [UnitCategory("Events\\Banter\\User")]
     [TypeIcon(typeof(BSObjectId))]
-    public class OnUserLeft : EventUnit<BanterUser>
+    public class OnUserLeft : EventUnit<BSUser>
     {
         [DoNotSerialize]
         public ValueOutput info;
@@ -25,16 +25,16 @@ namespace Banter.VisualScripting
         {
             base.Definition();
 
-            info = ValueOutput<BanterUser>("User Info");
+            info = ValueOutput<BSUser>("User Info");
         }
 
-        protected override bool ShouldTrigger(Flow flow, BanterUser data)
+        protected override bool ShouldTrigger(Flow flow, BSUser data)
         {
             return true;
         }
 
         // Setting the value on our port.
-        protected override void AssignArguments(Flow flow, BanterUser data)
+        protected override void AssignArguments(Flow flow, BSUser data)
         {
             // name
             flow.SetValue(info, data);

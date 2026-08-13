@@ -12,7 +12,7 @@ namespace Banter.SDK
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
-    public class BSAudioSource : BanterComponentBase
+    public class BSAudioSource : BSComponentBase
     {
         [Tooltip("The volume of the audio source (0.0 to 1.0).")]
         [See(initial = "1")][SerializeField] internal float volume = 1.0f;
@@ -153,14 +153,14 @@ namespace Banter.SDK
         public System.Boolean PlayOnAwake { get { return playOnAwake; } set { playOnAwake = value; UpdateCallback(new List<PropertyName> { PropertyName.playOnAwake }); } }
         public System.Single SpatialBlend { get { return spatialBlend; } set { spatialBlend = value; UpdateCallback(new List<PropertyName> { PropertyName.spatialBlend }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -203,7 +203,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -255,81 +255,81 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valvolume = (BanterFloat)values[i];
+                    var valvolume = (BSFloat)values[i];
                     if (valvolume.n == PropertyName.volume)
                     {
                         volume = valvolume.x;
                         changedProperties.Add(PropertyName.volume);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valpitch = (BanterFloat)values[i];
+                    var valpitch = (BSFloat)values[i];
                     if (valpitch.n == PropertyName.pitch)
                     {
                         pitch = valpitch.x;
                         changedProperties.Add(PropertyName.pitch);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valmute = (BanterBool)values[i];
+                    var valmute = (BSBool)values[i];
                     if (valmute.n == PropertyName.mute)
                     {
                         mute = valmute.x;
                         changedProperties.Add(PropertyName.mute);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valloop = (BanterBool)values[i];
+                    var valloop = (BSBool)values[i];
                     if (valloop.n == PropertyName.loop)
                     {
                         loop = valloop.x;
                         changedProperties.Add(PropertyName.loop);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valbypassEffects = (BanterBool)values[i];
+                    var valbypassEffects = (BSBool)values[i];
                     if (valbypassEffects.n == PropertyName.bypassEffects)
                     {
                         bypassEffects = valbypassEffects.x;
                         changedProperties.Add(PropertyName.bypassEffects);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valbypassListenerEffects = (BanterBool)values[i];
+                    var valbypassListenerEffects = (BSBool)values[i];
                     if (valbypassListenerEffects.n == PropertyName.bypassListenerEffects)
                     {
                         bypassListenerEffects = valbypassListenerEffects.x;
                         changedProperties.Add(PropertyName.bypassListenerEffects);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valbypassReverbZones = (BanterBool)values[i];
+                    var valbypassReverbZones = (BSBool)values[i];
                     if (valbypassReverbZones.n == PropertyName.bypassReverbZones)
                     {
                         bypassReverbZones = valbypassReverbZones.x;
                         changedProperties.Add(PropertyName.bypassReverbZones);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valplayOnAwake = (BanterBool)values[i];
+                    var valplayOnAwake = (BSBool)values[i];
                     if (valplayOnAwake.n == PropertyName.playOnAwake)
                     {
                         playOnAwake = valplayOnAwake.x;
                         changedProperties.Add(PropertyName.playOnAwake);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valspatialBlend = (BanterFloat)values[i];
+                    var valspatialBlend = (BSFloat)values[i];
                     if (valspatialBlend.n == PropertyName.spatialBlend)
                     {
                         spatialBlend = valspatialBlend.x;
@@ -342,10 +342,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.volume,
                     type = PropertyType.Float,
@@ -357,7 +357,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.pitch,
                     type = PropertyType.Float,
@@ -369,7 +369,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.mute,
                     type = PropertyType.Bool,
@@ -381,7 +381,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.loop,
                     type = PropertyType.Bool,
@@ -393,7 +393,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.bypassEffects,
                     type = PropertyType.Bool,
@@ -405,7 +405,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.bypassListenerEffects,
                     type = PropertyType.Bool,
@@ -417,7 +417,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.bypassReverbZones,
                     type = PropertyType.Bool,
@@ -429,7 +429,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.playOnAwake,
                     type = PropertyType.Bool,
@@ -441,7 +441,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.spatialBlend,
                     type = PropertyType.Float,

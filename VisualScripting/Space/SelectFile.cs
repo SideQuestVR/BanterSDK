@@ -28,7 +28,7 @@ namespace Banter.VisualScripting
                 var _type = flow.GetValue<SelectFileType>(type);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnSelectFile.Invoke(_type);
+                    BSScene.Instance().events.OnSelectFile.Invoke(_type);
                 }, $"{nameof(SelectFile)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

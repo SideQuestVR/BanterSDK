@@ -2,9 +2,11 @@ using System;
 using UnityEngine;
 using Banter.SDK;
 using PropertyName = Banter.SDK.PropertyName;
+using Unity.VisualScripting;
 
 [Serializable]
-public struct BanterVector5
+[RenamedFrom("Banter.SDK.BanterVector5")]
+public struct BSVector5
 {
     public float x;
     public float y;
@@ -33,11 +35,11 @@ public struct BanterVector5
     }
 
 
-    public static explicit operator BanterVector5(JointLimits v)
+    public static explicit operator BSVector5(JointLimits v)
     {
-        return new BanterVector5() { x = v.bounciness, y = v.bounceMinVelocity, z = v.contactDistance, w = v.min, v = v.max };
+        return new BSVector5() { x = v.bounciness, y = v.bounceMinVelocity, z = v.contactDistance, w = v.min, v = v.max };
     }
-    public static explicit operator JointLimits(BanterVector5 v)
+    public static explicit operator JointLimits(BSVector5 v)
     {
         return new JointLimits() { bounciness = v.x, bounceMinVelocity = v.y, contactDistance = v.z, min = v.w, max = v.v };
     }
@@ -62,7 +64,8 @@ public class Vector5
 }
 
 [Serializable]
-public struct BanterVector4
+[RenamedFrom("Banter.SDK.BanterVector4")]
+public struct BSVector4
 {
     public float x;
     public float y;
@@ -90,28 +93,28 @@ public struct BanterVector4
     }
 
 
-    public static explicit operator BanterVector4(Quaternion v)
+    public static explicit operator BSVector4(Quaternion v)
     {
-        return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
+        return new BSVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
-    public static explicit operator Quaternion(BanterVector4 v)
+    public static explicit operator Quaternion(BSVector4 v)
     {
         return new Quaternion() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
 
-    public static explicit operator BanterVector4(Vector4 v)
+    public static explicit operator BSVector4(Vector4 v)
     {
-        return new BanterVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
+        return new BSVector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
-    public static explicit operator Vector4(BanterVector4 v)
+    public static explicit operator Vector4(BSVector4 v)
     {
         return new Vector4() { x = v.x, y = v.y, z = v.z, w = v.w };
     }
-    public static explicit operator BanterVector4(JointDrive v)
+    public static explicit operator BSVector4(JointDrive v)
     {
-        return new BanterVector4() { x = v.positionSpring, y = v.positionDamper, z = v.maximumForce, w = v.useAcceleration ? 1 : 0 };
+        return new BSVector4() { x = v.positionSpring, y = v.positionDamper, z = v.maximumForce, w = v.useAcceleration ? 1 : 0 };
     }
-    public static explicit operator JointDrive(BanterVector4 v)
+    public static explicit operator JointDrive(BSVector4 v)
     {
         return new JointDrive() { positionSpring = v.x, positionDamper = v.y, maximumForce = v.z, useAcceleration = !(v.w == 0) };
     }
@@ -119,7 +122,8 @@ public struct BanterVector4
 
 
 [Serializable]
-public struct BanterVector2
+[RenamedFrom("Banter.SDK.BanterVector2")]
+public struct BSVector2
 {
     public float x;
     public float y;
@@ -146,18 +150,19 @@ public struct BanterVector2
         y = NumberFormat.Parse(parts[3]);
     }
 
-    public static explicit operator BanterVector2(Vector2 v)
+    public static explicit operator BSVector2(Vector2 v)
     {
-        return new BanterVector2() { x = v.x, y = v.y };
+        return new BSVector2() { x = v.x, y = v.y };
     }
-    public static explicit operator Vector2(BanterVector2 v)
+    public static explicit operator Vector2(BSVector2 v)
     {
         return new Vector2() { x = v.x, y = v.y };
     }
 }
 
 [Serializable]
-public struct BanterVector3
+[RenamedFrom("Banter.SDK.BanterVector3")]
+public struct BSVector3
 {
     public float x;
     public float y;
@@ -186,26 +191,27 @@ public struct BanterVector3
         z = NumberFormat.Parse(parts[4]);
     }
 
-    public static explicit operator BanterVector3(Vector3 v)
+    public static explicit operator BSVector3(Vector3 v)
     {
-        return new BanterVector3() { x = v.x, y = v.y, z = v.z };
+        return new BSVector3() { x = v.x, y = v.y, z = v.z };
     }
-    public static explicit operator BanterVector3(SoftJointLimit v)
+    public static explicit operator BSVector3(SoftJointLimit v)
     {
-        return new BanterVector3() { x = v.limit, y = v.bounciness, z = v.contactDistance };
+        return new BSVector3() { x = v.limit, y = v.bounciness, z = v.contactDistance };
     }
-    public static explicit operator SoftJointLimit(BanterVector3 v)
+    public static explicit operator SoftJointLimit(BSVector3 v)
     {
         return new SoftJointLimit() { limit = v.x, bounciness = v.y, contactDistance = v.z };
     }
-    public static explicit operator Vector3(BanterVector3 v)
+    public static explicit operator Vector3(BSVector3 v)
     {
         return new Vector3() { x = v.x, y = v.y, z = v.z };
     }
 }
 
 [Serializable]
-public struct BanterFloat
+[RenamedFrom("Banter.SDK.BanterFloat")]
+public struct BSFloat
 {
     public float x;
     public PropertyName n;
@@ -230,12 +236,12 @@ public struct BanterFloat
         x = NumberFormat.Parse(parts[1]);
     }
 
-    public static explicit operator BanterFloat(float v)
+    public static explicit operator BSFloat(float v)
     {
-        return new BanterFloat() { x = v };
+        return new BSFloat() { x = v };
     }
 
-    public static explicit operator float(BanterFloat v)
+    public static explicit operator float(BSFloat v)
     {
         return v.x;
     }
@@ -244,7 +250,8 @@ public struct BanterFloat
 }
 
 [Serializable]
-public struct BanterInt
+[RenamedFrom("Banter.SDK.BanterInt")]
+public struct BSInt
 {
     public int x;
     public PropertyName n;
@@ -269,18 +276,19 @@ public struct BanterInt
         x = int.Parse(parts[1]);
     }
 
-    public static explicit operator BanterInt(int v)
+    public static explicit operator BSInt(int v)
     {
-        return new BanterInt() { x = v };
+        return new BSInt() { x = v };
     }
-    public static explicit operator int(BanterInt v)
+    public static explicit operator int(BSInt v)
     {
         return v.x;
     }
 }
 
 [Serializable]
-public struct BanterBool
+[RenamedFrom("Banter.SDK.BanterBool")]
+public struct BSBool
 {
     public bool x;
     public PropertyName n;
@@ -304,17 +312,18 @@ public struct BanterBool
         x = int.Parse(parts[1]) == 1;
     }
 
-    public static explicit operator BanterBool(bool v)
+    public static explicit operator BSBool(bool v)
     {
-        return new BanterBool() { x = v };
+        return new BSBool() { x = v };
     }
-    public static explicit operator bool(BanterBool v)
+    public static explicit operator bool(BSBool v)
     {
         return v.x;
     }
 }
 [Serializable]
-public struct BanterString
+[RenamedFrom("Banter.SDK.BanterString")]
+public struct BSString
 {
     public string x;
     public PropertyName n;
@@ -339,54 +348,55 @@ public struct BanterString
         x = parts[1];
     }
 
-    public static explicit operator BanterString(string v)
+    public static explicit operator BSString(string v)
     {
-        return new BanterString() { x = v };
+        return new BSString() { x = v };
     }
-    public static explicit operator string(BanterString v)
+    public static explicit operator string(BSString v)
     {
         return v.x;
     }
 }
 
 [Serializable]
-public struct BanterStruct
+[RenamedFrom("Banter.SDK.BanterStruct")]
+public struct BSStruct
 {
     public PropertyName n;
 
-    public static implicit operator BanterStruct(BanterString v)
+    public static implicit operator BSStruct(BSString v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
-    public static implicit operator BanterStruct(BanterBool v)
+    public static implicit operator BSStruct(BSBool v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
-    public static implicit operator BanterStruct(BanterInt v)
+    public static implicit operator BSStruct(BSInt v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
-    public static implicit operator BanterStruct(BanterFloat v)
+    public static implicit operator BSStruct(BSFloat v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
-    public static implicit operator BanterStruct(BanterVector2 v)
+    public static implicit operator BSStruct(BSVector2 v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
-    public static implicit operator BanterStruct(BanterVector3 v)
+    public static implicit operator BSStruct(BSVector3 v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
-    public static implicit operator BanterStruct(BanterVector4 v)
+    public static implicit operator BSStruct(BSVector4 v)
     {
-        return new BanterStruct() { n = v.n };
+        return new BSStruct() { n = v.n };
     }
 
 }

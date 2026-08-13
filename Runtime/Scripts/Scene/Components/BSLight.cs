@@ -50,14 +50,14 @@ namespace Banter.SDK
                 return _componentType;
             }
         }
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -99,7 +99,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -119,63 +119,63 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valtype = (BanterInt)values[i];
+                    var valtype = (BSInt)values[i];
                     if (valtype.n == PropertyName.type)
                     {
                         componentType.type = (LightType)valtype.x;
                         changedProperties.Add(PropertyName.type);
                     }
                 }
-                if (values[i] is BanterVector4)
+                if (values[i] is BSVector4)
                 {
-                    var valcolor = (BanterVector4)values[i];
+                    var valcolor = (BSVector4)values[i];
                     if (valcolor.n == PropertyName.color)
                     {
                         componentType.color = new Vector4(valcolor.x, valcolor.y, valcolor.z, valcolor.w);
                         changedProperties.Add(PropertyName.color);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valintensity = (BanterFloat)values[i];
+                    var valintensity = (BSFloat)values[i];
                     if (valintensity.n == PropertyName.intensity)
                     {
                         componentType.intensity = valintensity.x;
                         changedProperties.Add(PropertyName.intensity);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valrange = (BanterFloat)values[i];
+                    var valrange = (BSFloat)values[i];
                     if (valrange.n == PropertyName.range)
                     {
                         componentType.range = valrange.x;
                         changedProperties.Add(PropertyName.range);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valspotAngle = (BanterFloat)values[i];
+                    var valspotAngle = (BSFloat)values[i];
                     if (valspotAngle.n == PropertyName.spotAngle)
                     {
                         componentType.spotAngle = valspotAngle.x;
                         changedProperties.Add(PropertyName.spotAngle);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valinnerSpotAngle = (BanterFloat)values[i];
+                    var valinnerSpotAngle = (BSFloat)values[i];
                     if (valinnerSpotAngle.n == PropertyName.innerSpotAngle)
                     {
                         componentType.innerSpotAngle = valinnerSpotAngle.x;
                         changedProperties.Add(PropertyName.innerSpotAngle);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valshadows = (BanterInt)values[i];
+                    var valshadows = (BSInt)values[i];
                     if (valshadows.n == PropertyName.shadows)
                     {
                         componentType.shadows = (LightShadows)valshadows.x;
@@ -187,10 +187,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.type,
                     type = PropertyType.Int,
@@ -202,7 +202,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.color,
                     type = PropertyType.Vector4,
@@ -214,7 +214,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.intensity,
                     type = PropertyType.Float,
@@ -226,7 +226,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.range,
                     type = PropertyType.Float,
@@ -238,7 +238,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.spotAngle,
                     type = PropertyType.Float,
@@ -250,7 +250,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.innerSpotAngle,
                     type = PropertyType.Float,
@@ -262,7 +262,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.shadows,
                     type = PropertyType.Int,

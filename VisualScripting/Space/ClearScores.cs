@@ -28,7 +28,7 @@ namespace Banter.VisualScripting
                 var _board = flow.GetValue<string>(board);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnLeaderBoardClear.Invoke(_board);
+                    BSScene.Instance().events.OnLeaderBoardClear.Invoke(_board);
                 }, $"{nameof(ClearScores)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

@@ -16,7 +16,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSAssetBundle : BanterComponentBase
+    public class BSAssetBundle : BSComponentBase
     {
         [Tooltip("The URL to the Windows asset bundle.")]
         [See(initial = "")][SerializeField] internal string windowsUrl = "";
@@ -391,14 +391,14 @@ namespace Banter.SDK
         public System.Boolean IsScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
         public System.Boolean LegacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -441,7 +441,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -461,72 +461,72 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valwindowsUrl = (BanterString)values[i];
+                    var valwindowsUrl = (BSString)values[i];
                     if (valwindowsUrl.n == PropertyName.windowsUrl)
                     {
                         windowsUrl = valwindowsUrl.x;
                         changedProperties.Add(PropertyName.windowsUrl);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valosxUrl = (BanterString)values[i];
+                    var valosxUrl = (BSString)values[i];
                     if (valosxUrl.n == PropertyName.osxUrl)
                     {
                         osxUrl = valosxUrl.x;
                         changedProperties.Add(PropertyName.osxUrl);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var vallinuxUrl = (BanterString)values[i];
+                    var vallinuxUrl = (BSString)values[i];
                     if (vallinuxUrl.n == PropertyName.linuxUrl)
                     {
                         linuxUrl = vallinuxUrl.x;
                         changedProperties.Add(PropertyName.linuxUrl);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valandroidUrl = (BanterString)values[i];
+                    var valandroidUrl = (BSString)values[i];
                     if (valandroidUrl.n == PropertyName.androidUrl)
                     {
                         androidUrl = valandroidUrl.x;
                         changedProperties.Add(PropertyName.androidUrl);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valiosUrl = (BanterString)values[i];
+                    var valiosUrl = (BSString)values[i];
                     if (valiosUrl.n == PropertyName.iosUrl)
                     {
                         iosUrl = valiosUrl.x;
                         changedProperties.Add(PropertyName.iosUrl);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valvosUrl = (BanterString)values[i];
+                    var valvosUrl = (BSString)values[i];
                     if (valvosUrl.n == PropertyName.vosUrl)
                     {
                         vosUrl = valvosUrl.x;
                         changedProperties.Add(PropertyName.vosUrl);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisScene = (BanterBool)values[i];
+                    var valisScene = (BSBool)values[i];
                     if (valisScene.n == PropertyName.isScene)
                     {
                         isScene = valisScene.x;
                         changedProperties.Add(PropertyName.isScene);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var vallegacyShaderFix = (BanterBool)values[i];
+                    var vallegacyShaderFix = (BSBool)values[i];
                     if (vallegacyShaderFix.n == PropertyName.legacyShaderFix)
                     {
                         legacyShaderFix = vallegacyShaderFix.x;
@@ -539,10 +539,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.windowsUrl,
                     type = PropertyType.String,
@@ -554,7 +554,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.osxUrl,
                     type = PropertyType.String,
@@ -566,7 +566,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.linuxUrl,
                     type = PropertyType.String,
@@ -578,7 +578,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.androidUrl,
                     type = PropertyType.String,
@@ -590,7 +590,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.iosUrl,
                     type = PropertyType.String,
@@ -602,7 +602,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.vosUrl,
                     type = PropertyType.String,
@@ -614,7 +614,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isScene,
                     type = PropertyType.Bool,
@@ -626,7 +626,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.legacyShaderFix,
                     type = PropertyType.Bool,

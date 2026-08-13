@@ -8,7 +8,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSTorus : BanterComponentBase
+    public class BSTorus : BSComponentBase
     {
         [Tooltip("Radius of the inner circle")]
         [See(initial = "1")][SerializeField] internal float radius;
@@ -77,14 +77,14 @@ namespace Banter.SDK
         public System.Int32 TubularSegments { get { return tubularSegments; } set { tubularSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.tubularSegments }); } }
         public System.Single Arc { get { return arc; } set { arc = value; UpdateCallback(new List<PropertyName> { PropertyName.arc }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -127,7 +127,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -147,45 +147,45 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valradius = (BanterFloat)values[i];
+                    var valradius = (BSFloat)values[i];
                     if (valradius.n == PropertyName.radius)
                     {
                         radius = valradius.x;
                         changedProperties.Add(PropertyName.radius);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valtube = (BanterFloat)values[i];
+                    var valtube = (BSFloat)values[i];
                     if (valtube.n == PropertyName.tube)
                     {
                         tube = valtube.x;
                         changedProperties.Add(PropertyName.tube);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valradialSegments = (BanterInt)values[i];
+                    var valradialSegments = (BSInt)values[i];
                     if (valradialSegments.n == PropertyName.radialSegments)
                     {
                         radialSegments = valradialSegments.x;
                         changedProperties.Add(PropertyName.radialSegments);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valtubularSegments = (BanterInt)values[i];
+                    var valtubularSegments = (BSInt)values[i];
                     if (valtubularSegments.n == PropertyName.tubularSegments)
                     {
                         tubularSegments = valtubularSegments.x;
                         changedProperties.Add(PropertyName.tubularSegments);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valarc = (BanterFloat)values[i];
+                    var valarc = (BSFloat)values[i];
                     if (valarc.n == PropertyName.arc)
                     {
                         arc = valarc.x;
@@ -198,10 +198,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.radius,
                     type = PropertyType.Float,
@@ -213,7 +213,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.tube,
                     type = PropertyType.Float,
@@ -225,7 +225,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.radialSegments,
                     type = PropertyType.Int,
@@ -237,7 +237,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.tubularSegments,
                     type = PropertyType.Int,
@@ -249,7 +249,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.arc,
                     type = PropertyType.Float,

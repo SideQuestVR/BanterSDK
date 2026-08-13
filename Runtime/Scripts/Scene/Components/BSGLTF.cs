@@ -38,7 +38,7 @@ namespace Banter.SDK
     [WatchComponent]
     [RequireComponent(typeof(BSObjectId))]
 
-    public class BSGLTF : BanterComponentBase
+    public class BSGLTF : BSComponentBase
     {
         [Tooltip("The URL of the GLB file to be loaded.")]
         [See(initial = "")][SerializeField] internal string url;
@@ -261,14 +261,14 @@ namespace Banter.SDK
         public System.Boolean LegacyRotate { get { return legacyRotate; } set { legacyRotate = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyRotate }); } }
         public System.Int32 ChildrenLayer { get { return childrenLayer; } set { childrenLayer = value; UpdateCallback(new List<PropertyName> { PropertyName.childrenLayer }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -311,7 +311,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -331,72 +331,72 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valurl = (BanterString)values[i];
+                    var valurl = (BSString)values[i];
                     if (valurl.n == PropertyName.url)
                     {
                         url = valurl.x;
                         changedProperties.Add(PropertyName.url);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valgenerateMipMaps = (BanterBool)values[i];
+                    var valgenerateMipMaps = (BSBool)values[i];
                     if (valgenerateMipMaps.n == PropertyName.generateMipMaps)
                     {
                         generateMipMaps = valgenerateMipMaps.x;
                         changedProperties.Add(PropertyName.generateMipMaps);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valaddColliders = (BanterBool)values[i];
+                    var valaddColliders = (BSBool)values[i];
                     if (valaddColliders.n == PropertyName.addColliders)
                     {
                         addColliders = valaddColliders.x;
                         changedProperties.Add(PropertyName.addColliders);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valnonConvexColliders = (BanterBool)values[i];
+                    var valnonConvexColliders = (BSBool)values[i];
                     if (valnonConvexColliders.n == PropertyName.nonConvexColliders)
                     {
                         nonConvexColliders = valnonConvexColliders.x;
                         changedProperties.Add(PropertyName.nonConvexColliders);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valslippery = (BanterBool)values[i];
+                    var valslippery = (BSBool)values[i];
                     if (valslippery.n == PropertyName.slippery)
                     {
                         slippery = valslippery.x;
                         changedProperties.Add(PropertyName.slippery);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valclimbable = (BanterBool)values[i];
+                    var valclimbable = (BSBool)values[i];
                     if (valclimbable.n == PropertyName.climbable)
                     {
                         climbable = valclimbable.x;
                         changedProperties.Add(PropertyName.climbable);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var vallegacyRotate = (BanterBool)values[i];
+                    var vallegacyRotate = (BSBool)values[i];
                     if (vallegacyRotate.n == PropertyName.legacyRotate)
                     {
                         legacyRotate = vallegacyRotate.x;
                         changedProperties.Add(PropertyName.legacyRotate);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valchildrenLayer = (BanterInt)values[i];
+                    var valchildrenLayer = (BSInt)values[i];
                     if (valchildrenLayer.n == PropertyName.childrenLayer)
                     {
                         childrenLayer = valchildrenLayer.x;
@@ -409,10 +409,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.url,
                     type = PropertyType.String,
@@ -424,7 +424,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.generateMipMaps,
                     type = PropertyType.Bool,
@@ -436,7 +436,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.addColliders,
                     type = PropertyType.Bool,
@@ -448,7 +448,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.nonConvexColliders,
                     type = PropertyType.Bool,
@@ -460,7 +460,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.slippery,
                     type = PropertyType.Bool,
@@ -472,7 +472,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.climbable,
                     type = PropertyType.Bool,
@@ -484,7 +484,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.legacyRotate,
                     type = PropertyType.Bool,
@@ -496,7 +496,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.childrenLayer,
                     type = PropertyType.Int,

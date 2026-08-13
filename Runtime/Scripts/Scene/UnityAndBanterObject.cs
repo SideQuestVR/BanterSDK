@@ -7,7 +7,7 @@ namespace Banter.SDK
     public struct UnityAndBanterObject
     {
         public GameObject gameObject;
-        public BanterObject banterObject;
+        public BSObject banterObject;
         public BSObjectId id;
     }
 }

@@ -412,7 +412,7 @@ namespace Banter.SDK
                          $"{(meta.loaded ? "1" : "0")}{MessageDelimiters.SECONDARY}" +
                          $"{meta.tag ?? ""}";
 
-            BanterScene.Instance()?.link?.Send(message);
+            BSScene.Instance()?.link?.Send(message);
         }
 
         private void SendAssetLoaded(string assetId)
@@ -423,19 +423,19 @@ namespace Banter.SDK
             var message = $"!al!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}" +
                          $"{meta.memorySize}";
 
-            BanterScene.Instance()?.link?.Send(message);
+            BSScene.Instance()?.link?.Send(message);
         }
 
         private void SendAssetFailed(string assetId, string error)
         {
             var message = $"!af!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}{error}";
-            BanterScene.Instance()?.link?.Send(message);
+            BSScene.Instance()?.link?.Send(message);
         }
 
         private void SendAssetDestroyed(string assetId)
         {
             var message = $"!ad!{MessageDelimiters.PRIMARY}{assetId}";
-            BanterScene.Instance()?.link?.Send(message);
+            BSScene.Instance()?.link?.Send(message);
         }
 
         #endregion

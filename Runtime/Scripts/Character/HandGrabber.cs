@@ -15,7 +15,7 @@ namespace Banter.SDK
         public float Radius = .1f;
         public LayerMask GrabLayer;
         public HandSide side;
-        BanterScene scene;
+        BSScene scene;
         public bool Grabbing;
         public Transform Anchor;
         private readonly Collider[] _colliders = new Collider[100];
@@ -28,7 +28,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            scene = BanterScene.Instance();
+            scene = BSScene.Instance();
             grab = (side == HandSide.LEFT ? scene.LeftHandActions : scene.RightHandActions).FindAction("Grip");
         }
 

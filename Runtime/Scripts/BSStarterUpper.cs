@@ -35,7 +35,7 @@ namespace Banter.SDK
         public static float voiceVolume = 0;
         private GameObject localPlayerPrefab;
         private object process;
-        public BanterScene scene;
+        public BSScene scene;
         public static string WEB_ROOT = "WebRoot";
         public static int mainWWindowId;
         public static int mainWWindowPort = -2;
@@ -75,7 +75,7 @@ namespace Banter.SDK
                 initialized = true;
             }
 
-            scene = BanterScene.Instance();
+            scene = BSScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
 
 #if !BANTER_EDITOR
@@ -211,7 +211,7 @@ namespace Banter.SDK
         {
             scene.events.OnTeleport.AddListener((position, rotation, _, _) =>
             {
-                var player = BanterScene.Instance().users.First(user => user.isLocal);
+                var player = BSScene.Instance().users.First(user => user.isLocal);
                 player.transform.position = position;
                 player.transform.eulerAngles = rotation;
             });
@@ -265,7 +265,7 @@ namespace Banter.SDK
             if (scene.HasLoadFailed())
             {
                 scene.LoadingStatus = "Couldn't load home space, loading fallback...";
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BSStarterUpper)}.{nameof(CancelLoading)}.Failed"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BSScene.ORIGINAL_HOME_SPACE), $"{nameof(BSStarterUpper)}.{nameof(CancelLoading)}.Failed"));
             }
             else
             {
@@ -275,16 +275,16 @@ namespace Banter.SDK
                     scene.LoadingStatus = "Loading canceled, falling back to lobby";
                     LogLine.Do("Taking you to your home...");
                     scene.Cancel("User cancelled loading", true);
-                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BanterScene.ORIGINAL_HOME_SPACE), $"{nameof(BSStarterUpper)}.{nameof(CancelLoading)}.LoadingCanceled"));
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.events.OnLoadUrl.Invoke(BSScene.ORIGINAL_HOME_SPACE), $"{nameof(BSStarterUpper)}.{nameof(CancelLoading)}.LoadingCanceled"));
                 }
 
                 // The below allows canceling from outside loading screen
-                // if (!(scene.loading && scene.CurrentUrl == BanterScene.CUSTOM_HOME_SPACE))
+                // if (!(scene.loading && scene.CurrentUrl == BSScene.CUSTOM_HOME_SPACE))
                 // {
                 //     scene.LoadingStatus = "Taking you to your home...";
                 //     LogLine.Do("Taking you to your home...");
                 //     scene.Cancel("User cancelled loading", true);
-                //     UnityMainThreadTaskScheduler.Default.QueueAction(() => scene.events.OnLoadUrl.Invoke(BanterScene.CUSTOM_HOME_SPACE));
+                //     UnityMainThreadTaskScheduler.Default.QueueAction(() => scene.events.OnLoadUrl.Invoke(BSScene.CUSTOM_HOME_SPACE));
                 // }
             }
         }
@@ -303,7 +303,7 @@ namespace Banter.SDK
 #endif
             if (Application.isPlaying)
             {
-                BanterScene.Instance().link.ToggleDevTools(_devToolsEnabled);
+                BSScene.Instance().link.ToggleDevTools(_devToolsEnabled);
             }
         }
 

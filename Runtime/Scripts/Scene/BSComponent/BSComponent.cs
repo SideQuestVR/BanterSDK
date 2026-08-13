@@ -4,21 +4,23 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public class BanterComponent
+    [RenamedFrom("Banter.SDK.BanterComponent")]
+    public class BSComponent
     {
         public int cid;
         public string jsId;
         public ComponentType type;
-        public ConcurrentDictionary<PropertyName, BanterComponentProperty> componentProperties = new ConcurrentDictionary<PropertyName, BanterComponentProperty>();
-        public BanterObject banterObject;
+        public ConcurrentDictionary<PropertyName, BSComponentProperty> componentProperties = new ConcurrentDictionary<PropertyName, BSComponentProperty>();
+        public BSObject banterObject;
         public float progress;
         public bool loaded;
         public void SetProperty(PropertyName name, PropertyType type, object value, Action callback = null)
         {
-            BanterComponentProperty prop;
+            BSComponentProperty prop;
             try
             {
                 if (componentProperties.TryGetValue(name, out prop))
@@ -40,7 +42,7 @@ namespace Banter.SDK
                 }
                 else
                 {
-                    prop = new BanterComponentProperty()
+                    prop = new BSComponentProperty()
                     {
                         banterComponent = this,
                         name = name,
@@ -65,7 +67,7 @@ namespace Banter.SDK
 
         public void UpdateProperty(PropertyName name, object value)
         {
-            BanterComponentProperty prop;
+            BSComponentProperty prop;
             try
             {
                 if (componentProperties.TryGetValue(name, out prop))
@@ -102,7 +104,7 @@ namespace Banter.SDK
             await ObjectOnMainThread(component => callback(component.CallMethod(methodName, parameters)));
         }
 
-        public BanterComponentBase Object()
+        public BSComponentBase Object()
         {
             var ObjectId = banterObject.unityAndBanterObject.id;
             if (ObjectId != null && ObjectId.mainThreadComponentMap.TryGetValue(cid, out var component))
@@ -112,12 +114,12 @@ namespace Banter.SDK
             return null;
         }
 
-        public Task ObjectOnMainThread(Action<BanterComponentBase> callback)
+        public Task ObjectOnMainThread(Action<BSComponentBase> callback)
         {
             return UnityMainThreadTaskScheduler.Default.EnqueueAsync(TaskRunner.Track(() =>
             {
                 callback(Object());
-            }, $"{nameof(BanterComponent)}.{nameof(ObjectOnMainThread)}"));
+            }, $"{nameof(BSComponent)}.{nameof(ObjectOnMainThread)}"));
         }
 
         public void Dispose()

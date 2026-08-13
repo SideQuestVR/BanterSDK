@@ -17,7 +17,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSMirror : BanterComponentBase
+    public class BSMirror : BSComponentBase
     {
         [Tooltip("The resolution of the mirror's render texture. Higher values improve quality but use more memory.")]
         [See(initial = "1024")][SerializeField] internal int renderTextureSize = 1024;
@@ -98,14 +98,14 @@ namespace Banter.SDK
         public System.Int32 CameraClear { get { return cameraClear; } set { cameraClear = value; UpdateCallback(new List<PropertyName> { PropertyName.cameraClear }); } }
         public System.String BackgroundColor { get { return backgroundColor; } set { backgroundColor = value; UpdateCallback(new List<PropertyName> { PropertyName.backgroundColor }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -148,7 +148,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -192,27 +192,27 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valrenderTextureSize = (BanterInt)values[i];
+                    var valrenderTextureSize = (BSInt)values[i];
                     if (valrenderTextureSize.n == PropertyName.renderTextureSize)
                     {
                         renderTextureSize = valrenderTextureSize.x;
                         changedProperties.Add(PropertyName.renderTextureSize);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valcameraClear = (BanterInt)values[i];
+                    var valcameraClear = (BSInt)values[i];
                     if (valcameraClear.n == PropertyName.cameraClear)
                     {
                         cameraClear = valcameraClear.x;
                         changedProperties.Add(PropertyName.cameraClear);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valbackgroundColor = (BanterString)values[i];
+                    var valbackgroundColor = (BSString)values[i];
                     if (valbackgroundColor.n == PropertyName.backgroundColor)
                     {
                         backgroundColor = valbackgroundColor.x;
@@ -225,10 +225,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.renderTextureSize,
                     type = PropertyType.Int,
@@ -240,7 +240,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.cameraClear,
                     type = PropertyType.Int,
@@ -252,7 +252,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.backgroundColor,
                     type = PropertyType.String,

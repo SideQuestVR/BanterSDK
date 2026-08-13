@@ -22,7 +22,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var platformString = BanterScene.Instance().events.GetPlatform?.Invoke() ?? "";
+                var platformString = BSScene.Instance().events.GetPlatform?.Invoke() ?? "";
                 flow.SetValue(platform, platformString);
                 return outputTrigger;
             });

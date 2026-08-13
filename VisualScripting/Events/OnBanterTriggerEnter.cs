@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
         {
             base.Definition();
 
-            user = ValueOutput<BanterUser>(nameof(user));
+            user = ValueOutput<BSUser>(nameof(user));
         }
         protected override void AssignArguments(Flow flow, Collider other)
         {
@@ -31,7 +31,7 @@ namespace Banter.VisualScripting
             var user = other.gameObject.GetComponentInParent<UserData>();
             if (user != null)
             {
-                flow.SetValue(this.user, new BanterUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+                flow.SetValue(this.user, new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             }
             else
             {

@@ -25,7 +25,7 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var urlVal = flow.GetValue<string>(url);
 
-                BanterScene.Instance().OpenPage(urlVal, 0);
+                BSScene.Instance().OpenPage(urlVal, 0);
 
                 return outputTrigger;
             });

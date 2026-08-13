@@ -16,7 +16,7 @@ namespace Banter.SDK
         public string jsId;
 
         [HideInInspector]
-        public Dictionary<int, BanterComponentBase> mainThreadComponentMap = new Dictionary<int, BanterComponentBase>();
+        public Dictionary<int, BSComponentBase> mainThreadComponentMap = new Dictionary<int, BSComponentBase>();
         [HideInInspector] public UnityEvent loaded = new UnityEvent();
 
         public bool watchPosition;
@@ -33,12 +33,12 @@ namespace Banter.SDK
         float _stepPosition = 0.3f;
         float _stepRotation = 0.1f;
 
-        BanterScene scene;
+        BSScene scene;
 
         void Awake()
         {
             oid = gameObject.GetInstanceID();
-            scene = BanterScene.Instance();
+            scene = BSScene.Instance();
 #if UNITY_EDITOR
                 if (!UnityEditor.BuildPipeline.isBuildingPlayer)
                     GenerateId(IsDuplicateId(Id));
@@ -92,7 +92,7 @@ namespace Banter.SDK
         void OnDestroy()
         {
             mainThreadComponentMap.Clear();
-            BanterScene.Instance().DestroyBanterObject(gameObject.GetInstanceID());
+            BSScene.Instance().DestroyBanterObject(gameObject.GetInstanceID());
         }
         void Update()
         {
@@ -110,10 +110,10 @@ namespace Banter.SDK
         }
         void SyncProperties(bool force = false)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if ((transform.hasChanged && watchPosition) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.position,
                     type = PropertyType.Vector3,
@@ -124,7 +124,7 @@ namespace Banter.SDK
             }
             if ((transform.hasChanged && watchLocalPosition) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.localPosition,
                     type = PropertyType.Vector3,
@@ -135,7 +135,7 @@ namespace Banter.SDK
             }
             if ((transform.hasChanged && watchRotation) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.rotation,
                     type = PropertyType.Quaternion,
@@ -146,7 +146,7 @@ namespace Banter.SDK
             }
             if ((transform.hasChanged && watchLocalRotation) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.localRotation,
                     type = PropertyType.Quaternion,
@@ -157,7 +157,7 @@ namespace Banter.SDK
             }
             if ((transform.hasChanged && watchLocalScale) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.localScale,
                     type = PropertyType.Vector3,
@@ -168,7 +168,7 @@ namespace Banter.SDK
             }
             if ((transform.hasChanged && watchEuler) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.eulerAngles,
                     type = PropertyType.Vector3,
@@ -179,7 +179,7 @@ namespace Banter.SDK
             }
             if ((transform.hasChanged && watchLocalEuler) || force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.localEulerAngles,
                     type = PropertyType.Vector3,

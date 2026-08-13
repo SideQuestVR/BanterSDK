@@ -27,7 +27,7 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var local = flow.GetValue<string>(localAvatarUrl);
                 var remote = flow.GetValue<string>(remoteAvatarUrl);
-                BanterScene.Instance().events.OnAvatarSet?.Invoke(remote, local);
+                BSScene.Instance().events.OnAvatarSet?.Invoke(remote, local);
 
                 return outputTrigger;
             });

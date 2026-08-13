@@ -44,7 +44,7 @@ namespace Banter.VisualScripting
                 var _score = flow.GetValue<float>(score);
                 var _unique = flow.GetValue<bool>(unique);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
-                    BanterScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc", _unique);
+                    BSScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc", _unique);
                 }, $"{nameof(SetScore)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

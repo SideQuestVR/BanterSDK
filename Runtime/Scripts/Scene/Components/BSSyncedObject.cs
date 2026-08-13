@@ -2,10 +2,12 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public class BanterSynced
+    [RenamedFrom("Banter.SDK.BanterSynced")]
+    public class BSSynced
     {
         public bool syncPosition;
         public bool syncRotation;
@@ -16,7 +18,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSSyncedObject : BanterComponentBase
+    public class BSSyncedObject : BSComponentBase
     {
         [Tooltip("Determines if the object's position is synchronized across all clients.")]
         [See(initial = "true")][SerializeField] internal bool syncPosition = true;
@@ -44,7 +46,7 @@ namespace Banter.SDK
         {
             return scene.data.NSODoIOwn(synced, banterObjectId);
         }
-        BanterSynced synced;
+        BSSynced synced;
         BSObjectId banterObjectId;
         internal override void StartStuff()
         {
@@ -63,7 +65,7 @@ namespace Banter.SDK
         {
             if (synced == null)
             {
-                synced = new BanterSynced();
+                synced = new BSSynced();
             }
             synced.syncPosition = syncPosition;
             synced.syncRotation = syncRotation;
@@ -79,14 +81,14 @@ namespace Banter.SDK
         public System.Boolean TakeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
         public System.Boolean KinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -129,7 +131,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -170,45 +172,45 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valsyncPosition = (BanterBool)values[i];
+                    var valsyncPosition = (BSBool)values[i];
                     if (valsyncPosition.n == PropertyName.syncPosition)
                     {
                         syncPosition = valsyncPosition.x;
                         changedProperties.Add(PropertyName.syncPosition);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valsyncRotation = (BanterBool)values[i];
+                    var valsyncRotation = (BSBool)values[i];
                     if (valsyncRotation.n == PropertyName.syncRotation)
                     {
                         syncRotation = valsyncRotation.x;
                         changedProperties.Add(PropertyName.syncRotation);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valtakeOwnershipOnCollision = (BanterBool)values[i];
+                    var valtakeOwnershipOnCollision = (BSBool)values[i];
                     if (valtakeOwnershipOnCollision.n == PropertyName.takeOwnershipOnCollision)
                     {
                         takeOwnershipOnCollision = valtakeOwnershipOnCollision.x;
                         changedProperties.Add(PropertyName.takeOwnershipOnCollision);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valtakeOwnershipOnGrab = (BanterBool)values[i];
+                    var valtakeOwnershipOnGrab = (BSBool)values[i];
                     if (valtakeOwnershipOnGrab.n == PropertyName.takeOwnershipOnGrab)
                     {
                         takeOwnershipOnGrab = valtakeOwnershipOnGrab.x;
                         changedProperties.Add(PropertyName.takeOwnershipOnGrab);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valkinematicIfNotOwned = (BanterBool)values[i];
+                    var valkinematicIfNotOwned = (BSBool)values[i];
                     if (valkinematicIfNotOwned.n == PropertyName.kinematicIfNotOwned)
                     {
                         kinematicIfNotOwned = valkinematicIfNotOwned.x;
@@ -221,10 +223,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.syncPosition,
                     type = PropertyType.Bool,
@@ -236,7 +238,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.syncRotation,
                     type = PropertyType.Bool,
@@ -248,7 +250,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.takeOwnershipOnCollision,
                     type = PropertyType.Bool,
@@ -260,7 +262,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.takeOwnershipOnGrab,
                     type = PropertyType.Bool,
@@ -272,7 +274,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.kinematicIfNotOwned,
                     type = PropertyType.Bool,

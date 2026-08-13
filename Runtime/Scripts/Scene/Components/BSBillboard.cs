@@ -31,7 +31,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSBillboard : BanterComponentBase
+    public class BSBillboard : BSComponentBase
     {
         [Tooltip("Controls the smoothness of the billboard's rotation.")]
         [See(initial = "0")][SerializeField] internal float smoothing = 0;
@@ -82,14 +82,14 @@ namespace Banter.SDK
         public System.Boolean EnableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
         public System.Boolean EnableZAxis { get { return enableZAxis; } set { enableZAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableZAxis }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -132,7 +132,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -152,36 +152,36 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valsmoothing = (BanterFloat)values[i];
+                    var valsmoothing = (BSFloat)values[i];
                     if (valsmoothing.n == PropertyName.smoothing)
                     {
                         smoothing = valsmoothing.x;
                         changedProperties.Add(PropertyName.smoothing);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valenableXAxis = (BanterBool)values[i];
+                    var valenableXAxis = (BSBool)values[i];
                     if (valenableXAxis.n == PropertyName.enableXAxis)
                     {
                         enableXAxis = valenableXAxis.x;
                         changedProperties.Add(PropertyName.enableXAxis);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valenableYAxis = (BanterBool)values[i];
+                    var valenableYAxis = (BSBool)values[i];
                     if (valenableYAxis.n == PropertyName.enableYAxis)
                     {
                         enableYAxis = valenableYAxis.x;
                         changedProperties.Add(PropertyName.enableYAxis);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valenableZAxis = (BanterBool)values[i];
+                    var valenableZAxis = (BSBool)values[i];
                     if (valenableZAxis.n == PropertyName.enableZAxis)
                     {
                         enableZAxis = valenableZAxis.x;
@@ -194,10 +194,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.smoothing,
                     type = PropertyType.Float,
@@ -209,7 +209,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.enableXAxis,
                     type = PropertyType.Bool,
@@ -221,7 +221,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.enableYAxis,
                     type = PropertyType.Bool,
@@ -233,7 +233,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.enableZAxis,
                     type = PropertyType.Bool,

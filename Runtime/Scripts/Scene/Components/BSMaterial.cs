@@ -19,7 +19,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSMaterial : BanterComponentBase
+    public class BSMaterial : BSComponentBase
     {
         public ShaderType shaderType = ShaderType.Custom;
         MeshRenderer _renderer;
@@ -196,14 +196,14 @@ namespace Banter.SDK
         public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
         public System.String CacheBust { get { return cacheBust; } set { cacheBust = value; UpdateCallback(new List<PropertyName> { PropertyName.cacheBust }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -246,7 +246,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -266,54 +266,54 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valshaderName = (BanterString)values[i];
+                    var valshaderName = (BSString)values[i];
                     if (valshaderName.n == PropertyName.shaderName)
                     {
                         shaderName = valshaderName.x;
                         changedProperties.Add(PropertyName.shaderName);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valtexture = (BanterString)values[i];
+                    var valtexture = (BSString)values[i];
                     if (valtexture.n == PropertyName.texture)
                     {
                         texture = valtexture.x;
                         changedProperties.Add(PropertyName.texture);
                     }
                 }
-                if (values[i] is BanterVector4)
+                if (values[i] is BSVector4)
                 {
-                    var valcolor = (BanterVector4)values[i];
+                    var valcolor = (BSVector4)values[i];
                     if (valcolor.n == PropertyName.color)
                     {
                         color = new Vector4(valcolor.x, valcolor.y, valcolor.z, valcolor.w);
                         changedProperties.Add(PropertyName.color);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valside = (BanterInt)values[i];
+                    var valside = (BSInt)values[i];
                     if (valside.n == PropertyName.side)
                     {
                         side = (MaterialSide)valside.x;
                         changedProperties.Add(PropertyName.side);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valgenerateMipMaps = (BanterBool)values[i];
+                    var valgenerateMipMaps = (BSBool)values[i];
                     if (valgenerateMipMaps.n == PropertyName.generateMipMaps)
                     {
                         generateMipMaps = valgenerateMipMaps.x;
                         changedProperties.Add(PropertyName.generateMipMaps);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valcacheBust = (BanterString)values[i];
+                    var valcacheBust = (BSString)values[i];
                     if (valcacheBust.n == PropertyName.cacheBust)
                     {
                         cacheBust = valcacheBust.x;
@@ -326,10 +326,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.shaderName,
                     type = PropertyType.String,
@@ -341,7 +341,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.texture,
                     type = PropertyType.String,
@@ -353,7 +353,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.color,
                     type = PropertyType.Vector4,
@@ -365,7 +365,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.side,
                     type = PropertyType.Int,
@@ -377,7 +377,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.generateMipMaps,
                     type = PropertyType.Bool,
@@ -389,7 +389,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.cacheBust,
                     type = PropertyType.String,

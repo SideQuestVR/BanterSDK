@@ -14,10 +14,10 @@ public class UserData : MonoBehaviour
     public TextMeshPro nameTag;
     public Transform Head;
     Dictionary<string, string> props = new Dictionary<string, string>();
-    BanterScene scene;
+    BSScene scene;
     void Start()
     {
-        scene = BanterScene.Instance();
+        scene = BSScene.Instance();
 #if !BANTER_EDITOR
         name = NameGenerator.Generate();
         id = System.Guid.NewGuid().ToString();

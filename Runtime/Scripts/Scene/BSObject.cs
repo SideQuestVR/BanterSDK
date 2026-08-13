@@ -4,26 +4,28 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Unity.VisualScripting;
 
 namespace Banter.SDK
 {
-    public class BanterObject
+    [RenamedFrom("Banter.SDK.BanterObject")]
+    public class BSObject
     {
-        public BanterObject()
+        public BSObject()
         {
-            scene = BanterScene.Instance();
+            scene = BSScene.Instance();
         }
         public int oid;
         public string name = "";
-        public BanterScene scene;
+        public BSScene scene;
         public UnityAndBanterObject unityAndBanterObject;
-        public ConcurrentDictionary<int, BanterComponent> banterComponents = new ConcurrentDictionary<int, BanterComponent>();
+        public ConcurrentDictionary<int, BSComponent> banterComponents = new ConcurrentDictionary<int, BSComponent>();
         public Transform previousParent;
-        public BanterComponent GetComponent(int id)
+        public BSComponent GetComponent(int id)
         {
             return scene?.GetBanterComponent(id);
         }
-        public void AddComponent(int id, BanterComponent component)
+        public void AddComponent(int id, BSComponent component)
         {
             banterComponents.TryAdd(id, component);
         }

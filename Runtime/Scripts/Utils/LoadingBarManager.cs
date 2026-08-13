@@ -36,7 +36,7 @@ namespace Banter.SDK
         public UnityEvent onLoadOutStarted = new UnityEvent();
         public GameObject loadFailed;
         public Transform spinner;
-        BanterScene scene;
+        BSScene scene;
         public float speed = 1f;
         private bool CanCancel = true;
         private float lastLoadingPercent = 0f;
@@ -69,7 +69,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            scene = BanterScene.Instance();
+            scene = BSScene.Instance();
             if (feetTransform == null)
                 Debug.LogWarning("[Cage] feetTransform is not assigned — falling back to camera position for cage placement.");
             SetCanCancel(false);
@@ -343,7 +343,7 @@ namespace Banter.SDK
                     {
                         spinner.gameObject.SetActive(true);
                         loadFailed.SetActive(false);
-                        cancelText.text = currentUrl == BanterScene.CUSTOM_HOME_SPACE ? "Homespace: " + currentUrl : GetCancelButtonText() + " to cancel";
+                        cancelText.text = currentUrl == BSScene.CUSTOM_HOME_SPACE ? "Homespace: " + currentUrl : GetCancelButtonText() + " to cancel";
                     }
                 }
                 else cancelText.text = "";

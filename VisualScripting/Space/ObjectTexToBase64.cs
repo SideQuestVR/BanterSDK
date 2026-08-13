@@ -26,7 +26,7 @@ namespace Banter.VisualScripting
             material = ValueInput("Material Index", 0);
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             base64 = ValueOutput<string>("Base64", flow => {
-                return BanterScene.Instance().GameObjectTextureToBase64(flow.GetValue<GameObject>(gameObject), flow.GetValue<int>(material));
+                return BSScene.Instance().GameObjectTextureToBase64(flow.GetValue<GameObject>(gameObject), flow.GetValue<int>(material));
             });
         }
     }

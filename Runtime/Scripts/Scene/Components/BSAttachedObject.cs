@@ -10,7 +10,8 @@ namespace Banter.SDK
 {
     // Data, but used as a class to pass by reference
     [System.Serializable]
-    public class BanterAttachment
+    [RenamedFrom("Banter.SDK.BanterAttachment")]
+    public class BSAttachment
     {
         public string uid;
         public Vector3 attachmentPosition = Vector3.zero;
@@ -33,7 +34,7 @@ namespace Banter.SDK
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSAttachedObject : BanterComponentBase
+    public class BSAttachedObject : BSComponentBase
     {
         [Tooltip("Player uid for the object to attach to.")]
         [See(initial = "")][SerializeField] internal string uid;
@@ -69,14 +70,14 @@ namespace Banter.SDK
         [See(initial = "false")][SerializeField] internal bool isSeat = false;
 
 
-        [SerializeField] [HideInInspector] BanterAttachment attachment = new BanterAttachment();
+        [SerializeField] [HideInInspector] BSAttachment attachment = new BSAttachment();
 
         [Method]
         public void _Attach(string uid)
         {
             this.uid = attachment.uid = uid; 
             UpdateCallback(null);
-            BanterScene.Instance().data.AttachObject(attachment);
+            BSScene.Instance().data.AttachObject(attachment);
         }
 
         [Method]
@@ -84,7 +85,7 @@ namespace Banter.SDK
         {
             this.uid = attachment.uid = uid;
             UpdateCallback(null);
-            BanterScene.Instance().data.DetachObject(attachment);
+            BSScene.Instance().data.DetachObject(attachment);
         }
 
         internal override void StartStuff()
@@ -93,7 +94,7 @@ namespace Banter.SDK
             if (attachment.autoAttach)
             {
                 _Attach(attachment.uid);
-                Debug.Log("Auto-attaching object to uid: " + attachment.uid + " with attachment oid: " + oid + " " + BanterScene.Instance().GetObject(oid) + " go: " + BanterScene.Instance().GetGameObject(oid));
+                Debug.Log("Auto-attaching object to uid: " + attachment.uid + " with attachment oid: " + oid + " " + BSScene.Instance().GetObject(oid) + " go: " + BSScene.Instance().GetGameObject(oid));
             }
             SetLoadedIfNot();
         }
@@ -106,7 +107,7 @@ namespace Banter.SDK
         internal override void DestroyStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            attachment.attachedObject = BanterScene.Instance().GetObject(oid);
+            attachment.attachedObject = BSScene.Instance().GetObject(oid);
             if (changedProperties == null || changedProperties.Contains(PropertyName.uid))
             {
                 attachment.uid = uid;
@@ -165,14 +166,14 @@ namespace Banter.SDK
         public System.Boolean AutoAttach { get { return autoAttach; } set { autoAttach = value; UpdateCallback(new List<PropertyName> { PropertyName.autoAttach }); } }
         public System.Boolean IsSeat { get { return isSeat; } set { isSeat = value; UpdateCallback(new List<PropertyName> { PropertyName.isSeat }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -215,7 +216,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -259,99 +260,99 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valuid = (BanterString)values[i];
+                    var valuid = (BSString)values[i];
                     if (valuid.n == PropertyName.uid)
                     {
                         uid = valuid.x;
                         changedProperties.Add(PropertyName.uid);
                     }
                 }
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valattachmentPosition = (BanterVector3)values[i];
+                    var valattachmentPosition = (BSVector3)values[i];
                     if (valattachmentPosition.n == PropertyName.attachmentPosition)
                     {
                         attachmentPosition = new Vector3(valattachmentPosition.x, valattachmentPosition.y, valattachmentPosition.z);
                         changedProperties.Add(PropertyName.attachmentPosition);
                     }
                 }
-                if (values[i] is BanterVector4)
+                if (values[i] is BSVector4)
                 {
-                    var valattachmentRotation = (BanterVector4)values[i];
+                    var valattachmentRotation = (BSVector4)values[i];
                     if (valattachmentRotation.n == PropertyName.attachmentRotation)
                     {
                         attachmentRotation = new Quaternion(valattachmentRotation.x, valattachmentRotation.y, valattachmentRotation.z, valattachmentRotation.w);
                         changedProperties.Add(PropertyName.attachmentRotation);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valattachmentType = (BanterInt)values[i];
+                    var valattachmentType = (BSInt)values[i];
                     if (valattachmentType.n == PropertyName.attachmentType)
                     {
                         attachmentType = (AttachmentType)valattachmentType.x;
                         changedProperties.Add(PropertyName.attachmentType);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valavatarAttachmentType = (BanterInt)values[i];
+                    var valavatarAttachmentType = (BSInt)values[i];
                     if (valavatarAttachmentType.n == PropertyName.avatarAttachmentType)
                     {
                         avatarAttachmentType = (AvatarAttachmentType)valavatarAttachmentType.x;
                         changedProperties.Add(PropertyName.avatarAttachmentType);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valavatarAttachmentPoint = (BanterInt)values[i];
+                    var valavatarAttachmentPoint = (BSInt)values[i];
                     if (valavatarAttachmentPoint.n == PropertyName.avatarAttachmentPoint)
                     {
                         avatarAttachmentPoint = (AvatarBoneName)valavatarAttachmentPoint.x;
                         changedProperties.Add(PropertyName.avatarAttachmentPoint);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valattachmentPoint = (BanterInt)values[i];
+                    var valattachmentPoint = (BSInt)values[i];
                     if (valattachmentPoint.n == PropertyName.attachmentPoint)
                     {
                         attachmentPoint = (PhysicsAttachmentPoint)valattachmentPoint.x;
                         changedProperties.Add(PropertyName.attachmentPoint);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valautoSync = (BanterBool)values[i];
+                    var valautoSync = (BSBool)values[i];
                     if (valautoSync.n == PropertyName.autoSync)
                     {
                         autoSync = valautoSync.x;
                         changedProperties.Add(PropertyName.autoSync);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valjointAvatar = (BanterBool)values[i];
+                    var valjointAvatar = (BSBool)values[i];
                     if (valjointAvatar.n == PropertyName.jointAvatar)
                     {
                         jointAvatar = valjointAvatar.x;
                         changedProperties.Add(PropertyName.jointAvatar);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valautoAttach = (BanterBool)values[i];
+                    var valautoAttach = (BSBool)values[i];
                     if (valautoAttach.n == PropertyName.autoAttach)
                     {
                         autoAttach = valautoAttach.x;
                         changedProperties.Add(PropertyName.autoAttach);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisSeat = (BanterBool)values[i];
+                    var valisSeat = (BSBool)values[i];
                     if (valisSeat.n == PropertyName.isSeat)
                     {
                         isSeat = valisSeat.x;
@@ -364,10 +365,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.uid,
                     type = PropertyType.String,
@@ -379,7 +380,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.attachmentPosition,
                     type = PropertyType.Vector3,
@@ -391,7 +392,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.attachmentRotation,
                     type = PropertyType.Quaternion,
@@ -403,7 +404,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.attachmentType,
                     type = PropertyType.Int,
@@ -415,7 +416,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.avatarAttachmentType,
                     type = PropertyType.Int,
@@ -427,7 +428,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.avatarAttachmentPoint,
                     type = PropertyType.Int,
@@ -439,7 +440,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.attachmentPoint,
                     type = PropertyType.Int,
@@ -451,7 +452,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.autoSync,
                     type = PropertyType.Bool,
@@ -463,7 +464,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.jointAvatar,
                     type = PropertyType.Bool,
@@ -475,7 +476,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.autoAttach,
                     type = PropertyType.Bool,
@@ -487,7 +488,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isSeat,
                     type = PropertyType.Bool,

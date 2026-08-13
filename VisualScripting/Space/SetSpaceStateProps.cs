@@ -34,11 +34,11 @@ namespace Banter.VisualScripting
 
                 if (propIsPublic)
                 {
-                    BanterScene.Instance().events.OnPublicSpaceStateChanged.Invoke(propKey, propValue);
+                    BSScene.Instance().events.OnPublicSpaceStateChanged.Invoke(propKey, propValue);
                 }
                 else
                 {
-                    BanterScene.Instance().events.OnProtectedSpaceStateChanged.Invoke(propKey, propValue);
+                    BSScene.Instance().events.OnProtectedSpaceStateChanged.Invoke(propKey, propValue);
                 }
 
                 return outputTrigger;

@@ -43,14 +43,14 @@ namespace Banter.SDK
                 return _componentType;
             }
         }
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -96,7 +96,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -116,18 +116,18 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valconvex = (BanterBool)values[i];
+                    var valconvex = (BSBool)values[i];
                     if (valconvex.n == PropertyName.convex)
                     {
                         componentType.convex = valconvex.x;
                         changedProperties.Add(PropertyName.convex);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valisTrigger = (BanterBool)values[i];
+                    var valisTrigger = (BSBool)values[i];
                     if (valisTrigger.n == PropertyName.isTrigger)
                     {
                         if (valisTrigger.x && !componentType.convex)
@@ -144,10 +144,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.convex,
                     type = PropertyType.Bool,
@@ -159,7 +159,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.isTrigger,
                     type = PropertyType.Bool,

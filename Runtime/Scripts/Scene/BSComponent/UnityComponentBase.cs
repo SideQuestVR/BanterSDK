@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Banter.SDK
 {
-    public class UnityComponentBase : BanterComponentBase
+    public class UnityComponentBase : BSComponentBase
     {
 
         internal override object CallMethod(string methodName, List<object> parameters)

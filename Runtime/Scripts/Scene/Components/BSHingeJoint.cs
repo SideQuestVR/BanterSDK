@@ -81,14 +81,14 @@ namespace Banter.SDK
                 return _componentType;
             }
         }
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -130,7 +130,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -150,54 +150,54 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valanchor = (BanterVector3)values[i];
+                    var valanchor = (BSVector3)values[i];
                     if (valanchor.n == PropertyName.anchor)
                     {
                         componentType.anchor = new Vector3(valanchor.x, valanchor.y, valanchor.z);
                         changedProperties.Add(PropertyName.anchor);
                     }
                 }
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valaxis = (BanterVector3)values[i];
+                    var valaxis = (BSVector3)values[i];
                     if (valaxis.n == PropertyName.axis)
                     {
                         componentType.axis = new Vector3(valaxis.x, valaxis.y, valaxis.z);
                         changedProperties.Add(PropertyName.axis);
                     }
                 }
-                if (values[i] is BanterVector3)
+                if (values[i] is BSVector3)
                 {
-                    var valconnectedAnchor = (BanterVector3)values[i];
+                    var valconnectedAnchor = (BSVector3)values[i];
                     if (valconnectedAnchor.n == PropertyName.connectedAnchor)
                     {
                         componentType.connectedAnchor = new Vector3(valconnectedAnchor.x, valconnectedAnchor.y, valconnectedAnchor.z);
                         changedProperties.Add(PropertyName.connectedAnchor);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valautoConfigureConnectedAnchor = (BanterBool)values[i];
+                    var valautoConfigureConnectedAnchor = (BSBool)values[i];
                     if (valautoConfigureConnectedAnchor.n == PropertyName.autoConfigureConnectedAnchor)
                     {
                         componentType.autoConfigureConnectedAnchor = valautoConfigureConnectedAnchor.x;
                         changedProperties.Add(PropertyName.autoConfigureConnectedAnchor);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valuseLimits = (BanterBool)values[i];
+                    var valuseLimits = (BSBool)values[i];
                     if (valuseLimits.n == PropertyName.useLimits)
                     {
                         componentType.useLimits = valuseLimits.x;
                         changedProperties.Add(PropertyName.useLimits);
                     }
                 }
-                if (values[i] is BanterVector5)
+                if (values[i] is BSVector5)
                 {
-                    var vallimits = (BanterVector5)values[i];
+                    var vallimits = (BSVector5)values[i];
                     if (vallimits.n == PropertyName.limits)
                     {
                         componentType.limits = new JointLimits(){
@@ -210,81 +210,81 @@ namespace Banter.SDK
                         changedProperties.Add(PropertyName.limits);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valuseMotor = (BanterBool)values[i];
+                    var valuseMotor = (BSBool)values[i];
                     if (valuseMotor.n == PropertyName.useMotor)
                     {
                         componentType.useMotor = valuseMotor.x;
                         changedProperties.Add(PropertyName.useMotor);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valuseSpring = (BanterBool)values[i];
+                    var valuseSpring = (BSBool)values[i];
                     if (valuseSpring.n == PropertyName.useSpring)
                     {
                         componentType.useSpring = valuseSpring.x;
                         changedProperties.Add(PropertyName.useSpring);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valbreakForce = (BanterFloat)values[i];
+                    var valbreakForce = (BSFloat)values[i];
                     if (valbreakForce.n == PropertyName.breakForce)
                     {
                         componentType.breakForce = valbreakForce.x;
                         changedProperties.Add(PropertyName.breakForce);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valbreakTorque = (BanterFloat)values[i];
+                    var valbreakTorque = (BSFloat)values[i];
                     if (valbreakTorque.n == PropertyName.breakTorque)
                     {
                         componentType.breakTorque = valbreakTorque.x;
                         changedProperties.Add(PropertyName.breakTorque);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valenableCollision = (BanterBool)values[i];
+                    var valenableCollision = (BSBool)values[i];
                     if (valenableCollision.n == PropertyName.enableCollision)
                     {
                         componentType.enableCollision = valenableCollision.x;
                         changedProperties.Add(PropertyName.enableCollision);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valenablePreprocessing = (BanterBool)values[i];
+                    var valenablePreprocessing = (BSBool)values[i];
                     if (valenablePreprocessing.n == PropertyName.enablePreprocessing)
                     {
                         componentType.enablePreprocessing = valenablePreprocessing.x;
                         changedProperties.Add(PropertyName.enablePreprocessing);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valconnectedMassScale = (BanterFloat)values[i];
+                    var valconnectedMassScale = (BSFloat)values[i];
                     if (valconnectedMassScale.n == PropertyName.connectedMassScale)
                     {
                         componentType.connectedMassScale = valconnectedMassScale.x;
                         changedProperties.Add(PropertyName.connectedMassScale);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valmassScale = (BanterFloat)values[i];
+                    var valmassScale = (BSFloat)values[i];
                     if (valmassScale.n == PropertyName.massScale)
                     {
                         componentType.massScale = valmassScale.x;
                         changedProperties.Add(PropertyName.massScale);
                     }
                 }
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valconnectedBody = (BanterString)values[i];
+                    var valconnectedBody = (BSString)values[i];
                     if (valconnectedBody.n == PropertyName.connectedBody)
                     {
                         if (!string.IsNullOrEmpty(valconnectedBody.x))
@@ -332,10 +332,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.anchor,
                     type = PropertyType.Vector3,
@@ -347,7 +347,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.axis,
                     type = PropertyType.Vector3,
@@ -359,7 +359,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.connectedAnchor,
                     type = PropertyType.Vector3,
@@ -371,7 +371,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.autoConfigureConnectedAnchor,
                     type = PropertyType.Bool,
@@ -383,7 +383,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.useLimits,
                     type = PropertyType.Bool,
@@ -395,7 +395,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.limits,
                     type = PropertyType.JointLimits,
@@ -407,7 +407,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.useMotor,
                     type = PropertyType.Bool,
@@ -419,7 +419,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.useSpring,
                     type = PropertyType.Bool,
@@ -431,7 +431,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.breakForce,
                     type = PropertyType.Float,
@@ -443,7 +443,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.breakTorque,
                     type = PropertyType.Float,
@@ -455,7 +455,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.enableCollision,
                     type = PropertyType.Bool,
@@ -467,7 +467,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.enablePreprocessing,
                     type = PropertyType.Bool,
@@ -479,7 +479,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.connectedMassScale,
                     type = PropertyType.Float,
@@ -491,7 +491,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.massScale,
                     type = PropertyType.Float,
@@ -503,7 +503,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.connectedBody,
                     type = PropertyType.String,

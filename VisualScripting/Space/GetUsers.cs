@@ -20,16 +20,16 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             info = ValueOutput("Users Array", (f) => {
-                var data = BanterScene.Instance().users;
+                var data = BSScene.Instance().users;
                 if (data == null)
                 {
                     return null;
                 }
 
-                List<BanterUser> users = new ();
+                List<BSUser> users = new ();
                 for (var i = 0; i < data.Count; i++)
                 {
-                    users.Add(new BanterUser()
+                    users.Add(new BSUser()
                     {
                         name = data[i].name,
                         id = data[i].id,

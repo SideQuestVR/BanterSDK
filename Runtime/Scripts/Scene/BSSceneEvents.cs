@@ -2,8 +2,10 @@ using System;
 using Banter.SDK;
 using UnityEngine;
 using UnityEngine.Events;
+using Unity.VisualScripting;
 
-public class BanterSceneEvents
+[RenamedFrom("Banter.SDK.BanterSceneEvents")]
+public class BSSceneEvents
 {
     public UnityEvent<string> KeyboardFocus = new UnityEvent<string>();
     public UnityEvent OnLoad = new UnityEvent();
@@ -32,8 +34,8 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<BanterSynced, BSSyncedObject> OnSyncedObject = new UnityEvent<BanterSynced, BSSyncedObject>();
-    public UnityEvent<BanterSynced, BSSyncedObject> OnTakeOwnership = new UnityEvent<BanterSynced, BSSyncedObject>();
+    public UnityEvent<BSSynced, BSSyncedObject> OnSyncedObject = new UnityEvent<BSSynced, BSSyncedObject>();
+    public UnityEvent<BSSynced, BSSyncedObject> OnTakeOwnership = new UnityEvent<BSSynced, BSSyncedObject>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();

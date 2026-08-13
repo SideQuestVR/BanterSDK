@@ -32,7 +32,7 @@ namespace Banter.VisualScripting
                 var _ratio = flow.GetValue<AiImageRatio>(ratio);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    BanterScene.Instance().events.OnAiImage.Invoke(_prompt, _ratio);
+                    BSScene.Instance().events.OnAiImage.Invoke(_prompt, _ratio);
                 }, $"{nameof(AiImage)}.{nameof(Definition)}"));
                 return outputTrigger;
             });

@@ -11,10 +11,10 @@ namespace Banter.SDK
     {
         public Func<bool> IsSpaceFavourited = () => false;
         public Func<bool> IsSpaceOwner = () => false;
-        public Func<BanterSynced, BSObjectId, bool> NSODoIOwn = (_, _) => false;
+        public Func<BSSynced, BSObjectId, bool> NSODoIOwn = (_, _) => false;
 
-        public Action<BanterAttachment> AttachObject = _ => { };
-        public Action<BanterAttachment> DetachObject = _ => { };
+        public Action<BSAttachment> AttachObject = _ => { };
+        public Action<BSAttachment> DetachObject = _ => { };
 
         public Action<long> CloneAvatar = _ => { };
 

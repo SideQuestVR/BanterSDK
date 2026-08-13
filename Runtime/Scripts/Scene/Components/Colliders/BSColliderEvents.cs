@@ -16,23 +16,23 @@ namespace Banter.SDK
     */
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSColliderEvents : BanterComponentBase
+    public class BSColliderEvents : BSComponentBase
     {
         void OnCollisionEnter(Collision collision)
         {
-            BanterScene.Instance().link?._OnCollisionEnter(gameObject, collision);
+            BSScene.Instance().link?._OnCollisionEnter(gameObject, collision);
         }
         void OnCollisionExit(Collision collision)
         {
-            BanterScene.Instance().link?._OnCollisionExit(gameObject, collision);
+            BSScene.Instance().link?._OnCollisionExit(gameObject, collision);
         }
         void OnTriggerEnter(Collider collider)
         {
-            BanterScene.Instance().link?._OnTriggerEnter(gameObject, collider);
+            BSScene.Instance().link?._OnTriggerEnter(gameObject, collider);
         }
         void OnTriggerExit(Collider collider)
         {
-            BanterScene.Instance().link?._OnTriggerExit(gameObject, collider);
+            BSScene.Instance().link?._OnTriggerExit(gameObject, collider);
         }
         internal override void DestroyStuff() { }
 
@@ -46,14 +46,14 @@ namespace Banter.SDK
             SetLoadedIfNot();
         }
         // BANTER COMPILED CODE 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -96,7 +96,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -122,7 +122,7 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             scene.SetFromUnityProperties(updates, callback);
         }
 

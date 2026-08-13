@@ -11,7 +11,7 @@ namespace Banter.SDK
     [WatchComponent]
     [RequireComponent(typeof(BSObjectId))]
 
-    public class BSText : BanterComponentBase
+    public class BSText : BSComponentBase
     {
         TextMeshPro tmpComponent;
         [Tooltip("The text content to display.")]
@@ -117,14 +117,14 @@ namespace Banter.SDK
         public System.Boolean EnableWordWrapping { get { return enableWordWrapping; } set { enableWordWrapping = value; UpdateCallback(new List<PropertyName> { PropertyName.enableWordWrapping }); } }
         public UnityEngine.Vector2 RectTransformSizeDelta { get { return rectTransformSizeDelta; } set { rectTransformSizeDelta = value; UpdateCallback(new List<PropertyName> { PropertyName.rectTransformSizeDelta }); } }
 
-        BanterScene _scene;
-        public BanterScene scene
+        BSScene _scene;
+        public BSScene scene
         {
             get
             {
                 if (_scene == null)
                 {
-                    _scene = BanterScene.Instance();
+                    _scene = BSScene.Instance();
                 }
                 return _scene;
             }
@@ -167,7 +167,7 @@ namespace Banter.SDK
 
         void Awake()
         {
-            BanterScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
         }
 
         void OnDestroy()
@@ -187,72 +187,72 @@ namespace Banter.SDK
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BanterString)
+                if (values[i] is BSString)
                 {
-                    var valtext = (BanterString)values[i];
+                    var valtext = (BSString)values[i];
                     if (valtext.n == PropertyName.text)
                     {
                         text = valtext.x;
                         changedProperties.Add(PropertyName.text);
                     }
                 }
-                if (values[i] is BanterVector4)
+                if (values[i] is BSVector4)
                 {
-                    var valcolor = (BanterVector4)values[i];
+                    var valcolor = (BSVector4)values[i];
                     if (valcolor.n == PropertyName.color)
                     {
                         color = new Vector4(valcolor.x, valcolor.y, valcolor.z, valcolor.w);
                         changedProperties.Add(PropertyName.color);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valhorizontalAlignment = (BanterInt)values[i];
+                    var valhorizontalAlignment = (BSInt)values[i];
                     if (valhorizontalAlignment.n == PropertyName.horizontalAlignment)
                     {
                         horizontalAlignment = (HorizontalAlignment)valhorizontalAlignment.x;
                         changedProperties.Add(PropertyName.horizontalAlignment);
                     }
                 }
-                if (values[i] is BanterInt)
+                if (values[i] is BSInt)
                 {
-                    var valverticalAlignment = (BanterInt)values[i];
+                    var valverticalAlignment = (BSInt)values[i];
                     if (valverticalAlignment.n == PropertyName.verticalAlignment)
                     {
                         verticalAlignment = (VerticalAlignment)valverticalAlignment.x;
                         changedProperties.Add(PropertyName.verticalAlignment);
                     }
                 }
-                if (values[i] is BanterFloat)
+                if (values[i] is BSFloat)
                 {
-                    var valfontSize = (BanterFloat)values[i];
+                    var valfontSize = (BSFloat)values[i];
                     if (valfontSize.n == PropertyName.fontSize)
                     {
                         fontSize = valfontSize.x;
                         changedProperties.Add(PropertyName.fontSize);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valrichText = (BanterBool)values[i];
+                    var valrichText = (BSBool)values[i];
                     if (valrichText.n == PropertyName.richText)
                     {
                         richText = valrichText.x;
                         changedProperties.Add(PropertyName.richText);
                     }
                 }
-                if (values[i] is BanterBool)
+                if (values[i] is BSBool)
                 {
-                    var valenableWordWrapping = (BanterBool)values[i];
+                    var valenableWordWrapping = (BSBool)values[i];
                     if (valenableWordWrapping.n == PropertyName.enableWordWrapping)
                     {
                         enableWordWrapping = valenableWordWrapping.x;
                         changedProperties.Add(PropertyName.enableWordWrapping);
                     }
                 }
-                if (values[i] is BanterVector2)
+                if (values[i] is BSVector2)
                 {
-                    var valrectTransformSizeDelta = (BanterVector2)values[i];
+                    var valrectTransformSizeDelta = (BSVector2)values[i];
                     if (valrectTransformSizeDelta.n == PropertyName.rectTransformSizeDelta)
                     {
                         rectTransformSizeDelta = new Vector2(valrectTransformSizeDelta.x, valrectTransformSizeDelta.y);
@@ -265,10 +265,10 @@ namespace Banter.SDK
 
         internal override void SyncProperties(bool force = false, Action callback = null)
         {
-            var updates = new List<BanterComponentPropertyUpdate>();
+            var updates = new List<BSComponentPropertyUpdate>();
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.text,
                     type = PropertyType.String,
@@ -280,7 +280,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.color,
                     type = PropertyType.Vector4,
@@ -292,7 +292,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.horizontalAlignment,
                     type = PropertyType.Int,
@@ -304,7 +304,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.verticalAlignment,
                     type = PropertyType.Int,
@@ -316,7 +316,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.fontSize,
                     type = PropertyType.Float,
@@ -328,7 +328,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.richText,
                     type = PropertyType.Bool,
@@ -340,7 +340,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.enableWordWrapping,
                     type = PropertyType.Bool,
@@ -352,7 +352,7 @@ namespace Banter.SDK
             }
             if (force)
             {
-                updates.Add(new BanterComponentPropertyUpdate()
+                updates.Add(new BSComponentPropertyUpdate()
                 {
                     name = PropertyName.rectTransformSizeDelta,
                     type = PropertyType.Vector2,

@@ -2,11 +2,13 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Banter.SDK;
+using Unity.VisualScripting;
 
 namespace Banter.SDKEditor
 {
     [CustomEditor(typeof(BSObjectId))]
-    public class BanterObjectIdEditor : Editor
+    [RenamedFrom("Banter.SDKEditor.BanterObjectIdEditor")]
+    public class BSObjectIdEditor : Editor
     {
         public override bool UseDefaultMargins() => false;
         public override VisualElement CreateInspectorGUI()
