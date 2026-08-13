@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
-using Banter.SDK;
-using PropertyName = Banter.SDK.PropertyName;
+using BS;
+using PropertyName = BS.PropertyName;
 using Unity.VisualScripting;
 
 [Serializable]

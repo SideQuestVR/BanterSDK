@@ -1,8 +1,8 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Ai Model")]

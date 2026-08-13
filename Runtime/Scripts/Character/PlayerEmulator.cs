@@ -1,5 +1,5 @@
 using UnityEngine;
-using Banter.SDK;
+using BS;
 
 public class PlayerEmulator : MonoBehaviour
 {

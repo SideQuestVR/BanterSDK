@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using DigitalRuby.Tween;
 using UnityEngine;
 using UnityEngine.Events;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.SDK
+namespace BS
 {
 
     enum LoadingState

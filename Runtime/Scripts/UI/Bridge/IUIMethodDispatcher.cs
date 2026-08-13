@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Banter.UI.Bridge
+namespace BS.UI.Bridge
 {
     /// <summary>
     /// Interface for UI elements that can dispatch method calls from TypeScript.

@@ -11,7 +11,7 @@ using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

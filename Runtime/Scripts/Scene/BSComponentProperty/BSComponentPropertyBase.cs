@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDK.BanterComponentPropertyBase")]
     public class BSComponentPropertyBase

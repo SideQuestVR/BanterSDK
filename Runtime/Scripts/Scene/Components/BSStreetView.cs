@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

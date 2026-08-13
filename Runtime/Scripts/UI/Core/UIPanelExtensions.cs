@@ -1,7 +1,7 @@
 using UnityEngine;
-using Banter.SDK;
+using BS;
 
-namespace Banter.UI.Core
+namespace BS.UI.Core
 {
     /// <summary>
     /// Extension methods for BSUIPanel to simplify Visual Scripting node operations

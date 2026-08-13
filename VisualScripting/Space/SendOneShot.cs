@@ -1,11 +1,11 @@
 #if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Linq;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Send a One Shot Message")]
     [UnitShortTitle("SendOneShot")]

@@ -1,10 +1,10 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using UnityEngine;
-using Banter.SDK;
+using BS;
 using SideQuest.FlexaBody;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Rotate")]
     [UnitShortTitle("Set Can Rotate")]

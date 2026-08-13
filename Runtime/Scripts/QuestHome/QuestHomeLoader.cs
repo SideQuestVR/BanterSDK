@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Simple helper script to load Quest Home environments with minimal setup.

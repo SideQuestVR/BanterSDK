@@ -6,7 +6,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.Networking;
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

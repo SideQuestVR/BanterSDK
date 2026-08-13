@@ -5,19 +5,19 @@ using System.Threading.Tasks;
 using UnityEngine;
 using System.IO;
 using System.Text;
-using Banter.UI.Bridge;
+using BS.UI.Bridge;
 
 
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 #endif
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
 #if BANTER_ORA
 using SideQuest.Ora;
 #endif
-namespace Banter.SDK
+namespace BS
 {
     public class BSLink : MonoBehaviour
     {

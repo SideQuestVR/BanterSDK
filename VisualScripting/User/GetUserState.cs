@@ -2,11 +2,11 @@
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Data.Common;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get User State")]
     [UnitShortTitle("User State")]

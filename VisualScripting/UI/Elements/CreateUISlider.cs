@@ -1,11 +1,11 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Slider")]
     [UnitShortTitle("Create UI Slider")]

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     [RequireComponent(typeof(Rigidbody))]
     public class PhysicsHandFollow : MonoBehaviour

@@ -9,7 +9,7 @@ using Newtonsoft.Json.Linq;
 using SideQuest.Ora;
 #endif
 
-namespace Banter.SDK
+namespace BS
 {
     [Serializable]
     public class BrowserAction

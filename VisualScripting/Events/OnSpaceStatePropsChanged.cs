@@ -1,9 +1,9 @@
 #if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Space State Properties Changed")]
     [UnitShortTitle("Space State Changed")]

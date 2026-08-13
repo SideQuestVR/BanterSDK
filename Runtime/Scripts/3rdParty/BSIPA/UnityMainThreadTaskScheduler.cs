@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 
-namespace Banter.Utilities.Async
+namespace BS.Utilities.Async
 {
     /// <summary>
     /// A task scheduler that runs tasks on the Unity main thread via coroutines.

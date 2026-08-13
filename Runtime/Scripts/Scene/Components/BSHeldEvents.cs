@@ -6,7 +6,7 @@ using Pixeye.Unity;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

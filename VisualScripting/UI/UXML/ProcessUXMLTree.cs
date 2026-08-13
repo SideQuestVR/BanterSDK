@@ -1,14 +1,14 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
+using BS;
+using BS.UI.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Process UXML Tree")]
     [UnitShortTitle("Process UXML Tree")]

@@ -1,10 +1,10 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Load UXML Asset")]
     [UnitShortTitle("Load UXML Asset")]

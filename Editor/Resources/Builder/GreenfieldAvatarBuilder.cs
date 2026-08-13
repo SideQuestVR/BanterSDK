@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     /// <summary>
     /// Greenfield avatar builder — a standalone editor window that builds a single encrypted Basis
@@ -22,7 +22,7 @@ namespace Banter.SDKEditor
     {
         // The one shared Greenfield bundle key, centralised in the SDK so build and runtime can't
         // drift. Seeds the editable key field below; a mismatch would fail decryption silently.
-        private const string DefaultEncryptionKey = Banter.SDK.GreenfieldBundleCrypto.Password;
+        private const string DefaultEncryptionKey = BS.GreenfieldBundleCrypto.Password;
 
         private const string OutputFolderPrefKey = "Greenfield_AvatarBuilder_OutputFolder";
 

@@ -1,11 +1,11 @@
 #if BANTER_VISUAL_SCRIPTING
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using System.Collections;
 using UnityEngine;
 
-namespace Banter.VisualScripting.UI.Helpers
+namespace BS.VisualScripting.UI.Helpers
 {
     /// <summary>
     /// Helper class for auto-registering UI events from Visual Scripting nodes

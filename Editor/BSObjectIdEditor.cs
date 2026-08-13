@@ -1,10 +1,10 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.SDK;
+using BS;
 using Unity.VisualScripting;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     [CustomEditor(typeof(BSObjectId))]
     [RenamedFrom("Banter.SDKEditor.BanterObjectIdEditor")]

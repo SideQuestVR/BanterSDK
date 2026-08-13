@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Unity.VisualScripting;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     [InitializeOnLoad]
     public class ValidateVisualScripting
@@ -263,7 +263,7 @@ namespace Banter.SDKEditor
                 notAllowedElements = everything.Distinct().Where( e => {
                     string id = e;
                     bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
-                    bool isBanterVs = id?.StartsWith("Banter.VisualScripting.") ?? false;
+                    bool isBanterVs = (id?.StartsWith("BS.VisualScripting.") ?? false) || (id?.StartsWith("Banter.VisualScripting.") ?? false);
                     bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;
                     bool isColombiaVs = id?.StartsWith("SideQuest.Columbia.VisualScripting.") ?? false;
 

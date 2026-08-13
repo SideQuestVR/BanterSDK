@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Banter.UI.Bridge;
-using Banter.SDK;
+using BS.UI.Bridge;
+using BS;
 
-namespace Banter.UI.Core
+namespace BS.UI.Core
 {
     /// <summary>
     /// Resolves UI elements to their containing panels for simplified Visual Scripting workflows

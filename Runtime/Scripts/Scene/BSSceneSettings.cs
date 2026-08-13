@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDK.BanterSceneSettings")]
     public class BSSceneSettings

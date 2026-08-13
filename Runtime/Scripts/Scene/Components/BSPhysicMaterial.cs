@@ -1,12 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 using UnityEngine.Video;
-using PropertyName = Banter.SDK.PropertyName;
+using PropertyName = BS.PropertyName;
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

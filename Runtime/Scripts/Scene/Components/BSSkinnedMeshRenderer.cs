@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     [System.Serializable]
     public class BlendShapeInfo

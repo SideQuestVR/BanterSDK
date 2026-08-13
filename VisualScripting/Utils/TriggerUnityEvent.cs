@@ -1,10 +1,10 @@
 #if BANTER_VISUAL_SCRIPTING
 using System;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Trigger VisualScriptingEvent")]
     [UnitShortTitle("Trigger VisualScriptingEvent")]

@@ -5,7 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SpatialTracking;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 using Debug = UnityEngine.Debug;
 using UnityEngine.UI;
 using System.Collections;
@@ -20,7 +20,7 @@ using SideQuest.Ora.WebRTC;
 using Unity.VisualScripting;
 #endif
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1001)]
     public class BSStarterUpper : MonoBehaviour

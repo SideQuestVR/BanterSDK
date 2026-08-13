@@ -2,10 +2,10 @@
 using UnityEngine;
 using Unity.VisualScripting;
 using UnityEngine.XR;
-using Banter.SDK;
-using Banter.Utilities.Async;
+using BS;
+using BS.Utilities.Async;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     // [UnitTitle("Send Haptic Impulse")]
     // [UnitShortTitle("Haptics")]

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     public enum ShaderType
     {
@@ -192,7 +192,7 @@ namespace Banter.SDK
         public System.String ShaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
         public System.String Texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
         public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
-        public Banter.SDK.MaterialSide Side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
+        public BS.MaterialSide Side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
         public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
         public System.String CacheBust { get { return cacheBust; } set { cacheBust = value; UpdateCallback(new List<PropertyName> { PropertyName.cacheBust }); } }
 

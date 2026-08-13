@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 /// </summary>
 
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     public class SqEditorApiException : Exception
     {

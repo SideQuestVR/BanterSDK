@@ -1,7 +1,7 @@
 
 using System;
 
-namespace Banter.SDK
+namespace BS
 {
     [Serializable]
     public class Score{

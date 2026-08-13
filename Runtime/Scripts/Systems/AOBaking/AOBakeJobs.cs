@@ -3,7 +3,7 @@ using Unity.Collections;
 using Unity.Jobs;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Burst-compiled job to prepare RaycastCommands for AO baking.

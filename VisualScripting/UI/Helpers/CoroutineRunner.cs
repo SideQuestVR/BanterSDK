@@ -1,7 +1,7 @@
 #if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 
-namespace Banter.VisualScripting.UI.Helpers
+namespace BS.VisualScripting.UI.Helpers
 {
     /// <summary>
     /// Singleton MonoBehaviour for running coroutines from static contexts

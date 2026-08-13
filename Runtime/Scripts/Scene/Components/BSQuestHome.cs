@@ -7,7 +7,7 @@ using UnityEngine.Networking;
 using Siccity.GLTFUtility;
 using Newtonsoft.Json.Linq;
 
-namespace Banter.SDK
+namespace BS
 {
     /*
     #### Banter Quest Home

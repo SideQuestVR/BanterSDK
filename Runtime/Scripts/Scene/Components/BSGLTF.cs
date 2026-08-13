@@ -5,7 +5,7 @@ using UnityEngine;
 using Siccity.GLTFUtility;
 using System.Threading.Tasks;
 
-namespace Banter.SDK
+namespace BS
 {
 
     /* 

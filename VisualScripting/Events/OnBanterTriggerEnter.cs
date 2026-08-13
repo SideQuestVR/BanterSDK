@@ -1,10 +1,10 @@
 #if BANTER_VISUAL_SCRIPTING
 using System;
-using Banter.SDK;
+using BS;
 using Unity.VisualScripting;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     /// <summary>
     /// Called when a collider enters the trigger.

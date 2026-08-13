@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     [System.Serializable]
     public class Geometry

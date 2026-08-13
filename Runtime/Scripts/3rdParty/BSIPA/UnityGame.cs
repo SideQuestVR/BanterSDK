@@ -11,7 +11,7 @@ using UnityEngine;
 using Path = Net3_Proxy.Path;
 #endif
 
-namespace Banter.Utilities.Async
+namespace BS.Utilities.Async
 {
     /// <summary>
     /// Provides some basic utility methods and properties of Beat Saber

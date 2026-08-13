@@ -1,4 +1,4 @@
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDK.BanterComponent")]
     public class BSComponent

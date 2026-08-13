@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.UICodeGen;
+using BS.UICodeGen;
 
-namespace Banter.UI.Elements
+namespace BS.UI.Elements
 {
     /// <summary>
     /// Enhanced scroll view component with additional features and TypeScript accessibility.

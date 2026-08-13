@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter.SDK
+namespace BS
 {
     [Serializable]
     public class QuickMenuItem : INotifyPropertyChanged

@@ -1,9 +1,9 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.SDK;
+using BS;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     // editorForChildClasses so the deprecated Banter-prefixed subclasses get this inspector too.
     [CustomEditor(typeof(BSTorusKnot), true)]

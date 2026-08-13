@@ -1,7 +1,7 @@
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDKEditor.BanterPoseExtensions")]
     public static class BSPoseExtensions

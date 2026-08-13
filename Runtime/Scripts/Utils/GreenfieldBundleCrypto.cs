@@ -1,4 +1,4 @@
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// The single shared secret every Greenfield-built Basis <c>.BEE</c> bundle — avatars and spaces

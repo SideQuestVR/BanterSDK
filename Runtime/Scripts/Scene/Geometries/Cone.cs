@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     public class Cone : Geometry
     {

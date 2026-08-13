@@ -20,7 +20,7 @@ public enum BSGrabHand
     LeftOnly,
     RightOnly
 }
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

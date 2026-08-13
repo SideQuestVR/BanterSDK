@@ -2,10 +2,10 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.UI.Bridge;
+using BS.UI.Bridge;
 using System.Linq;
 
-namespace Banter.UI.Core
+namespace BS.UI.Core
 {
     /// <summary>
     /// Processes UXML visual element trees to register all elements with UIElementBridge

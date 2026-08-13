@@ -9,7 +9,7 @@ using Unity.Jobs;
 using UnityEditor;
 #endif
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Merges child primitive objects, optionally subdivides, and bakes ambient occlusion

@@ -1,13 +1,13 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Banter.UI.Bridge;
+using BS.UI.Bridge;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
 using UnityEngine.XR;
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

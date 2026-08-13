@@ -1,9 +1,9 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Add Force To Player")]
     [UnitShortTitle("Add Player Force")]

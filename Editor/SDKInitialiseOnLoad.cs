@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
-using Banter.SDK;
+using BS;
 using Newtonsoft.Json.Linq;
 using System.IO.Compression;
 using LongBunnyLabs;
@@ -10,7 +10,7 @@ using Unity.EditorCoroutines.Editor;
 using UnityEditor.Build;
 using System.Linq;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     [InitializeOnLoad]
     public static class InitialiseOnLoad
@@ -66,7 +66,7 @@ namespace Banter.SDKEditor
 // using System.IO;
 // using UnityEditor.PackageManager;
 // using UnityEditor.PackageManager.Requests;
-// namespace Banter.SDKEditor
+// namespace BS.SDKEditor
 // {{
 //     public class UninstallBanter
 //     {{

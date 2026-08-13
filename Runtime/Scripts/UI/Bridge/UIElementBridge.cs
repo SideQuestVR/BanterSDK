@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.SDK;
-using Banter.UI.Elements;
+using BS;
+using BS.UI.Elements;
 
-namespace Banter.UI.Bridge
+namespace BS.UI.Bridge
 {
     public class UIElementBridge : MonoBehaviour
     {
@@ -2400,7 +2400,7 @@ namespace Banter.UI.Bridge
         /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
         public Dictionary<VisualElement, string> ProcessUXMLTree(UIDocument document, string prefix = "uxml")
         {
-            return Banter.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+            return BS.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
         }
 
         /// <summary>
@@ -2411,7 +2411,7 @@ namespace Banter.UI.Bridge
         /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
         public Dictionary<VisualElement, string> ProcessVisualElementTree(VisualElement rootElement, string prefix = "uxml")
         {
-            return Banter.UI.Core.UIXMLTreeProcessor.ProcessTree(this, rootElement, prefix);
+            return BS.UI.Core.UIXMLTreeProcessor.ProcessTree(this, rootElement, prefix);
         }
 
         /// <summary>

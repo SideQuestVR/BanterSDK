@@ -1,4 +1,4 @@
-namespace Banter.UI.Bridge
+namespace BS.UI.Bridge
 {
     /// <summary>
     /// Enumeration of all supported UI event types for type-safe event handling.

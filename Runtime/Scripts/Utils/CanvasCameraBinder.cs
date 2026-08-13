@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Keeps a worldspace Canvas's worldCamera bound to Camera.main. A one-shot assignment at

@@ -1,13 +1,13 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 using System.Collections;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Property")]
     [UnitShortTitle("Get UI Property")]

@@ -20,7 +20,7 @@ using Unity.EditorCoroutines.Editor;
 /// </summary>
 /// 
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
 
 

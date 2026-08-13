@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 /// Object containing any information that's persisted by the SqEditor api classes
 /// </summary>
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     public class SqEditorPersistentData
     {

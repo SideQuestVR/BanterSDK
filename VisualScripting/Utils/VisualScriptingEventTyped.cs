@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum EventDataType
     {

@@ -1,12 +1,12 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Border")]
     [UnitShortTitle("Set UI Border")]

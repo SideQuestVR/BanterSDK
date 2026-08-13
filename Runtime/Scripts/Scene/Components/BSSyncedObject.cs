@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDK.BanterSynced")]
     public class BSSynced

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using SideQuest.FlexaBody;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]

@@ -21,7 +21,7 @@ using System.Collections.Specialized;
 using PicaVoxel;
 #endif
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     public static class VsNodeGeneration
     {
@@ -143,8 +143,8 @@ namespace Banter.SDKEditor
             "Cinemachine",
 
             // Banter
-            "Banter.SDK",
-            "Banter.VisualScripting",
+            "BS",
+            "BS.VisualScripting",
             
             // Picavoxel
             "GarethIW.PicaVoxelInfinity",
@@ -371,10 +371,10 @@ namespace Banter.SDKEditor
 
             // Banter classes that aren't MonoBehaviours
             // See AotPreBuilder._allowedBanterTypes for the MBs
-            typeof(Banter.SDK.BSUser),
-            typeof(Banter.SDK.BSAttachment),
+            typeof(BS.BSUser),
+            typeof(BS.BSAttachment),
 
-            typeof(Banter.SDK.Score),
+            typeof(BS.Score),
 #if BANTER_PICAVOXEL
             typeof(PicaVoxel.VoxelEditEventArgs),
             typeof(PicaVoxel.VoxelDetectorEventArgs),

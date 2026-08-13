@@ -1,11 +1,11 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Diagnostics;
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Global Event")]

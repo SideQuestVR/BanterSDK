@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
 
     [System.Serializable]
@@ -301,8 +301,8 @@ namespace Banter.SDK
             }
         }
         // BANTER COMPILED CODE 
-        public Banter.SDK.GeometryType GeometryType { get { return geometryType; } set { geometryType = value; UpdateCallback(new List<PropertyName> { PropertyName.geometryType }); } }
-        public Banter.SDK.ParametricGeometryType ParametricType { get { return parametricType; } set { parametricType = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricType }); } }
+        public BS.GeometryType GeometryType { get { return geometryType; } set { geometryType = value; UpdateCallback(new List<PropertyName> { PropertyName.geometryType }); } }
+        public BS.ParametricGeometryType ParametricType { get { return parametricType; } set { parametricType = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricType }); } }
         public System.Single Width { get { return width; } set { width = value; UpdateCallback(new List<PropertyName> { PropertyName.width }); } }
         public System.Single Height { get { return height; } set { height = value; UpdateCallback(new List<PropertyName> { PropertyName.height }); } }
         public System.Single Depth { get { return depth; } set { depth = value; UpdateCallback(new List<PropertyName> { PropertyName.depth }); } }

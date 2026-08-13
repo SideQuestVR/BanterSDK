@@ -4,7 +4,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Represents a texture-to-material mapping from GLTF

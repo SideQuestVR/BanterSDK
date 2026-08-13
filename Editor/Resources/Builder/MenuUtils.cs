@@ -1,11 +1,11 @@
 using UnityEngine;
 using UnityEditor;
-using Banter.SDK;
+using BS;
 using System.IO;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     public class MenuUtils
     {

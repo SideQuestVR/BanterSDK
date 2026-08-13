@@ -1,7 +1,7 @@
 using System;
 using UnityEngine.UIElements;
 
-namespace Banter.UICodeGen
+namespace BS.UICodeGen
 {
     /// <summary>
     /// Marks a class as a UI element for code generation.

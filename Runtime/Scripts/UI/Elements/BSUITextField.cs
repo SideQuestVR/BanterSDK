@@ -1,9 +1,9 @@
 using System;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.UICodeGen;
+using BS.UICodeGen;
 
-namespace Banter.UI.Elements
+namespace BS.UI.Elements
 {
     /// <summary>
     /// Text input field element with support for placeholder text, password masking, and validation.

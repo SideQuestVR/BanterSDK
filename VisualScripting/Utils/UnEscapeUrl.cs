@@ -3,10 +3,10 @@
 #if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine.Networking;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("UnEscape Url")]
     [UnitShortTitle("UnEscape Url")]

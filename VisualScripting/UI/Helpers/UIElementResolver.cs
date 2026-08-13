@@ -1,9 +1,9 @@
 #if BANTER_VISUAL_SCRIPTING
-using Banter.SDK;
-using Banter.UI.Bridge;
+using BS;
+using BS.UI.Bridge;
 using UnityEngine;
 
-namespace Banter.VisualScripting.UI.Helpers
+namespace BS.VisualScripting.UI.Helpers
 {
     /// <summary>
     /// Helper class for resolving element names to IDs across all panels in Visual Scripting nodes

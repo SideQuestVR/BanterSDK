@@ -1,5 +1,5 @@
 using Unity.VisualScripting;
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDK.BanterUser")]
     public class BSUser

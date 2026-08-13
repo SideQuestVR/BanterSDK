@@ -1,7 +1,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Banter.SDK;
+using BS;
 #if BANTER_ORA
 using SideQuest.Ora;
 using Unity.VisualScripting;

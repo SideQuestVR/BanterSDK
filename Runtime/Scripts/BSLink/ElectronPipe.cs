@@ -6,7 +6,7 @@
 // using System.Text;
 // using System.Collections.Concurrent;
 // using Lachee.IO;
-// using Banter.SDK;
+// using BS;
 
 // public class ElectronPipe
 // {
@@ -74,7 +74,7 @@
 
 //         var ctx = new CancellationTokenSource();
 //         ctx.CancelAfter(60000);
-//         _ = Banter.SDK.TaskRunner.Run(() =>
+//         _ = BS.TaskRunner.Run(() =>
 //         {
 //             // Keep retrying pipe connection once every one seconds for 60 seconds (token timeout)
 //             while (!done)

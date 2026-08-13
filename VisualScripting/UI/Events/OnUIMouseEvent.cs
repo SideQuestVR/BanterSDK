@@ -1,12 +1,12 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On UI Mouse Event")]
     [UnitShortTitle("On UI Mouse Event")]

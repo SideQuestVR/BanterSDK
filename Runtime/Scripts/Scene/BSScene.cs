@@ -10,7 +10,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.Video;
 using UnityEngine.Events;
 using UnityEngine.XR;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 
 using SideQuest.FlexaBody;
 
@@ -22,7 +22,7 @@ using SideQuest.FlexaBody;
 using Unity.VisualScripting;
 #endif
 
-namespace Banter.SDK
+namespace BS
 {
     public class SpawnPointData
     {
@@ -170,7 +170,7 @@ namespace Banter.SDK
                 {
                     return;
                 }
-                activeTask = Banter.SDK.TaskRunner.Run(() =>
+                activeTask = BS.TaskRunner.Run(() =>
                 {
                     SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref pendingQLocked, 1, 0) == 0));
                     var q = _pendingQueue;

@@ -1,6 +1,6 @@
 using System;
 using System.Collections;
-using Banter.SDKEditor;
+using BS.SDKEditor;
 using Unity.EditorCoroutines.Editor;
 using UnityEngine;
 using UnityEngine.UI;

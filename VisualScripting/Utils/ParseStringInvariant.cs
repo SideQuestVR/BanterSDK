@@ -1,12 +1,12 @@
 #if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Linq;
-using Banter.Utilities.Async;
+using BS.Utilities.Async;
 using System.Globalization;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("String To Float Invariant Culture")]
     [UnitShortTitle("String To Float")]

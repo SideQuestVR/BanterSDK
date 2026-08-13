@@ -9,7 +9,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Object = UnityEngine.Object;
 
-namespace Banter.SDK
+namespace BS
 {
     [Serializable]
     public class Community

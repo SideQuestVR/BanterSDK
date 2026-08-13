@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [System.Serializable]
     [RenamedFrom("Banter.SDK.BanterComponentPropertyUpdate")]

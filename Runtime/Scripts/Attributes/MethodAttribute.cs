@@ -2,7 +2,7 @@ using System;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace Banter.SDK
+namespace BS
 {
     [AttributeUsage(AttributeTargets.Method)]
     public class MethodAttribute : Attribute

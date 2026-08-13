@@ -1,6 +1,6 @@
 using System;
 
-namespace Banter.SDK
+namespace BS
 {
     public class MessageDelimitersAttribute : Attribute
     {

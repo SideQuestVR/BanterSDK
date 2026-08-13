@@ -1,10 +1,10 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Toggle Changed")]
     [UnitShortTitle("On Toggle Changed")]

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Banter.UI.Bridge
+namespace BS.UI.Bridge
 {
     /// <summary>
     /// Enumeration of all supported USS style properties for Unity UI Toolkit.

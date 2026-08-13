@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Data.Common;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get Users")]
     [UnitShortTitle("Get Users")]

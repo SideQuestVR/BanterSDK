@@ -1,6 +1,6 @@
 
 using SideQuest.FlexaBody;
-using Banter.SDK;
+using BS;
 using Unity.VisualScripting;
 using UnityEngine;
 

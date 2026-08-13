@@ -1,4 +1,4 @@
-namespace Banter.SDK
+namespace BS
 {
     public static class UICommands
     {

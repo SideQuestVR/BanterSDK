@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter.SDK
+namespace BS
 {
     [DisallowMultipleComponent]
     [DefaultExecutionOrder(-1)]

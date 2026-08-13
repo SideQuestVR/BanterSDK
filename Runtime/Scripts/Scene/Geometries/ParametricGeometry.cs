@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     public class ParametricGeometry : Geometry
     {

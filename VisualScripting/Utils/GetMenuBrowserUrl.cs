@@ -3,9 +3,9 @@ using System;
 using System.Reflection;
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     /// <summary>
     /// Visual Scripting node that gets the current URL of the menu browser.

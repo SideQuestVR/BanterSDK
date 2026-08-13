@@ -1,9 +1,9 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Radio Button Changed")]
     [UnitShortTitle("On Radio Button Changed")]

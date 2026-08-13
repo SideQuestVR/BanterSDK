@@ -1,9 +1,9 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Banter glTF is Loaded")]
     [UnitShortTitle("is glTF Loaded")]

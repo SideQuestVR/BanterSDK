@@ -1,8 +1,8 @@
 using System;
-using Banter.UI.Bridge;
+using BS.UI.Bridge;
 using UnityEngine;
 
-namespace Banter.UI.Elements
+namespace BS.UI.Elements
 {
     public partial class BSUITextField : IUIMethodDispatcher, IUIPropertySetter
     {

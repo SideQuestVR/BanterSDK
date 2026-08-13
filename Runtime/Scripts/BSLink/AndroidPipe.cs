@@ -2,8 +2,8 @@
 // using System.Diagnostics;
 // using System.Threading.Tasks;
 // using UnityEngine;
-// using Banter.Utilities.Async;
-// namespace Banter.SDK
+// using BS.Utilities.Async;
+// namespace BS
 // {
 //     public class AndroidPipe : BSPipe
 //     {

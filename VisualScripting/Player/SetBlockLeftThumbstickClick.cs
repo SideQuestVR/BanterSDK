@@ -1,9 +1,9 @@
 #if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using SideQuest.FlexaBody;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Block Left Thumbstick Click")]
     [UnitShortTitle("Block Left Stick Click")]

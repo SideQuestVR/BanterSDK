@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
-namespace Banter.SDK
+namespace BS
 {
     public class AframeCallback : AndroidJavaProxy
     {

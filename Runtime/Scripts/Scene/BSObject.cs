@@ -6,7 +6,7 @@ using System.Linq;
 using UnityEngine;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RenamedFrom("Banter.SDK.BanterObject")]
     public class BSObject

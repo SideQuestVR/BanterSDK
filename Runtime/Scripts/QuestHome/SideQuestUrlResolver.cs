@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Newtonsoft.Json.Linq;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Utility class for resolving SideQuest listing URLs to direct APK URLs.

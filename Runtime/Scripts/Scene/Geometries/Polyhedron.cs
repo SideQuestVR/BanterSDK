@@ -2,7 +2,7 @@
 using UnityEngine;
 using System.Linq;
 
-namespace Banter.SDK
+namespace BS
 {
     public class Polyhedron : Geometry
     {

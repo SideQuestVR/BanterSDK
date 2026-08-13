@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Manages batch AO baking with distance-based priority.

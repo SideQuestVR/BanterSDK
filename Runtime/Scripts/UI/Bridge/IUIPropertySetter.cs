@@ -1,4 +1,4 @@
-namespace Banter.UI.Bridge
+namespace BS.UI.Bridge
 {
     /// <summary>
     /// Interface for UI elements that can handle dynamic property setting

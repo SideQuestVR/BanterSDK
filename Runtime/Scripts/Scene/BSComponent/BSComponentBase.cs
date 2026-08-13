@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using Unity.VisualScripting;
 
-namespace Banter.SDK
+namespace BS
 {
     [RequireComponent(typeof(BSObjectId))]
     [RenamedFrom("Banter.SDK.BanterComponentBase")]
