@@ -250,7 +250,7 @@ All: `obj.AddComponent(new BS.ComponentName({...}))`
 
 ### Physics
 
-**BanterRigidbody**
+**Rigidbody**
 ```
 Config: {velocity?: Vector3, angularVelocity?: Vector3, mass?: number(1), drag?: number(0), angularDrag?: number(0.05), isKinematic?: boolean(false), useGravity?: boolean(true), centerOfMass?: Vector3, collisionDetectionMode?: CollisionDetectionMode, freezePositionX?: boolean, freezePositionY?: boolean, freezePositionZ?: boolean, freezeRotationX?: boolean, freezeRotationY?: boolean, freezeRotationZ?: boolean}
 
@@ -293,12 +293,12 @@ Config: {isTrigger?: boolean(false), radius?: number(0.5), height?: number(2)}
 Config: {isTrigger?: boolean(false), convex?: boolean(true)}
 ```
 
-**BanterColliderEvents**
+**ColliderEvents**
 ```
 Config: {} (no params, enables collision/trigger events)
 ```
 
-**BanterPhysicMaterial**
+**PhysicMaterial**
 ```
 Config: {dynamicFriction?: number(0.6), staticFriction?: number(0.6)}
 ```
@@ -341,84 +341,84 @@ Config: {targetPosition?: Vector3, targetRotation?: Quaternion, targetVelocity?:
 Config: {type?: LightType(Point), color?: Vector4(1,1,1,1), intensity?: number(1), range?: number(10), spotAngle?: number(30), innerSpotAngle?: number(21.8), shadows?: LightShadows(None)}
 ```
 
-**BanterMaterial**
+**Material**
 ```
 Config: {shaderName?: string("Unlit/Diffuse"), texture?: string(url), color?: Vector4(1,1,1,1), side?: MaterialSide(Front), generateMipMaps?: boolean(false)}
 ```
 
-**BanterText**
+**Text**
 ```
 Config: {text?: string, color?: Vector4(1,1,1,1), fontSize?: number(2), horizontalAlignment?: HorizontalAlignment(Center), verticalAlignment?: VerticalAlignment(Middle), richText?: boolean(true), enableWordWrapping?: boolean(true), rectTransformSizeDelta?: Vector2}
 ```
 
-**BanterBillboard**
+**Billboard**
 ```
 Config: {smoothing?: number(0), enableXAxis?: boolean(true), enableYAxis?: boolean(true), enableZAxis?: boolean(false)}
 ```
 
-**BanterMirror**
+**Mirror**
 ```
 Config: {}
 ```
 
-**BanterInvertedMesh**
+**InvertedMesh**
 ```
 Config: {}
 ```
 
 ### Geometry Primitives
 
-**BanterBox**
+**Box**
 ```
 Config: {width?: number(1), height?: number(1), depth?: number(1), widthSegments?: number(1), heightSegments?: number(1), depthSegments?: number(1)}
 ```
 
-**BanterSphere**
+**Sphere**
 ```
 Config: {radius?: number(1), widthSegments?: number(16), heightSegments?: number(16), phiStart?: number(0), phiLength?: number(2π), thetaStart?: number(0), thetaLength?: number(π)}
 ```
 
-**BanterPlane**
+**Plane**
 ```
 Config: {width?: number(1), height?: number(1), widthSegments?: number(1), heightSegments?: number(1)}
 // facing -Z
 ```
 
-**BanterCylinder**
+**Cylinder**
 ```
 Config: {radiusTop?: number(1), radiusBottom?: number(1), height?: number(1), radialSegments?: number(8), heightSegments?: number(1), openEnded?: boolean(false), thetaStart?: number(0), thetaLength?: number(2π)}
 // curved side faces -Z
 ```
 
-**BanterCone**
+**Cone**
 ```
 Config: {radius?: number(1), height?: number(1), radialSegments?: number(8), heightSegments?: number(1), openEnded?: boolean(false), thetaStart?: number(0), thetaLength?: number(2π)}
 ```
 
-**BanterCircle**
+**Circle**
 ```
 Config: {radius?: number(1), segments?: number(32), thetaStart?: number(0), thetaLength?: number(2π)}
 ```
 
-**BanterTorus**
+**Torus**
 ```
 Config: {radius?: number(1), tube?: number(0.4), radialSegments?: number(8), tubularSegments?: number(16), arc?: number(2π)}
 ```
 
-**BanterTorusKnot**
+**TorusKnot**
 ```
 Config: {radius?: number(1), tube?: number(0.4), tubularSegments?: number(64), radialSegments?: number(8), p?: number(2), q?: number(3)}
 ```
 
 **Parametric Shapes**
 ```
-BanterKlein, BanterMobius, BanterMobius3d, BanterCatenoid, BanterHelicoid, BanterFermet, BanterNatica, BanterScherk, BanterSnail, BanterSpiral, BanterSpring
+Klein, Mobius, Mobius3d, Catenoid, Helicoid, Fermet, Natica, Scherk, Snail, Spiral, Spring
 Config: {stacks?: number, slices?: number, ...shape-specific}
 ```
 
 ### Audio
 
-**BanterAudioSource**
+**AudioSource**
 ```
 Config: {volume?: number(1), pitch?: number(1), mute?: boolean(false), loop?: boolean(false), playOnAwake?: boolean(true), bypassEffects?: boolean(false), bypassListenerEffects?: boolean(false), bypassReverbZones?: boolean(false), spatialBlend?: number(1)}
 
@@ -430,17 +430,17 @@ PlayOneShotFromUrl(url: string)
 
 ### Media
 
-**BanterGLTF**
+**GLTF**
 ```
 Config: {url: string, generateMipMaps?: boolean(false), addColliders?: boolean(false), nonConvexColliders?: boolean(false), slippery?: boolean(false), climbable?: boolean(false), legacyRotate?: boolean(false), childrenLayer?: number}
 ```
 
-**BanterAssetBundle**
+**AssetBundle**
 ```
 Config: {windowsUrl?: string, androidUrl?: string, osxUrl?: string, linuxUrl?: string, iosUrl?: string, vosUrl?: string, isScene?: boolean(false), legacyShaderFix?: boolean(false)}
 ```
 
-**BanterVideoPlayer**
+**VideoPlayer**
 ```
 Config: {url?: string, volume?: number(1), loop?: boolean(false), playOnAwake?: boolean(true), skipOnDrop?: boolean(true), waitForFirstFrame?: boolean(true)}
 
@@ -448,7 +448,7 @@ Properties: time, isPlaying, isLooping
 Methods: Play(), Pause(), Stop()
 ```
 
-**BanterBrowser**
+**Browser**
 ```
 Config: {url?: string, mipMaps?: number(4), pixelsPerUnit?: number(1200), pageWidth?: number(1280), pageHeight?: number(720), actions?: string}
 
@@ -457,63 +457,63 @@ ToggleInteraction(enabled: boolean)
 RunActions(actions: string)
 ```
 
-**BanterStreetView**
+**StreetView**
 ```
 Config: {panoId: string}
 ```
 
-**BanterPortal**
+**Portal**
 ```
 Config: {url: string, instance?: string}
 ```
 
 ### VR Interaction
 
-**BanterGrababble**
+**Grababble**
 ```
 Config: {grabType?: BanterGrabType, grabRadius?: number(0.01), gunTriggerSensitivity?: number(0.5), gunTriggerFireRate?: number(0.1), gunTriggerAutoFire?: boolean(false), blockLeftPrimary?: boolean, blockLeftSecondary?: boolean, blockRightPrimary?: boolean, blockRightSecondary?: boolean, blockLeftThumbstick?: boolean, blockLeftThumbstickClick?: boolean, blockRightThumbstick?: boolean, blockRightThumbstickClick?: boolean, blockLeftTrigger?: boolean, blockRightTrigger?: boolean}
 ```
 
-**BanterGrabHandle**
+**GrabHandle**
 ```
 Config: {grabType?: BanterGrabType, grabRadius?: number(0.01)}
 ```
 
-**BanterHeldEvents**
+**HeldEvents**
 ```
 Config: {sensitivity?: number(0.5), fireRate?: number(0.1), auto?: boolean(false), blockLeftPrimary?: boolean, blockLeftSecondary?: boolean, blockRightPrimary?: boolean, blockRightSecondary?: boolean, blockLeftThumbstick?: boolean, blockLeftThumbstickClick?: boolean, blockRightThumbstick?: boolean, blockRightThumbstickClick?: boolean, blockLeftTrigger?: boolean, blockRightTrigger?: boolean}
 ```
 
-**BanterAttachedObject**
+**AttachedObject**
 ```
 Config: {attachmentType: AttachmentType}
 ```
 
 ### Special
 
-**BanterKitItem**
+**KitItem**
 ```
 Config: {path: string}
 ```
 
-**BanterSyncedObject**
+**SyncedObject**
 ```
 Config: {}
 ```
 
-**BanterWorldObject**
+**WorldObject**
 ```
 Config: {}
 ```
 
-**BanterAvatarPedestal**
+**AvatarPedestal**
 ```
 Config: {}
 ```
 
 ### Optimization
 
-**BanterAOBaking**
+**AOBaking**
 
 Merges child primitives into a single optimized mesh and bakes ambient occlusion into vertex colors for realistic soft shadows without runtime lighting cost.
 
@@ -546,16 +546,16 @@ const building = new BS.GameObject({name: "Building"});
 // 2. Add child primitives
 const wall = new BS.GameObject({name: "Wall", localPosition: new BS.Vector3(0, 1, 0)});
 wall.SetParent(building, false);
-wall.AddComponent(new BS.BanterBox({width: 4, height: 2, depth: 0.2}));
-wall.AddComponent(new BS.BanterMaterial({color: new BS.Vector4(0.8, 0.8, 0.8, 1)}));
+wall.AddComponent(new BS.Box({width: 4, height: 2, depth: 0.2}));
+wall.AddComponent(new BS.Material({color: new BS.Vector4(0.8, 0.8, 0.8, 1)}));
 
 const pillar = new BS.GameObject({name: "Pillar", localPosition: new BS.Vector3(-1.5, 1, 0.5)});
 pillar.SetParent(building, false);
-pillar.AddComponent(new BS.BanterCylinder({radiusTop: 0.2, radiusBottom: 0.2, height: 2}));
-pillar.AddComponent(new BS.BanterMaterial({color: new BS.Vector4(0.7, 0.7, 0.7, 1)}));
+pillar.AddComponent(new BS.Cylinder({radiusTop: 0.2, radiusBottom: 0.2, height: 2}));
+pillar.AddComponent(new BS.Material({color: new BS.Vector4(0.7, 0.7, 0.7, 1)}));
 
 // 3. Add AO baking to the parent and bake
-const aoBaker = building.AddComponent(new BS.BanterAOBaking({
+const aoBaker = building.AddComponent(new BS.AOBaking({
   subdivisionLevel: 2,    // More triangles = smoother AO
   sampleCount: 64,        // Good quality
   aoIntensity: 0.8        // Subtle shadows
@@ -577,7 +577,7 @@ aoBaker.BakeAO();
 
 ## UI System
 
-### BanterUIPanel
+### UIPanel
 ```
 Config: {resolution?: Vector2(800,600), screenSpace?: boolean(false), enableHaptics?: boolean(true), clickHaptic?: Vector2, enterHaptic?: Vector2, exitHaptic?: Vector2, enableSounds?: boolean(false), clickSoundUrl?: string, enterSoundUrl?: string, exitSoundUrl?: string}
 ```
@@ -699,7 +699,7 @@ Methods: SetFromEuler({x,y,z,order?}), GetEuler() -> Vector3
 
 ### ComponentType (BS.CT)
 ```
-Transform, BanterRigidbody, BoxCollider, SphereCollider, CapsuleCollider, MeshCollider, BanterAudioSource, BanterGLTF, BanterMaterial, BanterText, Light, BanterBrowser, BanterVideoPlayer, BanterAssetBundle, ...
+Transform, Rigidbody, BoxCollider, SphereCollider, CapsuleCollider, MeshCollider, AudioSource, GLTF, Material, Text, Light, Browser, VideoPlayer, AssetBundle, ...
 ```
 
 ### PropertyName (BS.PN)
@@ -811,24 +811,24 @@ obj.RemoveEventListener(eventName, callback)
 ### Create object with component
 ```js
 const obj = new BS.GameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
-obj.AddComponent(new BS.BanterSphere({radius: 1}));
-obj.AddComponent(new BS.BanterMaterial({color: new BS.Vector4(1,0,0,1)}));
+obj.AddComponent(new BS.Sphere({radius: 1}));
+obj.AddComponent(new BS.Material({color: new BS.Vector4(1,0,0,1)}));
 ```
 
 ### Physics object
 ```js
 const obj = new BS.GameObject({name: "Ball"});
-obj.AddComponent(new BS.BanterSphere({radius: 0.5}));
+obj.AddComponent(new BS.Sphere({radius: 0.5}));
 obj.AddComponent(new BS.SphereCollider({radius: 0.5}));
-obj.AddComponent(new BS.BanterRigidbody({mass: 1}));
-obj.AddComponent(new BS.BanterColliderEvents());
+obj.AddComponent(new BS.Rigidbody({mass: 1}));
+obj.AddComponent(new BS.ColliderEvents());
 obj.On("collision-enter", (e) => console.log(e.detail.name));
 ```
 
 ### Grabbable object
 ```js
 const obj = new BS.GameObject({name: "Pickup"});
-obj.AddComponent(new BS.BanterGrababble({grabType: BS.BanterGrabType.Default}));
+obj.AddComponent(new BS.Grababble({grabType: BS.BanterGrabType.Default}));
 obj.On("grab", (e) => console.log("Grabbed by", e.detail.side));
 obj.On("drop", (e) => console.log("Dropped"));
 ```
@@ -843,7 +843,7 @@ scene.On("unity-loaded", () => {
 
 ### Get component & watch transform
 ```js
-const rb = obj.GetComponent(BS.CT.BanterRigidbody);
+const rb = obj.GetComponent(BS.CT.Rigidbody);
 obj.WatchTransform([BS.PN.position, BS.PN.rotation], (t) => console.log(t.position));
 ```
 

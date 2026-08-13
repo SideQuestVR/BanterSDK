@@ -2,6 +2,15 @@
 
 Create interactive 3D VR spaces using JavaScript. The Banter SDK provides a complete API for building multiplayer virtual reality experiences.
 
+> **Component names dropped the `Banter` prefix.** `BS.BanterBrowser` is now `BS.Browser`,
+> `BS.BanterGLTF` is now `BS.GLTF`, and so on. The examples below use the new names.
+>
+> Existing scripts keep working: every previous component name remains as a deprecated alias,
+> including the `BS.ComponentType` members (`BS.CT.BanterBrowser` still resolves to
+> `BS.CT.Browser`). The aliases are subclasses of the new classes and override
+> `Symbol.hasInstance`, so `instanceof` holds in both directions. Component ids on the wire are
+> unchanged. New components added after this rename will not get an alias.
+
 ---
 
 ## Quick Start
@@ -21,14 +30,14 @@ scene.On("unity-loaded", () => {
     });
 
     // Add visual geometry
-    sphere.AddComponent(new BS.BanterSphere({ radius: 0.5 }));
-    sphere.AddComponent(new BS.BanterMaterial({
+    sphere.AddComponent(new BS.Sphere({ radius: 0.5 }));
+    sphere.AddComponent(new BS.Material({
         color: new BS.Vector4(1, 0, 0, 1)
     }));
 
     // Add physics
     sphere.AddComponent(new BS.SphereCollider({ radius: 0.5 }));
-    sphere.AddComponent(new BS.BanterRigidbody({ mass: 1, useGravity: true }));
+    sphere.AddComponent(new BS.Rigidbody({ mass: 1, useGravity: true }));
 
     // Handle clicks
     sphere.On("click", (e) => {
@@ -427,7 +436,7 @@ Components and GameObjects fire their own events you can listen to:
 
 ```js
 const obj = new BS.GameObject({ name: "Model" });
-const gltf = obj.AddComponent(new BS.BanterGLTF({ url: "model.glb" }));
+const gltf = obj.AddComponent(new BS.GLTF({ url: "model.glb" }));
 
 // Component finished loading its asset (GLTF, video, audio, etc.)
 gltf.On("loaded", () => {
@@ -580,7 +589,7 @@ obj.Traverse((childObj) => {
 
 ```js
 // Add a component
-const rb = obj.AddComponent(new BS.BanterRigidbody({ mass: 2 }));
+const rb = obj.AddComponent(new BS.Rigidbody({ mass: 2 }));
 
 // Get an existing component by type
 const collider = obj.GetComponent(BS.CT.BoxCollider);
@@ -625,7 +634,7 @@ obj.On("drop", (e) => {
     console.log("Dropped by:", e.detail.side);
 });
 
-// Collision events (requires BanterColliderEvents component)
+// Collision events (requires ColliderEvents component)
 obj.On("collision-enter", (e) => {
     console.log("Collided with:", e.detail.name);
     console.log("Tag:", e.detail.tag);
@@ -676,12 +685,12 @@ obj.AddComponent(new BS.ComponentName({ property: value }));
 
 ## Physics Components
 
-### BanterRigidbody
+### Rigidbody
 
 Adds physics simulation to an object.
 
 ```js
-const rb = obj.AddComponent(new BS.BanterRigidbody({
+const rb = obj.AddComponent(new BS.Rigidbody({
     mass: 1,                    // Weight (default: 1)
     drag: 0,                    // Linear drag (default: 0)
     angularDrag: 0.05,          // Rotational drag (default: 0.05)
@@ -787,20 +796,20 @@ obj.AddComponent(new BS.MeshCollider({
 }));
 ```
 
-### BanterColliderEvents
+### ColliderEvents
 
 Enables collision and trigger events on the GameObject. Required for `collision-enter`, `collision-exit`, `trigger-enter`, `trigger-exit` events.
 
 ```js
-obj.AddComponent(new BS.BanterColliderEvents());
+obj.AddComponent(new BS.ColliderEvents());
 ```
 
-### BanterPhysicMaterial
+### PhysicMaterial
 
 Controls surface friction.
 
 ```js
-obj.AddComponent(new BS.BanterPhysicMaterial({
+obj.AddComponent(new BS.PhysicMaterial({
     dynamicFriction: 0.6,  // Friction when moving
     staticFriction: 0.6    // Friction when stationary
 }));
@@ -947,12 +956,12 @@ obj.AddComponent(new BS.Light({
 }));
 ```
 
-### BanterMaterial
+### Material
 
 Applies a material/shader to the object.
 
 ```js
-obj.AddComponent(new BS.BanterMaterial({
+obj.AddComponent(new BS.Material({
     shaderName: "Unlit/Diffuse",        // Shader name
     texture: "https://example.com/texture.png",
     color: new BS.Vector4(1, 1, 1, 1),  // RGBA tint
@@ -961,12 +970,12 @@ obj.AddComponent(new BS.BanterMaterial({
 }));
 ```
 
-### BanterText
+### Text
 
 3D text rendering.
 
 ```js
-obj.AddComponent(new BS.BanterText({
+obj.AddComponent(new BS.Text({
     text: "Hello World",
     color: new BS.Vector4(1, 1, 1, 1),
     fontSize: 2,
@@ -978,12 +987,12 @@ obj.AddComponent(new BS.BanterText({
 }));
 ```
 
-### BanterBillboard
+### Billboard
 
 Makes object always face the camera.
 
 ```js
-obj.AddComponent(new BS.BanterBillboard({
+obj.AddComponent(new BS.Billboard({
     smoothing: 0,        // Rotation smoothing (0 = instant)
     enableXAxis: true,   // Rotate on X
     enableYAxis: true,   // Rotate on Y
@@ -991,20 +1000,20 @@ obj.AddComponent(new BS.BanterBillboard({
 }));
 ```
 
-### BanterMirror
+### Mirror
 
 Creates a reflective mirror surface.
 
 ```js
-obj.AddComponent(new BS.BanterMirror());
+obj.AddComponent(new BS.Mirror());
 ```
 
-### BanterInvertedMesh
+### InvertedMesh
 
 Inverts mesh normals (renders inside-out).
 
 ```js
-obj.AddComponent(new BS.BanterInvertedMesh());
+obj.AddComponent(new BS.InvertedMesh());
 ```
 
 ---
@@ -1013,10 +1022,10 @@ obj.AddComponent(new BS.BanterInvertedMesh());
 
 Simple shape components for quick prototyping.
 
-### BanterBox
+### Box
 
 ```js
-obj.AddComponent(new BS.BanterBox({
+obj.AddComponent(new BS.Box({
     width: 1,
     height: 1,
     depth: 1,
@@ -1026,10 +1035,10 @@ obj.AddComponent(new BS.BanterBox({
 }));
 ```
 
-### BanterSphere
+### Sphere
 
 ```js
-obj.AddComponent(new BS.BanterSphere({
+obj.AddComponent(new BS.Sphere({
     radius: 1,
     widthSegments: 16,
     heightSegments: 16,
@@ -1040,12 +1049,12 @@ obj.AddComponent(new BS.BanterSphere({
 }));
 ```
 
-### BanterPlane
+### Plane
 
 Plane faces -Z direction (forward).
 
 ```js
-obj.AddComponent(new BS.BanterPlane({
+obj.AddComponent(new BS.Plane({
     width: 1,
     height: 1,
     widthSegments: 1,
@@ -1053,12 +1062,12 @@ obj.AddComponent(new BS.BanterPlane({
 }));
 ```
 
-### BanterCylinder
+### Cylinder
 
 Curved side faces -Z direction (forward).
 
 ```js
-obj.AddComponent(new BS.BanterCylinder({
+obj.AddComponent(new BS.Cylinder({
     radiusTop: 1,
     radiusBottom: 1,
     height: 1,
@@ -1070,10 +1079,10 @@ obj.AddComponent(new BS.BanterCylinder({
 }));
 ```
 
-### BanterCone
+### Cone
 
 ```js
-obj.AddComponent(new BS.BanterCone({
+obj.AddComponent(new BS.Cone({
     radius: 1,
     height: 1,
     radialSegments: 8,
@@ -1084,10 +1093,10 @@ obj.AddComponent(new BS.BanterCone({
 }));
 ```
 
-### BanterCircle
+### Circle
 
 ```js
-obj.AddComponent(new BS.BanterCircle({
+obj.AddComponent(new BS.Circle({
     radius: 1,
     segments: 32,
     thetaStart: 0,
@@ -1095,10 +1104,10 @@ obj.AddComponent(new BS.BanterCircle({
 }));
 ```
 
-### BanterTorus
+### Torus
 
 ```js
-obj.AddComponent(new BS.BanterTorus({
+obj.AddComponent(new BS.Torus({
     radius: 1,
     tube: 0.4,
     radialSegments: 8,
@@ -1107,10 +1116,10 @@ obj.AddComponent(new BS.BanterTorus({
 }));
 ```
 
-### BanterTorusKnot
+### TorusKnot
 
 ```js
-obj.AddComponent(new BS.BanterTorusKnot({
+obj.AddComponent(new BS.TorusKnot({
     radius: 1,
     tube: 0.4,
     tubularSegments: 64,
@@ -1124,28 +1133,28 @@ obj.AddComponent(new BS.BanterTorusKnot({
 
 Advanced mathematical surfaces:
 
-- `BanterKlein` - Klein bottle
-- `BanterMobius` - Möbius strip
-- `BanterMobius3d` - 3D Möbius
-- `BanterCatenoid` - Catenoid surface
-- `BanterHelicoid` - Helicoid surface
-- `BanterFermet` - Fermat spiral
-- `BanterNatica` - Natica shell
-- `BanterScherk` - Scherk surface
-- `BanterSnail` - Snail shell
-- `BanterSpiral` - Spiral surface
-- `BanterSpring` - Spring/coil
+- `Klein` - Klein bottle
+- `Mobius` - Möbius strip
+- `Mobius3d` - 3D Möbius
+- `Catenoid` - Catenoid surface
+- `Helicoid` - Helicoid surface
+- `Fermet` - Fermat spiral
+- `Natica` - Natica shell
+- `Scherk` - Scherk surface
+- `Snail` - Snail shell
+- `Spiral` - Spiral surface
+- `Spring` - Spring/coil
 
 ---
 
 ## Audio Components
 
-### BanterAudioSource
+### AudioSource
 
 Plays audio in 3D space.
 
 ```js
-const audio = obj.AddComponent(new BS.BanterAudioSource({
+const audio = obj.AddComponent(new BS.AudioSource({
     volume: 1,              // 0 to 1
     pitch: 1,               // Playback speed
     mute: false,
@@ -1170,12 +1179,12 @@ audio.PlayOneShotFromUrl("https://example.com/sound.mp3");
 
 ## Media & Content Components
 
-### BanterGLTF
+### GLTF
 
 Loads 3D models in glTF/GLB format.
 
 ```js
-obj.AddComponent(new BS.BanterGLTF({
+obj.AddComponent(new BS.GLTF({
     url: "https://example.com/model.glb",
     generateMipMaps: false,
     addColliders: false,        // Auto-generate colliders
@@ -1187,12 +1196,12 @@ obj.AddComponent(new BS.BanterGLTF({
 }));
 ```
 
-### BanterAssetBundle
+### AssetBundle
 
 Loads Unity asset bundles (for advanced content).
 
 ```js
-obj.AddComponent(new BS.BanterAssetBundle({
+obj.AddComponent(new BS.AssetBundle({
     windowsUrl: "https://example.com/windows.banter",
     androidUrl: "https://example.com/android.banter",
     osxUrl: null,
@@ -1204,12 +1213,12 @@ obj.AddComponent(new BS.BanterAssetBundle({
 }));
 ```
 
-### BanterVideoPlayer
+### VideoPlayer
 
 Plays video on a surface.
 
 ```js
-const video = obj.AddComponent(new BS.BanterVideoPlayer({
+const video = obj.AddComponent(new BS.VideoPlayer({
     url: "https://example.com/video.mp4",
     volume: 1,
     loop: true,
@@ -1235,12 +1244,12 @@ video.Pause();
 video.Stop();
 ```
 
-### BanterBrowser
+### Browser
 
 Embedded web browser on a surface.
 
 ```js
-const browser = obj.AddComponent(new BS.BanterBrowser({
+const browser = obj.AddComponent(new BS.Browser({
     url: "https://example.com",
     mipMaps: 4,
     pixelsPerUnit: 1200,
@@ -1257,22 +1266,22 @@ browser.ToggleInteraction(true);
 browser.RunActions("click2d,0.5,0.5");
 ```
 
-### BanterStreetView
+### StreetView
 
 Google Street View panorama viewer.
 
 ```js
-obj.AddComponent(new BS.BanterStreetView({
+obj.AddComponent(new BS.StreetView({
     panoId: "CAoSLEFGM..."  // Street View panorama ID
 }));
 ```
 
-### BanterPortal
+### Portal
 
 Creates a portal to another space.
 
 ```js
-obj.AddComponent(new BS.BanterPortal({
+obj.AddComponent(new BS.Portal({
     url: "https://space.bant.ing",
     instance: "instance-id"
 }));
@@ -1282,12 +1291,12 @@ obj.AddComponent(new BS.BanterPortal({
 
 ## VR Interaction Components
 
-### BanterGrababble
+### Grababble
 
 Makes an object grabbable in VR with full input control.
 
 ```js
-obj.AddComponent(new BS.BanterGrababble({
+obj.AddComponent(new BS.Grababble({
     grabType: BS.BanterGrabType.Default,
     grabRadius: 0.01,
     gunTriggerSensitivity: 0.5,
@@ -1307,23 +1316,23 @@ obj.AddComponent(new BS.BanterGrababble({
 }));
 ```
 
-### BanterGrabHandle
+### GrabHandle
 
 Simple grab point on an object.
 
 ```js
-obj.AddComponent(new BS.BanterGrabHandle({
+obj.AddComponent(new BS.GrabHandle({
     grabType: BS.BanterGrabType.Default,
     grabRadius: 0.01
 }));
 ```
 
-### BanterHeldEvents
+### HeldEvents
 
 Handles input events while an object is held.
 
 ```js
-obj.AddComponent(new BS.BanterHeldEvents({
+obj.AddComponent(new BS.HeldEvents({
     sensitivity: 0.5,
     fireRate: 0.1,
     auto: false,           // Auto-fire
@@ -1340,12 +1349,12 @@ obj.AddComponent(new BS.BanterHeldEvents({
 }));
 ```
 
-### BanterAttachedObject
+### AttachedObject
 
 Attaches object to player body parts.
 
 ```js
-obj.AddComponent(new BS.BanterAttachedObject({
+obj.AddComponent(new BS.AttachedObject({
     attachmentType: BS.AttachmentType.RightHand
 }));
 ```
@@ -1354,41 +1363,41 @@ obj.AddComponent(new BS.BanterAttachedObject({
 
 ## Special Components
 
-### BanterKitItem
+### KitItem
 
 Instantiates a prefab from an asset bundle.
 
 ```js
-obj.AddComponent(new BS.BanterKitItem({
+obj.AddComponent(new BS.KitItem({
     path: "assets/prefabs/myitem.prefab"
 }));
 ```
 
-### BanterSyncedObject
+### SyncedObject
 
 Enables network synchronization for the object.
 
 ```js
-obj.AddComponent(new BS.BanterSyncedObject());
+obj.AddComponent(new BS.SyncedObject());
 ```
 
-### BanterWorldObject
+### WorldObject
 
 Marks object as part of the world (non-interactive).
 
 ```js
-obj.AddComponent(new BS.BanterWorldObject());
+obj.AddComponent(new BS.WorldObject());
 ```
 
-### BanterAvatarPedestal
+### AvatarPedestal
 
 Displays an avatar on a pedestal.
 
 ```js
-obj.AddComponent(new BS.BanterAvatarPedestal());
+obj.AddComponent(new BS.AvatarPedestal());
 ```
 
-### BanterAOBaking
+### AOBaking
 
 Merges child meshes and bakes ambient occlusion into vertex colors for improved visual quality with minimal runtime cost. Use this for static geometry like buildings, terrain features, or any collection of primitives that won't move.
 
@@ -1400,7 +1409,7 @@ Merges child meshes and bakes ambient occlusion into vertex colors for improved 
 
 **Best Practices:**
 
-1. **Use root parents:** When building something out of multiple primitives, always create a root parent GameObject first and add all primitives as children. This keeps the hierarchy clean and organized, and is required for BanterAOBaking to work correctly.
+1. **Use root parents:** When building something out of multiple primitives, always create a root parent GameObject first and add all primitives as children. This keeps the hierarchy clean and organized, and is required for AOBaking to work correctly.
 
 2. **Bake incrementally:** Bake each object as soon as it's finished before building the next one. This ensures proper AO from nearby objects.
 
@@ -1419,13 +1428,13 @@ Merges child meshes and bakes ambient occlusion into vertex colors for improved 
 const building = new BS.GameObject({ name: "Building" });
 
 const wall = new BS.GameObject({ name: "Wall", parent: building });
-wall.AddComponent(new BS.BanterBox({ width: 5, height: 3, depth: 0.2 }));
+wall.AddComponent(new BS.Box({ width: 5, height: 3, depth: 0.2 }));
 
 const pillar = new BS.GameObject({ name: "Pillar", parent: building });
-pillar.AddComponent(new BS.BanterCylinder({ radiusTop: 0.3, radiusBottom: 0.3, height: 3 }));
+pillar.AddComponent(new BS.Cylinder({ radiusTop: 0.3, radiusBottom: 0.3, height: 3 }));
 
 // Add AO baking to parent
-const aoBaker = building.AddComponent(new BS.BanterAOBaking({
+const aoBaker = building.AddComponent(new BS.AOBaking({
     subdivisionLevel: 2,              // 0-3, higher = more detail
     sampleCount: 128,                 // 16-256, higher = better quality
     aoIntensity: 1.2,                 // 0-2, strength of shadows
@@ -1473,13 +1482,13 @@ aoBaker.Clear();
 
 Create 2D user interfaces in VR with the UI system.
 
-### BanterUIPanel
+### UIPanel
 
 Container for UI elements. Must be added to a GameObject first.
 
 ```js
 const panelObj = new BS.GameObject({ name: "UIPanel" });
-const panel = panelObj.AddComponent(new BS.BanterUIPanel({
+const panel = panelObj.AddComponent(new BS.UIPanel({
     resolution: new BS.Vector2(800, 600),
     screenSpace: false,     // World-space UI
     enableHaptics: true,
@@ -1502,7 +1511,7 @@ All UI components inherit from UIElement.
 ```js
 element.id;           // Unique ID
 element.type;         // UIElementType
-element.panel;        // Parent BanterUIPanel
+element.panel;        // Parent UIPanel
 element.parent;       // Parent UIElement
 element.children;     // Child UIElements
 element.enabled;      // Interactive
@@ -1795,15 +1804,15 @@ Used with `GetComponent()`. Shorthand: `BS.CT`
 
 ```js
 BS.CT.Transform
-BS.CT.BanterRigidbody
+BS.CT.Rigidbody
 BS.CT.BoxCollider
 BS.CT.SphereCollider
 BS.CT.CapsuleCollider
 BS.CT.MeshCollider
-BS.CT.BanterAudioSource
-BS.CT.BanterGLTF
-BS.CT.BanterMaterial
-BS.CT.BanterText
+BS.CT.AudioSource
+BS.CT.GLTF
+BS.CT.Material
+BS.CT.Text
 BS.CT.Light
 // ... and more
 ```

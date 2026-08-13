@@ -28,15 +28,15 @@ obj2.SetParent(obj, false); // Worldpositionstays - true by default
 |---------|----------|
 | **Scene** | `GetInstance()`, `Find()`, `SetSettings()`, `Raycast()`, `TeleportTo()` |
 | **GameObject** | `new GameObject()`, `AddComponent()`, `SetPosition()`, `SetParent()` |
-| **Physics** | `BanterRigidbody`, `BoxCollider`, `SphereCollider`, `BanterColliderEvents` |
+| **Physics** | `Rigidbody`, `BoxCollider`, `SphereCollider`, `ColliderEvents` |
 | **Joints** | `HingeJoint`, `SpringJoint`, `FixedJoint`, `ConfigurableJoint` |
-| **Rendering** | `BanterMaterial`, `Light`, `BanterText`, `BanterBillboard` |
-| **Geometry** | `BanterBox`, `BanterSphere`, `BanterPlane`, `BanterCylinder` |
-| **Media** | `BanterGLTF`, `BanterVideoPlayer`, `BanterBrowser`, `BanterAssetBundle` |
-| **Audio** | `BanterAudioSource` |
-| **Optimization** | `BanterAOBaking` |
-| **VR** | `BanterGrababble`, `BanterAttachedObject`, `BanterHeldEvents` |
-| **UI** | `BanterUIPanel`, `UIButton`, `UILabel`, `UISlider`, `UIToggle` |
+| **Rendering** | `Material`, `Light`, `Text`, `Billboard` |
+| **Geometry** | `Box`, `Sphere`, `Plane`, `Cylinder` |
+| **Media** | `GLTF`, `VideoPlayer`, `Browser`, `AssetBundle` |
+| **Audio** | `AudioSource` |
+| **Optimization** | `AOBaking` |
+| **VR** | `Grababble`, `AttachedObject`, `HeldEvents` |
+| **UI** | `UIPanel`, `UIButton`, `UILabel`, `UISlider`, `UIToggle` |
 
 ## Essential Events
 
@@ -62,19 +62,19 @@ obj2.SetParent(obj, false); // Worldpositionstays - true by default
 
 **Visual:**
 ```
-BanterSphere({radius}), BanterBox({width, height, depth}), BanterCylinder({radiusTop, radiusBottom})  // curved side faces -Z
-BanterPlane({width, height}) // facing -Z
-BanterTorus() // facing -Z
-BanterMaterial({color: Vector4, texture: url})
-BanterText({text, fontSize, color})
+Sphere({radius}), Box({width, height, depth}), Cylinder({radiusTop, radiusBottom})  // curved side faces -Z
+Plane({width, height}) // facing -Z
+Torus() // facing -Z
+Material({color: Vector4, texture: url})
+Text({text, fontSize, color})
 Light({type, color, intensity})
 ```
 
 **Physics:**
 ```
-BanterRigidbody({mass, useGravity, isKinematic})
+Rigidbody({mass, useGravity, isKinematic})
 BoxCollider({size}), SphereCollider({radius}), MeshCollider({convex})
-BanterColliderEvents({})  // enables collision events
+ColliderEvents({})  // enables collision events
 HingeJoint({connectedBody}) // IMPORTANT! ALWAYS REMEMBER THIS PART! the connectedBody is the rigidbody on the other game obejct, without this then the hinge connects to world space. You must link joints and their connected bodies together. You can specify the connectedBody with rigidBody.id and banter will connect the body if it exists. The moving part of the hinge should not be kinematic, or else it cant move. Make sure to set the limits to something sensible. 
 
 DO NOT MAKE A HINGE WITHOUT A CONNECTED BODY!!!
@@ -82,21 +82,21 @@ DO NOT MAKE A HINGE WITHOUT A CONNECTED BODY!!!
 
 **Interaction:**
 ```
-BanterGrababble({grabType})  // make grabbable
-BanterAttachedObject({attachmentType})  // attach to player
+Grababble({grabType})  // make grabbable
+AttachedObject({attachmentType})  // attach to player
 ```
 
 **Media:**
 ```
-BanterGLTF({url})
-BanterVideoPlayer({url, loop, volume})
-BanterBrowser({url, pageWidth, pageHeight})
-BanterAudioSource({volume, loop, spatialBlend})
+GLTF({url})
+VideoPlayer({url, loop, volume})
+Browser({url, pageWidth, pageHeight})
+AudioSource({volume, loop, spatialBlend})
 ```
 
 **Optimization:**
 ```
-BanterAOBaking({subdivisionLevel, sampleCount, aoIntensity})  // Merge children & bake AO
+AOBaking({subdivisionLevel, sampleCount, aoIntensity})  // Merge children & bake AO
   .BakeAO()   // Bake ambient occlusion
   .Preview()  // Merge without AO
   .Clear()    // Restore originals

@@ -91,7 +91,7 @@ The `Watch` attribute has the same parameters as the `See` attribute,
 The method attribute is used to expose a method to `JavaScript` so it can be called on the equivalent component in `JavaScript`. These methods should always 
 have an underscore(`_`) at the start of their names - this is important as the code generation will add a method using the same name without the underscore.
 
-[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/BanterRigidbody.cs)
+[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/Rigidbody.cs)
 
 **Parameters**
 - `overload` - Set a postfix to append to the method name for overload methods. This allows you to expose `C-Sharp` methods with the same name to `JavaScript`, 
@@ -201,13 +201,13 @@ namespace Banter.SDK
     ```js
         const path = "assets/prefabs/mykititem.prefab";
         const gameObject = new BS.GameObject("MyKitItem"); 
-        const kitItem = await gameObject.AddComponent(new BS.BanterKitItem(path));
+        const kitItem = await gameObject.AddComponent(new BS.KitItem(path));
     ```
 
     */
     [RequireComponent(typeof(BanterObjectId))]
     [WatchComponent]
-    public class BanterKitItem : BanterComponentBase
+    public class KitItem : BanterComponentBase
     {
         [See(initial = "")] public string path = "";
         GameObject item;
