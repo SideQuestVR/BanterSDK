@@ -23,7 +23,7 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var panel = flow.GetValue<BanterUIPanel>(panelReference);
+                var panel = flow.GetValue<BSUIPanel>(panelReference);
 
                 if (panel == null)
                 {
@@ -49,7 +49,7 @@ namespace Banter.VisualScripting
             });
 
             outputTrigger = ControlOutput("");
-            panelReference = ValueInput<BanterUIPanel>("Panel");
+            panelReference = ValueInput<BSUIPanel>("Panel");
         }
     }
 }

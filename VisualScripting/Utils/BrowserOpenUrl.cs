@@ -37,7 +37,7 @@ namespace Banter.VisualScripting
     [UnitTitle("World Browser Open URL")]
     [UnitShortTitle("World Browser Nav")]
     [UnitCategory("Banter")]
-    [Obsolete("Use BanterBrowser Set Url")]
+    [Obsolete("Use BSBrowser Set Url")]
     [TypeIcon(typeof(BanterObjectId))]
     public class WorldOpenUrl : Unit
     {
@@ -58,7 +58,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var urlVal = flow.GetValue<string>(url);
-                var browser = flow.GetValue<BanterBrowser>(browserComponent);
+                var browser = flow.GetValue<BSBrowser>(browserComponent);
 
                 browser.Url = urlVal;
 
@@ -66,7 +66,7 @@ namespace Banter.VisualScripting
             });
             outputTrigger = ControlOutput("");
             url = ValueInput("Url", string.Empty);
-            browserComponent = ValueInput<BanterBrowser>("Banter Browser", null);
+            browserComponent = ValueInput<BSBrowser>("Banter Browser", null);
             browserComponent.SetDefaultValue(null);
             browserComponent.NullMeansSelf();
         }

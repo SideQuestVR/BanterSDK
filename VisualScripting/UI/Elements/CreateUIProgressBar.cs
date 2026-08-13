@@ -57,7 +57,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var value = flow.GetValue<float>(initialValue);
@@ -69,7 +69,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIProgressBar] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIProgressBar] BSUIPanel component not found on GameObject.");
                     flow.SetValue(progressBarId, "");
                     return outputTrigger;
                 }

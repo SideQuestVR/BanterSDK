@@ -60,8 +60,8 @@ namespace Banter.VisualScripting.UI.Helpers
             }
 
             // Try to find the element in any registered panel
-            var allPanels = Object.FindObjectsOfType<BanterUIPanel>();
-            LogVerbose($"ResolveElementNameToId: Found {allPanels.Length} BanterUIPanel(s) in scene");
+            var allPanels = Object.FindObjectsOfType<BSUIPanel>();
+            LogVerbose($"ResolveElementNameToId: Found {allPanels.Length} BSUIPanel(s) in scene");
 
             foreach (var panel in allPanels)
             {
@@ -98,11 +98,11 @@ namespace Banter.VisualScripting.UI.Helpers
             return elementName; // Fallback
         }
 
-        public static UIElementBridge GetUIElementBridge(BanterUIPanel panel)
+        public static UIElementBridge GetUIElementBridge(BSUIPanel panel)
         {
             try
             {
-                var panelType = typeof(BanterUIPanel);
+                var panelType = typeof(BSUIPanel);
                 var bridgeField = panelType.GetField("uiElementBridge", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 return bridgeField?.GetValue(panel) as UIElementBridge;
             }

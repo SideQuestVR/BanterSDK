@@ -50,7 +50,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var foldoutText = flow.GetValue<string>(text);
@@ -60,7 +60,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIFoldout] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIFoldout] BSUIPanel component not found on GameObject.");
                     flow.SetValue(foldoutId, "");
                     return outputTrigger;
                 }

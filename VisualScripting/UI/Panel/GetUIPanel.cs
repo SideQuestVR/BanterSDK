@@ -23,20 +23,20 @@ namespace Banter.VisualScripting
         {
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
 
-            panel = ValueOutput<BanterUIPanel>("Panel", (flow) => {
+            panel = ValueOutput<BSUIPanel>("Panel", (flow) => {
                 var target = flow.GetValue<GameObject>(gameObject);
 
-                BanterUIPanel foundPanel = null;
+                BSUIPanel foundPanel = null;
 
                 if (target != null)
                 {
                     // Try to get the panel component from the GameObject
-                    foundPanel = target.GetComponent<BanterUIPanel>();
+                    foundPanel = target.GetComponent<BSUIPanel>();
                 }
                 else
                 {
                     // If no GameObject specified, get the first panel in the scene
-                    foundPanel = Object.FindObjectOfType<BanterUIPanel>();
+                    foundPanel = Object.FindObjectOfType<BSUIPanel>();
                 }
 
                 if (foundPanel == null)

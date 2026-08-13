@@ -78,7 +78,7 @@ namespace Banter.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var type = flow.GetValue<UIElementTypeVS>(elementType);
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var retId = flow.GetValue<string>(returnId);
@@ -86,7 +86,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIElement] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIElement] BSUIPanel component not found on GameObject.");
                     flow.SetValue(elementId, "");
                     return outputTrigger;
                 }

@@ -73,8 +73,8 @@ namespace Banter.VisualScripting.UI.Helpers
             try
             {
                 // Try to find ANY panel that's initialized
-                var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
-                LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Found {allPanels.Length} BanterUIPanel(s)");
+                var allPanels = UnityEngine.Object.FindObjectsOfType<BSUIPanel>();
+                LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Found {allPanels.Length} BSUIPanel(s)");
 
                 foreach (var panel in allPanels)
                 {
@@ -179,7 +179,7 @@ namespace Banter.VisualScripting.UI.Helpers
             try
             {
                 // Try to find ANY panel that's initialized
-                var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+                var allPanels = UnityEngine.Object.FindObjectsOfType<BSUIPanel>();
 
                 foreach (var panel in allPanels)
                 {

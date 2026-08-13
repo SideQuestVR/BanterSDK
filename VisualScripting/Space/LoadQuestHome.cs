@@ -50,10 +50,10 @@ namespace Banter.VisualScripting
                 GameObject parentGameObject = flow.stack.gameObject;
 
                 // Find existing Quest Home child (if any)
-                BanterQuestHome oldQuestHome = null;
+                BSQuestHome oldQuestHome = null;
                 foreach (Transform child in parentGameObject.transform)
                 {
-                    var questHome = child.GetComponent<BanterQuestHome>();
+                    var questHome = child.GetComponent<BSQuestHome>();
                     if (questHome != null)
                     {
                         oldQuestHome = questHome;
@@ -67,7 +67,7 @@ namespace Banter.VisualScripting
                 questHomeGo.transform.SetParent(parentGameObject.transform, false);
 
                 // Add components
-                var questHomeComponent = questHomeGo.AddComponent<BanterQuestHome>();
+                var questHomeComponent = questHomeGo.AddComponent<BSQuestHome>();
                 questHomeGo.AddComponent<AudioSource>();
 
                 // Set up cleanup handlers for both success and failure cases

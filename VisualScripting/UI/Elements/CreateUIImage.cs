@@ -57,7 +57,7 @@ namespace Banter.VisualScripting
         {
             inputTrigger = ControlInput("", (flow) => {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var tex = flow.GetValue<Texture2D>(texture);
@@ -69,7 +69,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIImage] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIImage] BSUIPanel component not found on GameObject.");
                     flow.SetValue(imageId, "");
                     return outputTrigger;
                 }

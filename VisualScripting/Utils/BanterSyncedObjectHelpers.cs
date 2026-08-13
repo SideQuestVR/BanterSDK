@@ -8,8 +8,8 @@ namespace Banter.VisualScripting
     [UnitTitle("Banter Synced Object Take Ownership")]
     [UnitShortTitle("Take Ownership")]
     [UnitCategory("Banter/Components/Banter Synced Object")]
-    [Obsolete("Use BanterSyncedObject _TakeOwnership()")]
-    [TypeIcon(typeof(BanterSyncedObject))]
+    [Obsolete("Use BSSyncedObject _TakeOwnership()")]
+    [TypeIcon(typeof(BSSyncedObject))]
     public class BanterSyncedObjectTakeOwnership : Unit
     {
         [DoNotSerialize]
@@ -25,13 +25,13 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) => {
-                var syncObject = flow.GetValue<BanterSyncedObject>(syncedObject);
+                var syncObject = flow.GetValue<BSSyncedObject>(syncedObject);
                 syncObject._TakeOwnership();
 
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
-            syncedObject = ValueInput<BanterSyncedObject>("Sync Object", null);
+            syncedObject = ValueInput<BSSyncedObject>("Sync Object", null);
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
         }
@@ -40,8 +40,8 @@ namespace Banter.VisualScripting
     [UnitTitle("Banter Synced Object Is Owner")]
     [UnitShortTitle("Is Synced Object Owner")]
     [UnitCategory("Banter/Components/Banter Synced Object")]
-    [Obsolete("Use BanterSyncedObject _DoIOwn()")]
-    [TypeIcon(typeof(BanterSyncedObject))]
+    [Obsolete("Use BSSyncedObject _DoIOwn()")]
+    [TypeIcon(typeof(BSSyncedObject))]
     public class BanterSyncedObjectDoIOwn : Unit
     {
         [DoNotSerialize]
@@ -53,12 +53,12 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            syncedObject = ValueInput<BanterSyncedObject>("Sync Object", null);
+            syncedObject = ValueInput<BSSyncedObject>("Sync Object", null);
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
 
             isOwner = ValueOutput<bool>("Is Owner", (flow) => {
-                var syncObject = flow.GetValue<BanterSyncedObject>(syncedObject);
+                var syncObject = flow.GetValue<BSSyncedObject>(syncedObject);
                 return syncObject._DoIOwn();
             });
         }

@@ -222,7 +222,7 @@ namespace Banter.VisualScripting
     [UnitTitle("Load glTF/glb from URL")]
     [UnitShortTitle("Load glTF")]
     [UnitCategory("Banter")]
-    [Obsolete("Use BanterGLTF Set Url")]
+    [Obsolete("Use BSGLTF Set Url")]
     [TypeIcon(typeof(BanterObjectId))]
     public class LoadGltfUrl : Unit
     {
@@ -245,7 +245,7 @@ namespace Banter.VisualScripting
             input = ControlInput("", (flow) => LoadGltf(flow));
             output = ControlOutput("");
             url = ValueInput<string>("URL", string.Empty);
-            gltfComponent = ValueInput<BanterGLTF>("BanterGltf", null);
+            gltfComponent = ValueInput<BSGLTF>("BSGLTF", null);
             gltfComponent.SetDefaultValue(null);
             gltfComponent.NullMeansSelf();
         }
@@ -253,7 +253,7 @@ namespace Banter.VisualScripting
         private ControlOutput LoadGltf(Flow flow)
         {
             var url = flow.GetValue<string>(this.url);
-            var bGLTF = flow.GetValue<BanterGLTF>(gltfComponent);
+            var bGLTF = flow.GetValue<BSGLTF>(gltfComponent);
             bGLTF.Url = url;
 
             return output;

@@ -32,8 +32,8 @@ public class BanterSceneEvents
     public UnityEvent<Vector2> OnClippingPlaneChanged = new UnityEvent<Vector2>();
     public UnityEvent<string> OnPageOpened = new UnityEvent<string>();
     public UnityEvent<string, bool> OnOneShot = new UnityEvent<string, bool>();
-    public UnityEvent<BanterSynced, BanterSyncedObject> OnSyncedObject = new UnityEvent<BanterSynced, BanterSyncedObject>();
-    public UnityEvent<BanterSynced, BanterSyncedObject> OnTakeOwnership = new UnityEvent<BanterSynced, BanterSyncedObject>();
+    public UnityEvent<BanterSynced, BSSyncedObject> OnSyncedObject = new UnityEvent<BanterSynced, BSSyncedObject>();
+    public UnityEvent<BanterSynced, BSSyncedObject> OnTakeOwnership = new UnityEvent<BanterSynced, BSSyncedObject>();
     public UnityEvent<string, string> OnPublicSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnProtectedSpaceStateChanged = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnDeepLink = new UnityEvent<string, string>();

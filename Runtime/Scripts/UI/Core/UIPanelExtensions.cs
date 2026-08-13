@@ -4,7 +4,7 @@ using Banter.SDK;
 namespace Banter.UI.Core
 {
     /// <summary>
-    /// Extension methods for BanterUIPanel to simplify Visual Scripting node operations
+    /// Extension methods for BSUIPanel to simplify Visual Scripting node operations
     /// </summary>
     public static class UIPanelExtensions
     {
@@ -12,9 +12,9 @@ namespace Banter.UI.Core
         /// Get the formatted panel ID for this panel
         /// Uses internal panel ID management
         /// </summary>
-        /// <param name="panel">The BanterUIPanel instance</param>
+        /// <param name="panel">The BSUIPanel instance</param>
         /// <returns>Formatted panel ID string (e.g., "Panel_0")</returns>
-        public static string GetFormattedPanelId(this BanterUIPanel panel)
+        public static string GetFormattedPanelId(this BSUIPanel panel)
         {
             if (panel == null)
             {
@@ -28,9 +28,9 @@ namespace Banter.UI.Core
         /// <summary>
         /// Check if this panel's ID is valid
         /// </summary>
-        /// <param name="panel">The BanterUIPanel instance</param>
+        /// <param name="panel">The BSUIPanel instance</param>
         /// <returns>true if panel ID is valid, false otherwise</returns>
-        public static bool HasValidPanelId(this BanterUIPanel panel)
+        public static bool HasValidPanelId(this BSUIPanel panel)
         {
             if (panel == null) return false;
             
@@ -41,9 +41,9 @@ namespace Banter.UI.Core
         /// <summary>
         /// Check if this panel is currently in use (i.e., properly initialized)
         /// </summary>
-        /// <param name="panel">The BanterUIPanel instance</param>
+        /// <param name="panel">The BSUIPanel instance</param>
         /// <returns>true if panel is initialized and in use, false otherwise</returns>
-        public static bool IsPanelIdInUse(this BanterUIPanel panel)
+        public static bool IsPanelIdInUse(this BSUIPanel panel)
         {
             if (panel == null) return false;
             
@@ -55,10 +55,10 @@ namespace Banter.UI.Core
         /// Validate that this panel is ready for UI operations
         /// Checks for null panel and required components
         /// </summary>
-        /// <param name="panel">The BanterUIPanel instance</param>
+        /// <param name="panel">The BSUIPanel instance</param>
         /// <param name="operationName">Name of the operation being performed (for error logging)</param>
         /// <returns>true if panel is valid and ready, false otherwise</returns>
-        public static bool ValidateForUIOperation(this BanterUIPanel panel, string operationName = "UI operation")
+        public static bool ValidateForUIOperation(this BSUIPanel panel, string operationName = "UI operation")
         {
             if (panel == null)
             {
@@ -74,8 +74,8 @@ namespace Banter.UI.Core
         /// Get the panel that contains the specified element ID
         /// </summary>
         /// <param name="elementId">The element ID to search for</param>
-        /// <returns>The BanterUIPanel containing the element, or null if not found</returns>
-        public static BanterUIPanel GetPanelByElementId(string elementId)
+        /// <returns>The BSUIPanel containing the element, or null if not found</returns>
+        public static BSUIPanel GetPanelByElementId(string elementId)
         {
             return UIElementResolver.FindPanelForElement(elementId);
         }

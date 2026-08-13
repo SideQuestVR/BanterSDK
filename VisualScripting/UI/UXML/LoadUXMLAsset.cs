@@ -43,11 +43,11 @@ namespace Banter.VisualScripting
 
                 try
                 {
-                    // Get BanterUIPanel component
-                    var panel = target?.GetComponent<BanterUIPanel>();
+                    // Get BSUIPanel component
+                    var panel = target?.GetComponent<BSUIPanel>();
                     if (panel == null)
                     {
-                        Debug.LogError("[LoadUXMLAsset] BanterUIPanel component not found on target GameObject");
+                        Debug.LogError("[LoadUXMLAsset] BSUIPanel component not found on target GameObject");
                         flow.SetValue(uiDocument, null);
                         return outputTrigger;
                     }
@@ -92,13 +92,13 @@ namespace Banter.VisualScripting
                     // Only assign panel settings if the document doesn't already have them
                     if (document.panelSettings == null)
                     {
-                        // Get panel settings from the BanterUIPanel if available
+                        // Get panel settings from the BSUIPanel if available
                         var panelSettings = GetPanelSettings(panel);
                         if (panelSettings != null)
                         {
                             document.panelSettings = panelSettings;
 #if BANTER_UI_DEBUG
-                        Debug.Log($"{LogPrefix} Applied panel settings from BanterUIPanel");
+                        Debug.Log($"{LogPrefix} Applied panel settings from BSUIPanel");
 #endif
                     }
                     else
@@ -144,13 +144,13 @@ namespace Banter.VisualScripting
         }
 
         /// <summary>
-        /// Gets the PanelSettings from a BanterUIPanel using reflection
+        /// Gets the PanelSettings from a BSUIPanel using reflection
         /// </summary>
-        private PanelSettings GetPanelSettings(BanterUIPanel panel)
+        private PanelSettings GetPanelSettings(BSUIPanel panel)
         {
             try
             {
-                var panelType = typeof(BanterUIPanel);
+                var panelType = typeof(BSUIPanel);
                 var panelSettingsField = panelType.GetField("panelSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 
                 return panelSettingsField?.GetValue(panel) as PanelSettings;

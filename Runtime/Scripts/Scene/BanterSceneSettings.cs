@@ -82,9 +82,9 @@ namespace Banter.SDK
         public Transform Cockpit = null;
         public Transform parentTransform = null;
         public AudioMixerGroup SpaceAudioGroup;
-        public BanterAssetBundle SceneAssetBundle;
-        public List<BanterAssetBundle> KitBundles = new List<BanterAssetBundle>();
-        public Dictionary<string, BanterAssetBundle> KitPaths = new Dictionary<string, BanterAssetBundle>();
+        public BSAssetBundle SceneAssetBundle;
+        public List<BSAssetBundle> KitBundles = new List<BSAssetBundle>();
+        public Dictionary<string, BSAssetBundle> KitPaths = new Dictionary<string, BSAssetBundle>();
         // public Dictionary<string, string> CachedFiles = new Dictionary<string, string>();
         public bool isDestroying { get; private set; } = false;
         public DateTime? destroyedAt { get; private set; } = null;

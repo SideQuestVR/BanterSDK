@@ -42,11 +42,11 @@ namespace Banter.VisualScripting
                 #endif
                 try
                 {
-                    // Get or add BanterUIPanel component
-                    var panel = target.GetComponent<BanterUIPanel>();
+                    // Get or add BSUIPanel component
+                    var panel = target.GetComponent<BSUIPanel>();
                     if (panel == null)
                     {
-                        panel = target.AddComponent<BanterUIPanel>();
+                        panel = target.AddComponent<BSUIPanel>();
                     }
 
                     // Set panel properties - panel IDs are managed internally
@@ -72,7 +72,7 @@ namespace Banter.VisualScripting
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             resolution = ValueInput("Resolution", new Vector2(512, 512));
             screenSpace = ValueInput("Screen Space", false);
-            panelReference = ValueOutput<BanterUIPanel>("Panel");
+            panelReference = ValueOutput<BSUIPanel>("Panel");
         }
     }
 }

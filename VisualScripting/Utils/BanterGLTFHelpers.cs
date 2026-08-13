@@ -8,8 +8,8 @@ namespace Banter.VisualScripting
     [UnitTitle("Banter glTF is Loaded")]
     [UnitShortTitle("is glTF Loaded")]
     [UnitCategory("Banter/Components/Banter glTF")]
-    [Obsolete("Use BanterGLTF IsLoaded instead")]
-    [TypeIcon(typeof(BanterGLTF))]
+    [Obsolete("Use BSGLTF IsLoaded instead")]
+    [TypeIcon(typeof(BSGLTF))]
     public class BanterGLTFIsLoaded : Unit
     {
         [DoNotSerialize]
@@ -22,11 +22,11 @@ namespace Banter.VisualScripting
         protected override void Definition()
         {
             isLoaded = ValueOutput<bool>("Is Loaded", (flow) => {
-                var gltfComp = flow.GetValue<BanterGLTF>(gltfObject);
+                var gltfComp = flow.GetValue<BSGLTF>(gltfObject);
                 return gltfComp.IsLoaded;
             });
 
-            gltfObject = ValueInput<BanterGLTF>("BanterGltf", null);
+            gltfObject = ValueInput<BSGLTF>("BSGLTF", null);
             gltfObject.SetDefaultValue(null);
             gltfObject.NullMeansSelf();
         }

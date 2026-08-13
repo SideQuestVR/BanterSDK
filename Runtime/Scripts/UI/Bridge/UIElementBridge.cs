@@ -23,7 +23,7 @@ namespace Banter.UI.Bridge
         private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
         
         public string panelId;
-        public BanterUIPanel banterUiPanel;
+        public BSUIPanel banterUiPanel;
         
         public static UIElementBridge GetPanelInstance(string panelId)
         {
@@ -43,7 +43,7 @@ namespace Banter.UI.Bridge
             return false;
         }
         
-        public static void RegisterPanelInstance(string panelId, UIElementBridge instance, BanterUIPanel banterUIPanel)
+        public static void RegisterPanelInstance(string panelId, UIElementBridge instance, BSUIPanel banterUIPanel)
         {
             if (string.IsNullOrEmpty(panelId))
             {
@@ -284,9 +284,9 @@ namespace Banter.UI.Bridge
                     0 => new VisualElement(), // VisualElement
                     1 => new ScrollView(), // ScrollView
                     2 => new ListView(), // ListView
-                    10 => new BanterUIButton(), // Button -> BanterUIButton
-                    11 => new BanterUILabel(), // Label -> BanterUILabel
-                    12 => new BanterUITextField(), // TextField -> BanterUITextField
+                    10 => new BSUIButton(), // Button -> BSUIButton
+                    11 => new BSUILabel(), // Label -> BSUILabel
+                    12 => new BSUITextField(), // TextField -> BSUITextField
                     13 => new Toggle(), // Toggle
                     14 => new Slider(), // Slider
                     15 => new DropdownField(), // DropdownField

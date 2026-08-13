@@ -28,7 +28,7 @@ namespace Banter.SDK
         [SerializeField] private string status = "Not loaded";
 
         private GameObject questHomeObject;
-        private BanterQuestHome questHomeComponent;
+        private BSQuestHome questHomeComponent;
         private bool isLoading = false;
 
         /// <summary>
@@ -79,8 +79,8 @@ namespace Banter.SDK
             questHomeObject.transform.localRotation = Quaternion.identity;
             questHomeObject.transform.localScale = Vector3.one;
 
-            // Add the BanterQuestHome component
-            questHomeComponent = questHomeObject.AddComponent<BanterQuestHome>();
+            // Add the BSQuestHome component
+            questHomeComponent = questHomeObject.AddComponent<BSQuestHome>();
 
             // Configure the component using the public C# API
             questHomeComponent.Url = apkUrl;

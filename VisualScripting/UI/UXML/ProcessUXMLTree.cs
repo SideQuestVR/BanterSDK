@@ -55,12 +55,12 @@ namespace Banter.VisualScripting
 
                 try
                 {
-                    // Get or create BanterUIPanel component
-                    var panel = target?.GetComponent<BanterUIPanel>();
+                    // Get or create BSUIPanel component
+                    var panel = target?.GetComponent<BSUIPanel>();
                     if (panel == null)
                     {
-                        panel = target.AddComponent<BanterUIPanel>();
-                        LogVerbose("Created BanterUIPanel component");
+                        panel = target.AddComponent<BSUIPanel>();
+                        LogVerbose("Created BSUIPanel component");
                     }
 
                     UIElementBridge bridge;

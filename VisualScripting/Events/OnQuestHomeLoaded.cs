@@ -43,7 +43,7 @@ namespace Banter.VisualScripting
             var questHomeGo = Flow.FetchValue<GameObject>(questHomeObject, stack.ToReference());
             if (questHomeGo != null)
             {
-                var questHome = questHomeGo.GetComponent<BanterQuestHome>();
+                var questHome = questHomeGo.GetComponent<BSQuestHome>();
                 if (questHome != null)
                 {
                     // Subscribe to the loaded UnityEvent
@@ -62,7 +62,7 @@ namespace Banter.VisualScripting
                 }
                 else
                 {
-                    Debug.LogWarning("[OnQuestHomeLoaded] No BanterQuestHome component found on GameObject");
+                    Debug.LogWarning("[OnQuestHomeLoaded] No BSQuestHome component found on GameObject");
                 }
             }
         }

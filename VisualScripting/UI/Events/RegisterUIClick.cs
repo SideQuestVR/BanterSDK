@@ -93,7 +93,7 @@ namespace Banter.VisualScripting
                 return elementName;
 
             // Try to find the element in any registered panel
-            var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+            var allPanels = UnityEngine.Object.FindObjectsOfType<BSUIPanel>();
             foreach (var panel in allPanels)
             {
                 try

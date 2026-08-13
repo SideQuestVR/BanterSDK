@@ -15,15 +15,15 @@ namespace Banter.UI.Core
     {
         // Cache for element ID to panel ID mappings for performance
         private static readonly Dictionary<string, string> _elementToPanelCache = new Dictionary<string, string>();
-        private static readonly Dictionary<string, BanterUIPanel> _panelInstanceCache = new Dictionary<string, BanterUIPanel>();
+        private static readonly Dictionary<string, BSUIPanel> _panelInstanceCache = new Dictionary<string, BSUIPanel>();
         private static readonly object _cacheLock = new object();
         
         /// <summary>
-        /// Find the BanterUIPanel that contains the specified element
+        /// Find the BSUIPanel that contains the specified element
         /// </summary>
         /// <param name="elementId">The element ID to search for</param>
-        /// <returns>The BanterUIPanel containing the element, or null if not found</returns>
-        public static BanterUIPanel FindPanelForElement(string elementId)
+        /// <returns>The BSUIPanel containing the element, or null if not found</returns>
+        public static BSUIPanel FindPanelForElement(string elementId)
         {
             if (string.IsNullOrEmpty(elementId))
             {
@@ -53,8 +53,8 @@ namespace Banter.UI.Core
             var bridge = FindBridgeForElement(elementId);
             if (bridge == null) return null;
             
-            // Find the BanterUIPanel component on the same GameObject as the bridge
-            var panel = bridge.GetComponent<BanterUIPanel>();
+            // Find the BSUIPanel component on the same GameObject as the bridge
+            var panel = bridge.GetComponent<BSUIPanel>();
             if (panel != null)
             {
                 // Cache the result

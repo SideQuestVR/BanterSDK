@@ -4,7 +4,7 @@ using UnityEngine;
 public class LogTag
 {
     public const string Banter = "[Banter]";
-    public const string BanterBrowser = "[BanterBrowsr]";
+    public const string BSBrowser = "[BanterBrowsr]";
     public const string API = "[API]";
     public const string ElectronCompiler = "[ElectronCompiler]";
     public const string InjectionCompiler = "[InjectionCompiler]";
