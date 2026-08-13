@@ -1562,7 +1562,7 @@ public class BuilderWindow : EditorWindow
         }
         var data = File.ReadAllBytes(file);
         string slug = SelectedWorldSlug;
-        string baseUrl = string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + slug + ".bant.ing") : SelectedWorldUrl;
+        string baseUrl = string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + slug + ".worldspace.host") : SelectedWorldUrl;
         yield return sq.UploadFileToWorld(name, data, selectedWorld?.WorldId, slug, (text) =>
         {
             status.AddStatus("Uploaded " + file + " to " + baseUrl + "/" + name);
@@ -1948,7 +1948,7 @@ public class BuilderWindow : EditorWindow
         confirmSceneFile.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
         confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
         confirmSpaceCode.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
-        confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".bant.ing") : SelectedWorldUrl);
+        confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".worldspace.host") : SelectedWorldUrl);
         confirmKitNumber.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
     }
