@@ -38,7 +38,10 @@ public class Status
         statusBar.text = "STATUS: " + val;
         if (statusMessages.Count > 300)
         {
-            statusMessages = statusMessages.GetRange(0, 300);
+            // Trim IN PLACE — reassigning the field (GetRange returns a new list) orphans the
+            // ListView's itemsSource, which is bound once to this exact list, so nothing new would
+            // render after the first time we cross 300 (e.g. a large replayed log file).
+            statusMessages.RemoveRange(300, statusMessages.Count - 300);
         }
 
         buildProgress.Rebuild();

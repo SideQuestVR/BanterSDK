@@ -253,10 +253,11 @@ namespace BS.SDKEditor
         [JsonProperty("contentType")] public string ContentType { get; set; }
 
         /// <summary>
-        /// A URL to upload the file to
+        /// The owning community id — null when the upload is scoped to a world instead of a community,
+        /// so this must be nullable or the world upload/attach response fails to deserialize.
         /// </summary>
         [JsonProperty("communities_id")]
-        public long CommunitiesId { get; set; }
+        public long? CommunitiesId { get; set; }
 
     }
 

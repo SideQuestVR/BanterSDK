@@ -552,7 +552,7 @@ namespace BS.SDKEditor
 
             yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
 
-            yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
+            yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId ?? 0, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
 
         /// <summary>
