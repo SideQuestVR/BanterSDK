@@ -779,40 +779,90 @@ namespace BS
         {
             return (loadUrlTaskCompletionSource?.Task.IsCanceled ?? false) || (loadUrlTaskCompletionSource?.Task.IsFaulted ?? false) || externalLoadFailed;
         }
+        /// <summary>
+        /// Single pass over the component set. Pure — no side effects — so it is safe to call on a
+        /// timer. A finished component counts as a whole 1; an unfinished one contributes its own
+        /// download progress. Uses the snapshot's length as the total so the count and the sum can
+        /// never disagree because the dictionary was mutated mid-walk.
+        /// </summary>
+        void ComputeLoadProgress(out int loadedCount, out int totalCount, out float combinedPercentage,
+                                 out bool allAssetBundlesLoaded)
+        {
+            var banterArray = banterComponents.ToArray();
+            totalCount = banterArray.Length;
+            loadedCount = 0;
+            combinedPercentage = 0f;
+            allAssetBundlesLoaded = true;
+
+            foreach (var entry in banterArray)
+            {
+                var component = entry.Value;
+                if (component.loaded)
+                {
+                    loadedCount++;
+                    combinedPercentage += 1;
+                }
+                else
+                {
+                    combinedPercentage += component.progress;
+                    if (component.type == ComponentType.AssetBundle)
+                    {
+                        allAssetBundlesLoaded = false;
+                    }
+                }
+            }
+        }
+
+        void PushLoadProgress(int loadedCount, int totalCount, float combinedPercentage)
+        {
+            if (combinedPercentage == 0 || totalCount == 0)
+            {
+                loadingManager?.SetLoadProgress("Loading", 0, LoadingStatus, true, loadingTexture);
+            }
+            else
+            {
+                var percentDisplay = (Mathf.Round(combinedPercentage / totalCount * 10000) / 100).ToString("0.00");
+                // Count only, no total: the total keeps climbing as the page streams more objects
+                // in, so "12/40" then "12/95" reads like going backwards.
+                loadingManager?.SetLoadProgress($"Loading ({loadedCount})",
+                    combinedPercentage / totalCount, percentDisplay + "%...", true, loadingTexture);
+            }
+            loadingTexture = null;
+        }
+
+        /// <summary>
+        /// Refreshes the loading bar ONLY. Deliberately does not touch <see cref="loaded"/> or
+        /// <see cref="bundlesLoaded"/> — those are the load gate, and driving them from a UI tick
+        /// would let the gate open early (before any component registers, loadedCount and
+        /// totalCount are both 0, which reads as "everything is done").
+        ///
+        /// This exists because nothing recomputed progress while the space was actually streaming
+        /// in: SetLoaded was only called on loadStarted, on domReady, and then from a poll that
+        /// does not begin until after SCENE_READY plus a 2s delay. The bar therefore sat at 0 for
+        /// the whole download and only animated at the very end.
+        /// </summary>
+        public void UpdateLoadProgress()
+        {
+            if (HasLoadFailed())
+            {
+                return;
+            }
+            ComputeLoadProgress(out var loadedCount, out var totalCount, out var combinedPercentage, out _);
+            PushLoadProgress(loadedCount, totalCount, combinedPercentage);
+        }
+
         public void SetLoaded()
         {
             if (HasLoadFailed())
             {
                 return;
             }
-            var totalComponents = banterComponents.Count;
-            var combinedPercentage = 0f;
-            var banterArray = banterComponents.ToArray();
-            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY) && banterArray.Where(x => x.Value.type == ComponentType.AssetBundle && !x.Value.loaded).Count() == 0;
-            var loadedComponents = banterArray.Where(x =>
-            {
-                if (!x.Value.loaded)
-                {
-                    combinedPercentage += x.Value.progress;
-                }
-                else
-                {
-                    combinedPercentage += 1;
-                }
-                return x.Value.loaded;
-            });
-            var loadedComponentsCount = loadedComponents.Count();
-            loaded = loadedComponentsCount == totalComponents;
-            var percentDisplay = (Mathf.Round(combinedPercentage / totalComponents * 10000) / 100).ToString("0.00");
-            if (combinedPercentage == 0 || totalComponents == 0)
-            {
-                loadingManager?.SetLoadProgress("Loading", 0, LoadingStatus, true, loadingTexture);
-            }
-            else
-            {
-                loadingManager?.SetLoadProgress("Loading " + $"({loadedComponentsCount}/{totalComponents})", combinedPercentage / totalComponents, percentDisplay + "%...", true, loadingTexture);
-            }
-            loadingTexture = null;
+            ComputeLoadProgress(out var loadedCount, out var totalCount, out var combinedPercentage,
+                                out var allAssetBundlesLoaded);
+            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY)
+                            && allAssetBundlesLoaded;
+            loaded = loadedCount == totalCount;
+            PushLoadProgress(loadedCount, totalCount, combinedPercentage);
         }
         public void RegisterComponentOnMainThread(GameObject go, BSComponentBase comp)
         {
@@ -1996,7 +2046,21 @@ namespace BS
             state = SceneState.NONE;
             loading = true;
             externalLoadFailed = false;
-            loadUrlTaskCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            // Capture the completion source in a LOCAL. It is also stored in the field so Cancel()
+            // can fault the in-flight load, but the body below must never re-read the field: a
+            // second LoadUrl (portal fired twice, menu join mid-load, F5/both-sticks) replaces it,
+            // and this body would then complete or double-complete somebody else's source. The old
+            // code did exactly that, and the resulting InvalidOperationException aborted the body
+            // before it reached LoadOut() — leaving a fully loaded world behind a cage that never
+            // opened. Every completion below goes through `tcs` with Try* semantics.
+            var tcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var previous = loadUrlTaskCompletionSource;
+            loadUrlTaskCompletionSource = tcs;
+
+            // Never strand the previous caller's awaiter — nothing can complete it any more.
+            previous?.TrySetCanceled();
+
             CurrentUrl = url;
             this.isHome = url == CUSTOM_HOME_SPACE;
             this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
@@ -2004,41 +2068,80 @@ namespace BS
             ResetLoadingProgress();
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
-                if (!isLoadingOpen)
+                // This lambda binds to Enqueue(Action), i.e. it is async void: an escaping exception
+                // is unobservable and would silently skip everything after it — including LoadOut().
+                // Everything is therefore wrapped, and the cage teardown lives in the finally.
+                try
                 {
-                    await this.OpenLoadingScreen(url);
-                }
-                // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
-                if (!Application.isPlaying)
-                {
-                    return;
-                }
-                await ResetScene();
-                await ShowSpaceImage(url);
-                Debug.Log("Before LoadUrl");
-                await link.LoadUrl(url);
-                Debug.Log("After LoadUrl");
-                await new WaitUntil(() => loaded);
-                Debug.Log("After WaitUntil(() => loaded)");
-                LoadingStatus = "Please wait, loading live space...";
-                if (HasLoadFailed())
-                {
-                    loading = false;
-                    return;
-                }
-                loadUrlTaskCompletionSource.SetResult(true);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
-                {
-                    events.OnUnitySceneLoad.Invoke(url);
-                }, $"{nameof(BSScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
-                
-                await Task.Delay(2500);
+                    if (!isLoadingOpen)
+                    {
+                        await this.OpenLoadingScreen(url);
+                    }
+                    // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
+                    if (!Application.isPlaying)
+                    {
+                        return;
+                    }
+                    await ResetScene();
+                    await ShowSpaceImage(url);
+                    Debug.Log("Before LoadUrl");
+                    await link.LoadUrl(url);
+                    Debug.Log("After LoadUrl");
+                    await new WaitUntil(() => loaded);
+                    Debug.Log("After WaitUntil(() => loaded)");
+                    LoadingStatus = "Please wait, loading live space...";
+                    if (HasLoadFailed())
+                    {
+                        return;
+                    }
+                    tcs.TrySetResult(true);
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                    {
+                        events.OnUnitySceneLoad.Invoke(url);
+                    }, $"{nameof(BSScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
 
-                if (loadingManager != null)
-                    await loadingManager.LoadOut();
-                loading = false;
+                    await Task.Delay(2500);
+                }
+                catch (Exception e)
+                {
+                    LogLine.Err($"[LOADING] LoadUrl body threw for {url}: {e}");
+                    tcs.TrySetException(e);
+                }
+                finally
+                {
+                    // Only the newest load owns the cage; an older one finishing late must not open
+                    // it over the top of a load that is still running.
+                    var supersededByNewerLoad = !ReferenceEquals(loadUrlTaskCompletionSource, tcs);
+
+                    // Matching the original behaviour on the two paths that deliberately left the
+                    // cage up: a failed load keeps the failure screen (LoadOut self-guards on
+                    // LOAD_FAILED anyway, this just makes it explicit), and play-mode exit must not
+                    // touch objects Unity is already tearing down.
+                    var shouldOpenCage = !supersededByNewerLoad
+                                         && Application.isPlaying
+                                         && !HasLoadFailed();
+
+                    if (loadingManager != null && shouldOpenCage)
+                    {
+                        try
+                        {
+                            await loadingManager.LoadOut();
+                        }
+                        catch (Exception e)
+                        {
+                            LogLine.Err($"[LOADING] LoadOut threw: {e}");
+                        }
+                    }
+                    if (!supersededByNewerLoad)
+                    {
+                        loading = false;
+                    }
+                    // Guarantee the awaiter is released no matter which path we took.
+                    tcs.TrySetCanceled();
+                }
             }, $"{nameof(BSScene)}.{nameof(LoadUrl)}"));
-            await loadUrlTaskCompletionSource.Task;
+            // Await our OWN source, not the field — the field may already belong to a newer load.
+            await tcs.Task;
         }
         public async Task OnLoad(string instanceId)
         {

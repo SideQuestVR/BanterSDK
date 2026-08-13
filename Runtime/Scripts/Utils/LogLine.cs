@@ -27,13 +27,21 @@ public class LogLine
         Do(banterColor, LogTag.Banter, line);
     }
 
+    // The player branch used to be `#elif LOGLINE`, an opt-in define that nothing set — so every
+    // LogLine call was compiled out of player builds. That silently removed the entire SDK load
+    // trace from user logs, including "[LOADING] LoadOut state=... scene.state=..." which is the
+    // one line that says whether the loading cage was ever told to open. Verified against two
+    // shipped player logs: zero LogLine output in either, despite those paths definitely running.
+    //
+    // It is now opt-OUT (`LOGLINE_OFF`) so the diagnostics are present by default and cannot be
+    // lost again by a ProjectSettings round-trip. Define LOGLINE_OFF to compile them back out.
     public static void Do(Color color, string tag, string line)
     {
         if (!string.IsNullOrEmpty(line))
         {
 #if UNITY_EDITOR
                 Debug.Log(string.Format("<color=#4f4f4f>" + tag + "</color> <color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), line));
-#elif LOGLINE
+#elif !LOGLINE_OFF
                 Debug.Log(string.Format(DateTime.Now.ToString("HH:mm:ss.fff") + ": " + tag + " {0}", line));
 #endif
             //Console.WriteLine(string.Format(tag + " " + line));

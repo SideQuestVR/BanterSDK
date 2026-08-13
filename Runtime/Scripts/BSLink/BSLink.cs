@@ -582,6 +582,19 @@ namespace BS
             {
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😬", 0, $"No objects loaded yet, {Mathf.Round(260f - (Time.time - timeoutDisplay))} seconds left...", true);
             }
+            else if (scene.loading && Time.frameCount % 10 == 0)
+            {
+                // Keep the bar live while the space streams in. Nothing else recomputes progress
+                // during this window — SetLoaded only runs on loadStarted, on domReady, and then
+                // from the poll below, which does not start until SCENE_READY (itself emitted only
+                // after a 3s no-new-objects debounce on the JS side) plus another 2s wait. So the
+                // bar used to sit at 0 for the entire download and then whip to 100 at the end.
+                //
+                // Throttled to every 10th frame: this walks every component, so a per-frame call
+                // would be needless work on a big space. UpdateLoadProgress touches the UI only —
+                // it must not be SetLoaded(), which would drive the load gate off a UI timer.
+                scene.UpdateLoadProgress();
+            }
         }
 #if BANTER_LINK_DEBUG_LOG
         //debugging, keep track of how many messages of each command type
