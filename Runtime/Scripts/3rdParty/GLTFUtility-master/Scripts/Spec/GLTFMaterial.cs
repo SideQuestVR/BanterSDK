@@ -49,7 +49,7 @@ namespace Siccity.GLTFUtility {
 				while (en.MoveNext()) { yield return null; };
 			}
 			// Load fallback material
-			else mat = new Material(Shader.Find("Standard"));
+			else mat = new Material(BS.BSShaderResolver.Find("Standard"));
 			// Normal texture
 			if (normalTexture != null) {
 				en = TryGetTexture(textures, normalTexture, true, tex => {

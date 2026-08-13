@@ -1188,7 +1188,7 @@ namespace BS
             try
             {
                 // Create a new material
-                var material = new Material(Shader.Find("Standard"));
+                var material = new Material(BSShaderResolver.Find("Standard"));
                 BSAssetRegistry.Instance.RegisterAsset(material, AssetType.Material, url, tag);
                 BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
 

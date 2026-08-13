@@ -53,6 +53,7 @@ namespace BS
                 Destroy(mat.Value);
             }
             materialCache.Clear();
+            BSShaderResolver.ClearCache();
         }
         
         private Material GetCachedMaterial()
@@ -64,7 +65,7 @@ namespace BS
             }
             else
             {
-                var material = new Material(shaderType == ShaderType.Custom && !string.IsNullOrEmpty(shaderName) ? Shader.Find(shaderName) : Shader.Find("Unlit/Diffuse"));
+                var material = new Material(BSShaderResolver.Find(shaderType == ShaderType.Custom ? shaderName : BSShaderResolver.DefaultShader));
                 materialCache.Add(signature, material);
                 return material;
             }
@@ -129,7 +130,7 @@ namespace BS
 
         public void SetColor(Color color)
         {
-            _renderer.sharedMaterial.SetColor("_Color", color);
+            BSShaderResolver.SetColor(_renderer.sharedMaterial, color);
         }
 
         public async Task SetTexture(string texture)
