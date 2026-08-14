@@ -1,4 +1,4 @@
-# Banter SDK Reference
+# SideQuest Creator SDK Reference
 
 JavaScript SDK for creating 3D VR spaces. All APIs under `BS` namespace.
 

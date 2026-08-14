@@ -1,5 +1,95 @@
 @import url("unity-theme://default");
-VisualElement {}
+
+/*
+ * Panel font.
+ *
+ * The JS bridge implements no -unity-font-definition (SetStyle drops it with a warning), so a
+ * panel's font can only come from the theme. Unity's own editor UI is set in Inter, but UI Toolkit
+ * at runtime does not inherit that: with no textSettings on the PanelSettings it falls back to the
+ * project's default TextCore font, which here is LiberationSans. This puts every Banter panel on
+ * Inter to match the editor chrome.
+ *
+ * resource() rather than url() is deliberate. resource() stores a path string and resolves it
+ * through Resources.Load when the panel is built, so if the font is ever moved the text falls back
+ * to the default. A url("project://...") reference is a baked GUID, and a stale one fails the
+ * theme import outright.
+ */
+* {
+    -unity-font-definition: resource("UI/Fonts/Inter-Regular");
+}
+
 .unity-label {
     color: white;
+}
+
+/*
+ * Scrollbars.
+ *
+ * ScrollView builds its scroller, slider, tracker and dragger itself, so none of them have a JS
+ * handle and none can be reached through SetStyles. The only place they can be styled is here.
+ * These rules replace the default runtime theme's dark, arrow-button scrollbar with a slim light
+ * one to match the editor's light body.
+ */
+.unity-scroller {
+    background-color: #F0F0F0;
+    border-width: 0;
+    margin: 0;
+}
+
+.unity-scroller--vertical {
+    width: 10px;
+}
+
+.unity-scroller--horizontal {
+    height: 10px;
+}
+
+/*
+ * The stepper arrows at each end. Hiding them leaves the slider to fill the scroller, but the
+ * default theme positions that slider absolutely with insets that reserve room for the buttons,
+ * so the insets are cleared here as well.
+ */
+.unity-scroller__low-button,
+.unity-scroller__high-button {
+    display: none;
+}
+
+.unity-scroller__slider {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    margin: 0;
+    min-width: auto;
+    min-height: auto;
+    width: auto;
+    height: auto;
+}
+
+.unity-base-slider__tracker {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    margin: 0;
+}
+
+.unity-base-slider__dragger {
+    background-color: #C1C1C1;
+    border-width: 0;
+    border-radius: 5px;
+    margin: 0;
+}
+
+.unity-base-slider--vertical .unity-base-slider__dragger {
+    left: 0;
+    right: 0;
+    width: auto;
+    min-height: 24px;
+}
+
+.unity-base-slider--horizontal .unity-base-slider__dragger {
+    top: 0;
+    bottom: 0;
+    height: auto;
+    min-width: 24px;
 }

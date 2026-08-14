@@ -1362,13 +1362,25 @@ namespace BS.UI.Bridge
             {
                 return cachedTexture;
             }
-            
+
+            // data: URIs are decoded inline. UnityWebRequest cannot fetch them, so an injected
+            // bundle that embeds its own icons would otherwise fail on every one of them.
+            if (url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                var decoded = DecodeDataUriTexture(url);
+                if (decoded != null)
+                {
+                    _textureCache[url] = decoded;
+                }
+                return decoded;
+            }
+
             // Check if already downloading
             if (_downloadingTextures.TryGetValue(url, out var downloadingTask))
             {
                 return await downloadingTask;
             }
-            
+
             // Start download
             var downloadTask = DownloadTexture(url);
             _downloadingTextures[url] = downloadTask;
@@ -1392,6 +1404,46 @@ namespace BS.UI.Bridge
             }
         }
         
+        /// <summary>
+        /// Decodes a base64 data: URI into a Texture2D. Returns null if the URI is malformed,
+        /// not base64-encoded, or the payload is not a PNG/JPG Unity can load.
+        /// </summary>
+        private static Texture2D DecodeDataUriTexture(string url)
+        {
+            var comma = url.IndexOf(',');
+            if (comma < 0)
+            {
+                Debug.LogWarning($"{LogPrefix} data: URI has no payload separator");
+                return null;
+            }
+
+            var meta = url.Substring(0, comma);
+            if (meta.IndexOf("base64", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                Debug.LogWarning($"{LogPrefix} only base64-encoded data: URIs are supported, got '{meta}'");
+                return null;
+            }
+
+            try
+            {
+                var bytes = Convert.FromBase64String(url.Substring(comma + 1));
+                var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!texture.LoadImage(bytes))
+                {
+                    UnityEngine.Object.Destroy(texture);
+                    Debug.LogWarning($"{LogPrefix} data: URI payload was not a loadable image");
+                    return null;
+                }
+                LogVerbose($"Decoded data: URI texture ({bytes.Length} bytes, {texture.width}x{texture.height})");
+                return texture;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"{LogPrefix} Failed to decode data: URI texture: {e.Message}");
+                return null;
+            }
+        }
+
         /// <summary>
         /// Downloads texture using the existing Get.Texture method
         /// </summary>

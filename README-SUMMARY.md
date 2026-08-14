@@ -1,4 +1,4 @@
-# Banter SDK Quick Reference
+# SideQuest Creator SDK Quick Reference
 
 JS SDK for 3D VR spaces. All APIs: `BS.*`
 
@@ -10,13 +10,15 @@ Set Parent Tag to "Respawn".
 
 ## Core Pattern
 ```js
-const scene = BS.Scene.GetInstance();
-const obj = new BS.GameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
-obj.AddComponent(new BS.ComponentName({prop: value}));
-obj.On("event", (e) => {});
+window.addEventListener("bs-loaded", async () => {
+  const scene = BS.Scene.GetInstance();
+  const obj = new BS.GameObject({name: "X", localPosition: new BS.Vector3(0,1,0)});
+  obj.AddComponent(new BS.ComponentName({prop: value}));
+  obj.On("event", (e) => {});
 
-const obj2 = new BS.GameObject({name: "Y", localPosition: new BS.Vector3(0,0,0)});
-obj2.SetParent(obj, false); // Worldpositionstays - true by default
+  const obj2 = new BS.GameObject({name: "Y", localPosition: new BS.Vector3(0,0,0)});
+  obj2.SetParent(obj, false); // Worldpositionstays - true by default
+});
 ```
 
 ## Shorthands
