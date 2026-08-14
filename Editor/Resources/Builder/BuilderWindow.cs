@@ -1550,7 +1550,7 @@ public class BuilderWindow : EditorWindow
     // via /v2/worlds/{worlds_id}/assets/type/{type}/platform/{platform}. Callers pass platform Any (0).
     private IEnumerator UploadWorldFile(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
     {
-        var file = (Path.Join(Path.Join(assetBundleRoot, assetBundleDirectory), name);
+        var file = Path.Join(Path.Join(assetBundleRoot, assetBundleDirectory), name);
         if (File.Exists(file))
         {
             status.AddStatus("Upload started: " + file + "...");
