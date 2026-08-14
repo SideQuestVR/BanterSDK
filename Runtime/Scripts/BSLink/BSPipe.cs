@@ -2,14 +2,11 @@ using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using BS;
-#if BANTER_ORA
 using SideQuest.Ora;
 using Unity.VisualScripting;
-#endif
 [RenamedFrom("Banter.SDK.BanterPipe")]
 public class BSPipe
 {
-#if BANTER_ORA
     public OraView view;
     OraManager manager;
     BSLink link;
@@ -48,20 +45,13 @@ public class BSPipe
             link.scene.SetLoaded();
         });
     }
-#endif
     public void Send(string msg)
     {
 
-#if BANTER_ORA
         view?.Send(msg);
-#endif
     }
     public bool GetIsConnected()
     {
-#if BANTER_ORA
         return manager.connected;
-#else
-        return false;
-#endif
     }
 }

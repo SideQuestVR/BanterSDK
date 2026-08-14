@@ -14,9 +14,7 @@ using Unity.VisualScripting;
 using BS.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
-#if BANTER_ORA
 using SideQuest.Ora;
-#endif
 namespace BS
 {
     public class BSLink : MonoBehaviour
@@ -653,7 +651,6 @@ namespace BS
             }
         }
 
-#if BANTER_ORA
         public void SetupPipe(OraView view, OraManager manager)
         {
             // #if UNITY_ANDROID && !UNITY_EDITOR
@@ -703,7 +700,6 @@ namespace BS
                 }
             });
         }
-#endif
 
         
         Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
@@ -755,9 +751,7 @@ namespace BS
         public async Task LoadUrl(string url)
         {
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + url);
-#if BANTER_ORA
             pipe.view.LoadUrl(url);
-#endif
             // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
             scene.state = SceneState.NONE;
             // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
@@ -1219,9 +1213,7 @@ namespace BS
         #region Legacy stuff
         public void ToggleDevTools(bool open)
         {
-#if BANTER_ORA
             pipe.view.ToggleDevTools(open);
-#endif
         }
         public void HideDevTools()
         {

@@ -186,7 +186,6 @@ namespace BS
         // Only scene bundles are ever encrypted — kits and other bundles are always raw, so skip the peek.
         private async Task<AssetBundle> LoadPlatformBundle(string url, Action<float> progress = null)
         {
-// #if BASIS_BUNDLE_MANAGEMENT
             if (isScene && !string.IsNullOrEmpty(url))
             {
                 byte[] head = await Get.PeekHeader(url, 8);
@@ -203,7 +202,6 @@ namespace BS
             {
                 Debug.Log($"[Greenfield/BEE] Skipping .bee sniff (isScene={isScene}, url={(string.IsNullOrEmpty(url) ? "<empty>" : url)}) — raw AssetBundle load.");
             }
-// #endif
             return await Get.AssetBundle(url, progress);
         }
 

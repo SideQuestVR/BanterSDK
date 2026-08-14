@@ -4,10 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UIElements;
-#if BANTER_ORA
 using Newtonsoft.Json.Linq;
 using SideQuest.Ora;
-#endif
 
 namespace BS
 {
@@ -70,26 +68,23 @@ namespace BS
         public bool IsStreamingBrowser = false;
 
         GameObject browser;
-#if BANTER_ORA
         OraView _oraView;
         Coroutine _actionsCoroutine;
         List<BrowserAction> _pendingActions = new List<BrowserAction>();
 
         const string BANTER_DISPATCH_MESSAGE_TEMPLATE =
             @"window.dispatchEvent(new CustomEvent('bantermessage', { detail: { message: '{0}' } }));";
-#endif
+
 
         [Method]
         public void _ToggleInteraction(bool enabled)
         {
-#if BANTER_ORA
             if (browser != null)
             {
                 var handler = browser.GetComponent<UIToolkitInputHandler>();
                 if (handler != null)
                     handler.enabled = enabled;
             }
-#endif
         }
 
         [Method]
@@ -101,7 +96,6 @@ namespace BS
         [Method]
         public void _RunActions(string actions)
         {
-#if BANTER_ORA
             if (string.IsNullOrWhiteSpace(actions) || _oraView == null)
                 return;
             try
@@ -116,7 +110,6 @@ namespace BS
                 Debug.LogError($"[BSBrowser] Failed to parse actions: {actions}");
                 Debug.LogException(e);
             }
-#endif
         }
 
         internal override void StartStuff()
@@ -143,22 +136,18 @@ namespace BS
 #endif
                 browser.name = "BSBrowser";
 
-#if BANTER_ORA
                 _oraView = browser.GetComponent<OraView>();
                 if (_oraView != null)
                     _oraView.browserMessage.AddListener(OnBrowserMessage);
-#endif
 
                 if (!string.IsNullOrEmpty(actions))
                     _RunActions(actions);
             }
 
-#if BANTER_ORA
             if ((changedProperties?.Contains(PropertyName.url) ?? true) && !string.IsNullOrEmpty(url))
             {
                 _oraView?.LoadUrl(url);
             }
-#endif
 
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
             {
@@ -169,7 +158,6 @@ namespace BS
             SetLoadedIfNot();
         }
 
-#if BANTER_ORA
         void OnBrowserMessage(string arg0, string type, string data)
         {
             if (data != null)
@@ -257,11 +245,9 @@ namespace BS
             }
             _actionsCoroutine = null;
         }
-#endif
 
         internal override void DestroyStuff()
         {
-#if BANTER_ORA
             if (_oraView != null)
                 _oraView.browserMessage.RemoveListener(OnBrowserMessage);
             _oraView = null;
@@ -271,7 +257,6 @@ namespace BS
                 StopCoroutine(_actionsCoroutine);
                 _actionsCoroutine = null;
             }
-#endif
 
             if (browser != null)
             {

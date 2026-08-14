@@ -34,9 +34,9 @@ namespace BS.SDKEditor
         {
             if (EditorPrefs.GetString(GENERATED_VS_NODES_VERSION_PREFS_KEY) != PackageManagerUtility.currentVersion)
             {
-                string DialogMessage = "Banter SDK has been updated and requires Visual Scripting to be regenerated. This may take a few moments.";
+                string DialogMessage = "SideQuest creator SDK has been updated and requires Visual Scripting to be regenerated. This may take a few moments.";
                 if (!Application.isBatchMode)
-                    UnityEditor.EditorUtility.DisplayDialog("Banter SDK Updated", DialogMessage, "OK");
+                    UnityEditor.EditorUtility.DisplayDialog("SideQuest creator SDK Updated", DialogMessage, "OK");
                 SetVSTypesAndAssemblies();
             }
         }

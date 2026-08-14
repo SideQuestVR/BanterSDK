@@ -9,16 +9,9 @@ using BS.Utilities.Async;
 using Debug = UnityEngine.Debug;
 using UnityEngine.UI;
 using System.Collections;
-#if BANTER_ORA
 using SideQuest.Ora;
 using SideQuest.Ora.WebRTC;
-
-#endif
-
-
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-#endif
 
 namespace BS
 {
@@ -59,10 +52,9 @@ namespace BS
                 PlayerPrefs.SetInt("SafeModeOff", 1);
             }
 
-// #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
             _ = BasisLoadHandler.EnsureInitializationComplete();
-// #endif
+
             if (!initialized)
             {
                 UnityGame.SetMainThread();
@@ -88,7 +80,6 @@ namespace BS
 #if UNITY_EDITOR
             CreateWebRoot();
 #endif
-#if BANTER_ORA
             var oraManager = gameObject.GetComponent<OraManager>();
             if (!oraManager)
             {
@@ -118,25 +109,6 @@ namespace BS
 
             oraView.openBrowser = openBrowser;
             SetupBrowserLink(oraView, oraManager);
-#endif
-            // #if UNITY_STANDALONE || UNITY_EDITOR
-            //             Kill();
-            //             StartElectronBrowser();
-            // #else
-            //             StartBrowserWindow();
-            // #endif
-            // #if UNITY_STANDALONE || UNITY_EDITOR
-            //     EventHandler args = null;
-            //     args = (arg0, arg1) =>
-            //     {
-            //         scene.link.Connected -= args;
-            //         UnityMainThreadTaskScheduler.Default.Enqueue(() =>
-            //         {
-            //             StartBrowserWindow();
-            //         });
-            //     };
-            //     scene.link.Connected += args;
-            // #endif
 
 #if BANTER_EDITOR
             // Hand our feet reference to the loading cage — but never clobber a reference
@@ -150,9 +122,7 @@ namespace BS
         IEnumerator OpenPageDev()
         {
             yield return new WaitForSeconds(2);
-#if BANTER_ORA
             scene.link.pipe.view.LoadUrl("http://localhost:42068");
-#endif
         }
 
         Vector3 RandomSpawnPoint()
@@ -252,14 +222,12 @@ namespace BS
             {
             }
         }
-#if BANTER_ORA
         private void SetupBrowserLink(OraView view, OraManager manager)
         {
             scene.link = gameObject.AddComponent<BSLink>();
             scene.link.SetupPipe(view, manager);
             scene.link.Connected += (arg0, arg1) => UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => scene.LoadSpaceState(), $"{nameof(BSStarterUpper)}.{nameof(SetupBrowserLink)}"));
         }
-#endif
         public void CancelLoading()
         {
             if (scene.HasLoadFailed())

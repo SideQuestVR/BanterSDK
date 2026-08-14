@@ -27,13 +27,11 @@ namespace BS.VisualScripting
             inputTrigger = ControlInput("", (flow) => {
                 var code = flow.GetValue<string>(jsCode);
                 var returnCode = flow.GetValue<string>(returnId);
-#if BANTER_ORA
                 BSScene.Instance().link.pipe.view.EvaluateJS(code,
                     s =>
                     {
                         BSScene.Instance().events.OnJsCallbackRecieved.Invoke(returnCode, s, true);
                     });
-#endif
 
                 return outputTrigger;
             });
