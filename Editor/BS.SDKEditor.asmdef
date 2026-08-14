@@ -1,6 +1,6 @@
 {
-    "name": "Banter.SDKEditor",
-    "rootNamespace": "Banter.SDKEditor",
+    "name": "BS.SDKEditor",
+    "rootNamespace": "BS.SDKEditor",
     "references": [
         "GUID:478a2357cc57436488a56e564b08d223",
         "GUID:96338e729defced4d8d19cacd9eb0503",
