@@ -23,7 +23,8 @@
     "com.basis.common": "0.0.1",
     "com.basis.sdk": "0.0.1",
     "com.sidequest.ora": "0.0.2",
-    "com.sidequest.thirdparty.bouncycastle": "2.5.0"
+    "com.sidequest.thirdparty.bouncycastle": "2.5.0",
+    "com.unity.visualscripting": "1.9.1"
   },
   "keywords": [
     "world-building",
