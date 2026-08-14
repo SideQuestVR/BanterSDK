@@ -49,7 +49,7 @@ namespace BS.SDKEditor
         private string _outputFolder;
         private bool _isBuilding;
 
-        [MenuItem("Greenfield/Avatar Builder")]
+        // [M/enuItem("Greenfield/Avatar Builder")]
         public static void ShowWindow()
         {
             var window = GetWindow<GreenfieldAvatarBuilder>();
