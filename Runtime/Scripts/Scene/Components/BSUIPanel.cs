@@ -31,6 +31,10 @@ namespace BS
         [See(initial = "512,512")][SerializeField] internal Vector2 resolution = new Vector2(512,512);
         [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
 
+        [Tooltip("Render onto the mesh already on this object instead of UI Toolkit's own flat quad, and " +
+                 "take pointer input from that mesh's UVs, so the panel can be any shape. Ignored in screen space.")]
+        [See(initial = "false")][SerializeField] internal bool meshInput = false;
+
         [Header("Haptics")]
         [See(initial = "false")][SerializeField] internal bool enableHaptics = false;
         [See(initial = "0.5,0.1")][SerializeField] internal Vector2 clickHaptic = new Vector2(0.5f, 0.1f); // amplitude, duration
@@ -465,11 +469,14 @@ namespace BS
                     renderTexture.Create();
                 }
 
-                createdMeshRenderer = true;
-
                 if (uiDocument != null)
                 {
                     uiDocument.panelSettings.targetTexture = renderTexture;
+                }
+
+                if (meshInput)
+                {
+                    BeginMeshBinding();
                 }
             }
             else
@@ -493,6 +500,231 @@ namespace BS
                     renderer.enabled = false;
                 }
             }
+        }
+
+        static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
+        static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        static readonly int UnlitColorMapId = Shader.PropertyToID("_UnlitColorMap");
+
+        private MeshCollider meshInputCollider;
+        private Mesh colliderMesh;
+        private Mesh colliderSource;
+        private Material meshMaterial;
+        private bool createdMeshCollider;
+        private Coroutine meshBindRoutine;
+
+        /// <summary>
+        /// True while this panel is showing on its own mesh and taking pointer input from that
+        /// mesh's UVs rather than from UI Toolkit's flat quad.
+        /// </summary>
+        public bool UsesMeshInput => meshInput && !screenSpace;
+
+        /// <summary>
+        /// The collider the input bridge raycasts to turn a pointer ray into a texture UV.
+        /// Null until the mesh has arrived and been bound.
+        /// </summary>
+        public MeshCollider MeshInputCollider => meshInputCollider;
+
+        /// <summary>
+        /// Waits for the mesh to exist, then routes the panel onto it. The mesh normally arrives
+        /// from JS a little after the panel does, so this cannot be a one-shot.
+        /// </summary>
+        private void BeginMeshBinding()
+        {
+            if (!isActiveAndEnabled) return;
+            if (meshBindRoutine != null) StopCoroutine(meshBindRoutine);
+            meshBindRoutine = StartCoroutine(BindMeshWhenReady());
+        }
+
+        private IEnumerator BindMeshWhenReady()
+        {
+            var deadline = Time.realtimeSinceStartup + 30f;
+            string status;
+
+            while (!TryBindMesh(out status))
+            {
+                if (Time.realtimeSinceStartup > deadline)
+                {
+                    Debug.LogWarning($"{LogPrefix} meshInput is on but no mesh was ever bound: {status}");
+                    meshBindRoutine = null;
+                    yield break;
+                }
+                yield return null;
+            }
+
+            meshBindRoutine = null;
+            LogVerbose($"Mesh input bound: {status}");
+        }
+
+        private bool TryBindMesh(out string status)
+        {
+            if (uiDocument == null || uiDocument.panelSettings == null) { status = "no UIDocument yet"; return false; }
+            if (renderTexture == null) { status = "no render texture"; return false; }
+
+            var filter = GetComponent<MeshFilter>();
+            var mesh = filter != null ? filter.sharedMesh : null;
+            if (mesh == null) { status = "no mesh yet"; return false; }
+
+            var meshRenderer = GetComponent<MeshRenderer>();
+            if (meshRenderer == null) { status = "no MeshRenderer yet"; return false; }
+
+            // Everything is checked before anything is changed: this runs every frame until the
+            // pieces arrive from JS, and reconfiguring the panel on each of those frames would
+            // rebuild it repeatedly for no reason.
+            if (!HasTextureSlot(meshRenderer))
+            {
+                status = $"material '{meshRenderer.sharedMaterial?.shader?.name ?? "none"}' has no texture slot yet";
+                return false;
+            }
+
+            var settings = uiDocument.panelSettings;
+
+            // World-space mode draws onto UI Toolkit's own quad and ignores the target texture
+            // entirely. The overlay path is what actually routes the UI into the texture.
+            if (settings.renderMode != PanelRenderMode.ScreenSpaceOverlay)
+                settings.renderMode = PanelRenderMode.ScreenSpaceOverlay;
+            if (settings.targetTexture != renderTexture)
+                settings.targetTexture = renderTexture;
+
+            // The input bridge treats the render texture as panel space 1:1, which only holds
+            // while the panel is unscaled.
+            if (settings.scaleMode != PanelScaleMode.ConstantPixelSize)
+                settings.scaleMode = PanelScaleMode.ConstantPixelSize;
+            if (!Mathf.Approximately(settings.scale, 1f))
+                settings.scale = 1f;
+
+            ResetRootForTexture();
+
+            // Otherwise the panel keeps drawing its flat world-space quad on top of the mesh.
+            var uiRenderer = GetComponent<UIRenderer>();
+            if (uiRenderer != null) uiRenderer.enabled = false;
+
+            ApplyTexture(meshRenderer, renderTexture);
+            BuildMeshCollider(mesh);
+
+            status = $"{renderTexture.width}x{renderTexture.height} texture on '{mesh.name}'";
+            return true;
+        }
+
+        /// <summary>
+        /// Unity bakes world-space sizing — fixed width, content height, pivot transform — into
+        /// inline styles on the document root, and those survive the switch to the texture path.
+        /// Left alone they lay the UI out in a corner of the texture, and picking then resolves to
+        /// the root almost everywhere, which would defeat the UV mapping entirely.
+        /// </summary>
+        private void ResetRootForTexture()
+        {
+            var root = uiDocument != null ? uiDocument.rootVisualElement : null;
+            if (root == null) return;
+
+            root.style.position = Position.Absolute;
+            root.style.left = 0;
+            root.style.top = 0;
+            root.style.right = 0;
+            root.style.bottom = 0;
+            root.style.width = StyleKeyword.Null;
+            root.style.height = StyleKeyword.Null;
+            root.style.scale = StyleKeyword.Null;
+            root.style.translate = StyleKeyword.Null;
+            root.style.transformOrigin = StyleKeyword.Null;
+            root.style.rotate = StyleKeyword.Null;
+        }
+
+        /// <summary>
+        /// Assign the texture to whichever slot the material actually has — URP uses _BaseMap, the
+        /// built-in unlit shaders use _MainTex, and <c>material.mainTexture</c> throws on a shader
+        /// that has neither.
+        /// </summary>
+        /// <summary>
+        /// Probes the shared material rather than the instance: reading <c>.material</c>
+        /// instantiates a copy, and this is asked every frame while waiting on JS.
+        /// </summary>
+        private static bool HasTextureSlot(MeshRenderer meshRenderer)
+        {
+            var template = meshRenderer.sharedMaterial;
+            return template != null
+                && (template.HasProperty(BaseMapId) || template.HasProperty(MainTexId) || template.HasProperty(UnlitColorMapId));
+        }
+
+        private void ApplyTexture(MeshRenderer meshRenderer, Texture texture)
+        {
+            // The instance, not the shared asset: this texture belongs to one panel. Reading
+            // `.material` also writes it back to sharedMaterial, so this instantiates once and
+            // only repeats if something later swaps the material out.
+            if (meshMaterial == null || meshRenderer.sharedMaterial != meshMaterial)
+                meshMaterial = meshRenderer.material;
+
+            if (meshMaterial.HasProperty(BaseMapId)) meshMaterial.SetTexture(BaseMapId, texture);
+            if (meshMaterial.HasProperty(MainTexId)) meshMaterial.SetTexture(MainTexId, texture);
+            if (meshMaterial.HasProperty(UnlitColorMapId)) meshMaterial.SetTexture(UnlitColorMapId, texture);
+        }
+
+        /// <summary>
+        /// Give the panel a collider the pointer ray can hit, on this GameObject so it inherits the
+        /// Menu layer that the laser and the pointer module both scan.
+        /// </summary>
+        private void BuildMeshCollider(Mesh source)
+        {
+            if (colliderSource == source && meshInputCollider != null) return;
+
+            var built = PanelColliderMesh.BuildTwoSided(source);
+            if (built == null)
+            {
+                Debug.LogWarning($"{LogPrefix} mesh '{source.name}' cannot be used as a pointer target — it needs UVs, " +
+                                 "and Read/Write enabled if it is an imported asset.");
+                return;
+            }
+
+            if (colliderMesh != null) Destroy(colliderMesh);
+            colliderMesh = built;
+            colliderSource = source;
+
+            var meshCollider = GetComponent<MeshCollider>();
+            if (meshCollider == null)
+            {
+                meshCollider = gameObject.AddComponent<MeshCollider>();
+                createdMeshCollider = true;
+            }
+
+            meshCollider.convex = false;
+            meshCollider.sharedMesh = colliderMesh;
+            meshInputCollider = meshCollider;
+        }
+
+        /// <summary>
+        /// Release what mesh mode set up. The screen-to-panel function goes first because it
+        /// captures this panel, and it has to be cleared through the 3D overload: the 2D one has no
+        /// null check and installs a wrapper that throws on the next pointer event.
+        /// </summary>
+        private void TearDownMeshInput()
+        {
+            if (meshBindRoutine != null)
+            {
+                StopCoroutine(meshBindRoutine);
+                meshBindRoutine = null;
+            }
+
+            if (uiDocument != null && uiDocument.panelSettings != null)
+                uiDocument.panelSettings.SetScreenToPanelSpaceFunction3D(null);
+
+            if (createdMeshCollider && meshInputCollider != null)
+                Destroy(meshInputCollider);
+
+            meshInputCollider = null;
+            createdMeshCollider = false;
+
+            if (colliderMesh != null)
+            {
+                Destroy(colliderMesh);
+                colliderMesh = null;
+            }
+
+            colliderSource = null;
+
+            // The material instance belongs to the MeshRenderer, which is not ours to strip — it
+            // outlives this component when only the panel is removed. Unity reclaims it with the
+            // renderer.
+            meshMaterial = null;
         }
 
         // Flags to track what we created
@@ -569,6 +801,8 @@ namespace BS
                 Destroy(uiElementBridge);
                 uiElementBridge = null;
             }
+
+            TearDownMeshInput();
 
             // Clean up render texture
             if (renderTexture != null)
@@ -683,6 +917,34 @@ namespace BS
                 }
 
                 gameObject.layer = LayerMask.NameToLayer("Menu");
+
+                // The mesh's material is still holding the texture that was just destroyed, and the
+                // panel has to be re-pinned to the new one, or mesh mode goes blank.
+                if (UsesMeshInput)
+                {
+                    BeginMeshBinding();
+                }
+            }
+
+            if (changedProperties.Contains(PropertyName.meshInput))
+            {
+                if (UsesMeshInput)
+                {
+                    BeginMeshBinding();
+                }
+                else
+                {
+                    TearDownMeshInput();
+
+                    // Best effort only: the inline styles Unity baked onto the document root for
+                    // world space were stripped on the way in and are not recoverable here.
+                    if (!screenSpace && uiDocument != null && uiDocument.panelSettings != null)
+                    {
+                        uiDocument.panelSettings.renderMode = PanelRenderMode.WorldSpace;
+                        var uiRenderer = GetComponent<UIRenderer>();
+                        if (uiRenderer != null) uiRenderer.enabled = true;
+                    }
+                }
             }
 
             if (changedProperties.Contains(PropertyName.screenSpace))
@@ -836,6 +1098,7 @@ namespace BS
         // BANTER COMPILED CODE 
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
         public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
+        public System.Boolean MeshInput { get { return meshInput; } set { meshInput = value; UpdateCallback(new List<PropertyName> { PropertyName.meshInput }); } }
         public System.Boolean EnableHaptics { get { return enableHaptics; } set { enableHaptics = value; UpdateCallback(new List<PropertyName> { PropertyName.enableHaptics }); } }
         public UnityEngine.Vector2 ClickHaptic { get { return clickHaptic; } set { clickHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.clickHaptic }); } }
         public UnityEngine.Vector2 EnterHaptic { get { return enterHaptic; } set { enterHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.enterHaptic }); } }
@@ -866,12 +1129,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, PropertyName.enableHaptics, PropertyName.clickHaptic, PropertyName.enterHaptic, PropertyName.exitHaptic, PropertyName.enableSounds, PropertyName.clickSoundUrl, PropertyName.enterSoundUrl, PropertyName.exitSoundUrl, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, PropertyName.meshInput, PropertyName.enableHaptics, PropertyName.clickHaptic, PropertyName.enterHaptic, PropertyName.exitHaptic, PropertyName.enableSounds, PropertyName.clickSoundUrl, PropertyName.enterSoundUrl, PropertyName.exitSoundUrl, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "UIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
+            return "UIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.meshInput + meshInput + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -945,6 +1208,15 @@ namespace BS
                     {
                         screenSpace = valscreenSpace.x;
                         changedProperties.Add(PropertyName.screenSpace);
+                    }
+                }
+                if (values[i] is BSBool)
+                {
+                    var valmeshInput = (BSBool)values[i];
+                    if (valmeshInput.n == PropertyName.meshInput)
+                    {
+                        meshInput = valmeshInput.x;
+                        changedProperties.Add(PropertyName.meshInput);
                     }
                 }
                 if (values[i] is BSBool)
@@ -1045,6 +1317,18 @@ namespace BS
                     name = PropertyName.screenSpace,
                     type = PropertyType.Bool,
                     value = screenSpace,
+                    componentType = ComponentType.UIPanel,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.meshInput,
+                    type = PropertyType.Bool,
+                    value = meshInput,
                     componentType = ComponentType.UIPanel,
                     oid = oid,
                     cid = cid

@@ -245,5 +245,6 @@ namespace BS
         isMuted,
         duration,
         time,
+        meshInput,
     }
 }
