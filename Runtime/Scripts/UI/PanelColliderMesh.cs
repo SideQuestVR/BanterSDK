@@ -40,6 +40,22 @@ namespace BS
             var uvs = source.uv;
             if (uvs == null || uvs.Length != vertices.Length) return null;
 
+            // The back-facing copy gets its own vertices rather than re-indexing the originals.
+            // Sharing them would make every mirrored triangle the same vertex triple as one that
+            // already exists, and PhysX cooks meshes with duplicate removal on by default — it
+            // could quietly discard exactly the triangles this whole thing depends on. Distinct
+            // indices put that out of reach. The copies carry the same UVs, so the hit coordinate
+            // is identical whichever side is struck.
+            var count = vertices.Length;
+
+            var allVertices = new Vector3[count * 2];
+            vertices.CopyTo(allVertices, 0);
+            vertices.CopyTo(allVertices, count);
+
+            var allUvs = new Vector2[count * 2];
+            uvs.CopyTo(allUvs, 0);
+            uvs.CopyTo(allUvs, count);
+
             // Reads across all submeshes; a collider only needs the one.
             var triangles = source.triangles;
             var doubled = new int[triangles.Length * 2];
@@ -48,17 +64,17 @@ namespace BS
             for (var i = 0; i < triangles.Length; i += 3)
             {
                 var mirrored = triangles.Length + i;
-                doubled[mirrored] = triangles[i];
-                doubled[mirrored + 1] = triangles[i + 2];
-                doubled[mirrored + 2] = triangles[i + 1];
+                doubled[mirrored] = triangles[i] + count;
+                doubled[mirrored + 1] = triangles[i + 2] + count;
+                doubled[mirrored + 2] = triangles[i + 1] + count;
             }
 
             var mesh = new Mesh { name = source.name + " (panel collider)" };
-            if (vertices.Length > ushort.MaxValue)
+            if (allVertices.Length > ushort.MaxValue)
                 mesh.indexFormat = IndexFormat.UInt32;
 
-            mesh.vertices = vertices;
-            mesh.uv = uvs;
+            mesh.vertices = allVertices;
+            mesh.uv = allUvs;
             mesh.triangles = doubled;
             mesh.RecalculateBounds();
 

@@ -599,7 +599,7 @@ namespace BS.UI.Bridge
             
             // Convert string to enum
             var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
-            
+
             // Apply style based on property enum
             switch (styleProperty)
             {

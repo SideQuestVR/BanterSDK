@@ -265,7 +265,17 @@ namespace BS.UI.Bridge
         /// </summary>
         public static UIStyleProperty FromUSSName(string ussName)
         {
-            return ussName.ToLower() switch
+            if (string.IsNullOrEmpty(ussName)) return UIStyleProperty.BackgroundColor;
+
+            var name = ussName.ToLower();
+
+            // Unity's own properties are spelled with a leading dash in USS (-unity-text-align),
+            // but the JS side derives its names by kebab-casing camelCase — `unityTextAlign`
+            // becomes `unity-text-align`, with no dash to add. Accept both spellings rather than
+            // require every caller to know which one this table happens to use.
+            if (name.StartsWith("unity-")) name = "-" + name;
+
+            return name switch
             {
                 // Layout Properties (Flexbox)
                 "align-content" => UIStyleProperty.AlignContent,

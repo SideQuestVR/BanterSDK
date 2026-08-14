@@ -166,7 +166,9 @@ namespace BS
                 if (document != null && document.panelSettings != null)
                 {
                     // Use the existing UIDocument and its panel settings
+                    // Shared asset, not a clone — mesh mode must not rewrite it.
                     panelSettings = document.panelSettings;
+                    ownsPanelSettings = false;
                     uiDocument = document;
                     LogVerbose($"Using existing UIDocument with panel settings: {panelSettings.name}");
                 }
@@ -187,6 +189,8 @@ namespace BS
                     var panelSettingsName = GetPanelSettingsName();
                     panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
                     panelSettings = Instantiate(panelSettings);
+                    // Our own copy, so mesh mode is free to rewrite renderMode/targetTexture on it.
+                    ownsPanelSettings = true;
                     if (internalPanelId > 19)
                     {
                         Debug.LogWarning($"[BSUIPanel] Internal panel ID {internalPanelId} exceeds maximum of 19. Using panel settings for ID 19.");
@@ -509,8 +513,12 @@ namespace BS
         private MeshCollider meshInputCollider;
         private Mesh colliderMesh;
         private Mesh colliderSource;
+        private Mesh rejectedMesh;
         private Material meshMaterial;
+        private PanelSettings boundSettings;
         private bool createdMeshCollider;
+        private bool meshBound;
+        private bool ownsPanelSettings;
         private Coroutine meshBindRoutine;
 
         /// <summary>
@@ -529,6 +537,17 @@ namespace BS
         /// Waits for the mesh to exist, then routes the panel onto it. The mesh normally arrives
         /// from JS a little after the panel does, so this cannot be a one-shot.
         /// </summary>
+        /// <summary>
+        /// Coroutines do not survive the object being deactivated, and a panel commonly sits
+        /// disabled for a few frames while its geometry loads. Without this, mesh mode would go
+        /// quiet for the rest of the session and the panel would keep drawing the flat quad.
+        /// </summary>
+        private void OnEnable()
+        {
+            if (UsesMeshInput && meshBindRoutine == null)
+                BeginMeshBinding();
+        }
+
         private void BeginMeshBinding()
         {
             if (!isActiveAndEnabled) return;
@@ -536,30 +555,48 @@ namespace BS
             meshBindRoutine = StartCoroutine(BindMeshWhenReady());
         }
 
+        /// <summary>
+        /// Keeps watching rather than binding once. The mesh and material arrive from JS after the
+        /// panel does, and either can be replaced later — a BSGeometry property change hands the
+        /// MeshFilter a brand new Mesh — which would otherwise leave the collider hit-testing a
+        /// shape that is no longer on screen.
+        /// </summary>
         private IEnumerator BindMeshWhenReady()
         {
             var deadline = Time.realtimeSinceStartup + 30f;
-            string status;
+            var warned = false;
 
-            while (!TryBindMesh(out status))
+            while (UsesMeshInput)
             {
-                if (Time.realtimeSinceStartup > deadline)
+                if (TryBindMesh(out var status))
                 {
-                    Debug.LogWarning($"{LogPrefix} meshInput is on but no mesh was ever bound: {status}");
-                    meshBindRoutine = null;
-                    yield break;
+                    if (!meshBound)
+                    {
+                        meshBound = true;
+                        LogVerbose($"Mesh input bound: {status}");
+                    }
                 }
+                else if (!meshBound && !warned && Time.realtimeSinceStartup > deadline)
+                {
+                    warned = true;
+                    Debug.LogWarning($"{LogPrefix} meshInput is on but nothing has bound yet: {status}");
+                }
+
                 yield return null;
             }
 
             meshBindRoutine = null;
-            LogVerbose($"Mesh input bound: {status}");
         }
 
         private bool TryBindMesh(out string status)
         {
             if (uiDocument == null || uiDocument.panelSettings == null) { status = "no UIDocument yet"; return false; }
             if (renderTexture == null) { status = "no render texture"; return false; }
+
+            // Leaves the shared PanelSettings asset alone. Only the panel that instantiated its own
+            // copy may rewrite renderMode/targetTexture on it — doing that to the shared asset would
+            // drag every other document using it into this panel's texture.
+            if (!ownsPanelSettings) { status = "panel settings are shared, not this panel's own"; return false; }
 
             var filter = GetComponent<MeshFilter>();
             var mesh = filter != null ? filter.sharedMesh : null;
@@ -568,12 +605,31 @@ namespace BS
             var meshRenderer = GetComponent<MeshRenderer>();
             if (meshRenderer == null) { status = "no MeshRenderer yet"; return false; }
 
+            // Already set up and nothing has changed underneath us. The texture is part of that
+            // check and not an afterthought: a resolution change destroys the render texture and
+            // creates a replacement, and without this the material would still be holding the
+            // destroyed one — which reads back as null, so the mesh samples nothing and the panel
+            // goes blank while still drawing happily into the new texture.
+            if (meshBound && mesh == colliderSource && meshInputCollider != null &&
+                meshRenderer.sharedMaterial == meshMaterial && HoldsTexture(meshMaterial, renderTexture))
+            {
+                status = "bound";
+                return true;
+            }
+
             // Everything is checked before anything is changed: this runs every frame until the
-            // pieces arrive from JS, and reconfiguring the panel on each of those frames would
-            // rebuild it repeatedly for no reason.
+            // pieces arrive, and half-configuring the panel on each of those frames would rebuild it
+            // repeatedly. Building the collider first also means a mesh that cannot be hit-tested
+            // never gets the panel switched into a mode where nothing else can pick it either.
             if (!HasTextureSlot(meshRenderer))
             {
                 status = $"material '{meshRenderer.sharedMaterial?.shader?.name ?? "none"}' has no texture slot yet";
+                return false;
+            }
+
+            if (!BuildMeshCollider(mesh))
+            {
+                status = $"mesh '{mesh.name}' cannot be used as a pointer target";
                 return false;
             }
 
@@ -586,6 +642,13 @@ namespace BS
             if (settings.targetTexture != renderTexture)
                 settings.targetTexture = renderTexture;
 
+            // The world-space asset ships with clearing off, which is right when the panel draws
+            // straight into the scene and wrong the moment it owns a texture: nothing would ever
+            // wipe last frame's contents, and a texture that has only just been created holds
+            // whatever was in that memory. Reading black is the usual result.
+            if (!settings.clearColor)
+                settings.clearColor = true;
+
             // The input bridge treats the render texture as panel space 1:1, which only holds
             // while the panel is unscaled.
             if (settings.scaleMode != PanelScaleMode.ConstantPixelSize)
@@ -593,14 +656,10 @@ namespace BS
             if (!Mathf.Approximately(settings.scale, 1f))
                 settings.scale = 1f;
 
+            boundSettings = settings;
+
             ResetRootForTexture();
-
-            // Otherwise the panel keeps drawing its flat world-space quad on top of the mesh.
-            var uiRenderer = GetComponent<UIRenderer>();
-            if (uiRenderer != null) uiRenderer.enabled = false;
-
             ApplyTexture(meshRenderer, renderTexture);
-            BuildMeshCollider(mesh);
 
             status = $"{renderTexture.width}x{renderTexture.height} texture on '{mesh.name}'";
             return true;
@@ -631,11 +690,6 @@ namespace BS
         }
 
         /// <summary>
-        /// Assign the texture to whichever slot the material actually has — URP uses _BaseMap, the
-        /// built-in unlit shaders use _MainTex, and <c>material.mainTexture</c> throws on a shader
-        /// that has neither.
-        /// </summary>
-        /// <summary>
         /// Probes the shared material rather than the instance: reading <c>.material</c>
         /// instantiates a copy, and this is asked every frame while waiting on JS.
         /// </summary>
@@ -646,6 +700,26 @@ namespace BS
                 && (template.HasProperty(BaseMapId) || template.HasProperty(MainTexId) || template.HasProperty(UnlitColorMapId));
         }
 
+        /// <summary>
+        /// True only when every texture slot the material has is already pointing at
+        /// <paramref name="texture"/>. Compared against the live texture rather than a remembered
+        /// one so that a destroyed texture — which a material reports as null, not as a stale
+        /// reference — fails the check just as a swapped one does.
+        /// </summary>
+        private static bool HoldsTexture(Material material, Texture texture)
+        {
+            if (material == null || texture == null) return false;
+            if (material.HasProperty(BaseMapId) && material.GetTexture(BaseMapId) != texture) return false;
+            if (material.HasProperty(MainTexId) && material.GetTexture(MainTexId) != texture) return false;
+            if (material.HasProperty(UnlitColorMapId) && material.GetTexture(UnlitColorMapId) != texture) return false;
+            return true;
+        }
+
+        /// <summary>
+        /// Assign the texture to whichever slot the material actually has — URP uses _BaseMap, the
+        /// built-in unlit shaders use _MainTex, and <c>material.mainTexture</c> throws on a shader
+        /// that has neither.
+        /// </summary>
         private void ApplyTexture(MeshRenderer meshRenderer, Texture texture)
         {
             // The instance, not the shared asset: this texture belongs to one panel. Reading
@@ -654,47 +728,70 @@ namespace BS
             if (meshMaterial == null || meshRenderer.sharedMaterial != meshMaterial)
                 meshMaterial = meshRenderer.material;
 
-            if (meshMaterial.HasProperty(BaseMapId)) meshMaterial.SetTexture(BaseMapId, texture);
-            if (meshMaterial.HasProperty(MainTexId)) meshMaterial.SetTexture(MainTexId, texture);
-            if (meshMaterial.HasProperty(UnlitColorMapId)) meshMaterial.SetTexture(UnlitColorMapId, texture);
+            Bind(BaseMapId);
+            Bind(MainTexId);
+            Bind(UnlitColorMapId);
+
+            void Bind(int id)
+            {
+                if (!meshMaterial.HasProperty(id)) return;
+                meshMaterial.SetTexture(id, texture);
+
+                // Hit-testing reads raw UVs, so any tiling or offset on the material would shift
+                // what is drawn without shifting where clicks land. Force them to identity and the
+                // two cannot disagree.
+                meshMaterial.SetTextureScale(id, Vector2.one);
+                meshMaterial.SetTextureOffset(id, Vector2.zero);
+            }
         }
 
         /// <summary>
         /// Give the panel a collider the pointer ray can hit, on this GameObject so it inherits the
         /// Menu layer that the laser and the pointer module both scan.
         /// </summary>
-        private void BuildMeshCollider(Mesh source)
+        private bool BuildMeshCollider(Mesh source)
         {
-            if (colliderSource == source && meshInputCollider != null) return;
+            if (colliderSource == source && meshInputCollider != null) return true;
 
             var built = PanelColliderMesh.BuildTwoSided(source);
             if (built == null)
             {
-                Debug.LogWarning($"{LogPrefix} mesh '{source.name}' cannot be used as a pointer target — it needs UVs, " +
-                                 "and Read/Write enabled if it is an imported asset.");
-                return;
+                if (rejectedMesh != source)
+                {
+                    rejectedMesh = source;
+                    Debug.LogWarning($"{LogPrefix} mesh '{source.name}' cannot be used as a pointer target — it needs " +
+                                     "UVs, and Read/Write enabled if it is an imported asset.");
+                }
+                return false;
             }
 
             if (colliderMesh != null) Destroy(colliderMesh);
             colliderMesh = built;
             colliderSource = source;
+            rejectedMesh = null;
 
-            var meshCollider = GetComponent<MeshCollider>();
-            if (meshCollider == null)
+            if (meshInputCollider == null)
             {
-                meshCollider = gameObject.AddComponent<MeshCollider>();
+                // Always a collider of our own, never one already on the object: adopting that
+                // would overwrite its mesh and convex flag, and teardown would then destroy the
+                // mesh it is still pointing at.
+                meshInputCollider = gameObject.AddComponent<MeshCollider>();
                 createdMeshCollider = true;
             }
 
-            meshCollider.convex = false;
-            meshCollider.sharedMesh = colliderMesh;
-            meshInputCollider = meshCollider;
+            // Set before the mesh, or it does not apply to this cook. Mesh cleaning is off on
+            // purpose: it removes duplicate triangles, and the back-facing half of this mesh is
+            // exactly what makes the surface hittable from where the viewer stands.
+            meshInputCollider.cookingOptions = MeshColliderCookingOptions.CookForFasterSimulation
+                                             | MeshColliderCookingOptions.UseFastMidphase;
+            meshInputCollider.convex = false;
+            meshInputCollider.sharedMesh = colliderMesh;
+
+            return true;
         }
 
         /// <summary>
-        /// Release what mesh mode set up. The screen-to-panel function goes first because it
-        /// captures this panel, and it has to be cleared through the 3D overload: the 2D one has no
-        /// null check and installs a wrapper that throws on the next pointer event.
+        /// Put the panel back the way it was and release what mesh mode created.
         /// </summary>
         private void TearDownMeshInput()
         {
@@ -704,8 +801,17 @@ namespace BS
                 meshBindRoutine = null;
             }
 
-            if (uiDocument != null && uiDocument.panelSettings != null)
-                uiDocument.panelSettings.SetScreenToPanelSpaceFunction3D(null);
+            // Through the cached settings rather than uiDocument, because teardown also runs on
+            // paths where the document has already gone. Clearing goes through the 3D overload:
+            // the 2D one has no null check and installs a wrapper that throws on the next event.
+            if (boundSettings != null)
+            {
+                boundSettings.SetScreenToPanelSpaceFunction3D(null);
+                boundSettings.targetTexture = null;
+                if (!screenSpace)
+                    boundSettings.renderMode = PanelRenderMode.WorldSpace;
+                boundSettings = null;
+            }
 
             if (createdMeshCollider && meshInputCollider != null)
                 Destroy(meshInputCollider);
@@ -720,6 +826,8 @@ namespace BS
             }
 
             colliderSource = null;
+            rejectedMesh = null;
+            meshBound = false;
 
             // The material instance belongs to the MeshRenderer, which is not ours to strip — it
             // outlives this component when only the panel is removed. Unity reclaims it with the
@@ -926,25 +1034,14 @@ namespace BS
                 }
             }
 
-            if (changedProperties.Contains(PropertyName.meshInput))
+            // Both properties decide mesh mode, since UsesMeshInput is meshInput && !screenSpace.
+            // Turning it off restores the render mode but not the inline styles Unity baked onto
+            // the document root for world space — those were stripped on the way in.
+            if (changedProperties.Contains(PropertyName.meshInput) ||
+                changedProperties.Contains(PropertyName.screenSpace))
             {
-                if (UsesMeshInput)
-                {
-                    BeginMeshBinding();
-                }
-                else
-                {
-                    TearDownMeshInput();
-
-                    // Best effort only: the inline styles Unity baked onto the document root for
-                    // world space were stripped on the way in and are not recoverable here.
-                    if (!screenSpace && uiDocument != null && uiDocument.panelSettings != null)
-                    {
-                        uiDocument.panelSettings.renderMode = PanelRenderMode.WorldSpace;
-                        var uiRenderer = GetComponent<UIRenderer>();
-                        if (uiRenderer != null) uiRenderer.enabled = true;
-                    }
-                }
+                if (UsesMeshInput) BeginMeshBinding();
+                else TearDownMeshInput();
             }
 
             if (changedProperties.Contains(PropertyName.screenSpace))
