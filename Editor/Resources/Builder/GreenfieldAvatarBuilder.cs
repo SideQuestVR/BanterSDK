@@ -376,7 +376,7 @@ namespace BS.SDKEditor
             if (_isBuilding)
                 return;
 
-#if BASIS_BUNDLE_MANAGEMENT
+// #if BASIS_BUNDLE_MANAGEMENT
             string why = null;
             if (_avatarGo == null || !IsHumanoid(_avatarGo, out why))
             {
@@ -475,10 +475,10 @@ namespace BS.SDKEditor
             {
                 SetStatus($"Build failed: {message}");
             }
-#else
-            await Task.Yield();
-            SetStatus("Basis packages are not installed. Install them via the SDK first.");
-#endif
+// #else
+//             await Task.Yield();
+//             SetStatus("Basis packages are not installed. Install them via the SDK first.");
+// #endif
         }
 
         // Drop the plaintext password sidecar the pipeline writes next to the .BEE — the key is the

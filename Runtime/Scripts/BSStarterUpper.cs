@@ -59,10 +59,10 @@ namespace BS
                 PlayerPrefs.SetInt("SafeModeOff", 1);
             }
 
-#if BASIS_BUNDLE_MANAGEMENT
+// #if BASIS_BUNDLE_MANAGEMENT
             BasisLoadHandler.IsInitialized = false;
             _ = BasisLoadHandler.EnsureInitializationComplete();
-#endif
+// #endif
             if (!initialized)
             {
                 UnityGame.SetMainThread();

@@ -402,7 +402,7 @@ namespace BS
             }
         }
 
-#if BASIS_BUNDLE_MANAGEMENT
+// #if BASIS_BUNDLE_MANAGEMENT
         /// <summary>
         /// Downloads (or reads from disk), decrypts and loads an encrypted Basis <c>.bee</c> bundle,
         /// returning a plain <see cref="AssetBundle"/> the caller owns and unloads — the encrypted
@@ -435,7 +435,7 @@ namespace BS
 
             return wrapper.AssetBundle;
         }
-#endif
+// #endif
 
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)
         {

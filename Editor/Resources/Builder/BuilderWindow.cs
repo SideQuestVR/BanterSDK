@@ -2178,7 +2178,7 @@ public class BuilderWindow : EditorWindow
             }
         }
         RemoveCameras();
-#if BASIS_BUNDLE_MANAGEMENT
+// #if BASIS_BUNDLE_MANAGEMENT
         var basisProp = avatarGameObject.GetComponent<BasisProp>();
         if (basisProp == null)
         {
@@ -2228,12 +2228,12 @@ public class BuilderWindow : EditorWindow
             Debug.LogError("Failed to get avatar bones: " + e);
             return false;
         }
-#else
-        await Task.Yield();
-        status.AddStatus("Basis packages missing, please reinstall.");
-        MissingBones.text = "Basis packages missing, please reinstall.";
-        return false;
-#endif
+// #else
+//         await Task.Yield();
+//         status.AddStatus("Basis packages missing, please reinstall.");
+//         MissingBones.text = "Basis packages missing, please reinstall.";
+//         return false;
+// #endif
     }
     private void BuildAssetBundles(bool skipUpload = false)
     {
@@ -2294,7 +2294,7 @@ public class BuilderWindow : EditorWindow
                         // Greenfield spaces build to a single platform-agnostic encrypted Basis bundle
                         // (asset.world). Every platform loads it and ranged-GETs its own section; the
                         // runtime falls back to legacy per-platform windows.banter / android.banter.
-#if BASIS_BUNDLE_MANAGEMENT
+// #if BASIS_BUNDLE_MANAGEMENT
                         EditorApplication.LockReloadAssemblies();
                         reloadLockHeld = true;
                         names = await BuildSpaceBeeBundles();
@@ -2303,10 +2303,10 @@ public class BuilderWindow : EditorWindow
                             status.AddStatus("Build failed. See the console for details.");
                             return;
                         }
-#else
-                        status.AddStatus("Basis packages missing, please reinstall.");
-                        return;
-#endif
+// #else
+//                         status.AddStatus("Basis packages missing, please reinstall.");
+//                         return;
+// #endif
                     }
                     else
                     {
@@ -2400,7 +2400,7 @@ public class BuilderWindow : EditorWindow
             }
         };
     }
-#if BASIS_BUNDLE_MANAGEMENT
+// #if BASIS_BUNDLE_MANAGEMENT
     /// <summary>
     /// Builds the selected scene into a single platform-agnostic encrypted Basis bundle, written to
     /// WebRoot as <c>asset.world</c>. Basis' build pipeline already concatenates every requested platform
@@ -2587,7 +2587,7 @@ public class BuilderWindow : EditorWindow
 
         return produced;
     }
-#endif
+// #endif
 
     // ---- in-window upload progress -------------------------------------------
     // Building already gets Unity's own popup, so this bar is upload-only.
