@@ -102,10 +102,33 @@
     margin: 0;
 }
 
+/*
+ * The dragger travels inside this, so any inset on it becomes dead space the thumb can never reach
+ * — which reads as a scrollbar that stops short of both ends even when the content is scrolled all
+ * the way. The dragger's own margin was already zeroed above and the slider is stretched to fill
+ * the scroller, so this was the last thing still holding the thumb off the ends.
+ *
+ * The insets are cleared as well as the box: the default runtime theme is compiled into the engine
+ * and cannot be read from disk to see which of the two it uses, and zeroing both costs nothing.
+ * Note `top`/`bottom` here are a no-op on a relatively positioned container, so this is safe
+ * whichever way that theme lays it out.
+ */
+.unity-scroller .unity-base-slider__drag-container {
+    margin: 0;
+    padding: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    min-width: auto;
+    min-height: auto;
+}
+
 .unity-scroller .unity-base-slider__dragger {
     background-color: #26A69A;
     border-width: 0;
-    border-radius: 4px;
+    /* Square, to match the panel's chrome — nothing else in the editor has rounded corners. */
+    border-radius: 0;
     margin: 0;
 }
 
