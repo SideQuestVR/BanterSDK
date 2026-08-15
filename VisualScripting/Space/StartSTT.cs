@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Start Speech To Text")]
     [UnitShortTitle("StartSTT")]
-    [UnitCategory("Banter\\AI")]
+    [UnitCategory("BS\\AI")]
     [TypeIcon(typeof(BSObjectId))]
     public class StartSTT : Unit
     {

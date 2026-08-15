@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On MinMax Slider Changed")]
     [UnitShortTitle("On MinMax Slider Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnMinMaxSliderChanged : EventUnit<CustomEventArgs>
     {

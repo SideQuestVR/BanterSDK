@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Value")]
     [UnitShortTitle("Set UI Value")]
-    [UnitCategory("Banter\\UI\\Properties\\Value")]
+    [UnitCategory("BS\\UI\\Properties\\Value")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIValue : Unit
     {

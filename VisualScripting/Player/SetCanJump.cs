@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Jump")]
     [UnitShortTitle("Set Can Jump")]
-    [UnitCategory("Banter\\Player\\Actions")]
+    [UnitCategory("BS\\Player\\Actions")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetCanJump : Unit
     {

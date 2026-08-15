@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On UI Click")]
     [UnitShortTitle("On UI Click")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnUIClick : EventUnit<CustomEventArgs>
     {

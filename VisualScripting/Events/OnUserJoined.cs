@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On User Joined")]
     [UnitShortTitle("User Joined")]
-    [UnitCategory("Events\\Banter\\User")]
+    [UnitCategory("Events\\BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnUserJoined : EventUnit<BSUser>
     {

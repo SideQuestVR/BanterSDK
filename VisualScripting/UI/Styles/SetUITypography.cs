@@ -39,7 +39,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Set UI Typography")]
     [UnitShortTitle("Set UI Typography")]
-    [UnitCategory("Banter\\UI\\Styles\\Typography")]
+    [UnitCategory("BS\\UI\\Styles\\Typography")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUITypography : Unit
     {

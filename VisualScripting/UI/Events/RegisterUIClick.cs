@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Register UI Click")]
     [UnitShortTitle("Register UI Click")]
-    [UnitCategory("Banter\\UI\\Events")]
+    [UnitCategory("BS\\UI\\Events")]
     [TypeIcon(typeof(BSObjectId))]
     public class RegisterUIClick : Unit
     {

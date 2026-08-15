@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Typography")]
     [UnitShortTitle("Get UI Typography")]
-    [UnitCategory("Banter\\UI\\Styles\\Typography")]
+    [UnitCategory("BS\\UI\\Styles\\Typography")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUITypography : Unit
     {

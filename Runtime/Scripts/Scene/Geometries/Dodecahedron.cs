@@ -3,60 +3,40 @@ using UnityEngine;
 
 namespace BS
 {
-    public class Dodecahedron
+    // Ported from three.js DodecahedronGeometry.
+    public class Dodecahedron : Polyhedron
     {
-        Vector3[] vertices;
-        int[] indices;
-        float radius;
-        float detail;
+        static readonly float t = (1 + Mathf.Sqrt(5)) / 2;
+        static readonly float r = 1 / t;
 
-        public Dodecahedron(float radius = 1, float detail = 0)
+        static List<Vector3> Vertices()
         {
-            var t = (1 + Mathf.Sqrt(5)) / 2;
-            var r = 1 / t;
-            this.radius = radius;
-            this.detail = detail;
-            this.vertices = new Vector3[20]{
-                new Vector3(- 1, - 1, - 1),
-                new Vector3(- 1, - 1, 1),
-                new Vector3(- 1, 1, - 1),
-                new Vector3(- 1, 1, 1),
-                new Vector3(1, - 1, - 1),
-                new Vector3(1, - 1, 1),
-                new Vector3(1, 1, - 1),
-                new Vector3(1, 1, 1),
-                new Vector3(0, - r, - t),
-                new Vector3(0, - r, t),
-                new Vector3(0, r, - t),
-                new Vector3(0, r, t),
-                new Vector3(- r, - t, 0),
-                new Vector3(- r, t, 0),
-                new Vector3(r, - t, 0),
-                new Vector3(r, t, 0),
-                new Vector3(- t, 0, - r),
-                new Vector3(t, 0, - r),
-                new Vector3(- t, 0, r),
-                new Vector3(t, 0, r),
-                // // (±1, ±1, ±1)
-                // - 1, - 1, - 1,	- 1, - 1, 1,
-                // - 1, 1, - 1, - 1, 1, 1,
-                // 1, - 1, - 1, 1, - 1, 1,
-                // 1, 1, - 1, 1, 1, 1,
+            return new List<Vector3>
+            {
+                // (+-1, +-1, +-1)
+                new Vector3(-1, -1, -1), new Vector3(-1, -1, 1),
+                new Vector3(-1, 1, -1), new Vector3(-1, 1, 1),
+                new Vector3(1, -1, -1), new Vector3(1, -1, 1),
+                new Vector3(1, 1, -1), new Vector3(1, 1, 1),
 
-                // (0, ±1/φ, ±φ)
-                // 0, - r, - t, 0, - r, t,
-                // 0, r, - t, 0, r, t,
+                // (0, +-1/phi, +-phi)
+                new Vector3(0, -r, -t), new Vector3(0, -r, t),
+                new Vector3(0, r, -t), new Vector3(0, r, t),
 
-                // (±1/φ, ±φ, 0)
-                // - r, - t, 0, - r, t, 0,
-                // r, - t, 0, r, t, 0,
+                // (+-1/phi, +-phi, 0)
+                new Vector3(-r, -t, 0), new Vector3(-r, t, 0),
+                new Vector3(r, -t, 0), new Vector3(r, t, 0),
 
-                // (±φ, 0, ±1/φ)
-                // - t, 0, - r, t, 0, - r,
-                // - t, 0, r, t, 0, r
+                // (+-phi, 0, +-1/phi)
+                new Vector3(-t, 0, -r), new Vector3(t, 0, -r),
+                new Vector3(-t, 0, r), new Vector3(t, 0, r)
             };
+        }
 
-            this.indices = new int[]{
+        static List<int> Indices()
+        {
+            return new List<int>
+            {
                 3, 11, 7,   3, 7, 15,   3, 15, 13,
                 7, 19, 17,  7, 17, 6,   7, 6, 15,
                 17, 4, 8,   17, 8, 10,  17, 10, 6,
@@ -70,14 +50,11 @@ namespace BS
                 19, 5, 14,  19, 14, 4,  19, 4, 17,
                 1, 12, 14,  1, 14, 5,   1, 5, 9
             };
-
-
         }
 
-        public Mesh generate()
+        public Dodecahedron(float radius = 0.5f, float detail = 0)
+            : base(Vertices(), Indices(), radius, detail)
         {
-            return new Polyhedron(new List<Vector3>(vertices), new List<int>(indices), radius, detail).Generate();
         }
-
     }
 }

@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get Local User Language")]
     [UnitShortTitle("Get User Language")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUserLanguage : Unit
     {

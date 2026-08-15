@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Flexbox")]
     [UnitShortTitle("Get UI Flexbox")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUIFlexbox : Unit
     {

@@ -11,7 +11,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Background")]
     [UnitShortTitle("Get UI Background")]
-    [UnitCategory("Banter\\UI\\Styles\\Appearance")]
+    [UnitCategory("BS\\UI\\Styles\\Appearance")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUIBackground : Unit
     {

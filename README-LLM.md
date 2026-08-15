@@ -724,8 +724,26 @@ TRIGGER, GRIP, PRIMARY, SECONDARY
 
 ### GeometryType
 ```
-BoxGeometry, CircleGeometry, ConeGeometry, CylinderGeometry, PlaneGeometry, RingGeometry, SphereGeometry, TorusGeometry, TorusKnotGeometry, ParametricGeometry
+BoxGeometry, CircleGeometry, ConeGeometry, CylinderGeometry, PlaneGeometry, RingGeometry, SphereGeometry, TorusGeometry, TorusKnotGeometry, ParametricGeometry, CapsuleGeometry, DodecahedronGeometry, IcosahedronGeometry, OctahedronGeometry, TetrahedronGeometry, LatheGeometry, TubeGeometry, ExtrudeGeometry, ShapeGeometry
 ```
+
+Every geometry defaults to a mesh that fits inside a 1x1x1m box centred on the pivot.
+
+`LatheGeometry`, `ExtrudeGeometry` and `ShapeGeometry` read a 2D outline from `shapePoints`;
+`TubeGeometry` reads a 3D curve from `curvePoints`, and `ExtrudeGeometry` optionally uses it as an
+extrude path. Both are JSON strings — see the Geometry component docs.
+
+`EdgesGeometry` and `WireframeGeometry` are deliberately absent: both consume an existing geometry
+and emit line segments rather than triangles, so they do not fit a component that drives a
+MeshFilter.
+
+### ParametricGeometryType
+```
+Klein, Apple, Fermet, Catenoid, Helicoid, Horn, Mobius, Mobius3d, Natica, Pillow, Scherk, Snail, Spiral, Spring, Custom
+```
+
+These are all reached with `geometryType: ParametricGeometry` plus a `parametricType`. Several are
+one-sided or self-folding surfaces, so they are best rendered with a double-sided material.
 
 ### BanterLayers (BS.L)
 ```

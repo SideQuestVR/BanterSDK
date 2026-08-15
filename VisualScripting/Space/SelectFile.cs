@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Select file (GLB/JPG/PNG)")]
     [UnitShortTitle("SelectFile")]
-    [UnitCategory("Banter\\Files")]
+    [UnitCategory("BS\\Files")]
     [TypeIcon(typeof(BSObjectId))]
     public class SelectFile : Unit
     {

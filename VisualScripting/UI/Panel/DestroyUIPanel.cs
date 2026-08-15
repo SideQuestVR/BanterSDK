@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Destroy UI Panel")]
     [UnitShortTitle("Destroy UI Panel")]
-    [UnitCategory("Banter\\UI\\Panel")]
+    [UnitCategory("BS\\UI\\Panel")]
     [TypeIcon(typeof(BSObjectId))]
     public class DestroyUIPanel : Unit
     {

@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Stop Speech To Text")]
     [UnitShortTitle("StopSTT")]
-    [UnitCategory("Banter\\AI")]
+    [UnitCategory("BS\\AI")]
     [TypeIcon(typeof(BSObjectId))]
     public class StopSTT : Unit
     {

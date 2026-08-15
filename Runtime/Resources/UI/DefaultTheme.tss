@@ -37,21 +37,41 @@
 }
 
 .unity-scroller--vertical {
-    width: 10px;
+    width: 8px;
 }
 
 .unity-scroller--horizontal {
-    height: 10px;
+    height: 8px;
 }
 
 /*
- * The stepper arrows at each end. Hiding them leaves the slider to fill the scroller, but the
- * default theme positions that slider absolutely with insets that reserve room for the buttons,
- * so the insets are cleared here as well.
+ * The stepper arrows at each end.
+ *
+ * Hiding them leaves the slider to fill the scroller, but the default theme positions that slider
+ * absolutely with insets that reserve room for the buttons, so the insets are cleared below too.
+ *
+ * The child-combinator selectors repeat what the bare class selectors already say, and the zeroed
+ * box is redundant with `display: none`. Both are deliberate. The bare rules have been here since
+ * the scrollbar was first styled and the buttons were still reported visible in-world, and the
+ * built-in runtime theme is compiled into the engine, so there is no way to read its selectors from
+ * disk and settle whether this is a specificity loss. Raising specificity covers that case, and
+ * collapsing the box covers a theme that wins on `display` by some other route. If a future Unity
+ * makes one of these redundant, deleting it is safe; guessing which one to delete now is not.
  */
 .unity-scroller__low-button,
-.unity-scroller__high-button {
+.unity-scroller__high-button,
+.unity-scroller--vertical > .unity-scroller__low-button,
+.unity-scroller--vertical > .unity-scroller__high-button,
+.unity-scroller--horizontal > .unity-scroller__low-button,
+.unity-scroller--horizontal > .unity-scroller__high-button {
     display: none;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    border-width: 0;
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
 }
 
 .unity-scroller__slider {
@@ -67,27 +87,41 @@
     height: auto;
 }
 
-.unity-base-slider__tracker {
+/*
+ * Everything below is scoped under `.unity-scroller`.
+ *
+ * A Scroller drives itself with an ordinary Slider, so `.unity-base-slider__*` matches the parts of
+ * a scrollbar — but it equally matches every real Slider in every panel on this theme. Unscoped,
+ * these rules were painting genuine sliders with an invisible track and a scrollbar-coloured
+ * dragger. Now that the dragger is brand teal rather than neutral grey, that bleed would be
+ * obvious, so the scope is what keeps a scrollbar rule from being a slider rule.
+ */
+.unity-scroller .unity-base-slider__tracker {
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
     margin: 0;
 }
 
-.unity-base-slider__dragger {
-    background-color: #C1C1C1;
+.unity-scroller .unity-base-slider__dragger {
+    background-color: #26A69A;
     border-width: 0;
-    border-radius: 5px;
+    border-radius: 4px;
     margin: 0;
 }
 
-.unity-base-slider--vertical .unity-base-slider__dragger {
+/* USS pseudo-classes do work here — it is only the JS bridge that cannot express :hover. */
+.unity-scroller .unity-base-slider__dragger:hover {
+    background-color: #4DB6AC;
+}
+
+.unity-scroller .unity-base-slider--vertical .unity-base-slider__dragger {
     left: 0;
     right: 0;
     width: auto;
     min-height: 24px;
 }
 
-.unity-base-slider--horizontal .unity-base-slider__dragger {
+.unity-scroller .unity-base-slider--horizontal .unity-base-slider__dragger {
     top: 0;
     bottom: 0;
     height: auto;

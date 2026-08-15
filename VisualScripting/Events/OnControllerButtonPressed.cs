@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Controller Button Pressed")]
     [UnitShortTitle("Button Pressed")]
-    [UnitCategory("Events\\Banter\\Controller")]
+    [UnitCategory("Events\\BS\\Controller")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnControllerButtonPressed : EventUnit<CustomEventArgs>
     {

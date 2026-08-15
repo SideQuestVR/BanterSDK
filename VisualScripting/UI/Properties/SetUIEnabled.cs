@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Enabled")]
     [UnitShortTitle("Set UI Enabled")]
-    [UnitCategory("Banter\\UI\\Properties\\State")]
+    [UnitCategory("BS\\UI\\Properties\\State")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIEnabled : Unit
     {

@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Grab")]
     [UnitShortTitle("Set Can Grab")]
-    [UnitCategory("Banter\\Player\\Actions")]
+    [UnitCategory("BS\\Player\\Actions")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetCanGrab : Unit
     {

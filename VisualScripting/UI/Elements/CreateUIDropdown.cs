@@ -11,7 +11,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Dropdown")]
     [UnitShortTitle("Create UI Dropdown")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIDropdown : Unit
     {

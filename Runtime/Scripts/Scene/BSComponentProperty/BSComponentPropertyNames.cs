@@ -246,5 +246,7 @@ namespace BS
         duration,
         time,
         meshInput,
+        curvePoints,
+        shapePoints,
     }
 }

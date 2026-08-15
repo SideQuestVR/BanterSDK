@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Teleport To Location")]
     [UnitShortTitle("Teleport")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class TeleportTo : Unit
     {

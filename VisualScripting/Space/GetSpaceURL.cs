@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get Space URL")]
     [UnitShortTitle("Space URL")]
-    [UnitCategory("Banter\\Space")]
+    [UnitCategory("BS\\Space")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetSpaceURL : Unit
     {

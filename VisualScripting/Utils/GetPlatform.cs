@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get Platform")]
     [UnitShortTitle("Get Platform")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetPlatform : Unit
     {

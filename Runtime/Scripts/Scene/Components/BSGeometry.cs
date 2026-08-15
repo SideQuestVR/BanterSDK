@@ -108,10 +108,10 @@ namespace BS
         [Tooltip("The number of depth segments to divide the shape into.")]
         [See(initial = "1")][SerializeField] internal int depthSegments = 1;
 
-        [Tooltip("The radius of the shape.")]
-        [See(initial = "1")][SerializeField] internal float radius = 1;
+        [Tooltip("The overall radius of the shape. For a torus or torus knot this is the outer radius, not three.js's ring radius, so that one radius means the same thing for every shape.")]
+        [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
         [Tooltip("The number of segments to divide the shape into.")]
-        [See(initial = "24")][SerializeField] internal int segments = 24;
+        [See(initial = "32")][SerializeField] internal int segments = 32;
         [Tooltip("The starting x angle of the shape.")]
         [See(initial = "0")][SerializeField] internal float thetaStart = 0;
         [Tooltip("The ending x angle of the shape.")]
@@ -123,27 +123,27 @@ namespace BS
         [See(initial = "6.283185")][SerializeField] internal float phiLength = Mathf.PI * 2f;
 
         [Tooltip("The number of radial segments to divide the shape into.")]
-        [See(initial = "8")][SerializeField] internal int radialSegments = 8;
+        [See(initial = "32")][SerializeField] internal int radialSegments = 32;
         [Tooltip("Whether the object is open on the end or not.")]
         [See(initial = "false")][SerializeField] internal bool openEnded = false;
 
         [Tooltip("The radius of the top of the shape.")]
-        [See(initial = "1")][SerializeField] internal float radiusTop = 1;
+        [See(initial = "0.5")][SerializeField] internal float radiusTop = 0.5f;
         [Tooltip("The radius of the bottom of the shape.")]
-        [See(initial = "1")][SerializeField] internal float radiusBottom = 1;
+        [See(initial = "0.5")][SerializeField] internal float radiusBottom = 0.5f;
 
         [Tooltip("The inner radius of the shape.")]
-        [See(initial = "0.3")][SerializeField] internal float innerRadius = 0.3f;
+        [See(initial = "0.15")][SerializeField] internal float innerRadius = 0.15f;
         [Tooltip("The outer radius of the shape.")]
-        [See(initial = "1")][SerializeField] internal float outerRadius = 1f;
+        [See(initial = "0.5")][SerializeField] internal float outerRadius = 0.5f;
         [Tooltip("The number of angular x segments to divide the shape into.")]
-        [See(initial = "24")][SerializeField] internal int thetaSegments = 24;
+        [See(initial = "32")][SerializeField] internal int thetaSegments = 32;
         [Tooltip("The number of angular y segments to divide the shape into.")]
-        [See(initial = "8")][SerializeField] internal int phiSegments = 8;
+        [See(initial = "1")][SerializeField] internal int phiSegments = 1;
         [Tooltip("The tube size.")]
-        [See(initial = "0.4")][SerializeField] internal float tube = 0.4f;
+        [See(initial = "0.15")][SerializeField] internal float tube = 0.15f;
         [Tooltip("The number of tubular segments to divide the tube into.")]
-        [See(initial = "16")][SerializeField] internal int tubularSegments = 16;
+        [See(initial = "32")][SerializeField] internal int tubularSegments = 32;
         [Tooltip("The arc of the shape.")]
         [See(initial = "6.283185")][SerializeField] internal float arc = Mathf.PI * 2;
         [Tooltip("The number of p segments to divide the shape into.")]
@@ -151,11 +151,15 @@ namespace BS
         [Tooltip("The number of q segments to divide the shape into.")]
         [See(initial = "3")][SerializeField] internal int q = 3;
         [Tooltip("The number of stacks to divide the shape into.")]
-        [See(initial = "5")][SerializeField] internal int stacks = 5;
+        [See(initial = "32")][SerializeField] internal int stacks = 32;
         [Tooltip("The number of slices to divide the shape into.")]
-        [See(initial = "5")][SerializeField] internal int slices = 5;
+        [See(initial = "32")][SerializeField] internal int slices = 32;
         [See(initial = "0")][SerializeField] internal float detail = 0;
         [See(initial = "")][SerializeField] internal string parametricPoints = "";
+        [Tooltip("The 3D curve to sweep along, as JSON. Used by TubeGeometry, and as the extrude path for ExtrudeGeometry.")]
+        [See(initial = "")][SerializeField] internal string curvePoints = "";
+        [Tooltip("The 2D outline and holes of the shape, as JSON. Used by ShapeGeometry and ExtrudeGeometry.")]
+        [See(initial = "")][SerializeField] internal string shapePoints = "";
         MeshFilter _filter;
         private static Dictionary<string, Mesh> geometryCache = new Dictionary<string, Mesh>();
         public static void ClearCache()
@@ -167,6 +171,57 @@ namespace BS
             geometryCache.Clear();
         }
         
+        /// <summary>
+        /// Each named surface has its own Geometry class, which is what applies the unit-cube
+        /// normalisation - the surface functions have no size parameters of their own and range
+        /// from roughly 4m to 15m across.
+        /// </summary>
+        static readonly Dictionary<ParametricGeometryType, Func<int, int, Geometry>> ParametricFactory =
+            new Dictionary<ParametricGeometryType, Func<int, int, Geometry>>
+            {
+                { ParametricGeometryType.Klein, (st, sl) => new Klein(st, sl) },
+                { ParametricGeometryType.Apple, (st, sl) => new Apple(st, sl) },
+                { ParametricGeometryType.Fermet, (st, sl) => new Fermet(st, sl) },
+                { ParametricGeometryType.Catenoid, (st, sl) => new Catenoid(st, sl) },
+                { ParametricGeometryType.Helicoid, (st, sl) => new Helicoid(st, sl) },
+                { ParametricGeometryType.Horn, (st, sl) => new Horn(st, sl) },
+                { ParametricGeometryType.Mobius, (st, sl) => new Mobius(st, sl) },
+                { ParametricGeometryType.Mobius3d, (st, sl) => new Mobius3d(st, sl) },
+                { ParametricGeometryType.Natica, (st, sl) => new Natica(st, sl) },
+                { ParametricGeometryType.Pillow, (st, sl) => new Pillow(st, sl) },
+                { ParametricGeometryType.Scherk, (st, sl) => new Scherk(st, sl) },
+                { ParametricGeometryType.Snail, (st, sl) => new Snail(st, sl) },
+                { ParametricGeometryType.Spiral, (st, sl) => new Spiral(st, sl) },
+                { ParametricGeometryType.Spring, (st, sl) => new Spring(st, sl) },
+            };
+
+        Mesh BuildParametric()
+        {
+            if (parametricType == ParametricGeometryType.Custom)
+            {
+                // Built here rather than in SetGeometry so it survives the first Start - the old
+                // path only ran when changedProperties was non-null, which StartStuff never is.
+                if (string.IsNullOrEmpty(parametricPoints))
+                {
+                    return null;
+                }
+                try
+                {
+                    var pointsData = JsonUtility.FromJson<ParametricPoints>(parametricPoints);
+                    return new ParametricGeometry(stacks, slices, null, pointsData.points).Generate();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning("[BSGeometry] Could not parse parametricPoints: " + e.Message);
+                    return null;
+                }
+            }
+
+            return ParametricFactory.TryGetValue(parametricType, out var build)
+                ? build(stacks, slices).Generate()
+                : null;
+        }
+
         private Mesh GetCachedMesh()
         {
             var signature = GetSignature();
@@ -186,7 +241,11 @@ namespace BS
                         mesh = new Circle(radius, segments, thetaStart, thetaLength).Generate();
                         break;
                     case GeometryType.ConeGeometry:
-                        mesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
+                        // A cone is a cylinder with radiusTop == 0 by definition. radiusTop belongs
+                        // to CylinderGeometry and defaults to a non-zero value, and the generated JS
+                        // coalesces a caller-supplied 0 back to that default, so the only place this
+                        // can be forced is here. Without it ConeGeometry renders a cylinder.
+                        mesh = new Cone(radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
                         break;
                     case GeometryType.CylinderGeometry:
                         mesh = new Cylinder(radiusTop, radiusBottom, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength).Generate();
@@ -198,60 +257,84 @@ namespace BS
                         mesh = new Ring(innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength).Generate();
                         break;
                     case GeometryType.SphereGeometry:
-                        mesh = new Sphere(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength).Generate();
+                        // widthSegments/heightSegments and thetaLength are shared with shapes that
+                        // want very different values - a sphere given Box's segment counts of 1, or
+                        // a thetaLength of 2*PI, emits zero triangles and renders as nothing. Only
+                        // values that are degenerate for a sphere are replaced, so a deliberately
+                        // low-poly or hemispherical sphere still works.
+                        mesh = new Sphere(radius,
+                            widthSegments <= 2 ? 32 : widthSegments,
+                            heightSegments <= 1 ? 16 : heightSegments,
+                            phiStart, phiLength, thetaStart,
+                            Mathf.Min(thetaLength, Mathf.PI)).Generate();
                         break;
                     case GeometryType.TorusGeometry:
-                        mesh = new Torus(radius, tube, radialSegments, tubularSegments, arc).Generate();
+                        // `radius` is the overall outer radius here, not three.js's ring radius, so
+                        // that one shared radius field means the same thing for every shape and the
+                        // defaults land inside a 1m cube.
+                        mesh = new Torus(Mathf.Max(0.001f, radius - tube), tube, radialSegments, tubularSegments, arc).Generate();
                         break;
                     case GeometryType.TorusKnotGeometry:
-                        mesh = new TorusKnot(radius, tube, radialSegments, tubularSegments, p, q).Generate();
+                        // Largest extent of the knot is 3R + 2*tube; solving for an overall radius
+                        // keeps `radius` consistent with the other shapes.
+                        mesh = new TorusKnot(Mathf.Max(0.001f, (2 * radius - 2 * tube) / 3), tube, radialSegments, tubularSegments, p, q).Generate();
+                        break;
+                    case GeometryType.CapsuleGeometry:
+                        // `height` is the total height and `radius` the overall bounding radius, so
+                        // the caps are radius/2 and the straight section is whatever is left. Taking
+                        // radius as the cap radius directly would make the default 0.5/1 capsule a
+                        // plain sphere. heightSegments doubles as the cap resolution, and its shared
+                        // default of 1 (Box's value) would give a two-ring hemisphere.
+                        var capRadius = Mathf.Min(radius / 2, height / 2);
+                        mesh = new Capsule(capRadius, Mathf.Max(0, height - 2 * capRadius),
+                            heightSegments <= 1 ? 8 : heightSegments, radialSegments).Generate();
+                        break;
+                    case GeometryType.DodecahedronGeometry:
+                        mesh = new Dodecahedron(radius, detail).Generate();
+                        break;
+                    case GeometryType.IcosahedronGeometry:
+                        mesh = new Icosahedron(radius, detail).Generate();
+                        break;
+                    case GeometryType.OctahedronGeometry:
+                        mesh = new Octahedron(radius, detail).Generate();
+                        break;
+                    case GeometryType.TetrahedronGeometry:
+                        mesh = new Tetrahedron(radius, detail).Generate();
+                        break;
+                    case GeometryType.TubeGeometry:
+                        var path = CurveDefinition.Parse(curvePoints);
+                        if (path != null)
+                        {
+                            mesh = new Tube(path, tubularSegments, radius, radialSegments,
+                                path is CatmullRomCurve3 crc && crc.closed).Generate();
+                        }
+                        break;
+                    case GeometryType.ShapeGeometry:
+                        var shape = ShapeCommands.Parse(shapePoints);
+                        if (shape != null)
+                        {
+                            mesh = new ShapeGeometry(shape, segments).Generate();
+                        }
+                        break;
+                    case GeometryType.ExtrudeGeometry:
+                        var extrudeShape = ShapeCommands.Parse(shapePoints);
+                        if (extrudeShape != null)
+                        {
+                            // depthSegments doubles as three.js's `steps`; both mean subdivisions
+                            // along the extrusion axis and share a default of 1.
+                            mesh = new ExtrudeGeometry(extrudeShape, depth, depthSegments, segments,
+                                CurveDefinition.Parse(curvePoints)).Generate();
+                        }
+                        break;
+                    case GeometryType.LatheGeometry:
+                        var profile = ShapeCommands.Parse(shapePoints);
+                        if (profile != null)
+                        {
+                            mesh = new Lathe(profile.GetPoints2D(segments), radialSegments, phiStart, phiLength).Generate();
+                        }
                         break;
                     case GeometryType.ParametricGeometry:
-                        switch (parametricType)
-                        {
-                            case ParametricGeometryType.Klein:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Klein).Generate();
-                                break;
-                            case ParametricGeometryType.Apple:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Apple).Generate();
-                                break;
-                            case ParametricGeometryType.Fermet:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Fermet).Generate();
-                                break;
-                            case ParametricGeometryType.Catenoid:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Catenoid).Generate();
-                                break;
-                            case ParametricGeometryType.Helicoid:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Helicoid).Generate();
-                                break;
-                            case ParametricGeometryType.Horn:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Horn).Generate();
-                                break;
-                            case ParametricGeometryType.Mobius:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius).Generate();
-                                break;
-                            case ParametricGeometryType.Mobius3d:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Mobius3d).Generate();
-                                break;
-                            case ParametricGeometryType.Natica:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Natica).Generate();
-                                break;
-                            case ParametricGeometryType.Pillow:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Pillow).Generate();
-                                break;
-                            case ParametricGeometryType.Scherk:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Scherk).Generate();
-                                break;
-                            case ParametricGeometryType.Snail:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Snail).Generate();
-                                break;
-                            case ParametricGeometryType.Spiral:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spiral).Generate();
-                                break;
-                            case ParametricGeometryType.Spring:
-                                mesh = new ParametricGeometry(stacks, slices, ParametricGeometry.Spring).Generate();
-                                break;
-                        }
+                        mesh = BuildParametric();
                         break;
                 }
                 if(mesh)
@@ -283,20 +366,16 @@ namespace BS
                 _filter = gameObject.AddComponent<MeshFilter>();
             }
             _filter.sharedMesh = GetCachedMesh();
-            if (changedProperties != null && changedProperties.Contains(PropertyName.parametricPoints)
-            && geometryType == GeometryType.ParametricGeometry && parametricType == ParametricGeometryType.Custom)
-            {
-                var pointsData = JsonUtility.FromJson<ParametricPoints>(parametricPoints);
-                _filter.sharedMesh = new ParametricGeometry(stacks, slices, null, pointsData.points).Generate();
-            }
         }
 
         internal override void DestroyStuff()
         {
             if (_filter != null)
             {
-                Destroy(_filter.sharedMesh);
-                geometryCache.Remove(GetSignature());
+                // The mesh is owned by the static cache and shared with every other object of
+                // identical geometry, so destroying it here blanked all of them. Unit-cube
+                // defaults make identical signatures far more common, which turned this from rare
+                // to routine. ClearCache is the only thing that should free these.
                 Destroy(_filter);
             }
         }
@@ -332,6 +411,8 @@ namespace BS
         public System.Int32 Slices { get { return slices; } set { slices = value; UpdateCallback(new List<PropertyName> { PropertyName.slices }); } }
         public System.Single Detail { get { return detail; } set { detail = value; UpdateCallback(new List<PropertyName> { PropertyName.detail }); } }
         public System.String ParametricPoints { get { return parametricPoints; } set { parametricPoints = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricPoints }); } }
+        public System.String CurvePoints { get { return curvePoints; } set { curvePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.curvePoints }); } }
+        public System.String ShapePoints { get { return shapePoints; } set { shapePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.shapePoints }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -354,12 +435,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.geometryType, PropertyName.parametricType, PropertyName.width, PropertyName.height, PropertyName.depth, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.depthSegments, PropertyName.radius, PropertyName.segments, PropertyName.thetaStart, PropertyName.thetaLength, PropertyName.phiStart, PropertyName.phiLength, PropertyName.radialSegments, PropertyName.openEnded, PropertyName.radiusTop, PropertyName.radiusBottom, PropertyName.innerRadius, PropertyName.outerRadius, PropertyName.thetaSegments, PropertyName.phiSegments, PropertyName.tube, PropertyName.tubularSegments, PropertyName.arc, PropertyName.p, PropertyName.q, PropertyName.stacks, PropertyName.slices, PropertyName.detail, PropertyName.parametricPoints, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.geometryType, PropertyName.parametricType, PropertyName.width, PropertyName.height, PropertyName.depth, PropertyName.widthSegments, PropertyName.heightSegments, PropertyName.depthSegments, PropertyName.radius, PropertyName.segments, PropertyName.thetaStart, PropertyName.thetaLength, PropertyName.phiStart, PropertyName.phiLength, PropertyName.radialSegments, PropertyName.openEnded, PropertyName.radiusTop, PropertyName.radiusBottom, PropertyName.innerRadius, PropertyName.outerRadius, PropertyName.thetaSegments, PropertyName.phiSegments, PropertyName.tube, PropertyName.tubularSegments, PropertyName.arc, PropertyName.p, PropertyName.q, PropertyName.stacks, PropertyName.slices, PropertyName.detail, PropertyName.parametricPoints, PropertyName.curvePoints, PropertyName.shapePoints, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "Geometry" +  PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints;
+            return "Geometry" +  PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints + PropertyName.curvePoints + curvePoints + PropertyName.shapePoints + shapePoints;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -680,6 +761,24 @@ namespace BS
                     {
                         parametricPoints = valparametricPoints.x;
                         changedProperties.Add(PropertyName.parametricPoints);
+                    }
+                }
+                if (values[i] is BSString)
+                {
+                    var valcurvePoints = (BSString)values[i];
+                    if (valcurvePoints.n == PropertyName.curvePoints)
+                    {
+                        curvePoints = valcurvePoints.x;
+                        changedProperties.Add(PropertyName.curvePoints);
+                    }
+                }
+                if (values[i] is BSString)
+                {
+                    var valshapePoints = (BSString)values[i];
+                    if (valshapePoints.n == PropertyName.shapePoints)
+                    {
+                        shapePoints = valshapePoints.x;
+                        changedProperties.Add(PropertyName.shapePoints);
                     }
                 }
             }
@@ -1056,6 +1155,30 @@ namespace BS
                     name = PropertyName.parametricPoints,
                     type = PropertyType.String,
                     value = parametricPoints,
+                    componentType = ComponentType.Geometry,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.curvePoints,
+                    type = PropertyType.String,
+                    value = curvePoints,
+                    componentType = ComponentType.Geometry,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.shapePoints,
+                    type = PropertyType.String,
+                    value = shapePoints,
                     componentType = ComponentType.Geometry,
                     oid = oid,
                     cid = cid

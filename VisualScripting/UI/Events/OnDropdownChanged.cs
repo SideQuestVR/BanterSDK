@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Dropdown Changed")]
     [UnitShortTitle("On Dropdown Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnDropdownChanged : EventUnit<CustomEventArgs>
     {

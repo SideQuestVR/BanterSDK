@@ -28,6 +28,7 @@ namespace BS
             BuildPlane("x", "y", "z", 1, -1, width, height, depth, widthSegments, heightSegments, 4); // pz
             BuildPlane("x", "y", "z", -1, -1, width, height, -depth, widthSegments, heightSegments, 5); // nz
 
+            ConvertToUnityHandedness();
         }
         void BuildPlane(string u, string v, string w, int udir, int vdir, float width, float height, float depth, int gridX, int gridY, int side)
         {
@@ -56,7 +57,7 @@ namespace BS
 
                     normals.Add(MakePlaneVector(u, v, w, 0, 0, depth > 0 ? 1 : -1));
 
-                    uvs.Add(new Vector2(1 - (ix / gridX), 1 - (iy / gridY)));
+                    uvs.Add(new Vector2(ix / (float)gridX, 1 - iy / (float)gridY));
 
                     vertexCounter++;
                 }

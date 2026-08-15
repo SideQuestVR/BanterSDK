@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Block Left Primary")]
     [UnitShortTitle("Block Left Primary")]
-    [UnitCategory("Banter\\Player\\Input")]
+    [UnitCategory("BS\\Player\\Input")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetBlockLeftPrimary : Unit
     {

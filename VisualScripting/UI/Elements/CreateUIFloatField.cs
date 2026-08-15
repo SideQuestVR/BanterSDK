@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Float Field")]
     [UnitShortTitle("Create UI Float Field")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIFloatField : Unit
     {

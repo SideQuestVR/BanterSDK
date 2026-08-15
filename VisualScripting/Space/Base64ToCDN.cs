@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Base64 To CDN")]
     [UnitShortTitle("Base64ToCDN")]
-    [UnitCategory("Banter\\AI")]
+    [UnitCategory("BS\\AI")]
     [TypeIcon(typeof(BSObjectId))]
     public class Base64ToCDN : Unit
     {

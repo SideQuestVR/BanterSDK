@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Crouch")]
     [UnitShortTitle("Set Can Crouch")]
-    [UnitCategory("Banter\\Player\\Actions")]
+    [UnitCategory("BS\\Player\\Actions")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetCanCrouch : Unit
     {

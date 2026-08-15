@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Style")]
     [UnitShortTitle("Set UI Style")]
-    [UnitCategory("Banter\\UI\\Styles")]
+    [UnitCategory("BS\\UI\\Styles")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIStyle : Unit
     {

@@ -11,7 +11,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Load Texture from URL")]
     [UnitShortTitle("Load Texture")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class LoadTextureUrl : Unit
     {
@@ -85,7 +85,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Load Text from URL")]
     [UnitShortTitle("Load Text")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class LoadTextUrl : Unit
     {
@@ -155,7 +155,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Load Audio from URL")]
     [UnitShortTitle("Load Audio")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class LoadAudioUrl : Unit
     {
@@ -221,7 +221,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Load glTF/glb from URL")]
     [UnitShortTitle("Load glTF")]
-    [UnitCategory("Banter")]
+    [UnitCategory("BS")]
     [Obsolete("Use BSGLTF Set Url")]
     [TypeIcon(typeof(BSObjectId))]
     public class LoadGltfUrl : Unit

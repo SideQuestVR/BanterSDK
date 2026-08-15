@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Block Right Thumbstick Click")]
     [UnitShortTitle("Block Right Stick Click")]
-    [UnitCategory("Banter\\Player\\Input")]
+    [UnitCategory("BS\\Player\\Input")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetBlockRightThumbstickClick : Unit
     {

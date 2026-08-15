@@ -1869,7 +1869,54 @@ BS.GeometryType.SphereGeometry
 BS.GeometryType.TorusGeometry
 BS.GeometryType.TorusKnotGeometry
 BS.GeometryType.ParametricGeometry
+BS.GeometryType.CapsuleGeometry
+BS.GeometryType.DodecahedronGeometry
+BS.GeometryType.IcosahedronGeometry
+BS.GeometryType.OctahedronGeometry
+BS.GeometryType.TetrahedronGeometry
+BS.GeometryType.LatheGeometry
+BS.GeometryType.TubeGeometry
+BS.GeometryType.ExtrudeGeometry
+BS.GeometryType.ShapeGeometry
 ```
+
+Every geometry defaults to a mesh that fits inside a 1×1×1m box centred on the pivot, so shapes
+can be mixed without rescaling each one by hand.
+
+`radius` is the shape's **overall** radius. For `TorusGeometry` and `TorusKnotGeometry` that means
+the outer radius rather than three.js's ring radius, so that one field means the same thing for
+every shape.
+
+The last four types are driven by author-supplied geometry rather than scalar parameters:
+
+```js
+// A square with a circular hole. "M" starts a contour, "H" switches to holes.
+const shapePoints = JSON.stringify({ commands: [
+  { type: 'M', x: -0.5, y: -0.5 }, { type: 'L', x: 0.5, y: -0.5 },
+  { type: 'L', x: 0.5, y: 0.5 },   { type: 'L', x: -0.5, y: 0.5 }, { type: 'Z' },
+  { type: 'H' },
+  { type: 'M', x: 0.25, y: 0 },
+  { type: 'A', x: 0, y: 0, radiusX: 0.25, radiusY: 0.25, startAngle: 0, endAngle: 6.283185 },
+]});
+
+// A closed loop for a tube to sweep along.
+const curvePoints = JSON.stringify({
+  type: 'CatmullRom', closed: true, curveType: 'centripetal',
+  points: [{ x: -0.4, y: 0, z: -0.4 }, { x: 0.4, y: 0.2, z: -0.4 },
+           { x: 0.4, y: 0, z: 0.4 },   { x: -0.4, y: -0.2, z: 0.4 }],
+});
+```
+
+Command letters are `M` moveTo, `L` lineTo, `C` cubic bezier, `Q` quadratic bezier, `S` spline
+through, `A` arc/ellipse, `Z` close, `H` begin holes. Curve `type` is `CatmullRom`, `Line` or
+`Path`.
+
+`ExtrudeGeometry` does not bevel. `EdgesGeometry` and `WireframeGeometry` are deliberately absent —
+both consume an existing geometry and emit line segments rather than triangles, so they do not fit
+a component that drives a MeshFilter.
+
+**Note that no numeric property can be `0`.** Every one is read with `||`, so a zero falls back to
+that property's default.
 
 ### PropertyName (BS.PN)
 

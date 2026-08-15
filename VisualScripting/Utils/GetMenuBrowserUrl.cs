@@ -15,7 +15,7 @@ namespace BS.VisualScripting
     /// </summary>
     [UnitTitle("Get Menu Browser URL")]
     [UnitShortTitle("Menu Browser URL")]
-    [UnitCategory("Banter\\Browser")]
+    [UnitCategory("BS\\Browser")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetMenuBrowserUrl : Unit
     {

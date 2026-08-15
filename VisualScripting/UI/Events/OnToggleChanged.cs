@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Toggle Changed")]
     [UnitShortTitle("On Toggle Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnToggleChanged : EventUnit<CustomEventArgs>
     {

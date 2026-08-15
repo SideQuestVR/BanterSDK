@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI ScrollView")]
     [UnitShortTitle("Create UI ScrollView")]
-    [UnitCategory("Banter\\UI\\Elements\\Containers")]
+    [UnitCategory("BS\\UI\\Elements\\Containers")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIScrollView : Unit
     {

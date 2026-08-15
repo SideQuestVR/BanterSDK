@@ -14,7 +14,7 @@ namespace BS.VisualScripting
     }
     [UnitTitle("Set a Score on a Leaderboard")]
     [UnitShortTitle("SetScore")]
-    [UnitCategory("Banter\\Leaderboard")]
+    [UnitCategory("BS\\Leaderboard")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetScore : Unit
     {

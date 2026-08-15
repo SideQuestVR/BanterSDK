@@ -11,7 +11,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Property")]
     [UnitShortTitle("Get UI Property")]
-    [UnitCategory("Banter\\UI\\Properties")]
+    [UnitCategory("BS\\UI\\Properties")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUIProperty : Unit
     {

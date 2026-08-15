@@ -1,132 +1,65 @@
-﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace BS
 {
-    public class TorusKnot : Geometry
+    /// <summary>
+    /// The (p,q) torus knot curve, as three.js computes it.
+    /// </summary>
+    public class TorusKnotCurve : Curve
     {
-        public TorusKnot(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, int p = 2, int q = 3)
+        readonly float radius;
+        readonly int p;
+        readonly int q;
+
+        public TorusKnotCurve(float radius, int p, int q)
         {
-
-            indices = new List<int>();//[indexLength];
-            vertices = new List<Vector3>();//[verticesLength];
-            normals = new List<Vector3>();//[verticesLength];
-            uvs = new List<Vector2>();//[verticesLength];
-            //var normal = new Vector3();
-
-            var P1 = new Vector3();
-            var P2 = new Vector3();
-
-            var B = new Vector3();
-            var T = new Vector3();
-            var N = new Vector3();
-
-            // generate vertices, normals and uvs
-
-            for (int i = 0; i <= tubularSegments; ++i)
-            {
-
-                // the radian "u" is used to calculate the position on the torus curve of the current tubular segement
-
-                var u = i / (float)tubularSegments * p * Mathf.PI * 2;
-
-                // now we calculate two points. P1 is our current position on the curve, P2 is a little farther ahead.
-                // these points are used to create a special "coordinate space", which is necessary to calculate the correct vertex positions
-
-                calculatePositionOnCurve(u, p, q, radius, ref P1);
-                calculatePositionOnCurve(u + 0.01f, p, q, radius, ref P2);
-
-                // calculate orthonormal basis
-                T = P2 - P1;
-                N = P2 + P1;
-                B = Vector3.Cross(T, N);
-                N = Vector3.Cross(B, T);
-                //T.subVectors(P2, P1);
-                //N.addVectors(P2, P1);
-                //B.crossVectors(T, N);
-                //N.crossVectors(B, T);
-
-                // normalize B, N. T can be ignored, we don't use it
-
-                B.Normalize();
-                N.Normalize();
-
-                for (int j = 0; j <= radialSegments; ++j)
-                {
-
-                    // now calculate the vertices. they are nothing more than an extrusion of the torus curve.
-                    // because we extrude a shape in the xy-plane, there is no need to calculate a z-value.
-
-                    var v = j / (float)radialSegments * Mathf.PI * 2;
-                    var cx = -tube * Mathf.Cos(v);
-                    var cy = tube * Mathf.Sin(v);
-
-                    // now calculate the final vertex position.
-                    // first we orient the extrusion with our basis vectos, then we add it to the current position on the curve
-
-                    var vertex = new Vector3(P1.x + (cx * N.x + cy * B.x), P1.y + (cx * N.y + cy * B.y), P1.z + (cx * N.z + cy * B.z));
-
-                    vertices.Add(vertex);
-
-                    // normal (P1 is always the center/origin of the extrusion, thus we can use it to calculate the normal)
-
-                    //normal.subVectors(vertex, P1).normalize();
-                    Vector3 normal = vertex - P1;
-                    normal.Normalize();
-                    normals.Add(normal);
-
-                    // uv
-                    uvs.Add(new Vector2(i / (float)tubularSegments, j / (float)radialSegments));
-                    //uvs.push(i / tubularSegments);
-                    //uvs.push(j / radialSegments);
-
-                }
-
-            }
-
-            // generate indices
-
-            for (int j = 1; j <= tubularSegments; j++)
-            {
-
-                for (int i = 1; i <= radialSegments; i++)
-                {
-
-                    // indices
-
-                    var a = (radialSegments + 1) * (j - 1) + (i - 1);
-                    var b = (radialSegments + 1) * j + (i - 1);
-                    var c = (radialSegments + 1) * j + i;
-                    var d = (radialSegments + 1) * (j - 1) + i;
-
-                    // faces
-
-                    indices.Add(a);
-                    indices.Add(b);
-                    indices.Add(d);
-
-                    indices.Add(b);
-                    indices.Add(c);
-                    indices.Add(d);
-
-                }
-
-            }
-
+            this.radius = radius;
+            this.p = p;
+            this.q = q;
         }
 
-        void calculatePositionOnCurve(float u, int p, int q, float radius, ref Vector3 position)
+        public override Vector3 GetPoint(float t)
         {
+            var u = t * p * Mathf.PI * 2;
 
             var cu = Mathf.Cos(u);
             var su = Mathf.Sin(u);
-            var quOverP = (float)q / (float)p * u;
+            var quOverP = (float)q / p * u;
             var cs = Mathf.Cos(quOverP);
 
-            position.x = radius * (2 + cs) * 0.5f * cu;
-            position.y = radius * (2 + cs) * su * 0.5f;
-            position.z = radius * Mathf.Sin(quOverP) * 0.5f;
+            return new Vector3(
+                radius * (2 + cs) * 0.5f * cu,
+                radius * (2 + cs) * su * 0.5f,
+                radius * Mathf.Sin(quOverP) * 0.5f);
+        }
+    }
 
+    /// <summary>
+    /// A tube swept along a (p,q) torus knot.
+    ///
+    /// three.js builds this with its own inline frame, `N = P2 + P1`, which points radially from
+    /// the origin. On a (2,3) knot the curve passes either side of the origin, so that frame
+    /// reverses handedness partway round: adjacent rings come out mirrored, the quads between them
+    /// become bow-ties, and the surface renders shredded. Sweeping with <see cref="Tube"/> instead
+    /// uses rotation-minimising frames, which carry a consistent normal along the whole curve and
+    /// cannot flip.
+    ///
+    /// The Tube it delegates to has already converted handedness and recentred, so this must not
+    /// do either again.
+    /// </summary>
+    public class TorusKnot : Geometry
+    {
+        // Largest extent is 3*radius + 2*tube: the tube offset runs along +x at u = 0, where
+        // cos((q/p)u) peaks, independent of p and q. 3(0.25) + 2(0.1) = 0.95.
+        public TorusKnot(float radius = 0.25f, float tube = 0.1f, int radialSegments = 8, int tubularSegments = 64, int p = 2, int q = 3)
+        {
+            var curve = new TorusKnotCurve(radius, Mathf.Max(1, p), Mathf.Max(1, q));
+            var tubeMesh = new Tube(curve, tubularSegments, tube, radialSegments, true);
+
+            indices = tubeMesh.indices;
+            vertices = tubeMesh.vertices;
+            normals = tubeMesh.normals;
+            uvs = tubeMesh.uvs;
         }
     }
 }

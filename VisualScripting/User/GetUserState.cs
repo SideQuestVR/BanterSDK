@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get User State")]
     [UnitShortTitle("User State")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUserState : Unit
     {
@@ -46,7 +46,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Get Local User State")]
     [UnitShortTitle("Local User State")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetLocalUserState : Unit
     {
@@ -74,7 +74,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Get User Saved Value")]
     [UnitShortTitle("GetUserSavedValue")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUserSavedValue : Unit
     {
@@ -111,7 +111,7 @@ namespace BS.VisualScripting
     
     [UnitTitle("Set User Saved Value")]
     [UnitShortTitle("SetUserSavedValue")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUserSavedValue : Unit
     {
@@ -152,7 +152,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Remove User Saved Value")]
     [UnitShortTitle("RemoveUserSavedValue")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class RemoveUserSavedValue : Unit
     {

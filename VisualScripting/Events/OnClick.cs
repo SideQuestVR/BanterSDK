@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Click")]
     [UnitShortTitle("On Click")]
-    [UnitCategory("Events\\Banter\\PlayerEvents")]
+    [UnitCategory("Events\\BS\\PlayerEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnClick : EventUnit<CustomEventArgs>
     {

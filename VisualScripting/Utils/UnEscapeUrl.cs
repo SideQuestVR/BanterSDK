@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("UnEscape Url")]
     [UnitShortTitle("UnEscape Url")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class UnEscapeUrl : Unit
     {

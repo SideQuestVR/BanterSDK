@@ -20,7 +20,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Set UI Background")]
     [UnitShortTitle("Set UI Background")]
-    [UnitCategory("Banter\\UI\\Styles\\Appearance")]
+    [UnitCategory("BS\\UI\\Styles\\Appearance")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIBackground : Unit
     {

@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Block Right Trigger")]
     [UnitShortTitle("Block Right Trigger")]
-    [UnitCategory("Banter\\Player\\Input")]
+    [UnitCategory("BS\\Player\\Input")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetBlockRightTrigger : Unit
     {

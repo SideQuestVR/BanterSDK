@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On ThumbClickUp")]
     [UnitShortTitle("On ThumbClickUp")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnThumbClickUp : EventUnit<CustomEventArgs>
     {

@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Panel")]
     [UnitShortTitle("Get UI Panel")]
-    [UnitCategory("Banter\\UI\\Panel")]
+    [UnitCategory("BS\\UI\\Panel")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUIPanel : Unit
     {

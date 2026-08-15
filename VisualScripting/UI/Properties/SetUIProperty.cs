@@ -28,7 +28,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Set UI Property")]
     [UnitShortTitle("Set UI Property")]
-    [UnitCategory("Banter\\UI\\Properties")]
+    [UnitCategory("BS\\UI\\Properties")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIProperty : Unit
     {

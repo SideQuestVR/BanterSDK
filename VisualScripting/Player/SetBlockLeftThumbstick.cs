@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Block Left Thumbstick")]
     [UnitShortTitle("Block Left Thumbstick")]
-    [UnitCategory("Banter\\Player\\Input")]
+    [UnitCategory("BS\\Player\\Input")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetBlockLeftThumbstick : Unit
     {

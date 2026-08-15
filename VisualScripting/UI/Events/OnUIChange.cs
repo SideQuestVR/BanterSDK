@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On UI Change")]
     [UnitShortTitle("On UI Change")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnUIChange : EventUnit<CustomEventArgs>
     {

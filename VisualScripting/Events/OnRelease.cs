@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Release")]
     [UnitShortTitle("On Release")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnRelease : EventUnit<CustomEventArgs>
     {

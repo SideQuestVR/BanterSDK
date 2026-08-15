@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Load Quest Home")]
     [UnitShortTitle("Load Quest Home")]
-    [UnitCategory("Banter\\Space")]
+    [UnitCategory("BS\\Space")]
     [TypeIcon(typeof(BSObjectId))]
     public class LoadQuestHome : Unit
     {

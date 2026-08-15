@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Label")]
     [UnitShortTitle("Create UI Label")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUILabel : Unit
     {

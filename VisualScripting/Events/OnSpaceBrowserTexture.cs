@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Space Browser Texture")]
     [UnitShortTitle("On Space Browser Texture")]
-    [UnitCategory("Events\\Banter\\Utils")]
+    [UnitCategory("Events\\BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnSpaceBrowserTexture : EventUnit<CustomEventArgs>
     {

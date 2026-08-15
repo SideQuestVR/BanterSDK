@@ -65,6 +65,8 @@ namespace BS
                     return gameObject.AddComponent<BSInvertedMesh>();
                 case ComponentType.KitItem:
                     return gameObject.AddComponent<BSKitItem>();
+                case ComponentType.KitAsset:
+                    return gameObject.AddComponent<BSKitAsset>();
                 case ComponentType.Klein:
                     return gameObject.AddComponent<BSKlein>();
                 case ComponentType.Light:

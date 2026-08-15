@@ -5,9 +5,9 @@ using System;
 
 namespace BS.VisualScripting
 {
-    [UnitTitle("Banter Synced Object Take Ownership")]
+    [UnitTitle("BS Synced Object Take Ownership")]
     [UnitShortTitle("Take Ownership")]
-    [UnitCategory("Banter/Components/Banter Synced Object")]
+    [UnitCategory("BS\\Components\\BS Synced Object")]
     [Obsolete("Use BSSyncedObject _TakeOwnership()")]
     [TypeIcon(typeof(BSSyncedObject))]
     [RenamedFrom("Banter.VisualScripting.BanterSyncedObjectTakeOwnership")]
@@ -38,9 +38,9 @@ namespace BS.VisualScripting
         }
     }
 
-    [UnitTitle("Banter Synced Object Is Owner")]
+    [UnitTitle("BS Synced Object Is Owner")]
     [UnitShortTitle("Is Synced Object Owner")]
-    [UnitCategory("Banter/Components/Banter Synced Object")]
+    [UnitCategory("BS\\Components\\BS Synced Object")]
     [Obsolete("Use BSSyncedObject _DoIOwn()")]
     [TypeIcon(typeof(BSSyncedObject))]
     [RenamedFrom("Banter.VisualScripting.BanterSyncedObjectDoIOwn")]

@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Grab")]
     [UnitShortTitle("On Grab")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnGrab : EventUnit<CustomEventArgs>
     {

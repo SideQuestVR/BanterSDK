@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Select File")]
     [UnitShortTitle("On Select File")]
-    [UnitCategory("Events\\Banter\\Files")]
+    [UnitCategory("Events\\BS\\Files")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnSelectFile : EventUnit<CustomEventArgs>
     {

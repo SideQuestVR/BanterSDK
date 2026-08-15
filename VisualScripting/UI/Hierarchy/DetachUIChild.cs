@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Detach UI Child")]
     [UnitShortTitle("Detach UI Child")]
-    [UnitCategory("Banter\\UI\\Hierarchy")]
+    [UnitCategory("BS\\UI\\Hierarchy")]
     [TypeIcon(typeof(BSObjectId))]
     public class DetachUIChild : Unit
     {

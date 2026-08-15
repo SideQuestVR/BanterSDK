@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Text Field")]
     [UnitShortTitle("Create UI Text Field")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUITextField : Unit
     {

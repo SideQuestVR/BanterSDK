@@ -67,6 +67,12 @@ namespace BS
         VideoPlayer,
         WorldObject,
 
+        // Appended, and it has to stay appended: these ordinals are the JS<->Unity wire protocol.
+        // Note this must sit ABOVE the alias block - implicit numbering continues from the last
+        // ASSIGNED value, so a member added after the aliases would silently take WorldObject + 1
+        // and collide with whatever already holds it.
+        KitAsset,
+
         // Deprecated aliases for the pre-rename names. Same values, so they stay
         // wire-compatible; kept so existing content and scripts keep resolving.
         BanterAOBaking = AOBaking,

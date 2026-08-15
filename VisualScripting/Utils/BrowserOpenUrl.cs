@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Menu Browser Open URL")]
     [UnitShortTitle("Menu Browser Nav")]
-    [UnitCategory("Banter\\Browser")]
+    [UnitCategory("BS\\Browser")]
     [TypeIcon(typeof(BSObjectId))]
     public class MenuOpenUrl : Unit
     {
@@ -36,7 +36,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("World Browser Open URL")]
     [UnitShortTitle("World Browser Nav")]
-    [UnitCategory("Banter")]
+    [UnitCategory("BS")]
     [Obsolete("Use BSBrowser Set Url")]
     [TypeIcon(typeof(BSObjectId))]
     public class WorldOpenUrl : Unit

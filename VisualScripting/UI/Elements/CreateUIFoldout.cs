@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Foldout")]
     [UnitShortTitle("Create UI Foldout")]
-    [UnitCategory("Banter\\UI\\Elements\\Containers")]
+    [UnitCategory("BS\\UI\\Elements\\Containers")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIFoldout : Unit
     {

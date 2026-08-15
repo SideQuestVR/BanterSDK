@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Position")]
     [UnitShortTitle("Get UI Position")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUIPosition : Unit
     {

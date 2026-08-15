@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Space State Properties Changed")]
     [UnitShortTitle("Space State Changed")]
-    [UnitCategory("Events\\Banter\\Networking")]
+    [UnitCategory("Events\\BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnSpaceStatePropsChanged : EventUnit<CustomEventArgs>
     {

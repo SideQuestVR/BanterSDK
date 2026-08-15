@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Float To String Invariant Culture")]
     [UnitShortTitle("FloatToString")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class ToStringInvariant : Unit
     {

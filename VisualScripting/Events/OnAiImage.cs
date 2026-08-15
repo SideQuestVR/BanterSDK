@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Ai Image")]
     [UnitShortTitle("On Ai Image")]
-    [UnitCategory("Events\\Banter\\AI")]
+    [UnitCategory("Events\\BS\\AI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnAiImage : EventUnit<CustomEventArgs>
     {

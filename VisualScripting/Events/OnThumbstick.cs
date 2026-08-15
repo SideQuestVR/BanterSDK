@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Thumbstick")]
     [UnitShortTitle("On Thumbstick")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnThumbstick : EventUnit<CustomEventArgs>
     {

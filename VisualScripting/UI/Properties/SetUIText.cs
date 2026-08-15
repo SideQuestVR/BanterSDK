@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Text")]
     [UnitShortTitle("Set UI Text")]
-    [UnitCategory("Banter\\UI\\Properties\\Text")]
+    [UnitCategory("BS\\UI\\Properties\\Text")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIText : Unit
     {

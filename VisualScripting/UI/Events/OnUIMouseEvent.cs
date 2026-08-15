@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On UI Mouse Event")]
     [UnitShortTitle("On UI Mouse Event")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnUIMouseEvent : EventUnit<CustomEventArgs>
     {

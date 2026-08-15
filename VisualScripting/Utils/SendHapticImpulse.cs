@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     // [UnitTitle("Send Haptic Impulse")]
     // [UnitShortTitle("Haptics")]
-    // [UnitCategory("Banter\\Utils")]
+    // [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class SendHapticImpulse : Unit
     {

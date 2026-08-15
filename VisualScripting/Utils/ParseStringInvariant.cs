@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("String To Float Invariant Culture")]
     [UnitShortTitle("String To Float")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class ParseStringInvariant : Unit
     {

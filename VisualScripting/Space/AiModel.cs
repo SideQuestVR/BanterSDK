@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Generate Ai Model")]
     [UnitShortTitle("AiModel")]
-    [UnitCategory("Banter\\AI")]
+    [UnitCategory("BS\\AI")]
     [TypeIcon(typeof(BSObjectId))]
     public class AiModel : Unit
     {

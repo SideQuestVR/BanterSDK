@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Ai Model")]
     [UnitShortTitle("On Ai Model")]
-    [UnitCategory("Events\\Banter\\AI")]
+    [UnitCategory("Events\\BS\\AI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnAiModel : EventUnit<CustomEventArgs>
     {

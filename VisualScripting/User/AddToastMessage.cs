@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Add Toast Message")]
     [UnitShortTitle("Add Toast Message")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class AddToastMessage : Unit
     {

@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Appearance")]
     [UnitShortTitle("Get UI Appearance")]
-    [UnitCategory("Banter\\UI\\Styles\\Appearance")]
+    [UnitCategory("BS\\UI\\Styles\\Appearance")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUIAppearance : Unit
     {

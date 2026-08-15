@@ -11,7 +11,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Image")]
     [UnitShortTitle("Create UI Image")]
-    [UnitCategory("Banter\\UI\\Elements\\Display")]
+    [UnitCategory("BS\\UI\\Elements\\Display")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIImage : Unit
     {

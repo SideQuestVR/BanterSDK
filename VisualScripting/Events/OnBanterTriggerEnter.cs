@@ -9,9 +9,9 @@ namespace BS.VisualScripting
     /// <summary>
     /// Called when a collider enters the trigger.
     /// </summary>
-    [UnitTitle("On BanterTriggerEnter Event Received")]
-    [UnitShortTitle("On BanterTriggerEnter")]
-    [UnitCategory("Events\\Banter\\Trigger")]
+    [UnitTitle("On BS Trigger Enter Event Received")]
+    [UnitShortTitle("On BS Trigger Enter")]
+    [UnitCategory("Events\\BS\\Trigger")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnBanterTriggerEnter : TriggerEventUnit
     {

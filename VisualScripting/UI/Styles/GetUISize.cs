@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Size")]
     [UnitShortTitle("Get UI Size")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUISize : Unit
     {

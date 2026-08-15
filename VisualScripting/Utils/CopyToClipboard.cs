@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Copy Text To Clipboard")]
     [UnitShortTitle("CopyToClipboard")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class CopyToClipboard : Unit
     {

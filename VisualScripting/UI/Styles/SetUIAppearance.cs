@@ -22,7 +22,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Set UI Appearance")]
     [UnitShortTitle("Set UI Appearance")]
-    [UnitCategory("Banter\\UI\\Styles\\Appearance")]
+    [UnitCategory("BS\\UI\\Styles\\Appearance")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIAppearance : Unit
     {

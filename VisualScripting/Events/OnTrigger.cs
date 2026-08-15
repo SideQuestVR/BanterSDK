@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Trigger")]
     [UnitShortTitle("On Trigger")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnTrigger : EventUnit<CustomEventArgs>
     {

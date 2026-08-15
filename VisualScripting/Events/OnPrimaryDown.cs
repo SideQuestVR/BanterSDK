@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On PrimaryDown")]
     [UnitShortTitle("On PrimaryDown")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnPrimaryDown : EventUnit<CustomEventArgs>
     {

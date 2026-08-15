@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set User Avatar")]
     [UnitShortTitle("Set Avatar")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetAvatar : Unit
     {

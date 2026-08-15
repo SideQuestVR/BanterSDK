@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Parent")]
     [UnitShortTitle("Set UI Parent")]
-    [UnitCategory("Banter\\UI\\Hierarchy")]
+    [UnitCategory("BS\\UI\\Hierarchy")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIParent : Unit
     {

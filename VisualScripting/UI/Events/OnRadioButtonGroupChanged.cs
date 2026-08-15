@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Radio Button Group Changed")]
     [UnitShortTitle("On Radio Button Group Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnRadioButtonGroupChanged : EventUnit<CustomEventArgs>
     {

@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Visible")]
     [UnitShortTitle("Set UI Visible")]
-    [UnitCategory("Banter\\UI\\Properties\\State")]
+    [UnitCategory("BS\\UI\\Properties\\State")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIVisible : Unit
     {

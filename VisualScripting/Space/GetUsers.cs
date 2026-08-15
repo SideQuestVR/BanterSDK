@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get Users")]
     [UnitShortTitle("Get Users")]
-    [UnitCategory("Banter\\Space")]
+    [UnitCategory("BS\\Space")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUsers : Unit
     {

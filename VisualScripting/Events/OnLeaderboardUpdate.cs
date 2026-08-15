@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Leaderboard Update Received")]
     [UnitShortTitle("On Leaderboard Update")]
-    [UnitCategory("Events\\Banter\\Leaderboard")]
+    [UnitCategory("Events\\BS\\Leaderboard")]
     [TypeIcon(typeof(BSObjectId))]
     public class LeaderboardUpdate : EventUnit<CustomEventArgs>
     {
@@ -50,7 +50,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Leaderboard Error Received")]
     [UnitShortTitle("On Leaderboard Error")]
-    [UnitCategory("Events\\Banter\\Leaderboard")]
+    [UnitCategory("Events\\BS\\Leaderboard")]
     [TypeIcon(typeof(BSObjectId))]
     public class LeaderboardError : EventUnit<CustomEventArgs>
     {

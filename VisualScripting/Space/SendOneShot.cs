@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Send a One Shot Message")]
     [UnitShortTitle("SendOneShot")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class SendOneShot : Unit
     {

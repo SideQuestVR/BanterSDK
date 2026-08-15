@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Clear Scores on a Leaderboard")]
     [UnitShortTitle("ClearScores")]
-    [UnitCategory("Banter\\Leaderboard")]
+    [UnitCategory("BS\\Leaderboard")]
     [TypeIcon(typeof(BSObjectId))]
     public class ClearScores : Unit
     {

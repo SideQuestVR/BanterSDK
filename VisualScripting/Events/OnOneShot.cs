@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On One Shot")]
     [UnitShortTitle("On One Shot")]
-    [UnitCategory("Events\\Banter\\Networking")]
+    [UnitCategory("Events\\BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnOneShot : EventUnit<CustomEventArgs>
     {

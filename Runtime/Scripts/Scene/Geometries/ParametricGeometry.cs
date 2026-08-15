@@ -240,8 +240,16 @@ namespace BS
             return Natica(u, v);
         };
 
-        public ParametricGeometry(int slices, int stacks, Func<float, float, Vector3> func = null, Vector3[] points = null)
+        const float EPS = 0.00001f;
+
+        // Parameter order is (stacks, slices) to match every call site. The signature used to
+        // read (slices, stacks) while callers passed stacks first, which went unnoticed only
+        // because both defaulted to the same value.
+        public ParametricGeometry(int stacks, int slices, Func<float, float, Vector3> func = null, Vector3[] points = null)
         {
+            stacks = Math.Max(1, stacks);
+            slices = Math.Max(1, slices);
+
             indices = new List<int>();
             vertices = new List<Vector3>();
             normals = new List<Vector3>();
@@ -255,17 +263,58 @@ namespace BS
                 throw new Exception("Not enough points, the points does not equal the number of slices/stacks.");
             }
 
-            for (var i = 0f; i <= stacks; i++)
+            for (var i = 0; i <= stacks; i++)
             {
-                var v = i / stacks;
-                for (var j = 0f; j <= slices; j++)
+                var v = i / (float)stacks;
+                for (var j = 0; j <= slices; j++)
                 {
-                    var u = j / slices;
-                    int _i = (int)i * (stacks + 1) + (int)j;
-                    var p = points == null ? func(u, v) : points[_i];
-                    vertices.Add(p);
-                    normals.Add(p.normalized);
+                    var u = j / (float)slices;
+                    var p0 = points == null ? func(u, v) : points[i * sliceCount + j];
+                    vertices.Add(p0);
                     uvs.Add(new Vector2(u, v));
+
+                    if (points != null)
+                    {
+                        // No surface function to differentiate; Generate() falls back to
+                        // Mesh.RecalculateNormals when the normal count does not match.
+                        continue;
+                    }
+
+                    // Approximate the tangents by differencing the function rather than the
+                    // generated grid. Every closed surface here duplicates its seam column, and
+                    // the grid has no neighbour across that seam, so grid differencing leaves a
+                    // visible lighting crease. This is also resolution independent.
+                    Vector3 pu, pv;
+                    if (u - EPS >= 0)
+                    {
+                        pu = p0 - func(u - EPS, v);
+                    }
+                    else
+                    {
+                        pu = func(u + EPS, v) - p0;
+                    }
+
+                    if (v - EPS >= 0)
+                    {
+                        pv = p0 - func(u, v - EPS);
+                    }
+                    else
+                    {
+                        pv = func(u, v + EPS) - p0;
+                    }
+
+                    var normal = Vector3.Cross(pu, pv);
+                    if (normal.sqrMagnitude < 1e-12f || float.IsNaN(normal.sqrMagnitude))
+                    {
+                        // Degenerate pole - Snail collapses at u=0, Pillow at both v extremes.
+                        // Borrow the previous ring's normal, which is the limit to within one
+                        // grid step. A zero normal renders black.
+                        normals.Add(normals.Count >= sliceCount ? normals[normals.Count - sliceCount] : Vector3.up);
+                    }
+                    else
+                    {
+                        normals.Add(normal.normalized);
+                    }
                 }
             }
 
@@ -287,6 +336,17 @@ namespace BS
                     indices.Add(d);
 
                 }
+            }
+
+            ConvertToUnityHandedness();
+
+            // cross(du, dv) follows the parameterisation, not the surface, so it points inward
+            // wherever the parameterisation folds and those parts shade flat and dull. The
+            // analytic normals above are still worth computing - they are the fallback at a
+            // crease, where opposed faces cancel - but the faces are what decides the direction.
+            if (points == null)
+            {
+                RecomputeSmoothNormals();
             }
         }
     }

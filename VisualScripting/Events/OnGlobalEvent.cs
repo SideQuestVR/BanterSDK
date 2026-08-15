@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Global Event")]
     [UnitShortTitle("On Global Event")]
-    [UnitCategory("Events\\Banter\\Utils")]
+    [UnitCategory("Events\\BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnGlobalEvent : EventUnit<CustomEventArgs>
     {

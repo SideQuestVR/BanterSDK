@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On GunTrigger")]
     [UnitShortTitle("On GunTrigger")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnGunTrigger : EventUnit<CustomEventArgs>
     {

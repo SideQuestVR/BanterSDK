@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Box")]
     [UnitShortTitle("Create UI Box")]
-    [UnitCategory("Banter\\UI\\Elements\\Containers")]
+    [UnitCategory("BS\\UI\\Elements\\Containers")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIBox : Unit
     {

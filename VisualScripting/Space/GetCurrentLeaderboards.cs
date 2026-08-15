@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get the Current Leaderboard")]
     [UnitShortTitle("GetCurrentLeaderboard")]
-    [UnitCategory("Banter\\Leaderboard")]
+    [UnitCategory("BS\\Leaderboard")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetCurrentLeaderboard : Unit
     {

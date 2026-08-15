@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Lock Player Position")]
     [UnitShortTitle("Lock Player")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class LockPlayer : Unit
     {
@@ -28,7 +28,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Unlock Player Position")]
     [UnitShortTitle("Unlock Player")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class UnlockPlayer : Unit
     {

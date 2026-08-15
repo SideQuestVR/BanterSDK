@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Teleport")]
     [UnitShortTitle("Set Can Teleport")]
-    [UnitCategory("Banter\\Player\\Actions")]
+    [UnitCategory("BS\\Player\\Actions")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetCanTeleport : Unit
     {

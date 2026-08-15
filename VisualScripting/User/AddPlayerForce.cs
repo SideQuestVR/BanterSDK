@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Add Force To Player")]
     [UnitShortTitle("Add Player Force")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class AddPlayerForce : Unit
     {

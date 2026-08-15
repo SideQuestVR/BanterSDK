@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get User Info")]
     [UnitShortTitle("Get User")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetUserInfo : Unit
     {
@@ -53,7 +53,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Get Local User Info")]
     [UnitShortTitle("Get Local User")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetLocalUserInfo : Unit
     {

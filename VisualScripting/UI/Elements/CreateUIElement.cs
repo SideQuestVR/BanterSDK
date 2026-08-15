@@ -40,7 +40,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Create UI Element")]
     [UnitShortTitle("Create UI Element")]
-    [UnitCategory("Banter\\UI\\Elements")]
+    [UnitCategory("BS\\UI\\Elements")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIElement : Unit
     {

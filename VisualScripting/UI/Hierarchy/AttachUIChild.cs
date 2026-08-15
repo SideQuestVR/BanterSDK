@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Attach UI Child")]
     [UnitShortTitle("Attach UI Child")]
-    [UnitCategory("Banter\\UI\\Hierarchy")]
+    [UnitCategory("BS\\UI\\Hierarchy")]
     [TypeIcon(typeof(BSObjectId))]
     public class AttachUIChild : Unit
     {

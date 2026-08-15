@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Spacing")]
     [UnitShortTitle("Set UI Spacing")]
-    [UnitCategory("Banter\\UI\\Styles\\Spacing")]
+    [UnitCategory("BS\\UI\\Styles\\Spacing")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUISpacing : Unit
     {

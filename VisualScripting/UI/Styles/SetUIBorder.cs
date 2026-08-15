@@ -10,7 +10,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Border")]
     [UnitShortTitle("Set UI Border")]
-    [UnitCategory("Banter\\UI\\Styles\\Border")]
+    [UnitCategory("BS\\UI\\Styles\\Border")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetUIBorder : Unit
     {

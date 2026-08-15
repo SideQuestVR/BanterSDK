@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Slider Changed")]
     [UnitShortTitle("On Slider Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnSliderChanged : EventUnit<CustomEventArgs>
     {

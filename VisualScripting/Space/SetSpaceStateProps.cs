@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Space State Property")]
     [UnitShortTitle("Set Space Prop")]
-    [UnitCategory("Banter\\Networking")]
+    [UnitCategory("BS\\Networking")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetSpaceStateProp : Unit
     {

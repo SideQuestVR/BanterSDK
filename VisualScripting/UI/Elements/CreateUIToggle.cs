@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Toggle")]
     [UnitShortTitle("Create UI Toggle")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUIToggle : Unit
     {

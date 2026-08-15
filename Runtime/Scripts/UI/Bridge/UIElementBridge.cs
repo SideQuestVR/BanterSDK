@@ -78,6 +78,13 @@ namespace BS.UI.Bridge
         // Texture cache for background images
         private static Dictionary<string, Texture2D> _textureCache = new Dictionary<string, Texture2D>();
         private static Dictionary<string, Task<Texture2D>> _downloadingTextures = new Dictionary<string, Task<Texture2D>>();
+
+        /// <summary>
+        /// Custom <c>background-image</c> schemes, keyed by scheme without the colon. See
+        /// <see cref="IUIImageSource"/>; <c>res:</c> is built in and is deliberately not in here.
+        /// </summary>
+        private static readonly Dictionary<string, IUIImageSource> _imageSources =
+            new Dictionary<string, IUIImageSource>(StringComparer.OrdinalIgnoreCase);
         
         // Static HashSet for efficient UI command checking
         private static readonly HashSet<string> _uiCommandPrefixes = new HashSet<string>
@@ -1299,21 +1306,38 @@ namespace BS.UI.Bridge
         /// </summary>
         private async void SetBackgroundImage(VisualElement element, string value)
         {
-            if (string.IsNullOrEmpty(value) || value.ToLower() == "none")
+            // Trimmed comparison rather than value.ToLower(): this used to lowercase the WHOLE
+            // payload on every set purely to test four characters, and with base64 data: URIs that
+            // payload is tens of kilobytes. An allocation that size per icon per style write is not
+            // something the keyword test needs.
+            var trimmed = value?.Trim();
+            if (string.IsNullOrEmpty(trimmed) || trimmed.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
                 // Clear background image
                 element.style.backgroundImage = new StyleBackground(StyleKeyword.None);
                 return;
             }
-            
+
             // Parse CSS url() format: url("https://example.com/image.png")
-            string imageUrl = ParseBackgroundImageUrl(value);
+            string imageUrl = ParseBackgroundImageUrl(trimmed);
             if (string.IsNullOrEmpty(imageUrl))
             {
                 Debug.LogWarning($"[UIElementBridge] Invalid background-image value: {value}");
                 return;
             }
-            
+
+            // Locally-resolved schemes are handled BEFORE the await, and that ordering is load
+            // bearing rather than an optimisation. Style writes arrive in the order JS sent them,
+            // and an await here yields the rest of the batch — so an awaited local resolve would
+            // let a later write to the same element land first and then be overwritten by this one.
+            // Synchronous resolution keeps last-write-wins actually true.
+            if (TryResolveLocalImage(imageUrl, out var local))
+            {
+                element.style.backgroundImage = local;
+                LogVerbose($"Set background image from local source: {imageUrl}");
+                return;
+            }
+
             try
             {
                 var texture = await GetOrDownloadTexture(imageUrl);
@@ -1327,6 +1351,110 @@ namespace BS.UI.Bridge
             {
                 Debug.LogError($"[UIElementBridge] Failed to load background image from {imageUrl}: {e.Message}");
             }
+        }
+
+        /// <summary>
+        /// Resolve an image that is already on the Unity side: <c>res:</c> for anything under a
+        /// Resources folder, plus whatever schemes have been registered through
+        /// <see cref="RegisterImageSource"/>.
+        /// </summary>
+        /// <remarks>
+        /// The point of these schemes is to stop images crossing the bridge as base64. A data: URI
+        /// costs its own length in string on the wire, again as a dictionary key, and a main-thread
+        /// PNG decode on top — per image, forever, because the payload IS the identity. A
+        /// <c>res:</c> path is a couple of dozen bytes and resolves to an asset Unity has already
+        /// imported, compressed and (for the atlas-backed sources) can unload as one unit.
+        ///
+        /// Nothing is cached here. <c>Resources.Load</c> already returns the same instance for
+        /// repeat calls, and caching the result ourselves would pin every icon ever shown against
+        /// <c>Resources.UnloadUnusedAssets</c> — which is exactly the leak the kit atlases must not
+        /// have.
+        /// </remarks>
+        private static bool TryResolveLocalImage(string source, out StyleBackground background)
+        {
+            background = default;
+            if (string.IsNullOrEmpty(source)) return false;
+
+            var colon = source.IndexOf(':');
+            if (colon <= 0) return false;
+
+            var scheme = source.Substring(0, colon);
+            var path = source.Substring(colon + 1).Trim();
+            if (path.Length == 0) return false;
+
+            if (scheme.Equals("res", StringComparison.OrdinalIgnoreCase))
+            {
+                // Texture first, then Sprite. A plain texture is what an icon imported with the
+                // default settings is, and asking for a Sprite would quietly miss it; a Sprite is
+                // what anything sliced out of a sheet is, and asking only for a Texture2D would
+                // return the whole sheet rather than the frame. Trying both means the caller does
+                // not have to know which importer the artist used.
+                var texture = Resources.Load<Texture2D>(path);
+                if (texture != null)
+                {
+                    background = new StyleBackground(texture);
+                    return true;
+                }
+
+                var sprite = Resources.Load<Sprite>(path);
+                if (sprite != null)
+                {
+                    background = new StyleBackground(sprite);
+                    return true;
+                }
+
+                Debug.LogWarning($"{LogPrefix} No texture or sprite in any Resources folder at '{path}'.");
+                return false;
+            }
+
+            if (_imageSources.TryGetValue(scheme, out var provider))
+            {
+                if (provider.TryResolve(path, out background)) return true;
+
+                Debug.LogWarning($"{LogPrefix} Image source '{scheme}' could not resolve '{path}'.");
+                return false;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Register a resolver for a custom <c>background-image</c> scheme. Replaces any previous
+        /// registration for the same scheme, so a hot-reloaded provider supersedes its predecessor
+        /// rather than being ignored by it.
+        /// </summary>
+        public static void RegisterImageSource(IUIImageSource source)
+        {
+            if (source == null || string.IsNullOrEmpty(source.Scheme))
+            {
+                Debug.LogWarning($"{LogPrefix} Ignoring an image source with no scheme.");
+                return;
+            }
+
+            _imageSources[source.Scheme] = source;
+            LogVerbose($"Registered image source for scheme '{source.Scheme}:'");
+        }
+
+        /// <summary>Remove a scheme registered by <see cref="RegisterImageSource"/>.</summary>
+        public static bool UnregisterImageSource(string scheme)
+        {
+            return !string.IsNullOrEmpty(scheme) && _imageSources.Remove(scheme);
+        }
+
+        /// <summary>
+        /// True when a bare (un-<c>url()</c>-wrapped) value carries a registered scheme.
+        /// </summary>
+        /// <remarks>
+        /// Only consulted for the direct-value fallback. Anything inside <c>url("…")</c> already
+        /// matches the regex above whatever its scheme, so this is purely about tolerating a value
+        /// written without the wrapper.
+        /// </remarks>
+        private static bool HasRegisteredScheme(string value)
+        {
+            if (_imageSources.Count == 0) return false;
+
+            var colon = value.IndexOf(':');
+            return colon > 0 && _imageSources.ContainsKey(value.Substring(0, colon));
         }
         
         /// <summary>
@@ -1344,11 +1472,13 @@ namespace BS.UI.Bridge
             }
             
             // Handle direct URL (fallback)
-            if (value.StartsWith("http://") || value.StartsWith("https://") || value.StartsWith("data:"))
+            if (value.StartsWith("http://") || value.StartsWith("https://") || value.StartsWith("data:")
+                || value.StartsWith("res:", StringComparison.OrdinalIgnoreCase)
+                || HasRegisteredScheme(value))
             {
                 return value.Trim();
             }
-            
+
             return null;
         }
         

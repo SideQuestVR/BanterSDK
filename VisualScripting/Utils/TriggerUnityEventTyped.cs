@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Trigger Visual Scripting Relay")]
     [UnitShortTitle("Trigger VS Relay")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class TriggerUnityEventTyped : Unit
     {

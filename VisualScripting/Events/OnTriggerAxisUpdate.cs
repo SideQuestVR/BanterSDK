@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Trigger Axis Update")]
     [UnitShortTitle("Trigger Update")]
-    [UnitCategory("Events\\Banter\\Controller")]
+    [UnitCategory("Events\\BS\\Controller")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnTriggerAxisUpdate : EventUnit<CustomEventArgs>
     {

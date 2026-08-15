@@ -5,9 +5,9 @@ using System;
 
 namespace BS.VisualScripting
 {
-    [UnitTitle("Banter glTF is Loaded")]
+    [UnitTitle("BS glTF is Loaded")]
     [UnitShortTitle("is glTF Loaded")]
-    [UnitCategory("Banter/Components/Banter glTF")]
+    [UnitCategory("BS\\Components\\BS glTF")]
     [Obsolete("Use BSGLTF IsLoaded instead")]
     [TypeIcon(typeof(BSGLTF))]
     [RenamedFrom("Banter.VisualScripting.BanterGLTFIsLoaded")]

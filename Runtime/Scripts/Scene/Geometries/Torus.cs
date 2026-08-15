@@ -5,8 +5,12 @@ namespace BS
 {
     public class Torus : Geometry
     {
-        public Torus(float radius = 0.5f, float tube = 0.4f, int radialSegments = 8, int tubularSegments = 16, float arc = Mathf.PI * 2)
+        // radius + tube = 0.5, so the default spans exactly 1m across.
+        public Torus(float radius = 0.35f, float tube = 0.15f, int radialSegments = 16, int tubularSegments = 32, float arc = Mathf.PI * 2)
         {
+            radialSegments = System.Math.Max(3, radialSegments);
+            tubularSegments = System.Math.Max(3, tubularSegments);
+
             indices = new List<int>();//[indexLength];
             vertices = new List<Vector3>();//[verticesLength];
             normals = new List<Vector3>();//[verticesLength];
@@ -72,6 +76,8 @@ namespace BS
                 }
 
             }
+
+            ConvertToUnityHandedness();
         }
     }
 }

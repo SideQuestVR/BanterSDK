@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Text Field Changed")]
     [UnitShortTitle("On Text Field Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
+    [UnitCategory("Events\\BS\\UI")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnTextFieldChanged : EventUnit<CustomEventArgs>
     {

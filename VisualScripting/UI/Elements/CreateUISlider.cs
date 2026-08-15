@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Slider")]
     [UnitShortTitle("Create UI Slider")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
     [TypeIcon(typeof(BSObjectId))]
     public class CreateUISlider : Unit
     {

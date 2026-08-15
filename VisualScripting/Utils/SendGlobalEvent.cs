@@ -14,7 +14,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("Trigger Global Event")]
     [UnitShortTitle("Trigger Global Event")]
-    [UnitCategory("Banter\\Utils")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class SendGlobalEvent : Unit
     {        

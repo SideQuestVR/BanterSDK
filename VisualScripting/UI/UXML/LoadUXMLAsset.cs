@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Load UXML Asset")]
     [UnitShortTitle("Load UXML Asset")]
-    [UnitCategory("Banter\\UI\\UXML")]
+    [UnitCategory("BS\\UI\\UXML")]
     [TypeIcon(typeof(BSObjectId))]
     public class LoadUXMLAsset : Unit
     {

@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On User Left")]
     [UnitShortTitle("User Left")]
-    [UnitCategory("Events\\Banter\\User")]
+    [UnitCategory("Events\\BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnUserLeft : EventUnit<BSUser>
     {

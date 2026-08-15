@@ -12,7 +12,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Process UXML Tree")]
     [UnitShortTitle("Process UXML Tree")]
-    [UnitCategory("Banter\\UI\\UXML")]
+    [UnitCategory("BS\\UI\\UXML")]
     [TypeIcon(typeof(BSObjectId))]
     public class ProcessUXMLTree : Unit
     {

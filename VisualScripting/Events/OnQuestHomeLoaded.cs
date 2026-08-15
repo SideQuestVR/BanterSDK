@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("On Quest Home Loaded")]
     [UnitShortTitle("On Quest Home Loaded")]
-    [UnitCategory("Events\\Banter\\Space")]
+    [UnitCategory("Events\\BS\\Space")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnQuestHomeLoaded : EventUnit<QuestHomeLoadedEventArgs>
     {

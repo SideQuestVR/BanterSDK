@@ -8,7 +8,7 @@ namespace BS.VisualScripting
     [UnitTitle("Read BullSchript from File")]
     [UnitShortTitle("Read BS")]
     [UnitSubtitle("it's not JavaScript, it's BullSchript!")]
-    [UnitCategory("Banter\\Browser")]
+    [UnitCategory("BS\\Browser")]
     [TypeIcon(typeof(BSObjectId))]
     public class ReadJsFromFile : Unit
     {

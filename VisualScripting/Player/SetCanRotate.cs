@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Rotate")]
     [UnitShortTitle("Set Can Rotate")]
-    [UnitCategory("Banter\\Player\\Actions")]
+    [UnitCategory("BS\\Player\\Actions")]
     [TypeIcon(typeof(BSObjectId))]
     public class SetCanRotate : Unit
     {

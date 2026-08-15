@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Receive Menu Browser Message")]
     [UnitShortTitle("On Receive Menu Browser Message")]
-    [UnitCategory("Events\\Banter\\Browser")]
+    [UnitCategory("Events\\BS\\Browser")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnReceiveMenuBrowserMessage : EventUnit<CustomEventArgs>
     {

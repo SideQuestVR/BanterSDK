@@ -9,7 +9,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("Get the voice volume of the Local User")]
     [UnitShortTitle("GetVoiceVolume")]
-    [UnitCategory("Banter\\User")]
+    [UnitCategory("BS\\User")]
     [TypeIcon(typeof(BSObjectId))]
     public class GetVoiceVolume : Unit
     {

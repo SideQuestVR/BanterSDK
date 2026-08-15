@@ -8,7 +8,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On SecondaryUp")]
     [UnitShortTitle("On SecondaryUp")]
-    [UnitCategory("Events\\Banter\\HeldEvents")]
+    [UnitCategory("Events\\BS\\HeldEvents")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnSecondaryUp : EventUnit<CustomEventArgs>
     {
