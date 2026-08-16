@@ -34,29 +34,40 @@
     background-color: #F0F0F0;
     border-width: 0;
     margin: 0;
+    /* Declared explicitly: this rule only ties the built-in `.unity-scroller` on specificity and
+       wins on order, so any property it does NOT name survives from the built-in theme. */
+    padding: 0;
 }
 
-.unity-scroller--vertical {
+.unity-scroller--vertical,
+.unity-scroll-view__vertical-scroller {
     width: 8px;
+    min-width: 8px;
+    margin: 0;
+    padding: 0;
 }
 
-.unity-scroller--horizontal {
+.unity-scroller--horizontal,
+.unity-scroll-view__horizontal-scroller {
     height: 8px;
+    min-height: 8px;
+    margin: 0;
+    padding: 0;
 }
 
 /*
  * The stepper arrows at each end.
  *
- * Hiding them leaves the slider to fill the scroller, but the default theme positions that slider
- * absolutely with insets that reserve room for the buttons, so the insets are cleared below too.
+ * These rules were never the problem, and the specificity worry recorded here previously has now
+ * been settled by reading the built-in theme's selector table out of the editor's resource blob:
+ * nothing in it sets `display` on these buttons at all, so even the bare 10-specificity selector
+ * applies unopposed. They are genuinely hidden, and have been.
  *
- * The child-combinator selectors repeat what the bare class selectors already say, and the zeroed
- * box is redundant with `display: none`. Both are deliberate. The bare rules have been here since
- * the scrollbar was first styled and the buttons were still reported visible in-world, and the
- * built-in runtime theme is compiled into the engine, so there is no way to read its selectors from
- * disk and settle whether this is a specificity loss. Raising specificity covers that case, and
- * collapsing the box covers a theme that wins on `display` by some other route. If a future Unity
- * makes one of these redundant, deleting it is safe; guessing which one to delete now is not.
+ * Hiding them does NOT free the space they occupied, though — the built-in theme insets the slider
+ * separately, which is what the rule below exists to undo.
+ *
+ * The child-combinator variants and the zeroed box are kept as belt and braces for a future Unity
+ * that grows a `display` rule here. Deleting either is safe today.
  */
 .unity-scroller__low-button,
 .unity-scroller__high-button,
@@ -74,17 +85,53 @@
     background-image: none;
 }
 
-.unity-scroller__slider {
+/*
+ * The slider that fills the scroller, and the selector is the whole point.
+ *
+ * This was a bare `.unity-scroller__slider` and it never applied. UI Toolkit scores specificity as
+ * id*100 + class*10 + type*1, and COMBINATORS COUNT FOR NOTHING — so a bare class is 10, while the
+ * built-in runtime theme writes this element only through `.unity-scroller--vertical
+ * .unity-scroller__slider` and its horizontal twin, which are 20. The built-in rule won every time,
+ * and it insets the slider by exactly the height of the stepper buttons at each end.
+ *
+ * That is where both halves of the reported bug came from: the buttons above are removed from layout
+ * by `display: none`, but the slider stayed pinned inside the space they used to occupy — so the
+ * scroller's own #F0F0F0 background showed through at both ends, and the dragger could only travel
+ * within the shortened slider, never reaching the extremes.
+ *
+ * Two classes on one simple selector is 20, plus the child selector's subject is another 10, giving
+ * 30. That beats the built-in outright rather than depending on which sheet is applied last.
+ */
+.unity-scroller.unity-scroller--vertical > .unity-scroller__slider,
+.unity-scroller.unity-scroller--horizontal > .unity-scroller__slider {
     position: absolute;
     top: 0;
     right: 0;
     bottom: 0;
     left: 0;
     margin: 0;
+    padding: 0;
     min-width: auto;
     min-height: auto;
     width: auto;
     height: auto;
+}
+
+/*
+ * The slider's input wrapper, which the drag container sits inside.
+ *
+ * Never styled here before, while the built-in theme gives it three rules — so its margins survived
+ * and inset the dragger's travel independently of everything above. On its own that is only a couple
+ * of pixels, which is why it reads as "nearly reaches the end" rather than as the gap the slider
+ * rule caused. Specificity 30, for the same reason and by the same construction.
+ */
+.unity-scroller .unity-base-slider--vertical > .unity-base-slider__input,
+.unity-scroller .unity-base-slider--horizontal > .unity-base-slider__input {
+    margin: 0;
+    padding: 0;
+    min-width: auto;
+    min-height: auto;
+    flex-grow: 1;
 }
 
 /*

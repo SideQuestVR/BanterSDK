@@ -1491,17 +1491,24 @@ namespace BS
             var componentType = (ComponentType)int.Parse(parts[2]);
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
+                 // Every early return below MUST reply. The JS side awaits this request id, and a
+                 // path that returns without an ack or an error leaves that promise unsettled
+                 // forever — which stalls any caller that queues its scene work sequentially.
                  if (!isReady)
                  {
+                     SendError(reqId, "ADD_COMPONENT: scene not ready");
                      return;
                  }
                  var comp = BSComponentFromType.CreateComponent(gameObject, componentType);
-                 comp.jsId = linkId;
                  if (comp == null)
                  {
+                     // The ComponentType enum carries members CreateComponent has no case for, so
+                     // this is reachable from content, not only from SDK bugs.
                      Debug.LogError("[Banter] Component type not found: " + componentType);
+                     SendError(reqId, "ADD_COMPONENT: Component type not found: " + componentType);
                      return;
                  }
+                 comp.jsId = linkId;
                  var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), linkId, componentType);
                  if (banterComp != null)
                  {
@@ -1721,6 +1728,13 @@ namespace BS
                      }
                  }, $"{nameof(BSScene)}.{nameof(DestroyJsComponent)}"));
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
+            }
+            else
+            {
+                // An unknown cid still has to reply — JS awaits this request id, and silence would
+                // leave that promise unsettled forever. Reachable from content: a fast add→destroy
+                // can arrive before the add's link round trip has registered the component.
+                SendError(reqId, "REMOVE_COMPONENT: Component not found: " + cid);
             }
         }
 

@@ -288,7 +288,11 @@ namespace BS.UI.Bridge
             {
                 return typeValue switch
                 {
-                    0 => new VisualElement(), // VisualElement
+                    // BSUIElement rather than a bare VisualElement: it IS a VisualElement, and it is
+                    // the only thing that gives a container an IUIMethodDispatcher — without it,
+                    // AddClass/RemoveClass from JS silently do nothing on every box, which is what
+                    // kept USS classes inert and forced every style to travel per-property.
+                    0 => new BSUIElement(), // VisualElement
                     1 => new ScrollView(), // ScrollView
                     2 => new ListView(), // ListView
                     10 => new BSUIButton(), // Button -> BSUIButton

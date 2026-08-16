@@ -27,11 +27,21 @@ namespace BS
         [Tooltip("Manifest path of the prefab, relative to the kit package's Assets root, e.g. CartoonCubeWorld/Prefabs/Props/Apple.prefab")]
         [See(initial = "")][SerializeField] internal string path = "";
 
-        /// <summary>Resources root the prefabs are expected under in a build.</summary>
-        const string ResourcePrefix = "Kit/";
+        /// <summary>
+        /// Resources-relative root the prefabs sit under.
+        /// </summary>
+        /// <remarks>
+        /// "Assets/" rather than anything kit-specific because the pipeline re-rooted by moving its
+        /// existing <c>Assets</c> tree wholesale inside <c>Resources</c>, so a manifest path of
+        /// <c>CartoonCubeWorld/…/Apple.prefab</c> is reachable as <c>Assets/CartoonCubeWorld/…/Apple</c>.
+        /// Keeping the tree shape identical is what lets the manifest's own path field stay valid
+        /// across the move — it is relative to the pack root either way.
+        /// </remarks>
+        const string ResourcePrefix = "Assets/";
 
         /// <summary>Where the prefabs live in the project, for the editor-only fallback.</summary>
-        const string PackageAssetRoot = "Packages/com.sidequest.low-poly-assets-processed/Assets/";
+        const string PackageAssetRoot =
+            "Packages/com.sidequest.low-poly-assets-processed/Resources/Assets/";
 
         GameObject item;
 
@@ -77,11 +87,11 @@ namespace BS
         /// Find the prefab, preferring the path that also works in a build.
         /// </summary>
         /// <remarks>
-        /// Resources first, AssetDatabase second, and the order is the point: Resources is the
-        /// shipping path and the fallback exists only so the editor works TODAY, before the kit
-        /// pipeline has been re-rooted to emit into a Resources folder. Putting the editor-only
-        /// branch first would mean everything works in the editor right up until the first build,
-        /// where nothing would.
+        /// Resources first, AssetDatabase second, and the order is the point: Resources is the only
+        /// branch that exists in a player build, so it has to be the one that normally hits. The
+        /// editor fallback is now just a safety net for a working tree mid-move — putting it first
+        /// would mean everything worked in the editor right up until the first build, where nothing
+        /// would, and nothing about that failure would point back to this method.
         /// </remarks>
         static GameObject Resolve(string manifestPath)
         {
@@ -106,9 +116,14 @@ namespace BS
 
         internal override void DestroyStuff()
         {
-            if (item != null && scene.kitItems.Contains(item))
+            if (item != null)
             {
                 scene.kitItems.Remove(item);
+                // The instantiated prefab is this component's artefact, exactly as the generated
+                // mesh is BSGeometry's — de-registering without destroying left it orphaned in the
+                // scene, and a remove→undo cycle then instantiated a second copy beside it.
+                Destroy(item);
+                item = null;
             }
         }
 

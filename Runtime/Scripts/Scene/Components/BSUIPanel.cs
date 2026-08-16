@@ -217,6 +217,16 @@ namespace BS
                 // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/SwitchToggle"));
                 // uiDocument.rootVisualElement.styleSheets.Add(Resources.Load<StyleSheet>("UI/Button"));
 
+                // An optional class sheet, by convention rather than by name: any package can drop a
+                // Resources/UI/PanelClasses.uss in and style its panels with AddClass — one message
+                // per element instead of one per style property. Absent is fine; loading nothing
+                // must never break a panel, which is why this is a lookup and not a reference.
+                var panelClasses = Resources.Load<StyleSheet>("UI/PanelClasses");
+                if (panelClasses != null)
+                {
+                    uiDocument.rootVisualElement.styleSheets.Add(panelClasses);
+                }
+
                 // Configure panel settings
                 uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPixelSize;
 
