@@ -39,19 +39,46 @@
     padding: 0;
 }
 
+/*
+ * The rail is inert. Only the thumb reacts to the pointer.
+ *
+ * Pinned rather than left alone: the built-in theme lights the scroller and its tracker on hover,
+ * and with a 24px bar that reads as the whole strip flashing when the ray merely crosses it. The
+ * `:enabled` variants match the built-in's own selector shape so they tie on specificity and win
+ * on order (our sheet is applied after the `@import` at the top of this file).
+ */
+.unity-scroller:hover,
+.unity-scroller:hover:enabled {
+    background-color: #F0F0F0;
+}
+
+/*
+ * 24px of bar, and a 12px gap on the content side. Wide because the pointer is a controller ray in
+ * a headset, where a slim desktop-sized bar is a genuinely hard target.
+ *
+ * The margin is what makes the gap: the scroller is a SIBLING of the content viewport inside the
+ * scroll view's row, so margin-left pushes the vertical bar away from the text it scrolls rather
+ * than moving it on screen. The margin comes after the `margin: 0` shorthand on purpose — later
+ * declarations win within a block, and the shorthand is still wanted for the other three sides.
+ *
+ * Anything that budgets width for the scrollbar (the Add panel's column arithmetic) must count
+ * 36px — bar plus gap — not the bar alone.
+ */
 .unity-scroller--vertical,
 .unity-scroll-view__vertical-scroller {
-    width: 8px;
-    min-width: 8px;
+    width: 24px;
+    min-width: 24px;
     margin: 0;
+    margin-left: 12px;
     padding: 0;
 }
 
 .unity-scroller--horizontal,
 .unity-scroll-view__horizontal-scroller {
-    height: 8px;
-    min-height: 8px;
+    height: 24px;
+    min-height: 24px;
     margin: 0;
+    margin-top: 12px;
     padding: 0;
 }
 
@@ -143,7 +170,9 @@
  * dragger. Now that the dragger is brand teal rather than neutral grey, that bleed would be
  * obvious, so the scope is what keeps a scrollbar rule from being a slider rule.
  */
-.unity-scroller .unity-base-slider__tracker {
+.unity-scroller .unity-base-slider__tracker,
+.unity-scroller .unity-base-slider__tracker:hover,
+.unity-scroller .unity-base-slider__tracker:hover:enabled {
     background-color: rgba(0, 0, 0, 0);
     border-width: 0;
     margin: 0;
@@ -171,6 +200,10 @@
     min-height: auto;
 }
 
+/*
+ * The thumb at rest: brand teal, the same colour as the header bar, so the bar reads as part of
+ * the editor's chrome rather than as a neutral piece of the OS.
+ */
 .unity-scroller .unity-base-slider__dragger {
     background-color: #26A69A;
     border-width: 0;
@@ -179,21 +212,92 @@
     margin: 0;
 }
 
-/* USS pseudo-classes do work here — it is only the JS bridge that cannot express :hover. */
-.unity-scroller .unity-base-slider__dragger:hover {
+/*
+ * Hover lifts one Material step to Teal 300; pressing drops back to the resting Teal 400.
+ *
+ * USS pseudo-classes do work here — it is only the JS bridge that cannot express :hover.
+ *
+ * `:enabled` is on these deliberately. The built-in theme writes the dragger through
+ * `.unity-scroller .unity-base-slider__dragger:hover:enabled` and `:active:enabled`, which score
+ * 40; a plain `:hover` here would score 30 and lose. Matching its shape ties at 40, and our sheet
+ * comes after the `@import`, so ours wins.
+ *
+ * The `:active` block MUST stay below the `:hover` one. A thumb being dragged is hovered as well as
+ * active, both selectors score 40, and a tie is broken by document order — so reversing these two
+ * blocks would leave a held thumb showing the hover colour and the press would never be visible.
+ */
+.unity-scroller .unity-base-slider__dragger:hover,
+.unity-scroller .unity-base-slider__dragger:hover:enabled {
     background-color: #4DB6AC;
 }
 
+.unity-scroller .unity-base-slider__dragger:active,
+.unity-scroller .unity-base-slider__dragger:active:enabled {
+    background-color: #26A69A;
+}
+
+/* The thumb's minimum length, so a very long document still leaves something ray-sized to grab. */
 .unity-scroller .unity-base-slider--vertical .unity-base-slider__dragger {
     left: 0;
     right: 0;
     width: auto;
-    min-height: 24px;
+    min-height: 40px;
 }
 
 .unity-scroller .unity-base-slider--horizontal .unity-base-slider__dragger {
     top: 0;
     bottom: 0;
     height: auto;
-    min-width: 24px;
+    min-width: 40px;
+}
+
+/*
+ * Text fields, and the second box that was showing through every one of them.
+ *
+ * A UITK TextField is TWO elements: the field itself, which is what the JS bridge hands out and so
+ * the only one SetStyles can reach, and a child TextInput carrying `.unity-base-text-field__input`.
+ * The built-in runtime theme gives that child its own background, its own 1px border and its own
+ * corner radius — so every field drew the border the panel asked for AND a second, darker one inset
+ * a pixel inside it. That is the doubled box, and no amount of styling from JS could remove it,
+ * because JS cannot address the child at all.
+ *
+ * The child is neutralised rather than restyled, so the visible box stays the one the panel author
+ * set through SetStyles and there is exactly one place to change it. Padding and margin go too: the
+ * child fills the field, and any inset on it shifts the text away from the border the eye reads as
+ * the edge of the input.
+ *
+ * Specificity 20. The built-in theme writes this element through a bare
+ * `.unity-base-text-field__input` (10), so this beats it outright rather than depending on which
+ * sheet is applied last.
+ */
+.unity-base-text-field > .unity-base-text-field__input {
+    background-color: rgba(0, 0, 0, 0);
+    background-image: none;
+    border-width: 0;
+    border-radius: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/*
+ * The same, held through hover and focus — the built-in theme repaints the child in both states,
+ * and either one would bring the second box back the moment a pointer crossed the field.
+ *
+ * Focus is marked with a wash of the brand colour rather than with a ring. A ring here would be
+ * drawn one pixel inside the field's own border, which is precisely the doubled box this block
+ * exists to remove; and at panel distance in a headset a caret is not a reliable way to tell which
+ * field is taking your typing.
+ *
+ * Specificity 30, against the built-in's 20 for its `…__input:focus`.
+ */
+.unity-base-text-field > .unity-base-text-field__input:hover,
+.unity-base-text-field > .unity-base-text-field__input:hover:enabled {
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.unity-base-text-field > .unity-base-text-field__input:focus,
+.unity-base-text-field > .unity-base-text-field__input:focus:enabled {
+    background-color: rgba(38, 166, 154, 0.10);
+    border-width: 0;
 }

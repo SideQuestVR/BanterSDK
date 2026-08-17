@@ -53,8 +53,20 @@ namespace BS
                 item = null;
             }
 
+            /*
+             * Failures are logged HERE as well as handed to SetLoadedIfNot, and that is not
+             * belt-and-braces — it is the only way most of them are ever seen.
+             *
+             * SetLoadedIfNot latches on `_loaded` and reports exactly once per component, ever. The
+             * first call wins even when it is the successful one, so a kit asset that loads and is
+             * then pointed at a path that does not resolve says nothing at all: no Unity log, no
+             * `loaded` event, and an object that silently stays empty. Every later failure was
+             * invisible, which is precisely the state "kit items do not load and there is nothing
+             * in the console" describes.
+             */
             if (string.IsNullOrEmpty(path))
             {
+                Debug.LogWarning($"[BSKitAsset] '{name}' has no path — nothing to instantiate.");
                 SetLoadedIfNot(false, "KitAsset has no path.");
                 return;
             }
@@ -62,6 +74,13 @@ namespace BS
             var prefab = Resolve(path);
             if (prefab == null)
             {
+                // The resolved Resources key is in the message on purpose: the manifest path and the
+                // key are different strings (the extension is stripped and "Assets/" prepended), and
+                // which of the two is wrong is the whole question when one of these fails.
+                Debug.LogWarning($"[BSKitAsset] '{name}' could not resolve '{path}' — tried "
+                               + $"Resources.Load(\"{ResourcePrefix + StripExtension(path)}\")"
+                               + " and the editor AssetDatabase fallback. Is "
+                               + "com.sidequest.low-poly-assets-processed present and processed?");
                 SetLoadedIfNot(false, $"KitAsset not found at path: {path}");
                 return;
             }
@@ -79,6 +98,7 @@ namespace BS
             }
             catch (Exception e)
             {
+                Debug.LogError($"[BSKitAsset] '{name}' failed to instantiate '{path}': {e.Message}");
                 SetLoadedIfNot(false, e.Message);
             }
         }
