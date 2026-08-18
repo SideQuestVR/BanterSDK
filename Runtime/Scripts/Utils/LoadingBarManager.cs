@@ -166,12 +166,14 @@ namespace BS
         float _nextSnapTime = float.NegativeInfinity;
         Vector3 _lastFollowPos;
         bool _hasFollowPos;
+        bool _reSnapRequested;
 
         void LateUpdate()
         {
             if (state == LoadingState.Unloaded)
             {
                 _hasFollowPos = false;
+                _reSnapRequested = false;
                 return;
             }
 
@@ -183,6 +185,16 @@ namespace BS
                     BeginFollow();
                 _lastFollowPos = floor;
                 _hasFollowPos = true;
+            }
+
+            // An explicit re-snap was requested by a scripted teleport (see RequestReSnap) —
+            // honour it here, post-physics, so the Rigidbody.position writes from the teleport
+            // have already landed. This covers scripted moves smaller than the jump-detect
+            // distance above, e.g. the visual-scripting Teleport fired on player join.
+            if (_reSnapRequested)
+            {
+                _reSnapRequested = false;
+                BeginFollow();
             }
 
             // Periodic re-snap during the follow window (first load only — window is 0 otherwise).
@@ -197,6 +209,19 @@ namespace BS
         /// interval for a short window so a not-yet-settled camera is caught. Called on
         /// open/preload and on teleport.</summary>
         public void MoveToPlayer() => BeginFollow();
+
+        /// <summary>Request a cage re-snap on the next LateUpdate (post-physics). Call this from
+        /// scripted teleport paths — e.g. the visual-scripting Teleport fired on player join —
+        /// that move the rig via Rigidbody.position. Deferring to LateUpdate (rather than snapping
+        /// synchronously here) is deliberate: the teleport's position write only lands after the
+        /// next physics step, so reading the head then keeps the cage in sync — the same reason
+        /// the follow itself lives in LateUpdate. No-op while the cage is down, so callers don't
+        /// need to check the loading state themselves.</summary>
+        public void RequestReSnap()
+        {
+            if (state != LoadingState.Unloaded)
+                _reSnapRequested = true;
+        }
 
         void BeginFollow()
         {
