@@ -119,12 +119,16 @@ void SQSampleAOVolume(float3 positionWS, half3 normalWS, out half visibility, ou
 
     float4 packed = SAMPLE_TEXTURE3D_LOD(_SQ_AOVolume, sampler_SQ_AOVolume, uvw, 0);
     float3 moment = (packed.rgb - 0.5) * 0.5;
-    // Alpha stores CONTACT visibility: the bake excludes hits within the self-plane
-    // distance from the mean, so a voxel beside an open floor reads ~1 and only
-    // genuinely nearby OTHER geometry pulls it down. Without that exclusion the
-    // floor's own plane set a ~0.65 baseline everywhere and the contact signal
-    // measured as a uniform dim (verified by pixel probes).
-    float contact = packed.a;
+    // Alpha stores contact visibility as a SPHERE mean with near hits excluded by
+    // distance — but distance exclusion cannot remove the surface's own grazing
+    // rays (they skim along the plane and land beyond any threshold), so the raw
+    // mean still carries a uniform baseline everywhere (measured: open floor and
+    // cube contact within 1 luminance point of each other). The receiver knows its
+    // normal: projecting the openness moment onto it reconstructs THIS surface's
+    // hemisphere — an open floor saturates to 1 (its moment points straight up),
+    // while creases and contacts stay down because their moment is small or
+    // points across the surface.
+    float contact = saturate(packed.a + 2.0 * dot(moment, (float3)normalWS));
 
     // Orientation term from the full-hit moment: 1 where the surface faces the
     // open direction, dark where it faces INTO the blockage (undersides, the
