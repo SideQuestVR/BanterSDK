@@ -11,7 +11,7 @@
 // The VP matrices below include the texture scale-bias, so xy is uv directly.
 
 TEXTURE2D(_SQ_FakeShadowMap);         SAMPLER(sampler_SQ_FakeShadowMap);
-TEXTURE2D_ARRAY(_SQ_AOAtlas);         SAMPLER(sampler_SQ_AOAtlas);
+TEXTURE3D(_SQ_AOVolume);              SAMPLER(sampler_SQ_AOVolume);
 
 float4x4 _SQ_FakeLightVP;          // world -> sun map uv (scale-bias baked in)
 float4   _SQ_FakeLightDir;         // xyz = surface->light, normalized
@@ -27,12 +27,11 @@ float4   _SQ_FakeShadowPcfParams;
 // x = minimum lighting floor, y = ambient floor, z = AO strength, w = sun test mode (0 = coverage, 1 = depth compare)
 float4   _SQ_LightingParams;
 
-// AO: 8 ortho depth slices in a Texture2DArray, one per fixed hemisphere direction.
-float4x4 _SQ_AOMatrices[8];        // world -> slice uv [0,1] (scale-bias baked in)
-float4   _SQ_AODirs[8];            // xyz = surface->light direction, w = 1 / (far - near)
-float4   _SQ_AOOrigins[8];         // xyz = slice ray origin, w = near
-// x = unused, y = normal bias (world units), z = depth bias (normalized), w = unused
-float4   _SQ_AOParams;
+// AO: a world-space directional-visibility volume baked by SideQuest.Lighting's
+// VoxelAOSystem (GPU voxelize or CPU raycast producer — same packed format).
+// RGBA8: rgb = visibility moment * 2 + 0.5, a = mean visibility.
+float4   _SQ_AOVolumeOrigin;       // xyz = grid min corner (world), w = normal offset (m)
+float4   _SQ_AOVolumeParams;       // xyz = 1 / grid world size, w = unused
 
 static const float2 kSQPoisson16[16] = {
     float2(-0.94201624, -0.39906216), float2( 0.94558609, -0.76890725),
@@ -65,7 +64,11 @@ half SQSampleFakeShadow(float3 positionWS, half3 normalWS)
     if (any(uv < 0.0) || any(uv > 1.0)) return 1.0; // outside the volume = lit
 
     float rayDistance = dot(positionWS - _SQ_FakeShadowRayOrigin.xyz, -_SQ_FakeLightDir.xyz);
-    float refDepth = saturate((rayDistance - _SQ_FakeShadowDepthParams.x) * _SQ_FakeShadowDepthParams.y);
+    float rawDepth = (rayDistance - _SQ_FakeShadowDepthParams.x) * _SQ_FakeShadowDepthParams.y;
+    // Beyond the far plane = untracked geometry outside the fitted volume; clamping
+    // it onto the far plane would fabricate proximity to far casters, so treat as lit.
+    if (rawDepth > 1.0) return 1.0;
+    float refDepth = max(rawDepth, 0.0);
     refDepth -= _SQ_FakeShadowParams.x * (1.0 + slope)
               + _SQ_FakeShadowParams.y * _SQ_FakeShadowDepthParams.y;
 
@@ -98,37 +101,35 @@ half SQSampleFakeShadow(float3 positionWS, half3 normalWS)
     return (half)(sum / sampleCount);
 }
 
-// Soft sky visibility from 8 fixed hemisphere directions, cosine weighted.
-// 1 = fully open, 0 = fully occluded.
-half SQSampleAO(float3 positionWS, half3 normalWS)
+// Directional ambient visibility from the baked voxel volume, one trilinear tap.
+// Evaluates saturate(mean + 2 * dot(moment, N)) so a crease darkens each face by
+// ITS exposure — a wall and the floor beside it read different values from the
+// same voxel. bentNormalWS points toward the open sky and should steer ambient
+// (SampleSH); it must never be used for direct light.
+void SQSampleAOVolume(float3 positionWS, half3 normalWS, out half visibility, out half3 bentNormalWS)
 {
-    // Push the sample point off the surface so a face never occludes itself.
-    float3 p = positionWS + normalWS * _SQ_AOParams.y;
+    visibility = 1.0h;
+    bentNormalWS = normalWS;
 
-    float sumVis = 0.0;
-    float sumW = 0.0;
+    // Offset along the normal so the tap reads the air just off the surface,
+    // not the surface's own voxel.
+    float3 uvw = (positionWS + normalWS * _SQ_AOVolumeOrigin.w - _SQ_AOVolumeOrigin.xyz)
+               * _SQ_AOVolumeParams.xyz;
+    if (any(uvw < 0.0) || any(uvw > 1.0)) return; // outside the volume = open
 
-    [unroll]
-    for (int i = 0; i < 8; ++i)
+    float4 packed = SAMPLE_TEXTURE3D_LOD(_SQ_AOVolume, sampler_SQ_AOVolume, uvw, 0);
+    float3 moment = (packed.rgb - 0.5) * 0.5;
+    float mean = packed.a;
+
+    visibility = (half)saturate(mean + 2.0 * dot(moment, (float3)normalWS));
+
+    float m2 = dot(moment, moment);
+    if (m2 > 1e-5)
     {
-        float w = saturate(dot(normalWS, _SQ_AODirs[i].xyz));
-        if (w <= 0.001) continue; // direction is behind the surface
-
-        float vis = 1.0;
-        float4 sp = mul(_SQ_AOMatrices[i], float4(p, 1.0));
-        float2 uv = sp.xy;
-        if (all(uv >= 0.0) && all(uv <= 1.0))
-        {
-            float mapDepth = SAMPLE_TEXTURE2D_ARRAY_LOD(_SQ_AOAtlas, sampler_SQ_AOAtlas, uv, i, 0).r;
-            float refDepth = saturate((dot(p - _SQ_AOOrigins[i].xyz, -_SQ_AODirs[i].xyz) - _SQ_AOOrigins[i].w) * _SQ_AODirs[i].w);
-            vis = step(refDepth - _SQ_AOParams.z, mapDepth);
-        }
-
-        sumVis += vis * w;
-        sumW += w;
+        float3 bent = moment * rsqrt(m2);
+        // Guard: a bent normal pointing behind the surface is noise, not signal.
+        if (dot(bent, (float3)normalWS) > 0.0) bentNormalWS = (half3)bent;
     }
-
-    return (half)(sumW > 0.0 ? sumVis / sumW : 1.0);
 }
 
 #endif

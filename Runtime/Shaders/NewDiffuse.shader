@@ -108,8 +108,21 @@ Shader "Unlit/Diffuse"
 				// tunable floors here so shadowed faces can actually darken.
 				half  ndl    = saturate(dot(normalWS, _SQ_FakeLightDir.xyz));
 				half  shadow = SQSampleFakeShadow(i.positionWS, normalWS);
-				half3 amb    = max(SampleSH(normalWS), _SQ_LightingParams.yyy);
-				lighting = max(_SQ_LightingParams.xxx, amb + ndl * shadow * _SQ_FakeLightColor.rgb);
+				#if defined(_SQ_AO_MAPS)
+					// AO is ambient attenuation, not a colour multiply: ambient is sampled
+					// along the bent normal (light arrives from the open side of a corner)
+					// and scaled by visibility; the sun gets only a mild micro-occlusion —
+					// it already has a real shadow term.
+					half aoVis; half3 bentN;
+					SQSampleAOVolume(i.positionWS, normalWS, aoVis, bentN);
+					half ao = lerp(1.0h, aoVis, _SQ_LightingParams.z);
+					half3 amb = max(SampleSH(bentN), _SQ_LightingParams.yyy) * ao;
+					half directAO = lerp(1.0h, aoVis, 0.35h * _SQ_LightingParams.z);
+					lighting = max(_SQ_LightingParams.xxx, amb + ndl * shadow * directAO * _SQ_FakeLightColor.rgb);
+				#else
+					half3 amb = max(SampleSH(normalWS), _SQ_LightingParams.yyy);
+					lighting = max(_SQ_LightingParams.xxx, amb + ndl * shadow * _SQ_FakeLightColor.rgb);
+				#endif
 			#else
 				// Calculate lighting from main directional light if it exists
 				Light mainLight = GetMainLight();
@@ -120,9 +133,11 @@ Shader "Unlit/Diffuse"
 
 				// Combine directional and ambient light, ensuring minimum brightness
 				lighting = max(0.6, max(ambient * 0.5 + 0.5, NdotL * mainLight.color + ambient));
-			#endif
-			#if defined(_SQ_AO_MAPS)
-				lighting *= lerp(1.0h, SQSampleAO(i.positionWS, normalWS), _SQ_LightingParams.z);
+				#if defined(_SQ_AO_MAPS)
+					half aoVis; half3 bentN;
+					SQSampleAOVolume(i.positionWS, normalWS, aoVis, bentN);
+					lighting *= lerp(1.0h, aoVis, _SQ_LightingParams.z);
+				#endif
 			#endif
 
 				// Apply lighting to color
