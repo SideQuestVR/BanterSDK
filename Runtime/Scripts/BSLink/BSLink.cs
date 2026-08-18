@@ -249,6 +249,14 @@ namespace BS
                 {
                     scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
                 }
+                else if (msg.StartsWith(APICommands.LIGHTING_DATA_GET))
+                {
+                    scene.LightingDataGet(id);
+                }
+                else if (msg.StartsWith(APICommands.LIGHTING_DATA_SET))
+                {
+                    scene.LightingDataSet(GetMsgData(msg, APICommands.LIGHTING_DATA_SET), id);
+                }
                 else if (msg.StartsWith(APICommands.GRAVITY))
                 {
                     scene.Gravity(GetMsgData(msg, APICommands.GRAVITY), id);

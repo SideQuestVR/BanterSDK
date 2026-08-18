@@ -80,9 +80,17 @@ public class BSSceneEvents
     public UnityEvent<string, string> OnRemoveUserState = new UnityEvent<string, string>();
 
     public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
+
+    /// <summary>A stored lighting payload arrived from the page (space load) for the
+    /// app's lighting system to apply.</summary>
+    public UnityEvent<string> OnLightingData = new UnityEvent<string>();
+
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
     public Func<string> GetPlatform = new Func<string>(() => { return ""; });
+    /// <summary>The app's current baked lighting data as a persistable string, for
+    /// the page to store with its saved scene. Empty = nothing baked yet.</summary>
+    public Func<string> GetLightingData = new Func<string>(() => { return ""; });
 
     #endregion
 
@@ -141,6 +149,7 @@ public class BSSceneEvents
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
         OnJsCallbackRecieved.RemoveAllListeners();
+        OnLightingData.RemoveAllListeners();
         OnTakeOwnership.RemoveAllListeners();
         OnPlayAvatar.RemoveAllListeners();
         OnSyncedObject.RemoveAllListeners();

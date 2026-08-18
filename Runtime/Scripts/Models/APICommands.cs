@@ -160,6 +160,12 @@ public class APICommands
     public const string SET_BLOCK_LEFT_TRIGGER = "!sbltr!";
     public const string SET_BLOCK_RIGHT_TRIGGER = "!sbrtr!";
 
+    // Lighting persistence: the page stores the baked lighting data with its
+    // saved scene and hands it back on load. GET returns the payload computed by
+    // an app-registered callback; SET pushes a stored payload for the app to apply.
+    public const string LIGHTING_DATA_GET = "!ligd!";
+    public const string LIGHTING_DATA_SET = "!lisd!";
+
     // Platform detection command
     public const string GET_PLATFORM = "!gp!";
 

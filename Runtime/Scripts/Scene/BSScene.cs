@@ -469,6 +469,23 @@ namespace BS
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)), $"{nameof(BSScene)}.{nameof(SelectFile)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SELECT_FILE);
         }
+        public void LightingDataGet(int reqId)
+        {
+            // The reply is DEFERRED into the main-thread task: the payload comes from
+            // an app callback that reads texture data, which cannot run on the socket
+            // thread. The promise on the page resolves when the app has answered.
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                var data = events.GetLightingData?.Invoke();
+                if (string.IsNullOrEmpty(data)) data = "null";
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.LIGHTING_DATA_GET + MessageDelimiters.SECONDARY + data);
+            }, $"{nameof(BSScene)}.{nameof(LightingDataGet)}"));
+        }
+        public void LightingDataSet(string msg, int reqId)
+        {
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnLightingData.Invoke(msg), $"{nameof(BSScene)}.{nameof(LightingDataSet)}"));
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.LIGHTING_DATA_SET);
+        }
         public void Gravity(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
