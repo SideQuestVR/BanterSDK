@@ -34,9 +34,15 @@ Shader "Unlit/DiffuseTransparent"
 			#pragma target 3.0
 			#pragma only_renderers d3d11 glcore gles3 vulkan
 			#pragma multi_compile_instancing
+			// Runtime-toggled global keywords set by SideQuest.Lighting (LightingSystem).
+			#pragma multi_compile _ _SQ_FAKE_SHADOWS
+			#pragma multi_compile _ _SQ_AO_MAPS
 
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+			#if defined(_SQ_FAKE_SHADOWS) || defined(_SQ_AO_MAPS)
+			#include "SQFakeShadow.hlsl"
+			#endif
 
 			TEXTURE2D(_MainTex);	SAMPLER(sampler_MainTex);
 
@@ -59,6 +65,9 @@ Shader "Unlit/DiffuseTransparent"
 				float4 positionCS : SV_POSITION;
 				float2 uv : TEXCOORD0;
 				half3 normalWS : TEXCOORD1;
+			#if defined(_SQ_FAKE_SHADOWS) || defined(_SQ_AO_MAPS)
+				float3 positionWS : TEXCOORD2;
+			#endif
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
@@ -74,6 +83,9 @@ Shader "Unlit/DiffuseTransparent"
 				o.positionCS = TransformObjectToHClip(v.positionOS.xyz);
 				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
 				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
+			#if defined(_SQ_FAKE_SHADOWS) || defined(_SQ_AO_MAPS)
+				o.positionWS = TransformObjectToWorld(v.positionOS.xyz);
+			#endif
 				return o;
 			}
 
@@ -91,6 +103,17 @@ Shader "Unlit/DiffuseTransparent"
 				// Flip normal for back faces
 				half3 normalWS = normalize(i.normalWS) * IS_FRONT_VFACE(facing, 1.0, -1.0);
 
+				half3 lighting;
+			#if defined(_SQ_FAKE_SHADOWS)
+				// Fake directional light: direction/colour come from the _SQ_ globals, never
+				// GetMainLight() — materials are shared scene-wide by BSMaterial's cache, so
+				// all lighting state must be global. The 0.6 floor below is replaced by
+				// tunable floors here so shadowed faces can actually darken.
+				half  ndl    = saturate(dot(normalWS, _SQ_FakeLightDir.xyz));
+				half  shadow = SQSampleFakeShadow(i.positionWS, normalWS);
+				half3 amb    = max(SampleSH(normalWS), _SQ_LightingParams.yyy);
+				lighting = max(_SQ_LightingParams.xxx, amb + ndl * shadow * _SQ_FakeLightColor.rgb);
+			#else
 				// Calculate lighting from main directional light if it exists
 				Light mainLight = GetMainLight();
 				half NdotL = max(0.0, dot(normalWS, mainLight.direction));
@@ -99,7 +122,11 @@ Shader "Unlit/DiffuseTransparent"
 				half3 ambient = SampleSH(normalWS);
 
 				// Combine directional and ambient light, ensuring minimum brightness
-				half3 lighting = max(0.6, max(ambient * 0.5 + 0.5, NdotL * mainLight.color + ambient));
+				lighting = max(0.6, max(ambient * 0.5 + 0.5, NdotL * mainLight.color + ambient));
+			#endif
+			#if defined(_SQ_AO_MAPS)
+				lighting *= lerp(1.0h, SQSampleAO(i.positionWS, normalWS), _SQ_LightingParams.z);
+			#endif
 
 				// Apply lighting to color, keeping the sampled alpha
 				col.rgb *= lighting;
