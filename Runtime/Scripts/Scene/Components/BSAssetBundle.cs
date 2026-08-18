@@ -276,9 +276,17 @@ namespace BS
                             Destroy(audioListener);
                         }
                         var audioSource = transform.gameObject.GetComponent<AudioSource>();
-                        if (audioSource != null && scene.settings.SpaceAudioGroup != null)
+                        if (audioSource != null)
                         {
-                            audioSource.outputAudioMixerGroup = scene.settings.SpaceAudioGroup;
+                            // App-supplied per-source policy first (e.g. music vs. gameplay), then
+                            // the single default group. Only assign if we actually resolved one, so
+                            // a scene with no routing configured keeps the bundle's own value.
+                            var group = scene.settings.AudioGroupSelector?.Invoke(audioSource)
+                                        ?? scene.settings.SpaceAudioGroup;
+                            if (group != null)
+                            {
+                                audioSource.outputAudioMixerGroup = group;
+                            }
                         }
                         var canvas = transform.gameObject.GetComponent<Canvas>();
                         if (canvas != null)
