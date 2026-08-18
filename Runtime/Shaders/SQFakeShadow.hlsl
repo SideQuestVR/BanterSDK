@@ -31,7 +31,7 @@ float4   _SQ_LightingParams;
 // VoxelAOSystem (GPU voxelize or CPU raycast producer — same packed format).
 // RGBA8: rgb = visibility moment * 2 + 0.5, a = mean visibility.
 float4   _SQ_AOVolumeOrigin;       // xyz = grid min corner (world), w = normal offset (m)
-float4   _SQ_AOVolumeParams;       // xyz = 1 / grid world size, w = unused
+float4   _SQ_AOVolumeParams;       // xyz = 1 / grid world size, w = contrast power (>= 1)
 
 static const float2 kSQPoisson16[16] = {
     float2(-0.94201624, -0.39906216), float2( 0.94558609, -0.76890725),
@@ -119,9 +119,23 @@ void SQSampleAOVolume(float3 positionWS, half3 normalWS, out half visibility, ou
 
     float4 packed = SAMPLE_TEXTURE3D_LOD(_SQ_AOVolume, sampler_SQ_AOVolume, uvw, 0);
     float3 moment = (packed.rgb - 0.5) * 0.5;
-    float mean = packed.a;
+    // Alpha stores CONTACT visibility: the bake excludes hits within the self-plane
+    // distance from the mean, so a voxel beside an open floor reads ~1 and only
+    // genuinely nearby OTHER geometry pulls it down. Without that exclusion the
+    // floor's own plane set a ~0.65 baseline everywhere and the contact signal
+    // measured as a uniform dim (verified by pixel probes).
+    float contact = packed.a;
 
-    visibility = (half)saturate(mean + 2.0 * dot(moment, (float3)normalWS));
+    // Orientation term from the full-hit moment: 1 where the surface faces the
+    // open direction, dark where it faces INTO the blockage (undersides, the
+    // inside faces of tight corners). Zero moment (open air) means no opinion.
+    float orientation = 1.0 - saturate(-4.0 * dot(moment, (float3)normalWS));
+
+    float vis = min(orientation, contact);
+
+    // Contrast power deepens the midtones. The max guard matters: a stale or
+    // uninitialized w of 0 would make pow() return 1 and silently disable AO.
+    visibility = (half)pow(abs(vis), max(1.0, _SQ_AOVolumeParams.w));
 
     float m2 = dot(moment, moment);
     if (m2 > 1e-5)

@@ -120,7 +120,7 @@ Shader "Unlit/DiffuseTransparent"
 					SQSampleAOVolume(i.positionWS, normalWS, aoVis, bentN);
 					half ao = lerp(1.0h, aoVis, _SQ_LightingParams.z);
 					half3 amb = max(SampleSH(bentN), _SQ_LightingParams.yyy) * ao;
-					half directAO = lerp(1.0h, aoVis, 0.35h * _SQ_LightingParams.z);
+					half directAO = lerp(1.0h, aoVis, 0.5h * _SQ_LightingParams.z);
 					lighting = max(_SQ_LightingParams.xxx, amb + ndl * shadow * directAO * _SQ_FakeLightColor.rgb);
 				#else
 					half3 amb = max(SampleSH(normalWS), _SQ_LightingParams.yyy);
