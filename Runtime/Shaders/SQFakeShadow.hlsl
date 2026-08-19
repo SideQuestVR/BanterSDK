@@ -20,9 +20,11 @@ float4   _SQ_FakeShadowRayOrigin;  // xyz = light plane origin (virtual cam pos)
 // x = depth bias (normalized-depth units), y = normal bias (world units, scaled to texel by C#),
 // z = 1 / sunMapSize (uv per texel), w = sunMapSize
 float4   _SQ_FakeShadowParams;
-// x = near, y = 1 / (far - near)
+// x = near, y = 1 / (far - near), z = EVSM warp exponent (0 = none)
 float4   _SQ_FakeShadowDepthParams;
-// x = PCF sample count (1..16), y = PCF radius in texels
+// x = blur passes (informational), y = penumbra radius in texels (informational),
+// z = variance floor relative to mean² (the moments live in the warped domain,
+// where an absolute floor is meaningless), w = light-bleed reduction floor
 float4   _SQ_FakeShadowPcfParams;
 // x = minimum lighting floor, y = ambient floor, z = AO strength, w = sun test mode (0 = coverage, 1 = depth compare)
 float4   _SQ_LightingParams;
@@ -33,23 +35,18 @@ float4   _SQ_LightingParams;
 float4   _SQ_AOVolumeOrigin;       // xyz = grid min corner (world), w = normal offset (m)
 float4   _SQ_AOVolumeParams;       // xyz = 1 / grid world size, w = contrast power (>= 1)
 
-static const float2 kSQPoisson16[16] = {
-    float2(-0.94201624, -0.39906216), float2( 0.94558609, -0.76890725),
-    float2(-0.09418410, -0.92938870), float2( 0.34495938,  0.29387760),
-    float2(-0.91588581,  0.45771432), float2(-0.81544232, -0.87912464),
-    float2(-0.38277543,  0.27676845), float2( 0.97484398,  0.75648379),
-    float2( 0.44323325, -0.97511554), float2( 0.53742981, -0.47373420),
-    float2(-0.26496911, -0.41893023), float2( 0.79197514,  0.19090188),
-    float2(-0.24188840,  0.99706507), float2(-0.81409955,  0.91437590),
-    float2( 0.19984126,  0.78641367), float2( 0.14383161, -0.14100790)
-};
-
-float SQFakeRand(float2 co)
-{
-    return frac(sin(dot(co, float2(12.9898, 78.233))) * 43758.5453);
-}
-
 // 1 = fully lit, 0 = fully shadowed.
+//
+// The map is an EXPONENTIAL variance shadow map (R = min exp(c·depth), G = its
+// square, both blurred at bake time by FakeLightRenderer), so the penumbra is
+// evaluated with ONE bilinear tap through Chebyshev's inequality — perfectly
+// smooth at any softness. The stochastic Poisson PCF this replaced sampled a
+// wide disk with a per-pixel random rotation, and at 8 taps over a 300%-softness
+// radius every pixel got its own noisy estimate: the grain the penumbra used to
+// show WAS that sampling. The exp warp (c in _SQ_FakeShadowDepthParams.z) is
+// what stops plain VSM's light bleed: around an object's base the blur mixes the
+// object's depth into the floor texels, the floor sits barely behind that mean,
+// and the unwarped bound brightens a ring exactly where AO contact-darkens.
 half SQSampleFakeShadow(float3 positionWS, half3 normalWS)
 {
     float NdotL = saturate(dot(normalWS, _SQ_FakeLightDir.xyz));
@@ -72,33 +69,36 @@ half SQSampleFakeShadow(float3 positionWS, half3 normalWS)
     refDepth -= _SQ_FakeShadowParams.x * (1.0 + slope)
               + _SQ_FakeShadowParams.y * _SQ_FakeShadowDepthParams.y;
 
-    int sampleCount = clamp((int)_SQ_FakeShadowPcfParams.x, 1, 16);
-    float radius = _SQ_FakeShadowParams.z * _SQ_FakeShadowPcfParams.y;
+    float2 moments = SAMPLE_TEXTURE2D_LOD(_SQ_FakeShadowMap, sampler_SQ_FakeShadowMap, uv, 0).rg;
 
-    float angle = SQFakeRand(uv * _SQ_FakeShadowParams.w) * 6.2831853;
-    float s, c;
-    sincos(angle, s, c);
-    float2x2 rot = float2x2(c, -s, s, c);
-
-    float sum = 0.0;
-    for (int i = 0; i < 16; ++i)
+    float warp = _SQ_FakeShadowDepthParams.z;
+    float wEmpty = warp > 0.0 ? exp(warp) : 1.0;
+    if (_SQ_LightingParams.w < 0.5)
     {
-        if (i >= sampleCount) break;
-        float2 o = mul(rot, kSQPoisson16[i]) * radius;
-        float mapDepth = SAMPLE_TEXTURE2D_LOD(_SQ_FakeShadowMap, sampler_SQ_FakeShadowMap, uv + o, 0).r;
-        if (_SQ_LightingParams.w < 0.5)
-        {
-            // Coverage mode: any caster texel shadows. Only usable when receivers
-            // are excluded from the caster set — every tracked primitive is both,
-            // so depth compare is the default here (unlike the Airbus original).
-            sum += mapDepth < 0.999 ? 0.0 : 1.0;
-        }
-        else
-        {
-            sum += step(refDepth, mapDepth);
-        }
+        // Coverage mode: any caster texel shadows. Only usable when receivers
+        // are excluded from the caster set — every tracked primitive is both,
+        // so depth compare is the default here (unlike the Airbus original).
+        return moments.x < 0.999 * wEmpty ? 0.0 : 1.0;
     }
-    return (half)(sum / sampleCount);
+
+    // Into the warped domain the moments live in.
+    float wRef = warp > 0.0 ? exp(warp * refDepth) : refDepth;
+
+    // In front of (or at) the mean occluder depth = lit. This also keeps every
+    // empty-map texel (cleared to the warped far value) fully lit for free.
+    if (wRef <= moments.x) return 1.0;
+
+    // Variance floor is RELATIVE to the mean squared — warped values span many
+    // orders of magnitude, so an absolute floor would be wrong at both ends.
+    float varianceFloor = moments.x * moments.x * _SQ_FakeShadowPcfParams.z;
+    float variance = max(moments.y - moments.x * moments.x, varianceFloor);
+    float d = wRef - moments.x;
+    float pMax = variance / (variance + d * d);
+
+    // Light-bleed reduction: Chebyshev is an UPPER bound and overlapping casters
+    // push it off zero deep inside real shadow — remap the low end to black.
+    float floorP = _SQ_FakeShadowPcfParams.w;
+    return (half)saturate((pMax - floorP) / (1.0 - floorP));
 }
 
 // Directional ambient visibility from the baked voxel volume, one trilinear tap.

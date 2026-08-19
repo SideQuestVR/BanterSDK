@@ -94,6 +94,11 @@ namespace BS
                 item.transform.localRotation = Quaternion.identity;
 
                 scene.kitItems.Add(item);
+                // Onto the SQ-lit diffuse family, so the piece receives the fake sun
+                // and baked AO like every editor primitive. Here rather than on the
+                // `loaded` event, which is latched once-per-component and never fires
+                // again for the re-instantiate a path change causes.
+                KitMaterialLighting.Convert(item);
                 SetLoadedIfNot();
             }
             catch (Exception e)
