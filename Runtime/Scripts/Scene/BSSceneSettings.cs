@@ -84,6 +84,13 @@ namespace BS
         public Transform Cockpit = null;
         public Transform parentTransform = null;
         public AudioMixerGroup SpaceAudioGroup;
+
+        // Optional per-source override for routing a loaded space's AudioSources. The app sets this
+        // (see Greenfield's AudioMixerApplier) to apply its own policy — e.g. music vs. gameplay
+        // buses — while the SDK stays app-agnostic. When null, or when it returns null for a given
+        // source, BSAssetBundle falls back to SpaceAudioGroup. Set on each space load, since these
+        // settings are rebuilt per load.
+        public System.Func<UnityEngine.AudioSource, AudioMixerGroup> AudioGroupSelector;
         public BSAssetBundle SceneAssetBundle;
         public List<BSAssetBundle> KitBundles = new List<BSAssetBundle>();
         public Dictionary<string, BSAssetBundle> KitPaths = new Dictionary<string, BSAssetBundle>();

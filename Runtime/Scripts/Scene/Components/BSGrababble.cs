@@ -75,6 +75,7 @@ namespace BS
         }
         internal override void StartStuff()
         {
+            SetLoadedIfNot();
         }
         internal override void DestroyStuff()
         {
