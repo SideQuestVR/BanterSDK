@@ -151,10 +151,8 @@ namespace BS
                     return gameObject.AddComponent<BSExtrude>();
                 case ComponentType.Shape:
                     return gameObject.AddComponent<BSShape>();
-#if BANTER_VISUAL_SCRIPTING
                 case ComponentType.ScriptGraph:
                     return gameObject.AddComponent<BSScriptGraph>();
-#endif
                 default:
                     return null;
             }

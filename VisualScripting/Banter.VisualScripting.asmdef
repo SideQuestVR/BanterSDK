@@ -22,11 +22,6 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.visualscripting",
-            "expression": "1.7.8",
-            "define": "BANTER_VISUAL_SCRIPTING"
-        },
-        {
             "name": "com.garethiw.picavoxelinfinity",
             "expression": "1.0.0",
             "define": "BANTER_PICAVOXEL"

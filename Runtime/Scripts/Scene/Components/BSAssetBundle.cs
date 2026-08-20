@@ -68,7 +68,7 @@ namespace BS
                 }
                 scene.settings.SceneAssetBundle = this;
             }
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             if (isScene)
             {
                 SetLoadedIfNot();

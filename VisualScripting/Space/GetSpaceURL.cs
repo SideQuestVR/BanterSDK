@@ -1,5 +1,4 @@
-﻿#if BANTER_VISUAL_SCRIPTING
-using Unity.VisualScripting;
+﻿using Unity.VisualScripting;
 using BS;
 
 namespace BS.VisualScripting
@@ -21,4 +20,3 @@ namespace BS.VisualScripting
         }
     }
 }
-#endif

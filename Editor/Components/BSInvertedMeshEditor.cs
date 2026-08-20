@@ -30,7 +30,7 @@ namespace BS.SDKEditor
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
 
-            //#if BANTER_EDITOR
+            //#if GREENFIELD_PROJECT
             var foldout = new Foldout();
             foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });

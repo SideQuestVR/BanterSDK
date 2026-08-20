@@ -129,7 +129,7 @@ namespace BS
         {
             if (browser == null)
             {
-#if BANTER_EDITOR
+#if GREENFIELD_PROJECT
                 browser = Instantiate(Resources.Load<GameObject>(IsStreamingBrowser ? "Prefabs/BanterBrowserStreaming" : "Prefabs/BanterBrowserBuild"), transform);
 #else
                 browser = Instantiate(Resources.Load<GameObject>("Prefabs/BSBrowser"), transform);

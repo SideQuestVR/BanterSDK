@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using BS;
 using System.Diagnostics;
@@ -13,7 +12,6 @@ namespace BS.VisualScripting
     public class OnSelectFile : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
         //            EventBus.Trigger("OnSelectFile", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
@@ -56,4 +54,3 @@ namespace BS.VisualScripting
         }
     }
 }
-#endif

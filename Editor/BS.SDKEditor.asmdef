@@ -28,11 +28,6 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.visualscripting",
-            "expression": "1.7.8",
-            "define": "BANTER_VISUAL_SCRIPTING"
-        },
-        {
             "name": "com.unity.timeline",
             "expression": "1.7.8",
             "define": "BANTER_VS_TIMELINE"

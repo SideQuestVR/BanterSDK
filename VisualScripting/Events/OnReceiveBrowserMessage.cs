@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using BS;
 using System.Diagnostics;
@@ -13,7 +12,6 @@ namespace BS.VisualScripting
     public class OnReceiveBrowserMessage : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
         //            EventBus.Trigger("OnAiImage", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
@@ -52,4 +50,3 @@ namespace BS.VisualScripting
         }
     }
 }
-#endif

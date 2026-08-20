@@ -41,7 +41,7 @@ namespace BS.SDKEditor
             seeFields.style.color = Color.gray;
             myInspector.Add(seeFields);
 
-            //#if BANTER_EDITOR
+            //#if GREENFIELD_PROJECT
             var foldout = new Foldout();
             foldout.text = "Available Properties";
             IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });

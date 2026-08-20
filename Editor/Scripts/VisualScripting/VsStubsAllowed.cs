@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24432,5 +24431,4 @@ namespace BS.SDKEditor
         };
     }
 }
-#endif
 

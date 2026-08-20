@@ -70,7 +70,7 @@ namespace BS
             scene = BSScene.Instance();
             gameObject.AddComponent<DontDestroyOnLoad>();
 
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
             SetupExtraEvents();
             SetupCamera();
@@ -110,7 +110,7 @@ namespace BS
             oraView.openBrowser = openBrowser;
             SetupBrowserLink(oraView, oraManager);
 
-#if BANTER_EDITOR
+#if GREENFIELD_PROJECT
             // Hand our feet reference to the loading cage — but never clobber a reference
             // the cage already has with null when ours isn't wired up in the scene.
             if (scene.loadingManager != null && _feetTransform != null)
@@ -170,7 +170,7 @@ namespace BS
 
             var localUserData = player.GetComponent<UserData>();
             localUserData.isLocal = true;
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             localUserData.nameTag = player.GetComponentInChildren<TMPro.TextMeshPro>();
 #endif
             player.transform.position = spawnPoint;
@@ -187,15 +187,11 @@ namespace BS
             });
             scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
             {
-#if BANTER_VISUAL_SCRIPTING
                 EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
-#endif
             });
             scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
             {
-#if BANTER_VISUAL_SCRIPTING
                 EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
-#endif
             });
         }
 
@@ -281,7 +277,7 @@ namespace BS
             {
                 try
                 {
-#if UNITY_STANDALONE_WIN && !UNITY_EDITOR && BANTER_EDITOR
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR && GREENFIELD_PROJECT
                     var processes = KS.Diagnostics.Process.GetProcessesByName("banter-link");
                     process = processes.FirstOrDefault(p=>p.Id==processId);
                     if (process!=null)
@@ -334,7 +330,7 @@ namespace BS
         void CreateWebRoot()
         {
             // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             var webRoot = Application.dataPath + "/WebRoot";
             if (Directory.Exists(webRoot))
                 return;

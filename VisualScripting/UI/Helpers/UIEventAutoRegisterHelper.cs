@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using BS;
 using BS.UI.Bridge;
 using BS.UI.Core;
@@ -233,5 +232,4 @@ namespace BS.VisualScripting.UI.Helpers
         }
     }
 }
-#endif
 

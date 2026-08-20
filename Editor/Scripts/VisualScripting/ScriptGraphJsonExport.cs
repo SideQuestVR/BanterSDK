@@ -1,4 +1,4 @@
-#if BANTER_VISUAL_SCRIPTING
+#if GREENFIELD_PROJECT
 using System.IO;
 using System.Text;
 using Newtonsoft.Json;

@@ -17,7 +17,7 @@ namespace BS.SDKEditor
     {
         static InitialiseOnLoad()
         {
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             SetupLayersAndTags();
             SetApiCompatibilityLevel();
             CreateWebRoot();
@@ -60,7 +60,7 @@ namespace BS.SDKEditor
         static void CreateWebRoot()
         {
             // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             var webRoot = Application.dataPath + "/WebRoot";
             if (Directory.Exists(webRoot))
                 return;

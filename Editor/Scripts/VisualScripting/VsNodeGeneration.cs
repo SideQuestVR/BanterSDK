@@ -2,7 +2,6 @@
 // Retrieved on 2024-06-04
 // SPDX-License-Identifier: MIT
 
-#if BANTER_VISUAL_SCRIPTING
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -28,7 +27,7 @@ namespace BS.SDKEditor
         private const string SETTINGS_ASSET_PATH = "ProjectSettings/VisualScriptingSettings.asset";
         private const string GENERATED_VS_NODES_VERSION_PREFS_KEY = "Banter_GeneratedVSNodesVersion";
 
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
         [InitializeOnLoadMethod]
         private static void OnScriptsReloaded()
         {
@@ -383,4 +382,3 @@ namespace BS.SDKEditor
         };
     }
 }
-#endif

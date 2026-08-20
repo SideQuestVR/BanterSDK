@@ -192,7 +192,7 @@ public class BuilderWindow : EditorWindow
     }
 
 
-#if BANTER_EDITOR
+#if GREENFIELD_PROJECT
     [MenuItem("Altspace/Tools/Compile Everything")]
     public static void CompileEverything()
     {
@@ -234,37 +234,30 @@ public class BuilderWindow : EditorWindow
         BSStarterUpper.ToggleDevTools();
     }
 
-#if BANTER_VISUAL_SCRIPTING
-
-#if BANTER_EDITOR
+#if GREENFIELD_PROJECT
     [MenuItem("Altspace/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         OnVisualScript.Invoke();
     }
         //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
-#else // BANTER_EDITOR
+#else // GREENFIELD_PROJECT
     [MenuItem("Altspace/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         VsNodeGeneration.SetVSTypesAndAssemblies();
     }
     //         rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
-#endif // BANTER_EDITOR
+#endif // GREENFIELD_PROJECT
 
-#if BANTER_EDITOR
+#if GREENFIELD_PROJECT
     [MenuItem("Altspace/Tools/Domain Reload")]
     public static void DomainReload()
     {
         EditorUtility.RequestScriptReload();
     }
     //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
-#endif // BANTER_EDITOR
-    
-    
-#else // BANTER_VISUAL_SCRIPTING
-    //         Remove(rootVisualElement.Q<Button>("visualScript"));
-#endif // BANTER_VISUAL_SCRIPTING
+#endif // GREENFIELD_PROJECT
 
     private SqEditorAppApi sq;
 
@@ -2261,7 +2254,6 @@ public class BuilderWindow : EditorWindow
             bool lockHandedToUpload = false;
             try
             {
-#if BANTER_VISUAL_SCRIPTING
                 if (!ValidateVisualScripting.CheckVsNodes())
                 {
                     status.AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
@@ -2271,7 +2263,6 @@ public class BuilderWindow : EditorWindow
                 {
                     status.AddStatus("Visual Scripting check passed!");
                 }
-#endif
                 if (!skipUpload) {
                     status.AddStatus("Build started...");
 

@@ -8,9 +8,7 @@ using System.Text;
 using BS.UI.Bridge;
 
 
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-#endif
 using BS.Utilities.Async;
 using NUnit.Framework;
 using System.Linq;
@@ -33,9 +31,7 @@ namespace BS
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-#if BANTER_VISUAL_SCRIPTING
                     EventBus.Trigger("OnJsReturnValue", new CustomEventArgs(id, new object[] { data }));
-#endif
                 }, $"{nameof(BSLink)}.{nameof(Start)}"));
             });
         }
@@ -740,7 +736,7 @@ namespace BS
         List<string> messages = new List<string>();
         public void Send(string msg)
         {
-            // #if !BANTER_EDITOR
+            // #if !GREENFIELD_PROJECT
             if (batchUpdater == null)
             {
                 messages.Add(msg);
@@ -851,23 +847,17 @@ namespace BS
         }
         public void OnAiModel(string glb)
         {
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiModel", new CustomEventArgs("", new object[] { glb }));
-#endif
             Send(APICommands.EVENT + APICommands.AI_MODEL_RECV + MessageDelimiters.PRIMARY + glb);
         }
         public void OnAiImage(string image)
         {
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnAiImage", new CustomEventArgs("", new object[] { image }));
-#endif
             Send(APICommands.EVENT + APICommands.AI_IMAGE_RECV + MessageDelimiters.PRIMARY + image);
         }
         public void OnBase64ToCDN(long image)
         {
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnBase64CDNLink", new CustomEventArgs("", new object[] { image }));
-#endif
             Send(APICommands.EVENT + APICommands.BASE_64_TO_CDN_RECV + MessageDelimiters.PRIMARY + image);
         }
         public void OnSelectFile(SelectFileType type, string path)
@@ -875,23 +865,17 @@ namespace BS
             byte[] bytes = File.ReadAllBytes(path);
             if (bytes.Length > 1048576 * 4)
             {
-#if BANTER_VISUAL_SCRIPTING
                 EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { "too-large-over-4mb", type }));
-#endif
                 Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + "too-large-over-4mb" + MessageDelimiters.SECONDARY + (int)type);
                 return;
             }
             string file = Convert.ToBase64String(bytes);
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnSelectFile", new CustomEventArgs("", new object[] { file, type }));
-#endif
             Send(APICommands.EVENT + APICommands.SELECT_FILE_RECV + MessageDelimiters.PRIMARY + file + MessageDelimiters.SECONDARY + (int)type);
         }
         public void OnTranscription(string message, string id)
         {
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnSTT", new CustomEventArgs(id, new object[] { message }));
-#endif
             Send(APICommands.EVENT + APICommands.SEND_TRANSCRIPTION + MessageDelimiters.PRIMARY + id + MessageDelimiters.SECONDARY + message);
         }
 
@@ -912,9 +896,7 @@ namespace BS
 
         public void OnOneShot(string data, string fromId, bool fromAdmin)
         {
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
-#endif
             Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + data);
         }
 
@@ -982,9 +964,7 @@ namespace BS
         }
         public void OnReceiveBrowserMessage(BSBrowser browser, string message)
         {
-#if BANTER_VISUAL_SCRIPTING
             EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
-#endif
             Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + message);
         }
         public void OnKeyPress(KeyCode key)

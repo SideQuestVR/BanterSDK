@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -13,7 +12,7 @@ namespace BS.SDKEditor
     [InitializeOnLoad]
     public class ValidateVisualScripting
     {
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
         [InitializeOnLoadMethod]
         static void Init()
         {
@@ -286,4 +285,3 @@ namespace BS.SDKEditor
         }
     }
 }
-#endif

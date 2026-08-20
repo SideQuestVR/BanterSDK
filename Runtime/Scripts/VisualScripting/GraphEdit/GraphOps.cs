@@ -1,4 +1,4 @@
-#if BANTER_VISUAL_SCRIPTING
+#if GREENFIELD_PROJECT
 using System;
 using System.Collections.Generic;
 using Newtonsoft.Json.Linq;

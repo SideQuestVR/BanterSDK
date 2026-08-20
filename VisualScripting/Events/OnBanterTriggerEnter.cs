@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using System;
 using BS;
 using Unity.VisualScripting;
@@ -40,4 +39,3 @@ namespace BS.VisualScripting
         }
     }
 }
-#endif

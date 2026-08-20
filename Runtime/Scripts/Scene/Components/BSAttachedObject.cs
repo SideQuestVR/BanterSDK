@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-#endif
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -19,9 +17,7 @@ namespace BS
         public AttachmentType attachmentType = AttachmentType.Physics;
         public AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
         public AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
-#if BANTER_VISUAL_SCRIPTING
         [RenamedFrom("attachmentPoint")]
-#endif
         [FormerlySerializedAs("attachmentPoint")]
         public PhysicsAttachmentPoint physicsAttachmentPoint = PhysicsAttachmentPoint.Head;
         public bool autoSync = false;

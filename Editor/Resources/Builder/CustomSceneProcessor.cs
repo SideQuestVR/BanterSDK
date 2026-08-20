@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEngine;
@@ -17,7 +19,7 @@ class CustomSceneProcessor : IProcessSceneWithReport
 
     public void OnProcessScene(UnityEngine.SceneManagement.Scene scene, BuildReport report)
     {
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
         // Strip any authoring-time BSStarterUpper from every space bundle — raw AND .bee. It's
         // re-added at runtime by the bootstrap; if one ships in the bundle its Awake fires on scene load
         // and sets up a second, broken browser link (BSPipe.Start NRE), killing scene JS and space
@@ -45,6 +47,44 @@ class CustomSceneProcessor : IProcessSceneWithReport
                 }
             }
         }
+        if (isBuildingAssetBundles || isBuildingSceneBee)
+        {
+            ApplyPlatformFilters(scene, report);
+        }
 #endif
     }
+
+#if !GREENFIELD_PROJECT
+    // Honors BSPlatformFilter: each platform section of a space bundle is built in its own pass, so
+    // this runs once per platform on the build copy and drops trees the creator excluded for it.
+    // Exclusion removes the entire subtree — a nested filter cannot re-include a child of an
+    // excluded ancestor. Filters on kept trees are stripped so the marker never ships.
+    static void ApplyPlatformFilters(UnityEngine.SceneManagement.Scene scene, BuildReport report)
+    {
+        // report is null for AssetBundle builds; the pipeline has already switched the active
+        // build target to this pass's platform before scene processing runs.
+        BuildTarget target = report != null ? report.summary.platform : EditorUserBuildSettings.activeBuildTarget;
+        bool isMobile = target == BuildTarget.Android;
+
+        // GetComponentsInChildren(true) rather than FindObjectsOfType: excluded trees may start inactive.
+        List<BSPlatformFilter> filters = new List<BSPlatformFilter>();
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            filters.AddRange(root.GetComponentsInChildren<BSPlatformFilter>(true));
+        }
+        foreach (BSPlatformFilter filter in filters)
+        {
+            if (filter == null) continue; // tree already destroyed by an ancestor filter
+            if (isMobile ? !filter.includeOnMobile : !filter.includeOnDesktop)
+            {
+                LogLine.Do($"BSPlatformFilter: excluding '{filter.gameObject.name}' from the {(isMobile ? "mobile" : "desktop")} ({target}) build.");
+                GameObject.DestroyImmediate(filter.gameObject);
+            }
+            else
+            {
+                GameObject.DestroyImmediate(filter);
+            }
+        }
+    }
+#endif
 }

@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using BS;
 using SideQuest.FlexaBody;
@@ -33,4 +32,3 @@ namespace BS.VisualScripting
         }
     }
 }
-#endif

@@ -24,11 +24,6 @@
     "defineConstraints": [],
     "versionDefines": [
         {
-            "name": "com.unity.visualscripting",
-            "expression": "1.7.8",
-            "define": "BANTER_VISUAL_SCRIPTING"
-        },
-        {
             "name": "com.gator-dragon-games.jigglephysics",
             "expression": "13.0.0",
             "define": "UNITY_JIGGLE_PHYSICS"

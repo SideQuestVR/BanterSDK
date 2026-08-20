@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -81,7 +80,9 @@ namespace BS
 
         internal override void DestroyStuff()
         {
+#if GREENFIELD_PROJECT
             ScriptGraphSessionManager.Instance.CloseSessionsFor(GetComponent<BSObjectId>()?.Id);
+#endif
         }
 
         internal override void UpdateStuff()
@@ -256,4 +257,3 @@ namespace BS
         // END BANTER COMPILED CODE 
     }
 }
-#endif

@@ -18,7 +18,7 @@ public class UserData : MonoBehaviour
     void Start()
     {
         scene = BSScene.Instance();
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
         name = NameGenerator.Generate();
         id = System.Guid.NewGuid().ToString();
         uid = System.Guid.NewGuid().ToString();
@@ -33,7 +33,7 @@ public class UserData : MonoBehaviour
         foreach (var prop in props)
         {
 
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             var parts = prop.Split(MessageDelimiters.TERTIARY);
             if (parts.Length == 2)
             {

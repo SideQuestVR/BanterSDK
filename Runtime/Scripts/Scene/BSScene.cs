@@ -18,9 +18,7 @@ using SideQuest.FlexaBody;
 
 
 
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-#endif
 
 namespace BS
 {
@@ -274,9 +272,7 @@ namespace BS
             {
                 interaction.onClick.Invoke(point, normal);
             }
-#if BANTER_VISUAL_SCRIPTING
         EventBus.Trigger("OnClick", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, normal }));
-#endif
             link.OnClick(obj, point, normal);
         }
         #endregion
@@ -296,13 +292,11 @@ namespace BS
                 users.Add(user);
             }
             link?.OnUserJoined(user);
-#if BANTER_VISUAL_SCRIPTING
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 await new WaitUntil(() => state == SceneState.UNITY_READY);
                 EventBus.Trigger("OnUserJoined", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             }, $"{nameof(BSScene)}.{nameof(AddUser)}"));
-#endif
         }
         public void RemoveUser(UserData user)
         {
@@ -311,12 +305,10 @@ namespace BS
                 users.Remove(user);
             }
             link.OnUserLeft(user);
-#if BANTER_VISUAL_SCRIPTING
            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 EventBus.Trigger("OnUserLeft", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
             }, $"{nameof(BSScene)}.{nameof(RemoveUser)}"));
-#endif
         }
         public void LookedAtMirror()
         {
@@ -478,7 +470,7 @@ namespace BS
         }
         public void ScriptGraph(string msg, int reqId)
         {
-#if BANTER_VISUAL_SCRIPTING
+#if GREENFIELD_PROJECT
             var parts = msg.Split(MessageDelimiters.SECONDARY, 2);
             var sub = parts[0];
             var payloadB64 = parts.Length > 1 ? parts[1] : "";
@@ -504,7 +496,7 @@ namespace BS
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SCRIPT_GRAPH + MessageDelimiters.SECONDARY + replyB64);
             }, $"{nameof(BSScene)}.{nameof(ScriptGraph)}"));
 #else
-            SendError(reqId, "SCRIPT_GRAPH: Visual Scripting is not available in this build");
+            SendError(reqId, "SCRIPT_GRAPH: script graph editing is not available in this build");
 #endif
         }
 
@@ -661,7 +653,7 @@ namespace BS
         }
         void SaveSpaceState()
         {
-            // #if !BANTER_EDITOR
+            // #if !GREENFIELD_PROJECT
             //                 PlayerPrefs.SetString("spaceState", JsonUtility.ToJson(spaceState));
             // #endif
         }

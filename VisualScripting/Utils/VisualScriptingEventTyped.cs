@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -53,4 +52,3 @@ namespace BS.VisualScripting
         public void TriggerObject(Object v) => OnObjectEvent?.Invoke(v);
     }
 }
-#endif

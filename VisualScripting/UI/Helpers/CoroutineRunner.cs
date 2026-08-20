@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 
 namespace BS.VisualScripting.UI.Helpers
@@ -44,4 +43,3 @@ namespace BS.VisualScripting.UI.Helpers
         }
     }
 }
-#endif

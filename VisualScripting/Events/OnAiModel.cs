@@ -1,4 +1,3 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using BS;
 
@@ -12,7 +11,6 @@ namespace BS.VisualScripting
     public class OnAiModel : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
         //            EventBus.Trigger("OnAiModel", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
@@ -51,4 +49,3 @@ namespace BS.VisualScripting
         }
     }
 }
-#endif
