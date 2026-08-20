@@ -310,6 +310,17 @@ namespace BS
             {
                 users.Remove(user);
             }
+            // Only announce the leave if no other UserData still holds this uid. During a reconnect /
+            // avatar replace, the new avatar's UserData is added (same uid) before the old one's
+            // OnDestroy removes it here — firing OnUserLeft then would bounce a user the new avatar
+            // still represents. The browser link keys users by uid, so the uid is "present" while any
+            // UserData carries it.
+            bool uidStillPresent = user != null && !string.IsNullOrEmpty(user.uid)
+                && users.Exists(u => u != null && u.uid == user.uid);
+            if (uidStillPresent)
+            {
+                return;
+            }
             link.OnUserLeft(user);
 #if BANTER_VISUAL_SCRIPTING
            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
