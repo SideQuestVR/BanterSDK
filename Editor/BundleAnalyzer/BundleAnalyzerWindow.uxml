@@ -1,0 +1,34 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
+    <ui:VisualElement name="TargetBar" class="target-bar">
+        <ui:Label text="Analyze:" class="target-bar-label" />
+        <uie:ObjectField name="TargetField" class="target-field" />
+        <ui:Label text="Platform:" class="target-bar-label" />
+        <ui:DropdownField name="PlatformDropdown" class="platform-dropdown" />
+    </ui:VisualElement>
+    <uie:Toolbar name="Toolbar">
+        <uie:ToolbarButton name="CancelButton" text="Cancel" class="cancel-button" />
+        <ui:ProgressBar name="LoadProgressBar" class="load-progress-bar" />
+        <ui:Label name="StatusLabel" class="status-label" />
+        <uie:ToolbarSpacer class="toolbar-spacer" />
+        <uie:ToolbarSearchField name="SearchField" tooltip="Filter by asset name" class="search-field" />
+        <uie:ToolbarMenu name="TypeFilterMenu" text="Type: All" />
+    </uie:Toolbar>
+    <ui:VisualElement name="EmptyStateContainer" class="empty-state-container">
+        <ui:Label name="EmptyStateLabel" text="Pick a Scene or Prefab above to preview its AssetBundle contents." class="empty-state-label" />
+    </ui:VisualElement>
+    <ui:VisualElement name="MainContent" class="main-content">
+        <ui:VisualElement name="BodyContainer" class="body-container">
+            <ui:VisualElement name="ListViewContainer" class="list-view-container" />
+            <ui:VisualElement name="PiePanel" class="pie-panel">
+                <ui:Label text="Size by Type" class="panel-title" />
+                <ui:IMGUIContainer name="PieImgui" class="pie-imgui" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="BlockViewPanel" class="block-view-panel">
+            <ui:Label text="Block View — click a block to locate it in the Project window" class="panel-title" />
+            <ui:IMGUIContainer name="BlockViewImgui" class="block-view-imgui" />
+            <ui:Label name="HoverInfoLabel" class="hover-info-label" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+    <ui:Label name="FooterLabel" class="footer-label" />
+</ui:UXML>
