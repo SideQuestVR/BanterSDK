@@ -868,28 +868,26 @@ public class BuilderWindow : EditorWindow
         dropAvatarContainer = rootVisualElement.Q<VisualElement>("dropAvatarContainer");
         openWebRoot.clicked += () => ShowWebRoot();
 
+        var analyzeBundle = rootVisualElement.Q<Button>("AnalyzeBundle");
+        analyzeBundle.clicked += () =>
+        {
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            if (string.IsNullOrEmpty(scene.path))
+            {
+                Debug.LogWarning("Bundle Analyzer: the active scene isn't saved to disk yet, so there's no asset path to analyze.");
+                return;
+            }
+
+            SideQuest.BundleAnalyzer.BundleAnalyzerWindow.OpenAndAnalyze(scene.path);
+        };
+
         var clearLogs = rootVisualElement.Q<Button>("clearLogs");
 
         clearLogs.clicked += () => status.ClearLogs();
 
-        var buildForAndroid = rootVisualElement.Q<Toggle>("buildForAndroid");
-        buildTargetFlags[0] = buildForAndroid.value = ProjectPrefs.GetBool("BanterBuilder_BuildTarget_Android", true);
-        buildForAndroid.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            ProjectPrefs.SetBool("BanterBuilder_BuildTarget_Android", buildForAndroid.value);
-            buildTargetFlags[0] = buildForAndroid.value;
-            ShowHideBuildButton();
-        });
-
-        var buildForWindows = rootVisualElement.Q<Toggle>("buildForWindows");
-        buildTargetFlags[1] = buildForWindows.value = ProjectPrefs.GetBool("BanterBuilder_BuildTarget_Windows", true);
-        buildForWindows.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            ProjectPrefs.SetBool("BanterBuilder_BuildTarget_Windows", buildForWindows.value);
-            buildTargetFlags[1] = buildForWindows.value;
-            ShowHideBuildButton();
-        });
-
+        // Always build both platforms - buildTargetFlags already defaults to { true, true }
+        // (Android, Windows) and nothing else needs to change it now that the per-platform
+        // toggles are gone, so there's nothing left to wire up here.
         ShowHideBuildButton();
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");

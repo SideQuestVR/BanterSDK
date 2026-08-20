@@ -157,6 +157,12 @@ VisualElement {}
     padding-left: 34px;
 }
 
+/* Icon-less counterpart of .alt-btn-icon - resets the glyph's reserved padding so the
+   label centres normally. Must follow .alt-btn-icon. */
+.unity-button.alt-btn-icon-plain {
+    padding-left: 5px;
+}
+
 /* Dropdown styled to match the dark .alt-field text inputs (a bare DropdownField
    otherwise renders as plain text on the window background). Reusable: add the
    `alt-dropdown` class to any DropdownField. */
