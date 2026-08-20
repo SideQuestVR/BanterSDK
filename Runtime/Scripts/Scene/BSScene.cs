@@ -476,6 +476,38 @@ namespace BS
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)), $"{nameof(BSScene)}.{nameof(SelectFile)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SELECT_FILE);
         }
+        public void ScriptGraph(string msg, int reqId)
+        {
+#if BANTER_VISUAL_SCRIPTING
+            var parts = msg.Split(MessageDelimiters.SECONDARY, 2);
+            var sub = parts[0];
+            var payloadB64 = parts.Length > 1 ? parts[1] : "";
+            // Deferred reply, LightingDataGet-style: graph work must run on the main thread.
+            // Payloads are base64(UTF-8 JSON) both ways so graph JSON never meets the
+            // unescaped bus delimiters.
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                string reply;
+                try
+                {
+                    var payload = payloadB64.Length > 0
+                        ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payloadB64))
+                        : "{}";
+                    reply = ScriptGraphSessionManager.Instance.HandleCommand(sub, payload, this);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[Banter] ScriptGraph '" + sub + "' failed: " + e);
+                    reply = "{\"error\":" + Newtonsoft.Json.JsonConvert.ToString(e.Message) + "}";
+                }
+                var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply));
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SCRIPT_GRAPH + MessageDelimiters.SECONDARY + replyB64);
+            }, $"{nameof(BSScene)}.{nameof(ScriptGraph)}"));
+#else
+            SendError(reqId, "SCRIPT_GRAPH: Visual Scripting is not available in this build");
+#endif
+        }
+
         public void LightingDataGet(int reqId)
         {
             // The reply is DEFERRED into the main-thread task: the payload comes from

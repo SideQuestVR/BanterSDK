@@ -248,5 +248,7 @@ namespace BS
         meshInput,
         curvePoints,
         shapePoints,
+        machineCount,
+        graphTitles,
     }
 }

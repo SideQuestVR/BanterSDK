@@ -159,8 +159,7 @@ namespace BS
         {
             SetupKitAsset();
         }
-
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public System.String Path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
 
         BSScene _scene;
@@ -175,9 +174,7 @@ namespace BS
                 return _scene;
             }
         }
-
         bool alreadyStarted = false;
-
         void Start()
         {
             Init();
@@ -186,12 +183,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            UpdateCallback(new List<PropertyName>() { PropertyName.path });
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.path, };
+            UpdateCallback(changedProperties);
         }
-
         internal override string GetSignature()
         {
-            return "KitAsset" + PropertyName.path + path;
+            return "KitAsset" +  PropertyName.path + path;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -199,6 +196,7 @@ namespace BS
             if (alreadyStarted) { return; }
             alreadyStarted = true;
             scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.KitAsset);
+
 
             oid = gameObject.GetInstanceID();
             cid = GetInstanceID();
@@ -209,6 +207,7 @@ namespace BS
             }
 
             SyncProperties(true);
+
         }
 
         void Awake()
@@ -219,6 +218,7 @@ namespace BS
         void OnDestroy()
         {
             scene.UnregisterComponentOnMainThread(gameObject, this);
+
             DestroyStuff();
         }
 
@@ -229,7 +229,7 @@ namespace BS
 
         internal override void Deserialise(List<object> values)
         {
-            var changedProperties = new List<PropertyName>();
+            List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
                 if (values[i] is BSString)
@@ -266,6 +266,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE
+        // END BANTER COMPILED CODE 
     }
 }

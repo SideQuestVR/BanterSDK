@@ -75,7 +75,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public System.String ShapePoints { get { return shapePoints; } set { shapePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.shapePoints }); } }
         public System.String CurvePoints { get { return curvePoints; } set { curvePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.curvePoints }); } }
         public System.Single Depth { get { return depth; } set { depth = value; UpdateCallback(new List<PropertyName> { PropertyName.depth }); } }
@@ -108,7 +108,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Extrude" + PropertyName.shapePoints + shapePoints + PropertyName.curvePoints + curvePoints + PropertyName.depth + depth + PropertyName.depthSegments + depthSegments + PropertyName.segments + segments;
+            return "Extrude" +  PropertyName.shapePoints + shapePoints + PropertyName.curvePoints + curvePoints + PropertyName.depth + depth + PropertyName.depthSegments + depthSegments + PropertyName.segments + segments;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -270,6 +270,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE
+        // END BANTER COMPILED CODE 
     }
 }

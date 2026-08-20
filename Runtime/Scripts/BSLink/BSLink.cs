@@ -249,6 +249,10 @@ namespace BS
                 {
                     scene.SelectFile(GetMsgData(msg, APICommands.SELECT_FILE), id);
                 }
+                else if (msg.StartsWith(APICommands.SCRIPT_GRAPH))
+                {
+                    scene.ScriptGraph(GetMsgData(msg, APICommands.SCRIPT_GRAPH), id);
+                }
                 else if (msg.StartsWith(APICommands.LIGHTING_DATA_GET))
                 {
                     scene.LightingDataGet(id);

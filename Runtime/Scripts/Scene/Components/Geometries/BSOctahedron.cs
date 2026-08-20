@@ -63,7 +63,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public System.Single Radius { get { return radius; } set { radius = value; UpdateCallback(new List<PropertyName> { PropertyName.radius }); } }
         public System.Single Detail { get { return detail; } set { detail = value; UpdateCallback(new List<PropertyName> { PropertyName.detail }); } }
 
@@ -93,7 +93,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Octahedron" + PropertyName.radius + radius + PropertyName.detail + detail;
+            return "Octahedron" +  PropertyName.radius + radius + PropertyName.detail + detail;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -192,6 +192,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE
+        // END BANTER COMPILED CODE 
     }
 }

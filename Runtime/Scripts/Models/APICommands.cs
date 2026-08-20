@@ -178,6 +178,11 @@ public class APICommands
     public const string CONTROLLER_AXIS_UPDATE = "ca!";
     public const string TRIGGER_AXIS_UPDATE = "ta!";
 
+    // Runtime script-graph editing (Shane's Editor). One command, subcommand-multiplexed;
+    // payloads are base64(UTF-8 JSON) in both directions so graph JSON never meets the
+    // unescaped bus delimiters.
+    public const string SCRIPT_GRAPH = "!sg!";
+
     // Asset System
     public const string ASSET_REGISTERED = "!ar!";
     public const string ASSET_LOADED = "!al!";

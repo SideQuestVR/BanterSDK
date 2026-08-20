@@ -75,7 +75,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public System.String ShapePoints { get { return shapePoints; } set { shapePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.shapePoints }); } }
         public System.Int32 Segments { get { return segments; } set { segments = value; UpdateCallback(new List<PropertyName> { PropertyName.segments }); } }
         public System.Int32 RadialSegments { get { return radialSegments; } set { radialSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.radialSegments }); } }
@@ -108,7 +108,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Lathe" + PropertyName.shapePoints + shapePoints + PropertyName.segments + segments + PropertyName.radialSegments + radialSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength;
+            return "Lathe" +  PropertyName.shapePoints + shapePoints + PropertyName.segments + segments + PropertyName.radialSegments + radialSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -270,6 +270,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE
+        // END BANTER COMPILED CODE 
     }
 }

@@ -71,7 +71,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE
+        // BANTER COMPILED CODE 
         public System.String CurvePoints { get { return curvePoints; } set { curvePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.curvePoints }); } }
         public System.Single Radius { get { return radius; } set { radius = value; UpdateCallback(new List<PropertyName> { PropertyName.radius }); } }
         public System.Int32 TubularSegments { get { return tubularSegments; } set { tubularSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.tubularSegments }); } }
@@ -103,7 +103,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Tube" + PropertyName.curvePoints + curvePoints + PropertyName.radius + radius + PropertyName.tubularSegments + tubularSegments + PropertyName.radialSegments + radialSegments;
+            return "Tube" +  PropertyName.curvePoints + curvePoints + PropertyName.radius + radius + PropertyName.tubularSegments + tubularSegments + PropertyName.radialSegments + radialSegments;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -244,6 +244,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE
+        // END BANTER COMPILED CODE 
     }
 }

@@ -65,8 +65,6 @@ namespace BS
                     return gameObject.AddComponent<BSInvertedMesh>();
                 case ComponentType.KitItem:
                     return gameObject.AddComponent<BSKitItem>();
-                case ComponentType.KitAsset:
-                    return gameObject.AddComponent<BSKitAsset>();
                 case ComponentType.Klein:
                     return gameObject.AddComponent<BSKlein>();
                 case ComponentType.Light:
@@ -133,6 +131,30 @@ namespace BS
                     return gameObject.AddComponent<BSVideoPlayer>();
                 case ComponentType.WorldObject:
                     return gameObject.AddComponent<BSWorldObject>();
+                case ComponentType.KitAsset:
+                    return gameObject.AddComponent<BSKitAsset>();
+                case ComponentType.Capsule:
+                    return gameObject.AddComponent<BSCapsule>();
+                case ComponentType.Dodecahedron:
+                    return gameObject.AddComponent<BSDodecahedron>();
+                case ComponentType.Icosahedron:
+                    return gameObject.AddComponent<BSIcosahedron>();
+                case ComponentType.Octahedron:
+                    return gameObject.AddComponent<BSOctahedron>();
+                case ComponentType.Tetrahedron:
+                    return gameObject.AddComponent<BSTetrahedron>();
+                case ComponentType.Lathe:
+                    return gameObject.AddComponent<BSLathe>();
+                case ComponentType.Tube:
+                    return gameObject.AddComponent<BSTube>();
+                case ComponentType.Extrude:
+                    return gameObject.AddComponent<BSExtrude>();
+                case ComponentType.Shape:
+                    return gameObject.AddComponent<BSShape>();
+#if BANTER_VISUAL_SCRIPTING
+                case ComponentType.ScriptGraph:
+                    return gameObject.AddComponent<BSScriptGraph>();
+#endif
                 default:
                     return null;
             }

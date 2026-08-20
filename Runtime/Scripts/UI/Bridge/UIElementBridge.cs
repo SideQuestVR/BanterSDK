@@ -305,6 +305,7 @@ namespace BS.UI.Bridge
                     21 => new GroupBox(), // GroupBox
                     22 => new Foldout(), // Foldout
                     100 => new VisualElement() { name = "UIPanel" }, // Custom UIPanel
+                    107 => new BSUIEdgeLayer(), // EdgeLayer (node-graph connection curves)
                     _ => new VisualElement()
                 };
             }
@@ -840,7 +841,23 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.UnityTextOutlineWidth:
                     element.style.unityTextOutlineWidth = ParseFloat(value);
                     break;
-                    
+
+                // Transform Properties. Transform writes do not invalidate layout, which is what
+                // makes a pan/zoom canvas viable over the bridge: two style messages move the
+                // whole container.
+                case UIStyleProperty.Translate:
+                    element.style.translate = ParseTranslate(value);
+                    break;
+                case UIStyleProperty.Scale:
+                    element.style.scale = ParseScale(value);
+                    break;
+                case UIStyleProperty.Rotate:
+                    element.style.rotate = ParseRotate(value);
+                    break;
+                case UIStyleProperty.TransformOrigin:
+                    element.style.transformOrigin = ParseTransformOrigin(value);
+                    break;
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported style property: {styleProperty} ({styleNameString})");
                     break;
@@ -1671,14 +1688,84 @@ namespace BS.UI.Bridge
         private float ParseFloat(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0f;
-            
+
             // Remove common units
             value = value.Replace("px", "").Replace("em", "").Replace("rem", "");
-            
+
             if (float.TryParse(value, out float result))
                 return result;
-                
+
             return 0f;
+        }
+
+        // Transform-style parsers. Culture-invariant: these values come off the wire, never
+        // from locale-formatted user input.
+        private static float ParseFloatInvariant(string value)
+        {
+            return float.TryParse(value, System.Globalization.NumberStyles.Float,
+                System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : 0f;
+        }
+
+        private static Length ParseLengthComponent(string value)
+        {
+            value = value.Trim();
+            if (value.EndsWith("%"))
+                return Length.Percent(ParseFloatInvariant(value.Substring(0, value.Length - 1)));
+            if (value.EndsWith("px"))
+                return new Length(ParseFloatInvariant(value.Substring(0, value.Length - 2)));
+            return new Length(ParseFloatInvariant(value));
+        }
+
+        private StyleTranslate ParseTranslate(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleTranslate(StyleKeyword.Initial);
+            value = value.Trim();
+            if (value == "none") return new StyleTranslate(StyleKeyword.None);
+            var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var x = ParseLengthComponent(parts[0]);
+            var y = parts.Length > 1 ? ParseLengthComponent(parts[1]) : new Length(0);
+            return new StyleTranslate(new Translate(x, y));
+        }
+
+        private StyleScale ParseScale(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleScale(StyleKeyword.Initial);
+            value = value.Trim();
+            if (value == "none") return new StyleScale(StyleKeyword.None);
+            var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            var x = ParseFloatInvariant(parts[0]);
+            var y = parts.Length > 1 ? ParseFloatInvariant(parts[1]) : x;
+            return new StyleScale(new Scale(new Vector2(x, y)));
+        }
+
+        private StyleRotate ParseRotate(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleRotate(StyleKeyword.Initial);
+            value = value.Trim();
+            if (value == "none") return new StyleRotate(StyleKeyword.None);
+            if (value.EndsWith("deg")) value = value.Substring(0, value.Length - 3);
+            return new StyleRotate(new Rotate(Angle.Degrees(ParseFloatInvariant(value))));
+        }
+
+        private StyleTransformOrigin ParseTransformOrigin(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleTransformOrigin(StyleKeyword.Initial);
+            var parts = value.Trim().ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            Length Component(string part)
+            {
+                switch (part)
+                {
+                    case "left":
+                    case "top": return Length.Percent(0);
+                    case "right":
+                    case "bottom": return Length.Percent(100);
+                    case "center": return Length.Percent(50);
+                    default: return ParseLengthComponent(part);
+                }
+            }
+            var x = Component(parts[0]);
+            var y = parts.Length > 1 ? Component(parts[1]) : Length.Percent(50);
+            return new StyleTransformOrigin(new TransformOrigin(x, y));
         }
         
         private StyleEnum<T> ParseEnum<T>(string value) where T : struct, System.Enum
@@ -1832,183 +1919,83 @@ namespace BS.UI.Bridge
             }
 
             LogVerbose($"Found element '{elementId}' of type {element.GetType().Name}");
-            
+
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
             var callbackKey = (elementId, eventType);
-            
+
             // Check if callback is already registered
             if (_registeredCallbacks.ContainsKey(callbackKey))
             {
                 Debug.LogWarning($"[UIElementBridge] Event {eventType} already registered for element {elementId}");
                 return;
             }
-            
+
+            // Optional third field: "stop" halts bubbling after the event is forwarded. Old
+            // bundles never send it, so behavior is unchanged by default; old Unity builds
+            // ignore the extra field, so the skew is safe in both directions.
+            var stop = data.Length > 2 && data[2] == "stop";
+
+            void Register<TEvent>() where TEvent : EventBase<TEvent>, new()
+            {
+                EventCallback<TEvent> callback = evt =>
+                {
+                    SendUIEvent(elementId, eventType, evt);
+                    if (stop) evt.StopPropagation();
+                };
+                element.RegisterCallback(callback);
+                _registeredCallbacks[callbackKey] = callback;
+            }
+
             // Register Unity event callbacks that will send messages back to TypeScript
             switch (eventType)
             {
                 // Basic events
-                case UIEventType.Click:
-                    {
-                        EventCallback<ClickEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.Click: Register<ClickEvent>(); break;
+
                 // Mouse events
-                case UIEventType.MouseDown:
-                    {
-                        EventCallback<MouseDownEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseUp:
-                    {
-                        EventCallback<MouseUpEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseEnter:
-                    {
-                        EventCallback<MouseEnterEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseLeave:
-                    {
-                        EventCallback<MouseLeaveEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseMove:
-                    {
-                        EventCallback<MouseMoveEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseOver:
-                    {
-                        EventCallback<MouseOverEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseOut:
-                    {
-                        EventCallback<MouseOutEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.Wheel:
-                    {
-                        EventCallback<WheelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.MouseDown: Register<MouseDownEvent>(); break;
+                case UIEventType.MouseUp: Register<MouseUpEvent>(); break;
+                case UIEventType.MouseEnter: Register<MouseEnterEvent>(); break;
+                case UIEventType.MouseLeave: Register<MouseLeaveEvent>(); break;
+                case UIEventType.MouseMove: Register<MouseMoveEvent>(); break;
+                case UIEventType.MouseOver: Register<MouseOverEvent>(); break;
+                case UIEventType.MouseOut: Register<MouseOutEvent>(); break;
+                case UIEventType.Wheel: Register<WheelEvent>(); break;
+
                 // Keyboard events
-                case UIEventType.KeyDown:
-                    {
-                        EventCallback<KeyDownEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.KeyUp:
-                    {
-                        EventCallback<KeyUpEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.KeyDown: Register<KeyDownEvent>(); break;
+                case UIEventType.KeyUp: Register<KeyUpEvent>(); break;
+
                 // Focus events
-                case UIEventType.Focus:
-                    {
-                        EventCallback<FocusEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.Blur:
-                    {
-                        EventCallback<BlurEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.FocusIn:
-                    {
-                        EventCallback<FocusInEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.FocusOut:
-                    {
-                        EventCallback<FocusOutEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.Focus: Register<FocusEvent>(); break;
+                case UIEventType.Blur: Register<BlurEvent>(); break;
+                case UIEventType.FocusIn: Register<FocusInEvent>(); break;
+                case UIEventType.FocusOut: Register<FocusOutEvent>(); break;
+
                 // Input events
                 case UIEventType.Change:
-                    {
-                        // Register multiple change event types based on element type
-                        if (element is TextField || element is DropdownField)
-                        {
-                            EventCallback<ChangeEvent<string>> stringCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(stringCallback);
-                            _registeredCallbacks[callbackKey] = stringCallback;
-                        }
-                        else if (element is Slider)
-                        {
-                            EventCallback<ChangeEvent<float>> floatCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(floatCallback);
-                            _registeredCallbacks[callbackKey] = floatCallback;
-                        }
-                        else if (element is Toggle || element is RadioButton)
-                        {
-                            EventCallback<ChangeEvent<bool>> boolCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(boolCallback);
-                            _registeredCallbacks[callbackKey] = boolCallback;
-                        }
-                        else if (element is SliderInt || element is RadioButtonGroup)
-                        {
-                            EventCallback<ChangeEvent<int>> intCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(intCallback);
-                            _registeredCallbacks[callbackKey] = intCallback;
-                        }
-                        else if (element is MinMaxSlider)
-                        {
-                            EventCallback<ChangeEvent<Vector2>> vector2Callback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(vector2Callback);
-                            _registeredCallbacks[callbackKey] = vector2Callback;
-                        }
-                        else
-                        {
-                            // Fallback to string type for unknown elements
-                            EventCallback<ChangeEvent<string>> callback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(callback);
-                            _registeredCallbacks[callbackKey] = callback;
-                        }
-                    }
+                    // Register the change event type matching the element's value type
+                    if (element is TextField || element is DropdownField)
+                        Register<ChangeEvent<string>>();
+                    else if (element is Slider)
+                        Register<ChangeEvent<float>>();
+                    else if (element is Toggle || element is RadioButton)
+                        Register<ChangeEvent<bool>>();
+                    else if (element is SliderInt || element is RadioButtonGroup)
+                        Register<ChangeEvent<int>>();
+                    else if (element is MinMaxSlider)
+                        Register<ChangeEvent<Vector2>>();
+                    else
+                        // Fallback to string type for unknown elements
+                        Register<ChangeEvent<string>>();
                     break;
-                 
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported event type: {eventType}");
                     break;
             }
-            
+
             LogVerbose($"Registered {eventType} event for element {elementId}");
         }
         
@@ -2391,6 +2378,13 @@ namespace BS.UI.Bridge
         
         private string BuildEventDataJson(EventBase evt)
         {
+            // The float interpolations below must be culture-invariant: on comma-decimal
+            // locales "1,5" instead of "1.5" makes every mouse payload invalid JSON, and
+            // graph gestures parse these coordinates.
+            var restoreCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            try
+            {
             // Build JSON manually for better control and Unity compatibility
             var jsonBuilder = new System.Text.StringBuilder();
             jsonBuilder.Append("{");
@@ -2492,9 +2486,14 @@ namespace BS.UI.Bridge
                     jsonBuilder.Append($",\"direction\":\"{blurEvt.direction.ToString()}\"");
                     break;
             }
-            
+
             jsonBuilder.Append("}");
             return jsonBuilder.ToString();
+            }
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = restoreCulture;
+            }
         }
         
         private string EscapeJsonString(string str)
