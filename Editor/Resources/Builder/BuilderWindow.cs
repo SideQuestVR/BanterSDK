@@ -236,6 +236,12 @@ public class BuilderWindow : EditorWindow
         BSStarterUpper.ToggleDevTools();
     }
 
+    [MenuItem("Altspace/Tools/Toggle Auto Start (Players + Keyboard Input)")]
+    public static void ToggleAutoStart()
+    {
+        BSStarterUpper.ToggleAutoStart();
+    }
+
 #if BANTER_VISUAL_SCRIPTING
 
 #if BANTER_EDITOR
