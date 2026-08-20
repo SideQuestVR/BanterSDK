@@ -37,6 +37,32 @@ namespace BS
         private Coroutine currentCoroutine;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
+        private const string BANTER_AUTOSTART_DISABLED = "BANTER_AUTOSTART_DISABLED";
+
+        // Editor-only convenience toggle: when on, skips local/remote player spawning and the
+        // HardwareKeyboardInput setup that spams the console when Active Input Handling is set
+        // to the new Input System. Never matters outside the Editor (always false in a build).
+        public static bool AutoStartDisabled
+        {
+            get
+            {
+#if UNITY_EDITOR
+                return UnityEditor.EditorPrefs.GetBool(BANTER_AUTOSTART_DISABLED, false);
+#else
+                return false;
+#endif
+            }
+        }
+
+#if UNITY_EDITOR
+        public static void ToggleAutoStart()
+        {
+            bool newValue = !UnityEditor.EditorPrefs.GetBool(BANTER_AUTOSTART_DISABLED, false);
+            UnityEditor.EditorPrefs.SetBool(BANTER_AUTOSTART_DISABLED, newValue);
+            LogLine.Do("Banter auto-start (local/remote players, hardware keyboard input) " + (newValue ? "disabled." : "enabled."));
+        }
+#endif
+
         void Awake()
         {
             // Safe mode?
@@ -71,11 +97,14 @@ namespace BS
             gameObject.AddComponent<DontDestroyOnLoad>();
 
 #if !GREENFIELD_PROJECT
-            localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
-            SetupExtraEvents();
-            SetupCamera();
-            SpawnPlayers();
-            StartCoroutine(OpenPageDev());
+            if (!AutoStartDisabled)
+            {
+                localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
+                SetupExtraEvents();
+                SetupCamera();
+                SpawnPlayers();
+                StartCoroutine(OpenPageDev());
+            }
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
@@ -95,12 +124,15 @@ namespace BS
             {
                 oraManager.oraWebRTCManager = gameObject.AddComponent<OraWebRTCManager>();
             }
-            oraManager.hardwareKeyboardInput = gameObject.GetComponent<HardwareKeyboardInput>();
-            if (!oraManager.hardwareKeyboardInput)
+            if (!AutoStartDisabled)
             {
-                oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
+                oraManager.hardwareKeyboardInput = gameObject.GetComponent<HardwareKeyboardInput>();
+                if (!oraManager.hardwareKeyboardInput)
+                {
+                    oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
+                }
+                oraManager.SubscribeHardwareKeyboard();
             }
-            oraManager.SubscribeHardwareKeyboard();
             var oraView = gameObject.GetComponent<OraView>();
             if (!oraView)
             {

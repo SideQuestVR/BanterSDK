@@ -31,7 +31,7 @@ namespace BS.SDKEditor
         {
             if (change == PlayModeStateChange.ExitingEditMode)
             {
-                if (Object.FindObjectOfType<BSStarterUpper>() == null)
+                if (!BSStarterUpper.AutoStartDisabled && Object.FindObjectOfType<BSStarterUpper>() == null)
                 {
                     Debug.LogWarning("BSStarterUpper not found, adding one.");
                     var go = new GameObject("BSStarterUpper");

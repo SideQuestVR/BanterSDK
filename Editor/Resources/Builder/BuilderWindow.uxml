@@ -45,6 +45,9 @@
                     <ui:VisualElement name="scenePathParent" style="flex-grow: 1; flex-direction: row; padding-bottom: 10px;">
                         <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin alt-muted" style="display: flex; margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 12px;" />
                     </ui:VisualElement>
+                    <ui:VisualElement name="sceneStatsParent" style="flex-grow: 1; flex-direction: row; padding-bottom: 10px; display: none;">
+                        <ui:Label name="sceneStatsLabel" display-tooltip-when-elided="true" text="" class="unity-label-margin alt-muted" style="display: flex; margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 12px;" />
+                    </ui:VisualElement>
                     <ui:VisualElement name="LoggedInViewScene" style="display: flex; margin-bottom: 0;">
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                             <ui:Label tabindex="-1" text="World:" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 25px; margin-top: 6px; font-size: 14px;" />
@@ -103,8 +106,10 @@
                             <ui:Button text="UPLOAD HTML+JS" display-tooltip-when-elided="true" name="UploadWebOnly" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                             <ui:Button text="UPLOAD ALL" display-tooltip-when-elided="true" name="UploadEverything" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                         </ui:VisualElement>
-                        <ui:Button text="WEBROOT FOLDER" display-tooltip-when-elided="true" name="OpenWebRoot" class="" style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px;" />
-                        <ui:Button text="ANALYZE BUNDLE" display-tooltip-when-elided="true" name="AnalyzeBundle" class="" tooltip="Preview the AssetBundle contents and estimated size of the currently open scene using Bundle Analyzer." style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px;" />
+                        <ui:VisualElement name="ExtraToolButtons" style="flex-grow: 1; flex-direction: row;">
+                            <ui:Button text="WEBROOT FOLDER" display-tooltip-when-elided="true" name="OpenWebRoot" class="" style="margin-top: 8px; margin-bottom: 8px;" />
+                            <ui:Button text="ANALYZE BUNDLE" display-tooltip-when-elided="true" name="AnalyzeBundle" class="" tooltip="Preview the AssetBundle contents and estimated size of the currently open scene using Bundle Analyzer." style="margin-top: 8px; margin-bottom: 8px;" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInCTAKit" style="display: none; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
                         <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center; display: flex;">
