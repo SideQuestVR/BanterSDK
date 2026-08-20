@@ -1811,6 +1811,10 @@ namespace BS
                                 break;
                         }
                     }
+                    // Push the current transform to the fresh watcher: the Awake-time sync fires
+                    // before any page is loaded to hear it, so without this a static object never
+                    // reports where it actually is.
+                    obj.id.SyncProperties(true);
                 }
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
             }, $"{nameof(BSScene)}.{nameof(WatchJsTransform)}"));

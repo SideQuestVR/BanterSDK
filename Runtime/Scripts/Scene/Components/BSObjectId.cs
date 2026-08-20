@@ -108,7 +108,7 @@ namespace BS
             }
             SyncProperties();
         }
-        void SyncProperties(bool force = false)
+        public void SyncProperties(bool force = false)
         {
             var updates = new List<BSComponentPropertyUpdate>();
             if ((transform.hasChanged && watchPosition) || force)
