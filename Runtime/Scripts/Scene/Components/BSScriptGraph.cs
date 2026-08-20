@@ -69,7 +69,9 @@ namespace BS
         {
             var machines = GetComponents<ScriptMachine>();
             machineCount = machines.Length;
+#if GREENFIELD_PROJECT
             graphTitles = string.Join(",", machines.Select(MachineDirectory.FriendlyTitle));
+#endif
             SyncProperties(true);
         }
 
