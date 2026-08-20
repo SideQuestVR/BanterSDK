@@ -5,8 +5,8 @@
             <ui:VisualElement style="background-image: resource(&apos;UI/Images/Banter_Logo_No_BG_V2copy 1&apos;); -unity-background-scale-mode: scale-to-fit; margin-left: 14px; margin-top: 12px; margin-bottom: 0; min-height: 40px; -unity-text-align: upper-left; min-width: 200px; max-height: 40px;" />
             <ui:VisualElement style="flex-grow: 0; padding-top: 15px;">
                 <ui:VisualElement name="OpenLink" style="flex-grow: 1; flex-direction: row; height: 20px; min-height: 20px;">
-                    <ui:Label tabindex="-1" text="Sign In: open " parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 14px; margin-right: 0; padding-right: 0;" />
-                    <ui:Label text="sdq.st/link" display-tooltip-when-elided="true" class="alt-link" style="font-size: 14px; -unity-text-align: upper-center; margin-right: 30px; margin-left: 0; padding-left: 0;" />
+                    <ui:Label tabindex="-1" text="Sign In: open" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 14px; margin-right: 0; padding-right: 0;" />
+                    <ui:Label text="sdq.st/link" display-tooltip-when-elided="true" class="alt-link" style="font-size: 14px; -unity-text-align: upper-center; margin-right: 30px; margin-left: 5px; padding-left: 0;" />
                 </ui:VisualElement>
                 <ui:Label text="put in 129735" display-tooltip-when-elided="true" name="LoginCode" style="-unity-text-align: upper-center; padding-top: 0; padding-bottom: 10px; font-size: 14px; display: flex; align-self: auto; min-height: auto; white-space: normal; max-width: none; margin-right: 30px; height: 75px; flex-direction: column; align-items: stretch; text-overflow: clip; margin-top: 0;" />
                 <ui:VisualElement name="LoggedInView" style="flex-grow: 0; align-items: flex-end; justify-content: flex-start; padding-right: 30px; display: none;">
@@ -43,7 +43,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label tabindex="-1" text="Scene Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitle" style="font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
-                        <ui:Button text="RESET" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetScreen" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
+                        <ui:Button text="RESET" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetScreen" class="" style="margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
                     </ui:Label>
                     <ui:VisualElement name="scenePathParent" style="flex-grow: 1; flex-direction: row; padding-bottom: 10px;">
                         <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin alt-muted" style="display: flex; margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 12px;" />
@@ -93,7 +93,7 @@
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:ListView focusable="true" name="kitItemList" style="display: none; margin-left: 5%; margin-right: 5%; margin-top: 16px; margin-bottom: 16px;" />
-                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" class="alt-btn-icon alt-btn-icon-plain" style="display: none; margin-left: 48px; margin-right: 48px; margin-bottom: 20px;" />
+                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" class="" style="display: none; margin-left: 48px; margin-right: 48px; margin-bottom: 20px;" />
                     <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" class="alt-muted" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
                     <ui:VisualElement name="BuildOptions" style="flex-grow: 1;">
                         <ui:Toggle label="Auto Upload" value="false" name="autoUpload" class="alt-toggle" style="display: none;" />
@@ -103,16 +103,16 @@
                             <ui:Label text="BUILD" display-tooltip-when-elided="true" name="buildButton" class="alt-pill-label alt-pill-label-plain" />
                         </ui:VisualElement>
                         <ui:VisualElement name="ExtraUploadButtons" style="flex-grow: 1; flex-direction: row;">
-                            <ui:Button text="UPLOAD HTML+JS" display-tooltip-when-elided="true" name="UploadWebOnly" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;" />
-                            <ui:Button text="UPLOAD ALL" display-tooltip-when-elided="true" name="UploadEverything" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;" />
+                            <ui:Button text="UPLOAD HTML+JS" display-tooltip-when-elided="true" name="UploadWebOnly" class="" style="margin-top: 8px; margin-bottom: 8px;" />
+                            <ui:Button text="UPLOAD ALL" display-tooltip-when-elided="true" name="UploadEverything" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                         </ui:VisualElement>
-                        <ui:Button text="WEBROOT FOLDER" display-tooltip-when-elided="true" name="OpenWebRoot" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px;" />
-                        <ui:Button text="ANALYZE BUNDLE" display-tooltip-when-elided="true" name="AnalyzeBundle" class="alt-btn-icon alt-btn-icon-plain" tooltip="Preview the AssetBundle contents and estimated size of the currently open scene using Bundle Analyzer." style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px;" />
+                        <ui:Button text="WEBROOT FOLDER" display-tooltip-when-elided="true" name="OpenWebRoot" class="" style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px;" />
+                        <ui:Button text="ANALYZE BUNDLE" display-tooltip-when-elided="true" name="AnalyzeBundle" class="" tooltip="Preview the AssetBundle contents and estimated size of the currently open scene using Bundle Analyzer." style="margin-top: 8px; margin-bottom: 8px;margin-left: 12px; margin-right: 12px;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInCTAKit" style="display: none; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
                         <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center; display: flex;">
-                            <ui:Button text="DELETE KIT" display-tooltip-when-elided="true" name="DeleteKit" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;border-left-color: rgb(179, 25, 50); border-right-color: rgb(179, 25, 50); border-top-color: rgb(179, 25, 50); border-bottom-color: rgb(179, 25, 50); display: none;" />
-                            <ui:Button text="UPDATE DETAILS" display-tooltip-when-elided="true" name="UploadWebOnlyKit" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;display: none;" />
+                            <ui:Button text="DELETE KIT" display-tooltip-when-elided="true" name="DeleteKit" class="" style="margin-top: 8px; margin-bottom: 8px;border-left-color: rgb(179, 25, 50); border-right-color: rgb(179, 25, 50); border-top-color: rgb(179, 25, 50); border-bottom-color: rgb(179, 25, 50); display: none;" />
+                            <ui:Button text="UPDATE DETAILS" display-tooltip-when-elided="true" name="UploadWebOnlyKit" class="" style="margin-top: 8px; margin-bottom: 8px;display: none;" />
                             <ui:VisualElement class="alt-pill" style="width: 215px; height: 40px; margin-left: 0; cursor: initial; margin-top: 0; margin-bottom: 0;">
                                 <ui:Label text="BUILD &amp; UPLOAD" display-tooltip-when-elided="true" name="UploadEverythingKit" class="alt-pill-label alt-pill-label-plain" />
                             </ui:VisualElement>
@@ -122,7 +122,7 @@
                     <ui:Label tabindex="-1" text="LOGS" parse-escape-sequences="true" display-tooltip-when-elided="true" style="font-size: 12px; letter-spacing: 1px; margin-left: 5%; margin-bottom: 8px;" />
                     <ui:ListView focusable="false" name="buildProgress" style="flex-grow: 0; width: auto; min-height: 150px; max-height: none; margin-left: 5%; margin-right: 5%; background-color: rgb(51, 51, 51); border-top-left-radius: 10px; border-bottom-left-radius: 10px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; margin-bottom: 12px; padding-top: 10px; padding-bottom: 10px;" />
                     <ui:VisualElement style="flex-direction: row; justify-content: center; margin-left: 5%; margin-right: 5%; margin-bottom: 24px;">
-                        <ui:Button text="CLEAR LOGS" display-tooltip-when-elided="true" name="clearLogs" class="alt-btn-icon alt-btn-icon-plain" style="width: 160px; margin-left: 0; margin-right: 0;" />
+                        <ui:Button text="CLEAR LOGS" display-tooltip-when-elided="true" name="clearLogs" class="" style="width: 160px; margin-left: 0; margin-right: 0;" />
                     </ui:VisualElement>
                 </ui:ScrollView>
             </ui:VisualElement>
@@ -136,7 +136,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement name="AvatarInfoCard" style="flex-grow: 1; display: flex;">
                         <ui:Label tabindex="-1" text="Avatar Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitleAvatar" style="font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
-                            <ui:Button text="RESET" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetAvatarScreen" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
+                            <ui:Button text="RESET" parse-escape-sequences="true" display-tooltip-when-elided="true" name="resetAvatarScreen" class="" style="margin-top: 0; margin-bottom: 10px; margin-right: 30px;" />
                         </ui:Label>
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row; justify-content: flex-start; align-items: stretch;">
                             <ui:VisualElement style="flex-grow: 0;">
@@ -221,7 +221,7 @@
                 <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
-                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelBuild" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;" />
+                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelBuild" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                 <ui:VisualElement class="alt-pill" style="width: 150px; height: 40px; margin-left: 8px; cursor: initial; margin-top: 0; margin-bottom: 0;">
                     <ui:Label text="CONFIRM" display-tooltip-when-elided="true" name="ConfirmBuild" class="alt-pill-label alt-pill-label-plain" />
                 </ui:VisualElement>
@@ -233,7 +233,7 @@
             <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 24px; margin-top: 30px;" />
             <ui:Label tabindex="-1" text="Do you want to delete this kit?" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 14px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
-                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelDelete" class="alt-btn-icon alt-btn-icon-plain" style="margin-top: 8px; margin-bottom: 8px;" />
+                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelDelete" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                 <ui:VisualElement class="alt-pill alt-pill-negative" style="width: 165px; height: 40px; margin-left: 8px; cursor: initial; margin-top: 0; margin-bottom: 0;">
                     <ui:Label text="DELETE" display-tooltip-when-elided="true" name="ConfirmDelete" class="alt-pill-label alt-pill-label-plain" />
                 </ui:VisualElement>

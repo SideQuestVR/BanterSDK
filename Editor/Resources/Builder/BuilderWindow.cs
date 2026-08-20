@@ -56,7 +56,7 @@ public class BuilderWindow : EditorWindow
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
     [SerializeField] private StyleSheet _mainWindowStyleSheet = default;
 
-    public const string SQ_API_CLIENT_ID = "client_0e4c67f9a6bbe12143870312";
+    public const string SQ_API_CLIENT_ID = "sidequest";
 
     public const string SQ_API_CLIENT_ID_TEST = "client_85b087d9975cb8ca5bb575a2";
 
