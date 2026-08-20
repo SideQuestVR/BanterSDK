@@ -413,13 +413,20 @@ namespace BS
         /// or scene-unload bookkeeping (those live in the LoadSceneBundle callers we deliberately skip).
         /// So the bundle's lifecycle is ours, exactly like the raw <c>.banter</c> path — Basis just does
         /// the crypto and disk caching. <paramref name="url"/> may be http(s) or a local path / file://.
+        ///
+        /// <paramref name="versionTag"/> is an opaque content version for whatever currently lives at
+        /// <paramref name="url"/> — see <c>BasisContentVersion.ResolveRequestedTagAsync</c>. Null or empty
+        /// leaves the disk cache authoritative, which is what a bundle at a per-upload url wants.
         /// </summary>
-        public static async Task<AssetBundle> EncryptedAssetBundle(string url, string password, Action<float> progress = null)
+        public static async Task<AssetBundle> EncryptedAssetBundle(string url, string password, Action<float> progress = null, string versionTag = null)
         {
             await BasisLoadHandler.EnsureInitializationComplete();
 
             var loadable = new BasisLoadableBundle { UnlockPassword = password };
             loadable.BasisRemoteBundleEncrypted.RemoteBeeFileLocation = url;
+            // Without this the cache is keyed by url alone, so content re-published to a static url
+            // is never re-fetched. Empty is the pre-existing behavior and stays a valid answer.
+            loadable.BasisRemoteBundleEncrypted.RemoteVersionTag = versionTag;
 
             var wrapper = new BasisTrackedBundleWrapper { AssetBundle = null, LoadableBundle = loadable };
             var report = new BasisProgressReport();

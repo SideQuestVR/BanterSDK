@@ -79,7 +79,7 @@ public class LoginManager
         {
             //When a code has been retrieved, the Code and the VerificationUrl returned from the API should
             //  be shown to the user
-            codeText.text = $"and put in {code.Code}";
+            codeText.text = $"Code: {code.Code}";
             linkPage.style.display = DisplayStyle.Flex;
             //begin polling for completion of the short code login using the interval returned from the API
             StartPolling(code.PollIntervalSeconds);

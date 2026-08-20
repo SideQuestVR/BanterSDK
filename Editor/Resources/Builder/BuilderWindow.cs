@@ -862,8 +862,9 @@ public class BuilderWindow : EditorWindow
         buildButton.RegisterCallback<MouseUpEvent>((e) => BuildAssetBundles());
 
         MainTitle = rootVisualElement.Q<Label>("MainTitle");
-        linkPage = rootVisualElement.Q<VisualElement>("OpenLink");
-        linkPage.RegisterCallback<MouseUpEvent>((e) => OpenLinkPage());
+        var signInButton = rootVisualElement.Q<Button>("OpenLink");
+        signInButton.clicked += OpenLinkPage;
+        linkPage = signInButton;
 
         var createSpace = rootVisualElement.Q<Label>("CreateSpace");
         createSpace.RegisterCallback<MouseUpEvent>((e) => OpenCreateWorld());
@@ -1855,9 +1856,18 @@ public class BuilderWindow : EditorWindow
     {
         Application.OpenURL("https://sidequestvr.com/account/create-space");
     }
+    // Sign-in page for the short code. Must be the same site as the API the window talks to
+    // (see isTestEnvironment) — a code minted by one environment won't validate on the other.
+    const string SQ_LINK_PAGE_URL = "https://sidequestvr.com/account/settings/link-sidequest";
+
     public void OpenLinkPage()
     {
-        Application.OpenURL("https://sidequestvr.com/account/settings/link-sidequest");
+        // Pre-fill the short code so the user doesn't have to retype it.
+        var code = sq?.CurrentLoginCode?.Code;
+        var url = string.IsNullOrEmpty(code)
+            ? SQ_LINK_PAGE_URL
+            : SQ_LINK_PAGE_URL + "?code=" + Uri.EscapeDataString(code);
+        Application.OpenURL(url);
     }
 
     // The selected world's slug + full hosting URL (null if none selected), and a readiness guard. These

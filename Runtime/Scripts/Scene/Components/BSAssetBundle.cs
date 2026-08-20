@@ -196,7 +196,14 @@ namespace BS
                               : $"header=[{DescribeHeader(head)}], looksLikeUnity={looksUnity} → " +
                                 (looksUnity ? "raw AssetBundle load." : "Basis encrypted (.bee) decrypt.")));
                 if (head != null && !looksUnity)
-                    return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress);
+                {
+                    // A world is published to a static url, so the cache cannot tell "same address,
+                    // new bytes" from "same address, same bytes" on its own — without a version tag
+                    // a re-uploaded world is never re-downloaded. Not harvested from the peek above:
+                    // that is a ranged request, and a 206 carries no ETag or Last-Modified.
+                    string versionTag = await BasisContentVersion.ResolveRequestedTagAsync(url);
+                    return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress, versionTag);
+                }
             }
             else
             {
