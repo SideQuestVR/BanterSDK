@@ -48,6 +48,9 @@
                     <ui:VisualElement name="scenePathParent" style="flex-grow: 1; flex-direction: row; padding-bottom: 10px;">
                         <ui:Label name="scenePathLabel" display-tooltip-when-elided="true" text="Scene Path: ahkahdkad/adadad/adadadad.scene" class="unity-label-margin alt-muted" style="display: flex; margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 12px;" />
                     </ui:VisualElement>
+                    <ui:VisualElement name="sceneStatsParent" style="flex-grow: 1; flex-direction: row; padding-bottom: 10px; display: none;">
+                        <ui:Label name="sceneStatsLabel" display-tooltip-when-elided="true" text="" class="unity-label-margin alt-muted" style="display: flex; margin-bottom: 0; margin-left: 5%; margin-right: 5%; font-size: 12px;" />
+                    </ui:VisualElement>
                     <ui:VisualElement name="LoggedInViewScene" style="display: flex; margin-bottom: 0;">
                         <ui:VisualElement style="flex-grow: 1; flex-direction: row;">
                             <ui:Label tabindex="-1" text="World:" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 25px; margin-top: 6px; font-size: 14px;" />

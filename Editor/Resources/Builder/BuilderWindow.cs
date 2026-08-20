@@ -73,6 +73,8 @@ public class BuilderWindow : EditorWindow
     BSBuilderBundleMode mode = BSBuilderBundleMode.None;
     Label scenePathLabel;
     VisualElement scenePathParent;
+    Label sceneStatsLabel;
+    VisualElement sceneStatsParent;
     // Label mainTitle;
     string scenePath;
     ListView kitListView;
@@ -1100,6 +1102,8 @@ public class BuilderWindow : EditorWindow
         // mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
         scenePathParent = rootVisualElement.Q<VisualElement>("scenePathParent");
+        sceneStatsLabel = rootVisualElement.Q<Label>("sceneStatsLabel");
+        sceneStatsParent = rootVisualElement.Q<VisualElement>("sceneStatsParent");
         buildProgress = rootVisualElement.Q<ListView>("buildProgress");
         buildProgress.makeItem = () =>
         {
@@ -1787,6 +1791,7 @@ public class BuilderWindow : EditorWindow
     private void RefreshView(bool skipLoginRefresh = false)
     {
         scenePathParent.style.display = DisplayStyle.None;
+        sceneStatsParent.style.display = DisplayStyle.None;
         kitListView.style.display = DisplayStyle.None;
         removeSelected.style.display = DisplayStyle.None;
         numberOfItems.style.display = DisplayStyle.None;
@@ -1808,11 +1813,15 @@ public class BuilderWindow : EditorWindow
             dropAreaContainer.style.display = DisplayStyle.Flex;
             MainTitle.text = "Kit Build";
             MainTitle.style.display = DisplayStyle.Flex;
+
+            ShowSceneStats(kitObjectList.Select(ko => ko.path));
         }
         else if (mode == BSBuilderBundleMode.Scene)
         {
             scenePathParent.style.display = DisplayStyle.Flex;
             scenePathLabel.text = "<color=\"white\">Scene:</color> " + scenePath;
+
+            ShowSceneStats(new[] { scenePath });
             loggedInViewPrefab.style.display = DisplayStyle.None;
             loggedInViewScene.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
             numberOfItems.style.display = DisplayStyle.None;
@@ -1839,6 +1848,23 @@ public class BuilderWindow : EditorWindow
         {
             loginManager.ShowUploadToggle();
         }
+    }
+
+    // Quick triangle-count / texture-memory readout for whatever was just dropped in - works
+    // directly off the asset dependency graph so it doesn't need the scene to be open. Not a
+    // full breakdown (see Bundle Analyzer for that), just an at-a-glance sanity check.
+    private void ShowSceneStats(IEnumerable<string> assetPaths)
+    {
+        var paths = assetPaths.Where(p => !string.IsNullOrEmpty(p)).ToList();
+        if (paths.Count == 0)
+        {
+            sceneStatsParent.style.display = DisplayStyle.None;
+            return;
+        }
+
+        var stats = SceneQuickStats.Compute(paths);
+        sceneStatsLabel.text = SceneQuickStats.FormatSummary(stats);
+        sceneStatsParent.style.display = DisplayStyle.Flex;
     }
 
     public void OpenSpaceCreation()
