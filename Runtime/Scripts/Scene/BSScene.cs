@@ -100,6 +100,13 @@ namespace BS
         public bool loaded = false;
         public bool bundlesLoaded = false;
         public bool loading = false;
+        /// <summary>
+        /// Optional app gate. After a load finishes, the loading cage is held open-pending until this
+        /// predicate returns true (e.g. wait for networking to connect). Null (default) opens the cage
+        /// immediately, unchanged. Polled with a safety timeout and superseded-load check so it can
+        /// never strand the cage; a throwing gate fails open.
+        /// </summary>
+        public System.Func<bool> CanOpenLoadingCage;
         public bool isHome = false;
         public bool isFallbackHome = false;
         private float _lookAtMirror;
@@ -2160,6 +2167,9 @@ namespace BS
                     {
                         try
                         {
+                            // Optional app gate: hold the cage open-pending until the app is ready
+                            // (e.g. networking connected). No-op when CanOpenLoadingCage is unset.
+                            await WaitForCageGate(tcs);
                             await loadingManager.LoadOut();
                         }
                         catch (Exception e)
@@ -2178,6 +2188,28 @@ namespace BS
             // Await our OWN source, not the field — the field may already belong to a newer load.
             await tcs.Task;
         }
+
+        private const float LoadingCageGateTimeoutSeconds = 20f;
+
+        // Hold the cage until CanOpenLoadingCage() is true, a newer load supersedes this one, or the
+        // safety timeout elapses. No-op when no gate is set.
+        private async Task WaitForCageGate(TaskCompletionSource<bool> owningLoad)
+        {
+            var gate = CanOpenLoadingCage;
+            if (gate == null) return;
+            float deadline = Time.realtimeSinceStartup + LoadingCageGateTimeoutSeconds;
+            await new WaitUntil(() =>
+                !ReferenceEquals(loadUrlTaskCompletionSource, owningLoad)
+                || Time.realtimeSinceStartup >= deadline
+                || SafeGate(gate));
+        }
+
+        private static bool SafeGate(System.Func<bool> gate)
+        {
+            try { return gate(); }
+            catch (Exception e) { LogLine.Err($"[LOADING] loading-cage gate threw: {e}"); return true; }
+        }
+
         public async Task OnLoad(string instanceId)
         {
             // This is fired when the page loads or realods from the browser end, so it can be fired becuase 
