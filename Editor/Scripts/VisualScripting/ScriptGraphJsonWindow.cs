@@ -19,7 +19,7 @@ namespace BS.SDKEditor
     /// </summary>
     public class ScriptGraphJsonWindow : EditorWindow
     {
-        [MenuItem("Banter/Visual Scripting/Script Graph JSON Tool")]
+        [MenuItem("Greenfield/Visual Scripting/Script Graph JSON Tool")]
         static void Open()
         {
             GetWindow<ScriptGraphJsonWindow>("Script Graph JSON");

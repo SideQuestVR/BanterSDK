@@ -14,7 +14,7 @@ namespace BS.SDKEditor
     /// </summary>
     public static class ScriptGraphSmokeTest
     {
-        [MenuItem("Banter/Visual Scripting/Run Graph Edit Smoke Test")]
+        [MenuItem("Greenfield/Visual Scripting/Run Graph Edit Smoke Test")]
         public static void Run()
         {
             var go = new GameObject("SGSmokeTest");

@@ -831,7 +831,11 @@ public class BuilderWindow : EditorWindow
                 if(selectedExistingAvatar?.AvatarId==av.AvatarId)
                     avatarIdDropdown.SetValueWithoutNotify(avatarIdDropdown.choices[^1]);
             }
-        }, Debug.LogException), this);
+        }, e =>
+        {
+            // Not being signed in just means there are no avatars to list yet.
+            if (!(e is SqEditorApiAuthException)) Debug.LogException(e);
+        }), this);
 
         avatarIsPublicToggle.value = selectedExistingAvatar?.Public ?? true;
     }
@@ -1195,15 +1199,28 @@ public class BuilderWindow : EditorWindow
     }
     public IEnumerator Json<T>(string url, Action<T> callback)
     {
+        // A throw inside an editor coroutine can't be caught by the caller and lands in the
+        // console as an unhandled exception, so log a warning and bail instead.
         var task = _httpClient.GetAsync(url);
         while (!task.IsCompleted) yield return null;
-        if (task.IsFaulted) throw task.Exception.InnerException ?? task.Exception;
+        if (task.IsFaulted)
+        {
+            Debug.LogWarning("Builder request failed: " + url + " (" + (task.Exception.InnerException ?? task.Exception).Message + ")");
+            yield break;
+        }
         var response = task.Result;
         if (!response.IsSuccessStatusCode)
-            throw new System.Exception(response.StatusCode + ": " + response.ReasonPhrase);
+        {
+            Debug.LogWarning("Builder request failed: " + url + " (" + (int)response.StatusCode + " " + response.ReasonPhrase + ")");
+            yield break;
+        }
         var readTask = response.Content.ReadAsStringAsync();
         while (!readTask.IsCompleted) yield return null;
-        if (readTask.IsFaulted) throw readTask.Exception.InnerException ?? readTask.Exception;
+        if (readTask.IsFaulted)
+        {
+            Debug.LogWarning("Builder request failed: " + url + " (" + (readTask.Exception.InnerException ?? readTask.Exception).Message + ")");
+            yield break;
+        }
         callback(JsonUtility.FromJson<T>(readTask.Result));
     }
 
