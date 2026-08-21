@@ -66,7 +66,6 @@ public class BuilderWindow : EditorWindow
     public static UnityEvent OnClearAll = new UnityEvent();
     public static UnityEvent OnVisualScript = new UnityEvent();
     public static UnityEvent OnCompileInjection = new UnityEvent();
-    public static UnityEvent OnCompileElectron = new UnityEvent();
     public static UnityEvent OnCompileAllComponents = new UnityEvent();
     private BuildTarget[] buildTargets = new BuildTarget[] { BuildTarget.Android, BuildTarget.StandaloneWindows };
     private bool[] buildTargetFlags = new bool[] { true, true };
@@ -195,14 +194,6 @@ public class BuilderWindow : EditorWindow
 
 
 #if GREENFIELD_PROJECT
-    [MenuItem("Altspace/Tools/Compile Everything")]
-    public static void CompileEverything()
-    {
-        // OnCompileAll.Invoke();
-        // OnCompileInjection.Invoke();
-        OnCompileInjection.Invoke();
-        OnCompileElectron.Invoke();
-    }
     [MenuItem("Altspace/Tools/Compile C# Components")]
     public static void CompileAllComponents()
     {
@@ -212,11 +203,6 @@ public class BuilderWindow : EditorWindow
     public static void ClearAllComponents()
     {
         OnClearAll.Invoke();
-    }
-    [MenuItem("Altspace/Tools/Compile Electron")]
-    public static void CompileElectron()
-    {
-        OnCompileElectron.Invoke();
     }
     [MenuItem("Altspace/Tools/Compile Injection")]
     public static void CompileInjection()
@@ -248,15 +234,13 @@ public class BuilderWindow : EditorWindow
     {
         OnVisualScript.Invoke();
     }
-        //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
-#else // GREENFIELD_PROJECT
+#else 
     [MenuItem("Altspace/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         VsNodeGeneration.SetVSTypesAndAssemblies();
     }
-    //         rootVisualElement.Q<Button>("visualScript").clicked += () => VsNodeGeneration.SetVSTypesAndAssemblies();
-#endif // GREENFIELD_PROJECT
+#endif 
 
 #if GREENFIELD_PROJECT
     [MenuItem("Altspace/Tools/Domain Reload")]
@@ -264,8 +248,7 @@ public class BuilderWindow : EditorWindow
     {
         EditorUtility.RequestScriptReload();
     }
-    //  rootVisualElement.Q<Button>("visualScript").clicked += () => OnVisualScript.Invoke();// SDKCodeGen.CompileAllComponents();
-#endif // GREENFIELD_PROJECT
+#endif 
 
     private SqEditorAppApi sq;
 
