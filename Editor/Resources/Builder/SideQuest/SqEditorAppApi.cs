@@ -550,7 +550,12 @@ namespace BS.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
+            bool uploadSucceeded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => uploadSucceeded = true, OnError, OnProgress);
+            if (!uploadSucceeded)
+            {
+                yield break;
+            }
 
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId ?? 0, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
@@ -571,7 +576,12 @@ namespace BS.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
+            bool uploadSucceeded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => uploadSucceeded = true, OnError, OnProgress);
+            if (!uploadSucceeded)
+            {
+                yield break;
+            }
 
             yield return AttachToWorld(() => OnCompleted?.Invoke(_uploadRequest), OnError, worldsId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
@@ -588,8 +598,12 @@ namespace BS.SDKEditor
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
-            OnCompleted?.Invoke(_uploadRequest);
+            bool uploadSucceeded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, (text) => uploadSucceeded = true, OnError, OnProgress);
+            if (uploadSucceeded)
+            {
+                OnCompleted?.Invoke(_uploadRequest);
+            }
 
         }
 
