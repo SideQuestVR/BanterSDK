@@ -95,8 +95,11 @@ namespace BS.SDKEditor
 
         /// <summary>
         /// Creates a new world owned by the signed-in user (POST /v2/worlds) and returns the created world.
+        /// Born Private (status 100) unless the caller explicitly asks otherwise — matching the API's own
+        /// default and the website's create form; pass 1000 for Public. Publishing is a deliberate act on
+        /// the world's settings page, not a side effect of every editor test build.
         /// </summary>
-        public IEnumerator CreateWorld(string name, Action<SqEditorWorld> OnCompleted, Action<Exception> OnError, int status = 1000, int maxOccupancy = 20)
+        public IEnumerator CreateWorld(string name, Action<SqEditorWorld> OnCompleted, Action<Exception> OnError, int status = 100, int maxOccupancy = 20)
         {
             if (Data?.Token == null)
             {

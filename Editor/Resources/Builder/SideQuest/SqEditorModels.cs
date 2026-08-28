@@ -573,8 +573,9 @@ namespace BS.SDKEditor
         [JsonProperty("name")]
         public string Name { get; set; }
 
+        /// <summary>100 = Private (the default everywhere else worlds are born), 1000 = Public.</summary>
         [JsonProperty("status")]
-        public int Status { get; set; } = 1000;
+        public int Status { get; set; } = 100;
 
         [JsonProperty("max_occupancy")]
         public int MaxOccupancy { get; set; } = 20;
