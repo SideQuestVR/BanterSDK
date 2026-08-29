@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -89,8 +90,19 @@ namespace BS.SDKEditor
                 yield break;
             }
             long usersId = Data.Token.UserId;
-            yield return JsonGet<List<SqEditorWorld>>($"/v2/worlds?users_id={usersId}&limit={limit}",
-                (worlds) => OnCompleted?.Invoke(worlds ?? new List<SqEditorWorld>()), OnError, true);
+            // Rows are converted one at a time so a single malformed world can't take down the whole
+            // list (and with it the upload target dropdown) — skip it and keep the rest.
+            yield return JsonGet<JArray>($"/v2/worlds?users_id={usersId}&limit={limit}", rows =>
+            {
+                var worlds = new List<SqEditorWorld>();
+                if (rows != null)
+                    foreach (var row in rows)
+                    {
+                        try { worlds.Add(row.ToObject<SqEditorWorld>()); }
+                        catch (Exception ex) { Debug.WriteLine("Skipping malformed world row", ex); }
+                    }
+                OnCompleted?.Invoke(worlds);
+            }, OnError, true);
         }
 
         /// <summary>
