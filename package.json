@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.creator-sdk",
-  "version": "4.0.0",
+  "version": "4.0.2",
   "displayName": "SideQuest Creator SDK",
   "description": "This Module contains the SideQuest Creator SDK used for building spaces in Altspace and others.",
   "unity": "6000.3",
@@ -19,7 +19,7 @@
     "com.unity.render-pipelines.universal": "17.4.0",
     "com.unity.cloud.gltfast": "6.14.1",
     "com.unity.animation.rigging": "1.4.1",
-    "com.basis.bundlemanagement": "0.0.1",
+    "com.basis.bundlemanagement": "0.0.2",
     "com.basis.common": "0.0.1",
     "com.basis.sdk": "0.0.1",
     "com.sidequest.ora": "0.0.2",
