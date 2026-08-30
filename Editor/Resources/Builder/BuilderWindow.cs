@@ -1493,7 +1493,7 @@ public class BuilderWindow : EditorWindow
 
     private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null, Action<float> onProgress = null)
     {
-        var file = path == null ? (Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name) : path;
+        var file = path == null ? Path.Combine(assetBundleRoot, assetBundleDirectory, name) : path;
         if (File.Exists(file) || bytes != null)
         {
             status.AddStatus("Upload started: " + file + "...");
@@ -1520,7 +1520,7 @@ public class BuilderWindow : EditorWindow
 
     private IEnumerator UploadFileToCommunity(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
     {
-        var file = Path.Join(assetBundleRoot, assetBundleDirectory) + "\\" + name;
+        var file = Path.Combine(assetBundleRoot, assetBundleDirectory, name);
         if (File.Exists(file))
         {
             status.AddStatus("Upload started: " + file + "...");
