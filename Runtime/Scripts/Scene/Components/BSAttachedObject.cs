@@ -24,6 +24,8 @@ namespace BS
         public bool jointAvatar = true;
         public bool autoAttach = false;
         public bool isSeat = false;
+        public bool unseatOnMove = true;
+        public bool unseatOnJump = true;
 
         public UnityAndBanterObject attachedObject;
     }
@@ -64,6 +66,12 @@ namespace BS
 
         [Tooltip("Indicates this attached object is a seat, enabling seated pose for the local player.")]
         [See(initial = "false")][SerializeField] internal bool isSeat = false;
+
+        [Tooltip("If this is a seat, stand the player up when they push the move stick / WASD.")]
+        [See(initial = "true")][SerializeField] internal bool unseatOnMove = true;
+
+        [Tooltip("If this is a seat, stand the player up when they press jump.")]
+        [See(initial = "true")][SerializeField] internal bool unseatOnJump = true;
 
 
         [SerializeField] [HideInInspector] BSAttachment attachment = new BSAttachment();
@@ -148,6 +156,14 @@ namespace BS
             {
                 attachment.isSeat = isSeat;
             }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.unseatOnMove))
+            {
+                attachment.unseatOnMove = unseatOnMove;
+            }
+            if (changedProperties == null || changedProperties.Contains(PropertyName.unseatOnJump))
+            {
+                attachment.unseatOnJump = unseatOnJump;
+            }
         }
         // BANTER COMPILED CODE 
         public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
@@ -161,6 +177,8 @@ namespace BS
         public System.Boolean JointAvatar { get { return jointAvatar; } set { jointAvatar = value; UpdateCallback(new List<PropertyName> { PropertyName.jointAvatar }); } }
         public System.Boolean AutoAttach { get { return autoAttach; } set { autoAttach = value; UpdateCallback(new List<PropertyName> { PropertyName.autoAttach }); } }
         public System.Boolean IsSeat { get { return isSeat; } set { isSeat = value; UpdateCallback(new List<PropertyName> { PropertyName.isSeat }); } }
+        public System.Boolean UnseatOnMove { get { return unseatOnMove; } set { unseatOnMove = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnMove }); } }
+        public System.Boolean UnseatOnJump { get { return unseatOnJump; } set { unseatOnJump = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnJump }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -183,12 +201,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, PropertyName.autoAttach, PropertyName.isSeat, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.uid, PropertyName.attachmentPosition, PropertyName.attachmentRotation, PropertyName.attachmentType, PropertyName.avatarAttachmentType, PropertyName.avatarAttachmentPoint, PropertyName.attachmentPoint, PropertyName.autoSync, PropertyName.jointAvatar, PropertyName.autoAttach, PropertyName.isSeat, PropertyName.unseatOnMove, PropertyName.unseatOnJump, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "AttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat;
+            return "AttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -355,6 +373,24 @@ namespace BS
                         changedProperties.Add(PropertyName.isSeat);
                     }
                 }
+                if (values[i] is BSBool)
+                {
+                    var valunseatOnMove = (BSBool)values[i];
+                    if (valunseatOnMove.n == PropertyName.unseatOnMove)
+                    {
+                        unseatOnMove = valunseatOnMove.x;
+                        changedProperties.Add(PropertyName.unseatOnMove);
+                    }
+                }
+                if (values[i] is BSBool)
+                {
+                    var valunseatOnJump = (BSBool)values[i];
+                    if (valunseatOnJump.n == PropertyName.unseatOnJump)
+                    {
+                        unseatOnJump = valunseatOnJump.x;
+                        changedProperties.Add(PropertyName.unseatOnJump);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -489,6 +525,30 @@ namespace BS
                     name = PropertyName.isSeat,
                     type = PropertyType.Bool,
                     value = isSeat,
+                    componentType = ComponentType.AttachedObject,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.unseatOnMove,
+                    type = PropertyType.Bool,
+                    value = unseatOnMove,
+                    componentType = ComponentType.AttachedObject,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.unseatOnJump,
+                    type = PropertyType.Bool,
+                    value = unseatOnJump,
                     componentType = ComponentType.AttachedObject,
                     oid = oid,
                     cid = cid
