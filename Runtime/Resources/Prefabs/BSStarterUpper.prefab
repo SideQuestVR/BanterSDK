@@ -1,0 +1,214 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1209142392357174382
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1209142392357174380}
+  - component: {fileID: -1956776749760096036}
+  - component: {fileID: -3412503789299942653}
+  - component: {fileID: -538370041190128275}
+  - component: {fileID: 180108665298274559}
+  - component: {fileID: -6509915932493255194}
+  - component: {fileID: -7944191251336140610}
+  m_Layer: 0
+  m_Name: BSStarterUpper
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1209142392357174380
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &-1956776749760096036
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d14aadda166f47cbaacd9a43692b444a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSStarterUpper
+  numberOfRemotePlayers: 1
+  spawnPoint: {x: 0, y: 0, z: 0}
+  spawnRotation: 0
+  openBrowser: 0
+  _feetTransform: {fileID: 0}
+  _browserRenderer: {fileID: 0}
+--- !u!114 &-3412503789299942653
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 766556512, guid: bb2cf028dca5e204ab6f023e88146cbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SideQuest.Ora.dll::SideQuest.Ora.OraAudioManager
+  audioReceiverPrefab: {fileID: 0}
+  sampleRate: 48000
+  channels: 2
+  autoCreateReceivers: 1
+  showDebugInfo: 0
+--- !u!114 &-538370041190128275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -1861236838, guid: bb2cf028dca5e204ab6f023e88146cbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SideQuest.Ora.dll::SideQuest.Ora.WebRTC.OraWebRTCManager
+  webrtcPeerPrefab: {fileID: 0}
+  showDebugInfo: 1
+--- !u!114 &180108665298274559
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 131112950, guid: bb2cf028dca5e204ab6f023e88146cbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SideQuest.Ora.dll::SideQuest.Ora.OraManager
+  oraAudioManager: {fileID: -3412503789299942653}
+  oraWebRTCManager: {fileID: -538370041190128275}
+  hardwareKeyboardInput: {fileID: -7944191251336140610}
+  enableTcpDebugLogging: 0
+  objectsForXR: []
+  objectsFor2D: []
+  cameraForXR: {fileID: 0}
+  cameraFor2D: {fileID: 0}
+  browserConnected:
+    m_PersistentCalls:
+      m_Calls: []
+  windowCreated:
+    m_PersistentCalls:
+      m_Calls: []
+  windowDestroyed:
+    m_PersistentCalls:
+      m_Calls: []
+  keyboardOpen:
+    m_PersistentCalls:
+      m_Calls: []
+  keyboardClose:
+    m_PersistentCalls:
+      m_Calls: []
+  enableMcp: 0
+  mcpPort: 42068
+  staticFolder: 
+  customMcpDocs: {fileID: 0}
+  customMcpSummary: {fileID: 0}
+  customMcpDefinition: {fileID: 0}
+  remoteDebuggingEnabled: 0
+  remoteDebuggingPort: 42067
+  remoteAllowOrigins: '*'
+  connected: 0
+--- !u!114 &-6509915932493255194
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1452187408, guid: bb2cf028dca5e204ab6f023e88146cbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SideQuest.Ora.dll::SideQuest.Ora.OraView
+  id: 
+  url: about:blank
+  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
+    like Gecko) Chrome/123.0.6269.2 Safari/537.36
+  customInjectedJavascript: {fileID: 2811297602134710623, guid: 56f767a68f066594985411709e2b9eaa, type: 3}
+  injectShims: 0
+  injectMediaAndWebRTC: 0
+  injectAudioSourceRedirection: 0
+  blockedDomains: []
+  size: {x: 1024, y: 768}
+  renderMode: 1
+  uiToolkitElementClass: 
+  sizingMode: 1
+  scaleTransform: {fileID: 0}
+  actualSize: {x: 1024, y: 768}
+  disableTouchScroll: 0
+  openDevTools: 0
+  openBrowser: 0
+  showLogs: 0
+  userMedia:
+    texture: {fileID: 0}
+    audioListener: {fileID: 0}
+    audioSource: {fileID: 0}
+  displayMedia:
+    texture: {fileID: 0}
+    audioListener: {fileID: 0}
+    audioSource: {fileID: 0}
+  textureChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  domReady:
+    m_PersistentCalls:
+      m_Calls: []
+  addressChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  loadStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  loadFailed:
+    m_PersistentCalls:
+      m_Calls: []
+  browserMessage:
+    m_PersistentCalls:
+      m_Calls: []
+  userMediaStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  userMediaEnded:
+    m_PersistentCalls:
+      m_Calls: []
+  texture2D: {fileID: 0}
+  initialised: 0
+  cachedScale: {x: 0, y: 0, z: 0}
+  cachedRect: {x: 0, y: 0}
+  cachedUIElementBounds: {x: 0, y: 0}
+  loadOnInitialised: 0
+--- !u!114 &-7944191251336140610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1209142392357174382}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 496649285, guid: bb2cf028dca5e204ab6f023e88146cbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: SideQuest.Ora.dll::SideQuest.Ora.HardwareKeyboardInput
