@@ -98,6 +98,14 @@ namespace BS
         public bool loaded = false;
         public bool bundlesLoaded = false;
         public bool loading = false;
+        // Realtime stamp of when `state` first reached SCENE_READY for the current load; -1 while
+        // not ready. Drives SetLoaded's empty-scene grace window. Reset at the top of LoadUrl.
+        float sceneReadySince = -1f;
+        // How long a ready scene may sit with ZERO registered components before we call it loaded
+        // anyway. Long enough for a space whose script registers objects after an async delay
+        // (config fetch, world.asset probe) to land its first component; short enough that a
+        // genuinely empty page still opens instead of hanging until the 4:20 NOTHING cancel.
+        const float EmptySceneGraceSeconds = 5f;
         /// <summary>
         /// Optional app gate. After a load finishes, the loading cage is held open-pending until this
         /// predicate returns true (e.g. wait for networking to connect). Null (default) opens the cage
@@ -876,14 +884,15 @@ namespace BS
         {
             if (combinedPercentage == 0 || totalCount == 0)
             {
-                loadingManager?.SetLoadProgress("Loading", 0, LoadingStatus, true, loadingTexture);
+                loadingManager?.SetLoadProgress("Loading...", 0, LoadingStatus, true, loadingTexture);
             }
             else
             {
                 var percentDisplay = (Mathf.Round(combinedPercentage / totalCount * 10000) / 100).ToString("0.00");
-                // Count only, no total: the total keeps climbing as the page streams more objects
-                // in, so "12/40" then "12/95" reads like going backwards.
-                loadingManager?.SetLoadProgress($"Loading ({loadedCount})",
+                // No count in the title: it only tracks components that have REGISTERED, so early
+                // in a load it reads "Loading (0)" while the bar visibly moves — users read that
+                // as broken. The percent detail line carries the progress.
+                loadingManager?.SetLoadProgress("Loading...",
                     combinedPercentage / totalCount, percentDisplay + "%...", true, loadingTexture);
             }
             loadingTexture = null;
@@ -910,6 +919,18 @@ namespace BS
             PushLoadProgress(loadedCount, totalCount, combinedPercentage);
         }
 
+        /// <summary>
+        /// THE load gate. `loaded` may only become true once the page has declared the scene ready
+        /// AND every registered component has finished. This used to be a bare
+        /// `loadedCount == totalCount`, which is trivially true on an EMPTY set — and SetLoaded
+        /// runs on loadStarted/domReady (always before any component registers) while SCENE_READY
+        /// itself is only a 3s "no new objects" debounce on the JS side. On a slow connection the
+        /// world.asset probe outlives that debounce, so the gate evaluated 0 == 0 with nothing
+        /// registered and released the player into a space that had not loaded (stuck floating
+        /// mid-air; the cage title read "Loading (0)" because the count only shows components that
+        /// DID register). The empty-set case now only counts as loaded after a grace window, so a
+        /// genuinely empty space still opens. Real time, never scaled — spaces can set timeScale 0.
+        /// </summary>
         public void SetLoaded()
         {
             if (HasLoadFailed())
@@ -918,9 +939,24 @@ namespace BS
             }
             ComputeLoadProgress(out var loadedCount, out var totalCount, out var combinedPercentage,
                                 out var allAssetBundlesLoaded);
-            bundlesLoaded = (state == SceneState.SCENE_READY || state == SceneState.UNITY_READY)
-                            && allAssetBundlesLoaded;
-            loaded = loadedCount == totalCount;
+            var ready = state == SceneState.SCENE_READY || state == SceneState.UNITY_READY;
+            if (ready && sceneReadySince < 0f)
+            {
+                sceneReadySince = Time.realtimeSinceStartup;
+            }
+            bundlesLoaded = ready && allAssetBundlesLoaded;
+            if (!ready)
+            {
+                loaded = false;
+            }
+            else if (totalCount > 0)
+            {
+                loaded = loadedCount == totalCount;
+            }
+            else
+            {
+                loaded = Time.realtimeSinceStartup - sceneReadySince >= EmptySceneGraceSeconds;
+            }
             PushLoadProgress(loadedCount, totalCount, combinedPercentage);
         }
         public void RegisterComponentOnMainThread(GameObject go, BSComponentBase comp)
@@ -2122,6 +2158,10 @@ namespace BS
         {
             state = SceneState.NONE;
             loading = true;
+            // `loaded` was never reset by a new load, so a stale true from the previous space could
+            // satisfy the WaitUntil gate below before this space registered a single component.
+            loaded = false;
+            sceneReadySince = -1f;
             externalLoadFailed = false;
 
             // Capture the completion source in a LOCAL. It is also stored in the field so Cancel()
