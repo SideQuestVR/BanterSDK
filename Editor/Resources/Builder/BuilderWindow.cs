@@ -1869,11 +1869,11 @@ public class BuilderWindow : EditorWindow
 
     public void OpenSpaceCreation()
     {
-        Application.OpenURL("https://sidequestvr.com/account/create-space");
+        Application.OpenURL("https://altvr.app/worlds");
     }
     // Sign-in page for the short code. Must be the same site as the API the window talks to
     // (see isTestEnvironment) — a code minted by one environment won't validate on the other.
-    const string SQ_LINK_PAGE_URL = "https://sidequestvr.com/account/settings/link-sidequest";
+    const string SQ_LINK_PAGE_URL = "https://altvr.app/link";
 
     public void OpenLinkPage()
     {
