@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -89,14 +90,28 @@ namespace BS.SDKEditor
                 yield break;
             }
             long usersId = Data.Token.UserId;
-            yield return JsonGet<List<SqEditorWorld>>($"/v2/worlds?users_id={usersId}&limit={limit}",
-                (worlds) => OnCompleted?.Invoke(worlds ?? new List<SqEditorWorld>()), OnError, true);
+            // Rows are converted one at a time so a single malformed world can't take down the whole
+            // list (and with it the upload target dropdown) — skip it and keep the rest.
+            yield return JsonGet<JArray>($"/v2/worlds?users_id={usersId}&limit={limit}", rows =>
+            {
+                var worlds = new List<SqEditorWorld>();
+                if (rows != null)
+                    foreach (var row in rows)
+                    {
+                        try { worlds.Add(row.ToObject<SqEditorWorld>()); }
+                        catch (Exception ex) { Debug.WriteLine("Skipping malformed world row", ex); }
+                    }
+                OnCompleted?.Invoke(worlds);
+            }, OnError, true);
         }
 
         /// <summary>
         /// Creates a new world owned by the signed-in user (POST /v2/worlds) and returns the created world.
+        /// Born Private (status 100) unless the caller explicitly asks otherwise — matching the API's own
+        /// default and the website's create form; pass 1000 for Public. Publishing is a deliberate act on
+        /// the world's settings page, not a side effect of every editor test build.
         /// </summary>
-        public IEnumerator CreateWorld(string name, Action<SqEditorWorld> OnCompleted, Action<Exception> OnError, int status = 1000, int maxOccupancy = 20)
+        public IEnumerator CreateWorld(string name, Action<SqEditorWorld> OnCompleted, Action<Exception> OnError, int status = 100, int maxOccupancy = 20)
         {
             if (Data?.Token == null)
             {

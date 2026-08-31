@@ -539,8 +539,10 @@ namespace BS.SDKEditor
         [JsonProperty("status")]
         public int Status { get; set; }
 
+        /// <summary>Null when the row was created without one (e.g. via the website) — the server
+        /// only resolves its default at join time, so the API can and does return null here.</summary>
         [JsonProperty("max_occupancy")]
-        public int MaxOccupancy { get; set; }
+        public int? MaxOccupancy { get; set; }
     }
 
     /// <summary>
@@ -573,8 +575,9 @@ namespace BS.SDKEditor
         [JsonProperty("name")]
         public string Name { get; set; }
 
+        /// <summary>100 = Private (the default everywhere else worlds are born), 1000 = Public.</summary>
         [JsonProperty("status")]
-        public int Status { get; set; } = 1000;
+        public int Status { get; set; } = 100;
 
         [JsonProperty("max_occupancy")]
         public int MaxOccupancy { get; set; } = 20;
