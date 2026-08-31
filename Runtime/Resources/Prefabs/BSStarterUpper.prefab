@@ -148,7 +148,7 @@ MonoBehaviour:
   userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
     like Gecko) Chrome/123.0.6269.2 Safari/537.36
   customInjectedJavascript: {fileID: 2811297602134710623, guid: 56f767a68f066594985411709e2b9eaa, type: 3}
-  injectShims: 0
+  injectShims: 1
   injectMediaAndWebRTC: 0
   injectAudioSourceRedirection: 0
   blockedDomains: []
