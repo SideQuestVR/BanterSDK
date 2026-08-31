@@ -250,5 +250,7 @@ namespace BS
         shapePoints,
         machineCount,
         graphTitles,
+        unseatOnJump,
+        unseatOnMove,
     }
 }

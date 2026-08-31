@@ -32,7 +32,7 @@ namespace BS.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("uid, attachmentPosition, attachmentRotation, attachmentType, avatarAttachmentType, avatarAttachmentPoint, attachmentPoint, autoSync, jointAvatar, autoAttach, isSeat, ");
+            var seeFields = new Label("uid, attachmentPosition, attachmentRotation, attachmentType, avatarAttachmentType, avatarAttachmentPoint, attachmentPoint, autoSync, jointAvatar, autoAttach, isSeat, unseatOnMove, unseatOnJump, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;
