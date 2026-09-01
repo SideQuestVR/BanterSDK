@@ -34,8 +34,7 @@ namespace BS.SDKEditor
                 if (!BSStarterUpper.AutoStartDisabled && Object.FindObjectOfType<BSStarterUpper>() == null)
                 {
                     Debug.LogWarning("BSStarterUpper not found, adding one.");
-                    var go = new GameObject("BSStarterUpper");
-                    go.AddComponent<BSStarterUpper>();
+                    GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/BSStarterUpper"));
                 }
             }
         }

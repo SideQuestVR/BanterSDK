@@ -82,7 +82,7 @@ namespace BS.SDKEditor
         /// Lists the signed-in user's worlds (GET /v2/worlds?users_id={me}&amp;limit={limit}). The user id
         /// comes from the token, which always carries it (works even before the profile is fetched).
         /// </summary>
-        public IEnumerator ListWorlds(Action<List<SqEditorWorld>> OnCompleted, Action<Exception> OnError, int limit = 50)
+        public IEnumerator ListWorlds(Action<List<SqEditorWorld>> OnCompleted, Action<Exception> OnError, int limit = 1000)
         {
             if (Data?.Token == null)
             {
