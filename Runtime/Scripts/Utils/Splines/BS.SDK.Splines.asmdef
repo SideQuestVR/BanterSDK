@@ -1,0 +1,26 @@
+{
+    "name": "BS.SDK.Splines",
+    "rootNamespace": "BS",
+    "references": [
+        "BS.SDK",
+        "Unity.Splines",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "BS_HAS_SPLINES"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.splines",
+            "expression": "1.0.0",
+            "define": "BS_HAS_SPLINES"
+        }
+    ],
+    "noEngineReferences": false
+}
