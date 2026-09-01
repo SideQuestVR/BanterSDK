@@ -137,7 +137,6 @@ namespace BS
             if (!oraView)
             {
                 oraView = gameObject.AddComponent<OraView>();
-                oraView.EvaluateJS(Resources.Load<TextAsset>("injection").text);
             }
 
             oraView.openBrowser = openBrowser;

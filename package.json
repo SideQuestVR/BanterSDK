@@ -1,6 +1,6 @@
 {
   "name": "com.sidequest.creator-sdk",
-  "version": "4.0.12",
+  "version": "4.0.13",
   "displayName": "SideQuest Creator SDK",
   "description": "This Module contains the SideQuest Creator SDK used for building spaces in Altspace and others.",
   "unity": "6000.3",
