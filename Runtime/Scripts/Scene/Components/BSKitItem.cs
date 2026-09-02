@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
@@ -19,20 +20,75 @@ namespace BS
 
         GameObject item;
         public AssetBundle KitBundle;
+
+        /*
+         * Sentinel path meaning "the first prefab of MY bundle" — the BSAssetBundle on this same
+         * GameObject, not the scene-wide KitPaths registry (a sentinel is never registered there,
+         * and the registry can hold many bundles). Used by the injection runtime's <bs-snippet
+         * asset="..."> element, which adds an AssetBundle then a KitItem("*") to one object.
+         */
+        public const string FirstPrefabPath = "*";
+
         private async Task SetupKitItem()
         {
-            if(!scene.bundlesLoaded) {
-                await new WaitUntil(() => scene.bundlesLoaded);
-            }
-            if (KitBundle == null)
+            string loadPath = path;
+            if (path == FirstPrefabPath)
             {
-                if (scene.settings.KitPaths.ContainsKey(path))
+                // No scene.bundlesLoaded gate here: snippets are added after scene load and must
+                // not depend on the initial-load latch.
+                var bundleComponent = GetComponent<BSAssetBundle>();
+                if (bundleComponent == null)
                 {
-                    KitBundle = scene.settings.KitPaths[path].assetBundle;
+                    Debug.LogWarning($"[BSKitItem] '{name}' path is '{FirstPrefabPath}' but no BSAssetBundle sits on this object.");
+                    SetLoadedIfNot(false, "KitItem '*' requires a sibling BSAssetBundle.");
+                    return;
                 }
-                else
+                await new WaitUntil(() => bundleComponent.IsLoaded); // latches on success AND failure
+                KitBundle = bundleComponent.assetBundle;
+                if (KitBundle == null)
                 {
-                    SetLoadedIfNot(false, "Kititem not found at path: " + path);
+                    // Same-bytes-already-loaded case: a second snippet sharing this asset URL
+                    // fails its own load; fall back to the already-loaded twin (identical
+                    // signature = identical URLs).
+                    KitBundle = scene.settings.KitBundles.FirstOrDefault(b =>
+                        b != bundleComponent && b.assetBundle != null &&
+                        b.GetSignature() == bundleComponent.GetSignature())?.assetBundle;
+                }
+                if (KitBundle == null)
+                {
+                    // The latch on this component reports only once, ever — warn as well so later
+                    // failures stay visible (see BSKitAsset for the precedent).
+                    Debug.LogWarning($"[BSKitItem] '{name}' sibling bundle failed to load - cannot resolve first prefab.");
+                    SetLoadedIfNot(false, "KitItem '*': sibling bundle failed to load.");
+                    return;
+                }
+                loadPath = KitBundle.GetAllAssetNames()
+                    .Where(p => p.EndsWith(".prefab"))
+                    .OrderBy(p => p, StringComparer.Ordinal) // GetAllAssetNames order is unspecified; make "first" deterministic
+                    .FirstOrDefault();
+                if (loadPath == null)
+                {
+                    Debug.LogWarning($"[BSKitItem] '{name}' bundle contains no .prefab assets.");
+                    SetLoadedIfNot(false, "KitItem '*': bundle contains no prefabs.");
+                    return;
+                }
+            }
+            else
+            {
+                if(!scene.bundlesLoaded) {
+                    await new WaitUntil(() => scene.bundlesLoaded);
+                }
+                if (KitBundle == null)
+                {
+                    if (scene.settings.KitPaths.ContainsKey(path))
+                    {
+                        KitBundle = scene.settings.KitPaths[path].assetBundle;
+                    }
+                    else
+                    {
+                        SetLoadedIfNot(false, "Kititem not found at path: " + path);
+                        return; // previously fell through into a NullReferenceException on LoadAsset
+                    }
                 }
             }
             if (item != null)
@@ -41,7 +97,7 @@ namespace BS
             }
             try
             {
-                GameObject asset = KitBundle.LoadAsset<GameObject>(path);
+                GameObject asset = KitBundle.LoadAsset<GameObject>(loadPath);
                 if(resetTransform) {
                     asset.transform.localPosition = Vector3.zero;
                     asset.transform.localRotation = Quaternion.identity;
