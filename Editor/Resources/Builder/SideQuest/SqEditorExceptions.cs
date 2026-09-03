@@ -55,6 +55,17 @@ namespace BS.SDKEditor
     }
 
     /// <summary>
+    /// Raised when a short code login's code can no longer be redeemed: either it is past the expiry the
+    /// server gave us and the server still reports nothing, or the server answered 400 because the code
+    /// row is gone. Callers should mint a fresh code rather than treat this as a failure.
+    /// </summary>
+    public class SqEditorLoginCodeExpiredException : SqEditorApiAuthException
+    {
+        public SqEditorLoginCodeExpiredException(string message) : base(message) { }
+        public SqEditorLoginCodeExpiredException(int httpCode, string message) : base(httpCode, message) { }
+    }
+
+    /// <summary>
     /// Exception raised when an object being created already exists on the server
     /// </summary>
     public class SqEditorAlreadyExistsException : SqEditorApiException

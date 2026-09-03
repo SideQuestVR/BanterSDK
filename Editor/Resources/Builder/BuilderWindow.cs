@@ -254,8 +254,15 @@ public class BuilderWindow : EditorWindow
 
     public void OnDisable()
     {
-        loginManager?.StopPolling();
+        loginManager?.Dispose();
         SceneView.duringSceneGui -= OnSceneGUI;
+    }
+
+    private void OnFocus()
+    {
+        // While signed out, coming back to the window makes sure the code on screen is still
+        // redeemable and that we're listening for its approval (see LoginManager.OnWindowFocused).
+        loginManager?.OnWindowFocused();
     }
 
     void ShowWebRoot()
@@ -1877,12 +1884,21 @@ public class BuilderWindow : EditorWindow
 
     public void OpenLinkPage()
     {
-        // Pre-fill the short code so the user doesn't have to retype it.
-        var code = sq?.CurrentLoginCode?.Code;
-        var url = string.IsNullOrEmpty(code)
-            ? SQ_LINK_PAGE_URL
-            : SQ_LINK_PAGE_URL + "?code=" + Uri.EscapeDataString(code);
-        Application.OpenURL(url);
+        if (loginManager == null)
+        {
+            Application.OpenURL(SQ_LINK_PAGE_URL);
+            return;
+        }
+        // Ask the login manager for a code that is still redeemable (it fetches a fresh one if the
+        // current code has expired) and pre-fill it so the user doesn't have to retype it.
+        loginManager.PrepareSignIn((loginCode) =>
+        {
+            var code = loginCode?.Code;
+            var url = string.IsNullOrEmpty(code)
+                ? SQ_LINK_PAGE_URL
+                : SQ_LINK_PAGE_URL + "?code=" + Uri.EscapeDataString(code);
+            Application.OpenURL(url);
+        });
     }
 
     // The selected world's slug + full hosting URL (null if none selected), and a readiness guard. These

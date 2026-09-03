@@ -200,25 +200,39 @@ namespace BS.SDKEditor
         }
 
         /// <summary>
+        /// True when a short code login is in progress and the code is past the expiry the server gave us.
+        /// The server keeps an approved code redeemable for a while after this, so callers should still
+        /// ask it once before treating the code as dead (see CheckLoginCodeComplete).
+        /// </summary>
+        public bool IsLoginCodeExpired => Data?.LoginCode != null && DateTimeOffset.Now > Data.LoginCode.ExpiresAt;
+
+        /// <summary>
         /// The configuration being used
         /// </summary>
         public SqEditorAppApiConfig Config { get; private set; }
+
+        /// <summary>
+        /// Raised when a signed-in session is cleared, whether by an explicit Logout call or because the
+        /// API rejected it (expired or revoked refresh token, or a 401 that a refresh could not fix).
+        /// Raised on the editor main thread.
+        /// </summary>
+        public event Action LoggedOut;
 
         /// <summary>
         /// Clears the current user and any active short code requests
         /// </summary>
         public void Logout()
         {
-            var wasUserNull = Data?.Token == null;
+            var wasSignedIn = Data?.Token != null;
             Data.Token = null;
             Data.User = null;
             Data.LoginCode = null;
             Data.UserAchievements = null;
 
             SaveData();
-            if (!wasUserNull)
+            if (wasSignedIn)
             {
-                //todo: raise some event for this?
+                LoggedOut?.Invoke();
             }
         }
 
@@ -290,11 +304,9 @@ namespace BS.SDKEditor
                 OnError?.Invoke(new InvalidOperationException("There is not a code login in progress"));
                 yield break;
             }
-            if (DateTimeOffset.Now > Data.LoginCode.ExpiresAt)
-            {
-                OnError?.Invoke(new SqEditorApiAuthException("Device code has expired"));
-                yield break;
-            }
+            // No local expiry check before asking the server: an approved code stays redeemable for a
+            // while past expires_at, so a user who approved at T+14:59 and is polled at T+15:01 still
+            // gets signed in. Expiry is decided below, once the server has said "nothing yet".
             //check to make sure this isn't being called too frequently
             if ((DateTime.Now - _lastLoginPoll).TotalSeconds < Data.LoginCode.PollIntervalSeconds)
             {
@@ -317,6 +329,12 @@ namespace BS.SDKEditor
                 if (tok == null)
                 {
                     _lastLoginPoll = DateTime.Now;
+                    if (IsLoginCodeExpired)
+                    {
+                        // Past expiry and the server has nothing for us: this code is dead, mint a new one.
+                        OnError?.Invoke(new SqEditorLoginCodeExpiredException("Login code has expired"));
+                        yield break;
+                    }
                     OnCompleted?.Invoke(false, null);
                     yield break;
                 }
@@ -351,6 +369,12 @@ namespace BS.SDKEditor
                     SaveData();
                     OnCompleted?.Invoke(true, Data.User);
                 }
+            }
+            else if (ex is SqEditorApiAuthException authEx && authEx.HttpCode == 400)
+            {
+                // The code row is gone (expired and swept, or never valid). Anything else - network
+                // faults, 5xx - is transient and left to the caller to retry.
+                OnError?.Invoke(new SqEditorLoginCodeExpiredException(400, "Login code has expired or is invalid"));
             }
             else
             {
@@ -819,37 +843,135 @@ namespace BS.SDKEditor
             }, OnError, true);
         }
 
-        private IEnumerator GetAuthToken(Action<string> OnCompleted, Action<Exception> OnError)
+        // Refresh the access token this long before the server's expiry. The long CDN PUT in
+        // UploadFileWithRetryAsync carries no bearer token, so the margin only has to cover API calls.
+        private static readonly TimeSpan AccessTokenEarlyRefresh = TimeSpan.FromMinutes(5);
+
+        // One refresh at a time: coroutines that need a token while a refresh is in flight wait on this
+        // flag and share the outcome instead of each posting to /v2/oauth/token.
+        private bool _refreshInFlight;
+        private Exception _refreshResult;
+
+        private bool HasValidAccessToken()
         {
-            if (Data?.Token?.AccessTokenExpiresAt == null)
+            var token = Data?.Token;
+            return token?.AccessTokenExpiresAt != null
+                && !string.IsNullOrWhiteSpace(token.AccessToken)
+                && DateTimeOffset.Now < token.AccessTokenExpiresAt.Value - AccessTokenEarlyRefresh;
+        }
+
+        /// <summary>
+        /// True when a refresh failed with a status that means the session itself is no longer accepted
+        /// (oauth2-server answers 400 for an invalid or revoked refresh token).
+        /// </summary>
+        private static bool IsSessionRejected(Exception e)
+        {
+            var code = (e as SqEditorApiAuthException)?.HttpCode;
+            return code == 400 || code == 401 || code == 403;
+        }
+
+        /// <summary>
+        /// Hands back a usable access token, refreshing it first when it is missing, near expiry, or
+        /// <paramref name="forceRefresh"/> is set. A refresh the server rejects clears the session (and
+        /// raises LoggedOut); a refresh that fails for network or server reasons keeps the session so
+        /// the next call can try again.
+        /// </summary>
+        private IEnumerator GetAuthToken(Action<string> OnCompleted, Action<Exception> OnError, bool forceRefresh = false)
+        {
+            if (Data?.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user is logged in"));
                 yield break;
             }
-            if (DateTimeOffset.Now < Data.Token.AccessTokenExpiresAt.Value.AddMinutes(-1) && !string.IsNullOrWhiteSpace(Data.Token.AccessToken))
+            if (!forceRefresh && HasValidAccessToken())
             {
                 OnCompleted?.Invoke(Data.Token.AccessToken);
                 yield break;
             }
-            if (string.IsNullOrWhiteSpace(Data?.Token?.RefreshToken))
+            if (_refreshInFlight)
             {
-                Logout();
-                OnError?.Invoke(new SqEditorApiAuthException("User refresh token is missing, logging user out"));
+                // Share the refresh another call already started.
+                while (_refreshInFlight) yield return null;
+                if (_refreshResult != null)
+                {
+                    OnError?.Invoke(_refreshResult);
+                    yield break;
+                }
+                var shared = Data?.Token?.AccessToken;
+                if (string.IsNullOrWhiteSpace(shared))
+                {
+                    OnError?.Invoke(new SqEditorApiAuthException("No user is logged in"));
+                    yield break;
+                }
+                OnCompleted?.Invoke(shared);
                 yield break;
             }
-            yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token", $"grant_type=refresh_token&refresh_token={Uri.EscapeDataString(Data.Token?.RefreshToken)}&client_id={Data.Token?.ClientId}",
-                (a) =>
+            if (string.IsNullOrWhiteSpace(Data.Token.RefreshToken))
+            {
+                Logout();
+                OnError?.Invoke(new SqEditorApiAuthException("Your session has expired. Please sign in again."));
+                yield break;
+            }
+
+            _refreshInFlight = true;
+            _refreshResult = null;
+            try
+            {
+                SqEditorTokenInfo refreshed = null;
+                Exception refreshError = null;
+                yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token",
+                    $"grant_type=refresh_token&refresh_token={Uri.EscapeDataString(Data.Token.RefreshToken)}&client_id={Data.Token.ClientId}",
+                    (a) => refreshed = a, (e) => refreshError = e);
+                if (refreshError == null && string.IsNullOrWhiteSpace(refreshed?.AccessToken))
                 {
-                    if (a == null || a.AccessToken == null)
+                    refreshError = new SqEditorApiAuthException("Failed to retrieve auth token");
+                }
+                if (refreshError != null)
+                {
+                    if (IsSessionRejected(refreshError))
                     {
-                        OnError?.Invoke(new SqEditorApiAuthException("Failed to retrieve auth token"));
-                        return;
+                        // The server no longer accepts the refresh token: the session is dead.
+                        Logout();
+                        _refreshResult = new SqEditorApiAuthException(((SqEditorApiException)refreshError).HttpCode.Value,
+                            "Your session has expired. Please sign in again.", refreshError);
                     }
-                    Data.Token.AccessToken = a.AccessToken;
-                    Data.Token.AccessTokenExpiresAt = a.AccessTokenExpiresAt;
+                    else
+                    {
+                        // Network or server trouble: keep the session so the next call can try again.
+                        _refreshResult = refreshError;
+                    }
+                }
+                else if (Data?.Token != null)
+                {
+                    // (Token is null here only if something signed out while the refresh was in flight.)
+                    var token = Data.Token;
+                    token.AccessToken = refreshed.AccessToken;
+                    token.AccessTokenExpiresAt = refreshed.AccessTokenExpiresAt;
+                    if (!string.IsNullOrWhiteSpace(refreshed.ClientId)) token.ClientId = refreshed.ClientId;
+                    if (refreshed.GrantedScopes != null && refreshed.GrantedScopes.Count > 0) token.GrantedScopes = refreshed.GrantedScopes;
+                    if (refreshed.UserId != 0) token.UserId = refreshed.UserId;
+                    // The refresh grant does not rotate the refresh token; only take one if the server sent it.
+                    if (!string.IsNullOrWhiteSpace(refreshed.RefreshToken)) token.RefreshToken = refreshed.RefreshToken;
+                    if (refreshed.RefreshTokenExpiresAt != null) token.RefreshTokenExpiresAt = refreshed.RefreshTokenExpiresAt;
                     SaveData();
-                    OnCompleted?.Invoke(Data.Token.AccessToken);
-                }, OnError);
+                }
+            }
+            finally
+            {
+                _refreshInFlight = false;
+            }
+            if (_refreshResult != null)
+            {
+                OnError?.Invoke(_refreshResult);
+                yield break;
+            }
+            var accessToken = Data?.Token?.AccessToken;
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user is logged in"));
+                yield break;
+            }
+            OnCompleted?.Invoke(accessToken);
         }
 
         private IEnumerator PostFormEncodedStringNoAuth<T>(string urlPath, string data, Action<T> OnCompleted, Action<Exception> OnError)
@@ -857,9 +979,10 @@ namespace BS.SDKEditor
             var content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
             var task = _httpClient.PostAsync(new Uri(Config.RootApiUri, urlPath), content);
             while (!task.IsCompleted) yield return null;
-            if (task.IsFaulted)
+            if (task.IsFaulted || task.IsCanceled)
             {
-                OnError(new SqEditorApiNetworkException(task.Exception.InnerException?.Message ?? task.Exception.Message));
+                // IsCanceled is how HttpClient reports a timeout.
+                OnError(new SqEditorApiNetworkException(task.Exception?.InnerException?.Message ?? task.Exception?.Message ?? "Request timed out"));
                 yield break;
             }
             var response = task.Result;
@@ -884,99 +1007,115 @@ namespace BS.SDKEditor
             }
         }
 
-        private IEnumerator JsonGet<T>(string urlPath, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true)
+        /// <summary>
+        /// Sends a JSON request built by <paramref name="requestFactory"/>, attaching the bearer token when
+        /// <paramref name="withAuth"/> is set and a user is signed in. A 401 on an authenticated request
+        /// forces one token refresh and resends the request once (the factory runs again because an
+        /// HttpRequestMessage cannot be reused); a 401 on the resend means the server no longer accepts
+        /// the session, so it is cleared.
+        /// </summary>
+        private IEnumerator SendJsonRequest<T>(Func<HttpRequestMessage> requestFactory, bool withAuth, Action<T> OnCompleted, Action<Exception> OnError)
         {
             string authToken = null;
-            if (Data?.Token != null && withAuth)
+            if (withAuth && Data?.Token != null)
             {
-                Exception error = null;
-                yield return GetAuthToken((a) => authToken = a, (e) => error = e);
-                if (error != null) { OnError?.Invoke(error); yield break; }
+                Exception authError = null;
+                yield return GetAuthToken((a) => authToken = a, (e) => authError = e);
+                if (authError != null) { OnError?.Invoke(authError); yield break; }
             }
-            var request = new HttpRequestMessage(HttpMethod.Get, new Uri(Config.RootApiUri, urlPath));
-            request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
-            if (authToken != null)
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-            var task = _httpClient.SendAsync(request);
-            while (!task.IsCompleted) yield return null;
-            if (task.IsFaulted)
+
+            var retriedAuth = false;
+            while (true)
             {
-                OnError(new SqEditorApiNetworkException(task.Exception.InnerException?.Message ?? task.Exception.Message));
+                var request = requestFactory();
+                if (authToken != null)
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                var task = _httpClient.SendAsync(request);
+                while (!task.IsCompleted) yield return null;
+                if (task.IsFaulted || task.IsCanceled)
+                {
+                    OnError(new SqEditorApiNetworkException(task.Exception?.InnerException?.Message ?? task.Exception?.Message ?? "Request timed out"));
+                    yield break;
+                }
+                var response = task.Result;
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && withAuth && Data?.Token != null && !retriedAuth)
+                {
+                    // The server rejected a token we thought was still good (revoked, or signed with a key
+                    // it no longer trusts). Refresh regardless of the local expiry and try once more.
+                    retriedAuth = true;
+                    Exception refreshError = null;
+                    yield return GetAuthToken((a) => authToken = a, (e) => refreshError = e, forceRefresh: true);
+                    if (refreshError != null) { OnError?.Invoke(refreshError); yield break; }
+                    continue;
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errReadTask = response.Content.ReadAsStringAsync();
+                    while (!errReadTask.IsCompleted) yield return null;
+                    var errBody = errReadTask.IsFaulted || errReadTask.IsCanceled ? "" : errReadTask.Result;
+                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && withAuth)
+                    {
+                        if (Data?.Token == null)
+                        {
+                            OnError(new SqEditorApiAuthException((int)response.StatusCode, "No user is logged in"));
+                        }
+                        else
+                        {
+                            // A freshly refreshed token was rejected too; nothing more can be done locally.
+                            Logout();
+                            OnError(new SqEditorApiAuthException((int)response.StatusCode, "Your session has expired. Please sign in again."));
+                        }
+                        yield break;
+                    }
+                    OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {request.RequestUri} {response.ReasonPhrase} {errBody}"));
+                    yield break;
+                }
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+                {
+                    OnCompleted?.Invoke(default(T));
+                    yield break;
+                }
+                var readTask = response.Content.ReadAsStringAsync();
+                while (!readTask.IsCompleted) yield return null;
+                if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
+                var resStr = readTask.Result;
+                if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
+                try
+                {
+                    OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Failed deserializing response from API", ex);
+                    OnError?.Invoke(ex);
+                }
                 yield break;
             }
-            var response = task.Result;
-            if (!response.IsSuccessStatusCode)
+        }
+
+        private IEnumerator JsonGet<T>(string urlPath, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true)
+        {
+            var uri = new Uri(Config.RootApiUri, urlPath);
+            yield return SendJsonRequest<T>(() =>
             {
-                OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {response.ReasonPhrase}"));
-                yield break;
-            }
-            var readTask = response.Content.ReadAsStringAsync();
-            while (!readTask.IsCompleted) yield return null;
-            if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
-            var resStr = readTask.Result;
-            if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
-            try
-            {
-                OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Failed deserializing response from API", ex);
-                OnError?.Invoke(ex);
-            }
+                var request = new HttpRequestMessage(HttpMethod.Get, uri);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                return request;
+            }, withAuth, OnCompleted, OnError);
         }
         
         
         private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, string method = "POST")
         {
             var uri = new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath);
-            string authToken = null;
-            if (Data?.Token != null && withAuth)
+            // Serialised once so a 401 retry resends exactly the same body.
+            var body = JsonConvert.SerializeObject(data);
+            yield return SendJsonRequest<T>(() => new HttpRequestMessage(new HttpMethod(method), uri)
             {
-                Exception error = null;
-                yield return GetAuthToken((a) => authToken = a, (e) => error = e);
-                if (error != null) { OnError?.Invoke(error); yield break; }
-            }
-            var request = new HttpRequestMessage(new HttpMethod(method), uri)
-            {
-                Content = new StringContent(JsonConvert.SerializeObject(data), Encoding.UTF8, "application/json")
-            };
-            if (authToken != null)
-                request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", authToken);
-            var task = _httpClient.SendAsync(request);
-            while (!task.IsCompleted) yield return null;
-            if (task.IsFaulted)
-            {
-                OnError(new SqEditorApiNetworkException(task.Exception.InnerException?.Message ?? task.Exception.Message));
-                yield break;
-            }
-            var response = task.Result;
-            if (!response.IsSuccessStatusCode)
-            {
-                var errReadTask = response.Content.ReadAsStringAsync();
-                while (!errReadTask.IsCompleted) yield return null;
-                OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {uri} {response.ReasonPhrase} {errReadTask.Result}"));
-                yield break;
-            }
-            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-            {
-                OnCompleted?.Invoke(default(T));
-                yield break;
-            }
-            var readTask = response.Content.ReadAsStringAsync();
-            while (!readTask.IsCompleted) yield return null;
-            if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
-            var resStr = readTask.Result;
-            if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
-            try
-            {
-                OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-            }
-            catch (Exception ex)
-            {
-                Debug.WriteLine("Failed deserializing response from API", ex);
-                OnError?.Invoke(ex);
-            }
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            }, withAuth, OnCompleted, OnError);
         }
 
 
