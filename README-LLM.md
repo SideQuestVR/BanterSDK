@@ -657,6 +657,107 @@ cursor, transitionProperty, transitionDuration, transitionTimingFunction, transi
 
 ---
 
+## Snippets
+
+Prebuilt features dropped into a world without writing code. Not a JS component — an HTML element in
+`Assets/WebRoot/index.html` plus an authoring-time Unity component (`Banter/Snippet`, `BSSnippet`).
+Element names must be hyphenated (custom-element rule): `bs-snippet`, `bs-gizmo`.
+
+```html
+<!-- snippet section -->
+<bs-snippet name="video-player" instance="a1b2c3…" title="Video Player"
+  description="optional"
+  script="https://example.com/player.js"
+  position="0 1.5 0" width="1.6" volume="80" autoplay="true">
+  <bs-gizmo type="position" attribute="position"/>
+  <bs-gizmo type="plane" attribute="position" size="1.6 0.9"/>
+</bs-snippet>
+<!-- end snippet section -->
+```
+
+**Element attributes**
+```
+name         required  snippet id (== the Unity slug)
+title        required  shown in the Unity inspector
+description  optional
+script       script|asset  URL of the snippet JS      -> <script src> added once per URL
+asset        script|asset  URL of an asset bundle     -> first prefab instantiated
+instance     added by Unity; pairs element <-> BSSnippet component. Omit in hand-written elements.
+<others>     the snippet's own settings; typed fields in the inspector
+```
+`script` wins if both are present (logs a warning). `position`/`rotation`/`scale` are raw Unity local
+values, space-separated (`scale` also accepts one number). Fetched once from
+`https://altvr.app/api/snippets/<slug>`; the element in `index.html` is then the source of truth.
+
+**Gizmos** (Scene view, only while the owning object is selected)
+```
+type="position"  drag handle; writes back into attribute="..."  (attribute REQUIRED)
+type="plane"     filled rect in local XY facing +Z; size="w h"      (default 1 1)
+type="box"       wireframe box; size="x y z"                        (default 1 1 1)
+type="sphere"    3 wire circles; radius="r"                         (default 0.5)
+
+attribute="name"  draw at the "x y z" value held by that setting (falls back to position="")
+position="x y z"  fixed local offset
+rotation="x y z"  euler degrees (plane/box/sphere)
+```
+
+**Dynamic creation** — same code path as page-load parsing:
+```js
+const el = document.createElement("bs-snippet");
+el.setAttribute("name", "video-player");
+el.setAttribute("script", "https://example.com/player.js");
+document.body.appendChild(el);   // loads immediately
+```
+
+**Writing a snippet script** — runs once per page, serves every instance:
+```js
+window.addEventListener("bs-loaded", () => {
+    document.querySelectorAll('bs-snippet[name="video-player"]').forEach(el => {
+        const width = parseFloat(el.getAttribute("width") || "1.6");
+        const [x, y, z] = (el.getAttribute("position") || "0 0 0").split(/\s+/).map(Number);
+        // build the feature
+    });
+});
+```
+Default every setting; keep values flat (numbers, `"x y z"`, `true`/`false`, comma lists) so the
+inspector can type the fields without a schema; treat values as untrusted creator input.
+
+**Unity side**: inspector edits and gizmo drags write to `index.html` (debounced); external file
+edits flow back. Only the marked section is rewritten. Removing the component removes its element;
+unloading a scene does not. Orphans: `Altspace > Snippets > Remove Orphaned Snippet Elements`.
+Elements without `instance` are never touched by Unity, and a new component whose slug matches an
+existing element clones it instead of fetching.
+
+---
+
+## Platform Filter
+
+Ships or strips a GameObject per platform at build time. Unity Editor only — `BSPlatformFilter`,
+added via `Add Component > Banter/Platform Filter`, one per GameObject. Never reaches the JS API:
+the marker is stripped from every build, so scripts cannot see or query it.
+
+```
+includeOnMobile:  boolean(true)   // ship in mobile (Quest/Android) builds
+includeOnDesktop: boolean(true)   // ship in desktop (Windows) builds
+```
+
+**Build-time semantics**
+```
+flag unchecked -> the GameObject AND its entire subtree are removed from that platform's build
+flag checked   -> only the filter component is removed; the object ships normally
+both unchecked -> ships on no platform
+nested filter  -> cannot re-include anything under an excluded ancestor (the tree is already gone)
+editor         -> filtering is build-time only; play mode always shows everything
+                  (applies to inactive objects too)
+```
+Android counts as mobile; every other target is treated as desktop.
+
+**Pattern — platform-specific detail**: two sibling GameObjects at the same position,
+`FountainHighPoly` with **includeOnMobile** unticked and `FountainMobile` with **includeOnDesktop**
+unticked. Windows ships the first, Quest the second, the editor shows both.
+
+---
+
 ## Math Types
 
 ### Vector2

@@ -39,6 +39,8 @@ window.addEventListener("bs-loaded", async () => {
 | **Optimization** | `AOBaking` |
 | **VR** | `Grababble`, `AttachedObject`, `HeldEvents` |
 | **UI** | `UIPanel`, `UIButton`, `UILabel`, `UISlider`, `UIToggle` |
+| **Snippets** | `<bs-snippet>` element in `Assets/WebRoot/index.html` (no JS API) |
+| **Editor-only** | `BSPlatformFilter` — per-platform include/exclude at build time (no JS API) |
 
 ## Essential Events
 
@@ -104,6 +106,40 @@ AOBaking({subdivisionLevel, sampleCount, aoIntensity})  // Merge children & bake
   .Clear()    // Restore originals
 ```
 Best practice: Use root parent for primitives, bake incrementally, rebake when adding neighbors.
+
+## Snippets
+
+Prebuilt features (video player, etc.) added without code. HTML element in
+`Assets/WebRoot/index.html`, authored in Unity via `Add Component > Banter/Snippet` + a slug.
+Hyphenated names are required: `bs-snippet`, `bs-gizmo`.
+
+```html
+<bs-snippet name="video-player" title="Video Player" script="https://…/player.js"
+  position="0 1.5 0" width="1.6">
+  <bs-gizmo type="position" attribute="position"/>   <!-- drag handle, writes back -->
+  <bs-gizmo type="plane" attribute="position" size="1.6 0.9"/>
+</bs-snippet>
+```
+`name`+`title` required, `description` optional, plus `script` (JS URL) **or** `asset` (bundle URL →
+first prefab). Other attributes are the snippet's settings and become typed inspector fields.
+Fetched once from `altvr.app/api/snippets/<slug>`; `index.html` is then the source of truth and
+syncs both ways with the inspector. Gizmo types: `position` (interactive), `plane`, `box`, `sphere`.
+Snippet scripts load once per URL and serve every instance —
+`document.querySelectorAll('bs-snippet[name="…"]')`.
+
+## Platform Filter
+
+`Add Component > Banter/Platform Filter` (`BSPlatformFilter`) — ship a GameObject on some platforms
+only. Unity Editor only; stripped from every build, so it is invisible to JS.
+```
+includeOnMobile: true    // Quest/Android builds
+includeOnDesktop: true   // Windows builds
+```
+Unchecked = that GameObject **and its whole subtree** are cut from that platform's build (a nested
+filter can't re-include a child of an excluded parent). Checked = only the marker is stripped.
+Build-time only — play mode always shows everything, including inactive objects.
+Typical use: two siblings at the same spot, a high-poly one excluded from mobile and a low-poly one
+excluded from desktop.
 
 ## Math Types
 ```

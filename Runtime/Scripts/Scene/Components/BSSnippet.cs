@@ -14,6 +14,7 @@ namespace BS
      * cleaning up removed components) lives in BS.SDKEditor — see SnippetHtmlSync,
      * SnippetReconciler and BSSnippetEditor.
      */
+    [AddComponentMenu("Banter/Snippet")]
     public class BSSnippet : MonoBehaviour
     {
         [Tooltip("The snippet slug on altvr.app, e.g. 'video-player'. The snippet is fetched once and cached in index.html.")]
