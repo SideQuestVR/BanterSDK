@@ -16,7 +16,8 @@ BS.Scene.GetInstance() -> Scene
 - `users: {[uid]: UserData}` - Connected users
 - `localUser: UserData` - Local player
 - `unityLoaded: boolean` - Unity ready
-- `spaceState: {public: {}, protected: {}}` - Shared state
+- `spaceState: {public: {}, protected: {}}` - Shared state, string values
+- `spaceStateJson: {public: {}, protected: {}}` - Same state, real JSON, keyed by dotted path
 
 ### Methods
 ```
@@ -26,11 +27,30 @@ Instantiate(obj: GameObject, pos?: Vector3, rot?: Quaternion, parent?: GameObjec
 SetSettings(settings: SceneSettings)
 SetLoadPromise(promise: Promise)
 
-// State
+// State (strings, fire-and-forget - cannot report failure)
 SetPublicSpaceProps(props: {[key]: string})
 SetProtectedSpaceProps(props: {[key]: string})
-SetUserProps(props: {[key]: string}, userId: string)
+SetUserProps(props: {[key]: string}, userId?: string)  // userId ignored: owner-writes-only
 OneShot(data: any, allInstances?: boolean)
+
+// State (JSON, async, rejects with BSStateError{code, path, message})
+// '.' nests: "game.score" is a path. Set replaces; Merge keeps unnamed leaves.
+SpaceStateGet(path) -> JsonValue|undefined
+SpaceStateGetAll() -> {revision, public, protected}
+SpaceStateSet(path, value, opts?: {protected?: boolean})
+SpaceStateMerge(path, obj, opts?: {protected?: boolean})
+SpaceStateDelete(path, opts?)          // removes path AND descendants
+GetSpaceStateTree(scope?) -> nested object
+UserStateGet(key, userId?) -> JsonValue|undefined
+UserStateGetAll(userId?) -> object
+UserStateSet(key, value, opts?: {moderatorsCanWrite?: boolean})   // own props only
+UserStateDelete(key, opts?)
+
+// Scopes govern WRITES, never reads - protected state is readable by everyone.
+// Space: public = anyone; protected = world owner / community moderators.
+// User:  default = only you; moderatorsCanWrite = you + moderators.
+// Protecting a space key is PERMANENT for the room (24h).
+// Limits: 16KB/value, 2048 keys/space, 64 props/user.
 
 // Physics
 Gravity(vector: Vector3)
@@ -139,6 +159,13 @@ PhysicsSettingsLocked: boolean (false)
 "user-left" -> {detail: UserData}
 "key-press" -> {detail: {key: KeyCode}}
 "space-state-changed" -> {detail: {changes: [{property, oldValue, newValue}]}}
+  // two shapes: {property,oldValue,newValue,isPublic} or {type:"public"|"protected",property,oldValue,newValue}
+"user-state-changed" -> {detail: {user, changes: [{key, newValue, oldValue}]}}
+"space-state" -> {detail: {revision, full, changes: [{path, value, oldValue, scope, deleted}]}}
+"user-state"  -> {detail: {user, id, uid, full, changes: [{path, value, oldValue, deleted}]}}
+"space-state-error" -> {detail: {key, code, message}}   // fire-and-forget writes report here
+"user-state-error"  -> {detail: {key, code, message}}
+// on a UserData: "state-changed" (strings) and "state" (JSON)
 "one-shot" -> {detail: {fromId, fromAdmin, data}}
 "menu-browser-message" -> {detail: any}
 "transcription" -> {detail: {id, message}}

@@ -626,12 +626,23 @@ namespace BS
             var props = data.Split(MessageDelimiters.SECONDARY);
             if (propType == APICommands.SET_USER_PROPS)
             {
+#if GREENFIELD_PROJECT
+                // The host app owns user props: it networks them and enforces owner-writes-only.
+                // The local path below must NOT run here -- UserData.SetProps is a no-op under this
+                // define, yet UserPropChanged would still echo to the page, making a write aimed at
+                // another user look like it succeeded.
+                if (props.Length > 0)
+                {
+                    events.OnSetUserProps.Invoke(id, props);
+                }
+#else
                 var user = users.FirstOrDefault(x => id == null ? x.isLocal : x.id == id);
                 if (user != null && props.Length > 0)
                 {
                     user.SetProps(props);
                     UserPropChanged(props, user.id);
                 }
+#endif
             }
             else if (propType == APICommands.SET_PROTECTED_SPACE_PROPS || propType == APICommands.SET_PUBLIC_SPACE_PROPS)
             {
@@ -666,6 +677,78 @@ namespace BS
         {
             link.OnUserStateChanged(id + MessageDelimiters.SECONDARY + string.Join(MessageDelimiters.SECONDARY, props));
         }
+
+        #region JSON state API
+
+        /// <summary>Route a page's <c>!sso!</c> request. <paramref name="msg"/> is "sub§base64(JSON)".</summary>
+        public void SpaceStateOp(string msg, int reqId) => StateOp(BSStateTarget.Space, APICommands.SPACE_STATE_OP, msg, reqId);
+
+        /// <summary>Route a page's <c>!uso!</c> request. Same encoding.</summary>
+        public void UserStateOp(string msg, int reqId) => StateOp(BSStateTarget.User, APICommands.USER_STATE_OP, msg, reqId);
+
+        private void StateOp(BSStateTarget target, string command, string msg, int reqId)
+        {
+            var parts = (msg ?? "").Split(MessageDelimiters.SECONDARY, 2);
+            var sub = parts[0];
+            var payloadB64 = parts.Length > 1 ? parts[1] : "";
+
+            string body;
+            try
+            {
+                body = payloadB64.Length > 0
+                    ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payloadB64))
+                    : "{}";
+            }
+            catch (Exception)
+            {
+                SendError(reqId, (target == BSStateTarget.Space ? "SPACE_STATE_OP" : "USER_STATE_OP") + ": malformed payload");
+                return;
+            }
+
+            // Reply shape matches ScriptGraph's so the page's existing "<command>§<payload>" strip
+            // works unchanged.
+            var request = new BSStateRequest(reply =>
+            {
+                var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply ?? "{}"));
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY
+                          + command + MessageDelimiters.SECONDARY + replyB64);
+            })
+            {
+                Target = target,
+                Op = sub,
+                Json = body
+            };
+
+            EnqueueStateOp(request);
+        }
+
+        /// <summary>
+        /// Hand a state op to the host app on the main thread. When nothing is listening the request
+        /// is answered anyway, so a page promise always settles rather than hanging for ever.
+        /// </summary>
+        public void EnqueueStateOp(BSStateRequest request)
+        {
+            if (request == null) return;
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                try
+                {
+                    events.OnStateRequest.Invoke(request);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[Banter] State op '" + request.Op + "' failed: " + e);
+                    request.Respond("{\"ok\":false,\"error\":\"internal_error\"}");
+                    return;
+                }
+                if (!request.Handled)
+                {
+                    request.Respond("{\"ok\":false,\"error\":\"app_unavailable\"}");
+                }
+            }, $"{nameof(BSScene)}.{nameof(EnqueueStateOp)}"));
+        }
+
+        #endregion
         public void SpacePropChanged(string props)
         {
             // link.OnSpaceStateChanged(props);

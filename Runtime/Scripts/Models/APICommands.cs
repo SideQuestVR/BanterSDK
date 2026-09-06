@@ -47,6 +47,10 @@ public class APICommands
     public const string SET_PUBLIC_SPACE_PROPS = "!spsp!";
     public const string SET_PROTECTED_SPACE_PROPS = "!sprsp!";
     public const string SET_USER_PROPS = "!sup!";
+    /// <summary>JSON space-state op (request/response). Payload: "sub§base64(UTF-8 JSON)".</summary>
+    public const string SPACE_STATE_OP = "!sso!";
+    /// <summary>JSON user-state op (request/response). Same encoding as SPACE_STATE_OP.</summary>
+    public const string USER_STATE_OP = "!uso!";
     public const string TELEPORT = "!t!";
     public const string ATTACH = "!at!";
     public const string DETACH = "!dt!";
@@ -116,6 +120,12 @@ public class APICommands
     public const string BANTER_VERSION = "bv!";
     public const string SEND_USER = "su!";
     public const string FULL_SPACE_STATE = "fss!";
+    /// <summary>Full JSON space-state snapshot. Payload: base64(UTF-8 JSON).</summary>
+    public const string FULL_SPACE_STATE_JSON = "fsj!";
+    /// <summary>Incremental JSON space-state change. Payload: base64(UTF-8 JSON).</summary>
+    public const string SPACE_STATE_JSON = "spj!";
+    /// <summary>Incremental JSON user-state change. Payload: base64(UTF-8 JSON).</summary>
+    public const string USER_STATE_JSON = "upj!";
     public const string VOICE_STARTED = "vs!";
     public const string PLAY_AVATAR = "pa!";
     #endregion

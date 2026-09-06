@@ -79,6 +79,22 @@ public class BSSceneEvents
     public UnityEvent<string, string, string> OnSetUserState = new UnityEvent<string, string, string>();
     public UnityEvent<string, string> OnRemoveUserState = new UnityEvent<string, string>();
 
+    /// <summary>
+    /// A page's SetUserProps, as (targetUserId, "key|value" props). Raised INSTEAD of the local
+    /// UserData echo under GREENFIELD_PROJECT so the host app can network the write and enforce
+    /// ownership: the local path would otherwise echo a foreign-user write back to the page as if
+    /// it had succeeded. Distinct from OnSetUserState above, which is the SideQuest-backend
+    /// "saved value" feature.
+    /// </summary>
+    public UnityEvent<string, string[]> OnSetUserProps = new UnityEvent<string, string[]>();
+
+    /// <summary>
+    /// A JSON space/user state operation from a page or a Visual Scripting unit. The host app
+    /// handles it, sets <c>Handled</c> synchronously, and calls <c>Respond</c> when the backend
+    /// answers. See <see cref="BSStateRequest"/>.
+    /// </summary>
+    public UnityEvent<BSStateRequest> OnStateRequest = new UnityEvent<BSStateRequest>();
+
     public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
 
     /// <summary>A stored lighting payload arrived from the page (space load) for the
@@ -91,6 +107,20 @@ public class BSSceneEvents
     /// <summary>The app's current baked lighting data as a persistable string, for
     /// the page to store with its saved scene. Empty = nothing baked yet.</summary>
     public Func<string> GetLightingData = new Func<string>(() => { return ""; });
+
+    /// <summary>
+    /// Synchronous read of a space-state key from the host app's local mirror, for Visual Scripting
+    /// value nodes (which have no control flow to await on). Returns a compact JSON envelope:
+    /// <c>{"exists":bool,"value":"string form","json":"json form","isPublic":bool}</c>.
+    /// </summary>
+    public Func<string, string> GetSpaceStateValue = new Func<string, string>(key => "{\"exists\":false}");
+
+    /// <summary>
+    /// Synchronous read of a user prop. Arguments are (userIdOrMe, key); the envelope is
+    /// <c>{"exists":bool,"value":"string form","json":"json form"}</c>.
+    /// </summary>
+    public Func<string, string, string> GetUserStateValue =
+        new Func<string, string, string>((userId, key) => "{\"exists\":false}");
 
     #endregion
 
@@ -112,6 +142,8 @@ public class BSSceneEvents
     public void RemoveAllListeners()
     {
         // Stop Event Listeners
+        OnStateRequest.RemoveAllListeners();
+        OnSetUserProps.RemoveAllListeners();
         OnLoad.RemoveAllListeners();
         OnDomReady.RemoveAllListeners();
         OnSceneReady.RemoveAllListeners();

@@ -389,7 +389,8 @@ const scene = BS.Scene.GetInstance();
 | `localUser` | UserData | The current local user |
 | `unityLoaded` | boolean | True when Unity is fully loaded |
 | `domLoaded` | boolean | True when the page DOM has finished loading |
-| `spaceState` | Object | Current space state (public/protected) |
+| `spaceState` | Object | Current space state as strings (`public` / `protected`) |
+| `spaceStateJson` | Object | The same state as real JSON values, keyed by full dotted path (`public` / `protected`) |
 
 ```js
 // Look up by id (ids arrive in events and updates)
@@ -508,19 +509,102 @@ The built-in component methods (`rb.AddForce(...)`, `audio.PlayOneShot(...)`, et
 
 ### State Management
 
+Two surfaces, both live. The **string API** below is unchanged and keeps working; the **JSON API**
+after it adds real values, nested paths, deletes and errors you can catch.
+
 ```js
 // Set public properties (visible to all, persists)
 scene.SetPublicSpaceProps({ "score": "100", "level": "3" });
 
-// Set protected properties (admin/mod only can set)
+// Set protected properties (space owner / moderators only)
 scene.SetProtectedSpaceProps({ "gameMode": "competitive" });
 
-// Set user-specific properties
-scene.SetUserProps({ "team": "red" }, userId);
+// Set your own user properties. The id argument is ignored: user state is
+// owner-writes-only, so you can only ever write your own.
+scene.SetUserProps({ "team": "red" });
 
 // Send one-shot message to all users
 scene.OneShot({ action: "explosion", position: [0, 1, 0] }, true); // allInstances
 ```
+
+These are **fire-and-forget** — they return immediately and cannot report a failure. To learn that a
+write was refused, listen for `space-state-error` / `user-state-error`, or use the JSON API.
+
+#### JSON space state
+
+Values are real JSON, not strings. `.` nests, so `game.score` is a path rather than a flat name.
+
+```js
+await scene.SpaceStateSet("game", { round: 2, board: [[0,1],[1,0]] });
+await scene.SpaceStateSet("game.round", 3);           // just that leaf
+await scene.SpaceStateMerge("game", { mode: "pvp" }); // keeps round + board
+
+await scene.SpaceStateGet("game.round");              // 3
+await scene.SpaceStateGetAll();                       // {revision, public, protected}
+scene.GetSpaceStateTree();                            // nested view of the local mirror
+
+await scene.SpaceStateDelete("game.board");           // removes the path AND everything under it
+await scene.SpaceStateSet("title", "Arena", { protected: true });
+```
+
+**`Set` replaces, `Merge` merges.** A bare object-set on the server merges into existing leaves, so
+`SpaceStateSet` clears the subtree first to give you real replace semantics; `SpaceStateMerge`
+exposes the merge behaviour under an honest name.
+
+#### JSON user state
+
+```js
+await scene.UserStateSet("team", "red");
+await scene.UserStateSet("loadout", { primary: "bow", ammo: 30 });
+await scene.UserStateGet("team");                     // your own
+await scene.UserStateGet("team", someUid);            // another participant's
+await scene.UserStateGetAll(someUid);
+await scene.UserStateDelete("loadout");
+
+// Let space moderators change this one too (default: only you can)
+await scene.UserStateSet("status", "afk", { moderatorsCanWrite: true });
+```
+
+Writes take no user id, because user state is owner-writes-only — the server derives the owner from
+the connection and ignores anything a client claims.
+
+#### Errors
+
+Every JSON call rejects with a `BSStateError` carrying the server's own code:
+
+```js
+try {
+    await scene.SpaceStateSet("title", "Arena", { protected: true });
+} catch (e) {
+    // e.code: "not_authorized" | "protected_path" | "invalid_path" |
+    //         "value_too_large" | "too_many_keys" | "rate_limited" | "timeout" | ...
+    console.warn(e.code, e.message, e.path);
+}
+```
+
+#### What "protected" means
+
+| | Space state | User state |
+|---|---|---|
+| Public | anyone in the room may write | you, and space moderators |
+| Protected | the world owner, or an Owner/Moderator of the community hosting it | **only you** — not even a moderator |
+
+Two things to keep in mind:
+
+- **Protection governs writing, never reading.** Protected values are in the snapshot every
+  participant receives. Never put a secret in one.
+- **Protecting a space-state key is permanent for the room** (its 24 h lifetime). The first
+  protected write to a key locks it, and a page cannot unprotect it.
+
+> Moderator-writable *user* state is accepted and namespaced now, but the server does not enforce
+> moderator writes yet — in practice every user prop is currently owner-only.
+
+#### Limits
+
+Keys may use `A-Z a-z 0-9 _ - @` and `.` to nest; anything else is encoded transparently, so a key
+with spaces or emoji still round-trips. Values are capped at 16 KB, a space at 2048 properties, and
+a participant at 64 props. Writes are coalesced and batched, so a tight loop of `SetPublicSpaceProps`
+is fine.
 
 ### Browser & Page Methods
 
@@ -816,6 +900,10 @@ scene.On("user-state-changed", (e) => {
 });
 ```
 
+`user.props` now populates for keys you have not seen before, and `oldValue` is the real previous
+value rather than always `null`. See `user-state` under [State Events](#state-events) for the same
+updates with real JSON values.
+
 ### Keyboard Events
 
 ```js
@@ -851,6 +939,49 @@ scene.On("space-state-changed", (e) => {
     });
 });
 ```
+
+#### JSON state events
+
+`space-state` and `user-state` carry the same updates with **real JSON values**, the full dotted
+path, and a `deleted` flag the string events cannot express. One shape, not two.
+
+```js
+scene.On("space-state", (e) => {
+    // e.detail: { revision, full, changes: [...] }
+    // `full` is true for a snapshot (on join, or after a page reload)
+    e.detail.changes.forEach(c => {
+        // c: { path, value, oldValue, scope: "public"|"protected", deleted }
+        console.log(c.path, "=", c.value, c.deleted ? "(deleted)" : "");
+    });
+});
+
+scene.On("user-state", (e) => {
+    // e.detail: { user, id, uid, full, changes: [{ path, value, oldValue, deleted }] }
+    console.log(e.detail.user.name, e.detail.changes);
+});
+
+// Also fired on the UserData itself
+someUser.On("state", (e) => console.log(e.detail.changes));
+```
+
+Values are mirrored on `scene.spaceStateJson.public` / `.protected` (real JSON, keyed by full
+dotted path) and on `user.state`. The string mirrors `scene.spaceState` and `user.props` are still
+maintained exactly as before.
+
+#### State errors
+
+The string-API writes are fire-and-forget, so refusals arrive out of band:
+
+```js
+scene.On("space-state-error", (e) => {
+    console.warn(e.detail.code, e.detail.key, e.detail.message);
+});
+scene.On("user-state-error", (e) => { /* same shape */ });
+```
+
+Common codes: `not_authorized` (not the owner/moderator), `protected_path` (that key is locked to
+protected writes), `invalid_path`, `value_too_large`, `too_many_keys`. `rate_limited` is handled for
+you — writes are retried automatically and never surface it.
 
 ```js
 
@@ -3305,17 +3436,25 @@ BS.AttachmentType.Back
 ### State Synchronization
 
 ```js
-// Set shared public state
+// Set shared public state (strings)
 scene.SetPublicSpaceProps({
     "gameScore": "100",
     "currentRound": "3"
 });
+
+// ...or as real JSON, with nesting and awaited errors
+await scene.SpaceStateSet("game", { score: 100, round: 3 });
 
 // Listen for changes
 scene.On("space-state-changed", (e) => {
     e.detail.changes.forEach(change => {
         console.log(change.property, "changed to", change.newValue);
     });
+});
+
+// Same updates, real values, with the full path and a delete flag
+scene.On("space-state", (e) => {
+    e.detail.changes.forEach(c => console.log(c.path, "=", c.value));
 });
 
 // Send message to all users
@@ -3437,6 +3576,9 @@ Event nodes start a graph's control flow when something happens in the space. Al
 |------|---------|
 | On One Shot | A one-shot network message arrived. Outputs `Data` |
 | On Space State Properties Changed | A space state property changed. Filter by `Property Name`; outputs `New Value` and whether it is a public property |
+| On Space State Value Changed | As above, plus the JSON value and a `Deleted` flag. Filter by `Path` (leave empty for all); outputs `Value`, `JSON`, `Is Public Property?`, `Deleted` |
+| On Space State Result | The outcome of a write you tagged with a `Request Id`. Outputs `Ok`, `Error`, `Path`, `JSON` |
+| On Space State Error | **Any** failed space-state write, including ones with no `Request Id` — the only way a `Set Space Prop` failure can reach a graph. Filter by `Property Name`; outputs `Code`, `Message` |
 
 **User events** (`Events > BS > User`)
 
@@ -3444,6 +3586,9 @@ Event nodes start a graph's control flow when something happens in the space. Al
 |------|---------|
 | On User Joined | A user joined the space. Outputs `User Info` (BSUser) |
 | On User Left | A user left the space. Outputs `User Info` (BSUser) |
+| On User State Value Changed | A participant's prop changed. Filter by `Key` (leave empty for all); outputs `Value`, `JSON`, `UserId`, `Is Local`, `Deleted` |
+| On User State Result | The outcome of a write you tagged with a `Request Id`. Outputs `Ok`, `Error`, `Key`, `JSON` |
+| On User State Error | **Any** failed user-state write, including uncorrelated ones. Filter by `Key`; outputs `Code`, `Message` |
 
 **Utility events** (`Events > BS > Utils`)
 
@@ -3518,7 +3663,10 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Is Space Favourited | Whether the local user favourited the space |
 | Load Quest Home | Load a Quest home environment |
 | Send a One Shot Message | Broadcast a one-shot network message |
-| Set Space State Property | Set a public/protected space state property |
+| Set Space State Property | Set a public/protected space state property (string value) |
+| Set Space State Value | Set a value at a dotted `Path`. `Value Is JSON?` switches the text between a plain string and parsed JSON, so numbers, booleans, arrays and objects all work. Optional `Request Id` correlates the result |
+| Delete Space State Value | Remove a `Path` **and everything under it** |
+| Get Space State Value | Read the local mirror. Outputs `Value`, `JSON`, `Exists`, `Is Public Property?` (no trigger — it is a pure value node) |
 | Set a Score on a Leaderboard | Write a score to a leaderboard |
 | Get the Current Leaderboard | Fetch leaderboard data |
 | Clear Scores on a Leaderboard | Clear a leaderboard |
@@ -3536,11 +3684,14 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 |------|---------|
 | Get User Info | Get info for a given user |
 | Get Local User Info | Get info for the local user |
-| Get User State | Request a user's state |
-| Get Local User State | Get the local user's state |
+| Get User State | A user's head position/rotation (despite the name — it is not a prop reader) |
+| Get Local User State | The local user's head position/rotation |
 | Get User Saved Value | Read a saved per-user value |
 | Set User Saved Value | Write a saved per-user value |
 | Remove User Saved Value | Delete a saved per-user value |
+| Set My User State Value | Set one of **your own** synced props. `Value Is JSON?` parses the text; `Moderators Can Write?` opens it to space moderators (default: only you). No user id — user state is owner-writes-only |
+| Delete My User State Value | Remove one of your own props |
+| Get User State Value | Read any participant's prop from the local mirror. `UserId Or Me` defaults to `"me"`; outputs `Value`, `JSON`, `Exists` |
 | Get Local User Language | Get the local user's language |
 | Get the voice volume of the Local User | Current microphone volume of the local user |
 | Add Force To Player | Apply a physics force to the player |
@@ -4038,6 +4189,16 @@ These keep the SDK running and are documented for completeness; spaces should no
 | `EnableLegacy()` | Switches on the legacy message pipeline for old spaces. |
 | `GetLegacyBanterScene()` | Returns the event target that legacy A-Frame messages are dispatched on. |
 | `SetProp(propType, props, id?)` | Shared implementation behind `SetPublicSpaceProps`, `SetProtectedSpaceProps` and `SetUserProps`. |
+| `SpaceStateGet(path)` | Read one dotted path; resolves `undefined` when absent. |
+| `SpaceStateGetAll()` | `{revision, public, protected}` — real JSON, keyed by full path. |
+| `SpaceStateSet(path, value, opts?)` | Replace the value at `path`. `opts.protected` writes the protected scope. |
+| `SpaceStateMerge(path, obj, opts?)` | Merge into `path`, leaving unnamed leaves alone. |
+| `SpaceStateDelete(path, opts?)` | Remove `path` and every descendant. |
+| `GetSpaceStateTree(scope?)` | Nested view of the local mirror. |
+| `UserStateGet(key, userId?)` | Read your own prop, or another participant's. |
+| `UserStateGetAll(userId?)` | Every prop of a participant. |
+| `UserStateSet(key, value, opts?)` | Set one of your own props. `opts.moderatorsCanWrite` opens it to moderators. |
+| `UserStateDelete(key, opts?)` | Remove one of your own props. |
 | `_t(eventName, props)` | Sends a telemetry event. |
 | `getUIMessageHandler()` | Returns the internal UI-system message handler. |
 | `getInstance()` | Deprecated alias of `GetInstance()`; logs a warning and forwards. |

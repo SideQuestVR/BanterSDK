@@ -249,6 +249,14 @@ namespace BS
                 {
                     scene.ScriptGraph(GetMsgData(msg, APICommands.SCRIPT_GRAPH), id);
                 }
+                else if (msg.StartsWith(APICommands.SPACE_STATE_OP))
+                {
+                    scene.SpaceStateOp(GetMsgData(msg, APICommands.SPACE_STATE_OP), id);
+                }
+                else if (msg.StartsWith(APICommands.USER_STATE_OP))
+                {
+                    scene.UserStateOp(GetMsgData(msg, APICommands.USER_STATE_OP), id);
+                }
                 else if (msg.StartsWith(APICommands.LIGHTING_DATA_GET))
                 {
                     scene.LightingDataGet(id);
@@ -892,6 +900,24 @@ namespace BS
         public void OnUserStateChanged(string data)
         {
             Send(APICommands.EVENT + APICommands.USER_STATE_CHANGED + MessageDelimiters.PRIMARY + data);
+        }
+
+        // The JSON surface. Callers pass an ALREADY base64-encoded payload so serialization stays
+        // with whoever owns the data, and so nothing here can meet an unescaped bus delimiter.
+
+        public void OnFullSpaceStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.FULL_SPACE_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnSpaceStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.SPACE_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnUserStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.USER_STATE_JSON + MessageDelimiters.PRIMARY + base64);
         }
 
         public void OnOneShot(string data, string fromId, bool fromAdmin)
