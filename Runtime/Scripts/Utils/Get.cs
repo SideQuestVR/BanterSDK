@@ -300,26 +300,41 @@ namespace BS
             {
                 head.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
                 await head.SendWebRequest();
-                // A failed HEAD returns null headers. This used to NullReference on the line below
-                // and surface as a generic bundle failure. The cache key just falls back to the URL
-                // alone, which is the same thing that happens when the host sends neither header.
-                var headers = head.result == UnityWebRequest.Result.Success
-                    ? head.GetResponseHeaders()
-                    : null;
-                if (headers == null)
+                // GetResponseHeader rather than indexing the GetResponseHeaders() dictionary:
+                // that dictionary compares keys ordinally, while HTTP field names are
+                // case-insensitive and HTTP/2 and HTTP/3 require them lowercase on the wire.
+                // Looking up "Last-Modified" in it therefore misses entirely against an h2 CDN,
+                // which silently reduces the cache key to the URL alone — and since that never
+                // changes, Unity's bundle cache can never be invalidated and a bundle
+                // republished to the same URL is never re-downloaded. The accessor is
+                // case-insensitive by contract, so it sees the header whatever the wire casing.
+                // A failed request simply yields nulls here rather than throwing.
+                string lastModified = head.GetResponseHeader("Last-Modified");
+                string etag = head.GetResponseHeader("ETag");
+
+                // Both are appended when both are present, in the original order, so a client
+                // whose header casing already matched keeps the exact hash it had. Preferring one
+                // would change every existing key and re-download every cached bundle once.
+                if (!string.IsNullOrWhiteSpace(lastModified))
                 {
-                    LogLine.Do("HEAD failed for " + url + " (" + head.error + ") — versioning bundle by URL only.");
+                    hash.Append(lastModified);
                 }
-                else
+                if (!string.IsNullOrWhiteSpace(etag))
                 {
-                    if (headers.ContainsKey("Last-Modified"))
-                    {
-                        hash.Append(headers["Last-Modified"]);
-                    }
-                    if (headers.ContainsKey("ETag"))
-                    {
-                        hash.Append(headers["ETag"]);
-                    }
+                    hash.Append(etag);
+                }
+
+                if (string.IsNullOrWhiteSpace(lastModified) && string.IsNullOrWhiteSpace(etag))
+                {
+                    // Every route to this point leaves the bundle keyed by URL alone and so pinned
+                    // in Unity's cache indefinitely. The previous log fired only when the header
+                    // dictionary was exactly null, hiding both the "responded, but with no
+                    // validators" and "responded in a casing we failed to match" cases — which is
+                    // precisely how this stays invisible.
+                    LogLine.Do("No cache validator for " + url + " (result=" + head.result +
+                               ", HTTP " + head.responseCode +
+                               (string.IsNullOrEmpty(head.error) ? "" : ", " + head.error) +
+                               ") — versioning bundle by URL only; a republish to this URL will not be picked up.");
                 }
             }
             using (UnityWebRequest web = UnityWebRequestAssetBundle.GetAssetBundle(url, hash))
