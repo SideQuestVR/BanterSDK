@@ -8,9 +8,11 @@ namespace BS
     /// lands in the same phase on all clients WITHOUT syncing any transforms.
     ///
     /// Source is the UTC wall clock — all devices agree when their clocks are NTP-synced (the usual case; a
-    /// badly-set device clock can be off by seconds). PacketParty exposes no shared server clock today; if one
-    /// ever does, set <see cref="ServerOffsetSeconds"/> so <see cref="NowSeconds"/> tracks it and every
-    /// consumer benefits without changes.
+    /// badly-set device clock can be off by seconds). A host app with a networked/server clock can tighten
+    /// that agreement by setting <see cref="ServerOffsetSeconds"/>, and every consumer benefits without
+    /// changes. Greenfield does this today: a bridge maps PacketParty's server-authoritative room clock onto
+    /// the offset (anchored on server WALL time, so the offset is only the device→server skew and syncing
+    /// never jumps the phase). When no such clock is available the offset stays 0 and this is plain UTC.
     /// </summary>
     public static class SyncedClock
     {
