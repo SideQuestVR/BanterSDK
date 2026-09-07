@@ -221,6 +221,7 @@
                 <ui:Label tabindex="-1" text="Kit Bundle: " name="ConfirmKitBundle" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
                 <ui:Label tabindex="-1" text="Kit Bundle ID: " name="ConfirmKitBundleID" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
                 <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
+                <ui:Label tabindex="-1" text="" name="ConfirmSyncedGraphs" parse-escape-sequences="true" display-tooltip-when-elided="true" style="display: none; margin-left: 0; margin-top: 12px; margin-right: 30px; font-size: 14px; white-space: normal; color: rgb(255, 196, 87);" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
                 <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelBuild" class="" style="margin-top: 8px; margin-bottom: 8px;" />

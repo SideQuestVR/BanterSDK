@@ -26,7 +26,7 @@ namespace BS
         {
             switch (sub)
             {
-                case "list": return List();
+                case "list": return List(payloadJson);
                 case "open": return Open(payloadJson);
                 case "ops": return Ops(payloadJson);
                 case "save": return Save(payloadJson);
@@ -45,9 +45,25 @@ namespace BS
             }
         }
 
-        string List()
+        class ListBody
         {
-            var machines = MachineDirectory.AllMachines().Select(MachineDirectory.Describe).ToList();
+            /// <summary>
+            /// Include each machine's current graph hash. Off by default and deliberately so:
+            /// computing one means serializing the whole graph, and the picker polls this list.
+            /// Only the load-time override check needs the hashes, and it asks once.
+            /// </summary>
+            public bool withRefs;
+        }
+
+        string List(string payloadJson)
+        {
+            var body = string.IsNullOrEmpty(payloadJson)
+                ? null
+                : JsonConvert.DeserializeObject<ListBody>(payloadJson);
+
+            var machines = MachineDirectory.AllMachines()
+                .Select(m => MachineDirectory.Describe(m, body != null && body.withRefs))
+                .ToList();
             return JsonConvert.SerializeObject(new { machines });
         }
 

@@ -114,6 +114,7 @@ public class BuilderWindow : EditorWindow
     Label confirmBuildMode;
     Label confirmSceneFile;
     Label confirmSpaceCode;
+    Label confirmSyncedGraphs;
     Label confirmKitBundle;
     Label confirmKitBundleID;
     Label confirmKitNumber;
@@ -960,6 +961,7 @@ public class BuilderWindow : EditorWindow
         confirmKitBundle = rootVisualElement.Q<Label>("ConfirmKitBundle");
         confirmKitBundleID = rootVisualElement.Q<Label>("ConfirmKitBundleID");
         confirmKitNumber = rootVisualElement.Q<Label>("ConfirmKitNumber");
+        confirmSyncedGraphs = rootVisualElement.Q<Label>("ConfirmSyncedGraphs");
 
         deleteConfirm = rootVisualElement.Q<VisualElement>("DeleteConfirm");
 
@@ -1010,7 +1012,13 @@ public class BuilderWindow : EditorWindow
             int idx = worldDropdown.index;
             selectedWorld = (idx >= 0 && idx < worlds.Count) ? worlds[idx] : null;
             if (selectedWorld != null)
+            {
                 ProjectPrefs.SetString("BanterBuilder_selectedWorldId", selectedWorld.WorldId.ToString());
+                // Record the choice on the scene as well as in project prefs: the prefs entry is
+                // one value for the whole project, while the runtime-override tooling needs to know
+                // which world THIS scene publishes to.
+                WorldLinkStamp.StampIfOpen(scenePath, selectedWorld.WorldId, selectedWorld.Slug);
+            }
             UpdateWorldUrlLabel();
         });
 
@@ -1511,6 +1519,7 @@ public class BuilderWindow : EditorWindow
         // BuildAssetBundles). A leaked lock would wedge script recompilation until an editor restart.
         try
         {
+            uploadHadFailure = false;
             BeginUploadProgress(4);
             // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
             // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
@@ -1520,6 +1529,15 @@ public class BuilderWindow : EditorWindow
             yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
             yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
             yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+
+            // Only now that the world itself is up: the runtime overrides we are about to drop are
+            // only redundant because the scene that just shipped contains them.
+            if (!uploadHadFailure)
+                yield return RuntimeOverridePrune.Run(sq, selectedWorld?.WorldId, SelectedWorldSlug,
+                                                      msg => status.AddStatus(msg));
+            else
+                status.AddStatus("Skipping runtime-override cleanup — part of the upload failed.");
+
             EndUploadProgress("Upload complete");
         }
         finally
@@ -1527,6 +1545,9 @@ public class BuilderWindow : EditorWindow
             callback?.Invoke();
         }
     }
+
+    /// <summary>Set by UploadWorldFile; read by UploadEverything's post-upload cleanup.</summary>
+    private bool uploadHadFailure;
 
     private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null, Action<float> onProgress = null)
     {
@@ -1577,6 +1598,10 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("Uploaded " + file + " to " + baseUrl + "/" + name);
         }, e =>
         {
+            // Recorded as well as logged: an upload step failing does not throw, so without this
+            // flag the post-upload cleanup would run on a half-uploaded world and drop runtime
+            // overrides the world does not actually contain yet.
+            uploadHadFailure = true;
             status.AddStatus("FAILED UPLOADING " + file + " to " + baseUrl + "/" + name);
             Debug.LogException(e);
         }, type, platform, onProgress);
@@ -1945,7 +1970,10 @@ public class BuilderWindow : EditorWindow
             // the displayed string actually changes, which isn't guaranteed on a refresh.
             selectedWorld = idx >= 0 ? worlds[idx] : null;
             if (selectedWorld != null)
+            {
                 ProjectPrefs.SetString("BanterBuilder_selectedWorldId", selectedWorld.WorldId.ToString());
+                WorldLinkStamp.StampIfOpen(scenePath, selectedWorld.WorldId, selectedWorld.Slug);
+            }
             if (worlds.Count == 0)
                 worldDropdown.value = "No worlds — create one";
             UpdateWorldUrlLabel();
@@ -2000,6 +2028,13 @@ public class BuilderWindow : EditorWindow
         confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".worldspace.host") : SelectedWorldUrl);
         confirmKitNumber.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
         confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
+
+        // Runtime graph edits that this project has already absorbed. Worth saying out loud here
+        // because the upload is what makes removing them from the world safe, and removing them is
+        // not obviously part of "upload a world".
+        var syncedNote = mode == BSBuilderBundleMode.Scene ? RuntimeOverridePrune.ConfirmationLine() : null;
+        confirmSyncedGraphs.style.display = syncedNote == null ? DisplayStyle.None : DisplayStyle.Flex;
+        confirmSyncedGraphs.text = syncedNote ?? "";
     }
    void AddRemoveFlexaHead()
     {

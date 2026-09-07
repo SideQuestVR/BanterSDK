@@ -19,6 +19,7 @@ class CustomSceneProcessor : IProcessSceneWithReport
 
     public void OnProcessScene(UnityEngine.SceneManagement.Scene scene, BuildReport report)
     {
+        StripWorldLink(scene);
 #if !GREENFIELD_PROJECT
         // Strip any authoring-time BSStarterUpper from every space bundle — raw AND .bee. It's
         // re-added at runtime by the bootstrap; if one ships in the bundle its Awake fires on scene load
@@ -52,6 +53,23 @@ class CustomSceneProcessor : IProcessSceneWithReport
             ApplyPlatformFilters(scene, report);
         }
 #endif
+    }
+
+    // The scene<->world link is authoring data with no runtime meaning. Its holder is tagged
+    // EditorOnly, which already keeps it out of builds -- this runs unguarded, on the build copy,
+    // so that a link someone re-tagged or reparented cannot ship either. It is not gated on the
+    // greenfield defines because there is no build of any kind that wants this object in it.
+    static void StripWorldLink(UnityEngine.SceneManagement.Scene scene)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (BSWorldLink link in root.GetComponentsInChildren<BSWorldLink>(true))
+            {
+                if (link == null) continue;
+                if (link.gameObject.name == BSWorldLink.HolderName) GameObject.DestroyImmediate(link.gameObject);
+                else GameObject.DestroyImmediate(link);
+            }
+        }
     }
 
 #if !GREENFIELD_PROJECT

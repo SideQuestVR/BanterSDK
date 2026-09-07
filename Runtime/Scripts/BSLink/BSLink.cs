@@ -249,6 +249,10 @@ namespace BS
                 {
                     scene.ScriptGraph(GetMsgData(msg, APICommands.SCRIPT_GRAPH), id);
                 }
+                else if (msg.StartsWith(APICommands.PERSIST_FILE))
+                {
+                    scene.PersistFile(GetMsgData(msg, APICommands.PERSIST_FILE), id);
+                }
                 else if (msg.StartsWith(APICommands.SPACE_STATE_OP))
                 {
                     scene.SpaceStateOp(GetMsgData(msg, APICommands.SPACE_STATE_OP), id);

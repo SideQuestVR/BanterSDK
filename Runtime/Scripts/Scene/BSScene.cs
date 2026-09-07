@@ -519,6 +519,97 @@ namespace BS
 #endif
         }
 
+        /// <summary>
+        /// The prefix every page-written file carries. It is applied HERE rather than by the
+        /// caller, and that is the whole security model of this command: combined with the forced
+        /// .json extension below, a page can never aim a write at index.html, script.js or
+        /// world.asset, whatever it passes as a name.
+        /// </summary>
+        public const string PERSIST_FILE_PREFIX = "__persisted_";
+
+        /// <summary>
+        /// The extension is forced, and it must be this one. The API's Extra-asset validator
+        /// accepts only a closed list of extensions and rejects an extension-less name outright,
+        /// and 'json' is the only entry on that list that describes what we actually store.
+        /// </summary>
+        const string PERSIST_FILE_EXTENSION = ".json";
+
+        /// <summary>Max characters of caller-supplied name, before the prefix and extension.</summary>
+        const int PERSIST_FILE_MAX_NAME = 80;
+
+        /// <summary>
+        /// Reduce a caller's name to the characters that can only ever produce a file inside our
+        /// own namespace. Anything else is dropped rather than escaped — a name is an identifier
+        /// here, not user-visible text, so silently losing a '/' is preferable to inventing an
+        /// encoding that a later reader has to know about.
+        /// </summary>
+        public static string SanitisePersistFileName(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return null;
+            var sb = new System.Text.StringBuilder(Math.Min(name.Length, PERSIST_FILE_MAX_NAME));
+            foreach (var c in name)
+            {
+                if (sb.Length >= PERSIST_FILE_MAX_NAME) break;
+                var ok = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+                      || (c >= '0' && c <= '9') || c == '_' || c == '-';
+                if (ok) sb.Append(c);
+            }
+            if (sb.Length == 0) return null;
+            return PERSIST_FILE_PREFIX + sb + PERSIST_FILE_EXTENSION;
+        }
+
+        public void PersistFile(string msg, int reqId)
+        {
+            var parts = msg.Split(MessageDelimiters.SECONDARY, 2);
+            var sub = parts[0];
+            var payloadB64 = parts.Length > 1 ? parts[1] : "";
+            // Deferred reply in the ScriptGraph/YtInfo style: the work is an authenticated HTTP
+            // round trip through the client, so the reply cannot be sent inline.
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+            {
+                string reply;
+                try
+                {
+                    var payload = payloadB64.Length > 0
+                        ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payloadB64))
+                        : "{}";
+                    var body = Newtonsoft.Json.JsonConvert.DeserializeObject<PersistFilePayload>(payload)
+                               ?? new PersistFilePayload();
+
+                    var needsName = sub == "set" || sub == "get" || sub == "remove";
+                    var name = needsName ? SanitisePersistFileName(body.name) : "";
+                    if (needsName && name == null)
+                    {
+                        reply = Newtonsoft.Json.JsonConvert.SerializeObject(
+                            PersistFileResult.Unavailable("'" + body.name + "' has no usable characters for a file name"));
+                    }
+                    else
+                    {
+                        var result = await data.PersistFile(new PersistFileRequest
+                        {
+                            Op = sub,
+                            Name = name,
+                            Data = body.data,
+                        });
+                        reply = Newtonsoft.Json.JsonConvert.SerializeObject(result ?? PersistFileResult.Unavailable("no result"));
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[Banter] PersistFile '" + sub + "' failed: " + e);
+                    reply = "{\"ok\":false,\"error\":" + Newtonsoft.Json.JsonConvert.ToString(e.Message) + "}";
+                }
+                var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply));
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.PERSIST_FILE + MessageDelimiters.SECONDARY + replyB64);
+            }, $"{nameof(BSScene)}.{nameof(PersistFile)}"));
+        }
+
+        class PersistFilePayload
+        {
+            public string name;
+            public string data;
+        }
+
         public void LightingDataGet(int reqId)
         {
             // The reply is DEFERRED into the main-thread task: the payload comes from

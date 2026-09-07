@@ -30,6 +30,14 @@ namespace BS
         public int unitCount;
         public bool blocked;
         public bool paused;
+
+        /// <summary>
+        /// Content hash of the machine's current graph, in the same form an envelope's
+        /// baseGraphRef takes — so a saved override can be told apart from one whose base has
+        /// since changed. Null unless the caller asked for it: producing one serializes the whole
+        /// graph, which is far too expensive for the list the picker polls.
+        /// </summary>
+        public string graphRef;
     }
 
     public static class MachineDirectory
@@ -59,11 +67,14 @@ namespace BS
             return System.Array.IndexOf(machine.GetComponents<ScriptMachine>(), machine);
         }
 
-        public static MachineDescriptor Describe(ScriptMachine machine)
+        public static MachineDescriptor Describe(ScriptMachine machine) => Describe(machine, false);
+
+        public static MachineDescriptor Describe(ScriptMachine machine, bool withGraphRef)
         {
             var graph = machine.graph;
             return new MachineDescriptor
             {
+                graphRef = withGraphRef ? GraphRef(machine) : null,
                 bid = machine.GetComponent<BSObjectId>()?.Id ?? "",
                 machineIndex = MachineIndex(machine),
                 objectName = machine.gameObject.name,
@@ -75,6 +86,35 @@ namespace BS
                 blocked = graph != null && IsBlockedQuiet(graph),
                 paused = machine.GraphPaused,
             };
+        }
+
+        /// <summary>
+        /// The machine's current graph as a content hash, comparable with an envelope's
+        /// baseGraphRef. Serializes a CLONE, never the live graph - the machine is running.
+        /// </summary>
+        static string GraphRef(ScriptMachine machine)
+        {
+            var graph = machine.graph;
+            if (graph == null) return null;
+            ScriptGraphAsset asset = null;
+            try
+            {
+                asset = ScriptableObject.CreateInstance<ScriptGraphAsset>();
+                asset.hideFlags = HideFlags.DontSave;
+                asset.graph = ScriptGraphSession.CloneGraph(graph);
+                return ScriptGraphSession.HashRef(((object)asset).Serialize(true).json);
+            }
+            catch (System.Exception e)
+            {
+                // Not fatal: a machine whose hash cannot be taken simply cannot be staleness-checked,
+                // and the caller treats a missing hash as "cannot tell" rather than as "stale".
+                Debug.LogWarning($"[Banter] Could not hash the graph on '{machine.gameObject.name}': {e.Message}");
+                return null;
+            }
+            finally
+            {
+                if (asset != null) Object.DestroyImmediate(asset);
+            }
         }
 
         /// <summary>

@@ -193,6 +193,12 @@ public class APICommands
     // unescaped bus delimiters.
     public const string SCRIPT_GRAPH = "!sg!";
 
+    // Per-world persisted files (Shane's Editor scene + script-graph overrides). One command,
+    // subcommand-multiplexed, base64(UTF-8 JSON) both ways for the same delimiter reason as
+    // SCRIPT_GRAPH. Writes need the signed-in user's token, which the SDK does not have, so the
+    // work is delegated out through BSScene.data (DataBridge).
+    public const string PERSIST_FILE = "!pf!";
+
     // Asset System
     public const string ASSET_REGISTERED = "!ar!";
     public const string ASSET_LOADED = "!al!";

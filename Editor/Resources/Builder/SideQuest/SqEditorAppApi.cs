@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
@@ -32,7 +32,14 @@ namespace BS.SDKEditor
         Js = 3,
         // A single platform-agnostic combined bundle (world.asset). Attached to a world with platform 0
         // (Any) via /v2/worlds/{id}/assets/type/4/platform/0 (see AttachToWorld).
-        WorldAsset = 4
+        WorldAsset = 4,
+
+        // Arbitrary named file attached to the world and served at {slug}.worldspace.host/{name}.
+        // The ONLY type keyed by name — every other type is a single slot per world, so attaching
+        // two files under one of them silently destroys the first (and deletes its stored bytes).
+        // The API also restricts these names to a closed list of extensions and rejects any name
+        // without one.
+        Extra = 99
     }
 
     public enum UploadAssetTypePlatform
