@@ -51,6 +51,8 @@ public class APICommands
     public const string SPACE_STATE_OP = "!sso!";
     /// <summary>JSON user-state op (request/response). Same encoding as SPACE_STATE_OP.</summary>
     public const string USER_STATE_OP = "!uso!";
+    /// <summary>JSON progression op (request/response): fire a world-bound XP hook, read my progression. Same encoding as SPACE_STATE_OP.</summary>
+    public const string PROGRESSION_OP = "!pgo!";
     public const string TELEPORT = "!t!";
     public const string ATTACH = "!at!";
     public const string DETACH = "!dt!";

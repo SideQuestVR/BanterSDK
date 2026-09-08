@@ -813,6 +813,63 @@ namespace BS
             EnqueueStateOp(request);
         }
 
+        /// <summary>Route a page's <c>!pgo!</c> request. Same "sub§base64(JSON)" encoding as the state ops.</summary>
+        public void ProgressionOp(string msg, int reqId)
+        {
+            var parts = (msg ?? "").Split(MessageDelimiters.SECONDARY, 2);
+            var sub = parts[0];
+            var payloadB64 = parts.Length > 1 ? parts[1] : "";
+            string body;
+            try
+            {
+                body = payloadB64.Length > 0
+                    ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payloadB64))
+                    : "{}";
+            }
+            catch (Exception)
+            {
+                SendError(reqId, "PROGRESSION_OP: malformed payload");
+                return;
+            }
+            var request = new BSHostRequest(APICommands.PROGRESSION_OP, reply =>
+            {
+                var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply ?? "{}"));
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY
+                          + APICommands.PROGRESSION_OP + MessageDelimiters.SECONDARY + replyB64);
+            })
+            {
+                Op = sub,
+                Json = body
+            };
+            EnqueueHostOp(events.OnProgressionRequest, request);
+        }
+
+        /// <summary>
+        /// Hand a host op to the app on the main thread; answered with app_unavailable when nothing
+        /// listens so the page promise always settles. Generic sibling of EnqueueStateOp.
+        /// </summary>
+        public void EnqueueHostOp(UnityEvent<BSHostRequest> target, BSHostRequest request)
+        {
+            if (request == null) return;
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                try
+                {
+                    target?.Invoke(request);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("[Banter] Host op '" + request.Command + ":" + request.Op + "' failed: " + e);
+                    request.Respond("{\"ok\":false,\"error\":\"internal_error\"}");
+                    return;
+                }
+                if (!request.Handled)
+                {
+                    request.Respond("{\"ok\":false,\"error\":\"app_unavailable\"}");
+                }
+            }, $"{nameof(BSScene)}.{nameof(EnqueueHostOp)}"));
+        }
+
         /// <summary>
         /// Hand a state op to the host app on the main thread. When nothing is listening the request
         /// is answered anyway, so a page promise always settles rather than hanging for ever.

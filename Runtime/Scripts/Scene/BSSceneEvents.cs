@@ -94,6 +94,11 @@ public class BSSceneEvents
     /// answers. See <see cref="BSStateRequest"/>.
     /// </summary>
     public UnityEvent<BSStateRequest> OnStateRequest = new UnityEvent<BSStateRequest>();
+    /// <summary>
+    /// A progression op from a page (fire a world-bound XP hook, read my progression). Same
+    /// op-object contract as OnStateRequest: the handler sets Handled synchronously and replies.
+    /// </summary>
+    public UnityEvent<BSHostRequest> OnProgressionRequest = new UnityEvent<BSHostRequest>();
 
     public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
 
@@ -143,6 +148,7 @@ public class BSSceneEvents
     {
         // Stop Event Listeners
         OnStateRequest.RemoveAllListeners();
+        OnProgressionRequest.RemoveAllListeners();
         OnSetUserProps.RemoveAllListeners();
         OnLoad.RemoveAllListeners();
         OnDomReady.RemoveAllListeners();
