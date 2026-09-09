@@ -50,6 +50,11 @@ public class BSSceneEvents
     public UnityEvent<string> OnMenuBrowserMessage = new UnityEvent<string>();
     public UnityEvent OnSceneReset = new UnityEvent();
     public UnityEvent<string> OnLoadUrl = new UnityEvent<string>();
+    /// <summary>
+    /// The space at the given URL produced nothing (see <see cref="MissingWorldFallback"/>) and the
+    /// scene is now loading the missing-world fallback instead. Argument: the URL that was asked for.
+    /// </summary>
+    public UnityEvent<string> OnMissingWorldFallback = new UnityEvent<string>();
     public UnityEvent<string, string, bool> OnJsCallbackRecieved = new UnityEvent<string, string, bool>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnGuestAvatarSet = new UnityEvent<string, string>();
@@ -186,6 +191,7 @@ public class BSSceneEvents
         OnMenuBrowserMessage.RemoveAllListeners();
         OnSceneReset.RemoveAllListeners();
         OnLoadUrl.RemoveAllListeners();
+        OnMissingWorldFallback.RemoveAllListeners();
         OnJsCallbackRecieved.RemoveAllListeners();
         OnLightingData.RemoveAllListeners();
         OnTakeOwnership.RemoveAllListeners();
