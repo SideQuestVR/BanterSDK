@@ -28,10 +28,12 @@ p { margin: 16px; }
   var SPAWN        = __SPAWN__;   // [x, y, z, yawDegrees] - the SpawnPoint the world will use.
 
   // Layout, all relative to the spawn point and its facing. Tune here.
-  var DISTANCE      = 2.5;   // metres in front of the spawn point
-  var BROWSER_Y     = 1.4;   // browser panel centre height
-  var LABEL_Y       = 2.25;  // label centre height (above the browser)
-  var BROWSER_SCALE = 1.5;   // panel is 1280x720 px at 1300 px/m; 1.5 => ~1.5 m wide
+  var DISTANCE      = 3;     // metres in front of the spawn point
+  var BROWSER_Y     = 1.5;   // browser panel centre height
+  var LABEL_Y       = 2.45;  // label centre height (just above the browser top edge)
+  var BROWSER_SCALE = 2.5;   // panel is 1280x720 px at 1300 px/m; 2.5 => ~2.5 m wide
+  var LABEL_SIZE    = 1;     // TMP font size (~0.1 m glyphs)
+  var LABEL_WIDTH   = 5;     // wrap width in metres - wide enough for one line
 
   var built = false;
   function build() {
@@ -64,7 +66,7 @@ p { margin: 16px; }
       })
       .AddComponent(new BS.Text(MESSAGE, new BS.Vector4(1, 1, 1, 1),
         BS.HorizontalAlignment.Center, BS.VerticalAlignment.Center,
-        2.5, true, true, new BS.Vector2(3, 1)))
+        LABEL_SIZE, true, true, new BS.Vector2(LABEL_WIDTH, 0.6)))
       .catch(function (e) { console.error("[MissingWorld] label", e); });
 
     // The address the user asked for, opened in an interactive in-world browser.

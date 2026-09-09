@@ -103,8 +103,8 @@ namespace BS
 #endif
         /// <summary>SpawnPoint (x, y, z, yaw degrees) used inside the fallback world; the browser and label are placed relative to it.</summary>
         public static Vector4 MissingWorldSpawnPoint = Vector4.zero;
-        /// <summary>Label above the in-world browser. {0} is the URL the user asked for (rich text; angle brackets are stripped from the URL).</summary>
-        public static string MissingWorldLabelFormat = "We couldn't find a world at\n<b>{0}</b>\nso we've opened it in this browser instead.";
+        /// <summary>Label above the in-world browser. {0} (unused by default) is the URL the user asked for (rich text; angle brackets are stripped from the URL).</summary>
+        public static string MissingWorldLabelFormat = "We couldn't find that world, so we opened the browser instead.";
         /// <summary>Loading-cage detail line while the fallback world loads.</summary>
         public static string MissingWorldLoadingStatus = "That world doesn't exist - opening it in a browser instead...";
         #endregion
