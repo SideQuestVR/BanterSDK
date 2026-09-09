@@ -772,16 +772,33 @@ namespace BS
 
         }
 
-        public async Task LoadUrl(string url)
+        /// <summary>
+        /// Navigate the space browser and wait for the page to declare SCENE_READY (or fail —
+        /// LOAD_FAILED sorts above SCENE_READY). <paramref name="abortWhen"/> lets the caller stop
+        /// waiting early: without it a page that never reaches SCENE_READY (a 404, a plain web
+        /// page, a DNS failure whose error-page redirect then overwrote LOAD_FAILED with DOM_READY)
+        /// parks this await forever.
+        /// </summary>
+        public async Task LoadUrl(string url, Func<bool> abortWhen = null)
         {
-            LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + url);
+            LogLine.Do(LogLine.banterColor, LogTag.Banter, "Loading URL: " + DescribeUrlForLog(url));
             pipe.view.LoadUrl(url);
             // pipe.Send(APICommands.LOAD_URL + MessageDelimiters.PRIMARY + url);
             scene.state = SceneState.NONE;
             // LogLine.Do(LogLine.banterColor, LogTag.Banter, "Before WaitUntil SCENE_READY");
-            await new WaitUntil(() => scene.state >= SceneState.SCENE_READY);
+            await new WaitUntil(() => scene.state >= SceneState.SCENE_READY || (abortWhen?.Invoke() ?? false));
             // LogLine.Do(LogLine.banterColor, LogTag.Banter, "After WaitUntil SCENE_READY");
             scene.SetLoaded();
+        }
+
+        /// <summary>data: URLs (the missing-world fallback page) are kilobytes of base64 — keep the log line readable.</summary>
+        public static string DescribeUrlForLog(string url)
+        {
+            if (url != null && url.StartsWith("data:") && url.Length > 60)
+            {
+                return url.Substring(0, 40) + "...(" + url.Length + " chars)";
+            }
+            return url;
         }
 
 

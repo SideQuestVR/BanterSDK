@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html hide-space-info>
+<head>
+<meta charset="utf-8">
+<title>World not found</title>
+<style>
+html, body { margin: 0; background: #0f1216; color: #cfd8e3; font: 16px/1.4 system-ui, sans-serif; }
+p { margin: 16px; }
+</style>
+</head>
+<body>
+<p>World not found. Opening the address in a browser inside the fallback world...</p>
+<!--
+  Missing-world fallback page. BS.MissingWorldPage fills the placeholders below and hands the
+  result to the space browser as a data: URL. The Banter SDK (window.BS) is injected by the browser
+  itself, like on every other page - do NOT inline it here, a second copy would run a second scene
+  and a second "nothing loaded" timer.
+
+  Rules that keep the Unity side intact: no embedded frames, no fragment or history navigation -
+  the browser reports every navigation (sub-frame or same-document included) as a page load, and
+  each one resets the Unity scene.
+-->
+<script>
+(function () {
+  var ORIGINAL_URL = __ORIGINAL_URL__;
+  var WORLD_ASSET  = __WORLD_ASSET__;
+  var MESSAGE      = __MESSAGE__;
+  var SPAWN        = __SPAWN__;   // [x, y, z, yawDegrees] - the SpawnPoint the world will use.
+
+  // Layout, all relative to the spawn point and its facing. Tune here.
+  var DISTANCE      = 2.5;   // metres in front of the spawn point
+  var BROWSER_Y     = 1.4;   // browser panel centre height
+  var LABEL_Y       = 2.25;  // label centre height (above the browser)
+  var BROWSER_SCALE = 1.5;   // panel is 1280x720 px at 1300 px/m; 1.5 => ~1.5 m wide
+
+  var built = false;
+  function build() {
+    if (built) return;
+    built = true;
+    var BS = window.BS;
+    var scene = BS.Scene.GetInstance();
+
+    if (SPAWN[0] || SPAWN[1] || SPAWN[2] || SPAWN[3]) {
+      var settings = new BS.SceneSettings();
+      settings.SpawnPoint = new BS.Vector4(SPAWN[0], SPAWN[1], SPAWN[2], SPAWN[3]);
+      scene.SetSettings(settings);
+    }
+
+    var yaw = SPAWN[3] * Math.PI / 180;
+    var fx = Math.sin(yaw) * DISTANCE;
+    var fz = Math.cos(yaw) * DISTANCE;
+    var facing = new BS.Vector3(0, SPAWN[3], 0);
+
+    // The fallback world itself: one combined scene bundle, same file for every platform.
+    new BS.GameObject({ name: "MissingWorld" })
+      .AddComponent(new BS.AssetBundle(WORLD_ASSET, WORLD_ASSET, WORLD_ASSET, WORLD_ASSET, WORLD_ASSET, WORLD_ASSET, true, false))
+      .catch(function (e) { console.error("[MissingWorld] world bundle", e); });
+
+    // Explanation above the browser.
+    new BS.GameObject({
+        name: "MissingWorldLabel",
+        localPosition: new BS.Vector3(SPAWN[0] + fx, SPAWN[1] + LABEL_Y, SPAWN[2] + fz),
+        localEulerAngles: facing
+      })
+      .AddComponent(new BS.Text(MESSAGE, new BS.Vector4(1, 1, 1, 1),
+        BS.HorizontalAlignment.Center, BS.VerticalAlignment.Center,
+        2.5, true, true, new BS.Vector2(3, 1)))
+      .catch(function (e) { console.error("[MissingWorld] label", e); });
+
+    // The address the user asked for, opened in an interactive in-world browser.
+    new BS.GameObject({
+        name: "MissingWorldBrowser",
+        localPosition: new BS.Vector3(SPAWN[0] + fx, SPAWN[1] + BROWSER_Y, SPAWN[2] + fz),
+        localEulerAngles: facing,
+        localScale: new BS.Vector3(BROWSER_SCALE, BROWSER_SCALE, BROWSER_SCALE)
+      })
+      .AddComponent(new BS.Browser(ORIGINAL_URL, 4, 1200, 1280, 720))
+      .catch(function (e) { console.error("[MissingWorld] browser", e); });
+  }
+
+  // On desktop the SDK is injected after the document finishes loading, so this inline script
+  // usually runs first and waits for the (latched) bs-loaded event. If the SDK is already here
+  // (other platforms may inject earlier), build straight away.
+  if (window.BS && window.BS.Scene) build();
+  else window.addEventListener("bs-loaded", build);
+})();
+</script>
+</body>
+</html>

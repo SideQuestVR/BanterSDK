@@ -75,10 +75,44 @@ namespace BS
         //private static BlockingCollection<BSComponentPropertyUpdate> _propertyUpdateQueue = new BlockingCollection<BSComponentPropertyUpdate>();
         ConcurrentDictionary<int, UnityAndBanterObject> objects = new ConcurrentDictionary<int, UnityAndBanterObject>();
         ConcurrentDictionary<int, BSComponent> banterComponents = new ConcurrentDictionary<int, BSComponent>();
+        /// <summary>Objects registered for the current load (JS-created or Unity-side BSObjectId). Cleared by ResetScene.</summary>
+        public int RegisteredObjectCount => objects.Count;
+        /// <summary>Components registered for the current load. Cleared by ResetScene.</summary>
+        public int RegisteredComponentCount => banterComponents.Count;
+        /// <summary>Has this load produced anything at all? The missing-world fallback keys off this.</summary>
+        public bool HasRegisteredContent => !objects.IsEmpty || !banterComponents.IsEmpty;
         public static string ORIGINAL_HOME_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string ONBOARDING_SPACE = "https://welcome.bant.ing";
+
+        #region Missing-world fallback configuration
+        /// <summary>Scene bundle loaded when a URL turns out not to be a world. One combined file for every platform.</summary>
+        public static string MISSING_WORLD_ASSET_URL = "https://cdn.sidequestvr.com/file/4575154/world.asset";
+        /// <summary>
+        /// Master switch. Scene bundles only load in Greenfield builds (see BSAssetBundle.SetupBundle),
+        /// so the fallback would be an empty void anywhere else.
+        /// </summary>
+#if GREENFIELD_PROJECT
+        public static bool EnableMissingWorldFallback = true;
+#else
+        public static bool EnableMissingWorldFallback = false;
+#endif
+        /// <summary>Treat a page that reached SCENE_READY with nothing registered (after the empty-scene grace) as missing too.</summary>
+        public static bool MissingWorldFallbackOnEmptyScene = true;
+        /// <summary>
+        /// How long a page may go without constructing the SDK scene before it is declared "not a
+        /// world" (404 pages, plain web sites). Pages that did construct the scene are never timed
+        /// out here - their own empty-scene grace or the JS 4:20 cancel handles them.
+        /// </summary>
+        public static float MissingWorldTimeoutSeconds = 20f;
+        /// <summary>SpawnPoint (x, y, z, yaw degrees) used inside the fallback world; the browser and label are placed relative to it.</summary>
+        public static Vector4 MissingWorldSpawnPoint = Vector4.zero;
+        /// <summary>Label above the in-world browser. {0} is the URL the user asked for (rich text; angle brackets are stripped from the URL).</summary>
+        public static string MissingWorldLabelFormat = "We couldn't find a world at\n<b>{0}</b>\nso we've opened it in this browser instead.";
+        /// <summary>Loading-cage detail line while the fallback world loads.</summary>
+        public static string MissingWorldLoadingStatus = "That world doesn't exist - opening it in a browser instead...";
+        #endregion
 
         public bool externalLoadFailed;
         public BSLink link;
@@ -106,6 +140,16 @@ namespace BS
         // (config fetch, world.asset probe) to land its first component; short enough that a
         // genuinely empty page still opens instead of hanging until the 4:20 NOTHING cancel.
         const float EmptySceneGraceSeconds = 5f;
+        // Missing-world fallback bookkeeping for the current load. Set in LoadUrlInternal's
+        // synchronous prefix, so a fallback can never be mistaken for the load it replaced.
+        bool isFallbackWorld;
+        string fallbackOriginalUrl;
+        float lastCancelAt = -1f;
+        bool lastCancelWasUser;
+        /// <summary>True while the missing-world fallback page is the loaded space.</summary>
+        public bool IsFallbackWorld => isFallbackWorld;
+        /// <summary>The URL the user asked for when the fallback was taken; null otherwise. CurrentUrl also keeps that URL.</summary>
+        public string FallbackOriginalUrl => fallbackOriginalUrl;
         /// <summary>
         /// Optional app gate. After a load finishes, the loading cage is held open-pending until this
         /// predicate returns true (e.g. wait for networking to connect). Null (default) opens the cage
@@ -1076,6 +1120,27 @@ namespace BS
         public bool HasLoadFailed()
         {
             return (loadUrlTaskCompletionSource?.Task.IsCanceled ?? false) || (loadUrlTaskCompletionSource?.Task.IsFaulted ?? false) || externalLoadFailed;
+        }
+        /// <summary>A newer LoadUrl has replaced the load that owns <paramref name="tcs"/>.</summary>
+        bool IsSuperseded(TaskCompletionSource<bool> tcs)
+        {
+            return !ReferenceEquals(loadUrlTaskCompletionSource, tcs);
+        }
+        /// <summary>Feed the live load state into the pure missing-world decision.</summary>
+        MissingWorldReason EvaluateMissingWorldFallback(float navStartedAt)
+        {
+            return MissingWorldFallback.Evaluate(
+                EnableMissingWorldFallback,
+                isFallbackWorld,
+                HasRegisteredContent,
+                HasLoadFailed(),
+                lastCancelWasUser,
+                lastCancelAt < 0f ? float.PositiveInfinity : Time.realtimeSinceStartup - lastCancelAt,
+                loaded,
+                MissingWorldFallbackOnEmptyScene,
+                state,
+                Time.realtimeSinceStartup - navStartedAt,
+                MissingWorldTimeoutSeconds);
         }
         /// <summary>
         /// Single pass over the component set. Pure — no side effects — so it is safe to call on a
@@ -2318,6 +2383,8 @@ namespace BS
             loaded = true;
             loading = false;
             externalLoadFailed = true;
+            lastCancelAt = Time.realtimeSinceStartup;
+            lastCancelWasUser = isUserCancel;
             loadUrlTaskCompletionSource?.TrySetException(new Exception((isUserCancel ? "Cancelled: " : "Load failed: ") + message));
             loadUrlTaskCompletionSource?.TrySetCanceled();
             state = SceneState.LOAD_FAILED;
@@ -2385,7 +2452,39 @@ namespace BS
                 Debug.LogError("[Banter] Error loading space image: " + url + " : " + e.Message);
             }
         }
-        public async Task LoadUrl(string url, bool isLoadingOpen = false)
+        public Task LoadUrl(string url, bool isLoadingOpen = false)
+        {
+            return LoadUrlInternal(url, url, isLoadingOpen, isFallback: false);
+        }
+
+        /// <summary>
+        /// The URL produced no world. Keep the loading cage up and load the missing-world fallback
+        /// page instead (see <see cref="MissingWorldPage"/>): the fallback world.asset, a label, and
+        /// an in-world browser opened at <paramref name="originalUrl"/>. CurrentUrl keeps the
+        /// original URL so the address bar, Rejoin and history still reflect what was asked for.
+        /// </summary>
+        public Task LoadMissingWorldFallback(string originalUrl)
+        {
+            var shownUrl = (originalUrl ?? "").Replace("<", "").Replace(">", "");
+            var pageUrl = MissingWorldPage.BuildUrl(originalUrl, MISSING_WORLD_ASSET_URL,
+                string.Format(MissingWorldLabelFormat, shownUrl), MissingWorldSpawnPoint);
+            if (pageUrl == null)
+            {
+                Cancel("That world couldn't be found.");
+                return Task.CompletedTask;
+            }
+            LoadingStatus = MissingWorldLoadingStatus;
+            LogLine.Do($"[LOADING] Missing world at {originalUrl} - loading the fallback world instead.");
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                events.OnMissingWorldFallback.Invoke(originalUrl);
+            }, $"{nameof(BSScene)}.{nameof(LoadMissingWorldFallback)}.OnMissingWorldFallback"));
+            return LoadUrlInternal(originalUrl, pageUrl, isLoadingOpen: true, isFallback: true);
+        }
+
+        /// <param name="displayUrl">What this load is, to everyone outside: CurrentUrl, home checks, the cage, OnUnitySceneLoad.</param>
+        /// <param name="pageUrl">What the space browser actually navigates to. Same as displayUrl except for the fallback page.</param>
+        async Task LoadUrlInternal(string displayUrl, string pageUrl, bool isLoadingOpen, bool isFallback)
         {
             state = SceneState.NONE;
             loading = true;
@@ -2394,6 +2493,10 @@ namespace BS
             loaded = false;
             sceneReadySince = -1f;
             externalLoadFailed = false;
+            lastCancelAt = -1f;
+            lastCancelWasUser = false;
+            isFallbackWorld = isFallback;
+            fallbackOriginalUrl = isFallback ? displayUrl : null;
 
             // Capture the completion source in a LOCAL. It is also stored in the field so Cancel()
             // can fault the in-flight load, but the body below must never re-read the field: a
@@ -2409,9 +2512,9 @@ namespace BS
             // Never strand the previous caller's awaiter — nothing can complete it any more.
             previous?.TrySetCanceled();
 
-            CurrentUrl = url;
-            this.isHome = url == CUSTOM_HOME_SPACE;
-            this.isFallbackHome = url == ORIGINAL_HOME_SPACE;
+            CurrentUrl = displayUrl;
+            this.isHome = displayUrl == CUSTOM_HOME_SPACE;
+            this.isFallbackHome = displayUrl == ORIGINAL_HOME_SPACE;
             loadingManager?.UpdateCancelText();
             ResetLoadingProgress();
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
@@ -2423,7 +2526,7 @@ namespace BS
                 {
                     if (!isLoadingOpen)
                     {
-                        await this.OpenLoadingScreen(url);
+                        await this.OpenLoadingScreen(displayUrl);
                     }
                     // Unity coming out of play mode tries to go to the lobby, just nipping that in the bud.
                     if (!Application.isPlaying)
@@ -2431,12 +2534,44 @@ namespace BS
                         return;
                     }
                     await ResetScene();
-                    await ShowSpaceImage(url);
+                    if (!isFallback)
+                    {
+                        // The fallback keeps the original URL as CurrentUrl; asking the API about a
+                        // URL we already know is not a world is pointless.
+                        await ShowSpaceImage(displayUrl);
+                    }
                     Debug.Log("Before LoadUrl");
-                    await link.LoadUrl(url);
+                    // Wait for the page to finish, fail, be superseded, or be judged "not a world".
+                    // PendingGrace (failed, nothing registered, grace not yet elapsed) deliberately
+                    // keeps the wait alive: Cancel() sets `loaded`, and stopping on that alone would
+                    // exit into the failure screen before the fallback could fire.
+                    float navStartedAt = Time.realtimeSinceStartup;
+                    bool StopWaiting()
+                    {
+                        var decision = EvaluateMissingWorldFallback(navStartedAt);
+                        return IsSuperseded(tcs)
+                               || MissingWorldFallback.IsTriggered(decision)
+                               || (loaded && decision == MissingWorldReason.None);
+                    }
+                    await link.LoadUrl(pageUrl, StopWaiting);
                     Debug.Log("After LoadUrl");
-                    await new WaitUntil(() => loaded);
+                    await new WaitUntil(StopWaiting);
                     Debug.Log("After WaitUntil(() => loaded)");
+                    if (IsSuperseded(tcs))
+                    {
+                        // A newer load owns the scene now; completing here would fire
+                        // OnUnitySceneLoad for a URL that is no longer loaded.
+                        return;
+                    }
+                    var reason = EvaluateMissingWorldFallback(navStartedAt);
+                    if (MissingWorldFallback.IsTriggered(reason))
+                    {
+                        LogLine.Do($"[LOADING] {reason}: objects={RegisteredObjectCount} components={RegisteredComponentCount} state={state} -> missing-world fallback for {displayUrl}");
+                        // Replaces loadUrlTaskCompletionSource synchronously, so the finally below
+                        // sees this load as superseded and leaves the cage shut for the fallback.
+                        _ = LoadMissingWorldFallback(displayUrl);
+                        return;
+                    }
                     LoadingStatus = "Please wait, loading live space...";
                     if (HasLoadFailed())
                     {
@@ -2445,14 +2580,14 @@ namespace BS
                     tcs.TrySetResult(true);
                     UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                     {
-                        events.OnUnitySceneLoad.Invoke(url);
+                        events.OnUnitySceneLoad.Invoke(displayUrl);
                     }, $"{nameof(BSScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
 
                     await Task.Delay(2500);
                 }
                 catch (Exception e)
                 {
-                    LogLine.Err($"[LOADING] LoadUrl body threw for {url}: {e}");
+                    LogLine.Err($"[LOADING] LoadUrl body threw for {displayUrl}: {e}");
                     tcs.TrySetException(e);
                 }
                 finally
