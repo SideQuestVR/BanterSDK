@@ -895,7 +895,7 @@ public class BuilderWindow : EditorWindow
         ShowHideBuildButton();
 
         autoUpload = rootVisualElement.Q<Toggle>("autoUpload");
-        autoUpload.value = ProjectPrefs.GetBool("BanterBuilder_AutoUpload", false);
+        autoUpload.value = ProjectPrefs.GetBool("BanterBuilder_AutoUpload", true);
 
         autoUpload.RegisterCallback<MouseUpEvent>((e) =>
         {

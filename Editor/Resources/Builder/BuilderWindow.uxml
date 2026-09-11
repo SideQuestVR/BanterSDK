@@ -96,7 +96,7 @@
                     <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" class="" style="display: none; margin-left: 48px; margin-right: 48px; margin-bottom: 20px;" />
                     <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" class="alt-muted" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
                     <ui:VisualElement name="BuildOptions" style="flex-grow: 1;">
-                        <ui:Toggle label="Auto Upload" value="false" name="autoUpload" class="alt-toggle" style="display: none;" />
+                        <ui:Toggle label="Auto Upload" value="true" name="autoUpload" class="alt-toggle" style="display: none;" />
                     </ui:VisualElement>
                     <ui:VisualElement name="LoggedInCTAScene" style="display: flex; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
                         <ui:VisualElement class="alt-pill" style="width: 215px; height: 40px; margin-left: 10px; cursor: initial; margin-top: 0;">
