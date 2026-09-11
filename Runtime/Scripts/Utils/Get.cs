@@ -160,34 +160,125 @@ namespace BS
                 }
             }
             objectCache.Clear();
+            // A download still in flight will add one orphan entry when it lands; harmless.
+            textureDownloads.Clear();
         }
-        public static async Task<Texture2D> Texture(string url)
+
+        /// <summary>
+        /// Texture downloads in flight, keyed like <see cref="objectCache"/>. Every BSMaterial that
+        /// shares a texture asks for it in the same frame, and the result cache alone cannot help
+        /// them: each would miss, download, and TryAdd — with all but one copy leaked. Main thread only.
+        /// </summary>
+        static readonly Dictionary<string, Task<Texture2D>> textureDownloads = new Dictionary<string, Task<Texture2D>>();
+
+        public static Task<Texture2D> Texture(string url)
         {
-            LogLine.Do("Checking cache for texture: " + url);
-            if (objectCache.TryGetValue(url, out Object value))
+            return Texture(url, false, false);
+        }
+
+        /// <summary>
+        /// Downloads (or returns the cached) texture at <paramref name="url"/>.
+        /// </summary>
+        /// <param name="linear">
+        /// Create the texture as linear data rather than sRGB colour. Required for normal, roughness
+        /// and AO maps, which are otherwise gamma-decoded on sampling and come out wrong.
+        /// </param>
+        /// <param name="mipmaps">Generate a mip chain. Tiled textures at VR grazing angles shimmer without one.</param>
+        /// <remarks>
+        /// The cache key includes both flags, so the same URL can legitimately be held twice (as an
+        /// sRGB albedo and as a linear mask, say). Neither flag is expressible through
+        /// <c>DownloadHandlerTexture</c>, which always yields an sRGB texture with no mips, so those
+        /// requests fetch bytes and decode through <c>Texture2D.LoadImage</c> instead.
+        /// </remarks>
+        public static async Task<Texture2D> Texture(string url, bool linear, bool mipmaps)
+        {
+            var key = (linear || mipmaps) ? url + "|" + (linear ? "linear" : "srgb") + (mipmaps ? "|mips" : "") : url;
+            LogLine.Do("Checking cache for texture: " + key);
+            if (objectCache.TryGetValue(key, out Object value))
             {
                 // Sometimes the cached object gets destroyed explicitly elsewhere (MipMaps.Do), so we need to check for null
                 if(value==null)
                 {
-                    objectCache.TryRemove(url, out _);
+                    objectCache.TryRemove(key, out _);
                 }
                 else return (Texture2D)value;
             }
-            using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
+            if (textureDownloads.TryGetValue(key, out var inFlight))
             {
-                uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
-                await uwr.SendWebRequest();
-                if (uwr.result != UnityWebRequest.Result.Success)
+                return await inFlight;
+            }
+            var download = DownloadTexture(url, key, linear, mipmaps);
+            textureDownloads[key] = download;
+            try
+            {
+                return await download;
+            }
+            finally
+            {
+                textureDownloads.Remove(key);
+            }
+        }
+
+        static async Task<Texture2D> DownloadTexture(string url, string key, bool linear, bool mipmaps)
+        {
+            Texture2D texture;
+            if (!linear && !mipmaps)
+            {
+                using (UnityWebRequest uwr = UnityWebRequestTexture.GetTexture(url))
                 {
-                    throw new System.Exception(uwr.error);
+                    await SendWithStallDetection(uwr, url);
+                    texture = DownloadHandlerTexture.GetContent(uwr);
                 }
-                else
+            }
+            else
+            {
+                byte[] bytes;
+                using (UnityWebRequest uwr = UnityWebRequest.Get(url))
                 {
-                    var texture = DownloadHandlerTexture.GetContent(uwr);
-                    LogLine.Do("Adding texture to cache: " + url);
-                    objectCache.TryAdd(url, texture);
-                    return texture;
+                    await SendWithStallDetection(uwr, url);
+                    bytes = uwr.downloadHandler.data;
                 }
+                // LoadImage resizes and reformats the texture to the image; only the mip-chain and
+                // linear flags of the placeholder survive, which is exactly what we want from it.
+                texture = new Texture2D(2, 2, TextureFormat.RGBA32, mipmaps, linear);
+                if (!texture.LoadImage(bytes, true))
+                {
+                    Object.Destroy(texture);
+                    throw new Exception("Not a loadable image: " + url);
+                }
+            }
+            LogLine.Do("Adding texture to cache: " + key);
+            objectCache.TryAdd(key, texture);
+            return texture;
+        }
+
+        /// <summary>
+        /// Sends the request and fails only when the transfer makes no progress for
+        /// <see cref="LARGE_DOWNLOAD_STALL_SECONDS"/>. A total deadline (the old 30 s) killed healthy
+        /// downloads of large textures — a 4K normal map is 20–40 MB — on slow headset wifi.
+        /// </summary>
+        static async Task SendWithStallDetection(UnityWebRequest uwr, string url)
+        {
+            _ = uwr.SendWebRequest();
+            var lastBytes = uwr.downloadedBytes;
+            var lastProgressAt = Time.realtimeSinceStartup;
+            while (!uwr.isDone)
+            {
+                if (uwr.downloadedBytes != lastBytes)
+                {
+                    lastBytes = uwr.downloadedBytes;
+                    lastProgressAt = Time.realtimeSinceStartup;
+                }
+                else if (Time.realtimeSinceStartup - lastProgressAt > LARGE_DOWNLOAD_STALL_SECONDS)
+                {
+                    uwr.Abort();
+                    throw new Exception($"Texture download stalled: no data for {LARGE_DOWNLOAD_STALL_SECONDS}s after {lastBytes} bytes from {url}");
+                }
+                await new WaitForSecondsRealtime(.1f);
+            }
+            if (uwr.result != UnityWebRequest.Result.Success)
+            {
+                throw new Exception(uwr.error);
             }
         }
         public static async Task<Community> SpaceMeta(string url)

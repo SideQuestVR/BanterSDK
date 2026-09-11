@@ -39,20 +39,9 @@ VisualElement {}
     background-position: left 0px center;
 }
 
-.unity-label.alt-placeholder,
-.alt-placeholder {
-    color: #808080 !important;
-}
-
 .unity-label.alt-negative,
 .alt-negative {
     color: #E6455F !important;
-}
-
-/* Text-input / dropdown row background */
-.alt-field {
-    background-color: #333333;
-    border-radius: 5px;
 }
 
 /* Primary call-to-action pill. Drawn with border-radius rather than a bitmap
@@ -70,18 +59,6 @@ VisualElement {}
 
 .alt-pill:active {
     background-color: #137D80;
-}
-
-.alt-pill-negative {
-    background-color: #B31932;
-}
-
-.alt-pill-negative:hover {
-    background-color: #D93751;
-}
-
-.alt-pill-negative:active {
-    background-color: #801224;
 }
 
 /* Pill caption. padding-left reserves the glyph column so the centred text
@@ -163,7 +140,7 @@ VisualElement {}
     padding-left: 5px;
 }
 
-/* Dropdown styled to match the dark .alt-field text inputs (a bare DropdownField
+/* Dropdown styled to match the dark text inputs (a bare DropdownField
    otherwise renders as plain text on the window background). Reusable: add the
    `alt-dropdown` class to any DropdownField. */
 .alt-dropdown {

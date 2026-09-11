@@ -35,8 +35,8 @@
                 <ui:ScrollView horizontal-scroller-visibility="Hidden" style="margin-bottom: 0;">
                     <ui:VisualElement name="dropAreaContainer" style="flex-grow: 1;">
                         <ui:VisualElement style="position: absolute; background-image: resource(&apos;UI/Images/uploadcube 1&apos;); width: 93px; height: 93px; left: 50%; margin-left: -46.5px;" />
-                        <ui:VisualElement name="dropArea" tooltip="Drop a scene file here to build a normal asset bunlde, or drop multiple prefab files here to make a kit bundle." style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5; margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; margin-bottom: 20px;">
-                            <ui:Label text="Drop Scene/Prefab files &#10;here to start." display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
+                        <ui:VisualElement name="dropArea" tooltip="Drop a .unity scene file here to build the space bundle." style="background-image: resource(&apos;UI/Images/Frame 3&apos;); width: auto; height: auto; -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5; margin-top: 60px; margin-left: 5%; margin-right: 5%; flex-shrink: 0; flex-grow: 0; margin-bottom: 20px;">
+                            <ui:Label text="Drop a Scene file &#10;here to start." display-tooltip-when-elided="true" class="unity-label-margin" style="-unity-text-align: middle-center; height: auto; justify-content: flex-start; align-items: auto; color: rgb(255, 255, 255); font-size: 14px; margin-top: 45px; margin-bottom: 45px; white-space: normal;" />
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:Label tabindex="-1" text="Scene Build" parse-escape-sequences="true" display-tooltip-when-elided="true" name="MainTitle" style="font-size: 18px; -unity-text-align: upper-left; padding-left: 30px; align-items: flex-end;">
@@ -61,40 +61,6 @@
                             </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
-                    <ui:VisualElement name="LoggedInViewPrefab" style="flex-grow: 1; display: none;">
-                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 0;">
-                            <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Select or Create New..." display-tooltip-when-elided="true" name="KitSelectPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
-                                <ui:DropdownField name="ExistingDropDown" style="color: white;" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
-                            <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Kit Name" display-tooltip-when-elided="true" name="KitNamePlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
-                                <ui:TextField picking-mode="Ignore" name="KitName" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
-                            <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Kit Description" display-tooltip-when-elided="true" name="KitDescPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
-                                <ui:TextField picking-mode="Ignore" name="KitDescription" style="width: auto; flex-grow: 0; margin-left: 5px; margin-right: 0; -unity-text-align: upper-right; margin-top: 6px;" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
-                            <ui:VisualElement style="width: 100%;">
-                                <ui:Label text="Select Category..." display-tooltip-when-elided="true" name="KitCategoryPlaceholder" class="alt-placeholder" style="-unity-text-align: middle-left; -unity-font-style: normal; flex-shrink: 0; flex-grow: 0; margin-right: 15px; margin-top: 3px; margin-bottom: 3px; padding-left: 10px; font-size: 12px; position: absolute; top: 5px; display: flex;" />
-                                <ui:DropdownField name="KitCategoryDropDown" style="color: white;" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                        <ui:VisualElement class="alt-field" style="min-height: auto; min-width: auto; flex-direction: row; justify-content: space-between; padding-top: 5px; padding-bottom: 5px; margin-left: 5%; margin-right: 5%; margin-bottom: 3px; margin-top: 20px;">
-                            <ui:VisualElement style="width: 100%;">
-                                <uie:ObjectField type="UnityEngine.Texture2D, UnityEngine.CoreModule" label="Select a cover image:" name="MarkitCoverImage" />
-                            </ui:VisualElement>
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:ListView focusable="true" name="kitItemList" style="display: none; margin-left: 5%; margin-right: 5%; margin-top: 16px; margin-bottom: 16px;" />
-                    <ui:Button text="REMOVE SELECTED" display-tooltip-when-elided="true" name="removeSelected" class="" style="display: none; margin-left: 48px; margin-right: 48px; margin-bottom: 20px;" />
-                    <ui:Label tabindex="-1" text="Number of items: 0" parse-escape-sequences="true" display-tooltip-when-elided="true" name="NumberOfItems" class="alt-muted" style="padding-left: 12px; -unity-text-align: middle-center; margin-top: 10px;" />
                     <ui:VisualElement name="BuildOptions" style="flex-grow: 1;">
                         <ui:Toggle label="Auto Upload" value="true" name="autoUpload" class="alt-toggle" style="display: none;" />
                     </ui:VisualElement>
@@ -109,15 +75,6 @@
                         <ui:VisualElement name="ExtraToolButtons" style="flex-grow: 1; flex-direction: row;">
                             <ui:Button text="WEBROOT FOLDER" display-tooltip-when-elided="true" name="OpenWebRoot" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                             <ui:Button text="ANALYZE BUNDLE" display-tooltip-when-elided="true" name="AnalyzeBundle" class="" tooltip="Preview the AssetBundle contents and estimated size of the currently open scene using Bundle Analyzer." style="margin-top: 8px; margin-bottom: 8px;" />
-                        </ui:VisualElement>
-                    </ui:VisualElement>
-                    <ui:VisualElement name="LoggedInCTAKit" style="display: none; align-items: flex-start; padding-left: 20px; padding-right: 20px; margin-top: 10px;">
-                        <ui:VisualElement style="margin-top: 20px; flex-direction: row; width: 100%; align-items: center; justify-content: center; display: flex;">
-                            <ui:Button text="DELETE KIT" display-tooltip-when-elided="true" name="DeleteKit" class="" style="margin-top: 8px; margin-bottom: 8px;border-left-color: rgb(179, 25, 50); border-right-color: rgb(179, 25, 50); border-top-color: rgb(179, 25, 50); border-bottom-color: rgb(179, 25, 50); display: none;" />
-                            <ui:Button text="UPDATE DETAILS" display-tooltip-when-elided="true" name="UploadWebOnlyKit" class="" style="margin-top: 8px; margin-bottom: 8px;display: none;" />
-                            <ui:VisualElement class="alt-pill" style="width: 215px; height: 40px; margin-left: 0; cursor: initial; margin-top: 0; margin-bottom: 0;">
-                                <ui:Label text="BUILD &amp; UPLOAD" display-tooltip-when-elided="true" name="UploadEverythingKit" class="alt-pill-label alt-pill-label-plain" />
-                            </ui:VisualElement>
                         </ui:VisualElement>
                     </ui:VisualElement>
                     <ui:VisualElement style="height: 1px; background-color: rgba(255, 255, 255, 0.1); margin-left: 5%; margin-right: 5%; margin-top: 28px; margin-bottom: 14px;" />
@@ -218,27 +175,12 @@
                 <ui:Label tabindex="-1" text="Build Mode: " name="ConfirmBuildMode" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
                 <ui:Label tabindex="-1" text="Scene File: " name="ConfirmSceneFile" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
                 <ui:Label tabindex="-1" text="Space: " name="ConfirmSpaceCode" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
-                <ui:Label tabindex="-1" text="Kit Bundle: " name="ConfirmKitBundle" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
-                <ui:Label tabindex="-1" text="Kit Bundle ID: " name="ConfirmKitBundleID" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
-                <ui:Label tabindex="-1" text="Number of Items: " name="ConfirmKitNumber" parse-escape-sequences="true" display-tooltip-when-elided="true" class="alt-muted" style="margin-left: 0; font-size: 14px;" />
                 <ui:Label tabindex="-1" text="" name="ConfirmSyncedGraphs" parse-escape-sequences="true" display-tooltip-when-elided="true" style="display: none; margin-left: 0; margin-top: 12px; margin-right: 30px; font-size: 14px; white-space: normal; color: rgb(255, 196, 87);" />
             </ui:VisualElement>
             <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
                 <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelBuild" class="" style="margin-top: 8px; margin-bottom: 8px;" />
                 <ui:VisualElement class="alt-pill" style="width: 150px; height: 40px; margin-left: 8px; cursor: initial; margin-top: 0; margin-bottom: 0;">
                     <ui:Label text="CONFIRM" display-tooltip-when-elided="true" name="ConfirmBuild" class="alt-pill-label alt-pill-label-plain" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-        </ui:VisualElement>
-    </ui:VisualElement>
-    <ui:VisualElement name="DeleteConfirm" style="display: none; flex-grow: 1; position: absolute; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.85);">
-        <ui:VisualElement name="VisualElement" style="flex-grow: 1; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left: 0; width: 80%; height: 80%; position: relative; left: 10%; top: 10%; right: 10%; bottom: 10%; max-height: 80%; background-image: resource(&apos;UI/Images/Main content&apos;); -unity-slice-left: 48; -unity-slice-top: 48; -unity-slice-right: 48; -unity-slice-bottom: 48; -unity-slice-scale: 0.5;">
-            <ui:Label tabindex="-1" text="Are you sure?" parse-escape-sequences="true" display-tooltip-when-elided="true" style="margin-left: 24px; font-size: 24px; margin-top: 30px;" />
-            <ui:Label tabindex="-1" text="Do you want to delete this kit?" parse-escape-sequences="true" display-tooltip-when-elided="true" name="Label" style="margin-left: 24px; font-size: 14px; margin-top: 36px; white-space: normal; margin-right: 30px;" />
-            <ui:VisualElement style="flex-direction: row; width: 100%; align-items: flex-end; justify-content: center; margin-top: 16px; align-self: auto; flex-grow: 1; margin-bottom: 16px;">
-                <ui:Button text="CANCEL" display-tooltip-when-elided="true" name="CancelDelete" class="" style="margin-top: 8px; margin-bottom: 8px;" />
-                <ui:VisualElement class="alt-pill alt-pill-negative" style="width: 165px; height: 40px; margin-left: 8px; cursor: initial; margin-top: 0; margin-bottom: 0;">
-                    <ui:Label text="DELETE" display-tooltip-when-elided="true" name="ConfirmDelete" class="alt-pill-label alt-pill-label-plain" />
                 </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>

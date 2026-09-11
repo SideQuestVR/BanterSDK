@@ -12,10 +12,7 @@ using System.Threading;
 using BS.SDKEditor;
 using Unity.EditorCoroutines.Editor;
 using System.Collections;
-using System.Net.Http;
-using System.Text;
 using UnityEditor.UIElements;
-using System.Text.RegularExpressions;
 using UnityEditor.SceneManagement;
 using LongBunnyLabs;
 using System.Runtime.InteropServices;
@@ -25,8 +22,7 @@ using Unity.VisualScripting;
 public enum BSBuilderBundleMode
 {
     None = 0,
-    Scene = 1,
-    Kit = 2
+    Scene = 1
 }
 
 public enum PoseSelectionType
@@ -36,23 +32,8 @@ public enum PoseSelectionType
     RightFoot
 }
 
-public class KitObjectAndPath
-{
-    public UnityEngine.Object obj;
-    public string path;
-    public Texture2D texture;
-    public static List<Type> ALLOWED_KIT_TYPES = new List<Type>()
-    {
-        typeof(GameObject),
-        typeof(Material),
-        typeof(Shader)
-    };
-}
-
 public class BuilderWindow : EditorWindow
 {
-    private static readonly HttpClient _httpClient = new HttpClient();
-
     [SerializeField] private VisualTreeAsset _mainWindowVisualTree = default;
     [SerializeField] private StyleSheet _mainWindowStyleSheet = default;
 
@@ -76,11 +57,8 @@ public class BuilderWindow : EditorWindow
     VisualElement sceneStatsParent;
     // Label mainTitle;
     string scenePath;
-    ListView kitListView;
-    List<KitObjectAndPath> kitObjectList = new List<KitObjectAndPath>();
     ListView buildProgress;
     ProgressBar buildProgressBar;
-    Button removeSelected;
     Label statusBar;
 
     Label codeText;
@@ -96,43 +74,20 @@ public class BuilderWindow : EditorWindow
 
     VisualElement loggedInView;
     VisualElement loggedInViewScene;
-    VisualElement loggedInViewPrefab;
 
-    DropdownField existingDropDown;
-    DropdownField kitCategoryDropDown;
-    Label numberOfItems;
-
-    KitCategory[] kitCategories;
-
-    TextField kitName;
-    TextField kitDescription;
-
-    ObjectField markitCoverImage;
-    Label uploadEverythingKit;
-    Button uploadWebOnlyKit;
-    Button deleteKit;
     Label confirmBuildMode;
     Label confirmSceneFile;
     Label confirmSpaceCode;
     Label confirmSyncedGraphs;
-    Label confirmKitBundle;
-    Label confirmKitBundleID;
-    Label confirmKitNumber;
 
     Label confirmBuild;
     Button cancelBuild;
 
     VisualElement buildConfirm;
 
-    VisualElement deleteConfirm;
-    Label confirmDelete;
-    Button cancelDelete;
-
     GameObject avatarGameObject;
     VisualElement dropAvatarContainer;
    
-    Kit[] myKits; 
-    string selectedKitId;
     string assetBundleRoot = "Assets";
     string assetBundleDirectory = "WebRoot";
     LoginManager loginManager;
@@ -140,11 +95,9 @@ public class BuilderWindow : EditorWindow
     Label buildButton;
     Label buildAvatarButton;
     Action confirmCallback;
-    Action deleteCallback;
     VisualElement linkPage;
     VisualElement buildOptions;
     VisualElement loggedInCTAScene;
-    VisualElement loggedInCTAKit;
     VisualElement dropAreaContainer;
     Label MainTitle;
 
@@ -316,7 +269,6 @@ public class BuilderWindow : EditorWindow
         }
         loginManager.OnLoginCompleted += () =>
         {
-            EditorCoroutineUtility.StartCoroutine(CheckKitUserExists(), this);
             EditorCoroutineUtility.StartCoroutine(RefreshWorlds(), this);
             RefreshView(true);
             avatarGameObject = AvatarRef.Instance.avatarGameObject;
@@ -373,41 +325,6 @@ public class BuilderWindow : EditorWindow
         }
     }
     
-
-
-    public IEnumerator Texture(string url, Action<Texture2D> callback)
-    {
-        var task = _httpClient.GetByteArrayAsync(url);
-        while (!task.IsCompleted) yield return null;
-        if (task.IsFaulted) throw task.Exception.InnerException ?? task.Exception;
-        var tex = new Texture2D(1, 1);
-        tex.LoadImage(task.Result);
-        callback(tex);
-    }
-
-    void SelectKit(int selectedIndex) {
-        if(myKits == null || myKits.Length == 0 || selectedIndex == myKits.Length) {
-            kitName.value = "";
-            kitDescription.value = "";
-            selectedKitId = "";
-            kitCategoryDropDown.index = -1;
-            markitCoverImage.value = null;
-            uploadWebOnlyKit.style.display = DisplayStyle.None;
-            deleteKit.style.display = DisplayStyle.None;
-            return;
-        }
-        uploadWebOnlyKit.style.display = DisplayStyle.Flex;
-        deleteKit.style.display = DisplayStyle.Flex;
-        selectedKitId = myKits[selectedIndex].id;
-        kitName.value = myKits[selectedIndex].name;
-        kitDescription.value = myKits[selectedIndex].description;
-        kitCategoryDropDown.index = -1;
-        kitCategoryDropDown.index = kitCategories.ToList().IndexOf(kitCategories.First(k => k.id == myKits[selectedIndex].kit_categories_id));
-        EditorCoroutineUtility.StartCoroutine(Texture(myKits[selectedIndex].picture, tex => {
-            markitCoverImage.value = CopyIt(tex);
-        }), this);
-    }
-
     private void OnSceneGUI(SceneView sceneView)
     {
         if (!handleEnabled)
@@ -907,75 +824,20 @@ public class BuilderWindow : EditorWindow
 
         loggedInCTAScene = rootVisualElement.Q<VisualElement>("LoggedInCTAScene");
 
-        loggedInCTAKit = rootVisualElement.Q<VisualElement>("LoggedInCTAKit");
-
         var resetScreen = rootVisualElement.Q<Button>("resetScreen");
         resetScreen.RegisterCallback<MouseUpEvent>((e) =>
         {
             mode = BSBuilderBundleMode.None;
             scenePath = "";
-            kitObjectList.Clear();
-            kitListView.Rebuild();
-            SaveKitList();
             ProjectPrefs.DeleteKey("BanterBuilder_ScenePath");
             status.AddStatus("Scene removed from build.");
             RefreshView();
         });
-        markitCoverImage = rootVisualElement.Q<ObjectField>("MarkitCoverImage");
-        existingDropDown = rootVisualElement.Q<DropdownField>("ExistingDropDown");
-        var kitSelectPlaceholder = rootVisualElement.Q<Label>("KitSelectPlaceholder");
-        existingDropDown.RegisterValueChangedCallback((e) =>
-        {
-            ShowSpaceSlugPlaceholder(kitSelectPlaceholder, e.newValue);
-            SelectKit(existingDropDown.index);
-
-        });
-
-        numberOfItems = rootVisualElement.Q<Label>("NumberOfItems");
-        kitCategoryDropDown = rootVisualElement.Q<DropdownField>("KitCategoryDropDown");
-        var kitCategoryPlaceholder = rootVisualElement.Q<Label>("KitCategoryPlaceholder");
-        kitCategoryDropDown.RegisterValueChangedCallback((e) =>
-        {
-            ShowSpaceSlugPlaceholder(kitCategoryPlaceholder, e.newValue);
-        });
-        EditorCoroutineUtility.StartCoroutine(Json<KitCategoryRows>("https://screen.sdq.st:2096/kit/categories", categories =>
-        {
-            kitCategories = categories.rows;
-            kitCategoryDropDown.choices = categories.rows.Select(k => k.name).ToList();
-        }), this);
-        kitName = rootVisualElement.Q<TextField>("KitName");
-        var kitNamePlaceholder = rootVisualElement.Q<Label>("KitNamePlaceholder");
-        kitName.RegisterValueChangedCallback((e) =>
-        {
-            ShowSpaceSlugPlaceholder(kitNamePlaceholder, e.newValue);
-        });
-        kitDescription = rootVisualElement.Q<TextField>("KitDescription");
-        var kitDescPlaceholder = rootVisualElement.Q<Label>("KitDescPlaceholder");
-        kitDescription.RegisterValueChangedCallback((e) =>
-        {
-            ShowSpaceSlugPlaceholder(kitDescPlaceholder, e.newValue);
-        });
         confirmBuildMode = rootVisualElement.Q<Label>("ConfirmBuildMode");
         confirmSceneFile = rootVisualElement.Q<Label>("ConfirmSceneFile");
         confirmSpaceCode = rootVisualElement.Q<Label>("ConfirmSpaceCode");
-        confirmKitBundle = rootVisualElement.Q<Label>("ConfirmKitBundle");
-        confirmKitBundleID = rootVisualElement.Q<Label>("ConfirmKitBundleID");
-        confirmKitNumber = rootVisualElement.Q<Label>("ConfirmKitNumber");
         confirmSyncedGraphs = rootVisualElement.Q<Label>("ConfirmSyncedGraphs");
 
-        deleteConfirm = rootVisualElement.Q<VisualElement>("DeleteConfirm");
-
-        confirmDelete = rootVisualElement.Q<Label>("ConfirmDelete");
-        cancelDelete = rootVisualElement.Q<Button>("CancelDelete");
-        cancelDelete.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            deleteConfirm.style.display = DisplayStyle.None;
-        });
-        confirmDelete.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            deleteConfirm.style.display = DisplayStyle.None;
-            deleteCallback?.Invoke();
-        });
         buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
 
         confirmBuild = rootVisualElement.Q<Label>("ConfirmBuild");
@@ -990,21 +852,14 @@ public class BuilderWindow : EditorWindow
             confirmCallback?.Invoke();
         });
 
-
-        EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
-
         codeText = rootVisualElement.Q<Label>("LoginCode");
         worldDropdown = rootVisualElement.Q<DropdownField>("WorldDropdown");
         worldUrlLabel = rootVisualElement.Q<Label>("WorldUrl");
         statusText = rootVisualElement.Q<Label>("SignedInStatus");
         uploadWebOnly = rootVisualElement.Q<Button>("UploadWebOnly");
-        uploadWebOnlyKit = rootVisualElement.Q<Button>("UploadWebOnlyKit");
-        deleteKit = rootVisualElement.Q<Button>("DeleteKit");
         uploadEverything = rootVisualElement.Q<Button>("UploadEverything");
-        uploadEverythingKit = rootVisualElement.Q<Label>("UploadEverythingKit");
         loggedInView = rootVisualElement.Q<VisualElement>("LoggedInView");
         loggedInViewScene = rootVisualElement.Q<VisualElement>("LoggedInViewScene");
-        loggedInViewPrefab = rootVisualElement.Q<VisualElement>("LoggedInViewPrefab");
 
         // Selecting a world in the dropdown sets the active world (by index → worlds list) and remembers it.
         worldDropdown.RegisterValueChangedCallback((e) =>
@@ -1070,37 +925,6 @@ public class BuilderWindow : EditorWindow
             };
         });
 
-        uploadEverythingKit.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            autoUpload.value = true;
-            BuildAssetBundles();
-        });
-
-        uploadWebOnlyKit.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            autoUpload.value = true;
-            BuildAssetBundles(true);
-        });
-
-        deleteKit.RegisterCallback<MouseUpEvent>((e) =>
-        {
-            deleteConfirm.style.display = DisplayStyle.Flex;
-            deleteCallback = () =>
-            {
-                if (string.IsNullOrEmpty(selectedKitId))
-                {
-                    status.AddStatus("No kit selected, please select a kit.");
-                    return;
-                }
-                deleteKit.SetEnabled(false);
-                EditorCoroutineUtility.StartCoroutine(DeleteKit(() =>
-                {
-                    status.AddStatus("Deleted kit.");
-                    deleteKit.SetEnabled(true);
-                }), this);
-            };
-        });
-
         // mainTitle = rootVisualElement.Q<Label>("mainTitle");
         scenePathLabel = rootVisualElement.Q<Label>("scenePathLabel");
         scenePathParent = rootVisualElement.Q<VisualElement>("scenePathParent");
@@ -1115,209 +939,13 @@ public class BuilderWindow : EditorWindow
         };
         buildProgress.selectionType = SelectionType.None;
         buildProgressBar = rootVisualElement.Q<ProgressBar>("buildProgressBar");
-        removeSelected = rootVisualElement.Q<Button>("removeSelected");
-        removeSelected.clicked += () => RemoveSelectedObjects();
-        kitListView = rootVisualElement.Q<ListView>("kitItemList");
-        kitListView.selectionChanged += (e) => ShowRemoveSelected();
-        kitListView.makeItem = () =>
-        {
-            var ele = new VisualElement();
-            ele.style.flexDirection = FlexDirection.Row;
-            ele.style.justifyContent = Justify.SpaceBetween;
-            var label = new Label
-            {
-                name = "kitItemName"
-            };
-            var button = new Button
-            {
-                name = "kitItemCopy"
-            };
-            var image = new VisualElement
-            {
-                name = "kitItemImage"
-            };
-            image.style.width = 50;
-            image.style.height = 50;
-            image.style.flexShrink = 0;
-            label.style.color = new Color(0.6f, 0.6f, 0.6f);
-            label.style.textOverflow = TextOverflow.Ellipsis;
-            label.style.fontSize = 16;
-            label.style.unityTextAlign = TextAnchor.MiddleLeft;
-
-            label.style.width = new StyleLength(Length.Percent(100));
-            label.style.flexShrink = 1;
-            button.style.paddingBottom = button.style.paddingTop = 5;
-            button.style.paddingLeft = button.style.paddingRight = 10;
-            button.style.borderTopRightRadius = button.style.borderBottomRightRadius = button.style.borderTopLeftRadius = button.style.borderBottomLeftRadius = 18;
-            button.style.marginTop = 10;
-            button.style.marginLeft = button.style.marginRight = 0;
-            button.style.marginBottom = 2;
-            button.style.height = 30;
-            ele.Add(image);
-            ele.Add(label);
-            ele.Add(button);
-            ele.AddToClassList("unity-label-margin");
-            return ele;
-        };
-
-        SnapshotCamera snapshotCamera = FindAnyObjectByType<SnapshotCamera>();
-
-        kitListView.bindItem = (e, i) =>
-        {
-            var name = kitObjectList[i].path.ToLower();
-            if (kitObjectList[i].texture == null)
-            {
-
-                if (snapshotCamera == null)
-                {
-                    snapshotCamera = SnapshotCamera.MakeSnapshotCamera(0);
-                }
-                kitObjectList[i].texture = snapshotCamera.TakePrefabSnapshot((GameObject)kitObjectList[i].obj);
-            }
-            var text = e.Q<Label>("kitItemName");
-            text.text = i + 1 + ". " + name;
-            var image = e.Q<VisualElement>("kitItemImage");
-            image.style.backgroundImage = new StyleBackground(kitObjectList[i].texture);
-            image.style.backgroundSize = new BackgroundSize(BackgroundSizeType.Contain);
-            var button = e.Q<Button>("kitItemCopy");
-            button.text = "copy";
-            button.clicked += () =>
-            {
-                status.AddStatus("Copied path to clipboard: " + name);
-                GUIUtility.systemCopyBuffer = name;
-            };
-        };
-        kitListView.selectionType = SelectionType.Multiple;
-        kitListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
-        kitListView.reorderMode = ListViewReorderMode.Simple;
         new DragAndDropStuff().SetupDropArea(rootVisualElement.Q<VisualElement>("dropArea"), DropFile);
         scenePathLabel.text = scenePath = ProjectPrefs.GetString("BanterBuilder_ScenePath", "");
-        LoadKitList();
         if (!string.IsNullOrEmpty(scenePath))
         {
             mode = BSBuilderBundleMode.Scene;
         }
-        else
-        {
-            if (kitObjectList.Count > 0)
-            {
-                mode = BSBuilderBundleMode.Kit;
-            }
-        }
 
-    }
-    public IEnumerator Json<T>(string url, Action<T> callback)
-    {
-        // A throw inside an editor coroutine can't be caught by the caller and lands in the
-        // console as an unhandled exception, so log a warning and bail instead.
-        var task = _httpClient.GetAsync(url);
-        while (!task.IsCompleted) yield return null;
-        if (task.IsFaulted)
-        {
-            Debug.LogWarning("Builder request failed: " + url + " (" + (task.Exception.InnerException ?? task.Exception).Message + ")");
-            yield break;
-        }
-        var response = task.Result;
-        if (!response.IsSuccessStatusCode)
-        {
-            Debug.LogWarning("Builder request failed: " + url + " (" + (int)response.StatusCode + " " + response.ReasonPhrase + ")");
-            yield break;
-        }
-        var readTask = response.Content.ReadAsStringAsync();
-        while (!readTask.IsCompleted) yield return null;
-        if (readTask.IsFaulted)
-        {
-            Debug.LogWarning("Builder request failed: " + url + " (" + (readTask.Exception.InnerException ?? readTask.Exception).Message + ")");
-            yield break;
-        }
-        callback(JsonUtility.FromJson<T>(readTask.Result));
-    }
-
-    public IEnumerator Json<T>(string url, T postData, Action<string> callback, Dictionary<string, string> headers = null)
-    {
-        var json = JsonUtility.ToJson(postData);
-        var request = new HttpRequestMessage(HttpMethod.Post, url)
-        {
-            Content = new StringContent(json, Encoding.UTF8, "application/json")
-        };
-        if (headers != null)
-        {
-            foreach (var header in headers)
-            {
-                if (!header.Key.Equals("Content-Type", StringComparison.OrdinalIgnoreCase))
-                    request.Headers.TryAddWithoutValidation(header.Key, header.Value);
-            }
-        }
-        var task = _httpClient.SendAsync(request);
-        while (!task.IsCompleted) yield return null;
-        if (task.IsFaulted) throw task.Exception.InnerException ?? task.Exception;
-        var response = task.Result;
-        if (!response.IsSuccessStatusCode)
-        {
-            Debug.LogError(url + ":" + json);
-            throw new System.Exception(response.StatusCode + ": " + response.ReasonPhrase);
-        }
-        var readTask = response.Content.ReadAsStringAsync();
-        while (!readTask.IsCompleted) yield return null;
-        if (readTask.IsFaulted) throw readTask.Exception.InnerException ?? readTask.Exception;
-        callback(readTask.Result);
-    }
-    private IEnumerator PopulateExistingKits(Action callback = null) {
-        if(sq.User == null) {
-            yield break;
-        }
-        yield return Json<KitRows>("https://screen.sdq.st:2096/kits/user/" + sq.User.UserId, kit => {
-            myKits = kit.rows;
-            if(kit.rows.Length != 0) {
-                existingDropDown.choices = kit.rows.Select(k => k.id + ": " + k.name).ToList().Concat(new List<string>{"Create New..."}).ToList();
-            }else{
-                existingDropDown.choices = new List<string>{"Create New..."};
-            }
-            callback?.Invoke();
-        });
-    }
-    bool KitUserCreated = false;
-    private IEnumerator CreateKitUser() {
-        var headers = new Dictionary<string, string>{
-            { "Content-Type", "application/json" },
-        };  
-        var kitUser = new KitUser{
-            ext_id = sq.User.UserId.ToString(),
-            name = sq.User.Name,
-            bio = sq.User.TagLine,
-            profile_pic = "https://cdn.sidequestvr.com/" + sq.User.PreviewImageUrl
-        };
-        yield return Json("https://screen.sdq.st:2096/user", kitUser, resp => {
-            var kitUserResponse = JsonUtility.FromJson<KitUserRows>(resp);
-            if(kitUserResponse.rows.Length == 0) {
-                status.AddStatus("Failed to create kit user, are you online?");
-                return;
-            }
-            KitUserCreated = true;
-        }, headers);
-    }
-    private IEnumerator CheckKitUserExists() {
-        if(sq.User == null || KitUserCreated) {
-            yield break;
-        }
-        yield return Json<KitUserRows>("https://screen.sdq.st:2096/user/" + sq.User.UserId, user => {
-            if(user.rows.Length == 0) {
-                EditorCoroutineUtility.StartCoroutine(CreateKitUser(), this);
-            }else{
-                KitUserCreated = true;
-            }
-        });
-    }
-    private void ShowSpaceSlugPlaceholder(Label spaceSlugPlaceholder, string newValue)
-    {
-        if (!string.IsNullOrEmpty(newValue))
-        {
-            spaceSlugPlaceholder.style.display = DisplayStyle.None;
-        }
-        else
-        {
-            spaceSlugPlaceholder.style.display = DisplayStyle.Flex;
-        }
     }
 
     private IEnumerator UploadAvatar(Action callback)
@@ -1411,106 +1039,6 @@ public class BuilderWindow : EditorWindow
         yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
         callback();
         EndUploadProgress("Upload complete");
-    }
-    private Texture2D CopyIt(Texture2D source) {
-        RenderTexture renderTex = RenderTexture.GetTemporary(
-                    source.width,
-                    source.height,
-                    0,
-                    RenderTextureFormat.Default,
-                    source.isDataSRGB ? RenderTextureReadWrite.sRGB : RenderTextureReadWrite.Linear);
-        
-        Graphics.Blit(source, renderTex);
-        RenderTexture previous = RenderTexture.active;
-        RenderTexture.active = renderTex;
-        Texture2D readableText = new Texture2D(source.width, source.height);
-        readableText.ReadPixels(new Rect(0, 0, renderTex.width, renderTex.height), 0, 0);
-        readableText.Apply();
-        RenderTexture.active = previous;
-        RenderTexture.ReleaseTemporary(renderTex);
-        return readableText;
-    }
-
-    private string GetKitName() {
-        return Regex.Replace(kitName.text, "[^A-Za-z0-9-]", "");
-    }
-
-    private IEnumerator UploadKit(Action callback, bool skipUpload = false) {
-        long androidFileId = 0;
-        long windowsFileId = 0;
-        long coverFileId = 0;
-        long[] imageIds = new long[kitObjectList.Count];
-
-        // 2 bundles (unless we are only refreshing kit details) + cover + one image per item
-        BeginUploadProgress((skipUpload ? 0 : 2) + 1 + kitObjectList.Count);
-
-        if(!skipUpload) {
-            yield return UploadFile("kitbundle_standalonewindows_" + GetKitName() + ".banter", null, fileId => windowsFileId = fileId, null, NextUploadStep("Uploading windows kit bundle"));
-            yield return UploadFile("kitbundle_android_" + GetKitName() + ".banter", null, fileId => androidFileId = fileId, null, NextUploadStep("Uploading android kit bundle"));
-        }
-
-        yield return UploadFile("cover_image.png", CopyIt((Texture2D)markitCoverImage.value).EncodeToPNG(), fileId => coverFileId = fileId, null, NextUploadStep("Uploading cover image"));
-
-        for(int i = 0; i < kitObjectList.Count; i++) {
-            // TODO this sucks - Replace with something bespoke like this: https://gist.github.com/mickdekkers/5c3c62539c057010d4497f9865060e20
-            var index = i;
-            yield return UploadFile("prefab_image.png", kitObjectList[i].texture.EncodeToPNG(), fileId => imageIds[index] = fileId, null, NextUploadStep("Uploading item image"));
-        }
-
-        string createdKitId = null;
-        var headers = new Dictionary<string, string>{
-            { "Content-Type", "application/json" },
-        };  
-        yield return Json("https://screen.sdq.st:2096/kit", new Kit{
-            name = kitName.value,
-            description = kitDescription.value,
-            kit_categories_id = kitCategories[kitCategoryDropDown.index].id,
-            users_id = sq.User.UserId.ToString(),
-            id = selectedKitId,
-            access_token = sq.Data.Token.AccessToken,
-            picture = "https://cdn.sidequestvr.com/file/" + coverFileId.ToString() + "/kitbundle_cover_image.png",
-            windows = skipUpload ? myKits[existingDropDown.index].windows : "https://cdn.sidequestvr.com/file/" + windowsFileId.ToString() + "/kitbundle_standalonewindows_" + GetKitName() + ".banter",
-            android = skipUpload ? myKits[existingDropDown.index].android : "https://cdn.sidequestvr.com/file/" + androidFileId.ToString() + "/kitbundle_android_" + GetKitName() + ".banter",
-            items = kitObjectList.Select(ko => new KitItem{
-                name = ko.obj.name,
-                picture = "https://cdn.sidequestvr.com/file/" + imageIds[kitObjectList.IndexOf(ko)].ToString() + "/kitbundle_prefab_image.png",
-                path = ko.path,
-            }).ToArray(),
-        }, resp => {
-            var kitResponse = JsonUtility.FromJson<KitRows>(resp);
-            createdKitId = kitResponse.rows[0].id;
-        }, headers);
-
-        status.AddStatus("Uploaded kit to Altspace Markit");
-        EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(), this);
-        callback();
-        EndUploadProgress("Upload complete");
-
-    }
-    private IEnumerator DeleteKit(Action callback) {
-        if(string.IsNullOrEmpty(selectedKitId)) {
-            status.AddStatus("No kit selected, please select a kit.");
-            yield break;
-        }
-        var headers = new Dictionary<string, string>{
-            { "Content-Type", "application/json" },
-        };  
-        var kit = new Kit();
-        kit.users_id = sq.User.UserId.ToString();
-        kit.access_token = sq.Data.Token.AccessToken;
-        yield return Json("https://screen.sdq.st:2096/kit/delete/" + selectedKitId, kit, resp => {
-            EditorCoroutineUtility.StartCoroutine(PopulateExistingKits(()=>{
-                SelectKit(myKits.Length);
-                try{
-                    existingDropDown.index = myKits.Length;
-                }catch{}
-                uploadWebOnlyKit.style.display = DisplayStyle.None;
-                deleteKit.style.display = DisplayStyle.None;
-                status.AddStatus("Deleted kit from Altspace Markit");
-                callback();
-            }), this);
-            
-        }, headers);
     }
     private IEnumerator UploadEverything(Action callback)
     {
@@ -1612,32 +1140,6 @@ public class BuilderWindow : EditorWindow
         element.parent.Remove(element);
     }
 
-    private void SaveKitList()
-    {
-        ProjectPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
-    }
-
-    private void LoadKitList()
-    {
-        var paths = ProjectPrefs.GetString("BanterBuilder_SelectedKitObjects", "").Split(',');
-        foreach (var path in paths)
-        {
-            if (string.IsNullOrEmpty(path))
-            {
-                continue;
-            }
-            var obj = GetKitObject(path);
-            if (obj == null)
-            {
-                continue;
-            }
-            if (!kitObjectList.Any(x => x.path == path))
-            {
-                kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = path });
-            }
-        }
-        numberOfItems.text = "Number of items: " + kitObjectList.Count;
-    }
     void GetHeadObjects()
     {
         if(avatarGameObject == null)
@@ -1693,67 +1195,18 @@ public class BuilderWindow : EditorWindow
     }
     private void DropFile(bool isScene, string sceneFile, string[] paths, GameObject gameObject)
     {
-        if (isScene)
+        if (!isScene)
         {
-            scenePathLabel.text = scenePath = sceneFile;
-            mode = BSBuilderBundleMode.Scene;
+            // Only scene files are accepted; the old prefab-drop flow no longer exists.
+            status.AddStatus("Only .unity scene files can be dropped here.");
+            return;
         }
-        else
-        {
-            scenePathLabel.text = scenePath = "";
-            foreach (var dropped in paths)
-            {
-                var obj = GetKitObject(dropped);
-                if (obj == null)
-                {
-                    continue;
-                }
-                if (!kitObjectList.Any(x => x.path == dropped))
-                {
-                    kitObjectList.Add(new KitObjectAndPath() { obj = obj, path = dropped });
-                    SaveKitList();
-                }
-            }
-            if (kitObjectList.Count > 0)
-            {
-                mode = BSBuilderBundleMode.Kit;
-            }
-            numberOfItems.text = "Number of items: " + kitObjectList.Count;
-        }
-        ProjectPrefs.SetString("BanterBuilder_SelectedKitObjects", String.Join(",", kitObjectList.Select(ko => ko.path).ToArray()));
+        scenePathLabel.text = scenePath = sceneFile;
+        mode = BSBuilderBundleMode.Scene;
         ProjectPrefs.SetString("BanterBuilder_ScenePath", scenePath);
         RefreshView();
     }
 
-    private UnityEngine.Object GetKitObject(string path)
-    {
-        var obj = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(path);
-        if (obj == null)
-        {
-            Debug.LogWarning("Couldn't load asset at path " + path);
-            return null;
-        }
-        if (!KitObjectAndPath.ALLOWED_KIT_TYPES.Contains(obj.GetType()))
-        {
-            Debug.LogWarning($"Asset at path {path} isn't a valid kit bundle object type, it is {obj.GetType().Name}.  Allowed types are: {string.Join(", ", KitObjectAndPath.ALLOWED_KIT_TYPES.Select(x => x.Name))}");
-            return null;
-        }
-        return obj;
-    }
-    void RemoveSelectedObjects()
-    {
-        foreach (var sel in kitListView.selectedItems.Cast<KitObjectAndPath>())
-        {
-            kitObjectList.Remove(sel);
-            SaveKitList();
-        }
-        kitListView.ClearSelection();
-        RefreshView();
-    }
-    private void ShowRemoveSelected()
-    {
-        removeSelected.style.display = kitListView.selectedIndices.Count() > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-    }
     private void RefreshAvatarView(bool ignoreBones = false)
     {
         if (avatarGameObject == null || (!ignoreBones && !ValidateAvatarBones()))
@@ -1824,58 +1277,29 @@ public class BuilderWindow : EditorWindow
     {
         scenePathParent.style.display = DisplayStyle.None;
         sceneStatsParent.style.display = DisplayStyle.None;
-        kitListView.style.display = DisplayStyle.None;
-        removeSelected.style.display = DisplayStyle.None;
-        numberOfItems.style.display = DisplayStyle.None;
         dropAreaContainer.style.display = DisplayStyle.None;
         MainTitle.style.display = DisplayStyle.None;
-        if (mode == BSBuilderBundleMode.Kit && kitObjectList.Count > 0)
-        {
-            removeSelected.style.display = DisplayStyle.Flex;
-            kitListView.style.display = DisplayStyle.Flex;
-
-            kitListView.itemsSource = kitObjectList;
-            kitListView.Rebuild();
-            loggedInViewPrefab.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
-            loggedInViewScene.style.display = DisplayStyle.None;
-            numberOfItems.style.display = DisplayStyle.Flex;
-            buildOptions.style.display = DisplayStyle.Flex;
-            loggedInCTAKit.style.display = DisplayStyle.Flex;
-            loggedInCTAScene.style.display = DisplayStyle.None;
-            dropAreaContainer.style.display = DisplayStyle.Flex;
-            MainTitle.text = "Kit Build";
-            MainTitle.style.display = DisplayStyle.Flex;
-
-            ShowSceneStats(kitObjectList.Select(ko => ko.path));
-        }
-        else if (mode == BSBuilderBundleMode.Scene)
+        if (mode == BSBuilderBundleMode.Scene)
         {
             scenePathParent.style.display = DisplayStyle.Flex;
             scenePathLabel.text = "<color=\"white\">Scene:</color> " + scenePath;
 
             ShowSceneStats(new[] { scenePath });
-            loggedInViewPrefab.style.display = DisplayStyle.None;
             loggedInViewScene.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
-            numberOfItems.style.display = DisplayStyle.None;
             buildOptions.style.display = DisplayStyle.Flex;
             loggedInCTAScene.style.display = DisplayStyle.Flex;
-            loggedInCTAKit.style.display = DisplayStyle.None;
             MainTitle.text = "Scene Build";
             MainTitle.style.display = DisplayStyle.Flex;
             // button to open the webroot folder - highlight in unity.
         }
         else
         {
-            loggedInViewPrefab.style.display = DisplayStyle.None;
             loggedInViewScene.style.display = DisplayStyle.None;
-            numberOfItems.style.display = DisplayStyle.None;
             buildOptions.style.display = DisplayStyle.None;
             loggedInCTAScene.style.display = DisplayStyle.None;
-            loggedInCTAKit.style.display = DisplayStyle.None;
             dropAreaContainer.style.display = DisplayStyle.Flex;
             MainTitle.style.display = DisplayStyle.None;
         }
-        ShowRemoveSelected();
         if (!skipLoginRefresh)
         {
             loginManager.ShowUploadToggle();
@@ -2017,22 +1441,14 @@ public class BuilderWindow : EditorWindow
     private void ShowBuildConfirm()
     {
         buildConfirm.style.display = DisplayStyle.Flex;
-        confirmBuildMode.text = "<color=\"white\">Build Mode:</color> " + (mode == BSBuilderBundleMode.Scene ? "Scene Bundle" : "Kit Bundle");
-        confirmKitBundle.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
-        confirmKitBundle.text = "<color=\"white\">Kit Name:</color> " + kitName.value;
-        confirmKitBundleID.style.display = mode == BSBuilderBundleMode.Kit && !string.IsNullOrEmpty(selectedKitId) ? DisplayStyle.Flex : DisplayStyle.None;
-        confirmKitBundleID.text = "<color=\"white\">Kit Bundle ID:</color> " + selectedKitId;
-        confirmSceneFile.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
+        confirmBuildMode.text = "<color=\"white\">Build Mode:</color> Scene Bundle";
         confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
-        confirmSpaceCode.style.display = mode == BSBuilderBundleMode.Scene ? DisplayStyle.Flex : DisplayStyle.None;
         confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".worldspace.host") : SelectedWorldUrl);
-        confirmKitNumber.style.display = mode == BSBuilderBundleMode.Kit ? DisplayStyle.Flex : DisplayStyle.None;
-        confirmKitNumber.text = "<color=\"white\">Number of Items:</color> " + kitObjectList.Count.ToString();
 
         // Runtime graph edits that this project has already absorbed. Worth saying out loud here
         // because the upload is what makes removing them from the world safe, and removing them is
         // not obviously part of "upload a world".
-        var syncedNote = mode == BSBuilderBundleMode.Scene ? RuntimeOverridePrune.ConfirmationLine() : null;
+        var syncedNote = RuntimeOverridePrune.ConfirmationLine();
         confirmSyncedGraphs.style.display = syncedNote == null ? DisplayStyle.None : DisplayStyle.Flex;
         confirmSyncedGraphs.text = syncedNote ?? "";
     }
@@ -2312,7 +1728,7 @@ public class BuilderWindow : EditorWindow
             return false;
         }
     }
-    private void BuildAssetBundles(bool skipUpload = false)
+    private void BuildAssetBundles()
     {
         if (mode == BSBuilderBundleMode.None)
         {
@@ -2324,12 +1740,7 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("No scene selected...");
             return;
         }
-        if (mode == BSBuilderBundleMode.Kit && kitObjectList.Count < 1)
-        {
-            status.AddStatus("No objects selected...");
-            return;
-        }
-        if (!skipUpload && !EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
         {
             return;
         }
@@ -2340,7 +1751,7 @@ public class BuilderWindow : EditorWindow
             // continuation and the auto-upload coroutine before they run (build succeeds, nothing
             // uploads, no error). Lock reloads across the scene build + upload and release only once the
             // upload finishes (handed to its completion callback) or here on any early exit, so the
-            // reload lands after we're done. Kit builds don't switch targets, so they never lock.
+            // reload lands after we're done.
             bool reloadLockHeld = false;
             bool lockHandedToUpload = false;
             try
@@ -2354,110 +1765,64 @@ public class BuilderWindow : EditorWindow
                 {
                     status.AddStatus("Visual Scripting check passed!");
                 }
-                if (!skipUpload) {
-                    status.AddStatus("Build started...");
+                status.AddStatus("Build started...");
 
-                    if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
-                    {
-                        Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
-                    }
-
-                    List<string> names = new List<string>();
-
-                    if (mode == BSBuilderBundleMode.Scene)
-                    {
-                        // Greenfield spaces build to a single platform-agnostic encrypted Basis bundle
-                        // (asset.world). Every platform loads it and ranged-GETs its own section; the
-                        // runtime falls back to legacy per-platform windows.banter / android.banter.
-                        EditorApplication.LockReloadAssemblies();
-                        reloadLockHeld = true;
-                        names = await BuildSpaceBeeBundles();
-                        if (names.Count == 0)
-                        {
-                            status.AddStatus("Build failed. See the console for details.");
-                            return;
-                        }
-                    }
-                    else
-                    {
-                        for (int i = 0; i < buildTargets.Length; i++)
-                        {
-                            if (buildTargetFlags[i])
-                            {
-                                string platform = buildTargets[i].ToString().ToLower();
-                                AssetBundleBuild abb = new AssetBundleBuild();
-                                string newAssetBundleName = "kitbundle_" + platform + "_" + GetKitName() + ".banter";
-                                status.AddStatus("Building: " + newAssetBundleName);
-                                abb.assetNames = kitObjectList.Select(x => x.path).ToArray();
-                                abb.assetBundleName = newAssetBundleName;
-                                CustomSceneProcessor.isBuildingAssetBundles = true;
-                                BuildPipeline.BuildAssetBundles(Path.Join(assetBundleRoot, assetBundleDirectory), new[] { abb }, BuildAssetBundleOptions.None, buildTargets[i]);
-                                CustomSceneProcessor.isBuildingAssetBundles = false;
-                                names.Add(newAssetBundleName);
-                                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest"))
-                                {
-                                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + newAssetBundleName + ".manifest");
-                                }
-                            }
-                        }
-                    }
-
-                    if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
-                    {
-                        File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
-                    }
-                    if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
-                    {
-                        File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
-                    }
-                    if (names.Count > 0 && !autoUpload.value)
-                    {
-                        EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
-                    }
-                    // The bar is upload-only now; BuildPipeline shows Unity's own
-                    // popup while building. (This used to poke the bar from a
-                    // background Task, which touched UI off the main thread.)
-                    if (mode == BSBuilderBundleMode.Kit)
-                    {
-                        status.AddStatus("Writing kit items to " + Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt.");
-                        File.WriteAllText(Path.Join(assetBundleRoot, assetBundleDirectory) + "/kit_items.txt", String.Join("\n", kitObjectList.Select(x => x.path.ToLower()).ToArray()));
-                    }
-                    status.AddStatus("Build finished.");
+                if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
+                {
+                    Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
                 }
+
+                List<string> names = new List<string>();
+
+                // Greenfield spaces build to a single platform-agnostic encrypted Basis bundle
+                // (asset.world). Every platform loads it and ranged-GETs its own section; the
+                // runtime falls back to legacy per-platform windows.banter / android.banter.
+                EditorApplication.LockReloadAssemblies();
+                reloadLockHeld = true;
+                names = await BuildSpaceBeeBundles();
+                if (names.Count == 0)
+                {
+                    status.AddStatus("Build failed. See the console for details.");
+                    return;
+                }
+
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest"))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory + ".manifest");
+                }
+                if (File.Exists(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory))
+                {
+                    File.Delete(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + assetBundleDirectory);
+                }
+                if (names.Count > 0 && !autoUpload.value)
+                {
+                    EditorUtility.RevealInFinder(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
+                }
+                // The bar is upload-only now; BuildPipeline shows Unity's own
+                // popup while building. (This used to poke the bar from a
+                // background Task, which touched UI off the main thread.)
+                status.AddStatus("Build finished.");
 
                 if (autoUpload.value && sq.User != null)
                 {
-                    if (mode == BSBuilderBundleMode.Scene) {
-                        if (!HasSelectedWorld) {
-                            status.AddStatus("No world selected, please select or create a world to upload.");
-                            return;
-                        }
-                        uploadWebOnly.SetEnabled(false);
-                        uploadEverything.SetEnabled(false);
-                        // Hand the reload lock to the upload: it releases in UploadEverything's callback
-                        // (which always fires, even on failure), so the deferred reload lands only after
-                        // the upload is done rather than mid-flight.
-                        bool unlockAfterUpload = reloadLockHeld;
-                        lockHandedToUpload = reloadLockHeld;
-                        EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
-                        {
-                            status.AddStatus("Upload complete.");
-                            uploadWebOnly.SetEnabled(true);
-                            uploadEverything.SetEnabled(true);
-                            if (unlockAfterUpload) EditorApplication.UnlockReloadAssemblies();
-                        }), this);
-                    } else {
-                        if (string.IsNullOrEmpty(kitName.text) || string.IsNullOrEmpty(kitDescription.text) || markitCoverImage.value == null || kitCategoryDropDown.index == -1) {
-                            status.AddStatus("No kit name, description, category or cover image provided, please enter a name, description, category and select a texture.");
-                            return;
-                        }
-                        uploadEverythingKit.SetEnabled(false);
-                        EditorCoroutineUtility.StartCoroutine(UploadKit(() =>
-                        {
-                            status.AddStatus("Upload complete.");
-                            uploadEverythingKit.SetEnabled(true);
-                        }, skipUpload), this);
+                    if (!HasSelectedWorld) {
+                        status.AddStatus("No world selected, please select or create a world to upload.");
+                        return;
                     }
+                    uploadWebOnly.SetEnabled(false);
+                    uploadEverything.SetEnabled(false);
+                    // Hand the reload lock to the upload: it releases in UploadEverything's callback
+                    // (which always fires, even on failure), so the deferred reload lands only after
+                    // the upload is done rather than mid-flight.
+                    bool unlockAfterUpload = reloadLockHeld;
+                    lockHandedToUpload = reloadLockHeld;
+                    EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+                    {
+                        status.AddStatus("Upload complete.");
+                        uploadWebOnly.SetEnabled(true);
+                        uploadEverything.SetEnabled(true);
+                        if (unlockAfterUpload) EditorApplication.UnlockReloadAssemblies();
+                    }), this);
                 }
             }
             finally

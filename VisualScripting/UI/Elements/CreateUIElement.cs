@@ -34,7 +34,9 @@ namespace BS.VisualScripting
         Vector3Field = 42,
         Vector4Field = 43,
         RectField = 44,
-        BoundsField = 45
+        BoundsField = 45,
+        /// <summary>The SideQuest colour picker (com.sidequest.color-picker registers the factory).</summary>
+        ColorPicker = 108
     }
 
     [UnitTitle("Create UI Element")]

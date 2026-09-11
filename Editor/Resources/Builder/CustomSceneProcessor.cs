@@ -8,7 +8,6 @@ using BS;
 class CustomSceneProcessor : IProcessSceneWithReport
 {
     public int callbackOrder { get { return 0; } }
-    public static bool isBuildingAssetBundles = false;
 
     // Set true only around the Greenfield space .bee build. A temporary GameObject by this name is
     // added to the source scene so Basis' SceneBundleBuild has a BasisContentBase to derive the scene
@@ -21,12 +20,10 @@ class CustomSceneProcessor : IProcessSceneWithReport
     {
         StripWorldLink(scene);
 #if !GREENFIELD_PROJECT
-        // Strip any authoring-time BSStarterUpper from every space bundle — raw AND .bee. It's
-        // re-added at runtime by the bootstrap; if one ships in the bundle its Awake fires on scene load
-        // and sets up a second, broken browser link (BSPipe.Start NRE), killing scene JS and space
-        // navigation. This used to only run for raw builds (isBuildingAssetBundles), so .bee scenes
-        // shipped it and broke — hence the same scene loading fine as a raw AssetBundle but not as a .bee.
-        if (isBuildingAssetBundles || isBuildingSceneBee)
+        // Strip any authoring-time BSStarterUpper from the space bundle. It's re-added at runtime by
+        // the bootstrap; if one ships in the bundle its Awake fires on scene load and sets up a second,
+        // broken browser link (BSPipe.Start NRE), killing scene JS and space navigation.
+        if (isBuildingSceneBee)
         {
             LogLine.Do("Removing existing BSStarterUpper if it exists, it will be added at runtime.");
             BSStarterUpper[] everything = GameObject.FindObjectsOfType<BSStarterUpper>();
@@ -48,7 +45,7 @@ class CustomSceneProcessor : IProcessSceneWithReport
                 }
             }
         }
-        if (isBuildingAssetBundles || isBuildingSceneBee)
+        if (isBuildingSceneBee)
         {
             ApplyPlatformFilters(scene, report);
         }

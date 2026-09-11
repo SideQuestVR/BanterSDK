@@ -30,7 +30,6 @@ Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK prov
 - [The Builder Window](#the-builder-window)
   - [Opening & Signing In](#opening--signing-in)
   - [Building a World (Scene Mode)](#building-a-world-scene-mode)
-  - [Building a Kit (Kit Mode)](#building-a-kit-kit-mode)
   - [Build Validation & Logs](#build-validation--logs)
 - [Core Concepts](#core-concepts)
   - [Scene](#scene)
@@ -153,6 +152,7 @@ Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK prov
   - [UIVisualElement](#uivisualelement)
   - [UITextField](#uitextfield)
   - [UIEdgeLayer](#uiedgelayer)
+  - [UIColorPicker](#uicolorpicker)
   - [BanterUI Factory Helpers](#banterui-factory-helpers)
   - [Style Properties Reference](#style-properties-reference)
 - [Asset System](#asset-system)
@@ -324,24 +324,9 @@ Pick a destination from the **World** dropdown — its hosting URL appears under
 
 The **Auto Upload** toggle is remembered per project.
 
-### Building a Kit (Kit Mode)
-
-Drop one or more prefabs onto the drop area to enter Kit mode. Only GameObject, Material, and Shader assets are accepted — anything else is skipped with a console warning, and duplicates are ignored. REMOVE SELECTED deletes highlighted entries from the item list.
-
-1. Fill in the kit name, description, and category, and pick a cover image — all four are required to upload.
-2. Or select one of your existing kits from the dropdown to update it instead of creating a new one.
-3. Click **BUILD & UPLOAD**.
-
-The build produces one bundle per platform in `Assets/WebRoot` and uploads both:
-
-```
-kitbundle_android_<name>.banter
-kitbundle_standalonewindows_<name>.banter
-```
-
 ### Build Validation & Logs
 
-A confirmation dialog summarizes every build before it runs — build mode, plus the scene file and destination world (Scene mode) or the kit name and item count (Kit mode). CANCEL backs out without building.
+A confirmation dialog summarizes every build before it runs — build mode, plus the scene file and destination world. CANCEL backs out without building.
 
 Once confirmed, every build first validates the scene's visual scripting graphs (see [Visual Scripting](#visual-scripting)). Disallowed nodes stop the build, with details in the logs.
 
@@ -1751,9 +1736,28 @@ obj.AddComponent(new BS.Material({
     texture: "https://example.com/texture.png",
     color: new BS.Vector4(1, 1, 1, 1),  // RGBA tint
     side: BS.MaterialSide.Front,        // Front, Back, Double
-    generateMipMaps: false
+    generateMipMaps: false,
+    normalMap: "",                      // Optional maps: empty = off (URL, asset id or scheme reference)
+    roughnessMap: "",                   //   read from the GREEN channel (white = rough)
+    aoMap: "",                          //   read from the RED channel
+    textureScale: 1,                    // UV tiling, or tiles per metre on the triplanar shaders
+    normalStrength: 1
 }));
 ```
+
+The bundled diffuse shaders come in two families, each with an opaque and an alpha-blended twin, and
+all four tint by `color` (the Transparent twins also honour its alpha):
+
+| Shader | Mapping |
+|---|---|
+| `Unlit/Diffuse`, `Unlit/DiffuseTransparent` | Mesh UVs, tiled by `textureScale` |
+| `Unlit/DiffuseTriplanar`, `Unlit/DiffuseTriplanarTransparent` | World-space triplanar (no UVs needed); `textureScale` = tiles per metre |
+
+Texture references may also use a registered scheme instead of a URL. The `com.sidequest.textures-cc0`
+package registers `cc0:{slug}/{map}/{size}` (map = `basecolor`, `normal` or `mask`; the mask file packs
+R = AO, G = roughness, B = metallic, so `roughnessMap` and `aoMap` can both point at it): the in-build
+256px preview shows immediately and the CDN file at the requested size is swapped in when it arrives.
+Other packages can register their own scheme with `BSMaterial.RegisterTextureSource(IBSTextureSource)`.
 
 ### Text
 
@@ -2721,6 +2725,32 @@ layer.setEdges([
 layer.edges;   // Read-only view of the current edge set
 ```
 
+### UIColorPicker
+
+A native colour picker: a hue/saturation wheel with a draggable marker, brightness and opacity bars, editable hex / hsl / rgb fields, preset and recent swatches, and a presets-only mode. Constructed with the owning panel: `new BS.UIColorPicker(panel, parent?)`. The element is implemented by the `com.sidequest.color-picker` package, which registers element type 108 with the UI bridge; the page only ever sends strings.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `value` | string | `#FFFFFFFF` | The colour as `#RRGGBBAA`. Writing it does not echo a change event |
+| `mode` | string | `full` | `full`, or `presets` for the swatch-grid-only picker |
+| `presets` | string | — | Comma-separated colour codes for the preset row; empty restores the defaults |
+| `recent` | string | — | Comma-separated colour codes for the recent row; empty hides it |
+| `showAlpha` | boolean | `true` | Show the opacity bar |
+| `theme` | string | — | JSON palette and metrics (`surface`, `accent`, `text`, `wheelDiameter`, `fontSize`, …); a partial document is applied over the defaults |
+| `tooltip` | string | — | Hover tooltip |
+| `name` | string | — | Element name for queries |
+
+```js
+const picker = new BS.UIColorPicker(panel);
+picker.value = "#FF2E8CFF";
+picker.presets = "#FFFFFF,#000000,#E53935,#1E88E5";
+picker.theme = JSON.stringify({ accent: "#4CAF50", wheelDiameter: 240 });
+picker.OnChange((e) => console.log("Colour:", e.value));   // live while dragging, then once on release
+
+picker.AddClass("wide");     // USS class helpers
+picker.RemoveClass("wide");
+```
+
 ### BanterUI Factory Helpers
 
 `BS.BanterUI` extends `UIPanel` with creator methods that pass the panel reference for you: `new BS.BanterUI(resolution?, screenSpace?, meshInput?)` (defaults: `new BS.Vector2(512, 512)`, `false`, `false`).
@@ -2735,6 +2765,7 @@ layer.edges;   // Read-only view of the current edge set
 | `CreateScrollView(parent?)` | UIScrollView | Scrollable container |
 | `CreateVisualElement(parent?)` | UIVisualElement | Generic container |
 | `CreateEdgeLayer(parent?)` | UIEdgeLayer | Bezier-edge canvas |
+| `CreateColorPicker(parent?)` | UIColorPicker | Colour picker (wheel, bars, fields, swatches) |
 | `CreateButtonWithText(text, tooltip?, parent?)` | UIButton | Button with text and optional tooltip |
 | `CreateToggleWithLabel(labelText, checked = false, parent?)` | { toggle, label } | Toggle beside a label |
 | `CreateSliderWithLabel(labelText, min = 0, max = 100, initialValue = 50, parent?)` | { slider, label } | Slider with a value label |

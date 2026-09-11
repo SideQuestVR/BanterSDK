@@ -252,5 +252,10 @@ namespace BS
         graphTitles,
         unseatOnJump,
         unseatOnMove,
+        normalMap,
+        roughnessMap,
+        aoMap,
+        textureScale,
+        normalStrength,
     }
 }

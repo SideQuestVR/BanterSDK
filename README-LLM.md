@@ -370,7 +370,8 @@ Config: {type?: LightType(Point), color?: Vector4(1,1,1,1), intensity?: number(1
 
 **Material**
 ```
-Config: {shaderName?: string("Unlit/Diffuse"), texture?: string(url), color?: Vector4(1,1,1,1), side?: MaterialSide(Front), generateMipMaps?: boolean(false)}
+Config: {shaderName?: string("Unlit/Diffuse"), texture?: string(url | "cc0:{slug}/basecolor/{size}"), color?: Vector4(1,1,1,1), side?: MaterialSide(Front), generateMipMaps?: boolean(false), normalMap?: string(""), roughnessMap?: string(""), aoMap?: string(""), textureScale?: number(1), normalStrength?: number(1)}
+Shaders: "Unlit/Diffuse" | "Unlit/DiffuseTransparent" (UV) | "Unlit/DiffuseTriplanar" | "Unlit/DiffuseTriplanarTransparent" (world-space, no UVs; textureScale = tiles per metre). All four tint by color; the Transparent twins honour color alpha. Optional maps are off while empty; roughnessMap reads G, aoMap reads R (the cc0 library's "mask" file packs R=AO G=roughness B=metallic, so both may point at "cc0:{slug}/mask/{size}").
 ```
 
 **Text**

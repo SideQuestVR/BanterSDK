@@ -85,7 +85,37 @@ namespace BS.UI.Bridge
         /// </summary>
         private static readonly Dictionary<string, IUIImageSource> _imageSources =
             new Dictionary<string, IUIImageSource>(StringComparer.OrdinalIgnoreCase);
-        
+
+        /// <summary>
+        /// Element factories registered by other packages, keyed by element type id. Consulted
+        /// before the built-in switch in <see cref="CreateElementByType"/>, so a package can add a
+        /// type (a colour picker, say) without the SDK referencing it.
+        /// </summary>
+        private static readonly Dictionary<int, Func<VisualElement>> _elementFactories =
+            new Dictionary<int, Func<VisualElement>>();
+
+        /// <summary>
+        /// Register how to build an element type. Replaces any previous registration for the
+        /// same id, so a hot-reloaded provider supersedes its predecessor.
+        /// </summary>
+        public static void RegisterElementFactory(int elementTypeId, Func<VisualElement> factory)
+        {
+            if (factory == null)
+            {
+                Debug.LogWarning($"{LogPrefix} Ignoring a null element factory for type {elementTypeId}.");
+                return;
+            }
+
+            _elementFactories[elementTypeId] = factory;
+            LogVerbose($"Registered element factory for type {elementTypeId}");
+        }
+
+        /// <summary>Remove a factory registered by <see cref="RegisterElementFactory"/>.</summary>
+        public static bool UnregisterElementFactory(int elementTypeId)
+        {
+            return _elementFactories.Remove(elementTypeId);
+        }
+
         // Static HashSet for efficient UI command checking
         private static readonly HashSet<string> _uiCommandPrefixes = new HashSet<string>
         {
@@ -286,6 +316,14 @@ namespace BS.UI.Bridge
             // Parse the UIElementType enum value
             if (int.TryParse(type, out int typeValue))
             {
+                // Types other packages own come first — see RegisterElementFactory.
+                if (_elementFactories.TryGetValue(typeValue, out var factory))
+                {
+                    var made = factory();
+                    if (made != null) return made;
+                    Debug.LogWarning($"{LogPrefix} The factory for element type {typeValue} returned null; falling back.");
+                }
+
                 return typeValue switch
                 {
                     // BSUIElement rather than a bare VisualElement: it IS a VisualElement, and it is

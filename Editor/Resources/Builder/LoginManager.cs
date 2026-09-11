@@ -351,7 +351,6 @@ public class LoginManager
         autoUpload.style.display = DisplayStyle.Flex;
         SetBuildButtonText();
         OnLoginCompleted?.Invoke();
-        // EditorCoroutineUtility.StartCoroutine(CheckKitUserExists(), this);
     }
 
     public void RefreshUser()
