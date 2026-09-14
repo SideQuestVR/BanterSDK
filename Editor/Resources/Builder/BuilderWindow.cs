@@ -914,6 +914,14 @@ public class BuilderWindow : EditorWindow
             confirmCallback = () =>
             {
                 confirmCallback = null;
+                // Same gate as the build path. Note this inspects the scenes currently open, not the
+                // already-built asset.world being uploaded, so it is a reminder rather than a
+                // guarantee about the bundle's contents.
+                if (!ConvexColliderValidation.CheckConvexColliders())
+                {
+                    status.AddStatus("Cancelled: convex mesh colliders on static geometry, please check the logs for more information.");
+                    return;
+                }
                 uploadWebOnly.SetEnabled(false);
                 uploadEverything.SetEnabled(false);
                 EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
@@ -1764,6 +1772,14 @@ public class BuilderWindow : EditorWindow
                 else
                 {
                     status.AddStatus("Visual Scripting check passed!");
+                }
+                // Convex on a static mesh collider makes players collide with a hull instead of the
+                // floor they can see, which can leave them stuck standing on solid ground. Gate here,
+                // before the reload lock, so cancelling costs nothing and blocks the auto-upload too.
+                if (!ConvexColliderValidation.CheckConvexColliders())
+                {
+                    status.AddStatus("Cancelled: convex mesh colliders on static geometry, please check the logs for more information.");
+                    return;
                 }
                 status.AddStatus("Build started...");
 
