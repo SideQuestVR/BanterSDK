@@ -112,32 +112,10 @@ namespace BS.SDKEditor
                 error => { failed = true; report(error); });
             if (failed) yield break;
 
-            // ---- shanes editor file ------------------------------------------------------
-            // Only the graph references are touched. The scene overlay beside them has never been
-            // imported into Unity, so clearing it would destroy work that exists nowhere else —
-            // hence the extension-data round trip in PersistedShanesEditor.
-            string editorJson = null;
-            yield return PersistedWorldFiles.Fetch(slug, PersistedWorldFiles.ShanesEditorFile,
-                json => editorJson = json,
-                error => report(error));
-
-            if (editorJson != null)
-            {
-                var editorFile = PersistedWorldFiles.Parse<PersistedShanesEditor>(editorJson);
-                if (editorFile?.Graphs != null)
-                {
-                    var before = editorFile.Graphs.Count;
-                    editorFile.Graphs = editorFile.Graphs.Where(g => g?.Id == null || !pruned.Contains(g.Id)).ToList();
-                    if (editorFile.Graphs.Count != before)
-                    {
-                        yield return PersistedWorldFiles.Upload(api, worldId, slug, PersistedWorldFiles.ShanesEditorFile,
-                            PersistedWorldFiles.Write(editorFile),
-                            () => report($"Updated {PersistedWorldFiles.ShanesEditorFile}."),
-                            error => report(error));
-                    }
-                }
-            }
-
+            // Script graph overrides live in exactly one file, so there is no second copy of this
+            // list to keep in step. Scene files carry only INLINE graphs — graphs on objects the
+            // editor itself created — which have no Unity counterpart to be synced into and are
+            // therefore never redundant. Pruning must never touch them.
             ClearRecords(link, scene, pruned, report, pruned.Count);
         }
 

@@ -29,8 +29,24 @@ namespace BS.SDKEditor
         /// </summary>
         public const UploadAssetType ExtraAssetType = UploadAssetType.Extra;
 
-        public const string ShanesEditorFile = "__persisted_shanes_editor.json";
+        /// <summary>The scene manifest: which scenes the world has, and which one is live.</summary>
+        public const string ScenesFile = "__persisted_scenes.json";
+
+        /// <summary>
+        /// Unity scene graph overrides — edits to graphs that already exist in this world's Unity
+        /// bundle. World-level and nothing to do with scenes: the objects they target are in the
+        /// bundle whichever scene is active.
+        /// </summary>
         public const string ScriptGraphsFile = "__persisted_script_graphs.json";
+
+        /// <summary>
+        /// The single-slot scene file the manifest replaced. Kept only so the runtime editor can
+        /// import a world last saved by the older build; nothing writes it any more.
+        /// </summary>
+        public const string ShanesEditorFile = "__persisted_shanes_editor.json";
+
+        /// <summary>One scene's file, by its opaque scene id.</summary>
+        public static string SceneFile(string sceneId) => "__persisted_scene_" + sceneId + ".json";
 
         public static string WebRoot(string slug) => "https://" + slug + ".worldspace.host";
 
@@ -149,26 +165,29 @@ namespace BS.SDKEditor
     }
 
     /// <summary>
-    /// __persisted_shanes_editor.json. Only the fields this side needs are typed; everything else
-    /// rides through <see cref="Extra"/> untouched, which is what lets the editor prune a graph
-    /// reference without understanding — or destroying — the scene overlay beside it.
+    /// __persisted_scenes.json — the world's scene list.
     /// </summary>
-    public class PersistedShanesEditor
+    /// <remarks>
+    /// Only the fields this side reads are typed. Everything else rides through
+    /// <see cref="Extra"/> untouched, so a manifest written by a newer runtime editor survives a
+    /// round trip through Unity with nothing dropped.
+    /// </remarks>
+    public class PersistedSceneManifest
     {
-        [JsonProperty("graphs")]
-        public List<PersistedGraphRef> Graphs { get; set; }
+        [JsonProperty("v")] public int V { get; set; }
+        [JsonProperty("rev")] public int Rev { get; set; }
+        [JsonProperty("activeSceneId")] public string ActiveSceneId { get; set; }
+        [JsonProperty("scenes")] public List<PersistedSceneEntry> Scenes { get; set; }
 
         [JsonExtensionData]
         public IDictionary<string, Newtonsoft.Json.Linq.JToken> Extra { get; set; }
     }
 
-    public class PersistedGraphRef
+    public class PersistedSceneEntry
     {
         [JsonProperty("id")] public string Id { get; set; }
-        [JsonProperty("bid")] public string Bid { get; set; }
-        [JsonProperty("machineIndex")] public int MachineIndex { get; set; }
-        [JsonProperty("title")] public string Title { get; set; }
-        [JsonProperty("baseGraphRef")] public string BaseGraphRef { get; set; }
+        [JsonProperty("name")] public string Name { get; set; }
+        [JsonProperty("file")] public string File { get; set; }
         [JsonProperty("savedAt")] public string SavedAt { get; set; }
 
         [JsonExtensionData]

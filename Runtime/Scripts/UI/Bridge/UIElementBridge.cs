@@ -1760,6 +1760,11 @@ namespace BS.UI.Bridge
             value = value.Trim();
             if (value == "none") return new StyleTranslate(StyleKeyword.None);
             var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            // A value that is neither null nor empty can still split to nothing — "   " does.
+            // Indexing [0] regardless would throw out of SetStyle, and because SetStyle is called
+            // from the message loop that would abandon every style queued behind it: one stray
+            // space and a whole panel stops being laid out, with nothing in the log to say why.
+            if (parts.Length == 0) return new StyleTranslate(StyleKeyword.Initial);
             var x = ParseLengthComponent(parts[0]);
             var y = parts.Length > 1 ? ParseLengthComponent(parts[1]) : new Length(0);
             return new StyleTranslate(new Translate(x, y));
@@ -1771,6 +1776,7 @@ namespace BS.UI.Bridge
             value = value.Trim();
             if (value == "none") return new StyleScale(StyleKeyword.None);
             var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return new StyleScale(StyleKeyword.Initial);
             var x = ParseFloatInvariant(parts[0]);
             var y = parts.Length > 1 ? ParseFloatInvariant(parts[1]) : x;
             return new StyleScale(new Scale(new Vector2(x, y)));
@@ -1789,6 +1795,7 @@ namespace BS.UI.Bridge
         {
             if (string.IsNullOrEmpty(value)) return new StyleTransformOrigin(StyleKeyword.Initial);
             var parts = value.Trim().ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return new StyleTransformOrigin(StyleKeyword.Initial);
             Length Component(string part)
             {
                 switch (part)
