@@ -189,12 +189,8 @@ namespace BS.SDKEditor
         static void Prompt(InputHandling current)
         {
             var message =
-                "This project's Active Input Handling is \"" + Label(current) + "\". The SideQuest Creator SDK requires \"Both\".\n\n" +
-                "The SDK uses the legacy Input Manager and the Input System package at the same time, and neither is optional:\n" +
-                "• Desktop keyboard and mouse control (PlayerEmulator) uses the legacy Input Manager.\n" +
-                "• Hand grabbing, world-space UI and asset loading use the Input System package.\n\n" +
-                "Neither wrong setting is a compile error, so the project will build and then fail silently at runtime.\n\n" +
-                "\"Set to Both and restart\" rewrites Player Settings and restarts Unity to recompile. Unsaved scenes are saved first.";
+                "Active Input Handling is \"" + Label(current) + "\". SDK Play Mode needs \"Both\" for keyboard/mouse, grabbing and UI.\n\n" +
+                "Save scenes, switch to Both and restart Unity?";
 
             var accepted = EditorUtility.DisplayDialog(
                 "Set Active Input Handling to Both?",
@@ -214,7 +210,19 @@ namespace BS.SDKEditor
 
         static string DeclineMessage(InputHandling current)
         {
-            return "[Banter] Active Input Handling is \"" + Label(current) + "\", not \"Both\". SDK input will fail silently at runtime. Fix it with " + MENU_DISPLAY + ".";
+            return "[Banter] Active Input Handling is \"" + Label(current) + "\", not \"Both\". SDK Play Mode input may not work. Fix it with " + MENU_DISPLAY + ".";
+        }
+
+        /// <summary>Read-only build warning. Never changes settings or restarts Unity.</summary>
+        public static bool ConfirmBeforeSceneBuild(Action<string> report)
+        {
+            var current = Current;
+            if (current == InputHandling.Both) return true;
+            string message = DeclineMessage(current) + "\nThis is a local Play Mode requirement; changing it does not repair the hosted client's player.";
+            Debug.LogWarning(message);
+            report?.Invoke(message);
+            return Application.isBatchMode || EditorUtility.DisplayDialog("SDK Play Mode input", message +
+                "\n\nBuild anyway without changing settings?", "Build anyway", "Cancel");
         }
 
         static string Label(InputHandling handling)
