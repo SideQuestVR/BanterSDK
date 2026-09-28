@@ -1,4 +1,3 @@
-#if GREENFIELD_PROJECT
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -194,4 +193,3 @@ namespace BS.SDKEditor
         public IDictionary<string, Newtonsoft.Json.Linq.JToken> Extra { get; set; }
     }
 }
-#endif

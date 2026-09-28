@@ -21,6 +21,19 @@ namespace BS
         static bool installed;
         static int fetchesSincePrune;
 
+        /// <summary>
+        /// Forget a root's debug data, so the next fetch builds it for the graph now installed.
+        /// </summary>
+        /// <remarks>
+        /// Keyed on the ROOT, and a graph swap keeps the same root (the machine) while replacing
+        /// its graph — so without this the swapped-in graph was handed the debug data built for the
+        /// graph it replaced, and every old element's data stayed referenced for the session.
+        /// </remarks>
+        public static void Release(IGraphRoot root)
+        {
+            if (root != null) data.Remove(root);
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Install()
         {

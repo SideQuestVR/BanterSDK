@@ -32,6 +32,19 @@ namespace BS
         public bool paused;
 
         /// <summary>
+        /// A runtime swap has replaced this machine's authored graph. The picker badges it, and
+        /// Revert is only offered when it is true.
+        /// </summary>
+        public bool overridden;
+
+        /// <summary>
+        /// Hash of the graph the machine was AUTHORED with. Equal to graphRef until a swap
+        /// replaces it; the base a saved override's baseGraphRef must match. Only filled when
+        /// hashes were asked for, like graphRef.
+        /// </summary>
+        public string authoredRef;
+
+        /// <summary>
         /// Content hash of the machine's current graph, in the same form an envelope's
         /// baseGraphRef takes — so a saved override can be told apart from one whose base has
         /// since changed. Null unless the caller asked for it: producing one serializes the whole
@@ -85,6 +98,10 @@ namespace BS
                 unitCount = graph?.units.Count ?? 0,
                 blocked = graph != null && IsBlockedQuiet(graph),
                 paused = machine.GraphPaused,
+                overridden = ScriptGraphSession.IsOverridden(machine),
+                authoredRef = withGraphRef
+                    ? (ScriptGraphSession.AuthoredHash(machine) ?? GraphRef(machine))
+                    : null,
             };
         }
 
@@ -94,15 +111,9 @@ namespace BS
         /// </summary>
         static string GraphRef(ScriptMachine machine)
         {
-            var graph = machine.graph;
-            if (graph == null) return null;
-            ScriptGraphAsset asset = null;
             try
             {
-                asset = ScriptableObject.CreateInstance<ScriptGraphAsset>();
-                asset.hideFlags = HideFlags.DontSave;
-                asset.graph = ScriptGraphSession.CloneGraph(graph);
-                return ScriptGraphSession.HashRef(((object)asset).Serialize(true).json);
+                return ScriptGraphSession.GraphHash(machine.graph);
             }
             catch (System.Exception e)
             {
@@ -110,10 +121,6 @@ namespace BS
                 // and the caller treats a missing hash as "cannot tell" rather than as "stale".
                 Debug.LogWarning($"[Banter] Could not hash the graph on '{machine.gameObject.name}': {e.Message}");
                 return null;
-            }
-            finally
-            {
-                if (asset != null) Object.DestroyImmediate(asset);
             }
         }
 
@@ -157,9 +164,10 @@ namespace BS
             {
                 var scene = BSScene.Instance();
                 var obj = scene != null ? scene.GetObjectByBid(target.bid) : default;
-                if (obj.gameObject != null)
+                var host = obj.gameObject != null ? obj.gameObject : FindUnregistered(target.bid);
+                if (host != null)
                 {
-                    var machines = obj.gameObject.GetComponents<ScriptMachine>();
+                    var machines = host.GetComponents<ScriptMachine>();
                     if (target.machineIndex >= 0 && target.machineIndex < machines.Length)
                     {
                         return machines[target.machineIndex];
@@ -181,6 +189,24 @@ namespace BS
                 }
             }
 
+            return null;
+        }
+
+        /// <summary>
+        /// Find an object by bid when the scene never registered it.
+        /// </summary>
+        /// <remarks>
+        /// BSObjectId registers itself in Awake, and an object that starts inactive has not woken —
+        /// so it is in the machine LIST (which searches inactive objects) but GetObjectByBid cannot
+        /// find it, and opening or applying to it failed with "Machine not found". A scan including
+        /// inactive objects, only on that miss.
+        /// </remarks>
+        static GameObject FindUnregistered(string bid)
+        {
+            foreach (var id in Object.FindObjectsByType<BSObjectId>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (id.Id == bid) return id.gameObject;
+            }
             return null;
         }
     }
