@@ -12,6 +12,7 @@ Only the two upstream **editor** guard removals from `6d3246d4` are carried forw
 
 - Teleporter user-parent lookup: confirmed incompatible with Greenfield's source hierarchy. `LocalUserService` mounts user data under its service; `BanterSceneEventHandler` separately tags the local torso `__BA_LocalPlayer`. The graph now uses Unity `On Trigger Enter` and that same reserved tag as the SDK Portal, then the existing `TeleportTo` unit.
 - Seat user lookup: likely failure contributor, not proven to be the only cause. The tested client's logs report zero re-injected users; its physical click delivery was not captured. The graph now passes the existing local token `me` to `BSAttachedObject._Attach`. Greenfield's `AttachmentsSystem` supports this token with or without a registered network user. Real click delivery and avatar seating remain unverified.
+- Seat attachment mode: confirmed broken against the traced Greenfield consumer. `NonPhysics + AvatarAttachTo` does not activate its constraint or seated state. Only `Physics + AvatarAttachTo` calls the existing FlexaMover seat-joint and seated-state path. The prefab now selects Physics in both serialized component/payload fields and includes a kinematic/no-gravity Rigidbody anchor. Move/jump unseat flags are explicit. No native controller changes or new joint logic were introduced.
 - Competing startup spawns: the primary test scene already had fixed spawn disabled and radius enabled. Client logs showed radius spawn, not two competing spawn events. The new diagnostic warns if creators actually enable multiple packaged startup spawners, without disabling any.
 - Camera ownership: the isolated project's existing Basis tag-only patch is outside this Creator SDK repository. It must not be described as shipped by this SDK commit or verified in the installed client.
 
@@ -23,6 +24,7 @@ Passed on the corrected Radius package:
 
 - Exactly one startup spawn event, inside the configured 2m horizontal disk; spawn/stop flags true.
 - Seat ignores other-object clicks and emits local `me` attachment, including with zero registered users.
+- The reauthored seat selects Physics/AvatarAttachTo, jointAvatar and move/jump unseat flags in its emitted payload. Its packaged Rigidbody is kinematic/no-gravity; measured anchor drift stays below 1mm and 0.1 degrees over at least 50 physics ticks. This is stationary-anchor evidence, not a test of the native torso/seat joint or seated avatar pose.
 - Local trigger has no parent `UserData`; the reserved tag produces a destination/facing event with velocity stop true and spawn false.
 - Non-user and remote collider messages produce no teleport or graph errors.
 - Six immediate local trigger messages produce one event; a later message after the gate reset produces a second.

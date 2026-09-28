@@ -20,7 +20,7 @@ It requires the normal Creator SDK world/player runtime. Candidate markers are c
 
 Its two visible parts use the included `Materials/Seat.mat` (URP Lit). The default visual requires URP, as used by Greenfield. For a Built-in project, assign a compatible material to the two visible children. This changes visuals only, not the attachment graph.
 
-The graph sends the existing local attachment token `me` to `BSAttachedObject._Attach`. Greenfield's attachment consumer resolves that token to the local user when available and supports it without a registered network user. It does not look up or move a remote user. The attachment direction uses `AvatarAttachTo` and `NonPhysics`; confirm sitting and unseating behavior in the client before shipping. The collider only receives clicks when the runtime routes it through the SDK click event. No avatar, controller, or camera implementation is bundled here.
+The graph sends the existing local attachment token `me` to `BSAttachedObject._Attach`. Greenfield's attachment consumer resolves that token to the local user when available and supports it without a registered network user. It does not look up or move a remote user. The prefab uses `Physics + AvatarAttachTo`, `jointAvatar`, and `isSeat`: this is Greenfield's implemented sitting path. Its kinematic, no-gravity Rigidbody keeps this basic seat stationary. Normal move/jump unseat inputs are enabled. The earlier `NonPhysics` configuration did not enter that sitting path and has been replaced. No new controller or joint implementation is included. Physical clicks, seated pose and unseating still require client acceptance.
 
 ## Local Space Teleporter
 
