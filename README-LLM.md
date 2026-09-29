@@ -517,7 +517,29 @@ Config: {sensitivity?: number(0.5), fireRate?: number(0.1), auto?: boolean(false
 Config: {attachmentType: AttachmentType}
 ```
 
+**Seat** (needs an AttachedObject; clicking its colliders sits the local player)
+```
+Config: {unseatOnMove?: boolean(true), unseatOnJump?: boolean(true)}
+Methods: Sit(), Stand()
+```
+
 ### Special
+
+**Spawn** (one active spawn is picked at random when the space loads)
+```
+Config: {radius?: number(0)}
+Methods: Spawn()
+```
+
+**Teleporter** (trigger collider on the same object; destination is set in the editor)
+```
+Config: {stopVelocity?: boolean(true), cooldown?: number(0.5)}
+```
+
+**Settings** (scene settings, applied on load; a later scene.SetSettings replaces them unless locked)
+```
+Config: {enableTeleport?: boolean(true), enableForceGrab?: boolean(false), enableSpiderMan?: boolean(false), enableHandHold?: boolean(true), enableRadar?: boolean(true), enableNametags?: boolean(true), enablePortals?: boolean(true), enableGuests?: boolean(true), refreshRate?: number(72), clippingPlane?: Vector2(0.02,1500), physicsMoveSpeed?: number(2), physicsMoveAcceleration?: number(1), physicsAirControlSpeed?: number(3.8), physicsAirControlAcceleration?: number(6), physicsDrag?: number(0), physicsFreeFallAngularDrag?: number(6), physicsJumpStrength?: number(1), physicsHandPositionStrength?: number(1), physicsHandRotationStrength?: number(1), physicsHandSpringiness?: number(10), physicsGrappleRange?: number(512), physicsGrappleReelSpeed?: number(1), physicsGrappleSpringiness?: number(10), physicsGorillaMode?: boolean(false), isSettingsLocked?: boolean(false), isPhysicsSettingsLocked?: boolean(false)}
+```
 
 **KitItem**
 ```

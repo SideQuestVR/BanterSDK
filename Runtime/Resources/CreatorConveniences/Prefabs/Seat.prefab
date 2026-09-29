@@ -1,5 +1,148 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &622579622261144267
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4579794003753530396}
+  - component: {fileID: 2648731947237464605}
+  - component: {fileID: 7964327099474305300}
+  - component: {fileID: 7107818285118989545}
+  - component: {fileID: 1521927146910027099}
+  m_Layer: 5
+  m_Name: SitPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4579794003753530396
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622579622261144267}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.48, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 8079753041728930142}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2648731947237464605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622579622261144267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1975fd0838af4a85be3bb6459af67590, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSObjectId
+  Id: -25810
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  watchPosition: 0
+  watchLocalPosition: 0
+  watchEuler: 0
+  watchLocalEuler: 0
+  watchRotation: 0
+  watchLocalRotation: 0
+  watchLocalScale: 0
+  lerpPosition: 0
+  lerpRotation: 0
+--- !u!114 &7964327099474305300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622579622261144267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52608dc850184ba7b3b623c0d7caebc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSAttachedObject
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  uid: 
+  attachmentPosition: {x: 0, y: 0, z: 0}
+  attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachmentType: 0
+  avatarAttachmentType: 1
+  avatarAttachmentPoint: 0
+  attachmentPoint: 0
+  autoSync: 0
+  jointAvatar: 1
+  autoAttach: 0
+  isSeat: 1
+  unseatOnMove: 1
+  unseatOnJump: 1
+  attachment:
+    uid: 
+    attachmentPosition: {x: 0, y: 0, z: 0}
+    attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+    attachmentType: 0
+    avatarAttachmentType: 0
+    avatarAttachmentPoint: 0
+    physicsAttachmentPoint: 0
+    autoSync: 0
+    jointAvatar: 1
+    autoAttach: 0
+    isSeat: 0
+    unseatOnMove: 1
+    unseatOnJump: 1
+--- !u!114 &7107818285118989545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622579622261144267}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0526f16d89d1664eb8c8db93f510f30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSSeat
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  unseatOnMove: 1
+  unseatOnJump: 1
+--- !u!65 &1521927146910027099
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 622579622261144267}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.25, y: 1.35, z: 1.25}
+  m_Center: {x: 0, y: 0.19500002, z: 0}
 --- !u!1 &4668509559885559062
 GameObject:
   m_ObjectHideFlags: 0
@@ -10,10 +153,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8079753041728930142}
   - component: {fileID: 5359579357461284760}
-  - component: {fileID: 8845904157412667521}
-  - component: {fileID: 7597741638798643381}
-  - component: {fileID: 9102233878123788687}
-  - component: {fileID: 7298980334196512725}
   - component: {fileID: 6859528692850643542}
   m_Layer: 0
   m_Name: Seat
@@ -37,6 +176,7 @@ Transform:
   m_Children:
   - {fileID: 4387706741420874430}
   - {fileID: 1144089184901482895}
+  - {fileID: 4579794003753530396}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &5359579357461284760
@@ -60,106 +200,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.2, y: 1.3, z: 1.2}
   m_Center: {x: 0, y: 0.65, z: 0}
---- !u!114 &8845904157412667521
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4668509559885559062}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1975fd0838af4a85be3bb6459af67590, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: BS.SDK::BS.BSObjectId
-  Id: -3640
-  jsId:
-  loaded:
-    m_PersistentCalls:
-      m_Calls: []
-  watchPosition: 0
-  watchLocalPosition: 0
-  watchEuler: 0
-  watchLocalEuler: 0
-  watchRotation: 0
-  watchLocalRotation: 0
-  watchLocalScale: 0
-  lerpPosition: 0
-  lerpRotation: 0
---- !u!114 &7597741638798643381
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4668509559885559062}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 52608dc850184ba7b3b623c0d7caebc5, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: BS.SDK::BS.BSAttachedObject
-  jsId:
-  loaded:
-    m_PersistentCalls:
-      m_Calls: []
-  uid:
-  attachmentPosition: {x: 0, y: 0, z: 0}
-  attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
-  attachmentType: 0
-  avatarAttachmentType: 1
-  avatarAttachmentPoint: 0
-  attachmentPoint: 0
-  autoSync: 0
-  jointAvatar: 1
-  autoAttach: 0
-  isSeat: 1
-  unseatOnMove: 1
-  unseatOnJump: 1
-  attachment:
-    uid:
-    attachmentPosition: {x: 0, y: 0, z: 0}
-    attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
-    attachmentType: 0
-    avatarAttachmentType: 1
-    avatarAttachmentPoint: 0
-    physicsAttachmentPoint: 0
-    autoSync: 0
-    jointAvatar: 1
-    autoAttach: 0
-    isSeat: 1
-    unseatOnMove: 1
-    unseatOnJump: 1
---- !u!114 &9102233878123788687
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4668509559885559062}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e741851cba3ad425c91ecf922cc6b379, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.VisualScripting.Core::Unity.VisualScripting.Variables
-  _data:
-    _json: '{"declarations":{"Kind":"Object","collection":{"$content":[],"$version":"A"},"$version":"A"}}'
-    _objectReferences: []
---- !u!114 &7298980334196512725
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4668509559885559062}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2fe5546f775c47d2820aa5e8a715f53, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.VisualScripting.Flow::Unity.VisualScripting.ScriptMachine
-  _data:
-    _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
-    _objectReferences:
-    - {fileID: 11400000, guid: afb6882f13cd935856ac4b546b0c7e94, type: 2}
 --- !u!54 &6859528692850643542
 Rigidbody:
   m_ObjectHideFlags: 0

@@ -153,6 +153,14 @@ namespace BS
                     return gameObject.AddComponent<BSShape>();
                 case ComponentType.ScriptGraph:
                     return gameObject.AddComponent<BSScriptGraph>();
+                case ComponentType.Seat:
+                    return gameObject.AddComponent<BSSeat>();
+                case ComponentType.Settings:
+                    return gameObject.AddComponent<BSSettings>();
+                case ComponentType.Spawn:
+                    return gameObject.AddComponent<BSSpawn>();
+                case ComponentType.Teleporter:
+                    return gameObject.AddComponent<BSTeleporter>();
                 default:
                     return null;
             }

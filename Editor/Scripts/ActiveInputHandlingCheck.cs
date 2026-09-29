@@ -225,7 +225,7 @@ namespace BS.SDKEditor
                 "\n\nBuild anyway without changing settings?", "Build anyway", "Cancel");
         }
 
-        static string Label(InputHandling handling)
+        internal static string Label(InputHandling handling)
         {
             switch (handling)
             {

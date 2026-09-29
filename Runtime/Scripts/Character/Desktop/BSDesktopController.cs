@@ -27,6 +27,10 @@ namespace BS
     /// BSScene click on release.</para>
     /// <para>The root also carries the local <see cref="UserData"/>, so spaces see a local user.
     /// It stands at the feet; the camera is the head, at eye height.</para>
+    /// <para>Seats (<see cref="BSSeat"/>, or any attached object that attaches the player to it) sit the
+    /// player at the seat and carry them with it. Space stands them up like the client's jump, unless an
+    /// object is held (Space is then its primary button); moving while flying stands them up like the
+    /// client's move stick. Either only when the seat allows it.</para>
     /// </remarks>
     [DefaultExecutionOrder(-100)]
     [AddComponentMenu("")]
@@ -60,6 +64,14 @@ namespace BS
         [SerializeField] Key _secondaryKey = Key.Tab;
         [SerializeField] Key _thumbClickKey = Key.Digit4;
 
+        [Header("Seat")]
+        [Tooltip("Eye height above the seat while sitting.")]
+        [SerializeField] float _seatedEyeHeight = 0.85f;
+        [Tooltip("Stands up from a seat, like jump in the client.")]
+        [SerializeField] Key _jumpKey = Key.Space;
+        [Tooltip("How far in front of the seat the player stands up.")]
+        [SerializeField] float _standOffset = 0.75f;
+
         enum PressOwner { None, UI, Grab, Click }
 
         BSScene _scene;
@@ -76,6 +88,13 @@ namespace BS
 
         PressOwner _pressOwner;
         GameObject _clickTarget;
+
+        bool _seated;
+        Transform _seat;
+        float _seatYaw;
+        bool _seatUnseatOnMove;
+        bool _seatUnseatOnJump;
+        System.Action _onUnseat;
 
         readonly RaycastHit[] _hits = new RaycastHit[32];
         readonly List<RaycastResult> _uiResults = new List<RaycastResult>();
@@ -153,6 +172,7 @@ namespace BS
             DisableOtherMainCameras();
             SceneManager.sceneLoaded += OnSceneLoaded;
             _scene?.events.OnTeleport.AddListener(OnTeleport);
+            _scene?.events.OnClippingPlaneChanged.AddListener(OnClippingPlaneChanged);
         }
 
         void OnDestroy()
@@ -161,6 +181,7 @@ namespace BS
                 Instance = null;
             SceneManager.sceneLoaded -= OnSceneLoaded;
             _scene?.events.OnTeleport.RemoveListener(OnTeleport);
+            _scene?.events.OnClippingPlaneChanged.RemoveListener(OnClippingPlaneChanged);
             if (_flying)
                 EndFly();
             if (_hand != null)
@@ -199,11 +220,21 @@ namespace BS
             if (mouse.leftButton.wasReleasedThisFrame)
                 EndPress(mouse);
 
+            UpdateSeatInput(keyboard);
             UpdateHeldInputs(keyboard);
         }
 
         void LateUpdate()
         {
+            if (_seated)
+            {
+                // The seat was destroyed: stand up where it was. Nothing is left to tell.
+                if (_seat == null)
+                    Unseat(false);
+                else
+                    FollowSeat();
+            }
+
             // Cleared after the EventSystem has processed this frame, release frame included.
             if (_pressOwner == PressOwner.None || _pressOwner == PressOwner.UI)
                 _capture.Capturing = false;
@@ -277,6 +308,14 @@ namespace BS
             if (direction == Vector3.zero)
                 return;
 
+            if (_seated)
+            {
+                // Like the client's move stick: stands up if the seat allows it, otherwise does nothing.
+                if (_seatUnseatOnMove)
+                    Unseat(true);
+                return;
+            }
+
             var speed = _flySpeed * (keyboard.shiftKey.isPressed ? _boostMultiplier : 1f);
             transform.position += _head.rotation * direction.normalized * (speed * Time.unscaledDeltaTime);
         }
@@ -299,7 +338,7 @@ namespace BS
             {
                 if (_hand.IsActive)
                     _hand.PushPull(scroll);
-                else if (!TryGetUIHit(screenPoint, ray, out _, out _))
+                else if (!_seated && !TryGetUIHit(screenPoint, ray, out _, out _))
                     transform.position += _head.forward * (Mathf.Sign(scroll) * _dollyStep * (keyboard.shiftKey.isPressed ? _boostMultiplier : 1f));
                 // Over UI: the EventSystem scrolls it.
             }
@@ -514,6 +553,8 @@ namespace BS
 
         void OnTeleport(Vector3 position, Vector3 rotation, bool stopVelocity, bool isSpawn)
         {
+            Unseat(true);
+
             var fromPosition = _head.position;
             var fromRotation = _head.rotation;
 
@@ -522,6 +563,111 @@ namespace BS
             ApplyLook();
 
             _hand.OnRigTeleported(fromPosition, fromRotation, _head.position, _head.rotation);
+        }
+
+        void OnClippingPlaneChanged(Vector2 planes)
+        {
+            _camera.nearClipPlane = Mathf.Max(0.001f, planes.x);
+            _camera.farClipPlane = Mathf.Max(_camera.nearClipPlane + 0.01f, planes.y);
+        }
+
+        // ---------------------------------------------------------------- Seat
+
+        public bool IsSeated => _seated;
+
+        public bool IsSeatedOn(Transform anchor) => _seated && anchor != null && _seat == anchor;
+
+        /// <summary>
+        /// Sits the player on <paramref name="anchor"/> (feet at its position, facing its forward) and
+        /// keeps them there until they stand up. <paramref name="onUnseat"/> runs when they stand up by
+        /// themselves (jump, move, a teleport), not when <see cref="Unseat"/> is asked not to notify.
+        /// </summary>
+        public void Seat(Transform anchor, bool unseatOnMove, bool unseatOnJump, System.Action onUnseat)
+        {
+            if (anchor == null)
+                return;
+            if (_seated && _seat != anchor)
+                Unseat(true);
+
+            _seatUnseatOnMove = unseatOnMove;
+            _seatUnseatOnJump = unseatOnJump;
+            _onUnseat = onUnseat;
+            if (_seated)
+                return;
+
+            var fromPosition = _head.position;
+            var fromRotation = _head.rotation;
+
+            _seated = true;
+            _seat = anchor;
+            _seatYaw = anchor.eulerAngles.y;
+            _yaw = _seatYaw;
+            _pitch = 0f;
+            _head.localPosition = new Vector3(0f, _seatedEyeHeight, 0f);
+            FollowSeat();
+
+            _hand.OnRigTeleported(fromPosition, fromRotation, _head.position, _head.rotation);
+        }
+
+        /// <summary>Stands the player up in front of the seat.</summary>
+        public void Unseat(bool notify)
+        {
+            if (!_seated)
+                return;
+
+            // State first: the callback detaches the seat, which asks to unseat again.
+            var anchor = _seat;
+            var callback = _onUnseat;
+            _seated = false;
+            _seat = null;
+            _onUnseat = null;
+
+            var fromPosition = _head.position;
+            var fromRotation = _head.rotation;
+            _head.localPosition = new Vector3(0f, _eyeHeight, 0f);
+            if (anchor != null)
+                transform.position = StandUpPoint(anchor);
+            ApplyLook();
+            _hand.OnRigTeleported(fromPosition, fromRotation, _head.position, _head.rotation);
+
+            if (notify)
+                callback?.Invoke();
+        }
+
+        void UpdateSeatInput(Keyboard keyboard)
+        {
+            // While an object is held, Space is its primary button.
+            if (_seated && _seatUnseatOnJump && keyboard[_jumpKey].wasPressedThisFrame && !_hand.IsHolding)
+                Unseat(true);
+        }
+
+        // Carries the player with a moving or turning seat.
+        void FollowSeat()
+        {
+            var seatYaw = _seat.eulerAngles.y;
+            _yaw += Mathf.DeltaAngle(_seatYaw, seatYaw);
+            _seatYaw = seatYaw;
+            transform.position = _seat.position;
+            ApplyLook();
+        }
+
+        // On the floor in front of the seat, ignoring the seat itself.
+        Vector3 StandUpPoint(Transform anchor)
+        {
+            var forward = Quaternion.Euler(0f, anchor.eulerAngles.y, 0f) * Vector3.forward;
+            var point = anchor.position + forward * _standOffset;
+            var seatBody = anchor.GetComponentInParent<Rigidbody>();
+
+            var count = Physics.RaycastNonAlloc(point + Vector3.up, Vector3.down, _hits, 3f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            System.Array.Sort(_hits, 0, count, RaycastHitDistanceComparer.Instance);
+            for (var i = 0; i < count; i++)
+            {
+                var col = _hits[i].collider;
+                if (IsOwnCollider(col) || (seatBody != null && col.attachedRigidbody == seatBody))
+                    continue;
+                return _hits[i].point;
+            }
+            return point;
         }
 
         /// <summary>

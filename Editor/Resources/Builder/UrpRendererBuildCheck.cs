@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 
 internal static class UrpRendererBuildCheck
 {
-    private sealed class Mismatch
+    internal sealed class Mismatch
     {
         internal string Description;
         internal UnityEngine.Object AssetToOpen;
@@ -23,20 +23,7 @@ internal static class UrpRendererBuildCheck
         if (mismatches.Count == 0)
             return true;
 
-        var requestedModes = new Dictionary<UniversalRendererData, RenderingMode>();
-        bool canChange = !sharedRendererConflict;
-        foreach (var mismatch in mismatches)
-        {
-            string assetPath = mismatch.Renderer == null ? null : AssetDatabase.GetAssetPath(mismatch.Renderer);
-            if (string.IsNullOrEmpty(assetPath) || !assetPath.StartsWith("Assets/", StringComparison.Ordinal) ||
-                !AssetDatabase.IsOpenForEdit(assetPath) ||
-                (requestedModes.TryGetValue(mismatch.Renderer, out var prior) && prior != mismatch.Expected))
-            {
-                canChange = false;
-                break;
-            }
-            requestedModes[mismatch.Renderer] = mismatch.Expected;
-        }
+        bool canChange = TryPlanChange(mismatches, sharedRendererConflict, out var requestedModes);
 
         var details = string.Join("\n", mismatches.Take(8).Select(x => "• " + x.Description));
         if (mismatches.Count > 8)
@@ -73,17 +60,7 @@ internal static class UrpRendererBuildCheck
             return false;
         }
 
-        Undo.IncrementCurrentGroup();
-        int undoGroup = Undo.GetCurrentGroup();
-        Undo.SetCurrentGroupName("Set scene build URP renderer modes");
-        foreach (var pair in requestedModes)
-        {
-            Undo.RecordObject(pair.Key, "Set URP rendering mode");
-            pair.Key.renderingMode = pair.Value;
-            EditorUtility.SetDirty(pair.Key);
-        }
-        Undo.CollapseUndoOperations(undoGroup);
-        AssetDatabase.SaveAssets();
+        ApplyModes(requestedModes);
 
         if (FindMismatches(targets, selected, out _).Count != 0)
         {
@@ -95,7 +72,46 @@ internal static class UrpRendererBuildCheck
         return true;
     }
 
-    private static List<Mismatch> FindMismatches(BuildTarget[] targets, bool[] selected,
+    /// <summary>
+    /// The renderer assets to change and the mode for each. False when they can't simply be changed:
+    /// missing, read-only or package assets, or one renderer that two targets want in different modes.
+    /// </summary>
+    internal static bool TryPlanChange(List<Mismatch> mismatches, bool sharedRendererConflict,
+        out Dictionary<UniversalRendererData, RenderingMode> requestedModes)
+    {
+        requestedModes = new Dictionary<UniversalRendererData, RenderingMode>();
+        if (sharedRendererConflict)
+            return false;
+        foreach (var mismatch in mismatches)
+        {
+            string assetPath = mismatch.Renderer == null ? null : AssetDatabase.GetAssetPath(mismatch.Renderer);
+            if (string.IsNullOrEmpty(assetPath) || !assetPath.StartsWith("Assets/", StringComparison.Ordinal) ||
+                !AssetDatabase.IsOpenForEdit(assetPath) ||
+                (requestedModes.TryGetValue(mismatch.Renderer, out var prior) && prior != mismatch.Expected))
+            {
+                return false;
+            }
+            requestedModes[mismatch.Renderer] = mismatch.Expected;
+        }
+        return true;
+    }
+
+    internal static void ApplyModes(Dictionary<UniversalRendererData, RenderingMode> requestedModes)
+    {
+        Undo.IncrementCurrentGroup();
+        int undoGroup = Undo.GetCurrentGroup();
+        Undo.SetCurrentGroupName("Set scene build URP renderer modes");
+        foreach (var pair in requestedModes)
+        {
+            Undo.RecordObject(pair.Key, "Set URP rendering mode");
+            pair.Key.renderingMode = pair.Value;
+            EditorUtility.SetDirty(pair.Key);
+        }
+        Undo.CollapseUndoOperations(undoGroup);
+        AssetDatabase.SaveAssets();
+    }
+
+    internal static List<Mismatch> FindMismatches(BuildTarget[] targets, bool[] selected,
         out bool sharedRendererConflict)
     {
         var result = new List<Mismatch>();

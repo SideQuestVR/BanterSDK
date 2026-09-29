@@ -1,4 +1,51 @@
-# Creator Conveniences validation — 2026-09-28
+# Creator Conveniences validation — 2026-09-29: components and build checklist
+
+Status: review/test branch, not client-accepted or release-ready.
+
+## What changed
+
+- **Graphs replaced by components.** The Visual Scripting graphs (SpawnPoint, SpawnRangeCandidates, Seat, LocalSpaceTeleporter) are deleted, and the prefabs now use runtime components:
+  - `BSSpawn`: random pick among the scene's active spawns, radius per spawn.
+  - `BSSeat`: configures its `BSAttachedObject` as a seat and sits the local user on click.
+  - `BSTeleporter`: trigger plus destination, with a cooldown.
+  - `BSSettings`: scene settings minus spawn point, occupancy, avatars, friend position join, default textures and dev tools.
+- **This supersedes the earlier record.** The 2026-09-28 statement that no runtime C# API or component was added no longer holds.
+- **Codegen and client.** These are codegen components, with the generated blocks hand-written to the Greenfield templates. They have to ship with a client and injection build that include component types 75–78 (Seat, Settings, Spawn, Teleporter) and property ids 255–282.
+- **Prefabs.** All four keep their GUIDs, so existing instances pick up the change. Overrides on the removed `Variables` components (e.g. a custom Spawn Range radius) are lost. The Spawn Range "Spawn Candidates" container is gone; several spawns replace it. The seat components moved to a `SitPoint` child at cushion height, on the UI layer.
+- **SDK Play Mode seating.** `SdkAttachments` now seats the desktop player for AvatarAttachTo attachments instead of parenting the seat to the camera. Space (when not holding an object) or moving stands them up and detaches the seat.
+- **Build checklist.** One checklist (`Editor/Scripts/BuildChecks`) replaces the chain of pre-build dialogs; the old checks are items in it. Multiple spawns are now intended, so the multiple-startup-spawner warning is gone. Missing graphs (e.g. from the deleted convenience graphs) are flagged instead.
+
+## Checklist rules (unchanged from the previous gates)
+
+- Checks only diagnose. A fix runs only when clicked, with undo.
+- Cancel blocks the build; Build anyway permits it. Non-overridable errors (disallowed Visual Scripting nodes, missing build modules) block every build.
+- Batch builds never show dialogs. They stop on any error (as the convex check did) and pass warnings (as the input, tag and renderer checks did).
+- The checklist inspects the builder's target scene: read in place if open, or through a preview scene. The active scene and dirty state are unchanged.
+- Inactive objects are included; EditorOnly subtrees and the stripped BSStarterUpper are skipped.
+
+## Evidence (TestSDK, Unity 6000.3.21f1)
+
+- **Compile and numbering.** Everything compiles. Component types 75–78 and property ids 255–282 are as intended.
+- **Menu.** Every `GameObject > BS` item creates the expected hierarchy in an empty scene. The seat SitPoint is on layer 5 and the grab handles on layer 20. A second Scene Settings selects the existing one. The checklist passes that scene.
+- **Checklist on a clean scene.** All 20 checks run on SampleScene, and the active scene and dirty flag are unchanged.
+- **Edit-mode tests.** `BuildChecklistTests`, `SceneChecksTests`, `BSSpawnSamplingTests` and the existing convex tests: 51 pass when invoked outside the Test Runner. The two `LogAssert` cases need the Test Runner; their logic was checked separately.
+- **SDK Play Mode, from the packaged prefabs:**
+  - One spawn is picked (landed 1.39 m from a radius-5 spawn, at its yaw).
+  - A `BSScene.Click` on the seat seats the desktop player at the SitPoint (eye 0.85 m above it, facing the seat).
+  - Standing up puts the player on the floor 0.75 m in front of the seat and restores the eye height.
+  - A moved seat carries the seated player.
+  - Entering the teleporter trigger stands the player up and lands them on the destination.
+  - Space itself wasn't pressed (MCP can't send input); the same `Unseat(true)` path was invoked.
+
+## Remaining acceptance
+
+- **Client.** Build the client and injection with the new component types, then test seat click, seated pose and unseating (VR jump and move stick), spawn selection, and walking into the teleporter. Confirm local-only behaviour with a second client.
+- **Settings.** `BSSettings` has no listeners in the SDK; its effect is client-only apart from the clipping planes.
+- **Builder UI.** The checklist section and confirmation have not been visually reviewed.
+
+---
+
+# Creator Conveniences validation — 2026-09-28 (graph version, superseded)
 
 Status: review/test branch, not client-accepted or release-ready.
 

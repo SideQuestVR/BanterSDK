@@ -5,33 +5,30 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Unity.VisualScripting;
 
 namespace BS.SDKEditor
 {
-    // Diagnostics only: do not rewrite tags or disable competing spawners.
+    // Diagnostics only: do not rewrite tags.
     internal static class SceneCreatorBuildCheck
     {
         static readonly string[] BuiltInTags =
             { "Untagged", "Respawn", "Finish", "EditorOnly", "MainCamera", "Player", "GameController" };
-        static readonly HashSet<string> SpawnGraphs = new HashSet<string>
-            { "16a69254c2a6956ccba2d04b4152b34b", "a15a3dea7129c4ba4c627436cb50fc62" };
 
-        internal static List<string> CollectIssues(Scene scene)
+        /// <summary>A custom tag the client may not define, and the objects that use it.</summary>
+        internal sealed class TagUse
+        {
+            public string Tag;
+            public readonly List<GameObject> Objects = new List<GameObject>();
+            public readonly List<string> Paths = new List<string>();
+        }
+
+        internal static List<TagUse> CollectUnsupportedTags(Scene scene)
         {
             // Read the SDK's current list each time, including future list expansions.
             var allowed = new HashSet<string>(BuiltInTags.Concat(InitialiseOnLoad.tagsToAdd.Values));
-            var unsupported = new Dictionary<string, List<string>>();
-            var spawners = new List<string>();
+            var unsupported = new Dictionary<string, TagUse>();
             foreach (var root in scene.GetRootGameObjects()) Inspect(root.transform, root.name);
-            var issues = unsupported.OrderBy(pair => pair.Key).Select(pair =>
-                "Unsupported custom tag '" + pair.Key + "' used by " + pair.Value.Count +
-                " object(s): " + string.Join(", ", pair.Value.Take(3)) +
-                ". The client may not define this tag. Tags are left unchanged.").ToList();
-            if (spawners.Count > 1)
-                issues.Add("Multiple active Creator Conveniences startup spawners: " + string.Join(", ", spawners.Take(5)) +
-                    ". Each can teleport the local player on load; the last event wins. Enable only the intended startup spawner. Nothing was disabled.");
-            return issues;
+            return unsupported.OrderBy(pair => pair.Key).Select(pair => pair.Value).ToList();
 
             void Inspect(Transform transform, string path)
             {
@@ -39,20 +36,21 @@ namespace BS.SDKEditor
                 if (obj.CompareTag("EditorOnly")) return; // Unity excludes the whole subtree from builds.
                 if (!allowed.Contains(obj.tag))
                 {
-                    if (!unsupported.TryGetValue(obj.tag, out var objects))
-                        unsupported.Add(obj.tag, objects = new List<string>());
-                    objects.Add(path);
-                }
-                if (obj.activeInHierarchy)
-                {
-                    foreach (var machine in obj.GetComponents<ScriptMachine>())
-                        if (machine.enabled && machine.nest.source == GraphSource.Macro && machine.nest.macro != null &&
-                            SpawnGraphs.Contains(AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(machine.nest.macro))))
-                            spawners.Add(path);
+                    if (!unsupported.TryGetValue(obj.tag, out var use))
+                        unsupported.Add(obj.tag, use = new TagUse { Tag = obj.tag });
+                    use.Objects.Add(obj);
+                    use.Paths.Add(path);
                 }
                 foreach (Transform child in transform) Inspect(child, path + "/" + child.name);
             }
         }
+
+        internal static string Describe(TagUse use) =>
+            "Unsupported custom tag '" + use.Tag + "' used by " + use.Paths.Count +
+            " object(s): " + string.Join(", ", use.Paths.Take(3)) +
+            ". The client may not define this tag. Tags are left unchanged.";
+
+        internal static List<string> CollectIssues(Scene scene) => CollectUnsupportedTags(scene).Select(Describe).ToList();
 
         internal static bool ConfirmBeforeSceneBuild(string scenePath, Action<string> report)
         {
@@ -66,7 +64,7 @@ namespace BS.SDKEditor
             }
             catch (Exception error)
             {
-                string message = "Could not inspect scene tags/spawners: " + error.Message;
+                string message = "Could not inspect scene tags: " + error.Message;
                 Debug.LogError(message);
                 report?.Invoke(message);
                 return false;

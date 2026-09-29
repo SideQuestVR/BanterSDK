@@ -1,0 +1,269 @@
+using System.Collections.Generic;
+using System.Linq;
+using BS.SDKEditor.BuildChecks;
+using NUnit.Framework;
+using Unity.VisualScripting;
+using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace BS.SDKEditor.Tests
+{
+    /// <summary>
+    /// What the scene and component checks find, on hierarchies built in a preview scene.
+    /// </summary>
+    public class SceneChecksTests
+    {
+        const int UILayer = 5;
+        const int GrabbableLayer = 20;
+
+        Scene _scene;
+        readonly List<Object> _assets = new List<Object>();
+
+        [SetUp]
+        public void SetUp() => _scene = EditorSceneManager.NewPreviewScene();
+
+        [TearDown]
+        public void TearDown()
+        {
+            EditorSceneManager.ClosePreviewScene(_scene);
+            foreach (var asset in _assets)
+                if (asset != null)
+                    Object.DestroyImmediate(asset);
+            _assets.Clear();
+        }
+
+        GameObject Create(string name, Transform parent = null)
+        {
+            var go = new GameObject(name);
+            if (parent != null)
+                go.transform.SetParent(parent, false);
+            else
+                SceneManager.MoveGameObjectToScene(go, _scene);
+            return go;
+        }
+
+        BuildCheckContext Context() =>
+            BuildCheckContext.ForScene(_scene, new[] { BuildTarget.Android, BuildTarget.StandaloneWindows }, "Assets/Test.unity");
+
+        List<BuildCheckIssue> Run(BuildCheck check)
+        {
+            var issues = new List<BuildCheckIssue>();
+            using (var context = Context())
+                check.Run(context, issues);
+            return issues;
+        }
+
+        // ---- context ----
+
+        [Test]
+        public void AllObjects_IncludesInactive_AndSkipsEditorOnly()
+        {
+            var root = Create("root");
+            Create("inactive", root.transform).SetActive(false);
+            var editorOnly = Create("editorOnly");
+            editorOnly.tag = "EditorOnly";
+            Create("underEditorOnly", editorOnly.transform);
+
+            using (var context = Context())
+            {
+                var names = context.AllObjects().Select(go => go.name).ToList();
+                CollectionAssert.AreEquivalent(new[] { "root", "inactive" }, names);
+            }
+        }
+
+        // ---- seats ----
+
+        [Test]
+        public void Seat_OnDefaultLayer_CantBeClickedInTheSdk()
+        {
+            var seat = Create("seat");
+            seat.AddComponent<BoxCollider>();
+            seat.AddComponent<BSSeat>();
+
+            var issues = Run(new SeatCheck());
+            Assert.AreEqual(1, issues.Count);
+            StringAssert.Contains("can't be clicked", issues[0].Title);
+            Assert.IsNotNull(issues[0].Fix);
+        }
+
+        [Test]
+        public void Seat_OnUILayer_Passes()
+        {
+            var seat = Create("seat");
+            seat.layer = UILayer;
+            seat.AddComponent<BoxCollider>();
+            seat.AddComponent<BSSeat>();
+
+            Assert.IsEmpty(Run(new SeatCheck()));
+        }
+
+        [Test]
+        public void Seat_ClickColliderOnAChild_Counts()
+        {
+            var seat = Create("seat");
+            seat.AddComponent<BSSeat>();
+            var click = Create("click", seat.transform);
+            click.layer = UILayer;
+            click.AddComponent<BoxCollider>().isTrigger = true;
+
+            Assert.IsEmpty(Run(new SeatCheck()));
+        }
+
+        [Test]
+        public void Seat_WithoutCollider_HasNothingToClick()
+        {
+            Create("seat").AddComponent<BSSeat>();
+
+            var issues = Run(new SeatCheck());
+            Assert.AreEqual(1, issues.Count);
+            StringAssert.Contains("nothing to click", issues[0].Title);
+        }
+
+        [Test]
+        public void Seat_ConfiguresItsAttachedObjectWhenAdded()
+        {
+            var seat = Create("seat").AddComponent<BSSeat>();
+            var attached = seat.GetComponent<BSAttachedObject>();
+            Assert.IsNotNull(attached);
+            Assert.IsTrue(attached.isSeat);
+            Assert.AreEqual(AvatarAttachmentType.AvatarAttachTo, attached.avatarAttachmentType);
+            Assert.AreEqual(AttachmentType.Physics, attached.attachmentType);
+            Assert.IsFalse(attached.autoAttach);
+        }
+
+        // ---- grab handles ----
+
+        [Test]
+        public void GrabHandle_OffTheGrabbableLayer_AndWithoutCollider_IsFlaggedTwice()
+        {
+            Create("handle").AddComponent<BSGrabHandle>();
+
+            var titles = Run(new GrabHandlesCheck()).Select(issue => issue.Title).ToList();
+            Assert.AreEqual(2, titles.Count);
+            Assert.IsTrue(titles.Any(title => title.Contains("Grabbable layer")));
+            Assert.IsTrue(titles.Any(title => title.Contains("no collider")));
+        }
+
+        [Test]
+        public void GrabHandle_SetUpProperly_Passes()
+        {
+            var handle = Create("handle");
+            handle.layer = GrabbableLayer;
+            handle.AddComponent<SphereCollider>();
+            handle.AddComponent<BSGrabHandle>();
+
+            Assert.IsEmpty(Run(new GrabHandlesCheck()));
+        }
+
+        // ---- settings, spawns, teleporters ----
+
+        [Test]
+        public void TwoSceneSettings_AreFlagged()
+        {
+            Create("a").AddComponent<BSSettings>();
+            Create("b").AddComponent<BSSettings>();
+
+            Assert.IsTrue(Run(new SceneSettingsCheck()).Any(issue => issue.Title.Contains("2 Scene Settings")));
+        }
+
+        [Test]
+        public void NoSpawn_IsANote()
+        {
+            var issues = Run(new SpawnCheck());
+            Assert.AreEqual(1, issues.Count);
+            Assert.AreEqual(BuildCheckSeverity.Info, issues[0].Severity);
+        }
+
+        [Test]
+        public void Spawn_WithNegativeRadius_IsFlagged()
+        {
+            Create("spawn").AddComponent<BSSpawn>().radius = -1f;
+
+            var issues = Run(new SpawnCheck());
+            Assert.AreEqual(1, issues.Count);
+            StringAssert.Contains("negative radius", issues[0].Title);
+        }
+
+        [Test]
+        public void Teleporter_WithoutDestination_IsFlagged()
+        {
+            var teleporter = Create("teleporter");
+            teleporter.AddComponent<BoxCollider>().isTrigger = true;
+            var component = teleporter.AddComponent<BSTeleporter>();
+            component.destination = null;
+
+            Assert.IsTrue(Run(new TeleporterCheck()).Any(issue => issue.Title.Contains("no destination")));
+        }
+
+        [Test]
+        public void Teleporter_LandingInsideItsTrigger_IsFlagged()
+        {
+            var teleporter = Create("teleporter");
+            var trigger = teleporter.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector3(2f, 3f, 1f);
+            trigger.center = new Vector3(0f, 1.5f, 0f);
+            var component = teleporter.AddComponent<BSTeleporter>();
+            var landing = Create("landing", teleporter.transform).transform;
+            component.destination = landing;
+            landing.localPosition = new Vector3(0f, 1f, 0f);
+
+            Assert.IsTrue(Run(new TeleporterCheck()).Any(issue => issue.Title.Contains("inside their own trigger")));
+
+            landing.localPosition = new Vector3(0f, 0f, 5f);
+            Assert.IsEmpty(Run(new TeleporterCheck()));
+        }
+
+        // ---- scene contents ----
+
+        [Test]
+        public void MachineWithMissingGraph_IsFlagged()
+        {
+            var machine = Create("machine").AddComponent<ScriptMachine>();
+            machine.nest.source = GraphSource.Macro;
+            machine.nest.macro = null;
+
+            var issues = Run(new MissingGraphsCheck());
+            Assert.AreEqual(1, issues.Count);
+            Assert.AreEqual(1, issues[0].Targets.Count);
+        }
+
+        [Test]
+        public void ScreenCamera_AndListener_AreFlagged_RenderTextureCameraIsNot()
+        {
+            var screen = Create("screen camera");
+            screen.AddComponent<Camera>();
+            screen.AddComponent<AudioListener>();
+            var texture = new RenderTexture(16, 16, 0);
+            _assets.Add(texture);
+            Create("mirror camera").AddComponent<Camera>().targetTexture = texture;
+
+            var issues = Run(new CamerasAndListenersCheck());
+            Assert.AreEqual(2, issues.Count);
+            var cameras = issues.Single(issue => issue.Title.Contains("camera"));
+            Assert.AreEqual(new[] { "screen camera" }, cameras.Targets.Select(target => target.Label).ToArray());
+        }
+
+        [Test]
+        public void EmptyMaterialSlot_IsFlagged()
+        {
+            var go = Create("renderer");
+            go.AddComponent<MeshFilter>();
+            go.AddComponent<MeshRenderer>().sharedMaterials = new Material[1];
+
+            Assert.IsTrue(Run(new MaterialsCheck()).Any(issue => issue.Title.Contains("empty material slot")));
+        }
+
+        [TestCase("Standard", true)]
+        [TestCase("Legacy Shaders/Diffuse", true)]
+        [TestCase("Mobile/Unlit (Supports Lightmap)", true)]
+        [TestCase("Universal Render Pipeline/Lit", false)]
+        [TestCase("Shader Graphs/Custom", false)]
+        public void BuiltInPipelineShaders_AreRecognised(string shader, bool builtIn)
+        {
+            Assert.AreEqual(builtIn, MaterialsCheck.IsBuiltInPipelineShader(shader));
+        }
+    }
+}
