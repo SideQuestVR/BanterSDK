@@ -1821,6 +1821,16 @@ public class BuilderWindow : EditorWindow
                     status.AddStatus("Cancelled: convex mesh colliders on static geometry, please check the logs for more information.");
                     return;
                 }
+                if (!ActiveInputHandlingCheck.ConfirmBeforeSceneBuild(message => status.AddStatus(message)) ||
+                    !SceneCreatorBuildCheck.ConfirmBeforeSceneBuild(scenePath, message => status.AddStatus(message)))
+                {
+                    return;
+                }
+                if (!UrpRendererBuildCheck.ConfirmBeforeSceneBuild(buildTargets, buildTargetFlags,
+                    message => status.AddStatus(message)))
+                {
+                    return;
+                }
                 status.AddStatus("Build started...");
 
                 if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
