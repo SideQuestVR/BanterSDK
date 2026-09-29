@@ -9,7 +9,8 @@ namespace BS.VisualScripting
     /// <remarks>
     /// Fed by the app's <c>recording</c>/<c>state</c> host-extension event (the same one a page
     /// sees through <c>BS.Recording.on("state")</c>). <c>State</c> is the recorder state name —
-    /// <c>Idle</c>, <c>Starting</c>, <c>Recording</c>, <c>Finalizing</c> or <c>Faulted</c>;
+    /// <c>Idle</c>, <c>Starting</c>, <c>Recording</c>, <c>Finalizing</c> or <c>Faulted</c> — or
+    /// <c>Saved</c> / <c>Failed</c>, raised once when a take ends;
     /// <c>Take Id</c> the take it concerns (empty when none); <c>Error</c> why a take failed (empty
     /// otherwise); <c>JSON</c> the whole event payload, for fields added later. Port keys are
     /// serialized into saved graphs: never rename them.
