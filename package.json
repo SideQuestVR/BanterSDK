@@ -45,11 +45,6 @@
       "displayName": "FlexaWorld",
       "description": "A physics-fuelled playground showcasing the best of our FlexaBody system.",
       "path": "Samples~/FlexaWorld"
-    },
-    {
-      "displayName": "Creator Conveniences",
-      "description": "Visual Scripting prefabs for spawn points and ranges, a clickable seat, and local-space teleportation.",
-      "path": "Samples~/CreatorConveniences"
     }
   ]
 }

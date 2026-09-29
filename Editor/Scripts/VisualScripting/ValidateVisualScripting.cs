@@ -207,69 +207,15 @@ namespace BS.SDKEditor
             return output;
         }
        
-        public static bool CheckVsNodes() {
-            var everything = new List<string>();
-            var notAllowedElements = new List<string>();
+        public static bool CheckVsNodes() => CheckVsNodes(SceneManager.GetActiveScene().GetRootGameObjects());
+
+        /// <summary>
+        /// Logs every node the client won't run, from the project's graph assets and prefabs and from
+        /// every machine under <paramref name="sceneRoots"/>. False if there are any, or on error.
+        /// </summary>
+        public static bool CheckVsNodes(IEnumerable<GameObject> sceneRoots) {
             try {
-                AssetDatabase.Refresh();
-                string[] scriptguids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
-
-                string[] stateguids = AssetDatabase.FindAssets("t:StateGraphAsset");
-
-                foreach (string guid in scriptguids)
-                {
-                    everything.AddRange(FindNodesFromScriptGraphAssetGuid(guid));
-                    //everything = (List<string>)everything.Concat(FindNodesFromScriptGraphAssetGuid(guid));
-                }            
-                foreach (string guid in stateguids)
-                {
-                    everything.AddRange(FindNodesFromStateGraphAssetGuid(guid));
-                }
-                var paths = AssetDatabase.GetAllAssetPaths().Select(path => path).Where(File.Exists).Where(f => Path.GetExtension(f) == ".prefab");
-                foreach (var p in paths)
-                {
-                    var assetPath = p;
-                    UnityEngine.Object o = AssetDatabase.LoadMainAssetAtPath(assetPath);
-                    if(o != null)
-                    {
-                        try
-                        {
-                            GameObject go = (GameObject)o;
-                            var scriptMachine = go.GetComponent<ScriptMachine>();
-                            if (scriptMachine?.nest?.source == GraphSource.Embed)
-                                everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
-
-                            var stateMachine = go.GetComponent<StateMachine>();
-                            if (stateMachine?.nest?.source == GraphSource.Embed)
-                                everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
-                        } catch (Exception e)
-                        {
-                            Debug.Log($"Error while loading prefabs to search from them in path {assetPath} {e.Message} {e.StackTrace}");
-                            return false;
-                        }
-                    }
-                }
-                SceneManager.GetActiveScene().GetRootGameObjects().ToList().ForEach(go => {
-                    var scriptMachine = go.GetComponent<ScriptMachine>();
-                    if (scriptMachine?.nest?.source == GraphSource.Embed)
-                        everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
-
-                    var stateMachine = go.GetComponent<StateMachine>();
-                    if (stateMachine?.nest?.source == GraphSource.Embed)
-                        everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
-                });
-
-                notAllowedElements = everything.Distinct().Where( e => {
-                    string id = e;
-                    bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
-                    bool isBanterVs = (id?.StartsWith("BS.VisualScripting.") ?? false) || (id?.StartsWith("Banter.VisualScripting.") ?? false);
-                    bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;
-                    bool isColombiaVs = id?.StartsWith("SideQuest.Columbia.VisualScripting.") ?? false;
-
-                    var notAllowed = !(id == null || isVs || isBanterVs || isPicaVoxelVs || isColombiaVs || VsStubsAllowed.members.Contains(id));
-                    return notAllowed;
-                }).ToList();
-
+                var notAllowedElements = CollectDisallowedElements(sceneRoots, refresh: true);
                 if(notAllowedElements.Count() > 0) {
                     Debug.LogError("[VisualScripting] Found elements that are not allowed for Visual Scripting");
                     foreach(var element in notAllowedElements) {
@@ -282,6 +228,76 @@ namespace BS.SDKEditor
                 return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// The node identifiers the client won't run: from every script/state graph asset, every
+        /// prefab's root machine, and every machine (inactive included) under <paramref name="sceneRoots"/>.
+        /// Throws if a prefab can't be inspected, since then the answer isn't known.
+        /// </summary>
+        public static List<string> CollectDisallowedElements(IEnumerable<GameObject> sceneRoots, bool refresh) {
+            var everything = new List<string>();
+            if (refresh) AssetDatabase.Refresh();
+            string[] scriptguids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
+
+            string[] stateguids = AssetDatabase.FindAssets("t:StateGraphAsset");
+
+            foreach (string guid in scriptguids)
+            {
+                everything.AddRange(FindNodesFromScriptGraphAssetGuid(guid));
+                //everything = (List<string>)everything.Concat(FindNodesFromScriptGraphAssetGuid(guid));
+            }            
+            foreach (string guid in stateguids)
+            {
+                everything.AddRange(FindNodesFromStateGraphAssetGuid(guid));
+            }
+            var paths = AssetDatabase.GetAllAssetPaths().Select(path => path).Where(File.Exists).Where(f => Path.GetExtension(f) == ".prefab");
+            foreach (var p in paths)
+            {
+                var assetPath = p;
+                UnityEngine.Object o = AssetDatabase.LoadMainAssetAtPath(assetPath);
+                if(o != null)
+                {
+                    try
+                    {
+                        GameObject go = (GameObject)o;
+                        var scriptMachine = go.GetComponent<ScriptMachine>();
+                        if (scriptMachine?.nest?.source == GraphSource.Embed)
+                            everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
+
+                        var stateMachine = go.GetComponent<StateMachine>();
+                        if (stateMachine?.nest?.source == GraphSource.Embed)
+                            everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
+                    } catch (Exception e)
+                    {
+                        Debug.Log($"Error while loading prefabs to search from them in path {assetPath} {e.Message} {e.StackTrace}");
+                        throw new InvalidOperationException($"Could not inspect the Visual Scripting in prefab {assetPath}: {e.Message}", e);
+                    }
+                }
+            }
+            // Every machine in the scene, not just those on root objects.
+            foreach (var root in sceneRoots ?? Enumerable.Empty<GameObject>()) {
+                if (root == null) continue;
+                foreach (var scriptMachine in root.GetComponentsInChildren<ScriptMachine>(true)) {
+                    if (scriptMachine?.nest?.source == GraphSource.Embed)
+                        everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
+                }
+                foreach (var stateMachine in root.GetComponentsInChildren<StateMachine>(true)) {
+                    if (stateMachine?.nest?.source == GraphSource.Embed)
+                        everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
+                }
+            }
+
+            return everything.Distinct().Where(IsDisallowed).ToList();
+        }
+
+        static bool IsDisallowed(string id) {
+            bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
+            bool isBanterVs = (id?.StartsWith("BS.VisualScripting.") ?? false) || (id?.StartsWith("Banter.VisualScripting.") ?? false);
+            bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;
+            bool isColombiaVs = id?.StartsWith("SideQuest.Columbia.VisualScripting.") ?? false;
+
+            return !(id == null || isVs || isBanterVs || isPicaVoxelVs || isColombiaVs || VsStubsAllowed.members.Contains(id));
         }
     }
 }

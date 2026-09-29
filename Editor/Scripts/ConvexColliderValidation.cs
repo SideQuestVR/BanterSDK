@@ -166,16 +166,7 @@ namespace BS.SDKEditor
             var sb = new StringBuilder();
             sb.AppendLine($"{count} mesh collider(s) in this scene have Convex ticked on static geometry.");
             sb.AppendLine();
-            sb.AppendLine("Convex throws the mesh away and collides against its convex hull instead, so players "
-                          + "hit a shape that can sit well away from the surface they can see. On a floor this is "
-                          + "severe: a player can end up standing on solid ground while the game thinks they are "
-                          + "falling, and get stuck there. That has already happened in a published world.");
-            sb.AppendLine();
-            sb.AppendLine("Convex is only needed when a mesh collider is on a moving Rigidbody, or is a trigger. "
-                          + "Neither applies to these. It is usually ticked to silence Unity's \"Non-convex "
-                          + "MeshCollider with non-kinematic Rigidbody is not supported\" error, then left behind "
-                          + "once the Rigidbody is gone.");
-            sb.AppendLine();
+            sb.AppendLine(Explanation);
 
             int shown = Mathf.Min(findings.Count, MaxListedInDialog);
             for (int i = 0; i < shown; i++)
@@ -188,6 +179,17 @@ namespace BS.SDKEditor
             sb.Append("To fix: untick Convex on each Mesh Collider, or run Altspace > Tools > Fix Convex Colliders.");
             return sb.ToString();
         }
+
+        /// <summary>Why a convex hull on static geometry hurts players, and when Convex is needed.</summary>
+        internal static string Explanation =>
+            "Convex throws the mesh away and collides against its convex hull instead, so players "
+            + "hit a shape that can sit well away from the surface they can see. On a floor this is "
+            + "severe: a player can end up standing on solid ground while the game thinks they are "
+            + "falling, and get stuck there. That has already happened in a published world.\n\n"
+            + "Convex is only needed when a mesh collider is on a moving Rigidbody, or is a trigger. "
+            + "Neither applies to these. It is usually ticked to silence Unity's \"Non-convex "
+            + "MeshCollider with non-kinematic Rigidbody is not supported\" error, then left behind "
+            + "once the Rigidbody is gone.\n";
 
         [MenuItem("Altspace/Tools/Validate Colliders")]
         public static void ValidateMenu()
@@ -213,8 +215,14 @@ namespace BS.SDKEditor
                 return;
             }
 
+            Untick(findings);
+        }
+
+        /// <summary>Unticks Convex on the given findings, with undo, and logs what changed.</summary>
+        public static void Untick(IReadOnlyCollection<Finding> findings)
+        {
             var report = new StringBuilder();
-            report.AppendLine($"Unticked Convex on {count} mesh collider(s):");
+            report.AppendLine($"Unticked Convex on {findings.Count} mesh collider(s):");
             foreach (Finding f in findings)
             {
                 Undo.RecordObject(f.Collider, "Untick Convex");

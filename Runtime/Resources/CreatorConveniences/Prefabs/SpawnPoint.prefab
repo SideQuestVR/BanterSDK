@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7223015806660680840}
-  - component: {fileID: 6514619968397744635}
-  - component: {fileID: 7621297931493926266}
+  - component: {fileID: 1650167493397211883}
+  - component: {fileID: 681732661108778057}
   m_Layer: 0
   m_Name: SpawnPoint
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6514619968397744635
+--- !u!114 &1650167493397211883
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,13 +42,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 1739568058010411198}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e741851cba3ad425c91ecf922cc6b379, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.VisualScripting.Core::Unity.VisualScripting.Variables
-  _data:
-    _json: '{"declarations":{"Kind":"Object","collection":{"$content":[],"$version":"A"},"$version":"A"}}'
-    _objectReferences: []
---- !u!114 &7621297931493926266
+  m_Script: {fileID: 11500000, guid: 1975fd0838af4a85be3bb6459af67590, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSObjectId
+  Id: 77904
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  watchPosition: 0
+  watchLocalPosition: 0
+  watchEuler: 0
+  watchLocalEuler: 0
+  watchRotation: 0
+  watchLocalRotation: 0
+  watchLocalScale: 0
+  lerpPosition: 0
+  lerpRotation: 0
+--- !u!114 &681732661108778057
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -57,10 +68,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1739568058010411198}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2fe5546f775c47d2820aa5e8a715f53, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.VisualScripting.Flow::Unity.VisualScripting.ScriptMachine
-  _data:
-    _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
-    _objectReferences:
-    - {fileID: 11400000, guid: 16a69254c2a6956ccba2d04b4152b34b, type: 2}
+  m_Script: {fileID: 11500000, guid: 7a4cf7bf943011141b483e7d7e09b5de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSSpawn
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  radius: 0

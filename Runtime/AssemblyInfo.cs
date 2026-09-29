@@ -5,3 +5,6 @@ using System.Runtime.CompilerServices;
 
 // Main banter project is just using the generic assembly? TODO
 // [assembly: InternalsVisibleTo("Assembly-CSharp")]
+
+// Edit-mode tests set components' internal (serialized) fields directly.
+[assembly: InternalsVisibleTo("BS.SDKEditor.Tests")]

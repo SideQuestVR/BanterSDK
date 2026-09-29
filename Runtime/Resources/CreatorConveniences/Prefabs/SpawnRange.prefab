@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 7223015806660680841}
-  - component: {fileID: 1111111111111111111}
-  - component: {fileID: 7621297931493926267}
+  - component: {fileID: 2144321274971929560}
+  - component: {fileID: 7202390837935315228}
   m_Layer: 0
   m_Name: SpawnRange
   m_TagString: Untagged
@@ -30,42 +30,10 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 6888888888888889}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &6888888888888888
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 6888888888888889}
-  m_Layer: 0
-  m_Name: Spawn Candidates
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &6888888888888889
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6888888888888888}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 7223015806660680841}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1111111111111111111
+--- !u!114 &2144321274971929560
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -74,13 +42,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 1739568058010411199}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e741851cba3ad425c91ecf922cc6b379, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.VisualScripting.Core::Unity.VisualScripting.Variables
-  _data:
-    _json: '{"declarations":{"Kind":"Object","collection":{"$content":[{"name":"Radius","value":{"$content":5.0,"$type":"System.Single"},"typeHandle":{"Identification":"System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089","$version":"A"},"$version":"A"}],"$version":"A"},"$version":"A"}}'
-    _objectReferences: []
---- !u!114 &7621297931493926267
+  m_Script: {fileID: 11500000, guid: 1975fd0838af4a85be3bb6459af67590, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSObjectId
+  Id: 77932
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  watchPosition: 0
+  watchLocalPosition: 0
+  watchEuler: 0
+  watchLocalEuler: 0
+  watchRotation: 0
+  watchLocalRotation: 0
+  watchLocalScale: 0
+  lerpPosition: 0
+  lerpRotation: 0
+--- !u!114 &7202390837935315228
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -89,10 +68,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 1739568058010411199}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d2fe5546f775c47d2820aa5e8a715f53, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Unity.VisualScripting.Flow::Unity.VisualScripting.ScriptMachine
-  _data:
-    _json: '{"nest":{"source":"Macro","macro":0,"embed":null}}'
-    _objectReferences:
-    - {fileID: 11400000, guid: a15a3dea7129c4ba4c627436cb50fc62, type: 2}
+  m_Script: {fileID: 11500000, guid: 7a4cf7bf943011141b483e7d7e09b5de, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSSpawn
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  radius: 5

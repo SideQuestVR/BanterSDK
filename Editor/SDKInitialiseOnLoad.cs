@@ -67,6 +67,30 @@ namespace BS.SDKEditor
 #endif
         }
 
+        /// <summary>The SDK layers and tags this project doesn't have at their slots. Changes nothing.</summary>
+        public static void GetMissingLayersAndTags(out List<string> missingLayers, out List<string> missingTags)
+        {
+            missingLayers = new List<string>();
+            missingTags = new List<string>();
+            Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
+            if (asset == null || asset.Length == 0)
+                return;
+
+            var serializedObject = new SerializedObject(asset[0]);
+            var layers = serializedObject.FindProperty("layers");
+            foreach (var layer in layersToAdd)
+            {
+                if (layer.Key >= layers.arraySize || layers.GetArrayElementAtIndex(layer.Key).stringValue != layer.Value)
+                    missingLayers.Add(layer.Value);
+            }
+            var tags = serializedObject.FindProperty("tags");
+            foreach (var tag in tagsToAdd)
+            {
+                if (tag.Key >= tags.arraySize || tags.GetArrayElementAtIndex(tag.Key).stringValue != tag.Value)
+                    missingTags.Add(tag.Value);
+            }
+        }
+
         public static void SetupLayersAndTags()
         {
             Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");

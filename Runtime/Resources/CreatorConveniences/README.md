@@ -1,47 +1,82 @@
 # Creator Conveniences
 
-Import this sample from Package Manager to add the prefabs, Visual Scripting graphs, and editor menu entries to your project. The included graphs call existing Creator SDK units; no custom runtime component is required. The entries are available under `GameObject > BS` (also the Hierarchy's Create GameObject context menu) after importing this sample.
+Ready-made objects for common space features, under `GameObject > BS` (also the Hierarchy's right-click menu). They ship with the Creator SDK package; there is nothing to import.
 
-## Spawn Point
+- **Player**: Spawn Point, Spawn Range, Seat, Teleporter, Scene Settings.
+- **Grab**: one preset per grab type (Point, Point as a gun, Cylinder, Ball, Soft) and a climbable handhold.
+- **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Kit Item, Billboard, Collider Events.
 
-`Prefabs/SpawnPoint.prefab` teleports the local player to the object's position and facing when the graph starts, through the SDK's `TeleportTo` unit with `Is Spawn` enabled and velocity stopping enabled. Place and rotate it at the intended spawn location. It requires the normal Creator SDK world/player runtime. This sample does not configure the world's stored default spawn setting.
+The player conveniences are prefabs in `Prefabs/`, built on SDK components (`BSSpawn`, `BSSeat`, `BSTeleporter`, `BSSettings`). They used to be Visual Scripting graphs; the graphs are gone. Objects that still use the old graphs are flagged by the build checklist ("Visual Scripting machine(s) have no graph"). Replace them with the new prefabs.
 
-The graph's Boolean and float defaults use Visual Scripting's typed serialization. A packaged Play Mode regression check verified one event at the configured position with both spawn and velocity-stop flags enabled; this is event-path evidence, not client movement acceptance.
+## Spawn Point and Spawn Range (`BSSpawn`)
 
-## Spawn Range
+When the space loads, one of the scene's active spawns is picked at random, and the local player is teleported there. The teleport uses the spawn's position and its Y rotation as the player's facing. `radius` spreads arrivals: players land at a random point within that many metres, on the horizontal plane. Spawn Point has radius 0 and Spawn Range has radius 5; otherwise they are the same component. For several spawn locations, add several spawns.
 
-`Prefabs/SpawnRange.prefab` has two explicit behaviors. If its `Spawn Candidates` child has one or more children, it selects one uniformly by index and spawns at that marker's world position and facing. Add empty child GameObjects under `Spawn Candidates` and move/rotate them to define choices; zero candidates falls back to radius mode, and one candidate always selects that marker. With no candidate children, it samples a uniformly distributed point in a horizontal XZ disk around the root transform. Set Object Variables `Radius` in the Inspector (default 5 world units; use a nonnegative value). Zero radius selects the root center. Radius mode keeps the root Y position and facing. Both modes call the SDK `TeleportTo` unit with `Is Spawn` and velocity stopping enabled. The graph addresses the candidate container as child index 0; keep the included `Spawn Candidates` container as the root's first child.
+The teleport is a spawn teleport with velocity stopped, the same as the `TeleportTo` unit with `Is Spawn` on. A spawn added by a page script after the space has loaded doesn't move anyone. Scripts can call `Spawn()` on any spawn to send the local player there.
 
-It requires the normal Creator SDK world/player runtime. Candidate markers are children of the built-in `Spawn Candidates` container; no external references or tags are needed.
+## Seat (`BSSeat`)
 
-## Seat
+Clicking the seat sits the local player on it. Moving (the move stick or WASD) or jumping stands them up, unless `unseatOnMove` / `unseatOnJump` are off.
 
-`Prefabs/Seat.prefab` contains a visible, editable seat, a BoxCollider interaction area, the SDK `BSAttachedObject` with `isSeat` enabled, and an `On Click` graph that attaches the local user to this object. Move, rotate, or scale the root to place it. Adjust the collider in the Inspector if the seat shape changes.
+`BSSeat` sets up the `BSAttachedObject` beside it as a seat: Physics + AvatarAttachTo, jointed, `isSeat`, and never auto-attached. It also listens for clicks on its colliders and adds a kinematic Rigidbody if there is none. Without one, the client would add a dynamic Rigidbody and the chair would fall.
 
-Its two visible parts use the included `Materials/Seat.mat` (URP Lit). The default visual requires URP, as used by Greenfield. For a Built-in project, assign a compatible material to the two visible children. This changes visuals only, not the attachment graph.
+In the prefab, the seat components are on the `SitPoint` child at the top of the cushion. The player sits there, facing its forward. The child's trigger box is on the **UI layer**: the client clicks any layer, but the SDK's desktop player only clicks the UI and Menu layers. The visible parts use `Materials/Seat.mat` (URP Lit).
 
-The graph sends the existing local attachment token `me` to `BSAttachedObject._Attach`. Greenfield's attachment consumer resolves that token to the local user when available and supports it without a registered network user. It does not look up or move a remote user. The prefab uses `Physics + AvatarAttachTo`, `jointAvatar`, and `isSeat`: this is Greenfield's implemented sitting path. Its kinematic, no-gravity Rigidbody keeps this basic seat stationary. Normal move/jump unseat inputs are enabled. The earlier `NonPhysics` configuration did not enter that sitting path and has been replaced. No new controller or joint implementation is included. Physical clicks, seated pose and unseating still require client acceptance.
+In SDK Play Mode, clicking the seat sits the desktop player. **Space** stands them up (unless they're holding something, when Space is the held object's primary button), and so does moving while flying (right mouse + WASD).
 
-## Local Space Teleporter
+## Teleporter (`BSTeleporter`)
 
-`Prefabs/LocalSpaceTeleporter.prefab` teleports the local player when they enter its trigger volume. The root Inspector's Object Variables exposes `Destination`; select that Transform to edit the landing position and facing. The graph checks the existing reserved `__BA_LocalPlayer` collider tag used by Greenfield and the SDK Portal, calls the SDK `TeleportTo` unit, stops velocity, and uses a `Once` gate with a 0.5-second reset. It does not require `UserData` on the collider's parents. It does not open another space or select a Portal URL. Requires the normal Creator SDK world/player runtime and its local collider tagging.
+When the local player walks into the trigger collider, they are teleported to `destination`: its position, facing its Y rotation, with velocity stopped. `cooldown` (0.5 s) stops the teleporter re-firing straight away. Only colliders tagged `__BA_LocalPlayer` count; don't give that tag to anything else. Move the prefab's `Destination` child to set the landing point, keeping it outside the trigger. The portal visual uses `FaceTarget` on the mesh, not the root, so the trigger and destination don't turn with the camera.
 
-## Build warnings
+## Scene Settings (`BSSettings`)
 
-The scene builder warns about unsupported custom tags **used by scene objects**, comparing against Unity's built-in tags and the SDK's current supported tag list. Future SDK list additions are accepted automatically. It also warns if more than one enabled, active Spawn Point/Spawn Range graph can run at startup. These warnings never rewrite tags or disable objects. Keep only the intended startup spawner enabled; separate spawn configurations are separate test builds.
+Sets the space's settings from the scene:
 
-The renderer check reviews Windows Forward+ and Android Forward. `Change and Build` changes only the listed editable renderer assets with consent; shared conflicting assets must be reviewed manually. Unattended builds log warnings and leave assets unchanged. The Active Input Handling warning is a local Editor Play Mode check, not a fix for a hosted client's input; the separate fix command offers saving scenes and restarting Unity after consent.
+- abilities: teleport, force grab, spider-man, hand holding, radar, name tags, portals, guests
+- refresh rate and clipping planes
+- player physics
+- the two locks
+
+They are applied when the space loads, again when the page reloads, and whenever a property changes. Spawn point, occupancy, avatars, friend position join, default textures and dev tools are not included. Use one per scene.
+
+A page script that calls `scene.SetSettings(...)` sends every setting, so it replaces these if it runs afterwards. Either remove that call, or tick both locks so nothing can change the settings later. The build checklist warns when a page calls `SetSettings` and the settings aren't locked. In SDK Play Mode only the clipping planes have a visible effect; everything else takes effect in the client.
+
+## Grab presets
+
+Each grab preset is a Rigidbody root with `BSWorldObject` and `BSSyncedObject`, so every player sees it move, plus a collider on the **Grabbable layer (20)** with a `BSGrabHandle` saying how it's held:
+
+| Preset | Grab type | How the hand holds it |
+|---|---|---|
+| Point (Handle) | Point | Snaps to one pose: the `GrabHandle` transform (a trigger capsule around the grip). |
+| Point (Gun) | Point | The same grip, plus `BSHeldEvents` with the triggers blocked, so the trigger fires the gun's events. |
+| Cylinder (Stick) | Cylinder | Anywhere along the handle's Y axis. |
+| Ball | Ball | Anywhere on a sphere of the grab radius. |
+| Soft (Any Shape) | Soft | Wherever the hand touches the collider. |
+| Climbable Handhold | Cylinder | No Rigidbody, so grabbing it holds on to the world. |
+
+Replace the placeholder meshes with your own and keep the handle collider on the Grabbable layer. Don't use `BSGrababble` for objects placed in the editor: it only sets itself up when a page script sets its properties.
+
+## Build checklist
+
+Before every build (and on **RUN CHECKS** in the Altspace Builder), the builder checks the scene and project and lists what it finds:
+
+- Visual Scripting nodes the client won't run
+- convex colliders on large static geometry
+- build modules, input handling, SDK layers and tags, URP renderer modes
+- missing scripts and graphs, scene cameras and audio listeners, pink materials
+- oversized or uncompressed Android textures, uncompressed long audio, overall scene size
+- the conveniences above set up wrongly
+
+Checks only report. A **FIX** button changes things only when clicked, with undo, and **SELECT** shows what an issue is about.
+
+- **Notes and warnings** are listed in the confirmation, whose button becomes **BUILD ANYWAY**.
+- **Errors marked "blocks the build"** stop it; other errors can be built past interactively.
+- **Unattended (batch) builds** stop on any error and never show dialogs.
+
+The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone. `Altspace > Tools > Run Build Checklist` runs it and logs the results to the Console.
 
 ## Known limitations
 
-Only colliders tagged `__BA_LocalPlayer` are accepted; unrelated/remote colliders are ignored. Do not assign that reserved tag to arbitrary world objects. Earlier user-parent lookup fixtures passed, but the uploaded client test reported no teleport and no seating. Those fixtures did not match Greenfield's collider hierarchy or its zero-user case. The current graphs address those source mismatches; actual movement, physical clicks, sitting pose and unseating still require a new client test. Neither an event capture nor successful bundle loading is client acceptance.
+These components need a client and injection build that include them (component types 75–78). Until the page's injection bundle knows them, a space that uses them makes the page's script fail to sync components.
 
-The corrected graphs passed encrypted-package Play Mode checks on 2026-09-28: a seat click emits the local `me` attachment with zero users; a tagged local collider with no parent user data emits the configured teleport; unrelated/remote colliders are ignored; and the repeat-entry gate resets correctly. Fixed, radius and candidate-spawn variants each emit one configured startup event. See `Documentation~/CreatorConveniencesValidation.md` for proof boundaries and remaining acceptance.
-
-The existing SDK FaceTarget component is on the portal mesh, not the teleporter root. This keeps the visual facing the player without rotating the trigger or the Destination child. Do not move it onto the root: a packaged Play Mode regression test demonstrated that doing so moved the configured landing point as the camera moved.
-
-Validated in Unity 6.3.21f1 / Greenfield Editor: all four included Script Graph assets import with no missing units or unbound value inputs. The menu callbacks were invoked through the editor menu paths, though the menu was not visually inspected. In Play Mode, the local test player selected each of two marker children in separate runs (at 100 and 110 world units); the remote test player remained unchanged. With no markers and radius 5, a final-graph sample landed 4.98 units from the root in XZ. With radius 0, the event target was exactly the root center. With one marker, the target was exactly that marker. The graph is restricted to AOT-allowed calls; an initial `Transform.Find` version was rejected by Unity and replaced with `Transform.GetChild`.
-
-Earlier local-player movement checks used a fixture, not a real hosted world. Some early fixtures also produced teardown errors and extra AudioListener warnings; those are not clean-client acceptance evidence.
-
-Earlier Seat checks captured `BSScene.Click` attachment events, but did not test the uploaded client's zero-user case. A graphics-enabled URP 17.3 capture confirmed that the original Standard seat material rendered pink; the included URP Lit material then rendered the seat without error-colored pixels. Inspector presentation and the visible GameObject menu itself were not visually reviewed. This sample is not release-accepted until the current client interaction matrix passes.
+Seating, standing up, and teleporting by walking in have been exercised in SDK Play Mode only. They still need testing in the client, with a second client to confirm the behaviour stays local to one player. See `Documentation~/CreatorConveniencesValidation.md`.

@@ -170,3 +170,93 @@ VisualElement {}
 .alt-dropdown .unity-base-popup-field__arrow {
     -unity-background-image-tint-color: rgba(255, 255, 255, 0.6);
 }
+
+/* Pre-build checklist (BuildChecklistView). */
+.unity-label.alt-warning,
+.alt-warning {
+    color: #FFC457 !important;
+}
+
+.alt-checklist-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.unity-label.alt-checklist-heading {
+    font-size: 12px;
+    letter-spacing: 1px;
+    margin-left: 0;
+    margin-right: 10px;
+}
+
+.unity-label.alt-checklist-summary {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+    font-size: 12px;
+}
+
+.alt-checklist-rows {
+    background-color: #333333;
+    border-radius: 10px;
+    padding: 6px 10px;
+}
+
+.alt-checklist-issue {
+    margin-top: 2px;
+    margin-bottom: 2px;
+}
+
+.alt-checklist-row {
+    flex-direction: row;
+    align-items: center;
+}
+
+.alt-checklist-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    margin-right: 6px;
+}
+
+.unity-label.alt-checklist-title {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+    font-size: 12px;
+    margin: 0;
+    padding: 2px 0;
+}
+
+.unity-label.alt-checklist-expandable {
+    cursor: link;
+}
+
+.unity-label.alt-checklist-details {
+    color: #999999 !important;
+    white-space: normal;
+    font-size: 11px;
+    margin: 2px 0 6px 22px;
+    padding: 0;
+}
+
+.unity-button.alt-checklist-button {
+    flex-shrink: 0;
+    font-size: 10px;
+    padding: 2px 8px;
+    margin: 0 0 0 6px;
+    min-height: 0;
+    height: 20px;
+}
+
+.unity-label.alt-checklist-confirm-heading {
+    font-size: 14px;
+    white-space: normal;
+    margin-left: 0;
+}
+
+.alt-checklist-confirm-list {
+    max-height: 180px;
+    margin-top: 6px;
+}

@@ -10,6 +10,7 @@ using UnityEngine.UIElements;
 using BS;
 using System.Threading;
 using BS.SDKEditor;
+using BS.SDKEditor.BuildChecks;
 using Unity.EditorCoroutines.Editor;
 using System.Collections;
 using UnityEditor.UIElements;
@@ -79,6 +80,11 @@ public class BuilderWindow : EditorWindow
     Label confirmSceneFile;
     Label confirmSpaceCode;
     Label confirmSyncedGraphs;
+    VisualElement confirmChecklist;
+
+    VisualElement checklistSection;
+    BuildChecklistView checklistView;
+    BuildChecklistResult lastChecklist;
 
     Label confirmBuild;
     Button cancelBuild;
@@ -837,6 +843,22 @@ public class BuilderWindow : EditorWindow
         confirmSceneFile = rootVisualElement.Q<Label>("ConfirmSceneFile");
         confirmSpaceCode = rootVisualElement.Q<Label>("ConfirmSpaceCode");
         confirmSyncedGraphs = rootVisualElement.Q<Label>("ConfirmSyncedGraphs");
+        confirmChecklist = rootVisualElement.Q<VisualElement>("ConfirmChecklist");
+
+        checklistSection = rootVisualElement.Q<VisualElement>("ChecklistSection");
+        checklistView = new BuildChecklistView(checklistSection);
+        checklistView.RunRequested += () => RunChecklist(forBuild: false);
+        checklistView.SelectRequested += issue =>
+        {
+            if (!BuildChecklist.Select(issue))
+                status.AddStatus("Open " + scenePath + " to select that.");
+        };
+        checklistView.FixRequested += issue =>
+        {
+            if (BuildChecklist.ApplyFix(issue, scenePath))
+                status.AddStatus("Checklist fix: " + issue.Fix.Label + ".");
+            RunChecklist(forBuild: false);
+        };
 
         buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
 
@@ -910,18 +932,16 @@ public class BuilderWindow : EditorWindow
                 status.AddStatus("No world selected, please select or create a world.");
                 return;
             }
-            ShowBuildConfirm();
+            // Same checklist as the build path, on the builder's scene. It inspects the scene, not the
+            // already-built asset.world being uploaded, so it is a reminder rather than a guarantee
+            // about the bundle's contents.
+            var checklist = RunChecklist(forBuild: false);
+            if (!ChecklistAllows(checklist))
+                return;
+            ShowBuildConfirm(checklist, "UPLOAD");
             confirmCallback = () =>
             {
                 confirmCallback = null;
-                // Same gate as the build path. Note this inspects the scenes currently open, not the
-                // already-built asset.world being uploaded, so it is a reminder rather than a
-                // guarantee about the bundle's contents.
-                if (!ConvexColliderValidation.CheckConvexColliders())
-                {
-                    status.AddStatus("Cancelled: convex mesh colliders on static geometry, please check the logs for more information.");
-                    return;
-                }
                 uploadWebOnly.SetEnabled(false);
                 uploadEverything.SetEnabled(false);
                 EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
@@ -1333,6 +1353,9 @@ public class BuilderWindow : EditorWindow
             scenePathLabel.text = "<color=\"white\">Scene:</color> " + scenePath;
 
             ShowSceneStats(new[] { scenePath });
+            checklistSection.style.display = DisplayStyle.Flex;
+            if (lastChecklist == null || lastChecklist.ScenePath != scenePath)
+                checklistView.ShowNotRun();
             loggedInViewScene.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
             buildOptions.style.display = DisplayStyle.Flex;
             loggedInCTAScene.style.display = DisplayStyle.Flex;
@@ -1342,6 +1365,7 @@ public class BuilderWindow : EditorWindow
         }
         else
         {
+            checklistSection.style.display = DisplayStyle.None;
             loggedInViewScene.style.display = DisplayStyle.None;
             buildOptions.style.display = DisplayStyle.None;
             loggedInCTAScene.style.display = DisplayStyle.None;
@@ -1486,9 +1510,68 @@ public class BuilderWindow : EditorWindow
         // Reload the list from the API (authoritative) and select the just-created world.
         yield return RefreshWorlds(created.WorldId);
     }
-    private void ShowBuildConfirm()
+    /// <summary>
+    /// Runs the pre-build checklist on the builder's scene, shows it in the Checklist section and logs
+    /// it. Null if it couldn't run (no scene, or the scene couldn't be opened).
+    /// </summary>
+    private BuildChecklistResult RunChecklist(bool forBuild)
+    {
+        try
+        {
+            var targets = buildTargets.Where((target, i) => i < buildTargetFlags.Length && buildTargetFlags[i]).ToArray();
+            var result = BuildChecklist.Run(scenePath, targets, forBuild,
+                (title, done) => EditorUtility.DisplayProgressBar("Build checklist", title, done));
+            lastChecklist = result;
+            checklistView.Show(result);
+            BuildChecklist.Log(result);
+            status.AddStatus("Checklist: " + result.Summary + ".");
+            return result;
+        }
+        catch (Exception e)
+        {
+            Debug.LogException(e);
+            status.AddStatus("The checklist couldn't run: " + e.Message);
+            return null;
+        }
+        finally
+        {
+            EditorUtility.ClearProgressBar();
+        }
+    }
+
+    // Hard blockers stop here; everything else is listed in the confirmation, whose button becomes
+    // "build anyway". Unattended builds can't choose, so any error stops them.
+    private bool ChecklistAllows(BuildChecklistResult checklist)
+    {
+        if (checklist == null)
+            return false;
+        var blockers = Application.isBatchMode
+            ? checklist.Issues.Where(issue => issue.Severity == BuildCheckSeverity.Error).ToList()
+            : checklist.Blockers.ToList();
+        if (blockers.Count == 0)
+            return true;
+        status.AddStatus("Blocked by the checklist: " + string.Join("; ", blockers.Select(issue => issue.Title)) + ".");
+        return false;
+    }
+
+    /// <summary>
+    /// Shows the confirmation. With checklist problems it lists them, and the confirm button becomes
+    /// "<paramref name="action"/> ANYWAY".
+    /// </summary>
+    private void ShowBuildConfirm(BuildChecklistResult checklist = null, string action = null)
     {
         buildConfirm.style.display = DisplayStyle.Flex;
+        if (checklist != null && checklist.HasProblems)
+        {
+            BuildChecklistView.FillConfirm(confirmChecklist, checklist);
+            confirmChecklist.style.display = DisplayStyle.Flex;
+            confirmBuild.text = (action ?? "BUILD") + " ANYWAY";
+        }
+        else
+        {
+            confirmChecklist.style.display = DisplayStyle.None;
+            confirmBuild.text = "CONFIRM";
+        }
         confirmBuildMode.text = "<color=\"white\">Build Mode:</color> Scene Bundle";
         confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
         confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".worldspace.host") : SelectedWorldUrl);
@@ -1792,7 +1875,14 @@ public class BuilderWindow : EditorWindow
         {
             return;
         }
-        ShowBuildConfirm();
+        // The checklist runs before the confirmation (and before the reload lock), so cancelling
+        // costs nothing and blocks the auto-upload too.
+        var checklist = RunChecklist(forBuild: true);
+        if (!ChecklistAllows(checklist))
+        {
+            return;
+        }
+        ShowBuildConfirm(checklist, "BUILD");
         confirmCallback = async () => {
             // Basis' scene build switches the active build target, which schedules a domain reload.
             // That reload is deferred until this async method yields — at which point it destroys the
@@ -1804,32 +1894,9 @@ public class BuilderWindow : EditorWindow
             bool lockHandedToUpload = false;
             try
             {
-                if (!ValidateVisualScripting.CheckVsNodes())
+                if (checklist.HasProblems)
                 {
-                    status.AddStatus("Found disallowed visual scripting nodes, please check the logs for more information.");
-                    return;
-                }
-                else
-                {
-                    status.AddStatus("Visual Scripting check passed!");
-                }
-                // Convex on a static mesh collider makes players collide with a hull instead of the
-                // floor they can see, which can leave them stuck standing on solid ground. Gate here,
-                // before the reload lock, so cancelling costs nothing and blocks the auto-upload too.
-                if (!ConvexColliderValidation.CheckConvexColliders())
-                {
-                    status.AddStatus("Cancelled: convex mesh colliders on static geometry, please check the logs for more information.");
-                    return;
-                }
-                if (!ActiveInputHandlingCheck.ConfirmBeforeSceneBuild(message => status.AddStatus(message)) ||
-                    !SceneCreatorBuildCheck.ConfirmBeforeSceneBuild(scenePath, message => status.AddStatus(message)))
-                {
-                    return;
-                }
-                if (!UrpRendererBuildCheck.ConfirmBeforeSceneBuild(buildTargets, buildTargetFlags,
-                    message => status.AddStatus(message)))
-                {
-                    return;
+                    status.AddStatus("Building anyway: " + checklist.Summary + ".");
                 }
                 status.AddStatus("Build started...");
 

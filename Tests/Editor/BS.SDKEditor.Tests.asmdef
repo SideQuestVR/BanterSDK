@@ -4,7 +4,10 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "BS.SDKEditor"
+        "BS.SDKEditor",
+        "BS.SDK",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow"
     ],
     "includePlatforms": [
         "Editor"
