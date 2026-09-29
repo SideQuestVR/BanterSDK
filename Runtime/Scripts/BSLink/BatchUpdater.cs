@@ -8,6 +8,7 @@ public class BatchUpdater
     BSPipe _pipe;
     List<string> _updates = new List<string>();
     Timer _timer;
+    volatile bool _disposed;
     public BatchUpdater(BSPipe pipe)
     {
         _pipe = pipe;
@@ -22,12 +23,25 @@ public class BatchUpdater
         }
     }
 
+    /// <summary>Stop sending: the pipe is going away (play mode ended, the link was destroyed).</summary>
+    public void Dispose()
+    {
+        _disposed = true;
+        ClearInterval(_timer);
+        _timer = null;
+        lock (_updates)
+        {
+            _updates.Clear();
+        }
+    }
+
     public void Tick()
     {
         lock (_updates)
         {
+            if (_disposed) return;
             if (_updates.Count > 0)
-            { 
+            {
                 _pipe.Send(MessageDelimiters.BATCH + string.Join(MessageDelimiters.BATCH, _updates));
                 _updates.Clear();
             }
@@ -38,9 +52,11 @@ public class BatchUpdater
         var timer = new Timer(interval);
         timer.Elapsed += (s, e) =>
         {
+            if (_disposed) return;
             timer.Enabled = false;
             action();
-            timer.Enabled = true;
+            // Re-arming a timer disposed while the tick ran would throw on the pool thread.
+            if (!_disposed) timer.Enabled = true;
         };
         timer.Enabled = true;
         return timer;

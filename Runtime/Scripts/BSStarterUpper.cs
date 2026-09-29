@@ -4,10 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
-using UnityEngine.SpatialTracking;
 using BS.Utilities.Async;
 using Debug = UnityEngine.Debug;
-using UnityEngine.UI;
 using System.Collections;
 using SideQuest.Ora;
 using SideQuest.Ora.WebRTC;
@@ -18,15 +16,10 @@ namespace BS
     [DefaultExecutionOrder(-1001)]
     public class BSStarterUpper : MonoBehaviour
     {
-        [SerializeField] int numberOfRemotePlayers = 1;
-        [SerializeField] Vector3 spawnPoint;
-        [SerializeField] float spawnRotation;
         public bool openBrowser;
         [SerializeField] Transform _feetTransform;
-        [SerializeField] RawImage _browserRenderer;
         public static bool SafeMode = false;
         public static float voiceVolume = 0;
-        private GameObject localPlayerPrefab;
         private object process;
         public BSScene scene;
         public static string WEB_ROOT = "WebRoot";
@@ -40,9 +33,10 @@ namespace BS
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
         private const string BANTER_AUTOSTART_DISABLED = "BANTER_AUTOSTART_DISABLED";
 
-        // Editor-only convenience toggle: when on, skips local/remote player spawning and the
-        // HardwareKeyboardInput setup that spams the console when Active Input Handling is set
-        // to the new Input System. Never matters outside the Editor (always false in a build).
+        // Editor-only convenience toggle: when on, skips the desktop controller (fly camera, mouse
+        // grab/click, local user) and the HardwareKeyboardInput setup that spams the console when
+        // Active Input Handling is set to the new Input System. Never matters outside the Editor
+        // (always false in a build).
         public static bool AutoStartDisabled
         {
             get
@@ -60,7 +54,7 @@ namespace BS
         {
             bool newValue = !UnityEditor.EditorPrefs.GetBool(BANTER_AUTOSTART_DISABLED, false);
             UnityEditor.EditorPrefs.SetBool(BANTER_AUTOSTART_DISABLED, newValue);
-            LogLine.Do("Banter auto-start (local/remote players, hardware keyboard input) " + (newValue ? "disabled." : "enabled."));
+            LogLine.Do("Banter desktop controller (camera, mouse grab/click, hardware keyboard input) " + (newValue ? "disabled." : "enabled."));
         }
 #endif
 
@@ -98,14 +92,16 @@ namespace BS
             gameObject.AddComponent<DontDestroyOnLoad>();
 
 #if !GREENFIELD_PROJECT
+            SetupExtraEvents();
             if (!AutoStartDisabled)
             {
-                localPlayerPrefab = Resources.Load<GameObject>("Prefabs/BanterPlayer");
-                SetupExtraEvents();
-                SetupCamera();
-                SpawnPlayers();
-                StartCoroutine(OpenPageDev());
+#if !BANTER_FLEX
+                BSDesktopController.Spawn(scene);
+#else
+                LogLine.Do("FlexaBody is installed, so the SDK desktop controller is not spawned.");
+#endif
             }
+            StartCoroutine(OpenPageDev());
 #endif
 #if UNITY_EDITOR
             CreateWebRoot();
@@ -172,82 +168,21 @@ namespace BS
         IEnumerator OpenPageDev()
         {
             yield return new WaitForSeconds(2);
-            // Ora's web server serves Assets/WebRoot on this port (see ServeWebRoot).
+            // Ora's web server serves Assets/WebRoot on this port (see BeforeEditorPlay).
             scene.link.pipe.view.LoadUrl("http://localhost:" + (oraManager != null ? oraManager.staticPort : 42068));
         }
 
-        Vector3 RandomSpawnPoint()
-        {
-            return new Vector3(UnityEngine.Random.Range(-0.5f, 0.5f), 0, UnityEngine.Random.Range(-0.5f, 0.5f)) + spawnPoint;
-        }
-
-        void SpawnPlayers()
-        {
-            var spawn = Resources.Load<GameObject>("Prefabs/BanterSpawnPoint");
-            if (spawn != null)
-            {
-                var spawnGo = Instantiate(spawn).transform;
-                spawnGo.name = "SpawnPoint";
-                spawnGo.position = spawnPoint;
-                spawnGo.eulerAngles = new Vector3(0, spawnRotation, 0);
-            }
-            for (int i = 0; i < numberOfRemotePlayers; i++)
-            {
-                var player = Instantiate(localPlayerPrefab).transform;
-                player.name = "RemotePlayer" + i;
-                player.position = RandomSpawnPoint();
-                player.eulerAngles = new Vector3(0, spawnRotation, 0);
-                GameObject.Destroy(player.Find("TrackedLeftHand").gameObject);
-                GameObject.Destroy(player.Find("TrackedRightHand").gameObject);
-                GameObject.Destroy(player.Find("Head").GetComponent<TrackedPoseDriver>());
-                // URP's camera data component depends on the Camera, so it cannot be destroyed; disable it
-                // and drop the MainCamera tag so Camera.main stays the local player's.
-                var remoteHead = player.Find("Head");
-                var remoteCamera = remoteHead.GetComponent<Camera>();
-                if (remoteCamera) remoteCamera.enabled = false;
-                if (remoteHead.CompareTag("MainCamera")) remoteHead.tag = "Untagged";
-                GameObject.Destroy(player.Find("Head").GetComponent<AudioListener>());
-                GameObject.Destroy(player.GetComponent<PlayerEmulator>());
-                player.Find("LeftHand").GetComponent<Rigidbody>().isKinematic = true;
-                player.Find("RightHand").GetComponent<Rigidbody>().isKinematic = true;
-                GameObject.Destroy(player.Find("RightHand").GetComponent<HandGrabber>());
-                GameObject.Destroy(player.Find("LeftHand").GetComponent<HandGrabber>());
-                GameObject.Destroy(player.Find("RightHand").GetComponent<PhysicsHandFollow>());
-                GameObject.Destroy(player.Find("LeftHand").GetComponent<PhysicsHandFollow>());
-            }
-        }
-
-        void SetupCamera()
-        {
-            var player = Instantiate(localPlayerPrefab).transform;
-            player.name = "LocalPlayer";
-            player.Find("RightHand").transform.SetParent(null);
-            player.Find("LeftHand").transform.SetParent(null);
-
-            var localUserData = player.GetComponent<UserData>();
-            localUserData.isLocal = true;
-#if !GREENFIELD_PROJECT
-            localUserData.nameTag = player.GetComponentInChildren<TMPro.TextMeshPro>();
-#endif
-            player.transform.position = spawnPoint;
-            player.transform.eulerAngles = new Vector3(0, spawnRotation, 0);
-        }
-
+        // Teleports are handled by BSDesktopController, which owns the local user.
         void SetupExtraEvents()
         {
-            scene.events.OnTeleport.AddListener((position, rotation, _, _) =>
-            {
-                var player = BSScene.Instance().users.First(user => user.isLocal);
-                player.transform.position = position;
-                player.transform.eulerAngles = rotation;
-            });
+            // Argument order the OnSpaceStatePropsChanged node reads: (value, isPublic).
             scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
             {
-                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
+                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
             });
             scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
             {
-                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
+                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
             });
         }
 
@@ -401,12 +336,30 @@ namespace BS
         }
 
 #if UNITY_EDITOR && !GREENFIELD_PROJECT
+        private const string SPAWN_ON_PLAY = "BS_SPAWN_STARTER_UPPER_ON_PLAY";
+
+        // Set by the editor when leaving edit mode with no BSStarterUpper in the scene. Kept in
+        // SessionState because entering play mode reloads the domain, which resets statics.
+        public static bool SpawnOnPlay
+        {
+            get => UnityEditor.SessionState.GetBool(SPAWN_ON_PLAY, false);
+            set => UnityEditor.SessionState.SetBool(SPAWN_ON_PLAY, value);
+        }
+
         // Before any OraManager.Awake launches Ora: have its web server serve Assets/WebRoot, the page
-        // OpenPageDev loads, unless the scene's OraManager names its own folder.
+        // OpenPageDev loads, unless the scene's OraManager names its own folder. Then add the
+        // BSStarterUpper the scene lacks. It's made in play mode, so it goes when play stops.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        private static void ServeWebRoot()
+        private static void BeforeEditorPlay()
         {
             OraManager.defaultStaticFolder = Application.dataPath + "/" + WEB_ROOT;
+            if (!SpawnOnPlay)
+            {
+                return;
+            }
+            SpawnOnPlay = false;
+            Debug.LogWarning("BSStarterUpper not found, adding one.");
+            Instantiate(Resources.Load<GameObject>("Prefabs/BSStarterUpper"));
         }
 #endif
 

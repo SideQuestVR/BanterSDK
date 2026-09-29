@@ -26,17 +26,20 @@ namespace BS.UI.Elements
             set => base.highValue = value;
         }
 
+        // Set from the page: no ChangeEvent, as with a DOM input's value. The page is the one setting it,
+        // and echoing its own write back as a change made a slider that tracks a value (a seek bar
+        // following playback) read every update as the user dragging it. Drags still notify.
         [UIProperty(propertyName: "value")]
         public new float value
         {
             get => base.value;
-            set => base.value = value;
+            set => SetValueWithoutNotify(value);
         }
 
         [UIMethod(methodName: "SetValue")]
         public void SetValue(float newValue)
         {
-            value = Mathf.Clamp(newValue, lowValue, highValue);
+            SetValueWithoutNotify(Mathf.Clamp(newValue, lowValue, highValue));
         }
 
         [UIMethod(methodName: "SetRange")]

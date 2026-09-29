@@ -1,7 +1,7 @@
 // Active Input Handling check.
 //
-// The SDK runtime uses the legacy Input Manager (PlayerEmulator) and the Input System
-// package (HandGrabber, BSScene, WorldSpaceUIDocument, ...) at the same time, and there
+// The SDK runtime uses the legacy Input Manager (Ora's HardwareKeyboardInput) and the Input
+// System package (BSDesktopController, the UI input module, BSScene, ...) at the same time, and there
 // isn't an ENABLE_INPUT_SYSTEM / ENABLE_LEGACY_INPUT_MANAGER guard anywhere in the
 // package, so it only works with Player Settings > Active Input Handling set to "Both".
 //
@@ -189,7 +189,7 @@ namespace BS.SDKEditor
         static void Prompt(InputHandling current)
         {
             var message =
-                "Active Input Handling is \"" + Label(current) + "\". SDK Play Mode needs \"Both\" for keyboard/mouse, grabbing and UI.\n\n" +
+                "Active Input Handling is \"" + Label(current) + "\". SDK Play Mode needs \"Both\" for the fly camera, mouse grabbing, UI clicks and browser typing.\n\n" +
                 "Save scenes, switch to Both and restart Unity?";
 
             var accepted = EditorUtility.DisplayDialog(

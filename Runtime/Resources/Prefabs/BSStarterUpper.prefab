@@ -44,9 +44,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d14aadda166f47cbaacd9a43692b444a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: BS.SDK::BS.BSStarterUpper
-  numberOfRemotePlayers: 1
-  spawnPoint: {x: 0, y: 0, z: 0}
-  spawnRotation: 0
   openBrowser: 0
   _feetTransform: {fileID: 0}
-  _browserRenderer: {fileID: 0}

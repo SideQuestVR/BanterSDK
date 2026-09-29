@@ -24,7 +24,7 @@ public class UserData : MonoBehaviour
         uid = System.Guid.NewGuid().ToString();
         color = ColorUtility.ToHtmlStringRGB(Random.ColorHSV());
         //instance = System.Guid.NewGuid().ToString();
-        nameTag.text = name;
+        if (nameTag) nameTag.text = name;
         scene.AddUser(this);
 #endif
     }
@@ -51,6 +51,6 @@ public class UserData : MonoBehaviour
 
     void OnDestroy()
     {
-        scene.RemoveUser(this);
+        scene?.RemoveUser(this);
     }
 }

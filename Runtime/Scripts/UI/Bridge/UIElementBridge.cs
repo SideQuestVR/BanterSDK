@@ -337,7 +337,9 @@ namespace BS.UI.Bridge
                     11 => new BSUILabel(), // Label -> BSUILabel
                     12 => new BSUITextField(), // TextField -> BSUITextField
                     13 => new Toggle(), // Toggle
-                    14 => new Slider(), // Slider
+                    // BSUISlider, not Slider: only it dispatches SetRange/SetValue and the camelCase
+                    // minValue/maxValue from JS; a plain Slider stays on its 0..10 default range.
+                    14 => new BSUISlider(), // Slider -> BSUISlider
                     15 => new DropdownField(), // DropdownField
                     20 => new UnityEngine.UIElements.Box(), // Box
                     21 => new GroupBox(), // GroupBox
@@ -473,7 +475,8 @@ namespace BS.UI.Bridge
                         return;
 
                     case Slider slider when propertyName == "value":
-                        slider.value = float.Parse(value);
+                        // No ChangeEvent for a value the page set itself (see BSUISlider.value).
+                        slider.SetValueWithoutNotify(float.Parse(value));
                         return;
 
                     case Slider slider when propertyName == "minvalue":
@@ -2510,7 +2513,23 @@ namespace BS.UI.Bridge
                     jsonBuilder.Append($",\"newValue\":\"{EscapeJsonString(changeEvt.newValue)}\"");
                     jsonBuilder.Append($",\"previousValue\":\"{EscapeJsonString(changeEvt.previousValue)}\"");
                     break;
-                    
+
+                // Sliders and toggles: without these the page's change event had no value at all.
+                case ChangeEvent<float> floatChangeEvt:
+                    jsonBuilder.Append($",\"newValue\":{floatChangeEvt.newValue}");
+                    jsonBuilder.Append($",\"previousValue\":{floatChangeEvt.previousValue}");
+                    break;
+
+                case ChangeEvent<int> intChangeEvt:
+                    jsonBuilder.Append($",\"newValue\":{intChangeEvt.newValue}");
+                    jsonBuilder.Append($",\"previousValue\":{intChangeEvt.previousValue}");
+                    break;
+
+                case ChangeEvent<bool> boolChangeEvt:
+                    jsonBuilder.Append($",\"newValue\":{boolChangeEvt.newValue.ToString().ToLower()}");
+                    jsonBuilder.Append($",\"previousValue\":{boolChangeEvt.previousValue.ToString().ToLower()}");
+                    break;
+
                 case KeyDownEvent keyDown:
                     jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
                     jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");

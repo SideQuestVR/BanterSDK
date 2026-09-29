@@ -72,7 +72,7 @@ namespace BS
         public UnityEvent<Texture2D> OnBrowserTexture = new UnityEvent<Texture2D>();
         public bool IsStreamingBrowser = false;
 
-        /// <summary>Asset reference of this browser's texture: <c>asset_browser_</c> + the component id the page knows it by.</summary>
+        /// <summary>Asset reference of this browser's texture: <c>asset_browser_</c> + the component's id, which the page sees as the BS.Browser's <c>unityId</c>.</summary>
         public string TextureAssetId => $"asset_browser_{cid}";
 
         GameObject browser;

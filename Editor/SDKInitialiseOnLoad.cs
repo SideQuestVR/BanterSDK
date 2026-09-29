@@ -31,11 +31,10 @@ namespace BS.SDKEditor
         {
             if (change == PlayModeStateChange.ExitingEditMode)
             {
-                if (!BSStarterUpper.AutoStartDisabled && Object.FindObjectOfType<BSStarterUpper>() == null)
-                {
-                    Debug.LogWarning("BSStarterUpper not found, adding one.");
-                    GameObject.Instantiate(Resources.Load<GameObject>("Prefabs/BSStarterUpper"));
-                }
+                // Only decide here. Creating it now would put it in the edit scene, which Unity saves as
+                // the state to restore when play stops, so it would still be there afterwards.
+                // BSStarterUpper.BeforeEditorPlay creates it once play mode has started.
+                BSStarterUpper.SpawnOnPlay = Object.FindObjectOfType<BSStarterUpper>() == null;
             }
         }
         static void AddScriptDefine(string define)

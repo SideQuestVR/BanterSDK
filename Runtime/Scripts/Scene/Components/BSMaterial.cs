@@ -187,6 +187,14 @@ namespace BS
                     {
                         await ApplyProperties(material);
                     }
+                    else
+                    {
+                        // A cached material can hold a live asset_ texture (a browser's) that nothing
+                        // follows any more: the component that created it was destroyed, e.g. on a page
+                        // reload. Follow those references from this component too, or the material keeps
+                        // a texture that the next resize destroys (a black screen).
+                        await FollowAssetSlots(material);
+                    }
                     if (changedProperties.Contains(PropertyName.texture) && !string.IsNullOrEmpty(texture))
                     {
                         scene.link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
@@ -195,6 +203,22 @@ namespace BS
             }
             catch { }
             SetLoadedIfNot();
+        }
+
+        /// <summary>Resolve and follow only the slots that reference a registry asset (asset_...).</summary>
+        Task FollowAssetSlots(Material material)
+        {
+            var tasks = new List<Task>();
+            void Follow(int propertyId, string reference, bool linear, bool isMain)
+            {
+                if (!string.IsNullOrEmpty(reference) && reference.StartsWith("asset_"))
+                    tasks.Add(SetTextureSlot(material, propertyId, reference, linear, isMain));
+            }
+            Follow(NormalMapId, normalMap, true, false);
+            Follow(RoughnessMapId, roughnessMap, true, false);
+            Follow(AOMapId, aoMap, true, false);
+            Follow(MainTexId, texture, false, true);
+            return Task.WhenAll(tasks);
         }
 
         /// <summary>
