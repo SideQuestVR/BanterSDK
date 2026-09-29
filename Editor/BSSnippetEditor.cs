@@ -407,21 +407,38 @@ namespace BS.SDKEditor
                     continue;
                 }
 
-                using (new Handles.DrawingScope(GizmoOutline,
-                           t.localToWorldMatrix * Matrix4x4.TRS(local, Quaternion.Euler(gizmo.euler), Vector3.one)))
+                // Full object-to-world transform, so every gizmo follows the GameObject's
+                // position, rotation AND scale (localToWorldMatrix carries lossyScale).
+                var gizmoToWorld = t.localToWorldMatrix * Matrix4x4.TRS(local, Quaternion.Euler(gizmo.euler), Vector3.one);
+
+                if (gizmo.kind == GizmoDef.Kind.Plane)
+                {
+                    /*
+                     * DrawSolidRectangleWithOutline takes explicit verts and does not apply
+                     * Handles.matrix to them the way DrawWireCube/DrawWireDisc do, so a scaled
+                     * object left the plane drawing at its literal size while the box and sphere
+                     * scaled correctly. Transform the corners to world space here and draw under
+                     * an identity matrix instead of relying on the drawing scope.
+                     */
+                    var half = gizmo.planeSize * 0.5f;
+                    var corners = new[]
+                    {
+                        gizmoToWorld.MultiplyPoint3x4(new Vector3(-half.x, -half.y, 0)),
+                        gizmoToWorld.MultiplyPoint3x4(new Vector3(-half.x, half.y, 0)),
+                        gizmoToWorld.MultiplyPoint3x4(new Vector3(half.x, half.y, 0)),
+                        gizmoToWorld.MultiplyPoint3x4(new Vector3(half.x, -half.y, 0)),
+                    };
+                    using (new Handles.DrawingScope(GizmoOutline, Matrix4x4.identity))
+                    {
+                        Handles.DrawSolidRectangleWithOutline(corners, GizmoFill, GizmoOutline);
+                    }
+                    continue;
+                }
+
+                using (new Handles.DrawingScope(GizmoOutline, gizmoToWorld))
                 {
                     switch (gizmo.kind)
                     {
-                        case GizmoDef.Kind.Plane:
-                            var half = gizmo.planeSize * 0.5f;
-                            Handles.DrawSolidRectangleWithOutline(new[]
-                            {
-                                new Vector3(-half.x, -half.y, 0),
-                                new Vector3(-half.x, half.y, 0),
-                                new Vector3(half.x, half.y, 0),
-                                new Vector3(half.x, -half.y, 0),
-                            }, GizmoFill, GizmoOutline);
-                            break;
                         case GizmoDef.Kind.Box:
                             Handles.DrawWireCube(Vector3.zero, gizmo.boxSize);
                             break;
