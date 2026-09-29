@@ -201,7 +201,7 @@ namespace BS
         /// find it, and opening or applying to it failed with "Machine not found". A scan including
         /// inactive objects, only on that miss.
         /// </remarks>
-        static GameObject FindUnregistered(string bid)
+        public static GameObject FindUnregistered(string bid)
         {
             foreach (var id in Object.FindObjectsByType<BSObjectId>(FindObjectsInactive.Include, FindObjectsSortMode.None))
             {

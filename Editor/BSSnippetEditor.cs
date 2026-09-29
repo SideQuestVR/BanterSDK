@@ -22,7 +22,14 @@ namespace BS.SDKEditor
     [CustomEditor(typeof(BSSnippet))]
     public class BSSnippetEditor : Editor
     {
-        static readonly string[] ReservedAttributes = { "name", "title", "description", SnippetHtmlSync.InstanceAttribute };
+        // Structural metadata the snippet author owns: shown as a header, never as an editable
+        // field. `single` is in here because flipping it would break the snippet's own assumption
+        // (two synced players fighting over one channel, say).
+        static readonly string[] ReservedAttributes =
+        {
+            "name", "title", "description",
+            SnippetHtmlSync.InstanceAttribute, SnippetHtmlSync.SingleAttribute
+        };
 
         VisualElement _root;
         HelpBox _statusBox;
@@ -165,7 +172,10 @@ namespace BS.SDKEditor
             _descriptionLabel.text = hasDescription ? description : "(no description)";
             _descriptionLabel.style.unityFontStyleAndWeight = hasDescription ? FontStyle.Normal : FontStyle.Italic;
             _descriptionLabel.style.opacity = hasDescription ? 0.85f : 0.45f;
-            _metaLabel.text = element == null ? "" : $"name: {(string)element.Attribute("name")}   instance: {Script.InstanceId}";
+            _metaLabel.text = element == null
+                ? ""
+                : $"name: {(string)element.Attribute("name")}   instance: {Script.InstanceId}"
+                  + (SnippetHtmlSync.IsSingleInstance(element) ? "   single-instance" : "");
 
             _attributesContainer.Clear();
             _fieldUpdaters.Clear();
@@ -222,6 +232,14 @@ namespace BS.SDKEditor
                     message = "No matching element in index.html yet.";
                     type = HelpBoxMessageType.Warning;
                 }
+                else if (IsSurplusSingleInstance())
+                {
+                    // The runtime silently ignores this copy, so say so here rather than let the
+                    // creator wonder why their second placement does nothing in-world.
+                    message = $"'{Script.Slug}' is a single-instance snippet and another copy comes first in index.html. "
+                              + "This one is kept in the file but will not load at runtime.";
+                    type = HelpBoxMessageType.Warning;
+                }
             }
 
             _statusBox.style.display = message == null ? DisplayStyle.None : DisplayStyle.Flex;
@@ -230,6 +248,24 @@ namespace BS.SDKEditor
                 _statusBox.text = message;
                 _statusBox.messageType = type;
             }
+        }
+
+        /*
+         * True when this component's element is a single-instance snippet that some earlier element
+         * in the section already claims. Mirrors the runtime rule: same name, first one in document
+         * order wins.
+         */
+        bool IsSurplusSingleInstance()
+        {
+            var mine = SnippetHtmlSync.Get(Script.InstanceId);
+            if (mine == null || !SnippetHtmlSync.IsSingleInstance(mine)) return false;
+            var name = (string)mine.Attribute("name");
+            foreach (var other in SnippetHtmlSync.All())
+            {
+                if (other == mine) return false; // reached ourselves first - we are the one that loads
+                if ((string)other.Attribute("name") == name) return true;
+            }
+            return false;
         }
 
         // ---- dynamic attribute fields ------------------------------------------------------

@@ -29,6 +29,7 @@ namespace BS.SDKEditor
         public const string ElementName = "bs-snippet";
         public const string GizmoElementName = "bs-gizmo";
         public const string InstanceAttribute = "instance";
+        public const string SingleAttribute = "single";
 
         public enum ChangeKind { Reloaded, ElementUpserted, ElementRemoved, AttributeSet }
         // (kind, instanceId or null, attribute name or null)
@@ -62,6 +63,17 @@ namespace BS.SDKEditor
         }
 
         public static bool LoadFailed => _loadFailed;
+
+        /*
+         * `single` / `single="true"` marks a snippet the runtime loads at most once per name: the
+         * first element wins and later copies are skipped (see claimSingleton in bs-snippet.ts).
+         * Only an explicit "false" opts back out, so a bare `single` reads naturally by hand.
+         */
+        public static bool IsSingleInstance(XElement element)
+        {
+            var value = (string)element?.Attribute(SingleAttribute);
+            return value != null && value != "false";
+        }
 
         public static XElement Get(string instanceId) =>
             !string.IsNullOrEmpty(instanceId) && _byInstance.TryGetValue(instanceId, out var e) ? e : null;

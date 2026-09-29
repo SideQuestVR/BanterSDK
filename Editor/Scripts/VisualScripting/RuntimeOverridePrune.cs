@@ -119,13 +119,18 @@ namespace BS.SDKEditor
         }
 
         /// <summary>
-        /// Whether the override in the world is still the one this project synced. A blank
-        /// savedAt on either side means we cannot tell, and not knowing is treated as "yes" —
-        /// the alternative leaves an override in place forever.
+        /// Whether the override in the world is still the one this project synced.
         /// </summary>
+        /// <remarks>
+        /// A blank savedAt on either side means it cannot be told, and not knowing is now "no".
+        /// It used to be "yes", on the grounds that the alternative leaves an override in place —
+        /// but a left-in-place override is visible, harmless and removable by hand, while a deleted
+        /// one is gone, and is exactly the case where the world may hold a newer edit than the
+        /// project does. When in doubt, keep.
+        /// </remarks>
         static bool SameVersion(SyncedGraphRecord record, PersistedScriptGraphEntry entry)
         {
-            if (string.IsNullOrEmpty(record.sourceSavedAt) || string.IsNullOrEmpty(entry.savedAt)) return true;
+            if (string.IsNullOrEmpty(record.sourceSavedAt) || string.IsNullOrEmpty(entry.savedAt)) return false;
             return string.Equals(record.sourceSavedAt, entry.savedAt, StringComparison.Ordinal);
         }
 
@@ -159,9 +164,11 @@ namespace BS.SDKEditor
                 ? string.Join(", ", names)
                 : string.Join(", ", names.Take(3)) + " and " + (names.Count - 3) + " more";
 
+            // "Will be removed IF this upload builds the scene" — the prune is gated on that, and a
+            // record kept back by an earlier upload (re-saved at runtime since) is only a candidate.
             return pending.Count == 1
-                ? $"1 runtime graph edit ({listed}) is now in this scene and will be removed from the world after upload."
-                : $"{pending.Count} runtime graph edits ({listed}) are now in this scene and will be removed from the world after upload.";
+                ? $"1 runtime graph edit ({listed}) is in this scene; if this upload builds it, the edit will be removed from the world."
+                : $"{pending.Count} runtime graph edits ({listed}) are in this scene; if this upload builds it, they will be removed from the world.";
         }
     }
 }

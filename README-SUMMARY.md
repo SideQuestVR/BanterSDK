@@ -121,7 +121,8 @@ Hyphenated names are required: `bs-snippet`, `bs-gizmo`.
 </bs-snippet>
 ```
 `name`+`title` required, `description` optional, plus `script` (JS URL) **or** `asset` (bundle URL →
-first prefab). Other attributes are the snippet's settings and become typed inspector fields.
+first prefab). `single="true"` = one per world, later copies ignored with a console warning.
+Other attributes are the snippet's settings and become typed inspector fields.
 Fetched once from `altvr.app/api/snippets/<slug>`; `index.html` is then the source of truth and
 syncs both ways with the inspector. Gizmo types: `position` (interactive), `plane`, `box`, `sphere`.
 Snippet scripts load once per URL and serve every instance —

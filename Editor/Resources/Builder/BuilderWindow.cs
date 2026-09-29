@@ -1056,6 +1056,7 @@ public class BuilderWindow : EditorWindow
         try
         {
             uploadHadFailure = false;
+            uploadedWorldAssetUtc = default;
             BeginUploadProgress(4);
             // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
             // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
@@ -1067,12 +1068,16 @@ public class BuilderWindow : EditorWindow
             yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
 
             // Only now that the world itself is up: the runtime overrides we are about to drop are
-            // only redundant because the scene that just shipped contains them.
-            if (!uploadHadFailure)
+            // only redundant because the scene that just shipped contains them — so that has to be
+            // TRUE, not assumed. See PruneBlockedReason.
+            var blocked = uploadHadFailure
+                ? "part of the upload failed"
+                : PruneBlockedReason();
+            if (blocked == null)
                 yield return RuntimeOverridePrune.Run(sq, selectedWorld?.WorldId, SelectedWorldSlug,
                                                       msg => status.AddStatus(msg));
             else
-                status.AddStatus("Skipping runtime-override cleanup — part of the upload failed.");
+                status.AddStatus("Skipping runtime-override cleanup — " + blocked + ".");
 
             EndUploadProgress("Upload complete");
         }
@@ -1084,6 +1089,40 @@ public class BuilderWindow : EditorWindow
 
     /// <summary>Set by UploadWorldFile; read by UploadEverything's post-upload cleanup.</summary>
     private bool uploadHadFailure;
+
+    /// <summary>The scene and asset.world this session last built, for the prune gate.</summary>
+    private string lastBuiltScenePath;
+    private DateTime lastBuiltWorldAssetUtc;
+
+    /// <summary>The asset.world this upload actually sent; default when it sent none.</summary>
+    private DateTime uploadedWorldAssetUtc;
+
+    /// <summary>
+    /// Why runtime overrides must NOT be pruned after this upload, or null when they may be.
+    /// </summary>
+    /// <remarks>
+    /// Pruning deletes the world's copy of an override on the grounds that the bundle now contains
+    /// it. That was assumed rather than checked, and three ordinary sequences made it false:
+    /// "Upload Everything" re-sends whatever asset.world is already on disk, which may predate the
+    /// sync; a missing asset.world was skipped without counting as a failure, so nothing new
+    /// shipped at all; and after a build the Builder reopens the previously open scene, so the
+    /// active scene's sync records may not belong to the scene that was built. In each case the
+    /// override was deleted from the world while the world still ran the old graph — and after a
+    /// sync that dropped references, that deleted copy was the only intact one.
+    /// </remarks>
+    private string PruneBlockedReason()
+    {
+        if (uploadedWorldAssetUtc == default)
+            return "no asset.world was uploaded, so the world does not yet contain the synced graphs";
+        if (string.IsNullOrEmpty(lastBuiltScenePath) || lastBuiltWorldAssetUtc == default)
+            return "the uploaded asset.world was not built in this session; build the scene, then upload";
+        if (uploadedWorldAssetUtc != lastBuiltWorldAssetUtc)
+            return "the uploaded asset.world is not the one last built here; rebuild, then upload";
+        var active = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path;
+        if (!string.Equals(active, lastBuiltScenePath, StringComparison.OrdinalIgnoreCase))
+            return $"the open scene ({active}) is not the one that was built ({lastBuiltScenePath}); open it and upload again";
+        return null;
+    }
 
     private IEnumerator UploadFile(string name, byte[] bytes = null, Action<long> callback = null, string path = null, Action<float> onProgress = null)
     {
@@ -1132,6 +1171,7 @@ public class BuilderWindow : EditorWindow
         yield return sq.UploadFileToWorld(name, data, selectedWorld?.WorldId, slug, (text) =>
         {
             status.AddStatus("Uploaded " + file + " to " + baseUrl + "/" + name);
+            if (name == "asset.world") uploadedWorldAssetUtc = File.GetLastWriteTimeUtc(file);
         }, e =>
         {
             // Recorded as well as logged: an upload step failing does not throw, so without this
@@ -1996,6 +2036,10 @@ public class BuilderWindow : EditorWindow
             }
 
             File.Copy(bee, Path.Combine(webRoot, outName), true);
+            // Remembered so the post-upload prune can tell that the asset.world it just sent is the
+            // one THIS session built, from THIS scene — see UploadEverything.
+            lastBuiltScenePath = scenePath;
+            lastBuiltWorldAssetUtc = File.GetLastWriteTimeUtc(Path.Combine(webRoot, outName));
             // Never leave the plaintext password sidecar Basis drops next to the .bee lying around.
             // (Leave the .bee itself — Basis reveals this folder, so it should show the built bundle.)
             try

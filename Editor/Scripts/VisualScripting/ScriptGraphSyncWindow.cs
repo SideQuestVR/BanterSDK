@@ -121,9 +121,13 @@ namespace BS.SDKEditor
             var stale = candidates.Count(c => c.state == SyncState.StaleBase);
             if (stale > 0)
             {
+                // Now that every save records the AUTHORED graph as its base, this really does mean
+                // the graph changed in Unity after the edit was made. (Edits saved before that fix
+                // could be marked stale merely for being a second edit of the same machine; the
+                // work is intact, and ticking one applies it.)
                 EditorGUILayout.HelpBox(
                     $"{stale} edit(s) were made against a version of the graph this scene no longer has — "
-                    + "someone changed the graph in Unity afterwards. Applying one replaces the Unity version.",
+                    + "the graph was changed in Unity afterwards. Applying one replaces the Unity version.",
                     MessageType.Warning);
             }
 
@@ -219,6 +223,16 @@ namespace BS.SDKEditor
 
         void ApplySelected()
         {
+            // Play mode throws away scene edits and the world-link record on exit, while the
+            // asset-writing resolutions do not — so an apply here would half-happen: the override
+            // left in the world file with no record of it, never to be pruned.
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog("Sync Runtime Script Graphs",
+                    "Leave play mode first. Changes made in play mode are thrown away when it ends.", "OK");
+                return;
+            }
+
             var scene = SceneManager.GetActiveScene();
             var link = WorldLinkStamp.FindActive();
             if (link == null) return;

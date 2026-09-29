@@ -710,6 +710,9 @@ title        required  shown in the Unity inspector
 description  optional
 script       script|asset  URL of the snippet JS      -> <script src> added once per URL
 asset        script|asset  URL of an asset bundle     -> first prefab instantiated
+single       optional  single="true" -> at most one per name; the first element to activate wins and
+                       later copies are skipped with a console warning. Bare `single` counts as true,
+                       single="false" opts out. Author-owned, so not an editable inspector field.
 instance     added by Unity; pairs element <-> BSSnippet component. Omit in hand-written elements.
 <others>     the snippet's own settings; typed fields in the inspector
 ```

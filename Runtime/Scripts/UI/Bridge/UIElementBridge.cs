@@ -2210,7 +2210,7 @@ namespace BS.UI.Bridge
 
             // Send UI events directly to TypeScript without panel ID prefix
             // TypeScript doesn't need panel ID for element routing
-            SendToJavaScript(message);
+            SendEventToJavaScript(elementId, eventType, message);
 
             // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
             var eventPrefix = ConvertEventTypeToPrefix(eventType);
@@ -2220,6 +2220,71 @@ namespace BS.UI.Bridge
 
             // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
             TriggerVisualScriptingEvent(elementId, eventType, evt);
+        }
+
+        // ------------------------------------------------------------------ MouseMove coalescing
+
+        /// <summary>Shortest gap between two MouseMove messages to the page, per element.</summary>
+        const double MouseMoveIntervalMs = 33;
+
+        readonly Dictionary<string, string> _pendingMove = new Dictionary<string, string>();
+        readonly Dictionary<string, double> _lastMoveSentMs = new Dictionary<string, double>();
+
+        /// <summary>
+        /// Send an event to the page, coalescing MouseMove to at most ~30 Hz per element.
+        /// </summary>
+        /// <remarks>
+        /// A controller ray moves every frame — hand tremor alone guarantees it — so an element
+        /// listening for MouseMove (a node-graph canvas listens always) was sent a JSON message on
+        /// every frame at 72-120 Hz, whether or not anything was happening, over a bus where every
+        /// message costs. Only the LATEST position matters, so moves inside the interval replace
+        /// each other and the last one is flushed when the interval ends.
+        ///
+        /// Two rules keep the page's view consistent. Any other event on the element flushes a
+        /// pending move FIRST, so a release is never read against a position the page never saw.
+        /// And the trailing move is flushed on the element's own scheduler, so a pointer that stops
+        /// still reports where it stopped. Visual Scripting listeners are untouched: they run
+        /// in-process and cost no bus traffic.
+        /// </remarks>
+        void SendEventToJavaScript(string elementId, UIEventType eventType, string message)
+        {
+            if (eventType != UIEventType.MouseMove)
+            {
+                FlushPendingMove(elementId);
+                SendToJavaScript(message);
+                return;
+            }
+
+            var now = Time.realtimeSinceStartupAsDouble * 1000.0;
+            if (!_lastMoveSentMs.TryGetValue(elementId, out var last) || now - last >= MouseMoveIntervalMs)
+            {
+                _pendingMove.Remove(elementId);
+                _lastMoveSentMs[elementId] = now;
+                SendToJavaScript(message);
+                return;
+            }
+
+            var alreadyScheduled = _pendingMove.ContainsKey(elementId);
+            _pendingMove[elementId] = message;
+            if (alreadyScheduled) return;
+
+            if (_elements.TryGetValue(elementId, out var element) && element != null)
+            {
+                var wait = (long)Math.Max(1, MouseMoveIntervalMs - (now - last));
+                element.schedule.Execute(() => FlushPendingMove(elementId)).StartingIn(wait);
+            }
+            else
+            {
+                FlushPendingMove(elementId);
+            }
+        }
+
+        void FlushPendingMove(string elementId)
+        {
+            if (!_pendingMove.TryGetValue(elementId, out var message)) return;
+            _pendingMove.Remove(elementId);
+            _lastMoveSentMs[elementId] = Time.realtimeSinceStartupAsDouble * 1000.0;
+            SendToJavaScript(message);
         }
 
         /// <summary>

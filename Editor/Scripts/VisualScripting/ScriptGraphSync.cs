@@ -148,10 +148,17 @@ namespace BS.SDKEditor
             var overrideJson = (string)candidate.entry.envelope?["uvsJson"];
             if (string.IsNullOrEmpty(overrideJson)) { candidate.state = SyncState.Unmatched; return; }
 
-            var sceneJson = SerializeMachineGraph(candidate.machine);
-            if (sceneJson == null) { candidate.state = SyncState.Unmatched; return; }
-
-            var sceneRef = ScriptGraphSession.HashRef(sceneJson);
+            // GraphHash, the same function the runtime uses for every base it records, so a
+            // saved override's baseGraphRef and this scene's hash cannot disagree about identical
+            // graphs. Two hand-written hash paths were an assumption nothing ever checked.
+            string sceneRef;
+            try { sceneRef = ScriptGraphSession.GraphHash(candidate.machine.graph); }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Banter] Could not hash the graph on '{candidate.machine.gameObject.name}': {e.Message}");
+                sceneRef = null;
+            }
+            if (sceneRef == null) { candidate.state = SyncState.Unmatched; return; }
             if (sceneRef == ScriptGraphSession.HashRef(overrideJson)) { candidate.state = SyncState.Applied; return; }
 
             // The override records the hash of the graph it was edited FROM. If that no longer
@@ -201,7 +208,21 @@ namespace BS.SDKEditor
             var json = (string)candidate.entry.envelope?["uvsJson"];
             if (string.IsNullOrEmpty(json)) return null;
 
-            var refs = Array.Empty<UnityObject>();
+            // The envelope's object references, resolved against the open scene. This used to be
+            // an empty list, so every GameObject, component and asset reference in a synced graph
+            // came through as null — and a graph with references could then never classify as
+            // Applied, so it stayed "pending" forever and was eventually pruned: the one copy that
+            // still had its references, deleted.
+            var refWarnings = new List<ObjectRefWarning>();
+            var descriptors = candidate.entry.envelope?["objectRefDescriptors"]
+                ?.ToObject<List<ObjectRefDescriptor>>();
+            var refs = ObjectRefResolver.Resolve(descriptors, refWarnings);
+            foreach (var warning in refWarnings)
+            {
+                Debug.LogWarning($"[Banter] '{candidate.Label}': a reference could not be found in this scene "
+                               + $"(slot {warning.slot}, {warning.descriptor?.kind} '{warning.descriptor?.name ?? warning.descriptor?.bid}'). "
+                               + "It will be empty until relinked.");
+            }
             var loaded = ScriptableObject.CreateInstance<ScriptGraphAsset>();
             loaded.hideFlags = HideFlags.DontSave;
             object boxed = loaded;
@@ -226,7 +247,7 @@ namespace BS.SDKEditor
 
             // A blocked graph must never reach a machine — the runtime refuses to run one, so
             // letting it into the scene would only fail later and further from the cause.
-            if (BanterStubsAllowed.IsBlocked(graph))
+            if (ScriptGraphSession.IsBlockedDeep(graph))
             {
                 Debug.LogError($"[Banter] '{candidate.Label}' uses members that are not allowed in Banter; not applied.");
                 UnityObject.DestroyImmediate(loaded);
@@ -258,6 +279,9 @@ namespace BS.SDKEditor
                         created.graph = graph;
                         AssetDatabase.CreateAsset(created, path);
                         AssetDatabase.SaveAssets();
+                        // So an Undo takes the new asset away too, rather than leaving an orphan
+                        // .asset file that nothing points at.
+                        Undo.RegisterCreatedObjectUndo(created, "Sync Runtime Script Graph");
                         Undo.RecordObject(machine, "Sync Runtime Script Graph");
                         machine.nest.SwitchToMacro(created);
                         break;

@@ -187,8 +187,16 @@ namespace BS
         {
             if (!string.IsNullOrEmpty(descriptor.bid))
             {
-                var obj = BSScene.Instance().GetObjectByBid(descriptor.bid);
+                var scene = BSScene.Instance();
+                var obj = scene != null ? scene.GetObjectByBid(descriptor.bid) : default;
                 if (obj.gameObject != null) return obj.gameObject;
+
+                // The scene registers objects in BSObjectId.Awake, which has not run for an object
+                // that started inactive — or for anything at all in edit mode, which is where the
+                // Unity sync window resolves an override's references. A scan that includes
+                // inactive objects, only on that miss.
+                var unregistered = MachineDirectory.FindUnregistered(descriptor.bid);
+                if (unregistered != null) return unregistered;
             }
             if (!string.IsNullOrEmpty(descriptor.path))
             {

@@ -4092,6 +4092,7 @@ Elements live between two markers, which the SDK creates the first time it needs
 | `description` | no | What the snippet does; shown in the Inspector. |
 | `script` | either | URL of the snippet's JavaScript. |
 | `asset` | either | URL of an asset bundle; the first prefab in it is instantiated. |
+| `single` | no | `single="true"` allows only one of this snippet per world; further copies are ignored at runtime. Set by the snippet author, so it is not an editable field. |
 | `instance` | added by Unity | Pairs the element with one `BSSnippet` component. Hand-written elements can omit it. |
 | anything else | no | The snippet's own settings, editable in the Inspector. |
 
@@ -4128,6 +4129,14 @@ script that fails to load logs an error without disturbing anything else.
 element from the DOM destroys that object. (Script snippets can't be unloaded — JavaScript, once run,
 stays run — so removing one of those elements is up to the snippet to notice.)
 
+**Single-instance snippets** declare `single="true"`, for features where a second copy would do
+harm rather than good — a synced video player whose copies would fight over one playback channel, a
+world leaderboard, anything owning a shared resource. The first element to load claims the snippet's
+name; every later copy is skipped and logs a warning naming the snippet. Copies are left alone
+otherwise: the element stays in `index.html`, the component keeps its settings and gizmos, and if
+the first copy is ever removed the name is released for another to claim. The Inspector flags the
+surplus copies so this is visible while authoring, rather than only in-world.
+
 ### Authoring a Snippet
 
 A snippet script runs once per page and serves every instance of itself, so it should find its own
@@ -4154,7 +4163,8 @@ Design guidance:
   That is what makes the Inspector able to show good fields without a schema.
 - Add a `<bs-gizmo>` for anything positional. A creator who can see the screen rectangle will place
   it correctly the first time.
-- Treat attribute values as untrusted creator input — validate before use.
+- Treat attribute values as untrusted creator input — validate before use.- Declare `single="true"` if two placements would fight over one resource. It is far kinder than
+  letting a creator discover the clash in-world.
 
 ### Housekeeping & Gotchas
 
