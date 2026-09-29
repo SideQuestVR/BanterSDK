@@ -67,6 +67,9 @@ namespace BS
 
         Texture2D defaultTexture;
         Texture2D mainTex;
+        // asset_ ids this component follows, per texture slot, so a replaced asset is re-assigned;
+        // released when the slot resolves again and on destroy.
+        readonly Dictionary<int, Action> assetFollowers = new Dictionary<int, Action>();
 
         bool UpdateCallbackRan = false;
 
@@ -257,6 +260,7 @@ namespace BS
         {
             try
             {
+                UnfollowAsset(propertyId);
                 if (material == null || !material.HasProperty(propertyId) || string.IsNullOrEmpty(reference))
                 {
                     return;
@@ -264,7 +268,9 @@ namespace BS
 
                 if (reference.StartsWith("asset_"))
                 {
-                    // It's an asset reference - look it up in the asset registry
+                    // It's an asset reference - look it up in the asset registry, and keep following the
+                    // id so an asset registered later or replaced (a browser's texture) is assigned too.
+                    FollowAsset(material, propertyId, reference, isMain);
                     var asset = BSAssetRegistry.Instance.GetAsset<Texture2D>(reference);
                     if (asset != null)
                     {
@@ -328,8 +334,38 @@ namespace BS
             }
         }
 
+        void FollowAsset(Material material, int propertyId, string assetId, bool isMain)
+        {
+            var registry = BSAssetRegistry.Instance;
+            Action<string> onChanged = id =>
+            {
+                if (id != assetId) return;
+                var tex = registry.GetAsset<Texture2D>(id);
+                if (tex != null) Assign(material, propertyId, tex, isMain);
+            };
+            Action<string, AssetType> onRegistered = (id, type) => onChanged(id);
+            registry.OnAssetUpdated += onChanged;
+            registry.OnAssetRegistered += onRegistered;
+            assetFollowers[propertyId] = () =>
+            {
+                registry.OnAssetUpdated -= onChanged;
+                registry.OnAssetRegistered -= onRegistered;
+            };
+        }
+
+        void UnfollowAsset(int propertyId)
+        {
+            if (assetFollowers.TryGetValue(propertyId, out var unfollow))
+            {
+                unfollow();
+                assetFollowers.Remove(propertyId);
+            }
+        }
+
         internal override void DestroyStuff()
         {
+            foreach (var unfollow in assetFollowers.Values) unfollow();
+            assetFollowers.Clear();
             if (_renderer != null)
             {
                 Destroy(_renderer);

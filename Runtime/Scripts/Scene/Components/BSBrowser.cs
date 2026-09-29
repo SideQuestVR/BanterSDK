@@ -65,7 +65,15 @@ namespace BS
         [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
         [See(initial = "")][SerializeField] internal string actions;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
+        /// <summary>
+        /// This browser's texture: its first frame, and again whenever a resize replaces it. The same
+        /// texture is in the asset registry as <see cref="TextureAssetId"/>, for materials and the page.
+        /// </summary>
+        public UnityEvent<Texture2D> OnBrowserTexture = new UnityEvent<Texture2D>();
         public bool IsStreamingBrowser = false;
+
+        /// <summary>Asset reference of this browser's texture: <c>asset_browser_</c> + the component id the page knows it by.</summary>
+        public string TextureAssetId => $"asset_browser_{cid}";
 
         GameObject browser;
         OraView _oraView;
@@ -138,7 +146,12 @@ namespace BS
 
                 _oraView = browser.GetComponent<OraView>();
                 if (_oraView != null)
+                {
                     _oraView.browserMessage.AddListener(OnBrowserMessage);
+                    _oraView.textureChanged.AddListener(OnTextureChanged);
+                    if (_oraView.texture2D != null)
+                        OnTextureChanged(_oraView.texture2D);
+                }
 
                 if (!string.IsNullOrEmpty(actions))
                     _RunActions(actions);
@@ -156,6 +169,13 @@ namespace BS
                     doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
             }
             SetLoadedIfNot();
+        }
+
+        void OnTextureChanged(Texture2D texture)
+        {
+            if (texture == null) return;
+            BSAssetRegistry.Instance.SetAsset(TextureAssetId, texture, AssetType.Texture2D, "browser");
+            OnBrowserTexture?.Invoke(texture);
         }
 
         void OnBrowserMessage(string arg0, string type, string data)
@@ -249,7 +269,11 @@ namespace BS
         internal override void DestroyStuff()
         {
             if (_oraView != null)
+            {
                 _oraView.browserMessage.RemoveListener(OnBrowserMessage);
+                _oraView.textureChanged.RemoveListener(OnTextureChanged);
+                BSAssetRegistry.Instance.UnregisterAsset(TextureAssetId);
+            }
             _oraView = null;
 
             if (_actionsCoroutine != null)

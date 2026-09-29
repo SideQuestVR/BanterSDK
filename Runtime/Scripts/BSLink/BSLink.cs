@@ -17,6 +17,8 @@ namespace BS
 {
     public class BSLink : MonoBehaviour
     {
+        /// <summary>Asset reference of the world (space page) browser's live texture, e.g. a BS.Material texture.</summary>
+        public const string WORLD_BROWSER_TEXTURE = "asset_browser_world";
         public BSPipe pipe;
         public BSScene scene;
         public event EventHandler Connected;
@@ -109,6 +111,21 @@ namespace BS
             else if (msg.StartsWith(APICommands.SET_PUBLIC_SPACE_PROPS))
             {
                 scene.SetProps(APICommands.SET_PUBLIC_SPACE_PROPS, GetMsgData(msg, APICommands.SET_PUBLIC_SPACE_PROPS));
+            }
+            else if (msg.StartsWith(APICommands.SET_WORLD_BROWSER_SIZE))
+            {
+                // w|1920§h|1080, in the space-props format; an empty payload restores the default size.
+                var prefix = APICommands.SET_WORLD_BROWSER_SIZE + MessageDelimiters.PRIMARY;
+                var data = msg.Length > prefix.Length ? msg.Substring(prefix.Length) : "";
+                int width = 0, height = 0;
+                foreach (var prop in data.Split(MessageDelimiters.SECONDARY))
+                {
+                    var kv = prop.Split(MessageDelimiters.TERTIARY);
+                    if (kv.Length != 2) continue;
+                    if (kv[0] == "w") int.TryParse(kv[1], out width);
+                    else if (kv[0] == "h") int.TryParse(kv[1], out height);
+                }
+                scene.SetWorldBrowserSize(width, height);
             }
             else if (msg.StartsWith(APICommands.SET_USER_PROPS))
             {
@@ -910,6 +927,17 @@ namespace BS
         {
             EventBus.Trigger("OnSTT", new CustomEventArgs(id, new object[] { message }));
             Send(APICommands.EVENT + APICommands.SEND_TRANSCRIPTION + MessageDelimiters.PRIMARY + id + MessageDelimiters.SECONDARY + message);
+        }
+        /// <summary>
+        /// The world (space page) browser painted a new texture: its first frame, or a resize replaced
+        /// it. Visual scripting gets it through On World Browser Texture; materials and the page reach it
+        /// as the <see cref="WORLD_BROWSER_TEXTURE"/> asset reference.
+        /// </summary>
+        public void OnWorldBrowserTexture(Texture2D texture)
+        {
+            if (texture == null) return;
+            EventBus.Trigger("OnWorldBrowserTexture", new CustomEventArgs(WORLD_BROWSER_TEXTURE, new object[] { texture }));
+            BSAssetRegistry.Instance.SetAsset(WORLD_BROWSER_TEXTURE, texture, AssetType.Texture2D, "browser:world");
         }
 
         public void OnFullSpaceState(string json)

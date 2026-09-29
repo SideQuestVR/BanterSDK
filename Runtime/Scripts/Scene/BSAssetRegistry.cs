@@ -59,6 +59,8 @@ namespace BS
         public event Action<string> OnAssetLoaded;
         public event Action<string, string> OnAssetFailed;
         public event Action<string> OnAssetDestroyed;
+        /// <summary>Raised when <see cref="SetAsset"/> replaces the object under an existing id.</summary>
+        public event Action<string> OnAssetUpdated;
 
         private void Awake()
         {
@@ -90,7 +92,43 @@ namespace BS
 
             // Generate unique ID
             string assetId = $"asset_{type}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
+            Store(assetId, asset, type, url, tag);
+            return assetId;
+        }
 
+        /// <summary>
+        /// Register <paramref name="asset"/> under a fixed id, or replace the object already under it.
+        /// A replacement raises <see cref="OnAssetUpdated"/> and tells the page, so anything bound to the
+        /// id (a material's <c>asset_</c> texture reference) picks up the new object. For assets that are
+        /// recreated at runtime, like a browser's texture after a resize.
+        /// </summary>
+        public void SetAsset(string assetId, UnityEngine.Object asset, AssetType type, string tag = null)
+        {
+            if (string.IsNullOrEmpty(assetId) || asset == null)
+            {
+                Debug.LogError($"Cannot set asset '{assetId}' to null");
+                return;
+            }
+
+            if (!assets.TryGetValue(assetId, out var current))
+            {
+                Store(assetId, asset, type, null, tag);
+                MarkAssetLoaded(assetId);
+                return;
+            }
+            if (current == asset) return;
+
+            assets[assetId] = asset;
+            var meta = metadata[assetId];
+            meta.memorySize = EstimateMemorySize(asset);
+            metadata[assetId] = meta;
+
+            OnAssetUpdated?.Invoke(assetId);
+            SendAssetUpdated(assetId);
+        }
+
+        void Store(string assetId, UnityEngine.Object asset, AssetType type, string url, string tag)
+        {
             // Store asset
             assets[assetId] = asset;
 
@@ -124,8 +162,6 @@ namespace BS
 
             OnAssetRegistered?.Invoke(assetId, type);
             SendAssetRegistered(assetId);
-
-            return assetId;
         }
 
         /// <summary>
@@ -421,6 +457,17 @@ namespace BS
                 return;
 
             var message = $"!al!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}" +
+                         $"{meta.memorySize}";
+
+            BSScene.Instance()?.link?.Send(message);
+        }
+
+        private void SendAssetUpdated(string assetId)
+        {
+            if (!metadata.TryGetValue(assetId, out var meta))
+                return;
+
+            var message = $"{APICommands.ASSET_UPDATED}{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}" +
                          $"{meta.memorySize}";
 
             BSScene.Instance()?.link?.Send(message);

@@ -35,6 +35,7 @@ namespace BS
         private int processId;
         private static bool initialized = false;
         private Coroutine currentCoroutine;
+        private OraManager oraManager;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
         private const string BANTER_AUTOSTART_DISABLED = "BANTER_AUTOSTART_DISABLED";
@@ -133,14 +134,31 @@ namespace BS
                 }
                 oraManager.SubscribeHardwareKeyboard();
             }
+            // The prefab carries no Ora components: Ora ships both as a DLL and as source, and a
+            // serialized reference to one form is a missing script under the other. So the space
+            // view is configured here, with what the prefab used to serialize. OraView registers its
+            // window (and reads its injection) in Awake, so it is built on an inactive child and
+            // configured before that Awake runs.
             var oraView = gameObject.GetComponent<OraView>();
             if (!oraView)
             {
-                oraView = gameObject.AddComponent<OraView>();
+                var viewGo = new GameObject("SpaceView");
+                viewGo.SetActive(false);
+                viewGo.transform.SetParent(transform, false);
+                oraView = viewGo.AddComponent<OraView>();
+                oraView.customInjectedJavascript = Resources.Load<TextAsset>("injection");
+                oraView.injectShims = true;
+                viewGo.SetActive(true);
             }
 
             oraView.openBrowser = openBrowser;
+            this.oraManager = oraManager;
             SetupBrowserLink(oraView, oraManager);
+            // The world browser's texture: visual scripting's On World Browser Texture, and the
+            // asset_browser_world reference for materials.
+            oraView.textureChanged.AddListener(scene.link.OnWorldBrowserTexture);
+            if (oraView.texture2D != null)
+                scene.link.OnWorldBrowserTexture(oraView.texture2D);
 
 #if GREENFIELD_PROJECT
             // Hand our feet reference to the loading cage — but never clobber a reference
@@ -154,7 +172,8 @@ namespace BS
         IEnumerator OpenPageDev()
         {
             yield return new WaitForSeconds(2);
-            scene.link.pipe.view.LoadUrl("http://localhost:42068");
+            // Ora's web server serves Assets/WebRoot on this port (see ServeWebRoot).
+            scene.link.pipe.view.LoadUrl("http://localhost:" + (oraManager != null ? oraManager.staticPort : 42068));
         }
 
         Vector3 RandomSpawnPoint()
@@ -181,7 +200,12 @@ namespace BS
                 GameObject.Destroy(player.Find("TrackedLeftHand").gameObject);
                 GameObject.Destroy(player.Find("TrackedRightHand").gameObject);
                 GameObject.Destroy(player.Find("Head").GetComponent<TrackedPoseDriver>());
-                GameObject.Destroy(player.Find("Head").GetComponent<Camera>());
+                // URP's camera data component depends on the Camera, so it cannot be destroyed; disable it
+                // and drop the MainCamera tag so Camera.main stays the local player's.
+                var remoteHead = player.Find("Head");
+                var remoteCamera = remoteHead.GetComponent<Camera>();
+                if (remoteCamera) remoteCamera.enabled = false;
+                if (remoteHead.CompareTag("MainCamera")) remoteHead.tag = "Untagged";
                 GameObject.Destroy(player.Find("Head").GetComponent<AudioListener>());
                 GameObject.Destroy(player.GetComponent<PlayerEmulator>());
                 player.Find("LeftHand").GetComponent<Rigidbody>().isKinematic = true;
@@ -375,6 +399,16 @@ namespace BS
         {
             scene.FixedUpdate();
         }
+
+#if UNITY_EDITOR && !GREENFIELD_PROJECT
+        // Before any OraManager.Awake launches Ora: have its web server serve Assets/WebRoot, the page
+        // OpenPageDev loads, unless the scene's OraManager names its own folder.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void ServeWebRoot()
+        {
+            OraManager.defaultStaticFolder = Application.dataPath + "/" + WEB_ROOT;
+        }
+#endif
 
         [RuntimeInitializeOnLoadMethod]
         private static void OnLoad()

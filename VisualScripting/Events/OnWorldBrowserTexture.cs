@@ -5,11 +5,12 @@ using UnityEngine;
 namespace BS.VisualScripting
 {
 
-    [UnitTitle("On Space Browser Texture")]
-    [UnitShortTitle("On Space Browser Texture")]
+    [UnitTitle("On World Browser Texture")]
+    [UnitShortTitle("On World Browser Texture")]
     [UnitCategory("Events\\BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
-    public class OnSpaceBrowserTexture : EventUnit<CustomEventArgs>
+    [RenamedFrom("BS.VisualScripting.OnSpaceBrowserTexture")]
+    public class OnWorldBrowserTexture : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
         public ValueOutput result;
@@ -18,7 +19,7 @@ namespace BS.VisualScripting
 
         public override EventHook GetHook(GraphReference reference)
         {
-            return new EventHook("OnSpaceBrowserTexture");
+            return new EventHook("OnWorldBrowserTexture");
         }
 
         protected override void Definition()
