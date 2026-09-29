@@ -882,6 +882,49 @@ namespace BS
         }
 
         /// <summary>
+        /// Route a page's <c>!hxo!</c> request to the <see cref="BSHostExtensions"/> handler
+        /// registered for its extension name. <paramref name="msg"/> is
+        /// "command§op§base64(UTF-8 JSON)"; the reply is "!hxo!§base64(JSON envelope)", the
+        /// progression shape, so the page strips it the same way. An unregistered extension is
+        /// answered with app_unavailable rather than left hanging.
+        /// </summary>
+        public void HostExtensionOp(string msg, int reqId)
+        {
+            var parts = (msg ?? "").Split(MessageDelimiters.SECONDARY, 3);
+            var command = parts[0];
+            var sub = parts.Length > 1 ? parts[1] : "";
+            var payloadB64 = parts.Length > 2 ? parts[2] : "";
+            if (!BSHostExtensions.IsValidName(command) || !BSHostExtensions.IsValidName(sub))
+            {
+                SendError(reqId, "HOST_EXT_OP: malformed payload");
+                return;
+            }
+            string body;
+            try
+            {
+                body = payloadB64.Length > 0
+                    ? System.Text.Encoding.UTF8.GetString(Convert.FromBase64String(payloadB64))
+                    : "{}";
+            }
+            catch (Exception)
+            {
+                SendError(reqId, "HOST_EXT_OP: malformed payload");
+                return;
+            }
+            var request = new BSHostRequest(command, reply =>
+            {
+                var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply ?? "{}"));
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY
+                          + APICommands.HOST_EXT_OP + MessageDelimiters.SECONDARY + replyB64);
+            })
+            {
+                Op = sub,
+                Json = body
+            };
+            BSHostExtensions.DispatchOnMainThread(request);
+        }
+
+        /// <summary>
         /// Hand a host op to the app on the main thread; answered with app_unavailable when nothing
         /// listens so the page promise always settles. Generic sibling of EnqueueStateOp.
         /// </summary>
@@ -1539,6 +1582,17 @@ namespace BS
         void SendError(int reqId, string msg)
         {
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.REQUEST_ERROR + MessageDelimiters.PRIMARY + msg);
+        }
+
+        /// <summary>
+        /// Resolve the page's request <paramref name="reqId"/> with <paramref name="payload"/>.
+        /// REQUEST_ID is the only reply channel scene.ts parses: these replies used to go out on
+        /// RESPONSE_ID, which the page never reads, so GetPlatform() and every SetCan*/SetBlock*
+        /// promise stayed pending for ever.
+        /// </summary>
+        void SendReply(int reqId, string payload)
+        {
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + payload);
         }
 
         public void InlineJsCrawl(string msg, int reqId)
@@ -3083,6 +3137,12 @@ namespace BS
             return _instance;
         }
 
+        /// <summary>
+        /// The live scene, or null — unlike <see cref="Instance"/>, never constructs one. For code
+        /// that only wants to reach a page if one exists (host-extension events).
+        /// </summary>
+        internal static BSScene Current => _instance;
+
 
         #endregion
 
@@ -3174,112 +3234,123 @@ namespace BS
         public void SetActionsSystemCanMove(bool value, int reqId)
         {
             ActionsSystem.canMove = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemCanRotate(bool value, int reqId)
         {
             Debug.Log("[MouseLook] ActionsSystem.canRotate set to " + value);
             ActionsSystem.canRotate = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemCanCrouch(bool value, int reqId)
         {
             ActionsSystem.canCrouch = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemCanTeleport(bool value, int reqId)
         {
             ActionsSystem.canTeleport = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemCanGrapple(bool value, int reqId)
         {
             ActionsSystem.canGrapple = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemCanJump(bool value, int reqId)
         {
             ActionsSystem.canJump = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemCanGrab(bool value, int reqId)
         {
             ActionsSystem.canGrab = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockLeftThumbstick(bool value, int reqId)
         {
             ActionsSystem.Blocker_LeftThumbstick.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockRightThumbstick(bool value, int reqId)
         {
             ActionsSystem.Blocker_RightThumbstick.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockLeftPrimary(bool value, int reqId)
         {
             ActionsSystem.Blocker_LeftPrimary.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockRightPrimary(bool value, int reqId)
         {
             ActionsSystem.Blocker_RightPrimary.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockLeftSecondary(bool value, int reqId)
         {
             ActionsSystem.Blocker_LeftSecondary.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockRightSecondary(bool value, int reqId)
         {
             ActionsSystem.Blocker_RightSecondary.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockLeftThumbstickClick(bool value, int reqId)
         {
             ActionsSystem.Blocker_LeftThumbstick.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockRightThumbstickClick(bool value, int reqId)
         {
             ActionsSystem.Blocker_RightThumbstick.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockLeftTrigger(bool value, int reqId)
         {
             ActionsSystem.Blocker_LeftTrigger.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockRightTrigger(bool value, int reqId)
         {
             ActionsSystem.Blocker_RightTrigger.All = value;
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+            SendReply(reqId, "");
         }
         #endregion
 
         #region Platform Detection
         public void GetPlatform(int reqId)
         {
-            string platform = events.GetPlatform?.Invoke() ?? "";
-            link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + platform);
+            string platform;
+            try
+            {
+                platform = events.GetPlatform?.Invoke() ?? "";
+            }
+            catch (Exception e)
+            {
+                // Always reply: the page's GetPlatform() has no timeout, so a throw here would
+                // leave its promise pending for ever.
+                Debug.LogError("[Banter] GetPlatform failed: " + e);
+                platform = "";
+            }
+            SendReply(reqId, platform);
         }
         #endregion
 
@@ -3314,7 +3385,7 @@ namespace BS
                         Debug.LogWarning("Invalid XR device for node: " + xrNode);
                     }
                 }
-                link.Send(APICommands.RESPONSE_ID + reqId + MessageDelimiters.PRIMARY + "");
+                SendReply(reqId, "");
             }, $"{nameof(BSScene)}.{nameof(SendHapticImpulse)}"));
         }
         #endregion

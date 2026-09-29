@@ -50,6 +50,16 @@ namespace BS
         [Tooltip("The total duration of the video in seconds.")]
         [See(initial = "0")][SerializeField] internal float duration = 0;
 
+        // Opt-in, authoring-only, and deliberately without [See]/[Watch]: it is not part of the JS
+        // wire and the codegen must leave it alone. Off (the default) keeps Unity's Direct output,
+        // which bypasses the AudioListener, so every existing world sounds exactly as before.
+        [Tooltip("Play the video's sound through an AudioSource on this GameObject (added if missing) instead of straight to the audio device. " +
+                 "The sound then goes through Unity's mixer and the AudioListener: it gets 3D spatialisation and is included in in-app recordings. " +
+                 "Set before the video starts; changing it mid-playback applies from the next load.")]
+        public bool routeAudioThroughAudioSource = false;
+        AudioSource _routedAudio;
+        bool _addedRoutedAudio;
+
         [Method]
         public void _PlayToggle()
         {
@@ -102,6 +112,48 @@ namespace BS
             {
                 _source = gameObject.AddComponent<VideoPlayer>();
             }
+            RouteAudio();
+        }
+
+        // Runs on every SetVideoPlayer, which precedes every url/play change, so the routing is in
+        // place before the first prepare. Idempotent once routed.
+        void RouteAudio()
+        {
+            if (!routeAudioThroughAudioSource || _source == null) return;
+            if (_routedAudio == null)
+            {
+                _routedAudio = GetComponent<AudioSource>();
+                if (_routedAudio == null)
+                {
+                    _routedAudio = gameObject.AddComponent<AudioSource>();
+                    _addedRoutedAudio = true;
+                    _routedAudio.playOnAwake = false;
+                    // A BSAudioSource on this object owns the AudioSource's settings; otherwise
+                    // default to fully 3D so the screen sounds like it is where it is.
+                    var bsAudio = GetComponent<BSAudioSource>();
+                    _routedAudio.spatialBlend = bsAudio != null ? bsAudio.spatialBlend : 1f;
+                    _routedAudio.volume = volume;
+                    // The same mixer routing BSAssetBundle gives a space's own AudioSources, so the
+                    // app's world-volume policy applies to the video too.
+                    var settings = scene?.settings;
+                    var group = settings?.AudioGroupSelector?.Invoke(_routedAudio) ?? settings?.SpaceAudioGroup;
+                    if (group != null)
+                    {
+                        _routedAudio.outputAudioMixerGroup = group;
+                    }
+                }
+            }
+            if (_source.audioOutputMode == VideoAudioOutputMode.AudioSource && _source.GetTargetAudioSource(0) == _routedAudio)
+            {
+                return;
+            }
+            _source.audioOutputMode = VideoAudioOutputMode.AudioSource;
+            if (_source.controlledAudioTrackCount < 1)
+            {
+                _source.controlledAudioTrackCount = 1;
+            }
+            _source.EnableAudioTrack(0, true);
+            _source.SetTargetAudioSource(0, _routedAudio);
         }
         void SetupVideo(List<PropertyName> changedProperties)
         {
@@ -209,6 +261,13 @@ namespace BS
                 _source.loopPointReached -= VideoEnded;
                 Destroy(_source);
             }
+            // Only an AudioSource this component added, and only while no BSAudioSource shares it.
+            if (_addedRoutedAudio && _routedAudio != null && GetComponent<BSAudioSource>() == null)
+            {
+                Destroy(_routedAudio);
+            }
+            _routedAudio = null;
+            _addedRoutedAudio = false;
         }
 
         internal override void UpdateStuff()

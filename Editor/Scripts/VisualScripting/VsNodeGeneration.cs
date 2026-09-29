@@ -139,7 +139,8 @@ namespace BS.SDKEditor
 
             "Unity.Timeline",
             "UnityEngine.DirectorModule",
-            "Cinemachine",
+            "Cinemachine",          // Cinemachine 2.x
+            "Unity.Cinemachine",    // Cinemachine 3.x (com.unity.cinemachine 3); also in AotPreBuilder._allowedNamespaces
 
             // Banter
             "BS",
@@ -325,6 +326,26 @@ namespace BS.SDKEditor
             typeof(UnityEngine.Timeline.SignalReceiver),
             typeof(UnityEngine.Timeline.SignalAsset),
             typeof(UnityEngine.Timeline.SignalEmitter),
+#endif
+#if BANTER_VS_CINEMACHINE
+            // Cinemachine 3: a world's program camera (brain + shots). Types a graph may hold in a
+            // variable; their members come from the Unity.Cinemachine assembly entry above.
+            typeof(Unity.Cinemachine.CinemachineBrain),
+            typeof(Unity.Cinemachine.CinemachineCamera),
+            typeof(Unity.Cinemachine.CinemachineVirtualCameraBase),
+            typeof(Unity.Cinemachine.CinemachineSplineDolly),
+            typeof(Unity.Cinemachine.CinemachineSplineCart),
+            typeof(Unity.Cinemachine.CinemachineTargetGroup),
+            typeof(Unity.Cinemachine.CinemachineBasicMultiChannelPerlin),
+            typeof(Unity.Cinemachine.CinemachineImpulseSource),
+            typeof(Unity.Cinemachine.CinemachineClearShot),
+            typeof(Unity.Cinemachine.CinemachineSequencerCamera),
+            typeof(Unity.Cinemachine.CinemachineMixingCamera),
+            typeof(Unity.Cinemachine.CinemachineCore),
+            typeof(Unity.Cinemachine.CinemachineBlendDefinition),
+            typeof(Unity.Cinemachine.LensSettings),
+            typeof(Unity.Cinemachine.PrioritySettings),
+            typeof(Unity.Cinemachine.CameraTarget),
 #endif
 
             typeof(AudioMixerGroup),

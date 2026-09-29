@@ -55,6 +55,8 @@ public class APICommands
     public const string USER_STATE_OP = "!uso!";
     /// <summary>JSON progression op (request/response): fire a world-bound XP hook, read my progression. Same encoding as SPACE_STATE_OP.</summary>
     public const string PROGRESSION_OP = "!pgo!";
+    /// <summary>Generic host-extension op (request/response), routed to BSHostExtensions by extension name. Payload: "command§op§base64(UTF-8 JSON)"; reply "!hxo!§base64(JSON envelope)".</summary>
+    public const string HOST_EXT_OP = "!hxo!";
     public const string TELEPORT = "!t!";
     public const string ATTACH = "!at!";
     public const string DETACH = "!dt!";
@@ -132,6 +134,8 @@ public class APICommands
     public const string USER_STATE_JSON = "upj!";
     public const string VOICE_STARTED = "vs!";
     public const string PLAY_AVATAR = "pa!";
+    /// <summary>Host-extension event (BSHostExtensions.Emit). Payload: "command§evt§base64(UTF-8 JSON)".</summary>
+    public const string HOST_EXT_EVENT = "hxe!";
     #endregion
     #region Legacy stuff
     public const string LEGACY = "!le";

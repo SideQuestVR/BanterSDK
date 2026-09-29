@@ -29,6 +29,9 @@ namespace BS.SDKEditor
 
         private static void OnPlayModeStateChanged(PlayModeStateChange change)
         {
+#if !GREENFIELD_PROJECT
+            // BSStarterUpper.SpawnOnPlay only exists outside the Greenfield client (it is subscribed
+            // above under the same guard).
             if (change == PlayModeStateChange.ExitingEditMode)
             {
                 // Only decide here. Creating it now would put it in the edit scene, which Unity saves as
@@ -36,6 +39,7 @@ namespace BS.SDKEditor
                 // BSStarterUpper.BeforeEditorPlay creates it once play mode has started.
                 BSStarterUpper.SpawnOnPlay = Object.FindObjectOfType<BSStarterUpper>() == null;
             }
+#endif
         }
         static void AddScriptDefine(string define)
         {
