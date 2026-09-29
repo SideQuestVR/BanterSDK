@@ -391,54 +391,53 @@ namespace BS.SDKEditor
             if (_gizmos == null) ParseGizmos(element);
 
             var t = Script.transform;
+            /*
+             * The GameObject is an authoring frame, not something the runtime reads: a script
+             * snippet never sees it, and places itself from its own `position` attribute. So the
+             * object's position and rotation locate the gizmos, but its SCALE is applied to their
+             * SIZE only, never to the offset.
+             *
+             * Going through localToWorldMatrix instead (the obvious thing) scaled the offset too,
+             * which pushed the gizmo away from the camera by exactly the factor it grew. The two
+             * cancel out in perspective, so scaling the object appeared to do nothing at all even
+             * though the maths was "right". Scaling now visibly resizes the preview in place.
+             */
+            var frame = Matrix4x4.TRS(t.position, t.rotation, Vector3.one);
+            var scale = t.lossyScale;
             foreach (var gizmo in _gizmos)
             {
                 var local = ResolveLocation(gizmo, element);
                 if (gizmo.kind == GizmoDef.Kind.Position)
                 {
                     EditorGUI.BeginChangeCheck();
-                    var world = Handles.PositionHandle(t.TransformPoint(local), t.rotation);
+                    var world = Handles.PositionHandle(frame.MultiplyPoint3x4(local), t.rotation);
                     if (EditorGUI.EndChangeCheck())
+                    {
                         // Same debounced path as inspector edits; the open inspector field
                         // live-updates via Changed(AttributeSet). Deliberately no Undo entry —
                         // index.html is outside the Undo stack (see SnippetReconciler header).
-                        SnippetHtmlSync.SetAttribute(Script.InstanceId, gizmo.boundAttribute, Format(
-                            t.InverseTransformPoint(world).x, t.InverseTransformPoint(world).y, t.InverseTransformPoint(world).z));
-                    continue;
-                }
-
-                // Full object-to-world transform, so every gizmo follows the GameObject's
-                // position, rotation AND scale (localToWorldMatrix carries lossyScale).
-                var gizmoToWorld = t.localToWorldMatrix * Matrix4x4.TRS(local, Quaternion.Euler(gizmo.euler), Vector3.one);
-
-                if (gizmo.kind == GizmoDef.Kind.Plane)
-                {
-                    /*
-                     * DrawSolidRectangleWithOutline takes explicit verts and does not apply
-                     * Handles.matrix to them the way DrawWireCube/DrawWireDisc do, so a scaled
-                     * object left the plane drawing at its literal size while the box and sphere
-                     * scaled correctly. Transform the corners to world space here and draw under
-                     * an identity matrix instead of relying on the drawing scope.
-                     */
-                    var half = gizmo.planeSize * 0.5f;
-                    var corners = new[]
-                    {
-                        gizmoToWorld.MultiplyPoint3x4(new Vector3(-half.x, -half.y, 0)),
-                        gizmoToWorld.MultiplyPoint3x4(new Vector3(-half.x, half.y, 0)),
-                        gizmoToWorld.MultiplyPoint3x4(new Vector3(half.x, half.y, 0)),
-                        gizmoToWorld.MultiplyPoint3x4(new Vector3(half.x, -half.y, 0)),
-                    };
-                    using (new Handles.DrawingScope(GizmoOutline, Matrix4x4.identity))
-                    {
-                        Handles.DrawSolidRectangleWithOutline(corners, GizmoFill, GizmoOutline);
+                        var back = Quaternion.Inverse(t.rotation) * (world - t.position);
+                        SnippetHtmlSync.SetAttribute(Script.InstanceId, gizmo.boundAttribute,
+                            Format(back.x, back.y, back.z));
                     }
                     continue;
                 }
 
-                using (new Handles.DrawingScope(GizmoOutline, gizmoToWorld))
+                using (new Handles.DrawingScope(GizmoOutline,
+                           frame * Matrix4x4.TRS(local, Quaternion.Euler(gizmo.euler), scale)))
                 {
                     switch (gizmo.kind)
                     {
+                        case GizmoDef.Kind.Plane:
+                            var half = gizmo.planeSize * 0.5f;
+                            Handles.DrawSolidRectangleWithOutline(new[]
+                            {
+                                new Vector3(-half.x, -half.y, 0),
+                                new Vector3(-half.x, half.y, 0),
+                                new Vector3(half.x, half.y, 0),
+                                new Vector3(half.x, -half.y, 0),
+                            }, GizmoFill, GizmoOutline);
+                            break;
                         case GizmoDef.Kind.Box:
                             Handles.DrawWireCube(Vector3.zero, gizmo.boxSize);
                             break;

@@ -265,6 +265,10 @@ namespace BS
                 {
                     scene.ProgressionOp(GetMsgData(msg, APICommands.PROGRESSION_OP), id);
                 }
+                else if (msg.StartsWith(APICommands.HOST_EXT_OP))
+                {
+                    scene.HostExtensionOp(GetMsgData(msg, APICommands.HOST_EXT_OP), id);
+                }
                 else if (msg.StartsWith(APICommands.LIGHTING_DATA_GET))
                 {
                     scene.LightingDataGet(id);
