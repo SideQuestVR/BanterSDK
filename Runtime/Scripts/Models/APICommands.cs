@@ -45,6 +45,8 @@ public class APICommands
     public const string METHOD_RETURN = "!mr!";
     public const string RAYCAST = "!rc!";
     public const string SET_PUBLIC_SPACE_PROPS = "!spsp!";
+    /// <summary>Size the world (space page) browser view: <c>w|1920§h|1080</c>; empty restores the default. See BSScene.SetWorldBrowserSize.</summary>
+    public const string SET_WORLD_BROWSER_SIZE = "!swbs!";
     public const string SET_PROTECTED_SPACE_PROPS = "!sprsp!";
     public const string SET_USER_PROPS = "!sup!";
     /// <summary>JSON space-state op (request/response). Payload: "sub§base64(UTF-8 JSON)".</summary>

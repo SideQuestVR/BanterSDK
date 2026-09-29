@@ -43,8 +43,7 @@ namespace BS
 
         internal override void DestroyStuff()
         {
-#if BANTER_FLEX
-            if (worldObjectAdded && grabHandle.WorldObj)
+            if (worldObjectAdded && grabHandle && grabHandle.WorldObj)
             {
                 Destroy(grabHandle.WorldObj);
             }
@@ -52,8 +51,6 @@ namespace BS
             {
                 Destroy(grabHandle);
             }
-#endif
-
         }
 
 
@@ -64,7 +61,8 @@ namespace BS
         internal override void StartStuff()
         {
             SetLoadedIfNot();
-#if BANTER_FLEX
+            // Configures FlexaBody's GrabHandle in Banter, and the SDK's port of it otherwise
+            // (Utils/FlexaBody), which the desktop controller grabs with.
             grabHandle = GetComponent<GrabHandle>();
             if (grabHandle == null)
             {
@@ -75,7 +73,7 @@ namespace BS
             grabHandle.Col = GetComponent<Collider>();
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;
-            Rigidbody rb = grabHandle.Col.attachedRigidbody;
+            Rigidbody rb = grabHandle.Col ? grabHandle.Col.attachedRigidbody : null;
             if(rb)
             {
                 grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
@@ -85,7 +83,6 @@ namespace BS
                     grabHandle.WorldObj = rb.gameObject.AddComponent<WorldObject>();
                 }
             }
-#endif
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)

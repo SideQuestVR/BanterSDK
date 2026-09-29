@@ -176,7 +176,7 @@ public class BuilderWindow : EditorWindow
         BSStarterUpper.ToggleDevTools();
     }
 
-    [MenuItem("Altspace/Tools/Toggle Auto Start (Players + Keyboard Input)")]
+    [MenuItem("Altspace/Tools/Toggle Desktop Controller (Camera + Keyboard Input)")]
     public static void ToggleAutoStart()
     {
         BSStarterUpper.ToggleAutoStart();

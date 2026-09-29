@@ -17,6 +17,8 @@ namespace BS
 {
     public class BSLink : MonoBehaviour
     {
+        /// <summary>Asset reference of the world (space page) browser's live texture, e.g. a BS.Material texture.</summary>
+        public const string WORLD_BROWSER_TEXTURE = "asset_browser_world";
         public BSPipe pipe;
         public BSScene scene;
         public event EventHandler Connected;
@@ -25,8 +27,25 @@ namespace BS
 
         Dictionary<string, string> androidStats = new Dictionary<string, string>();
 
+        // Set when play mode ends or the link goes away. Timers and delays started by the link run on
+        // other threads and outlive it; they check this instead of reporting against a dead scene.
+        volatile bool shuttingDown;
+
+        void OnApplicationQuit() => ShutDown();
+        void OnDestroy() => ShutDown();
+
+        void ShutDown()
+        {
+            shuttingDown = true;
+            batchUpdater?.Dispose();
+        }
+
+        // Whether this page has been told about the users already present (see OnUnitySceneLoaded).
+        bool usersAnnounced;
+
         void Start()
         {
+            scene.events.OnLoad.AddListener(() => usersAnnounced = false);
             scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -110,6 +129,21 @@ namespace BS
             {
                 scene.SetProps(APICommands.SET_PUBLIC_SPACE_PROPS, GetMsgData(msg, APICommands.SET_PUBLIC_SPACE_PROPS));
             }
+            else if (msg.StartsWith(APICommands.SET_WORLD_BROWSER_SIZE))
+            {
+                // w|1920§h|1080, in the space-props format; an empty payload restores the default size.
+                var prefix = APICommands.SET_WORLD_BROWSER_SIZE + MessageDelimiters.PRIMARY;
+                var data = msg.Length > prefix.Length ? msg.Substring(prefix.Length) : "";
+                int width = 0, height = 0;
+                foreach (var prop in data.Split(MessageDelimiters.SECONDARY))
+                {
+                    var kv = prop.Split(MessageDelimiters.TERTIARY);
+                    if (kv.Length != 2) continue;
+                    if (kv[0] == "w") int.TryParse(kv[1], out width);
+                    else if (kv[0] == "h") int.TryParse(kv[1], out height);
+                }
+                scene.SetWorldBrowserSize(width, height);
+            }
             else if (msg.StartsWith(APICommands.SET_USER_PROPS))
             {
                 var restOfMessage = GetMsgData(msg, APICommands.SET_USER_PROPS);
@@ -149,6 +183,8 @@ namespace BS
                 _ = TaskRunner.Run(async () =>
                 {
                     await Task.Delay(25000);
+                    // The delay outlives play mode; a scene torn down meanwhile did not fail to load.
+                    if (shuttingDown) return;
                     if (scene.state != SceneState.UNITY_READY)
                     {
                         scene.LogMissing();
@@ -688,6 +724,10 @@ namespace BS
             // #endif
 
             scene = BSScene.Instance();
+#if !GREENFIELD_PROJECT
+            // No Banter client in the SDK to attach objects to the local user; emulate the head.
+            SdkAttachments.Install(scene);
+#endif
             pipe = new BSPipe(this, view, manager);
             batchUpdater = new BatchUpdater(pipe);
             pipe.Start(() =>
@@ -873,6 +913,19 @@ namespace BS
             scene.state = SceneState.UNITY_READY;
             LogLine.Do(LogLine.banterColor, LogTag.Banter, "Unity Scene Loaded.");
             Send(APICommands.EVENT + APICommands.UNITY_LOADED + MessageDelimiters.PRIMARY);
+#if !GREENFIELD_PROJECT
+            // In the SDK the users (the local player, the emulated remotes) are added at startup, before
+            // this page exists, so their joins went to no page and the page never learnt who is here:
+            // no local user, and anything waiting for one (presence, attachments to "me") stalled until
+            // it gave up. Greenfield announces users after the space loads, so it doesn't need this.
+            // Once per page: this runs twice per load, and the page warns about repeated joins.
+            if (!usersAnnounced)
+            {
+                usersAnnounced = true;
+                foreach (var user in scene.users.ToArray())
+                    OnUserJoined(user);
+            }
+#endif
         }
         public void OnMonoBehaviourLifeCycle(int cid, BSMonoBehaviourLifeCycle lifeCycle)
         {
@@ -914,6 +967,17 @@ namespace BS
         {
             EventBus.Trigger("OnSTT", new CustomEventArgs(id, new object[] { message }));
             Send(APICommands.EVENT + APICommands.SEND_TRANSCRIPTION + MessageDelimiters.PRIMARY + id + MessageDelimiters.SECONDARY + message);
+        }
+        /// <summary>
+        /// The world (space page) browser painted a new texture: its first frame, or a resize replaced
+        /// it. Visual scripting gets it through On World Browser Texture; materials and the page reach it
+        /// as the <see cref="WORLD_BROWSER_TEXTURE"/> asset reference.
+        /// </summary>
+        public void OnWorldBrowserTexture(Texture2D texture)
+        {
+            if (texture == null) return;
+            EventBus.Trigger("OnWorldBrowserTexture", new CustomEventArgs(WORLD_BROWSER_TEXTURE, new object[] { texture }));
+            BSAssetRegistry.Instance.SetAsset(WORLD_BROWSER_TEXTURE, texture, AssetType.Texture2D, "browser:world");
         }
 
         public void OnFullSpaceState(string json)

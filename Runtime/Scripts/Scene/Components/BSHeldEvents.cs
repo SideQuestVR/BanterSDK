@@ -106,7 +106,10 @@ namespace BS
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if (!gameObject.GetComponent<BSPlayerEvents>())
+            // Take an author-added BSPlayerEvents too, or ControllerHeldEvents would be left
+            // without one.
+            banterPlayerEvents = GetComponent<BSPlayerEvents>();
+            if (!banterPlayerEvents)
             {
                 banterPlayerEventsAdded = true;
                 banterPlayerEvents = gameObject.AddComponent<BSPlayerEvents>();

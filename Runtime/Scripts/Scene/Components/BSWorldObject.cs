@@ -24,17 +24,15 @@ namespace BS
 
         internal override void DestroyStuff()
         {
-#if BANTER_FLEX
             if (worldObjectAdded && worldObj)
             {
                 Destroy(worldObj);
             }
-#endif
         }
 
         internal override void StartStuff()
         {
-#if BANTER_FLEX
+            // FlexaBody's WorldObject in Banter, the SDK's port of it otherwise (Utils/FlexaBody).
             worldObj = GetComponent<WorldObject>();
             if (worldObj == null)
             {
@@ -43,7 +41,6 @@ namespace BS
             }
             worldObj.RB = GetComponent<Rigidbody>();
             SetLoadedIfNot();
-#endif
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)

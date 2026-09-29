@@ -2697,14 +2697,57 @@ namespace BS
                      settings.Destroy();
                  }
                  settings = new BSSceneSettings(instanceId);
+                 RestoreWorldBrowserSize();
                  events.OnLoad.Invoke();
              }, $"{nameof(BSScene)}.{nameof(OnLoad)}"));
-            // TODO: This wont work with 5 ms, but I tested it hundreds of times at 10ms and it never 
-            // failed at that level. Maybe it is because the other thread stuff above? I think so. 
+            // TODO: This wont work with 5 ms, but I tested it hundreds of times at 10ms and it never
+            // failed at that level. Maybe it is because the other thread stuff above? I think so.
             // Maybe it will fail on android? Or other slower computers? Making it 100 for good measure.
             // :thumbsup: :worksonmymachine: :sadcat:
             await new WaitForSeconds(0.1f);
             FlushAllSceneProps();
+        }
+
+        // The world browser's size before SetWorldBrowserSize changed it; put back when the next space loads.
+        Vector2Int? worldBrowserDefaultSize;
+
+        /// <summary>
+        /// Size the world (space page) browser view, e.g. 1920x1080 so a page drawn through the
+        /// <see cref="BSLink.WORLD_BROWSER_TEXTURE"/> reference fills a 16:9 screen. Zero or a negative
+        /// size restores the default, which also comes back when the next space loads.
+        /// </summary>
+        public void SetWorldBrowserSize(int width, int height)
+        {
+            var view = link?.pipe?.view;
+            if (view == null) return;
+            if (width <= 0 || height <= 0)
+            {
+                RestoreWorldBrowserSize();
+                return;
+            }
+            var size = new Vector2Int(Mathf.Clamp(width, 320, 3840), Mathf.Clamp(height, 180, 2160));
+            if (worldBrowserDefaultSize == null) worldBrowserDefaultSize = view.size;
+            if (view.size == size) return;
+            ResizeWorldBrowser(size);
+            LogLine.Do($"World browser size -> {size.x}x{size.y}");
+        }
+
+        void RestoreWorldBrowserSize()
+        {
+            if (worldBrowserDefaultSize == null) return;
+            var size = worldBrowserDefaultSize.Value;
+            worldBrowserDefaultSize = null;
+            ResizeWorldBrowser(size);
+        }
+
+        // Writing OraView.size alone is not enough: in the world view's Scale sizing mode OraView only
+        // resizes its window when the transform scale changes, so resize it directly.
+        void ResizeWorldBrowser(Vector2Int size)
+        {
+            var view = link?.pipe?.view;
+            if (view == null || view.size == size) return;
+            view.size = size;
+            if (view.isActiveAndEnabled) view.StartCoroutine(view.ResizeWindow(view.GetAdjustedSize()));
         }
 
         void FlushAllSceneProps()
