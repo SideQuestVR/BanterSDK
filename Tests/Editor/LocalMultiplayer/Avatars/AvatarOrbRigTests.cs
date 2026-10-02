@@ -140,10 +140,10 @@ namespace BS.LocalMultiplayer.Tests
         {
             // BSDesktopController clicks layers 5 (UI) and 22 (Menu) and grabs layer 20; a trigger on any of them stops
             // the grab ray, and one on the click layers becomes a click target. The prefab's layer 5 would do both, so
-            // the body sits on 17 (NetworkPlayer), an ordinary layer that trigger volumes and raycasts still see.
+            // the body sits on 0 (Default), an ordinary layer that trigger volumes and raycasts still see.
             const int clickMask = (1 << 5) | (1 << 22);
             const int grabbableLayer = 20;
-            Assert.That(RemoteOrbAvatar.BodyLayer, Is.EqualTo(17));
+            Assert.That(RemoteOrbAvatar.BodyLayer, Is.EqualTo(0));
             Assert.That((1 << RemoteOrbAvatar.BodyLayer) & clickMask, Is.EqualTo(0));
             Assert.That(RemoteOrbAvatar.BodyLayer, Is.Not.EqualTo(grabbableLayer));
             Assert.That((1 << RemoteOrbAvatar.BodyLayer) & Physics.DefaultRaycastLayers, Is.Not.EqualTo(0));

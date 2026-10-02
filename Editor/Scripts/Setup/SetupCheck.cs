@@ -50,7 +50,7 @@ namespace BS.SDKEditor.Setup
     }
 
     /// <summary>
-    /// One item in the Welcome window's project setup checklist. Subclasses with a parameterless constructor
+    /// One item in the Setup panel's project setup checklist. Subclasses with a parameterless constructor
     /// are found by type, in any editor assembly, so adding one is enough to list it. Checks only look:
     /// <see cref="Evaluate"/> never changes the project. <see cref="Fix"/> runs only when the creator asks,
     /// on its own button or through Fix All.

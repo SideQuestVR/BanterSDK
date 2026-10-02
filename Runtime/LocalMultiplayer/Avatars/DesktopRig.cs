@@ -17,7 +17,7 @@ namespace BS.LocalMultiplayer.Avatars
     /// then it is the mouse hand.</para>
     /// <para>The three anchors carry kinematic Rigidbodies, as their production counterparts do, so attachment joints
     /// can connect to them.</para>
-    /// <para>The player's own orb is on layer 18 ("RPMAvatarHead"), which the head camera stops drawing, so it shows
+    /// <para>The player's own orb is on layer 21 ("Invisible"), which the head camera stops drawing, so it shows
     /// in mirrors only.</para>
     /// </remarks>
     // After BSDesktopController (-100: seat following) and BSDesktopMouseHand (-90), so the rig reads this frame's
@@ -27,9 +27,9 @@ namespace BS.LocalMultiplayer.Avatars
     [DisallowMultipleComponent]
     public sealed class DesktopRig : MonoBehaviour, ILocalRig
     {
-        /// <summary>The layer of the player's own orb: "RPMAvatarHead", culled from the head camera.</summary>
-        public const int LocalOrbLayer = 18;
-        /// <summary>The rig anchors' layer: "PhysicsPlayer", like the desktop player's own body.</summary>
+        /// <summary>The layer of the player's own orb: "Invisible", culled from the head camera.</summary>
+        public const int LocalOrbLayer = 21;
+        /// <summary>The rig anchors' layer: "CharacterColliders", like the desktop player's own body.</summary>
         public const int AnchorLayer = 23;
 
         [NonSerialized] bool _live;

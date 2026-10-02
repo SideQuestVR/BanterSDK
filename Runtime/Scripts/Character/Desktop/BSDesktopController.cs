@@ -143,7 +143,7 @@ namespace BS
             body.transform.SetParent(root.transform, false);
             body.layer = 23; // PhysicsPlayer
             try { body.tag = "__BA_LocalPlayer"; }
-            catch (UnityException) { LogLine.Do("[Desktop] Tag __BA_LocalPlayer is missing (Altspace > Tools > Setup Layers); portals won't see the player."); }
+            catch (UnityException) { LogLine.Do("[Desktop] Tag __BA_LocalPlayer is missing (Creator SDK > Setup); portals won't see the player."); }
             // Topped out well under the eye: UI Toolkit's world picking treats any collider on the
             // camera's ray as a blocker, and only a near-vertical look down should ever meet this.
             var bodyCollider = body.AddComponent<CapsuleCollider>();

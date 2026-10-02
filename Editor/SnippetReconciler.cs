@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Xml.Linq;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace BS.SDKEditor
 {
@@ -247,34 +249,243 @@ namespace BS.SDKEditor
                 });
         }
 
-        [MenuItem("Altspace/Snippets/Remove Orphaned Snippet Elements")]
-        static void RemoveOrphanedElements()
+        // ---- orphaned elements -------------------------------------------------------------
+
+        /*
+         * An element whose component is gone (deleted across a domain reload, say, or its scene deleted) still has
+         * everything the space uses: the slug (`name`), the instance id, the title and every setting. The runtime
+         * reads only the element, so a new object with a BSSnippet carrying that slug and id picks it up exactly as
+         * it was, local edits included. What's lost is the old object's name, transform and scene, none of which
+         * reach the space.
+         *
+         * Deliberately manual: an element whose component sits in a scene that isn't open looks orphaned from here.
+         * Saved scenes and prefabs are searched for the id first, and the ones they still use are left alone.
+         */
+        [MenuItem("Creator SDK/Snippets/Recover Orphaned Snippets...")]
+        static void RecoverOrphanedSnippets()
         {
-            var claimed = new HashSet<string>(UnityEngine.Object
+            if (EditorApplication.isPlayingOrWillChangePlaymode)
+            {
+                EditorUtility.DisplayDialog("Snippets", "Stop Play mode first: objects added in Play mode are lost when it ends.", "OK");
+                return;
+            }
+            if (SnippetHtmlSync.LoadFailed)
+            {
+                EditorUtility.DisplayDialog("Snippets", $"The snippet section in {SnippetHtmlSync.AssetPath} can't be read. Fix it first; the Console says what's wrong.", "OK");
+                return;
+            }
+
+            List<Orphan> orphans;
+            try
+            {
+                orphans = FindOrphans(SnippetHtmlSync.All(), ClaimedInstanceIds(), ids => FindUsers(ids, SavedScenesAndPrefabs()));
+            }
+            finally
+            {
+                EditorUtility.ClearProgressBar();
+            }
+
+            var stranded = orphans.Where(orphan => orphan.UsedBy == null).ToList();
+            var usedElsewhere = orphans.Where(orphan => orphan.UsedBy != null).ToList();
+            var leftAlone = usedElsewhere.Count == 0 ? "" :
+                "\n\nLeft as they are, because a scene that isn't open or a prefab still uses them:\n" +
+                Bullets(usedElsewhere, orphan => $"{orphan.Label} ({orphan.UsedBy})");
+            if (stranded.Count == 0)
+            {
+                EditorUtility.DisplayDialog("Snippets", "Every snippet in index.html belongs to an object." + leftAlone, "OK");
+                return;
+            }
+
+            var scene = SceneManager.GetActiveScene();
+            var sceneName = string.IsNullOrEmpty(scene.name) ? "the open scene" : $"the scene \"{scene.name}\"";
+            var recoverable = stranded.Where(orphan => orphan.CanRecover).ToList();
+            var unnamed = stranded.Count - recoverable.Count;
+            var message = "These snippets in index.html have no object in any scene or prefab:\n" + Bullets(stranded, orphan => orphan.Label) + "\n\n" +
+                          (recoverable.Count > 0
+                              ? $"Add to Scene creates an object for each in {sceneName}, at the origin, linked to its snippet: its settings are kept. "
+                              : "") +
+                          "Remove deletes them from index.html." +
+                          (unnamed > 0 ? $"\n\n{unnamed} of them {(unnamed == 1 ? "has" : "have")} no name, so only Remove applies." : "") +
+                          leftAlone;
+
+            if (recoverable.Count == 0)
+            {
+                if (EditorUtility.DisplayDialog("Orphaned snippets", message, "Remove", "Cancel"))
+                    RemoveOrphans(stranded);
+                return;
+            }
+            switch (EditorUtility.DisplayDialogComplex("Orphaned snippets", message, "Add to Scene", "Cancel", "Remove"))
+            {
+                case 0:
+                    var created = Recover(recoverable, scene);
+                    Selection.objects = created.Cast<UnityEngine.Object>().ToArray();
+                    if (created.Count > 0)
+                        EditorGUIUtility.PingObject(created[0]);
+                    Debug.Log($"[BSSnippet] Added {created.Count} object(s) to {sceneName} for orphaned snippets: " +
+                              string.Join(", ", recoverable.Select(orphan => orphan.Label)) + ".");
+                    break;
+                case 2:
+                    RemoveOrphans(stranded);
+                    break;
+            }
+        }
+
+        /// <summary>An element in index.html that no BSSnippet in a loaded scene claims.</summary>
+        internal sealed class Orphan
+        {
+            public XElement Element;
+            public string InstanceId;
+            public string Slug;
+            public string Title;
+            /// <summary>The saved scene that isn't open, or the prefab, that still uses it; null when nothing does.</summary>
+            public string UsedBy;
+
+            /// <summary>Without a slug a component couldn't pair with it: an empty slug detaches.</summary>
+            public bool CanRecover => UsedBy == null && !string.IsNullOrEmpty(Slug);
+
+            public string Label =>
+                !string.IsNullOrEmpty(Title) ? (string.IsNullOrEmpty(Slug) || Slug == Title ? Title : $"{Title} ({Slug})")
+                : !string.IsNullOrEmpty(Slug) ? Slug : "(unnamed)";
+        }
+
+        /*
+         * Elements no component in a loaded scene claims. A hand-written element (no instance id) isn't one: Unity
+         * never pairs those, and the runtime loads them as they are. `whereUsed` maps the unclaimed ids to the saved
+         * scene or prefab that still uses them, and is only asked when there are any.
+         */
+        internal static List<Orphan> FindOrphans(IEnumerable<XElement> elements, ICollection<string> claimed,
+            Func<ICollection<string>, IDictionary<string, string>> whereUsed)
+        {
+            var unclaimed = elements
+                .Select(element => (element, id: (string)element.Attribute(SnippetHtmlSync.InstanceAttribute)))
+                .Where(item => !string.IsNullOrEmpty(item.id) && !claimed.Contains(item.id))
+                .ToList();
+            if (unclaimed.Count == 0)
+                return new List<Orphan>();
+            var usedBy = whereUsed(unclaimed.Select(item => item.id).Distinct().ToList());
+            return unclaimed.Select(item => new Orphan
+            {
+                Element = item.element,
+                InstanceId = item.id,
+                Slug = (string)item.element.Attribute("name"),
+                Title = (string)item.element.Attribute("title"),
+                UsedBy = usedBy.TryGetValue(item.id, out var path) ? path : null,
+            }).ToList();
+        }
+
+        /// <summary>For each id, the first file whose text contains it. Stops reading files once every id is found.</summary>
+        internal static Dictionary<string, string> FindUsers(ICollection<string> ids, IEnumerable<(string path, string text)> files)
+        {
+            var users = new Dictionary<string, string>();
+            foreach (var (path, text) in files)
+            {
+                foreach (var id in ids)
+                {
+                    if (!users.ContainsKey(id) && text.Contains(id))
+                        users[id] = path;
+                }
+                if (users.Count == ids.Count)
+                    break;
+            }
+            return users;
+        }
+
+        /*
+         * Creates an object at the origin for each orphan, with a BSSnippet that pairs with its element. At the origin
+         * with no rotation the gizmos show what the space does: the runtime places a snippet from its own position
+         * attribute, measured from the world origin. One undo step; undoing it removes the objects, and with them
+         * their elements, as deleting any snippet object does (redo brings both back).
+         */
+        internal static List<GameObject> Recover(IEnumerable<Orphan> orphans, UnityEngine.SceneManagement.Scene scene)
+        {
+            Undo.IncrementCurrentGroup();
+            Undo.SetCurrentGroupName("Recover orphaned snippets");
+            var group = Undo.GetCurrentGroup();
+            var created = new List<GameObject>();
+            foreach (var orphan in orphans.Where(orphan => orphan.CanRecover))
+            {
+                var id = orphan.InstanceId;
+                // A pasted copy can share its id with another element. Unity pairs only the first, so a copy gets its own.
+                if (SnippetHtmlSync.Get(id) != orphan.Element)
+                {
+                    id = Guid.NewGuid().ToString("N");
+                    SnippetHtmlSync.SetInstanceId(orphan.Element, id);
+                }
+
+                var go = new GameObject(!string.IsNullOrEmpty(orphan.Title) ? orphan.Title : orphan.Slug);
+                if (scene.IsValid() && scene.isLoaded && go.scene != scene)
+                    SceneManager.MoveGameObjectToScene(go, scene);
+                Undo.RegisterCreatedObjectUndo(go, "Recover orphaned snippets");
+                var component = go.AddComponent<BSSnippet>();
+                var serialized = new SerializedObject(component);
+                serialized.FindProperty("slug").stringValue = orphan.Slug;
+                serialized.FindProperty("instanceId").stringValue = id;
+                serialized.FindProperty("cachedTitle").stringValue = orphan.Title ?? "";
+                serialized.FindProperty("cachedDescription").stringValue = (string)orphan.Element.Attribute("description") ?? "";
+                serialized.ApplyModifiedPropertiesWithoutUndo();
+                created.Add(go);
+            }
+            Undo.CollapseUndoOperations(group);
+            // Register them now, so the next pass treats them like any other snippet object.
+            ReconcileNow();
+            SnippetHtmlSync.FlushNow();
+            return created;
+        }
+
+        static void RemoveOrphans(IEnumerable<Orphan> orphans)
+        {
+            foreach (var orphan in orphans)
+                SnippetHtmlSync.RemoveElement(orphan.Element);
+            SnippetHtmlSync.FlushNow();
+        }
+
+        static HashSet<string> ClaimedInstanceIds() =>
+            new HashSet<string>(UnityEngine.Object
                 .FindObjectsByType<BSSnippet>(FindObjectsInactive.Include, FindObjectsSortMode.None)
                 .Where(c => c.gameObject.scene.isLoaded && !EditorSceneManager.IsPreviewSceneObject(c))
                 .Select(c => c.InstanceId)
                 .Where(id => !string.IsNullOrEmpty(id)));
-            var orphans = SnippetHtmlSync.All()
-                .Where(e => !claimed.Contains((string)e.Attribute(SnippetHtmlSync.InstanceAttribute)))
+
+        /*
+         * The project's saved scenes that aren't open, and its prefabs. A BSSnippet keeps its instance id in the file
+         * as plain text ("instanceId: <id>"); a binary-serialized file holds the same characters. Open scenes are
+         * left out: what's in memory is what counts for them.
+         */
+        static IEnumerable<(string path, string text)> SavedScenesAndPrefabs()
+        {
+            var open = new HashSet<string>(Enumerable.Range(0, SceneManager.sceneCount)
+                .Select(SceneManager.GetSceneAt)
+                .Where(scene => scene.isLoaded)
+                .Select(scene => scene.path));
+            var paths = AssetDatabase.FindAssets("t:Scene", new[] { "Assets" })
+                .Concat(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" }))
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Distinct()
+                .Where(path => !open.Contains(path))
                 .ToList();
-            if (orphans.Count == 0)
+            for (var i = 0; i < paths.Count; i++)
             {
-                EditorUtility.DisplayDialog("Snippets", "No orphaned snippet elements found.", "OK");
-                return;
+                EditorUtility.DisplayProgressBar("Snippets", "Looking for snippet objects in " + paths[i], i / (float)paths.Count);
+                string text;
+                try
+                {
+                    text = File.ReadAllText(paths[i]);
+                }
+                catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+                {
+                    continue;
+                }
+                yield return (paths[i], text);
             }
-            // Deliberately manual: elements can belong to scenes that are simply not open right
-            // now, so an automatic sweep would eat them.
-            var names = string.Join("\n", orphans.Select(e => "  • " + ((string)e.Attribute("name") ?? "(unnamed)")));
-            if (!EditorUtility.DisplayDialog("Remove orphaned snippets?",
-                    $"These <bs-snippet> elements in index.html have no BSSnippet component in any LOADED scene (they may belong to scenes that are not open!):\n\n{names}\n\nRemove them?",
-                    "Remove", "Cancel"))
-                return;
-            foreach (var orphan in orphans)
-            {
-                SnippetHtmlSync.RemoveElement(orphan);
-            }
-            SnippetHtmlSync.FlushNow();
+        }
+
+        static string Bullets(List<Orphan> orphans, Func<Orphan, string> describe)
+        {
+            const int Shown = 12;
+            var lines = orphans.Take(Shown).Select(orphan => "  • " + describe(orphan)).ToList();
+            if (orphans.Count > Shown)
+                lines.Add($"  ...and {orphans.Count - Shown} more");
+            return string.Join("\n", lines);
         }
     }
 }

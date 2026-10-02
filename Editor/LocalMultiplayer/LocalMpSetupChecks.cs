@@ -3,7 +3,7 @@ using UnityEditor;
 
 namespace BS.LocalMultiplayer.Editor
 {
-    // Local multiplayer's items in the Welcome window's setup checklist. Like the rest of this assembly they only
+    // Local multiplayer's items in the Setup panel's checklist. Like the rest of this assembly they only
     // exist when local multiplayer can run (an Ora with the relay, no FlexaBody).
 
     /// <summary>The extra editor players are Multiplayer Play Mode virtual players.</summary>

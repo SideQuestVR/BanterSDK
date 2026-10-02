@@ -9,7 +9,7 @@ using UnityEngine.SceneManagement;
 namespace BS.LocalMultiplayer.Editor
 {
     /// <summary>
-    /// Altspace > Local Multiplayer: test a world's multiplayer in the editor with Multiplayer Play Mode. It checks
+    /// Creator SDK > Local Multiplayer: test a world's multiplayer in the editor with Multiplayer Play Mode. It checks
     /// the environment (Multiplayer Play Mode, Ora, the desktop player), edits the settings every player reads,
     /// keeps the scenes loadable by the other players (saved, with stable object Ids) and shows the room during
     /// Play. Only the main editor writes the settings; in a Multiplayer Play Mode clone the window says where they
@@ -44,7 +44,7 @@ namespace BS.LocalMultiplayer.Editor
         const int MaxListedFindings = 12;
         const int MaxListedDiagnostics = 30;
 
-        [MenuItem("Altspace/Local Multiplayer")]
+        [MenuItem("Creator SDK/Local Multiplayer")]
         static void Open()
         {
             var window = GetWindow<LocalMultiplayerWindow>();
@@ -529,7 +529,7 @@ namespace BS.LocalMultiplayer.Editor
             Header("Multiplayer Play Mode player");
             EditorGUILayout.HelpBox(
                 $"This editor is Multiplayer Play Mode's \"{_slot}\". Local multiplayer settings live in the main "
-                + "editor: open Altspace > Local Multiplayer there. Every player reads them from "
+                + "editor: open Creator SDK > Local Multiplayer there. Every player reads them from "
                 + LocalMultiplayerSettings.FilePath(_root) + ".", MessageType.Info);
         }
 

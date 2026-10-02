@@ -59,7 +59,7 @@ namespace SideQuest.BundleAnalyzer
         ToolbarButton m_CancelButton;
         ProgressBar m_LoadProgressBar;
 
-        [MenuItem("Altspace/Tools/Bundle Analyzer")]
+        [MenuItem("Creator SDK/Tools/Bundle Analyzer")]
         public static void Open()
         {
             var window = GetWindow<BundleAnalyzerWindow>();

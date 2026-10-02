@@ -23,7 +23,7 @@ namespace BS.SDKEditor
     /// <summary>
     /// The Visual Scripting node library for spaces: which assemblies and types the fuzzy finder offers nodes
     /// for (the SDK's components and the Unity APIs the client runs), and building the node database from
-    /// them. Run from the Welcome window's setup checklist, Altspace/Tools/Configure Visual Scripting and,
+    /// them. Run from the Setup panel's checklist, Creator SDK/Tools/Configure Visual Scripting and,
     /// in Greenfield, its own code generation. It never shows a dialog, so it also runs in batch mode.
     /// </summary>
     public static class VsNodeGeneration
@@ -44,9 +44,10 @@ namespace BS.SDKEditor
         /// Sets the project's Visual Scripting node library to the SDK's assemblies and types, then rebuilds
         /// the node database. Uses Visual Scripting's own settings API, as its Project Settings page does:
         /// the database is built from the settings in memory, so a rebuild after editing the settings file on
-        /// disk would still use the old ones until the next domain reload.
+        /// disk would still use the old ones until the next domain reload. Returns false, having logged why,
+        /// when the library couldn't be set up.
         /// </summary>
-        public static void SetVSTypesAndAssemblies()
+        public static bool SetVSTypesAndAssemblies()
         {
             // The first time, this initialises Visual Scripting, which creates its settings and builds the
             // node database with its defaults, as opening a graph would.
@@ -58,7 +59,22 @@ namespace BS.SDKEditor
             {
                 Debug.LogError("[Creator SDK] Visual Scripting didn't initialise, so its node library wasn't set up. " +
                                "Open Edit > Project Settings > Visual Scripting once, then try again.");
-                return;
+                return false;
+            }
+
+            // Visual Scripting writes its settings without checking them out or clearing a read-only flag. A file
+            // that stays read-only would keep the old library on disk while this session showed the new one, until
+            // the next restart put it back.
+            var settingsPath = PluginPaths.projectSettings;
+            if (File.Exists(settingsPath))
+            {
+                VersionControlUtility.Unlock(settingsPath);
+                if (new FileInfo(settingsPath).IsReadOnly)
+                {
+                    Debug.LogError($"[Creator SDK] {settingsPath} is read-only, so the Visual Scripting node library can't be saved. " +
+                                   "Check it out in your version control, or make it writable, then try again.");
+                    return false;
+                }
             }
 
             // Replaced, not merged: a space can only use what the client runs.
@@ -68,20 +84,22 @@ namespace BS.SDKEditor
             configuration.typeOptions.AddRange(typeAllowList.Distinct());
             configuration.GetMetadata(nameof(configuration.assemblyOptions)).Save();
             configuration.GetMetadata(nameof(configuration.typeOptions)).Save();
-            WriteSettingsNow(configuration);
+            if (!WriteSettingsNow(configuration))
+                return false;
 
             Codebase.UpdateSettings();
-            UnitBase.Rebuild();
+            RebuildNodeDatabase();
 
             EditorUserSettings.SetConfigValue(NodesStampKey, CurrentStamp);
             Debug.Log($"[Creator SDK] Visual Scripting node library set up for SDK {PackageManagerUtility.currentVersion ?? "(unknown version)"}.");
+            return true;
         }
 
         // SaveProjectSettingsAsset only queues the write for EditorApplication.delayCall, which an editor in the
         // background doesn't reach, and a batch-mode run that quits straight after never does. Visual Scripting's
-        // own (private) serializer writes it now; the queued write still happens as well, and covers a version
-        // without that method.
-        static void WriteSettingsNow(PluginConfiguration configuration)
+        // own (private) serializer writes it now. The queued write still happens as well, and covers a version
+        // without that method; it runs the same serializer, so a write that fails here would fail there too.
+        static bool WriteSettingsNow(PluginConfiguration configuration)
         {
             configuration.SaveProjectSettingsAsset(true);
             try
@@ -89,11 +107,45 @@ namespace BS.SDKEditor
                 typeof(PluginConfiguration)
                     .GetMethod("SerializeProjectSettingsAssetToDisk", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                     ?.Invoke(configuration, null);
+                return true;
             }
             catch (Exception e)
             {
-                Debug.LogWarning("[Creator SDK] Visual Scripting's settings will be saved on the editor's next update: " + e.Message);
+                Debug.LogError("[Creator SDK] Visual Scripting's settings couldn't be saved, so the node library wasn't set up: " +
+                               (e.InnerException ?? e).Message);
+                return false;
             }
+        }
+
+        // Visual Scripting's UnitBase.Rebuild is Unlock + Delete + Build. Its background loader can still be reading
+        // the database for a few seconds after a script reload, and Windows won't delete a file that's open, so the
+        // delete waits for it. With Visual Scripting's experimental "Update Nodes Automatically" on, that loader also
+        // waits for work on the main thread, so the wait runs that work too, or neither would finish.
+        static void RebuildNodeDatabase()
+        {
+            var database = BoltFlow.Paths.unitOptions;
+            if (File.Exists(database))
+            {
+                VersionControlUtility.Unlock(database);
+                var giveUpAt = DateTime.UtcNow.AddSeconds(30);
+                while (true)
+                {
+                    try
+                    {
+                        File.Delete(database);
+                        break;
+                    }
+                    catch (IOException) when (DateTime.UtcNow < giveUpAt)
+                    {
+                        UnityAPI.ProcessDelegates();
+                        System.Threading.Thread.Sleep(250);
+                    }
+                }
+            }
+            // Build writes the database file before its rows. If it throws or Unity is closed part way, the file is
+            // there but empty, and nothing rebuilds it; without the stamp the Setup panel offers to generate the nodes.
+            EditorUserSettings.SetConfigValue(NodesStampKey, "");
+            UnitBase.Build();
         }
 
         /// <summary>

@@ -33,9 +33,10 @@ public class Status
     }
     public void AddStatus(string text, string dateString = null, bool skipWrite = false)
     {
-        var val = "<color=#999999>" + (dateString == null ? DateTime.Now.ToString("HH:mm:ss") : dateString) + ": <color=#FFFFFF>" + text;
+        // A grey for the time that reads on each editor skin; the message keeps the theme's text colour.
+        var val = (UnityEditor.EditorGUIUtility.isProSkin ? "<color=#8C8C8C>" : "<color=#555555>") + (dateString == null ? DateTime.Now.ToString("HH:mm:ss") : dateString) + ":</color> " + text;
         statusMessages.Insert(0, val);
-        statusBar.text = "STATUS: " + val;
+        statusBar.text = "Status: " + val;
         if (statusMessages.Count > 300)
         {
             // Trim IN PLACE — reassigning the field (GetRange returns a new list) orphans the

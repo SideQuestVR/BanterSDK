@@ -134,6 +134,14 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void RealChecklist_SaysWhatEveryCheckLooksAt()
+        {
+            // The Builder shows it on hover and in the list of checks that passed: a bare name like "Seats" means little.
+            foreach (var check in BuildChecklist.CreateChecks())
+                Assert.IsFalse(string.IsNullOrWhiteSpace(check.Description), $"{check.Id} has no description");
+        }
+
+        [Test]
         public void Target_ResolvesOnlyInLoadedScenes()
         {
             var go = new GameObject("target");

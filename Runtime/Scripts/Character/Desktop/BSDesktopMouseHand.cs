@@ -61,7 +61,6 @@ namespace BS
         internal static BSDesktopMouseHand Create(Transform camera, BSScene scene)
         {
             var go = new GameObject("BSDesktopMouseHand");
-            go.layer = 21; // HandColliders
             DontDestroyOnLoad(go);
 
             var rb = go.AddComponent<Rigidbody>();

@@ -430,7 +430,7 @@ namespace BS.LocalMultiplayer.Attachments
                         $"The attachment on BSObjectId '{objId}' is broadcast as user state '{key}', which the room "
                         + "refuses (a key is 1-64 of A-Z a-z 0-9 _ - : @). As in production, the whole batch fails with "
                         + "it, so other players may miss this player's attachments and seat. Give the object a plain "
-                        + "Id (Altspace > Local Multiplayer > Assign stable Ids).");
+                        + "Id (Creator SDK > Local Multiplayer > Assign stable Ids).");
                     break;
                 case EngineUserStateKey.Shape.Nested:
                     _diag.Warn(BadIdKey(objId),

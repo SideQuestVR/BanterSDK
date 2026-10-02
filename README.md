@@ -15,8 +15,8 @@ Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK prov
 > Component ids on the wire are unchanged. Components added after this rename will not get an
 > alias.
 >
-> The Unity Editor menus still use the legacy names (`Altspace`, `Banter`) — these docs quote menu
-> paths such as `Altspace/Altspace Builder` and `Banter/Platform Filter` literally.
+> The SDK's Unity Editor menu is **Creator SDK**; some component menus still use the legacy `Banter` name.
+> These docs quote menu paths such as `Creator SDK/Builder` and `Banter/Platform Filter` literally.
 
 ---
 
@@ -25,7 +25,7 @@ Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK prov
 - [Installation](#installation)
   - [Installer Package](#installer-package)
   - [Embedded Package](#embedded-package)
-  - [First Run: the Welcome Window](#first-run-the-welcome-window)
+  - [First Run: the Setup Panel](#first-run-the-setup-panel)
   - [Samples](#samples)
 - [Quick Start](#quick-start)
 - [The Builder Window](#the-builder-window)
@@ -39,6 +39,9 @@ Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK prov
   - [Transform](#transform)
   - [Assets](#assets)
   - [Node Graphs](#node-graphs)
+- [Layers](#layers)
+  - [The Layer List](#the-layer-list)
+  - [Movement and Collisions](#movement-and-collisions)
 - [Scene API](#scene-api)
   - [Getting the Scene](#getting-the-scene)
   - [Properties](#properties)
@@ -240,9 +243,9 @@ Double-click the downloaded file with your project open, or use `Assets > Import
 
 Alternatively, place the `com.sidequest.creator-sdk` folder directly in your project's `Packages/` folder. Unity picks it up as an embedded package on the next refresh.
 
-### First Run: the Welcome Window
+### First Run: the Setup Panel
 
-The first time the SDK loads in a project, the **Welcome** window opens (`Altspace/Welcome` opens it again). It has buttons for the World Builder and this documentation, and a project setup checklist:
+The first time the SDK loads in a project, the **Setup** panel opens (`Creator SDK/Setup` opens it again). It has buttons for the Builder and this documentation (which opens in a browser panel inside Unity, docked next to the Game view, when your Ora version has one), and a project setup checklist:
 
 | Item | | What it sets up |
 |------|-|-----------------|
@@ -250,13 +253,14 @@ The first time the SDK loads in a project, the **Welcome** window opens (`Altspa
 | SDK layers and tags | Required | Scenes store layer numbers, so each SDK layer has to be in the client's slot (Grabbable is 20). |
 | API compatibility level | Required | .NET Standard 2.1, which the SDK's Basis packages need. |
 | Space page (WebRoot) | Required | `Assets/WebRoot/index.html`, which Play mode serves and the Builder uploads. |
-| TextMesh Pro essentials | Recommended | The fonts BS Text draws with, so Unity's TMP importer doesn't interrupt Play mode. |
-| Universal Render Pipeline | Recommended | Forward on Quest and Forward+ on Windows, as the client renders. |
-| Linear color space | Recommended | As the client renders; baked lighting depends on it. |
+| TextMesh Pro essentials | Required | The fonts BS Text draws with, so Unity's TMP importer doesn't interrupt Play mode. |
+| Universal Render Pipeline | Required | Forward on Quest and Forward+ on Windows, as the client renders. |
+| Graphics APIs | Required | Auto Graphics API on Android (Vulkan, OpenGL ES 3) and the client's Direct3D 11, Direct3D 12 and Vulkan on Windows, so spaces carry the shaders the client runs. |
+| Linear color space | Required | As the client renders; baked lighting depends on it. |
 | Visual Scripting nodes | Required | Puts BS components and the SDK's nodes in the fuzzy finder. |
 | Active Input Handling | Required | `Both`, which SDK Play mode needs for mouse, keyboard and browser input. Takes effect after a Unity restart. |
 
-**Fix All** runs every Required and Recommended fix. Each item also has its own button, and hovering over an item explains why it's needed, what goes wrong without it and what its fix changes. Nothing in the project changes until you press a button. When local multiplayer is available, the list also offers Multiplayer Play Mode (Optional) and Run In Background.
+**Fix All** runs every Required and Recommended fix. Each item also has its own button, and hovering over an item explains why it's needed, what goes wrong without it and what its fix changes. Nothing in the project changes until you press a button. When local multiplayer is available, the list also offers Multiplayer Play Mode (Optional) and Run In Background (Recommended).
 
 ### Samples
 
@@ -310,13 +314,13 @@ The `bs-loaded` event is latched: a listener added after the event has already f
 
 ## The Builder Window
 
-The Builder builds your world and uploads it to SideQuest without leaving Unity. Open it via `Altspace/Altspace Builder` — the window docks next to the Inspector.
+The Builder builds and publishes your world without leaving Unity. Open it via `Creator SDK/Builder`, or **Open Builder** in the Setup panel; the window docks next to the Inspector.
 
 ![The Builder window](Documentation~/images/builder-window.png)
 
 ### Opening & Signing In
 
-The window header shows a device code: "Sign In: open sdq.st/link and put in `<code>`".
+While you're signed out, the header shows **Sign in** and a device code.
 
 1. Open sdq.st/link in a browser and sign in to your SideQuest account.
 2. Enter the code shown in the window.
@@ -328,28 +332,28 @@ Building works while signed out; the world list and every upload action require 
 
 ### Building a World (Scene Mode)
 
-Drop a `.unity` scene file onto the drop area to enter Scene mode. The selected scene path is shown in place of the drop area and remembered between sessions; RESET clears it.
+Drop a `.unity` scene file onto the drop area to enter Scene mode. The selected scene path is shown in place of the drop area and remembered between sessions; **Reset** clears it.
 
-Pick a destination from the **World** dropdown — its hosting URL appears underneath, and the last-used world is reselected automatically. No world yet? Click "Create One." to name and create one right in the window.
+Pick a destination from the **World** dropdown — its hosting URL appears underneath, and the last-used world is reselected automatically. No world yet? Click **Create one** to name and create one right in the window.
 
 | Button | Action |
 |--------|--------|
-| BUILD | Builds the scene into `Assets/WebRoot` as `asset.world`, a single platform-agnostic bundle that every platform loads |
-| BUILD & UPLOAD | Same button with **Auto Upload** ticked (and signed in): uploads to the selected world when the build finishes |
-| UPLOAD HTML+JS | Uploads just the web files from `Assets/WebRoot` — fast iteration on scripts without rebuilding |
-| UPLOAD ALL | Uploads everything: `asset.world` plus the web files |
-| WEBROOT FOLDER | Highlights the `Assets/WebRoot` output folder in the Project window |
-| ANALYZE BUNDLE | Previews the AssetBundle contents and estimated size of the currently open scene (the scene must be saved to disk) |
+| Build | Builds the scene into `Assets/WebRoot` as `asset.world`, a single platform-agnostic bundle that every platform loads |
+| Build & upload | Same button with **Upload after building** ticked (and signed in): uploads to the selected world when the build finishes |
+| Upload HTML + JS | Uploads just the web files from `Assets/WebRoot` — fast iteration on scripts without rebuilding |
+| Upload all | Uploads everything: `asset.world` plus the web files |
+| WebRoot folder | Highlights the `Assets/WebRoot` output folder in the Project window |
+| Analyze bundle | Previews the AssetBundle contents and estimated size of the currently open scene (the scene must be saved to disk) |
 
-The **Auto Upload** toggle is remembered per project.
+The **Upload after building** toggle is remembered per project.
 
 ### Build Validation & Logs
 
-A confirmation dialog summarizes every build before it runs — build mode, plus the scene file and destination world. CANCEL backs out without building.
+A confirmation dialog summarizes every build before it runs — build mode, plus the scene file and destination world. **Cancel** backs out without building.
 
 Once confirmed, every build first validates the scene's visual scripting graphs (see [Visual Scripting](#visual-scripting)). Disallowed nodes stop the build, with details in the logs.
 
-The LOGS pane at the bottom of the window streams build and upload progress; the status bar mirrors the latest entry, and a progress bar appears above it during uploads. CLEAR LOGS empties the pane.
+The **Logs** pane at the bottom of the window streams build and upload progress; the status bar mirrors the latest entry, and a progress bar appears above it during uploads. **Clear logs** empties the pane.
 
 ---
 
@@ -372,6 +376,55 @@ Large content such as textures, audio, and 3D models is tracked as assets rather
 
 ### Node Graphs
 Worlds can also be scripted without JavaScript, using node graphs authored in the Unity Editor. See [Visual Scripting](#visual-scripting).
+
+---
+
+## Layers
+
+Layers decide what the player can stand on, teleport to, grapple, grab and bump into, and what the
+player's camera draws. Unity stores an object's layer as a number, so your world has to use the
+same slots as the client: **Creator SDK > Setup** names slots 3 and 6–24 for you (the "SDK layers
+and tags" item). Slots 25 and above belong to the client; don't put anything on them.
+
+### The Layer List
+
+| Slot | Layer | What it's for |
+|---|---|---|
+| 0 | Default | Ordinary world geometry. |
+| 1 | TransparentFX | Unity built-in. For movement it counts like Default. |
+| 2 | Ignore Raycast | Unity built-in. Ground and grapple use it; teleport doesn't. |
+| 3 | UserLayer1 | Yours. Solid and walkable, and you can teleport onto it, but the grapple ignores it. |
+| 4 | Water | Unity built-in. For movement it counts like Default. |
+| 5 | UI | World-space UI that the pointer clicks. The player's body and hands pass through it. |
+| 6–12 | UserLayer2–8 | Yours. Ground, teleport and grapple all use them, but the player's body and hands pass through. |
+| 13–19 | UserLayer9–15 | Yours. Teleport, grapple and ground ignore them; the player's body and hands still bump into them. |
+| 20 | Grabbable | Things the player can pick up. `BSGrabbable` puts its object here for you. |
+| 21 | Invisible | Hidden from the player's own view (mirrors still show it). Still solid. |
+| 22 | Menu | The client's menus. Recording cameras leave it out; the player's body and hands pass through it. |
+| 23 | CharacterColliders | The local player's body: the rolling ball, torso and head. Don't put your own objects here. |
+| 24 | CharacterHandColliders | The local player's physics hands. Don't put your own objects here. |
+
+From JavaScript, use the `BS.L` names, e.g. `new BS.GameObject({ layer: BS.L.UserLayer9 })` (see
+[BanterLayers (BS.L)](#banterlayers-bsl)).
+
+### Movement and Collisions
+
+What works on each layer (✓ = yes):
+
+| | Default, TransparentFX, Water | Ignore Raycast | UserLayer1 | UserLayer2–8 | UserLayer9–15 | Grabbable | Invisible | UI, Menu |
+|---|---|---|---|---|---|---|---|---|
+| Stand on it (ground) | ✓ | ✓ | ✓ | ✓ | | ✓ | | |
+| Teleport onto it | ✓ | | ✓ | ✓ | | | | |
+| Grapple to it | ✓ | ✓ | | ✓ | | | | |
+| Grab it | | | | | | ✓ | | |
+| Body bumps into it | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+| Hands bump into it | | | | | ✓ | ✓ | ✓ | |
+
+- **Grab** only ever looks at Grabbable, so a grabbable object needs a collider on that layer.
+- **Body** is the CharacterColliders layer and **hands** are CharacterHandColliders. The hands
+  only touch UserLayer9–15, Grabbable and Invisible; they pass through everything else.
+- **Invisible** objects are hidden from the player's camera, and from the hand camera and
+  recordings, which copy it. They still collide, so an Invisible collider makes an invisible wall.
 
 ---
 
@@ -3360,12 +3413,20 @@ Physics/rendering layers. Shorthand: `BS.L`
 BS.L.UserLayer1    // 3
 BS.L.UserLayer2    // 6
 BS.L.UserLayer3    // 7
-// ... through UserLayer12
-BS.L.NetworkPlayer // 17
+// ... through UserLayer12 (16)
+BS.L.UserLayer13   // 17
+BS.L.UserLayer14   // 18
+BS.L.UserLayer15   // 19
 BS.L.Grabbable     // 20
-BS.L.HandColliders // 21
-BS.L.PhysicsPlayer // 23
+BS.L.Invisible     // 21
+BS.L.Menu          // 22
+BS.L.CharacterColliders     // 23
+BS.L.CharacterHandColliders // 24
 ```
+
+What each layer does is in [Layers](#layers). The old names still work but are deprecated:
+`NetworkPlayer` (17), `RPMAvatarHead` (18) and `RPMAvatarBody` (19) are user layers now,
+`HandColliders` is 21 (now `Invisible`), and `PhysicsPlayer` is `CharacterColliders`.
 
 ### MaterialSide
 
@@ -3537,7 +3598,7 @@ An object can carry several Script Machines, each running its own graph. A graph
 
 ### Setup
 
-One-time setup: run the menu item `Altspace/Tools/Configure Visual Scripting`. This configures the project's Visual Scripting settings and rebuilds the node library.
+One-time setup: press **Generate nodes** on the Visual Scripting nodes item in the Setup panel (or run `Creator SDK/Tools/Configure Visual Scripting`). This configures the project's Visual Scripting settings and rebuilds the node library.
 
 Run it again if the BS nodes described below do not appear in the fuzzy finder, or after updating the SDK.
 
@@ -3852,7 +3913,7 @@ Only approved types and members are usable — the fuzzy finder is limited to an
 
 ### Build Validation
 
-Building through the `Altspace/Altspace Builder` window validates the graphs in your project — script and state graph assets, plus graphs embedded on prefabs and scene objects. If any graph uses a node or member outside the approved set, the build stops with:
+Building through the `Creator SDK/Builder` window validates the graphs in your project — script and state graph assets, plus graphs embedded on prefabs and scene objects. If any graph uses a node or member outside the approved set, the build stops with:
 
 ```
 Found disallowed visual scripting nodes, please check the logs for more information.
@@ -4189,8 +4250,10 @@ Design guidance:
 
 - **Removing the component removes its element.** Closing a scene does not: elements owned by scenes
   that are merely unloaded are left alone, because they still belong to that scene. If elements do
-  get stranded, `Altspace > Snippets > Remove Orphaned Snippet Elements` lists the unclaimed ones and
-  removes them after you confirm.
+  get stranded (an object deleted while scripts were reloading, say), `Creator SDK > Snippets > Recover
+  Orphaned Snippets...` lists the ones no scene or prefab uses. **Add to Scene** gives each a new object
+  at the origin, linked to its element, so every setting you made is kept; **Remove** deletes them from
+  `index.html`. Elements a closed scene or a prefab still uses are listed but left alone.
 - **`index.html` is a project file.** It ships with your world and belongs in version control; the
   snippet section is a normal part of its diff.
 - **Hand-written elements are first-class.** An element with no `instance` attribute is never touched

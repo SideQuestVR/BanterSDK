@@ -9,7 +9,7 @@ namespace BS.SDKEditor
 {
     /// <summary>
     /// The project settings the SDK needs: its layers and tags, the API compatibility level and the WebRoot
-    /// folder. Nothing here changes the project on load any more: the Welcome window's setup checklist
+    /// folder. Nothing here changes the project on load any more: the Setup panel's checklist
     /// (<see cref="Setup.ProjectSetup"/>) shows what's missing and fixes it when the creator asks.
     /// </summary>
     [InitializeOnLoad]
@@ -79,9 +79,7 @@ namespace BS.SDKEditor
             if (WebRootExists)
                 return false;
             Directory.CreateDirectory(Path.GetDirectoryName(WebRootIndexPath));
-            // world-asset: the space loads its one combined bundle (asset.world) from next to this page.
-            File.WriteAllText(WebRootIndexPath,
-                "<html world-asset>\n<head>\n  <meta charset=\"utf-8\">\n  <title>Space</title>\n</head>\n<body>\n</body>\n</html>\n");
+            File.WriteAllText(WebRootIndexPath, BSStarterUpper.STARTER_PAGE);
             AssetDatabase.ImportAsset(WebRootIndexPath);
             return true;
         }
@@ -213,21 +211,15 @@ namespace BS.SDKEditor
             { 14, "UserLayer10" },
             { 15, "UserLayer11" },
             { 16, "UserLayer12" },
-            { 17, "NetworkPlayer" },
-            { 18, "RPMAvatarHead" },
-            { 19, "RPMAvatarBody" },
+            { 17, "UserLayer13" },
+            { 18, "UserLayer14" },
+            { 19, "UserLayer15" },
             { 20, "Grabbable" },
-            { 21, "HandColliders" },
+            { 21, "Invisible" },
             { 22, "Menu" },
-            { 23, "PhysicsPlayer" },
-            { 24, "BanterInternal1_DONTUSE" },
-            { 25, "BanterInternal2_DONTUSE" },
-            { 26, "BanterInternal3_DONTUSE" },
-            { 27, "BanterInternal4_DONTUSE" },
-            { 28, "BanterInternal5_DONTUSE" },
-            { 29, "BanterInternal6_DONTUSE" },
-            { 30, "BanterInternal7_DONTUSE" },
-            { 31, "BanterInternal8_DONTUSE" }
+            { 23, "CharacterColliders" },
+            { 24, "CharacterHandColliders" },
+            // 25 and up are the client's own; the SDK leaves those slots alone.
         };
 
         public static Dictionary<int, string> tagsToAdd = new Dictionary<int, string> {
@@ -259,9 +251,6 @@ namespace BS.SDKEditor
             { 25, "__BA_UserTag12" },
             { 26, "__BA_UserTag13" },
             { 27, "__BA_UserTag14" },
-            { 28, "MenuWorldSpace" },
-            { 29, "VRPlayerContextMenu" },
-            { 30, "PortalBall" },
         };
     }
 }

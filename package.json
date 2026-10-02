@@ -6,7 +6,7 @@
   "unity": "6000.3",
   "unityRelease": "10f1",
   "hideInEditor": false,
-  "documentationUrl": "https://github.com/SideQuestVR/BanterSDK/blob/feature/greenfield/README.md",
+  "documentationUrl": "https://greenfield-registry.sdq.st/-/web/detail/com.sidequest.creator-sdk",
   "dependencies": {
     "com.unity.nuget.newtonsoft-json": "3.0.2",
     "com.unity.textmeshpro": "3.0.9",

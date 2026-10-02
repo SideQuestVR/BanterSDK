@@ -120,6 +120,23 @@ namespace BS.SDKEditor
             Changed?.Invoke(ChangeKind.ElementRemoved, id, null);
         }
 
+        /*
+         * Gives an element already in the section a new instance id, in place: its position (which decides a
+         * `single` snippet's winner) and its attributes stay as they are. For an element whose id Unity can't
+         * pair with, such as a pasted copy that shares its id with another element.
+         */
+        public static void SetInstanceId(XElement element, string instanceId)
+        {
+            if (RefuseWhenBroken() || element == null || element.Parent != _sectionDoc.Root
+                || string.IsNullOrEmpty(instanceId) || Get(instanceId) != null) return;
+            var old = (string)element.Attribute(InstanceAttribute);
+            if (!string.IsNullOrEmpty(old) && Get(old) == element) _byInstance.Remove(old);
+            element.SetAttributeValue(InstanceAttribute, instanceId);
+            _byInstance[instanceId] = element;
+            MarkDirty();
+            Changed?.Invoke(ChangeKind.ElementUpserted, instanceId, null);
+        }
+
         public static void SetAttribute(string instanceId, string name, string value)
         {
             if (RefuseWhenBroken()) return;
@@ -280,7 +297,7 @@ namespace BS.SDKEditor
             if (text == null)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(FullPath));
-                text = "<html android-bundle windows-bundle>\n<head>\n  <meta charset=\"utf-8\">\n  <title>Space</title>\n</head>\n<body>\n</body>\n</html>\n";
+                text = BSStarterUpper.STARTER_PAGE;
             }
 
             var section = BuildSectionBody();

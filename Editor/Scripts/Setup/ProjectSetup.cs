@@ -7,7 +7,7 @@ using UnityEngine;
 namespace BS.SDKEditor.Setup
 {
     /// <summary>
-    /// The project setup checklist behind the Welcome window: every <see cref="SetupCheck"/>, fixing them one
+    /// The project setup checklist behind the Setup panel: every <see cref="SetupCheck"/>, fixing them one
     /// at a time or all at once, and opening the window the first time the SDK loads in a project (and after
     /// an SDK update that leaves something required unfinished). Nothing here changes the project unless the
     /// creator presses a fix button.
@@ -17,10 +17,12 @@ namespace BS.SDKEditor.Setup
         const string LogTag = "[Creator SDK]";
 
         // Per user and project (UserSettings/EditorUserSettings.asset, which isn't shared through version control).
-        const string SeenVersionKey = "BS.SDK.Welcome.SeenVersion";
-        const string ShowAtStartupKey = "BS.SDK.Welcome.ShowAtStartup";
+        const string SeenVersionKey = "BS.SDK.Setup.SeenVersion";
+        const string ShowAtStartupKey = "BS.SDK.Setup.ShowAtStartup";
         // Per editor session: cleared when Unity restarts, which is exactly when a restart-pending fix lands.
-        const string StartupHandledKey = "BS.SDK.Welcome.StartupHandled";
+        // The SDK version the startup check ran for, so an update made with Unity open runs it again.
+        const string StartupHandledKey = "BS.SDK.Setup.StartupHandledVersion";
+        const string StartupRanKey = "BS.SDK.Setup.StartupRan";
         const string RestartPendingKey = "BS.SDK.Setup.RestartPending";
 
         /// <summary>Raised after any fix runs or a background one finishes, so open windows can refresh.</summary>
@@ -72,11 +74,48 @@ namespace BS.SDKEditor.Setup
                 Changed?.Invoke();
                 return false;
             }
-            if (changed && check.FixNeedsRestart)
-                MarkRestartPending(check.Id);
-            Debug.Log($"{LogTag} {check.Title}: {(changed ? "fixed" : "nothing to change")}.");
+            if (changed)
+            {
+                SaveProjectSettings();
+                if (check.FixNeedsRestart)
+                    MarkRestartPending(check.Id);
+            }
+            var (outcome, failed) = Outcome(check, changed);
+            if (failed)
+                Debug.LogWarning($"{LogTag} {check.Title}: {outcome}.");
+            else
+                Debug.Log($"{LogTag} {check.Title}: {outcome}.");
             Changed?.Invoke();
             return changed;
+        }
+
+        // From the item's state afterwards, not just what Fix returned: a fix returns false both when there was nothing
+        // to do and when it couldn't do it.
+        static (string text, bool failed) Outcome(SetupCheck check, bool changed)
+        {
+            var state = Evaluate(check).State;
+            if (!changed)
+                return state == SetupState.NeedsFix ? ("couldn't fix it; see the messages above", true) : ("nothing to change", false);
+            if (check.FixNeedsRestart)
+                return ("changed; restart Unity for it to take effect", false);
+            switch (state)
+            {
+                // An import or a package install that finishes, or fails, after the fix returns.
+                case SetupState.Working: return ("started; it finishes in the background", false);
+                case SetupState.NeedsFix: return ("changed, but it still needs fixing; see the messages above", true);
+                default: return ("fixed", false);
+            }
+        }
+
+        // Player Settings changed from code are otherwise written only when the project is saved or Unity quits,
+        // so a crash in between would undo the fix. (TagManager and Visual Scripting's settings save themselves.)
+        static void SaveProjectSettings()
+        {
+            foreach (var settings in AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset"))
+            {
+                if (settings != null)
+                    AssetDatabase.SaveAssetIfDirty(settings);
+            }
         }
 
         public sealed class FixAllResult
@@ -138,9 +177,9 @@ namespace BS.SDKEditor.Setup
         /// <summary>Saves scenes if the creator wants, then restarts Unity so pending changes take effect.</summary>
         public static void RestartEditor() => ActiveInputHandlingCheck.RestartEditor();
 
-        // -- Welcome window at startup -----------------------------------------------
+        // -- Setup panel at startup -------------------------------------------------
 
-        /// <summary>Whether the Welcome window opens every time Unity starts, not just the first time.</summary>
+        /// <summary>Whether the Setup panel opens every time Unity starts, not just the first time.</summary>
         public static bool ShowAtStartup
         {
             get => EditorUserSettings.GetConfigValue(ShowAtStartupKey) == "1";
@@ -153,9 +192,12 @@ namespace BS.SDKEditor.Setup
         [InitializeOnLoadMethod]
         static void OnLoad()
         {
-            if (Application.isBatchMode || AssetDatabase.IsAssetImportWorkerProcess() || IsVirtualPlayer())
+            // Not in Unity's helper processes (asset import workers, the standalone Profiler) or in Multiplayer Play
+            // Mode's players: each would open its own panel and log its own warnings.
+            if (Application.isBatchMode || AssetDatabase.IsAssetImportWorkerProcess() ||
+                UnityEditor.MPE.ProcessService.level != UnityEditor.MPE.ProcessLevel.Main || IsVirtualPlayer())
                 return;
-            if (SessionState.GetBool(StartupHandledKey, false))
+            if (StartupHandled)
                 return;
             // EditorApplication.update, not delayCall: delayCall waits for a repaint, which an editor in the
             // background never does.
@@ -178,24 +220,47 @@ namespace BS.SDKEditor.Setup
             if (EditorApplication.timeSinceStartup - s_SettledSince < 1.0)
                 return;
             EditorApplication.update -= WhenSettled;
-            if (SessionState.GetBool(StartupHandledKey, false))
+            if (StartupHandled)
                 return;
-            SessionState.SetBool(StartupHandledKey, true);
+            var version = CurrentVersion;
+            SessionState.SetString(StartupHandledKey, version);
 
-            var version = PackageManagerUtility.currentVersion ?? "unknown";
             var seen = EditorUserSettings.GetConfigValue(SeenVersionKey);
-            var unfinished = Checks.Where(check => check.Importance == SetupImportance.Required && Evaluate(check).NeedsAttention).ToList();
+            var unfinished = Checks.Where(check => check.Importance == SetupImportance.Required)
+                .Select(check => (check, status: Evaluate(check)))
+                .Where(item => item.status.NeedsAttention)
+                .ToList();
 
             var firstLoad = string.IsNullOrEmpty(seen);
             var updatedAndUnfinished = !firstLoad && seen != version && unfinished.Count > 0;
-            if (firstLoad || updatedAndUnfinished || ShowAtStartup)
-                SdkWelcomeWindow.Open();
+            // "When Unity starts": not again when an SDK update made with Unity open runs this a second time.
+            var startingUp = !SessionState.GetBool(StartupRanKey, false);
+            SessionState.SetBool(StartupRanKey, true);
+            if (firstLoad || updatedAndUnfinished || (ShowAtStartup && startingUp))
+                SdkSetupWindow.Open();
             EditorUserSettings.SetConfigValue(SeenVersionKey, version);
 
             if (unfinished.Count > 0)
-                Debug.LogWarning($"{LogTag} Project setup isn't finished: {string.Join(", ", unfinished.Select(check => check.Title))}. " +
-                                 "Open Altspace > Welcome and press Fix All.");
+                Debug.LogWarning($"{LogTag} Project setup isn't finished. " + UnfinishedAdvice(unfinished));
         }
+
+        // Fix All only runs the items that have a fix; the others need the creator.
+        static string UnfinishedAdvice(List<(SetupCheck check, SetupStatus status)> unfinished)
+        {
+            var fixable = unfinished.Where(item => item.status.State == SetupState.NeedsFix).Select(item => item.check.Title).ToList();
+            var manual = unfinished.Where(item => item.status.State != SetupState.NeedsFix).Select(item => item.check.Title).ToList();
+            var advice = new List<string>();
+            if (fixable.Count > 0)
+                advice.Add($"{string.Join(", ", fixable)}: open Creator SDK > Setup and press Fix All.");
+            if (manual.Count > 0)
+                advice.Add($"{string.Join(", ", manual)} {(manual.Count == 1 ? "needs a step by hand; see its row" : "need steps by hand; see their rows")} " +
+                           "in Creator SDK > Setup.");
+            return string.Join(" ", advice);
+        }
+
+        static string CurrentVersion => PackageManagerUtility.currentVersion ?? "unknown";
+
+        static bool StartupHandled => SessionState.GetString(StartupHandledKey, "") == CurrentVersion;
 #endif
 
         /// <summary>A Multiplayer Play Mode virtual player: a clone of this project, driven by the main editor.</summary>

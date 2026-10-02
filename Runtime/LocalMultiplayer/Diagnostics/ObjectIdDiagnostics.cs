@@ -282,7 +282,7 @@ namespace BS.LocalMultiplayer.Objects
             SetEntry(DuplicateKey, DiagnosticLevel.Warning,
                 $"{duplicates} BSObjectId.Id value(s) are shared by several synced, attached or seat objects: {text}. " +
                 "Only one of them syncs (the Banter client binds one object per Id). Give each a unique Id " +
-                "(Altspace > Local Multiplayer > Assign Stable Ids).");
+                "(Creator SDK > Local Multiplayer > Assign Stable Ids).");
         }
 
         // ─── Peers ──────────────────────────────────────────────────────────────
@@ -351,7 +351,7 @@ namespace BS.LocalMultiplayer.Objects
                 if (extraRuntime.Count > 0)
                     text.Append($"{who} created objects at runtime with Ids you don't have: {DescribeRemote(extraRuntime)}. ");
                 text.Append("Those objects don't sync between you. Save the scene before pressing Play (players load it from " +
-                            "disk) and give objects stable Ids (Altspace > Local Multiplayer > Assign Stable Ids); an Id " +
+                            "disk) and give objects stable Ids (Creator SDK > Local Multiplayer > Assign Stable Ids); an Id " +
                             "created at runtime differs in every player.");
                 bool authoredMismatch = lacking.Count + extra.Count > 0;
                 SetEntry(key, authoredMismatch ? DiagnosticLevel.Warning : DiagnosticLevel.Info, text.ToString());

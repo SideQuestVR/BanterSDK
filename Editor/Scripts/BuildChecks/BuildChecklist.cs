@@ -168,7 +168,7 @@ namespace BS.SDKEditor.BuildChecks
             return scene.IsValid() && scene.isLoaded;
         }
 
-        [MenuItem("Altspace/Tools/Run Build Checklist")]
+        [MenuItem("Creator SDK/Tools/Run Build Checklist")]
         static void RunFromMenu()
         {
             var scenePath = ProjectPrefs.GetString("BanterBuilder_ScenePath", "");
@@ -176,7 +176,7 @@ namespace BS.SDKEditor.BuildChecks
                 scenePath = SceneManager.GetActiveScene().path;
             if (string.IsNullOrEmpty(scenePath))
             {
-                Debug.LogWarning($"{LogTag} Save the scene first, or pick it in the Altspace Builder.");
+                Debug.LogWarning($"{LogTag} Save the scene first, or pick it in the Builder.");
                 return;
             }
             try

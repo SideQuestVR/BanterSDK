@@ -21,6 +21,7 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "assets.android-textures";
         public override string Title => "Android textures";
+        public override string Description => $"The scene's textures are at most {MaxAndroidSize} px on Android, and the large ones are compressed.";
         public override int Order => 210;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -76,6 +77,7 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "assets.audio";
         public override string Title => "Audio";
+        public override string Description => $"Audio clips over {LongClipSeconds:0} seconds aren't kept in memory uncompressed.";
         public override int Order => 220;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)

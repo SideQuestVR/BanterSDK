@@ -32,6 +32,12 @@ namespace BS.SDKEditor.BuildChecks
         /// <summary>Short name shown while the checklist runs.</summary>
         public abstract string Title { get; }
 
+        /// <summary>
+        /// What the check looks at, in a sentence, for creators who don't know it by name: the Builder shows it
+        /// when the check's row is hovered, and under its name in the list of checks that passed.
+        /// </summary>
+        public virtual string Description => "";
+
         /// <summary>Checks run in ascending order.</summary>
         public virtual int Order => 100;
 
@@ -70,9 +76,9 @@ namespace BS.SDKEditor.BuildChecks
             return this;
         }
 
-        public BuildCheckIssue WithFix(string label, Func<BuildCheckIssue, bool> apply, bool needsLoadedScene = true)
+        public BuildCheckIssue WithFix(string label, Func<BuildCheckIssue, bool> apply, bool needsLoadedScene = true, bool interactive = false)
         {
-            Fix = new BuildCheckFix { Label = label, Apply = apply, NeedsLoadedScene = needsLoadedScene };
+            Fix = new BuildCheckFix { Label = label, Apply = apply, NeedsLoadedScene = needsLoadedScene, Interactive = interactive };
             return this;
         }
 
@@ -104,6 +110,8 @@ namespace BS.SDKEditor.BuildChecks
         public Func<BuildCheckIssue, bool> Apply;
         /// <summary>Whether the fix edits the checked scene, which then has to be open.</summary>
         public bool NeedsLoadedScene = true;
+        /// <summary>Whether the fix asks before it changes anything (a restart, say). Fix All leaves these to their own button.</summary>
+        public bool Interactive;
     }
 
     /// <summary>

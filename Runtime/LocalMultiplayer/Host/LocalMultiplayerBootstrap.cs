@@ -133,7 +133,7 @@ namespace BS.LocalMultiplayer
             if (LocalMultiplayerHost.Instance != null) return;
             if (BSStarterUpper.AutoStartDisabled)
             {
-                ExplainSkip("the Banter desktop controller is switched off (Altspace menu), so there is no local player to network.");
+                ExplainSkip("the Banter desktop controller is switched off (Creator SDK > Tools > Toggle Desktop Controller), so there is no local player to network.");
                 return;
             }
             if (BSDesktopController.Instance == null)

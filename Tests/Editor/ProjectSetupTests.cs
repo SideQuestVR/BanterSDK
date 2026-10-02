@@ -10,7 +10,7 @@ using UnityEngine.TestTools;
 namespace BS.SDKEditor.Tests
 {
     /// <summary>
-    /// The Welcome window's setup checklist: what Fix All runs and skips, and the layer and tag plan behind the
+    /// The Setup panel's checklist: what Fix All runs and skips, and the layer and tag plan behind the
     /// "SDK layers and tags" item.
     /// </summary>
     public class ProjectSetupTests
@@ -114,7 +114,8 @@ namespace BS.SDKEditor.Tests
                 Assert.IsFalse(string.IsNullOrWhiteSpace(check.Why), check.Id + " doesn't say why it's needed");
                 Assert.IsFalse(string.IsNullOrWhiteSpace(check.WithoutIt), check.Id + " doesn't say what goes wrong without it");
             }
-            CollectionAssert.IsSubsetOf(new[] { "sdk.layers-tags", "sdk.visual-scripting", "sdk.api-compatibility", "sdk.webroot", "sdk.input-handling" },
+            CollectionAssert.IsSubsetOf(new[] { "sdk.layers-tags", "sdk.visual-scripting", "sdk.api-compatibility", "sdk.webroot", "sdk.input-handling",
+                    "sdk.textmeshpro", "sdk.urp", "sdk.graphics-apis", "sdk.color-space" },
                 checks.Select(check => check.Id).ToList());
         }
 

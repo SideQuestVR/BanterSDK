@@ -39,8 +39,8 @@ namespace BS.SDKEditor
 
         const string PROPERTY_NAME = "activeInputHandler";
         const string PROJECT_SETTINGS_PATH = "ProjectSettings/ProjectSettings.asset";
-        const string MENU_PATH = "Altspace/Tools/Fix Active Input Handling";
-        const string MENU_DISPLAY = "Altspace > Tools > Fix Active Input Handling";
+        const string MENU_PATH = "Creator SDK/Tools/Fix Active Input Handling";
+        const string MENU_DISPLAY = "Creator SDK > Tools > Fix Active Input Handling";
         const string RESTART_LATER = "[Banter] Active Input Handling is now \"Both\". Restart Unity when you're ready for it to take effect.";
 
         // -- Detection ----------------------------------------------------------
@@ -272,8 +272,11 @@ namespace BS.SDKEditor
 
             // Set 2 outright rather than going through the two-bool backend API, which has a
             // documented (false, false) trap - see EditorPlayerSettingHelpers.cs:105-114.
+            var previous = prop.intValue;
             prop.intValue = (int)InputHandling.Both;
-            so.ApplyModifiedProperties();
+            // Not on the undo stack: Ctrl+Z for something else would put the old value back in memory while the
+            // Setup panel still waits for a restart, and quitting to restart would then save the old value.
+            so.ApplyModifiedPropertiesWithoutUndo();
 
             // Force this object out to disk before the on-disk check below - SaveAssets()
             // alone doesn't guarantee Player Settings has been flushed yet, and a stale read
@@ -283,6 +286,9 @@ namespace BS.SDKEditor
 
             if (Current != InputHandling.Both || !VerifyOnDisk(assetPath))
             {
+                // Put the value in memory back too, so nothing reads "Both" for a change that a restart won't keep.
+                prop.intValue = previous;
+                so.ApplyModifiedPropertiesWithoutUndo();
                 Debug.LogError("[Banter] Writing Active Input Handling to \"Both\" did not stick - is " + assetPath +
                                " read-only? Set it by hand under Edit > Project Settings > Player.");
                 return false;
@@ -372,7 +378,7 @@ namespace BS.SDKEditor
         // -- Startup, run from the bootstrap below ------------------------------
 
         /// <summary>
-        /// Startup doesn't ask any more: the setup checklist in the Welcome window (Altspace > Welcome)
+        /// Startup doesn't ask any more: the Setup panel's checklist (Creator SDK > Setup)
         /// shows this setting and fixes it, with a restart, when the creator chooses. This only keeps
         /// Unity's own Input System prompt away, which would ask a narrower version of the same question.
         /// </summary>

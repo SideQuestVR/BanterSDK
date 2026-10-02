@@ -11,6 +11,9 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "scene.convex-colliders";
         public override string Title => "Convex mesh colliders";
+        public override string Description =>
+            "Mesh colliders on big static geometry, like floors and walls, don't have Convex ticked. Convex collides against a rough hull, " +
+            "so players can end up standing on air or stuck.";
         public override int Order => 50;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -41,6 +44,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "scene.tags";
         public override string Title => "Tags";
+        public override string Description => "Objects only use tags the client has: Unity's built-in ones and the SDK's.";
         public override int Order => 60;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -61,6 +65,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "scene.missing-scripts";
         public override string Title => "Missing scripts";
+        public override string Description => "No object has a component whose script was deleted or isn't in this project.";
         public override int Order => 70;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -93,6 +98,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "scene.missing-graphs";
         public override string Title => "Visual Scripting graphs";
+        public override string Description => "Every Script Machine and State Machine has its graph asset.";
         public override int Order => 75;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -119,6 +125,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "scene.cameras-listeners";
         public override string Title => "Cameras and audio listeners";
+        public override string Description => "No scene camera draws to the screen, and the scene has no Audio Listener: the player brings both.";
         public override int Order => 80;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -176,6 +183,9 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "render.materials";
         public override string Title => "Materials";
+        public override string Description =>
+            "Renderers have no empty material slots, no missing or broken shaders, and none of Unity's Built-in pipeline shaders " +
+            "(Standard, Legacy Shaders, Mobile, Nature...), which render pink in URP.";
         public override int Order => 90;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -266,6 +276,9 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "scene.budget";
         public override string Title => "Scene size";
+        public override string Description =>
+            $"The scene fits what a Quest loads comfortably: about {TriangleBudget:N0} triangles and " +
+            $"{TextureMemoryBudget / (1024 * 1024):N0} MB of textures.";
         public override int Order => 200;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)

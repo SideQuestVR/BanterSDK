@@ -5,7 +5,7 @@
 // (:53-167, its placeholder renderer left out since the orb is always present); and RemoteAvatarService's gating of a
 // loaded avatar on its first bone pose (:316-335). The PacketParty runtime's part of the receive path (validate the
 // frame, push it into the playback buffer, raise it to the bone applier only when accepted; :884-906) is ReceiveFrame.
-// Deliberate desktop-only deviation: the Body sits on layer 17 (NetworkPlayer), not the prefab's 5 (UI); see BodyLayer.
+// Deliberate desktop-only deviation: the Body sits on layer 0 (Default), not the prefab's 5 (UI); see BodyLayer.
 using System;
 using UnityEngine;
 
@@ -27,13 +27,13 @@ namespace BS.LocalMultiplayer.Avatars
         const double MaxClockSkewMs = 5000.0;
 
         /// <summary>
-        /// The Body trigger's layer: 17, the SDK's "NetworkPlayer". RemotePlayer.prefab puts it on 5 (UI); production
+        /// The Body trigger's layer: 0 (Default). RemotePlayer.prefab puts it on 5 (UI); production
         /// grabs with hands, not rays, so there it never blocks a grab. Here the desktop grab ray stops at a trigger on
         /// BSDesktopController's click layers (5 and 22), so nothing behind another player could be grabbed, and the
         /// pointer would click the body. A deliberate, desktop-only deviation: trigger volumes still see the body and
         /// find its UserData, but the desktop pointer sends a page no clicks on a remote player.
         /// </summary>
-        public const int BodyLayer = 17;
+        public const int BodyLayer = 0;
 
         [NonSerialized] bool _live;
 

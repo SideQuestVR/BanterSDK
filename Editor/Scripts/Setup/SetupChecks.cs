@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace BS.SDKEditor.Setup
 {
@@ -43,13 +44,13 @@ namespace BS.SDKEditor.Setup
         public override int Order => 10;
         public override string FixLabel => "Set up";
         public override string Why =>
-            "Scenes store layers by number, so each of the SDK's layers has to be in the slot the client uses (Grabbable is 20, NetworkPlayer 17...). " +
+            "Scenes store layers by number, so each of the SDK's layers has to be in the slot the client uses (Grabbable is 20, Menu 22...). " +
             "Its tags are how teleporters, portals and triggers recognise the player.";
         public override string WithoutIt =>
             "Grab handles that aren't on the client's Grabbable layer can't be grabbed, layer masks don't line up with the client's, " +
             "and in Play mode portals and teleporters don't see the player.";
         public override string FixChanges =>
-            "Names layers 3 and 6 to 31 the way the client does, renaming any slot that has another name (the item's details list them). " +
+            "Names layers 3 and 6 to 24 the way the client does (25 and up are left alone), renaming any slot that has another name (the item's details list them). " +
             "Adds the SDK's tags after your own; existing tags are kept.";
 
         public override SetupStatus Evaluate()
@@ -111,7 +112,9 @@ namespace BS.SDKEditor.Setup
         public override string Why =>
             "Assets/WebRoot/index.html is your space's web page: Play mode serves it to the SDK's browser, " +
             "and the Builder builds the space into the same folder and uploads it from there.";
-        public override string WithoutIt => "The Builder has no page to upload, and Play mode creates a bare one the first time you press Play.";
+        public override string WithoutIt =>
+            "Your space has no page to add scripts and content to. A world uploaded without its page doesn't load, so building and " +
+            "pressing Play also create this starter page when there's none.";
         public override string FixChanges => "Creates Assets/WebRoot/index.html with a minimal page. An existing page is never changed.";
 
         public override SetupStatus Evaluate() =>
@@ -126,7 +129,6 @@ namespace BS.SDKEditor.Setup
     {
         public override string Id => "sdk.textmeshpro";
         public override string Title => "TextMesh Pro essentials";
-        public override SetupImportance Importance => SetupImportance.Recommended;
         public override int Order => 40;
         public override string FixLabel => "Import";
         public override string Why => "BS Text, and any other TextMesh Pro text, needs TextMesh Pro's default font and settings in the project.";
@@ -166,6 +168,13 @@ namespace BS.SDKEditor.Setup
             AssetDatabase.importPackageFailed -= ImportFailed;
             AssetDatabase.importPackageCancelled -= ImportEnded;
             s_Importing = false;
+            // As TMP's own importer window does. Text that woke up before the import is waiting for this event, and
+            // stays blank without it until the scene reloads.
+            if (package == "TMP Essential Resources" && AssetDatabase.FindAssets("t:" + nameof(TMPro.TMP_Settings)).Length > 0)
+            {
+                TMPro.TMPro_EventManager.ON_RESOURCES_LOADED();
+                SettingsService.NotifySettingsProviderChanged();
+            }
             ProjectSetup.NotifyChanged();
         }
     }
@@ -176,7 +185,6 @@ namespace BS.SDKEditor.Setup
 
         public override string Id => "sdk.urp";
         public override string Title => "Universal Render Pipeline";
-        public override SetupImportance Importance => SetupImportance.Recommended;
         public override int Order => 50;
         public override string FixLabel => "Set rendering modes";
         public override string ManualActionLabel => "Open Graphics settings";
@@ -216,11 +224,96 @@ namespace BS.SDKEditor.Setup
         public override void ManualAction() => SettingsService.OpenProjectSettings("Project/Graphics");
     }
 
+    /// <summary>
+    /// A space carries shaders only for the graphics APIs its project builds for: Android on Auto (Vulkan, then OpenGL ES 3,
+    /// which Quest runs) and Windows on the list the client is built with.
+    /// </summary>
+    sealed class GraphicsApiSetupCheck : SetupCheck
+    {
+        static readonly GraphicsDeviceType[] WindowsApis = { GraphicsDeviceType.Direct3D11, GraphicsDeviceType.Direct3D12, GraphicsDeviceType.Vulkan };
+        // Both Windows targets share one setting; both are set so neither can disagree.
+        static readonly BuildTarget[] WindowsTargets = { BuildTarget.StandaloneWindows64, BuildTarget.StandaloneWindows };
+
+        public override string Id => "sdk.graphics-apis";
+        public override string Title => "Graphics APIs";
+        public override int Order => 52;
+        public override string FixLabel => "Set graphics APIs";
+        public override string Why =>
+            "A space only carries shaders for the graphics APIs your project builds for. Quest runs Vulkan, with OpenGL ES 3 as a fallback, " +
+            "which is what Auto Graphics API picks for Android. The Windows client is built for Direct3D 11, Direct3D 12 and Vulkan.";
+        public override string WithoutIt =>
+            "Without Vulkan shaders a space renders pink on Quest. An Android list of your own works while it keeps Vulkan; Auto keeps it to " +
+            "what Unity picks for Quest. On Windows, materials render pink whenever the client runs on a graphics API the space has no shaders for.";
+        public override string FixChanges =>
+            "Turns on Auto Graphics API for Android and sets Windows to Direct3D 11, Direct3D 12 and Vulkan, in Player Settings > Other Settings. " +
+            "Builds take a little longer, since shaders are compiled for each API. On the Windows build target the editor itself uses " +
+            "Direct3D 11 from its next start.";
+
+        public override SetupStatus Evaluate()
+        {
+            var problems = new List<string>();
+            var androidAuto = PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.Android);
+            var androidVulkan = PlayerSettings.GetGraphicsAPIs(BuildTarget.Android).Contains(GraphicsDeviceType.Vulkan);
+            if (!androidAuto)
+                problems.Add(androidVulkan ? "Android has a list of its own, not Auto Graphics API" : "Android has no Vulkan, and isn't on Auto Graphics API");
+            if (WindowsTargets.Any(NeedsClientList))
+                problems.Add("Windows doesn't use the client's list");
+
+            var current = "Android: " + Describe(BuildTarget.Android) + ". Windows: " + Describe(BuildTarget.StandaloneWindows64) + ".";
+            if (problems.Count > 0)
+                return SetupStatus.NeedsFix(string.Join("; ", problems), "Now: " + current);
+            // Can't happen on Unity 6000.3, whose Auto list for Android is Vulkan then OpenGL ES 3. This item's fix only
+            // turns Auto on, so a Unity whose Auto list leaves Vulkan out needs a list made by hand.
+            if (!androidVulkan)
+                return SetupStatus.NeedsManualFix("Unity's Auto Graphics API for Android has no Vulkan",
+                    "Quest needs Vulkan shaders. In Player Settings > Other Settings, turn off Auto Graphics API for Android and put Vulkan " +
+                    "first. Now: " + current);
+            return SetupStatus.Done(current);
+        }
+
+        public override bool Fix()
+        {
+            var changed = false;
+            if (!PlayerSettings.GetUseDefaultGraphicsAPIs(BuildTarget.Android))
+            {
+                PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, true);
+                changed = true;
+            }
+            // Only a Windows list Evaluate rejected: one that already has the client's three, in any order or with
+            // more, is left as it is.
+            foreach (var target in WindowsTargets.Where(NeedsClientList))
+            {
+                PlayerSettings.SetUseDefaultGraphicsAPIs(target, false);
+                PlayerSettings.SetGraphicsAPIs(target, WindowsApis);
+                changed = true;
+            }
+            return changed;
+        }
+
+        static bool NeedsClientList(BuildTarget target) =>
+            PlayerSettings.GetUseDefaultGraphicsAPIs(target) || WindowsApis.Any(api => !PlayerSettings.GetGraphicsAPIs(target).Contains(api));
+
+        static string Describe(BuildTarget target) =>
+            (PlayerSettings.GetUseDefaultGraphicsAPIs(target) ? "Auto (" : "") +
+            string.Join(", ", PlayerSettings.GetGraphicsAPIs(target).Select(Name)) +
+            (PlayerSettings.GetUseDefaultGraphicsAPIs(target) ? ")" : "");
+
+        static string Name(GraphicsDeviceType api)
+        {
+            switch (api)
+            {
+                case GraphicsDeviceType.OpenGLES3: return "OpenGL ES 3";
+                case GraphicsDeviceType.Direct3D11: return "Direct3D 11";
+                case GraphicsDeviceType.Direct3D12: return "Direct3D 12";
+                default: return api.ToString();
+            }
+        }
+    }
+
     sealed class ColorSpaceSetupCheck : SetupCheck
     {
         public override string Id => "sdk.color-space";
         public override string Title => "Linear color space";
-        public override SetupImportance Importance => SetupImportance.Recommended;
         public override int Order => 55;
         public override string FixLabel => "Use Linear";
         public override string Why => "The client renders in Linear color space.";
@@ -286,11 +379,7 @@ namespace BS.SDKEditor.Setup
             return SetupStatus.Done("BS components and the SDK's nodes are in the fuzzy finder.");
         }
 
-        public override bool Fix()
-        {
-            VsNodeGeneration.SetVSTypesAndAssemblies();
-            return true;
-        }
+        public override bool Fix() => VsNodeGeneration.SetVSTypesAndAssemblies();
     }
 
     sealed class InputHandlingSetupCheck : SetupCheck

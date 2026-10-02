@@ -23,6 +23,11 @@ namespace BS
         private object process;
         public BSScene scene;
         public static string WEB_ROOT = "WebRoot";
+        // The index.html a new space starts with, wherever it's created. world-asset: the space loads its one
+        // combined bundle from next to this page.
+        // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
+        public const string STARTER_PAGE =
+            "<html world-asset>\n<head>\n  <meta charset=\"utf-8\">\n  <title>Space</title>\n</head>\n<body>\n</body>\n</html>\n";
         public static int mainWWindowId;
         public static int mainWWindowPort = -2;
         private int processId;
@@ -335,13 +340,13 @@ namespace BS
 
         void CreateWebRoot()
         {
-            // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
 #if !GREENFIELD_PROJECT
-            var webRoot = Application.dataPath + "/WebRoot";
-            if (Directory.Exists(webRoot))
+            var webRoot = Application.dataPath + "/" + WEB_ROOT;
+            // The page, not the folder: the folder can exist without one.
+            if (File.Exists(webRoot + "/index.html"))
                 return;
             Directory.CreateDirectory(webRoot);
-            File.WriteAllText(webRoot + "/index.html", "<html android-bundle windows-bundle><head>");
+            File.WriteAllText(webRoot + "/index.html", STARTER_PAGE);
 #endif
         }
 

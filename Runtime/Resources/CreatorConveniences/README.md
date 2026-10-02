@@ -58,22 +58,22 @@ Replace the placeholder meshes with your own and keep the handle collider on the
 
 ## Build checklist
 
-Before every build (and on **RUN CHECKS** in the Altspace Builder), the builder checks the scene and project and lists what it finds:
+When the Builder opens on a scene, on **Re-check**, and before every build, the Builder checks the scene and lists what it finds:
 
+- the project setup: one row for the Setup panel's required items (missing build support blocks the build)
 - Visual Scripting nodes the client won't run
 - convex colliders on large static geometry
-- build modules, input handling, SDK layers and tags, URP renderer modes
 - missing scripts and graphs, scene cameras and audio listeners, pink materials
 - oversized or uncompressed Android textures, uncompressed long audio, overall scene size
 - the conveniences above set up wrongly
 
-Checks only report. A **FIX** button changes things only when clicked, with undo, and **SELECT** shows what an issue is about.
+Checks only report. A **Fix** button changes things only when clicked, with undo; **Fix All** runs every fix that doesn't ask first; **Select** shows what an issue is about.
 
-- **Notes and warnings** are listed in the confirmation, whose button becomes **BUILD ANYWAY**.
+- **Notes and warnings** are listed in the confirmation, whose button becomes **Build anyway**.
 - **Errors marked "blocks the build"** stop it; other errors can be built past interactively.
 - **Unattended (batch) builds** stop on any error and never show dialogs.
 
-The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone. `Altspace > Tools > Run Build Checklist` runs it and logs the results to the Console.
+The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone. `Creator SDK > Tools > Run Build Checklist` runs it and logs the results to the Console.
 
 ## Known limitations
 

@@ -100,7 +100,7 @@ public class LoginManager
     }
     public void SetBuildButtonText()
     {
-        buildButton.text = autoUpload.value && sq.User != null ? "BUILD & UPLOAD" : "BUILD";
+        buildButton.text = autoUpload.value && sq.User != null ? "Build & upload" : "Build";
     }
 
     /// <summary>
@@ -162,7 +162,7 @@ public class LoginManager
             Debug.LogException(error);
             if (IsCeilingReached)
             {
-                codeText.text = "Code expired. Click SIGN IN for a new one.";
+                codeText.text = "Code expired. Click Sign in for a new one.";
                 return;
             }
             codeText.text = "Can't reach SideQuest, retrying...";
@@ -229,7 +229,7 @@ public class LoginManager
             {
                 // Nobody has signed in for a long time; stop hitting the API until the user comes back.
                 waitCoroutine = null;
-                codeText.text = "Code expired. Click SIGN IN for a new one.";
+                codeText.text = "Code expired. Click Sign in for a new one.";
                 yield break;
             }
 
@@ -349,6 +349,8 @@ public class LoginManager
         linkPage.style.display = DisplayStyle.None;
         statusText.text = $"Hi {sq.User.Name}!";
         autoUpload.style.display = DisplayStyle.Flex;
+        // As ShowUploadToggle does: the window's refresh after a sign-in skips it, which left these hidden until reopened.
+        ExtraUploadButtons.style.display = DisplayStyle.Flex;
         SetBuildButtonText();
         OnLoginCompleted?.Invoke();
     }

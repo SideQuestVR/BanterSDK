@@ -15,6 +15,7 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "bs.seat";
         public override string Title => "Seats";
+        public override string Description => "Every seat has a collider to click, on a layer SDK Play mode can click (UI or Menu).";
         public override int Order => 300;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -76,6 +77,7 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "bs.grab-handles";
         public override string Title => "Grab handles";
+        public override string Description => "Every grab handle is on the Grabbable layer and has its own collider.";
         public override int Order => 310;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -117,6 +119,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "bs.grababble";
         public override string Title => "Grababble";
+        public override string Description => "No object uses BSGrababble, which can't be picked up when it's placed in the editor.";
         public override int Order => 320;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -141,6 +144,7 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "bs.settings";
         public override string Title => "Scene settings";
+        public override string Description => "There's at most one Scene Settings component, and the page's script doesn't replace its values.";
         public override int Order => 330;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -193,6 +197,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "bs.spawn";
         public override string Title => "Spawn points";
+        public override string Description => "The scene has an active spawn point, and none has a negative radius.";
         public override int Order => 340;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -227,6 +232,7 @@ namespace BS.SDKEditor.BuildChecks
     {
         public override string Id => "bs.teleporter";
         public override string Title => "Teleporters";
+        public override string Description => "Every teleporter has a trigger collider, and a destination outside it.";
         public override int Order => 350;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)

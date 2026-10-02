@@ -6,7 +6,7 @@ using UnityEngine.Profiling;
 
 /// <summary>
 /// Quick, dependency-graph-based triangle/texture-memory summary for whatever Scene or
-/// Prefab(s) were just dropped into Altspace Builder - works on unopened Scene/Prefab assets
+/// Prefab(s) were just dropped into the Builder - works on unopened Scene/Prefab assets
 /// (no need to load the scene), same technique as Bundle Analyzer's dependency walker. Not a
 /// full breakdown (see Bundle Analyzer for that) - just enough for an at-a-glance sanity check
 /// right after dropping something in.

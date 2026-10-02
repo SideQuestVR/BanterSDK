@@ -17,8 +17,21 @@ namespace BS.SDKEditor.Tests
         static Type FindType(string fullName) =>
             AppDomain.CurrentDomain.GetAssemblies().Select(assembly => assembly.GetType(fullName)).FirstOrDefault(type => type != null);
 
-        static bool OnTheNodeLibrary(Type type) =>
-            VsNodeGeneration.assemblyAllowList.Contains(type.Assembly.GetName().Name) || VsNodeGeneration.typeAllowList.Contains(type);
+        // Visual Scripting's own rule (Codebase.UpdateSettings): only types from a listed assembly, and of those, the
+        // ones on the type list, enums and UnityEngine.Objects (unless [IncludeInSettings(false)]), and anything with
+        // [IncludeInSettings(true)]. A plain class like BSUser needs to be on the type list.
+        static bool OnTheNodeLibrary(Type type)
+        {
+            if (!VsNodeGeneration.assemblyAllowList.Contains(type.Assembly.GetName().Name))
+                return false;
+            if (VsNodeGeneration.typeAllowList.Contains(type))
+                return true;
+            var attribute = (Unity.VisualScripting.IncludeInSettingsAttribute)Attribute.GetCustomAttribute(type,
+                typeof(Unity.VisualScripting.IncludeInSettingsAttribute));
+            if (type.IsEnum || typeof(UnityEngine.Object).IsAssignableFrom(type))
+                return attribute == null || attribute.include;
+            return attribute != null && attribute.include;
+        }
 
         [Test]
         public void TheSdkAssemblies_AreOnTheList()
@@ -42,9 +55,11 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void EveryBsTypeTheClientRuns_HasNodes()
         {
-            // VsStubsAllowed lists the members the client runs: "BS.BSText.text", "BS.BSUser..ctor".
+            // VsStubsAllowed lists the members the client runs: "BS.BSText.text", "BS.BSUser..ctor". It also lists
+            // each one under its old name ("BS.BanterText.text") for graphs made before the rename; those types are
+            // Banter.SDK's legacy stubs, so the names never resolve here.
             var typeNames = VsStubsAllowed.members
-                .Where(member => member.StartsWith("BS.", StringComparison.Ordinal))
+                .Where(member => member.StartsWith("BS.", StringComparison.Ordinal) && !member.StartsWith("BS.Banter", StringComparison.Ordinal))
                 .Select(member => member.EndsWith("..ctor", StringComparison.Ordinal)
                     ? member.Substring(0, member.Length - "..ctor".Length)
                     : member.Substring(0, member.LastIndexOf('.')))

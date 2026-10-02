@@ -153,7 +153,7 @@ namespace BS.SDKEditor
             if (Application.isBatchMode)
             {
                 Debug.LogError($"{Tag} Publish blocked: {count} convex mesh collider(s) on static geometry. "
-                               + "Untick Convex on them, or run Altspace > Tools > Fix Convex Colliders.");
+                               + "Untick Convex on them, or run Creator SDK > Tools > Fix Convex Colliders.");
                 return false;
             }
 
@@ -176,7 +176,7 @@ namespace BS.SDKEditor
                 sb.AppendLine($"  ...and {findings.Count - shown} more (full list in the console)");
 
             sb.AppendLine();
-            sb.Append("To fix: untick Convex on each Mesh Collider, or run Altspace > Tools > Fix Convex Colliders.");
+            sb.Append("To fix: untick Convex on each Mesh Collider, or run Creator SDK > Tools > Fix Convex Colliders.");
             return sb.ToString();
         }
 
@@ -191,7 +191,7 @@ namespace BS.SDKEditor
             + "MeshCollider with non-kinematic Rigidbody is not supported\" error, then left behind "
             + "once the Rigidbody is gone.\n";
 
-        [MenuItem("Altspace/Tools/Validate Colliders")]
+        [MenuItem("Creator SDK/Tools/Validate Colliders")]
         public static void ValidateMenu()
         {
             var report = new StringBuilder();
@@ -204,7 +204,7 @@ namespace BS.SDKEditor
         /// Unticks Convex on everything the validator flags. Deliberately a separate, explicit action
         /// rather than something the publish gate does on its own, because it changes collision shape.
         /// </summary>
-        [MenuItem("Altspace/Tools/Fix Convex Colliders")]
+        [MenuItem("Creator SDK/Tools/Fix Convex Colliders")]
         public static void FixMenu()
         {
             var findings = new List<Finding>();

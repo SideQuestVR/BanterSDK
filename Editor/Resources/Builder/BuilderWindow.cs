@@ -143,59 +143,59 @@ public class BuilderWindow : EditorWindow
     FlexaPose currentFlexaPose;
 
 
-    [MenuItem("Altspace/Altspace Builder")]
+    [MenuItem("Creator SDK/Builder", false, 1)]
     public static void ShowMainWindow()
     {
         Type inspectorType = Type.GetType("UnityEditor.InspectorWindow,UnityEditor.dll");
         BuilderWindow window = EditorWindow.GetWindow<BuilderWindow>(new Type[] { inspectorType });
         window.minSize = new Vector2(450, 200);
-        window.titleContent = new GUIContent("Altspace Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
+        window.titleContent = new GUIContent("Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
     }
 
 
 #if GREENFIELD_PROJECT
-    [MenuItem("Altspace/Tools/Compile C# Components")]
+    [MenuItem("Creator SDK/Tools/Compile C# Components")]
     public static void CompileAllComponents()
     {
         OnCompileAll.Invoke();
     }
-    [MenuItem("Altspace/Tools/Clear C# Components")]
+    [MenuItem("Creator SDK/Tools/Clear C# Components")]
     public static void ClearAllComponents()
     {
         OnClearAll.Invoke();
     }
-    [MenuItem("Altspace/Tools/Compile Injection")]
+    [MenuItem("Creator SDK/Tools/Compile Injection")]
     public static void CompileInjection()
     {
         OnCompileInjection.Invoke();
     }
 #else
-    [MenuItem("Altspace/Tools/Setup Layers")]
+    [MenuItem("Creator SDK/Tools/Setup Layers")]
     public static void SetupLayersAndTags()
     {
         InitialiseOnLoad.SetupLayersAndTags();
     }
 #endif
-    [MenuItem("Altspace/Tools/Toggle Dev Tools")]
+    [MenuItem("Creator SDK/Tools/Toggle Dev Tools")]
     public static void ToggleDevTools()
     {
         BSStarterUpper.ToggleDevTools();
     }
 
-    [MenuItem("Altspace/Tools/Toggle Desktop Controller (Camera + Keyboard Input)")]
+    [MenuItem("Creator SDK/Tools/Toggle Desktop Controller (Camera + Keyboard Input)")]
     public static void ToggleAutoStart()
     {
         BSStarterUpper.ToggleAutoStart();
     }
 
 #if GREENFIELD_PROJECT
-    [MenuItem("Altspace/Tools/Configure Visual Scripting")]
+    [MenuItem("Creator SDK/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         OnVisualScript.Invoke();
     }
 #else 
-    [MenuItem("Altspace/Tools/Configure Visual Scripting")]
+    [MenuItem("Creator SDK/Tools/Configure Visual Scripting")]
     public static void VisualScript()
     {
         VsNodeGeneration.SetVSTypesAndAssemblies();
@@ -203,7 +203,7 @@ public class BuilderWindow : EditorWindow
 #endif 
 
 #if GREENFIELD_PROJECT
-    [MenuItem("Altspace/Tools/Domain Reload")]
+    [MenuItem("Creator SDK/Tools/Domain Reload")]
     public static void DomainReload()
     {
         EditorUtility.RequestScriptReload();
@@ -216,6 +216,7 @@ public class BuilderWindow : EditorWindow
     {
         loginManager?.Dispose();
         SceneView.duringSceneGui -= OnSceneGUI;
+        EditorApplication.update -= RunChecklistOnOpen;
     }
 
     private void OnFocus()
@@ -223,6 +224,15 @@ public class BuilderWindow : EditorWindow
         // While signed out, coming back to the window makes sure the code on screen is still
         // redeemable and that we're listening for its approval (see LoginManager.OnWindowFocused).
         loginManager?.OnWindowFocused();
+        // The editor theme can change while the window is open.
+        ApplySkinClass();
+    }
+
+    // The stylesheet follows the editor theme; only the white icons need telling which skin this is.
+    void ApplySkinClass()
+    {
+        rootVisualElement.EnableInClassList("builder--dark", EditorGUIUtility.isProSkin);
+        rootVisualElement.EnableInClassList("builder--light", !EditorGUIUtility.isProSkin);
     }
 
     void ShowWebRoot()
@@ -240,10 +250,22 @@ public class BuilderWindow : EditorWindow
     {
         
         SceneView.duringSceneGui += OnSceneGUI;
+        // Here as well as in ShowMainWindow: a window restored with the layout keeps whatever title it was saved with.
+        titleContent = new GUIContent("Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
+        // The checklist's look, shared with the Setup panel's.
+        var checklistStyles = AssetDatabase.LoadAssetAtPath<StyleSheet>(BS.SDKEditor.Setup.SdkSetupWindow.ChecklistStyleSheetPath);
+        if (checklistStyles != null)
+            rootVisualElement.styleSheets.Add(checklistStyles);
+        ApplySkinClass();
         rootVisualElement.Add(content);
+        // Null while an SDK update is mid-import: scripts reload before the new UXML is imported.
+        var versionLabel = rootVisualElement.Q<Label>("BuilderVersion");
+        var version = PackageManagerUtility.currentVersion;
+        if (versionLabel != null)
+            versionLabel.text = string.IsNullOrEmpty(version) ? "" : "Version " + version;
         SqEditorAppApiConfig config = new SqEditorAppApiConfig(isTestEnvironment ? SQ_API_CLIENT_ID_TEST : SQ_API_CLIENT_ID, Application.persistentDataPath, isTestEnvironment);
         sq = new SqEditorAppApi(config);
         SetupUI();
@@ -286,9 +308,32 @@ public class BuilderWindow : EditorWindow
             RefreshAvatarView(); 
         }
         RefreshView(); 
+        // The checklist runs when the window opens on a scene, after it has finished setting up.
+        if (mode == BSBuilderBundleMode.Scene)
+            EditorApplication.update += RunChecklistOnOpen;
     }
 
-    [MenuItem("Altspace/Tools/Clear All Asset Bundles")]
+    // Quiet, unlike Re-check and builds: no progress bar and nothing in the Console, since it also runs after
+    // every script reload. EditorApplication.update rather than delayCall, which waits for a repaint.
+    void RunChecklistOnOpen()
+    {
+        // Wait out Play mode, compiles and imports, as the Setup panel's startup check does. Entering Play mode reloads
+        // the window, so giving up here left "Not checked yet" after every play session.
+        if (this != null && (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating))
+            return;
+        EditorApplication.update -= RunChecklistOnOpen;
+        if (this == null || mode != BSBuilderBundleMode.Scene || string.IsNullOrEmpty(scenePath))
+            return;
+        // Moved or deleted since it was dropped here: say so, rather than an error after every script reload.
+        if (!File.Exists(scenePath))
+        {
+            checklistView.ShowNotRun($"{scenePath} doesn't exist any more. Drop the scene in again, or press Reset.");
+            return;
+        }
+        RunChecklist(forBuild: false, quiet: true);
+    }
+
+    [MenuItem("Creator SDK/Tools/Clear All Asset Bundles")]
     public static void ClearAllAssetBundles()
     {
         // Fetch all asset paths in the project
@@ -859,6 +904,7 @@ public class BuilderWindow : EditorWindow
                 status.AddStatus("Checklist fix: " + issue.Fix.Label + ".");
             RunChecklist(forBuild: false);
         };
+        checklistView.FixAllRequested += FixAllChecklistIssues;
 
         buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
 
@@ -938,7 +984,7 @@ public class BuilderWindow : EditorWindow
             var checklist = RunChecklist(forBuild: false);
             if (!ChecklistAllows(checklist))
                 return;
-            ShowBuildConfirm(checklist, "UPLOAD");
+            ShowBuildConfirm(checklist, "Upload");
             confirmCallback = () =>
             {
                 confirmCallback = null;
@@ -1273,6 +1319,7 @@ public class BuilderWindow : EditorWindow
         mode = BSBuilderBundleMode.Scene;
         ProjectPrefs.SetString("BanterBuilder_ScenePath", scenePath);
         RefreshView();
+        RunChecklist(forBuild: false, quiet: true);
     }
 
     private void RefreshAvatarView(bool ignoreBones = false)
@@ -1350,7 +1397,7 @@ public class BuilderWindow : EditorWindow
         if (mode == BSBuilderBundleMode.Scene)
         {
             scenePathParent.style.display = DisplayStyle.Flex;
-            scenePathLabel.text = "<color=\"white\">Scene:</color> " + scenePath;
+            scenePathLabel.text = "<b>Scene:</b> " + scenePath;
 
             ShowSceneStats(new[] { scenePath });
             checklistSection.style.display = DisplayStyle.Flex;
@@ -1359,7 +1406,7 @@ public class BuilderWindow : EditorWindow
             loggedInViewScene.style.display = sq.User == null ? DisplayStyle.None : DisplayStyle.Flex;
             buildOptions.style.display = DisplayStyle.Flex;
             loggedInCTAScene.style.display = DisplayStyle.Flex;
-            MainTitle.text = "Scene Build";
+            MainTitle.text = "Scene";
             MainTitle.style.display = DisplayStyle.Flex;
             // button to open the webroot folder - highlight in unity.
         }
@@ -1514,29 +1561,61 @@ public class BuilderWindow : EditorWindow
     /// Runs the pre-build checklist on the builder's scene, shows it in the Checklist section and logs
     /// it. Null if it couldn't run (no scene, or the scene couldn't be opened).
     /// </summary>
-    private BuildChecklistResult RunChecklist(bool forBuild)
+    /// <param name="quiet">For the automatic runs (window opened, scene dropped): no progress bar, no Console or log lines.</param>
+    private BuildChecklistResult RunChecklist(bool forBuild, bool quiet = false)
     {
         try
         {
             var targets = buildTargets.Where((target, i) => i < buildTargetFlags.Length && buildTargetFlags[i]).ToArray();
             var result = BuildChecklist.Run(scenePath, targets, forBuild,
-                (title, done) => EditorUtility.DisplayProgressBar("Build checklist", title, done));
+                quiet ? null : (title, done) => EditorUtility.DisplayProgressBar("Build checklist", title, done));
             lastChecklist = result;
-            checklistView.Show(result);
-            BuildChecklist.Log(result);
-            status.AddStatus("Checklist: " + result.Summary + ".");
+            checklistView.Show(result, logged: !quiet);
+            if (!quiet)
+            {
+                BuildChecklist.Log(result);
+                status.AddStatus("Checklist: " + result.Summary + ".");
+            }
             return result;
         }
         catch (Exception e)
         {
-            Debug.LogException(e);
-            status.AddStatus("The checklist couldn't run: " + e.Message);
+            checklistView.ShowNotRun("The checklist couldn't run: " + e.Message);
+            // An automatic run says so in the checklist only: it also runs after every script reload.
+            if (!quiet)
+            {
+                Debug.LogException(e);
+                status.AddStatus("The checklist couldn't run: " + e.Message);
+            }
             return null;
         }
         finally
         {
             EditorUtility.ClearProgressBar();
         }
+    }
+
+    /// <summary>
+    /// The checklist's Fix All: every fix that just changes the project, then a fresh check. Fixes that ask first (the
+    /// Active Input Handling restart) keep their own button. If a fix needs the scene open and the creator declines to
+    /// open it, the other scene fixes are skipped rather than asked again.
+    /// </summary>
+    private void FixAllChecklistIssues()
+    {
+        var fixes = BuildChecklistView.FixAllIssues(lastChecklist);
+        if (fixes.Count == 0)
+            return;
+        var sceneDeclined = false;
+        foreach (var issue in fixes)
+        {
+            if (issue.Fix.NeedsLoadedScene && sceneDeclined)
+                continue;
+            if (BuildChecklist.ApplyFix(issue, scenePath))
+                status.AddStatus("Checklist fix: " + issue.Fix.Label + ".");
+            else if (issue.Fix.NeedsLoadedScene && !UnityEngine.SceneManagement.SceneManager.GetSceneByPath(scenePath).isLoaded)
+                sceneDeclined = true;
+        }
+        RunChecklist(forBuild: false);
     }
 
     // Hard blockers stop here; everything else is listed in the confirmation, whose button becomes
@@ -1565,16 +1644,16 @@ public class BuilderWindow : EditorWindow
         {
             BuildChecklistView.FillConfirm(confirmChecklist, checklist);
             confirmChecklist.style.display = DisplayStyle.Flex;
-            confirmBuild.text = (action ?? "BUILD") + " ANYWAY";
+            confirmBuild.text = (action ?? "Build") + " anyway";
         }
         else
         {
             confirmChecklist.style.display = DisplayStyle.None;
-            confirmBuild.text = "CONFIRM";
+            confirmBuild.text = "Confirm";
         }
-        confirmBuildMode.text = "<color=\"white\">Build Mode:</color> Scene Bundle";
-        confirmSceneFile.text = "<color=\"white\">Scene File:</color> " + scenePath;
-        confirmSpaceCode.text = "<color=\"white\">World:</color> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".worldspace.host") : SelectedWorldUrl);
+        confirmBuildMode.text = "<b>Build mode:</b> Scene bundle";
+        confirmSceneFile.text = "<b>Scene file:</b> " + scenePath;
+        confirmSpaceCode.text = "<b>World:</b> " + (string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + SelectedWorldSlug + ".worldspace.host") : SelectedWorldUrl);
 
         // Runtime graph edits that this project has already absorbed. Worth saying out loud here
         // because the upload is what makes removing them from the world safe, and removing them is
@@ -1882,7 +1961,7 @@ public class BuilderWindow : EditorWindow
         {
             return;
         }
-        ShowBuildConfirm(checklist, "BUILD");
+        ShowBuildConfirm(checklist, "Build");
         confirmCallback = async () => {
             // Basis' scene build switches the active build target, which schedules a domain reload.
             // That reload is deferred until this async method yields — at which point it destroys the
@@ -1900,6 +1979,12 @@ public class BuilderWindow : EditorWindow
                 }
                 status.AddStatus("Build started...");
 
+#if !GREENFIELD_PROJECT
+                // A world loads from its page, so one that's uploaded without it never loads. Build with one, so the
+                // upload that follows sends it. An existing page is never changed.
+                if (InitialiseOnLoad.CreateWebRoot())
+                    status.AddStatus("Created " + InitialiseOnLoad.WebRootIndexPath + ", a starter page for your world.");
+#endif
                 if (!Directory.Exists(Path.Join(assetBundleRoot, assetBundleDirectory)))
                 {
                     Directory.CreateDirectory(Path.Join(assetBundleRoot, assetBundleDirectory));
