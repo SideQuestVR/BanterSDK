@@ -41,7 +41,6 @@ namespace BS.SDKEditor
         const string PROJECT_SETTINGS_PATH = "ProjectSettings/ProjectSettings.asset";
         const string MENU_PATH = "Altspace/Tools/Fix Active Input Handling";
         const string MENU_DISPLAY = "Altspace > Tools > Fix Active Input Handling";
-        const string PROMPTED_KEY = "BS.SDK.ActiveInputHandling.Prompted";
         const string RESTART_LATER = "[Banter] Active Input Handling is now \"Both\". Restart Unity when you're ready for it to take effect.";
 
         // -- Detection ----------------------------------------------------------
@@ -182,7 +181,6 @@ namespace BS.SDKEditor
                 return;
             }
 
-            SessionState.SetBool(PROMPTED_KEY, true);
             Prompt(current);
         }
 
@@ -371,66 +369,14 @@ namespace BS.SDKEditor
                 "Active Input Handling is now \"Both\". Restart Unity for it to take effect.", "OK");
         }
 
-        // -- Check, run from the bootstrap below --------------------------------
+        // -- Startup, run from the bootstrap below ------------------------------
 
-        internal static void Check()
-        {
-            if (SessionState.GetBool(PROMPTED_KEY, false))
-                return;
-
-            // A dialog raised mid-import cancels the import, so wait it out. This is what
-            // covers the very first import of the SDK.
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
-            {
-                EditorApplication.delayCall += Check;
-                return;
-            }
-
-            // Don't interrupt a build. Re-checked on the next domain reload.
-            if (BuildPipeline.isBuildingPlayer)
-                return;
-
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-            {
-                EditorApplication.playModeStateChanged -= ResumeAfterPlayMode;
-                EditorApplication.playModeStateChanged += ResumeAfterPlayMode;
-                return;
-            }
-
-            SuppressUnityInputSystemPrompt();
-
-            var current = Current;
-            if (current == InputHandling.Both)
-                return;
-
-            if (current == InputHandling.Unknown)
-            {
-                SessionState.SetBool(PROMPTED_KEY, true);
-                Debug.LogWarning("[Banter] Could not read Active Input Handling from Player Settings. The SDK needs it set to \"Both\" - check it under Edit > Project Settings > Player.");
-                return;
-            }
-
-            SessionState.SetBool(PROMPTED_KEY, true);
-
-            // DisplayDialog auto-answers OK in batch mode, which would rewrite Player
-            // Settings and kill a CI editor mid-run. Log and leave the project alone.
-            if (Application.isBatchMode)
-            {
-                Debug.LogWarning(DeclineMessage(current));
-                return;
-            }
-
-            Prompt(current);
-        }
-
-        static void ResumeAfterPlayMode(PlayModeStateChange change)
-        {
-            if (change != PlayModeStateChange.EnteredEditMode)
-                return;
-
-            EditorApplication.playModeStateChanged -= ResumeAfterPlayMode;
-            EditorApplication.delayCall += Check;
-        }
+        /// <summary>
+        /// Startup doesn't ask any more: the setup checklist in the Welcome window (Altspace > Welcome)
+        /// shows this setting and fixes it, with a restart, when the creator chooses. This only keeps
+        /// Unity's own Input System prompt away, which would ask a narrower version of the same question.
+        /// </summary>
+        internal static void Check() => SuppressUnityInputSystemPrompt();
 
         /// <summary>
         /// The Input System package puts up its own "Enable and Restart" dialog whenever the

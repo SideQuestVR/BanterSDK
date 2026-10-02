@@ -1,0 +1,341 @@
+/* The Creator SDK Welcome window (SdkWelcomeWindow.cs). Colours come from the editor theme where they can, so
+   it reads in both the dark and light skins; .sdk-welcome--light adjusts the white icons for the light one. */
+
+.sdk-welcome {
+    flex-grow: 1;
+}
+
+.sdk-welcome__scroll {
+    flex-grow: 1;
+}
+
+.sdk-welcome__content {
+    padding: 18px 20px 14px 20px;
+}
+
+/* -- Header ---------------------------------------------------------------- */
+
+.sdk-welcome__header-top {
+    flex-direction: row;
+    align-items: center;
+}
+
+.sdk-welcome__logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    background-image: resource('UI/Images/altspace-window-icon');
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.sdk-welcome--light .sdk-welcome__logo {
+    -unity-background-image-tint-color: rgb(40, 40, 40);
+}
+
+.sdk-welcome__titles {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.sdk-welcome__title {
+    font-size: 20px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.sdk-welcome__version {
+    padding: 0;
+    margin-top: 2px;
+    opacity: 0.65;
+}
+
+.sdk-welcome__intro {
+    white-space: normal;
+    padding: 0;
+    margin: 12px 0 16px 0;
+    opacity: 0.85;
+}
+
+/* -- World Builder / Documentation ------------------------------------------- */
+
+.sdk-welcome__actions {
+    flex-direction: row;
+    margin-bottom: 22px;
+}
+
+.sdk-welcome__action {
+    flex-grow: 1;
+    flex-basis: 0;
+    flex-direction: row;
+    align-items: center;
+    min-height: 66px;
+    margin: 0;
+    padding: 12px 14px;
+    border-radius: 6px;
+    border-width: 1px;
+    white-space: normal;
+}
+
+.sdk-welcome__action--first {
+    margin-right: 10px;
+}
+
+.sdk-welcome__action--primary {
+    background-color: rgb(186, 38, 98);
+    border-color: rgb(214, 66, 126);
+    color: rgb(255, 255, 255);
+}
+
+.sdk-welcome__action--primary:hover {
+    background-color: rgb(206, 50, 113);
+}
+
+.sdk-welcome__action--primary:active {
+    background-color: rgb(160, 30, 84);
+}
+
+.sdk-welcome__action-icon {
+    width: 28px;
+    height: 28px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.sdk-welcome__action-icon--builder {
+    background-image: resource('UI/Images/icon-worlds');
+}
+
+.sdk-welcome__action-icon--docs {
+    background-image: resource('UI/Images/icon-logs');
+}
+
+.sdk-welcome--light .sdk-welcome__action-icon {
+    -unity-background-image-tint-color: rgb(40, 40, 40);
+}
+
+.sdk-welcome--light .sdk-welcome__action--primary .sdk-welcome__action-icon {
+    -unity-background-image-tint-color: rgb(255, 255, 255);
+}
+
+.sdk-welcome__action-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.sdk-welcome__action-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    padding: 0;
+    margin: 0;
+}
+
+.sdk-welcome__action-caption {
+    font-size: 11px;
+    white-space: normal;
+    -unity-text-align: middle-left;
+    padding: 0;
+    margin-top: 3px;
+    opacity: 0.8;
+}
+
+/* -- Project setup ------------------------------------------------------------- */
+
+.sdk-welcome__section-heading {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.sdk-welcome__section-title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.sdk-welcome__spacer {
+    flex-grow: 1;
+}
+
+.sdk-welcome__recheck {
+    margin: 0 6px 0 0;
+    padding: 3px 10px;
+}
+
+.sdk-welcome__fix-all {
+    margin: 0;
+    padding: 3px 14px;
+    -unity-font-style: bold;
+    background-color: rgb(186, 38, 98);
+    border-color: rgb(214, 66, 126);
+    color: rgb(255, 255, 255);
+}
+
+.sdk-welcome__fix-all:hover {
+    background-color: rgb(206, 50, 113);
+}
+
+.sdk-welcome__fix-all:disabled {
+    background-color: rgba(128, 128, 128, 0.25);
+    border-color: rgba(128, 128, 128, 0.35);
+    color: rgba(128, 128, 128, 1);
+}
+
+.sdk-welcome__summary {
+    white-space: normal;
+    padding: 0;
+    margin: 4px 0 10px 0;
+    opacity: 0.85;
+}
+
+.sdk-welcome__banner {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: rgba(230, 160, 40, 0.65);
+    background-color: rgba(230, 160, 40, 0.16);
+}
+
+.sdk-welcome__banner-text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    white-space: normal;
+    padding: 0;
+}
+
+.sdk-welcome__banner-button {
+    margin: 0 0 0 10px;
+    flex-shrink: 0;
+}
+
+.sdk-welcome__list {
+    border-width: 1px;
+    border-radius: 6px;
+    border-color: rgba(128, 128, 128, 0.35);
+    overflow: hidden;
+}
+
+.sdk-welcome__hint {
+    font-size: 11px;
+    white-space: normal;
+    padding: 0;
+    margin-top: 8px;
+    opacity: 0.6;
+}
+
+/* -- Checklist rows ------------------------------------------------------------- */
+
+.setup-row {
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px 12px;
+    border-bottom-width: 1px;
+    border-color: rgba(128, 128, 128, 0.25);
+}
+
+.setup-row--last {
+    border-bottom-width: 0;
+}
+
+.setup-row:hover {
+    background-color: rgba(128, 128, 128, 0.12);
+}
+
+/* The icon itself is set in code: Unity's built-in console and test icons. */
+.setup-row__icon {
+    width: 16px;
+    height: 16px;
+    margin: 1px 10px 0 0;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.setup-row__body {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.setup-row__title-line {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.setup-row__title {
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0 6px 0 0;
+}
+
+.setup-row__badge {
+    font-size: 10px;
+    padding: 1px 6px;
+    margin: 0;
+    border-radius: 8px;
+    background-color: rgba(128, 128, 128, 0.22);
+}
+
+.setup-row__badge--required {
+    background-color: rgba(236, 152, 42, 0.26);
+}
+
+.setup-row__badge--recommended {
+    background-color: rgba(88, 160, 232, 0.24);
+}
+
+.setup-row--done .setup-row__badge {
+    opacity: 0.55;
+}
+
+.setup-row__summary {
+    white-space: normal;
+    padding: 0;
+    margin-top: 3px;
+    opacity: 0.9;
+}
+
+.setup-row--done .setup-row__summary {
+    opacity: 0.65;
+}
+
+.setup-row__details {
+    font-size: 11px;
+    white-space: normal;
+    padding: 0;
+    margin-top: 4px;
+    opacity: 0.7;
+}
+
+.setup-row__action {
+    flex-shrink: 0;
+    align-self: center;
+    margin: 0 0 0 10px;
+    padding: 3px 10px;
+}
+
+/* -- Footer ------------------------------------------------------------------------ */
+
+.sdk-welcome__footer {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 8px 20px;
+    border-top-width: 1px;
+    border-color: rgba(128, 128, 128, 0.3);
+}
+
+.sdk-welcome__footer .sdk-welcome__hint {
+    margin-top: 0;
+}
+
+.sdk-welcome__startup {
+    margin: 0;
+}

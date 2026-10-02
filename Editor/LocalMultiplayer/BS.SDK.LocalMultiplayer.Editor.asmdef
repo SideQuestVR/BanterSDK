@@ -3,6 +3,7 @@
     "rootNamespace": "BS.LocalMultiplayer.Editor",
     "references": [
         "BS.SDK.LocalMultiplayer",
+        "BS.SDKEditor",
         "GUID:00a9e2367449a2e4d89a262276b0dac1",
         "GUID:68e4fffbb7c599049b29a7c930eec568"
     ],

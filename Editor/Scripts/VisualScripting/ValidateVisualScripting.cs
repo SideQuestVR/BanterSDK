@@ -16,7 +16,11 @@ namespace BS.SDKEditor
         [InitializeOnLoadMethod]
         static void Init()
         {
-            CheckVsNodes();
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+            // No AssetDatabase.Refresh: a domain reload already follows one, and refreshing from inside
+            // the load can start another import, and another reload, while the SDK first installs.
+            CheckVsNodes(SceneManager.GetActiveScene().GetRootGameObjects(), refresh: false);
         }
 #endif
 
@@ -213,9 +217,9 @@ namespace BS.SDKEditor
         /// Logs every node the client won't run, from the project's graph assets and prefabs and from
         /// every machine under <paramref name="sceneRoots"/>. False if there are any, or on error.
         /// </summary>
-        public static bool CheckVsNodes(IEnumerable<GameObject> sceneRoots) {
+        public static bool CheckVsNodes(IEnumerable<GameObject> sceneRoots, bool refresh = true) {
             try {
-                var notAllowedElements = CollectDisallowedElements(sceneRoots, refresh: true);
+                var notAllowedElements = CollectDisallowedElements(sceneRoots, refresh);
                 if(notAllowedElements.Count() > 0) {
                     Debug.LogError("[VisualScripting] Found elements that are not allowed for Visual Scripting");
                     foreach(var element in notAllowedElements) {

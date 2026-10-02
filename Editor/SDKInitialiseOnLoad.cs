@@ -1,27 +1,23 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
-using UnityEngine;
-using BS;
-using Newtonsoft.Json.Linq;
-using System.IO.Compression;
-using LongBunnyLabs;
-using Unity.EditorCoroutines.Editor;
-using UnityEditor.Build;
 using System.Linq;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEngine;
 
 namespace BS.SDKEditor
 {
+    /// <summary>
+    /// The project settings the SDK needs: its layers and tags, the API compatibility level and the WebRoot
+    /// folder. Nothing here changes the project on load any more: the Welcome window's setup checklist
+    /// (<see cref="Setup.ProjectSetup"/>) shows what's missing and fixes it when the creator asks.
+    /// </summary>
     [InitializeOnLoad]
     public static class InitialiseOnLoad
     {
         static InitialiseOnLoad()
         {
 #if !GREENFIELD_PROJECT
-            SetupLayersAndTags();
-            SetApiCompatibilityLevel();
-            CreateWebRoot();
-            // CreateUninstaller();
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
@@ -41,140 +37,167 @@ namespace BS.SDKEditor
             }
 #endif
         }
-        static void AddScriptDefine(string define)
+
+        // -- API compatibility level ---------------------------------------------
+
+        /// <summary>The platforms spaces are built for.</summary>
+        static readonly NamedBuildTarget[] SdkTargets = { NamedBuildTarget.Standalone, NamedBuildTarget.Android };
+
+        /// <summary>
+        /// The SDK platforms ("Windows", "Android") whose API compatibility level isn't .NET Standard. Upstream
+        /// Basis targets .NET Standard 2.1; the old Banter fork ran on NET_Unity_4_8, which breaks the upstream packages.
+        /// </summary>
+        public static List<string> GetWrongApiCompatibilityTargets() =>
+            SdkTargets.Where(target => PlayerSettings.GetApiCompatibilityLevel(target) != ApiCompatibilityLevel.NET_Standard)
+                .Select(target => target == NamedBuildTarget.Standalone ? "Windows" : target.TargetName)
+                .ToList();
+
+        /// <summary>Sets .NET Standard on the SDK targets. Returns whether anything changed (scripts then recompile).</summary>
+        public static bool SetApiCompatibilityLevel()
         {
-            var buildTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-            var symbols = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
-            symbols = string.Join(";", symbols.Split(";").Where(d => !string.IsNullOrWhiteSpace(d)));
-            PlayerSettings.SetScriptingDefineSymbols(buildTarget, symbols + ";" + define);
-        }
-        static void SetApiCompatibilityLevel()
-        {
-            // Upstream Basis targets .NET Standard 2.1 (ApiCompatibilityLevel.NET_Standard). The old
-            // Banter fork ran on NET_Unity_4_8; forcing that here would break the upstream packages.
-            var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
-            if (level == ApiCompatibilityLevel.NET_Standard)
+            var changed = false;
+            foreach (var target in SdkTargets)
             {
-                return;
+                if (PlayerSettings.GetApiCompatibilityLevel(target) == ApiCompatibilityLevel.NET_Standard)
+                    continue;
+                PlayerSettings.SetApiCompatibilityLevel(target, ApiCompatibilityLevel.NET_Standard);
+                changed = true;
             }
-            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Standard);
-        }
-        static void CreateWebRoot()
-        {
-            // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
-#if !GREENFIELD_PROJECT
-            var webRoot = Application.dataPath + "/WebRoot";
-            if (Directory.Exists(webRoot))
-                return;
-            Directory.CreateDirectory(webRoot);
-            File.WriteAllText(webRoot + "/index.html", "<html world-asset><head>");
-#endif
+            return changed;
         }
 
-        /// <summary>The SDK layers and tags this project doesn't have at their slots. Changes nothing.</summary>
+        // -- WebRoot -------------------------------------------------------------
+
+        public static string WebRootIndexPath => "Assets/" + BSStarterUpper.WEB_ROOT + "/index.html";
+
+        /// <summary>Whether Assets/WebRoot/index.html, the space's page, exists.</summary>
+        public static bool WebRootExists => File.Exists(WebRootIndexPath);
+
+        /// <summary>Creates Assets/WebRoot with a starter index.html. Never overwrites one. Returns whether it created it.</summary>
+        public static bool CreateWebRoot()
+        {
+            if (WebRootExists)
+                return false;
+            Directory.CreateDirectory(Path.GetDirectoryName(WebRootIndexPath));
+            // world-asset: the space loads its one combined bundle (asset.world) from next to this page.
+            File.WriteAllText(WebRootIndexPath,
+                "<html world-asset>\n<head>\n  <meta charset=\"utf-8\">\n  <title>Space</title>\n</head>\n<body>\n</body>\n</html>\n");
+            AssetDatabase.ImportAsset(WebRootIndexPath);
+            return true;
+        }
+
+        // -- Layers and tags -----------------------------------------------------
+
+        /// <summary>What setting up the SDK's layers and tags would change in a TagManager.</summary>
+        public sealed class LayerTagPlan
+        {
+            /// <summary>A layer slot to name, with the name it has now ("" when it's unused).</summary>
+            public struct LayerChange
+            {
+                public int Index;
+                public string Current;
+                public string Wanted;
+            }
+
+            public readonly List<LayerChange> Layers = new List<LayerChange>();
+            /// <summary>SDK tags the project doesn't have, in the SDK's order.</summary>
+            public readonly List<string> MissingTags = new List<string>();
+
+            public bool IsEmpty => Layers.Count == 0 && MissingTags.Count == 0;
+
+            /// <summary>Layer slots that already carry another name, which setting them up renames.</summary>
+            public IEnumerable<LayerChange> Renames => Layers.Where(change => !string.IsNullOrEmpty(change.Current));
+        }
+
+        /// <summary>
+        /// Layers go by number in a built space, so each SDK layer has to be in its own slot; whatever a slot
+        /// is called now gets renamed. Tags go by name (a GameObject stores its tag as text), so a missing
+        /// tag is added after the project's own tags and never replaces one.
+        /// </summary>
+        public static LayerTagPlan PlanLayersAndTags(IReadOnlyList<string> layers, IReadOnlyList<string> tags)
+        {
+            var plan = new LayerTagPlan();
+            foreach (var layer in layersToAdd.OrderBy(pair => pair.Key))
+            {
+                var current = layer.Key < layers.Count ? layers[layer.Key] ?? "" : "";
+                if (current != layer.Value)
+                    plan.Layers.Add(new LayerTagPlan.LayerChange { Index = layer.Key, Current = current, Wanted = layer.Value });
+            }
+            var existingTags = new HashSet<string>(tags.Where(tag => !string.IsNullOrEmpty(tag)));
+            foreach (var tag in tagsToAdd.OrderBy(pair => pair.Key))
+            {
+                if (!existingTags.Contains(tag.Value))
+                    plan.MissingTags.Add(tag.Value);
+            }
+            return plan;
+        }
+
+        /// <summary>What setting up the layers and tags would change in this project. Changes nothing.</summary>
+        public static LayerTagPlan PlanLayersAndTags()
+        {
+            var tagManager = LoadTagManager();
+            if (tagManager == null)
+                return new LayerTagPlan();
+            return PlanLayersAndTags(ReadStrings(tagManager.FindProperty("layers")), ReadStrings(tagManager.FindProperty("tags")));
+        }
+
+        /// <summary>The SDK layers and tags this project doesn't have. Changes nothing.</summary>
         public static void GetMissingLayersAndTags(out List<string> missingLayers, out List<string> missingTags)
         {
-            missingLayers = new List<string>();
-            missingTags = new List<string>();
-            Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
-            if (asset == null || asset.Length == 0)
-                return;
-
-            var serializedObject = new SerializedObject(asset[0]);
-            var layers = serializedObject.FindProperty("layers");
-            foreach (var layer in layersToAdd)
-            {
-                if (layer.Key >= layers.arraySize || layers.GetArrayElementAtIndex(layer.Key).stringValue != layer.Value)
-                    missingLayers.Add(layer.Value);
-            }
-            var tags = serializedObject.FindProperty("tags");
-            foreach (var tag in tagsToAdd)
-            {
-                if (tag.Key >= tags.arraySize || tags.GetArrayElementAtIndex(tag.Key).stringValue != tag.Value)
-                    missingTags.Add(tag.Value);
-            }
+            var plan = PlanLayersAndTags();
+            missingLayers = plan.Layers.Select(change => change.Wanted).ToList();
+            missingTags = plan.MissingTags.ToList();
         }
 
-        public static void SetupLayersAndTags()
+        /// <summary>Names the SDK's layer slots and adds its missing tags. Returns whether anything changed.</summary>
+        public static bool SetupLayersAndTags()
         {
-            Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
-            if (asset != null && asset.Length > 0)
+            var tagManager = LoadTagManager();
+            if (tagManager == null)
             {
-                SerializedObject serializedObject = new SerializedObject(asset[0]);
-
-
-                SerializedProperty layers = serializedObject.FindProperty("layers");
-                bool isMissing = false;
-                List<string> missingLayers = new List<string>();
-                foreach (var layer in layersToAdd)
-                {
-                    var ulayer = layers.GetArrayElementAtIndex(layer.Key);
-                    if (ulayer == null || ulayer.stringValue != layer.Value)
-                    {
-                        isMissing = true;
-                        missingLayers.Add(layer.Value);
-                    }
-                }
-
-                SerializedProperty tags = serializedObject.FindProperty("tags");
-                List<string> missingTags = new List<string>();
-                foreach (var tag in tagsToAdd)
-                {
-                    var utag = tags.GetArrayElementAtIndex(tag.Key);
-                    if (utag == null || utag.stringValue != tag.Value)
-                    {
-                        isMissing = true;
-                        missingTags.Add(tag.Value);
-                    }
-                }
-
-                if (isMissing)
-                {
-                    foreach (var layer in layersToAdd)
-                    {
-                        var ulayer = layers.GetArrayElementAtIndex(layer.Key);
-                        if (ulayer == null || ulayer.stringValue != layer.Value)
-                        {
-                            AddTagManagerObjectAt(layers, "layer", layer.Key, layer.Value);
-                        }
-                    }
-
-                    foreach (var tag in tagsToAdd)
-                    {
-                        var utag = tags.GetArrayElementAtIndex(tag.Key);
-                        if (utag == null || utag.stringValue != tag.Value)
-                        {
-                            AddTagManagerObjectAt(tags, "tag", tag.Key, tag.Value);
-                        }
-                    }
-
-                    serializedObject.ApplyModifiedProperties();
-                    serializedObject.Update();
-                }
+                Debug.LogError("[Creator SDK] Couldn't load ProjectSettings/TagManager.asset, so the SDK's layers and tags weren't set up.");
+                return false;
             }
+            var layers = tagManager.FindProperty("layers");
+            var tags = tagManager.FindProperty("tags");
+            var plan = PlanLayersAndTags(ReadStrings(layers), ReadStrings(tags));
+            if (plan.IsEmpty)
+                return false;
+
+            foreach (var change in plan.Layers)
+            {
+                if (change.Index >= layers.arraySize)
+                    layers.arraySize = change.Index + 1;
+                layers.GetArrayElementAtIndex(change.Index).stringValue = change.Wanted;
+            }
+            foreach (var tag in plan.MissingTags)
+            {
+                tags.arraySize++;
+                tags.GetArrayElementAtIndex(tags.arraySize - 1).stringValue = tag;
+            }
+            tagManager.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssetIfDirty(tagManager.targetObject);
+
+            foreach (var rename in plan.Renames)
+                Debug.Log($"[Creator SDK] Layer {rename.Index} was \"{rename.Current}\"; spaces use it as \"{rename.Wanted}\".");
+            Debug.Log($"[Creator SDK] Set up {plan.Layers.Count} layer(s) and added {plan.MissingTags.Count} tag(s).");
+            return true;
         }
 
-        static void AddTagManagerObjectAt(SerializedProperty prop, string semantic, int index, string name, bool tryOtherIndex = false)
+        static SerializedObject LoadTagManager()
         {
-            // Skip if an object with the name already exists.
-            for (int i = 0; i < prop.arraySize; ++i)
-            {
-                if (prop.GetArrayElementAtIndex(i).stringValue == name)
-                {
-                    Debug.Log($"Skipping {semantic} '{name}' because it already exists.");
-                    return;
-                }
-            }
+            var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
+            return assets == null || assets.Length == 0 || assets[0] == null ? null : new SerializedObject(assets[0]);
+        }
 
-            // Extend layers if necessary
-            if (index >= prop.arraySize)
-                prop.arraySize = index + 1;
-
-            // set layer name at index
-            var element = prop.GetArrayElementAtIndex(index);
-
-            element.stringValue = name;
-            Debug.Log($"Added {semantic} '{name}' at index {index}.");
+        static List<string> ReadStrings(SerializedProperty array)
+        {
+            var values = new List<string>();
+            if (array == null || !array.isArray)
+                return values;
+            for (var i = 0; i < array.arraySize; i++)
+                values.Add(array.GetArrayElementAtIndex(i).stringValue);
+            return values;
         }
 
         public static Dictionary<int, string> layersToAdd = new Dictionary<int, string> {

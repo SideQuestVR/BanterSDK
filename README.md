@@ -25,6 +25,7 @@ Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK prov
 - [Installation](#installation)
   - [Installer Package](#installer-package)
   - [Embedded Package](#embedded-package)
+  - [First Run: the Welcome Window](#first-run-the-welcome-window)
   - [Samples](#samples)
 - [Quick Start](#quick-start)
 - [The Builder Window](#the-builder-window)
@@ -238,6 +239,24 @@ Double-click the downloaded file with your project open, or use `Assets > Import
 ### Embedded Package
 
 Alternatively, place the `com.sidequest.creator-sdk` folder directly in your project's `Packages/` folder. Unity picks it up as an embedded package on the next refresh.
+
+### First Run: the Welcome Window
+
+The first time the SDK loads in a project, the **Welcome** window opens (`Altspace/Welcome` opens it again). It has buttons for the World Builder and this documentation, and a project setup checklist:
+
+| Item | | What it sets up |
+|------|-|-----------------|
+| Android and Windows build support | Required | Spaces are built for both. Add missing modules in Unity Hub. |
+| SDK layers and tags | Required | Scenes store layer numbers, so each SDK layer has to be in the client's slot (Grabbable is 20). |
+| API compatibility level | Required | .NET Standard 2.1, which the SDK's Basis packages need. |
+| Space page (WebRoot) | Required | `Assets/WebRoot/index.html`, which Play mode serves and the Builder uploads. |
+| TextMesh Pro essentials | Recommended | The fonts BS Text draws with, so Unity's TMP importer doesn't interrupt Play mode. |
+| Universal Render Pipeline | Recommended | Forward on Quest and Forward+ on Windows, as the client renders. |
+| Linear color space | Recommended | As the client renders; baked lighting depends on it. |
+| Visual Scripting nodes | Required | Puts BS components and the SDK's nodes in the fuzzy finder. |
+| Active Input Handling | Required | `Both`, which SDK Play mode needs for mouse, keyboard and browser input. Takes effect after a Unity restart. |
+
+**Fix All** runs every Required and Recommended fix. Each item also has its own button, and hovering over an item explains why it's needed, what goes wrong without it and what its fix changes. Nothing in the project changes until you press a button. When local multiplayer is available, the list also offers Multiplayer Play Mode (Optional) and Run In Background.
 
 ### Samples
 

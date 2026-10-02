@@ -111,11 +111,9 @@ namespace BS
             {
                 oraManager = gameObject.AddComponent<OraManager>();
             }
-<<<<<<< HEAD
-=======
+
             // Ora's audio is now self-contained (OraAudioView / OraAudioEmitter, per-view + static) — the old
             // OraAudioManager component was removed, so there's nothing to wire up here anymore.
->>>>>>> c114b0442175ca9f92ab5c10d3f57f87006465ca
             oraManager.oraWebRTCManager = gameObject.GetComponent<OraWebRTCManager>();
             if (!oraManager.oraWebRTCManager)
             {
