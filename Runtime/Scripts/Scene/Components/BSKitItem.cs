@@ -49,7 +49,9 @@ namespace BS
                 {
                     // Same-bytes-already-loaded case: a second snippet sharing this asset URL
                     // fails its own load; fall back to the already-loaded twin (identical
-                    // signature = identical URLs).
+                    // signature = identical URLs). Visual Scripting or C# can get here at Play
+                    // start, before the page's first load created the settings.
+                    if (this == null || !await scene.WhenSettingsReady("Kit item '" + name + "'") || this == null) return;
                     KitBundle = scene.settings.KitBundles.FirstOrDefault(b =>
                         b != bundleComponent && b.assetBundle != null &&
                         b.GetSignature() == bundleComponent.GetSignature())?.assetBundle;

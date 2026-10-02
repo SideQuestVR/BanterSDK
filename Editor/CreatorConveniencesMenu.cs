@@ -23,7 +23,24 @@ internal static class CreatorConveniencesMenu
     private const string TeleporterGuid = "f0fb9ff341064868a90e08695bd41a58";
 
     // ------------------------------------------------------------------ Player
-
+    [MenuItem("GameObject/BS/Objects/BSStarterUpper", false, 10)]
+    static void CreateBanterStarterUpper(MenuCommand menuCommand)
+    {
+        var exists = GameObject.FindObjectOfType<BSStarterUpper>();
+        if (exists != null)
+        {
+            Debug.LogWarning("BSStarterUpper already exists in the scene.", exists);
+            return;
+        }
+        // Create a custom game object
+        GameObject go = new GameObject("BSStarterUpper");
+        go.AddComponent<BSStarterUpper>();
+        // Ensure it gets reparented if this was a context click (otherwise does nothing)
+        GameObjectUtility.SetParentAndAlign(go, menuCommand.context as GameObject);
+        // Register the creation in the undo system
+        Undo.RegisterCreatedObjectUndo(go, "Create " + go.name);
+        Selection.activeObject = go;
+    }
     [MenuItem(Root + "Player/Spawn Point", false, 10)]
     private static void CreateSpawnPoint(MenuCommand command) => CreatePrefab(SpawnPointGuid, "Spawn Point", command);
 

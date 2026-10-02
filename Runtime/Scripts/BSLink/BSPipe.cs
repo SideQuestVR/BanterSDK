@@ -52,6 +52,27 @@ public class BSPipe
     }
     public CountingLogger IncomingLogger = new CountingLogger("Pipe: Web -> Unity");
     public CountingLogger OutgoingLogger = new CountingLogger("Pipe: Unity -> Web");
+
+    // The space view starts on about:blank. On Windows, Ora's Electron injects the SDK into that document too, but it
+    // only attaches its LoadStarted/DomReady listeners at the window's first paint: that document never gets a
+    // LoadStarted, so BSScene.OnLoad (which creates BSScene.settings) never runs for it. The injection starts a Scene by
+    // itself, so the blank document sends SCENE_START, object update requests for every scene object (a parented one
+    // then threw on the null settings: "Error updating object") and, if the real page is held for 3 s, a SCENE_READY
+    // for a page that is not a space. Until a page has started loading, nothing the view sends is about a space. On
+    // Windows a real page's LoadStarted always comes first (OraView.LoadUrl waits for the window, and the listeners come
+    // with it). Ora's Android compat channel can deliver a page's first messages ahead of its LoadStarted; OnLoad's state
+    // reset already discarded those before this gate existed.
+    bool pageLoadStarted;
+    bool loggedIgnoring;
+    int ignoredBeforeLoad;
+
+    /// <summary>Whether a page has started loading in the view, which opens the pipe to its messages.</summary>
+    internal bool PageLoadStarted => pageLoadStarted;
+
+    // A LoadStarted for the start-up document itself (Ora attaching its listeners early, as in openBrowser mode) is not
+    // a page load: it must not open the gate.
+    static bool IsStartupUrl(string url) => string.IsNullOrEmpty(url) || url == "about:blank";
+
     public void Start(Action connectedCallback, Action<string> msgCallback)
     {
         manager?.browserConnected.AddListener(() => connectedCallback());
@@ -59,11 +80,29 @@ public class BSPipe
             connectedCallback();
         view.browserMessage.AddListener((reqId, command, data) =>
         {
+            if (!pageLoadStarted)
+            {
+                ignoredBeforeLoad++;
+                if (!loggedIgnoring)
+                {
+                    loggedIgnoring = true;
+                    LogLine.Do("Ignoring messages from the space view's start-up page (about:blank) until a page starts loading.");
+                }
+                return;
+            }
             msgCallback(data);
         });
-        
+
         view.loadStarted.AddListener((url) =>
         {
+            // Before OnLoad, which queues the task that creates the settings: every message handled after this
+            // queues its work behind that task.
+            if (!pageLoadStarted && !IsStartupUrl(url))
+            {
+                pageLoadStarted = true;
+                if (ignoredBeforeLoad > 0)
+                    LogLine.Do("Ignored " + ignoredBeforeLoad + " message(s) from the space view's start-up page.");
+            }
             _ = link.scene.OnLoad(Guid.NewGuid().ToString());
             link.scene.SetLoaded();
         });
@@ -79,6 +118,7 @@ public class BSPipe
         });
         view.domReady.AddListener((url) =>
         {
+            if (!pageLoadStarted) return;
             link.scene.state = SceneState.DOM_READY;
             link.scene.events.OnDomReady.Invoke();
             link.scene.SetLoaded();

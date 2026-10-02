@@ -918,8 +918,9 @@ namespace BS
             // this page exists, so their joins went to no page and the page never learnt who is here:
             // no local user, and anything waiting for one (presence, attachments to "me") stalled until
             // it gave up. Greenfield announces users after the space loads, so it doesn't need this.
-            // Once per page: this runs twice per load, and the page warns about repeated joins.
-            if (!usersAnnounced)
+            // Once per page: this runs twice per load, and the page warns about repeated joins. A network
+            // host (BSNetworkHost) replays its users itself when the scene is ready, as Greenfield does.
+            if (!usersAnnounced && !BSNetworkHost.Active)
             {
                 usersAnnounced = true;
                 foreach (var user in scene.users.ToArray())

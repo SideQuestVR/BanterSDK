@@ -113,6 +113,32 @@ namespace BS
         public BSLink link;
         public BSSceneEvents events;
         public BSSceneSettings settings;
+
+        /// <summary>
+        /// Completes once the first page load has created <see cref="settings"/> (the task <see cref="OnLoad"/> queues;
+        /// it is never set back to null). Components that Visual Scripting or C# drive at Play start, such as an asset
+        /// bundle or kit item refreshed from On Start, can run before that. False when no page load is coming: outside
+        /// Play, or this scene went away first (Play stopped). A wait over 10 s is reported once, naming
+        /// <paramref name="waiter"/>, so a page that never loads doesn't leave it hanging silently.
+        /// </summary>
+        internal async Task<bool> WhenSettingsReady(string waiter)
+        {
+            if (settings != null) return true;
+            if (!Application.isPlaying) return false;
+            float since = Time.realtimeSinceStartup;
+            bool reported = false;
+            await new WaitUntil(() =>
+            {
+                if (settings != null || _instance != this) return true;
+                if (!reported && Time.realtimeSinceStartup - since > 10f)
+                {
+                    reported = true;
+                    LogLine.Do(waiter + " is waiting for the space page's first load: it registers once a page has loaded.");
+                }
+                return false;
+            });
+            return settings != null && _instance == this;
+        }
         static BSScene _instance;
         public event EventHandler Tick;
         //public bool dirty = true;
@@ -764,11 +790,22 @@ namespace BS
                     events.OnSetUserProps.Invoke(id, props);
                 }
 #else
-                var user = users.FirstOrDefault(x => id == null ? x.isLocal : x.id == id);
-                if (user != null && props.Length > 0)
+                if (BSNetworkHost.Active)
                 {
-                    user.SetProps(props);
-                    UserPropChanged(props, user.id);
+                    // A local-multiplayer host networks user props the way the Greenfield client does.
+                    if (props.Length > 0)
+                    {
+                        events.OnSetUserProps.Invoke(id, props);
+                    }
+                }
+                else
+                {
+                    var user = users.FirstOrDefault(x => id == null ? x.isLocal : x.id == id);
+                    if (user != null && props.Length > 0)
+                    {
+                        user.SetProps(props);
+                        UserPropChanged(props, user.id);
+                    }
                 }
 #endif
             }
@@ -2099,7 +2136,10 @@ namespace BS
             if (banterObject != null)
             {
                 int parent = 0;
-                if (banterObject.activeSelf && banterObject.transform.parent != null && settings.parentTransform != banterObject.transform.parent)
+                // No settings means no world root yet (OnLoad's queued task creates it), so nothing can be the root's
+                // child: report the real parent. BSPipe ignores page messages until the first LoadStarted, so this only
+                // matters if a request is ever handled before that task has run.
+                if (banterObject.activeSelf && banterObject.transform.parent != null && (settings == null || settings.parentTransform != banterObject.transform.parent))
                 {
                     parent = banterObject.transform.parent.gameObject.GetInstanceID();
                 }

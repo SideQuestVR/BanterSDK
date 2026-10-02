@@ -234,7 +234,7 @@ namespace BS.Utilities.Async
 
         /// <summary>
         /// Cancels the scheduler. If the scheduler is currently executing tasks, that batch will finish first.
-        /// All remaining tasks will be left in the queue.
+        /// All remaining tasks will be left in the queue, except in the editor, where they are dropped.
         /// </summary>
         /// <exception cref="ObjectDisposedException">if this scheduler is disposed</exception>
         /// <exception cref="InvalidOperationException">if the scheduler is not running</exception>
@@ -246,6 +246,10 @@ namespace BS.Utilities.Async
             Cancelling = true;
 #if UNITY_EDITOR
             IsRunning = false;
+            // Play stopped. With Enter Play Mode Options skipping the domain reload this static scheduler
+            // lives on, and work the ending session queued (Visual Scripting user-left events for the
+            // players destroyed at exit) would run at the start of the next one.
+            while (tasks.TryDequeue(out _)) { }
 #endif
         }
 

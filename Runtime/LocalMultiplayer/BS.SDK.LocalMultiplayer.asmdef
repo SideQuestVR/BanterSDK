@@ -1,0 +1,42 @@
+{
+    "name": "BS.SDK.LocalMultiplayer",
+    "rootNamespace": "BS.LocalMultiplayer",
+    "references": [
+        "GUID:00a9e2367449a2e4d89a262276b0dac1",
+        "GUID:68e4fffbb7c599049b29a7c930eec568",
+        "GUID:21b0c8d1703a94250bfac916590cea4f",
+        "GUID:ea715009a4efd4c6cbc85be3ae097dd3",
+        "GUID:2bafac87e7f4b9b418d9448d219b01ab",
+        "GUID:75469ad4d38634e559750d17036d5f7c"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_EDITOR",
+        "!GREENFIELD_PROJECT",
+        "!BANTER_FLEX",
+        "BS_ORA_RELAY"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.sidequest.ora",
+            "expression": "0.1.0",
+            "define": "BS_ORA_RELAY"
+        },
+        {
+            "name": "com.sidequest.flexabody",
+            "expression": "0.0.1",
+            "define": "BANTER_FLEX"
+        },
+        {
+            "name": "com.unity.multiplayer.playmode",
+            "expression": "2.0.0",
+            "define": "BANTER_MPPM"
+        }
+    ],
+    "noEngineReferences": false
+}

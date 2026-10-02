@@ -60,7 +60,8 @@ namespace BS
         {
             if (isScene)
             {
-
+                // Visual Scripting or C# can get here at Play start, before the page's first load created the settings.
+                if (!await scene.WhenSettingsReady("Scene bundle '" + name + "'") || this == null) return;
                 if (scene.settings.SceneAssetBundle)
                 {
                     SetLoadedIfNot(false, "Scene bundle already registered!");
@@ -87,7 +88,11 @@ namespace BS
         }
 
         internal async Task AfterBundleLoad() {
-            
+                // A download started from Visual Scripting or C# at Play start can finish before the page's first load
+                // created the settings (both branches use them): register once they exist, unless this bundle was
+                // destroyed or unloaded meanwhile.
+                if (this == null || assetBundle == null) return;
+                if (!await scene.WhenSettingsReady("Asset bundle '" + name + "'") || this == null || assetBundle == null) return;
                 if (isScene)
                 {
                     await SetupSceneBundle();
@@ -360,14 +365,15 @@ namespace BS
                 Debug.Log(e.Message); 
             }
             assetBundle = null;
+            // Play can stop before any page has loaded, when there are no settings yet.
             if (isScene)
             {
-                scene.settings.SceneAssetBundle = null;
+                if (scene.settings != null) scene.settings.SceneAssetBundle = null;
                 await SceneManager.LoadSceneAsync("Void", LoadSceneMode.Single);
             }
             else
             {
-                scene.settings.KitBundles.Remove(this);
+                scene.settings?.KitBundles.Remove(this);
             }
         }
 

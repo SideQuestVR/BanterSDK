@@ -101,6 +101,13 @@ namespace BS
         PointerEventData _uiPointer;
         EventSystem _uiPointerSystem;
 
+        // Multiplayer Play Mode clones report the mouse at NaN while it isn't over their Game view, and
+        // Camera.ScreenPointToRay logs "Screen position out of view frustum" for every ray from such a point,
+        // here and in the EventSystem's UI raycasters, every frame. The pointer is skipped, and the UI input
+        // module paused, until the position is real again.
+        bool _pointerUsable = true;
+        BaseInputModule _pausedUIModule;
+
         /// <summary>Builds the desktop player: root (feet, local user) and head (camera).</summary>
         public static BSDesktopController Spawn(BSScene scene)
         {
@@ -184,6 +191,7 @@ namespace BS
             _scene?.events.OnClippingPlaneChanged.RemoveListener(OnClippingPlaneChanged);
             if (_flying)
                 EndFly();
+            ResumeUIModule();
             if (_hand != null)
                 Destroy(_hand.gameObject);
         }
@@ -201,6 +209,9 @@ namespace BS
             if (mouse == null || keyboard == null)
                 return;
 
+            var pointerUsable = IsUsablePoint(mouse.position.ReadValue());
+            SetPointerUsable(pointerUsable);
+
             UpdateFlyState(mouse);
 
             if (_flying)
@@ -211,7 +222,7 @@ namespace BS
                 if (scroll != 0f)
                     _flySpeed = Mathf.Clamp(_flySpeed * (scroll > 0f ? 1.2f : 1f / 1.2f), _minFlySpeed, _maxFlySpeed);
             }
-            else
+            else if (pointerUsable)
             {
                 UpdatePointer(mouse, keyboard);
             }
@@ -265,7 +276,8 @@ namespace BS
             _flying = false;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            Mouse.current?.WarpCursorPosition(_cursorBeforeFly);
+            if (IsUsablePoint(_cursorBeforeFly))
+                Mouse.current?.WarpCursorPosition(_cursorBeforeFly);
             SetKeyboardInputEnabled(true);
         }
 
@@ -321,6 +333,38 @@ namespace BS
         }
 
         // ---------------------------------------------------------------- Pointer
+
+        static bool IsUsablePoint(Vector2 point) =>
+            !float.IsNaN(point.x) && !float.IsNaN(point.y) && !float.IsInfinity(point.x) && !float.IsInfinity(point.y);
+
+        void SetPointerUsable(bool usable)
+        {
+            if (usable == _pointerUsable)
+                return;
+            _pointerUsable = usable;
+            if (usable)
+            {
+                ResumeUIModule();
+                return;
+            }
+
+            var eventSystem = EventSystem.current;
+            if (eventSystem == null)
+                return;
+            var module = eventSystem.currentInputModule != null ? eventSystem.currentInputModule : eventSystem.GetComponent<BaseInputModule>();
+            if (module != null && module.enabled)
+            {
+                module.enabled = false;
+                _pausedUIModule = module;
+            }
+        }
+
+        void ResumeUIModule()
+        {
+            if (_pausedUIModule != null)
+                _pausedUIModule.enabled = true;
+            _pausedUIModule = null;
+        }
 
         void UpdatePointer(Mouse mouse, Keyboard keyboard)
         {
@@ -391,6 +435,8 @@ namespace BS
                 case PressOwner.Click:
                     // A click is a press and release on the same object, with no UI in front of it.
                     var screenPoint = mouse.position.ReadValue();
+                    if (!IsUsablePoint(screenPoint))
+                        break;
                     var ray = _camera.ScreenPointToRay(screenPoint);
                     if (_clickTarget != null && TryGetClickTarget(ray, out var hit) && hit.collider.gameObject == _clickTarget)
                     {
@@ -576,6 +622,12 @@ namespace BS
         public bool IsSeated => _seated;
 
         public bool IsSeatedOn(Transform anchor) => _seated && anchor != null && _seat == anchor;
+
+        /// <summary>The seat the player sits on, or null when standing.</summary>
+        public Transform SeatAnchor => _seated ? _seat : null;
+
+        /// <summary>The mouse hand: the desktop player's right hand, which grabs.</summary>
+        public BSDesktopMouseHand MouseHand => _hand;
 
         /// <summary>
         /// Sits the player on <paramref name="anchor"/> (feet at its position, facing its forward) and

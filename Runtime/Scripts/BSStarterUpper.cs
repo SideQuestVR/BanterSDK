@@ -111,11 +111,6 @@ namespace BS
             {
                 oraManager = gameObject.AddComponent<OraManager>();
             }
-            oraManager.oraAudioManager = gameObject.GetComponent<OraAudioManager>();
-            if (!oraManager.oraAudioManager)
-            {
-                oraManager.oraAudioManager = gameObject.AddComponent<OraAudioManager>();
-            }
             oraManager.oraWebRTCManager = gameObject.GetComponent<OraWebRTCManager>();
             if (!oraManager.oraWebRTCManager)
             {
@@ -163,25 +158,42 @@ namespace BS
                 scene.loadingManager.feetTransform = _feetTransform;
 #endif
             scene.ResetLoadingProgress();
+#if !GREENFIELD_PROJECT
+            BSNetworkHost.RaiseSceneLinked(scene);
+#endif
         }
-        
+
         IEnumerator OpenPageDev()
         {
-            yield return new WaitForSeconds(2);
+            // Started from Awake before oraManager is assigned; let Awake finish first.
+            yield return null;
+            var port = oraManager != null ? oraManager.staticPort : 42068;
+            var gate = BSNetworkHost.PageLoadGate;
+            if (gate != null)
+            {
+                yield return gate(scene.link.pipe.view, port);
+            }
+            else
+            {
+                yield return new WaitForSeconds(2);
+            }
             // Ora's web server serves Assets/WebRoot on this port (see BeforeEditorPlay).
-            scene.link.pipe.view.LoadUrl("http://localhost:" + (oraManager != null ? oraManager.staticPort : 42068));
+            scene.link.pipe.view.LoadUrl("http://localhost:" + port);
         }
 
         // Teleports are handled by BSDesktopController, which owns the local user.
         void SetupExtraEvents()
         {
-            // Argument order the OnSpaceStatePropsChanged node reads: (value, isPublic).
+            // Argument order the OnSpaceStatePropsChanged node reads: (value, isPublic). A network
+            // host raises it from the room's echo instead, so it isn't raised twice.
             scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
             {
+                if (BSNetworkHost.Active) return;
                 EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
             });
             scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
             {
+                if (BSNetworkHost.Active) return;
                 EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
             });
         }
@@ -375,15 +387,14 @@ namespace BS
                         args.SetObserved();
 
                         // Teardown noise: aborted overlapped IO (Win32 995 from killed process
-                        // pipes / closed handles), cancelled or disposed background reads. These
-                        // surface via the finalizer long after shutdown started — not actionable.
+                        // pipes / closed handles), cancelled or disposed background reads, and
+                        // connects abandoned after a cancel (Unity's AI Assistant times out its
+                        // relay WebSocket connect that way). These surface via the finalizer long
+                        // after shutdown started — not actionable.
                         bool benignTeardown = true;
                         foreach (var inner in args.Exception.Flatten().InnerExceptions)
                         {
-                            if (inner is not (System.IO.IOException
-                                or System.OperationCanceledException
-                                or System.ObjectDisposedException
-                                or System.Threading.ThreadAbortException))
+                            if (!IsTeardownNoise(inner))
                             {
                                 benignTeardown = false;
                                 break;
@@ -395,6 +406,24 @@ namespace BS
 
                         Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
                     };
+        }
+
+        // Cancelled, disposed or aborted IO is noise; a transport wrapper (a WebSocket or HTTP failure) says
+        // nothing by itself, so what caused it decides. Wrappers are matched by name: no assembly references needed.
+        internal static bool IsTeardownNoise(Exception exception)
+        {
+            for (var e = exception; e != null; e = e.InnerException)
+            {
+                if (e is System.IO.IOException
+                    or System.OperationCanceledException
+                    or System.ObjectDisposedException
+                    or System.Threading.ThreadAbortException)
+                    return true;
+                var name = e.GetType().FullName;
+                if (name != "System.Net.WebSockets.WebSocketException" && name != "System.Net.Http.HttpRequestException")
+                    return false;
+            }
+            return false;
         }
     }
 }

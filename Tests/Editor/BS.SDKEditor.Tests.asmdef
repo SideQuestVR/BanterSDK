@@ -6,6 +6,7 @@
         "UnityEditor.TestRunner",
         "BS.SDKEditor",
         "BS.SDK",
+        "SideQuest.Ora",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow"
     ],
