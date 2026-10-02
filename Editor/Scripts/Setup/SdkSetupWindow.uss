@@ -190,7 +190,22 @@
     margin: 8px 0 3px 0;
 }
 
-.sdk-setup__topic-text {
+.sdk-setup__bullet {
+    flex-direction: row;
+    margin-bottom: 3px;
+}
+
+.sdk-setup__bullet-mark {
+    width: 12px;
+    flex-shrink: 0;
+    padding: 0;
+    margin: 0;
+    opacity: 0.6;
+}
+
+.sdk-setup__bullet-text {
+    flex-grow: 1;
+    flex-shrink: 1;
     white-space: normal;
     padding: 0;
     margin: 0;

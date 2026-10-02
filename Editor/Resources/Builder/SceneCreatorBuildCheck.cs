@@ -8,11 +8,14 @@ using UnityEngine.SceneManagement;
 
 namespace BS.SDKEditor
 {
-    // Diagnostics only: do not rewrite tags.
+    // Diagnostics only: nothing here rewrites tags or layers. The checklist's fixes do, when clicked.
     internal static class SceneCreatorBuildCheck
     {
         static readonly string[] BuiltInTags =
             { "Untagged", "Respawn", "Finish", "EditorOnly", "MainCamera", "Player", "GameController" };
+
+        /// <summary>Unity's own layer slots.</summary>
+        static readonly int[] BuiltInLayers = { 0, 1, 2, 4, 5 };
 
         /// <summary>A custom tag the client may not define, and the objects that use it.</summary>
         internal sealed class TagUse
@@ -20,6 +23,55 @@ namespace BS.SDKEditor
             public string Tag;
             public readonly List<GameObject> Objects = new List<GameObject>();
             public readonly List<string> Paths = new List<string>();
+        }
+
+        /// <summary>A layer slot the SDK doesn't set up, and the objects on it.</summary>
+        internal sealed class LayerUse
+        {
+            public int Layer;
+            public readonly List<GameObject> Objects = new List<GameObject>();
+        }
+
+        /// <summary>
+        /// The SDK tag an old Banter tag became (__BA_UserTag0 is UserTag1, __BA_LocalPlayer is BSLocalCharacter...),
+        /// or Untagged for any other tag.
+        /// </summary>
+        internal static string ReplacementTag(string tag)
+        {
+            switch (tag)
+            {
+                case "__BA_LocalPlayer": return "BSLocalCharacter";
+                case "__BA_PlayerLeftHand": return "BSLocalCharacterLeftHand";
+                case "__BA_PlayerRightHand": return "BSLocalCharacterRightHand";
+                case "__BA_PlayerHead": return "BSLocalCharacterHead";
+                case "__BA_LocalPlayerFeet": return "BSLocalCharacterFeet";
+            }
+            const string oldUserTag = "__BA_UserTag";
+            if (tag.StartsWith(oldUserTag, StringComparison.Ordinal) &&
+                int.TryParse(tag.Substring(oldUserTag.Length), out var index) && index >= 0 && index < 32)
+                return "UserTag" + (index + 1);
+            return "Untagged";
+        }
+
+        internal static List<LayerUse> CollectUnsupportedLayers(Scene scene)
+        {
+            var allowed = new HashSet<int>(BuiltInLayers.Concat(InitialiseOnLoad.layersToAdd.Keys));
+            var unsupported = new Dictionary<int, LayerUse>();
+            foreach (var root in scene.GetRootGameObjects()) Inspect(root.transform);
+            return unsupported.OrderBy(pair => pair.Key).Select(pair => pair.Value).ToList();
+
+            void Inspect(Transform transform)
+            {
+                var obj = transform.gameObject;
+                if (obj.CompareTag("EditorOnly")) return;
+                if (!allowed.Contains(obj.layer))
+                {
+                    if (!unsupported.TryGetValue(obj.layer, out var use))
+                        unsupported.Add(obj.layer, use = new LayerUse { Layer = obj.layer });
+                    use.Objects.Add(obj);
+                }
+                foreach (Transform child in transform) Inspect(child);
+            }
         }
 
         internal static List<TagUse> CollectUnsupportedTags(Scene scene)

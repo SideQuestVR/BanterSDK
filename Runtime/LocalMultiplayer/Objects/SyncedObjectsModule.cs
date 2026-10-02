@@ -32,7 +32,7 @@ namespace BS.LocalMultiplayer.Objects
         const string TypeKey = "object";
         static readonly string[] OwnershipCollisionTags =
         {
-            "__BA_LocalPlayer", "__BA_PlayerLeftHand", "__BA_PlayerRightHand", "__BA_PlayerHead", "__BA_LocalPlayerFeet"
+            "BSLocalCharacter", "BSLocalCharacterLeftHand", "BSLocalCharacterRightHand", "BSLocalCharacterHead", "BSLocalCharacterFeet"
         };
         /// <summary>The serialized production fall threshold (the code default is -100).</summary>
         public const float FallThreshold = -250f;

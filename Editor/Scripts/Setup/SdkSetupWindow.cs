@@ -225,15 +225,34 @@ namespace BS.SDKEditor.Setup
         {
             var foldout = new Foldout { text = "Getting started", value = false, viewDataKey = "sdk-setup-getting-started" };
             foldout.AddToClassList("sdk-setup__getting-started");
+
             foldout.Add(Text("Layers", "sdk-setup__topic-title"));
-            foldout.Add(Text("Put your own objects on UserLayer1–15. Default, Water and UserLayer1–8 are what the player stands on, " +
-                             "teleports to and grapples, except that the grapple ignores UserLayer1 and the player's body passes " +
-                             "through UserLayer2–8. UserLayer9–15 are ignored by all three but still stop the body and hands. Use " +
-                             "Grabbable for things to pick up and Invisible for things the player shouldn't see (they're still solid). " +
-                             "CharacterColliders and CharacterHandColliders are the player's own body and hands, so keep your objects " +
-                             "off them and off every layer above them. The documentation's Layers section has the full table.",
-                "sdk-setup__topic-text"));
+            foldout.Add(Bullet("<b>Your objects:</b> UserLayer1–15."));
+            foldout.Add(Bullet("<b>Stand, teleport, grapple:</b> Default, Water and UserLayer1–8 (the grapple skips UserLayer1). " +
+                               "UserLayer9–15 are ignored by all three."));
+            foldout.Add(Bullet("<b>Collisions:</b> the player's body passes through UserLayer2–8; the hands only touch UserLayer9–15, " +
+                               "Grabbable and Invisible."));
+            foldout.Add(Bullet("<b>Grabbable</b> is for things to pick up. <b>Invisible</b> is hidden from the player's view but still solid."));
+            foldout.Add(Bullet("<b>Hands off:</b> CharacterColliders and CharacterHandColliders are the player's body and hands, and " +
+                               "every layer above them belongs to the client."));
+
+            foldout.Add(Text("Tags", "sdk-setup__topic-title"));
+            foldout.Add(Bullet("<b>Your objects:</b> UserTag1–32."));
+            foldout.Add(Bullet("<b>The player:</b> BSLocalCharacter, plus its LeftHand, RightHand, Head and Feet versions. Check for " +
+                               "them in triggers, but never put them on your own objects."));
+            foldout.Add(Bullet("<b>Nothing else:</b> built spaces store tags by position, so Setup removes any other tag and the " +
+                               "Builder's checklist renames old __BA_ tags."));
+
+            foldout.Add(Text("The documentation's Layers and Tags sections have the full tables.", "sdk-setup__hint"));
             return foldout;
+        }
+
+        static VisualElement Bullet(string text)
+        {
+            var row = Element("sdk-setup__bullet");
+            row.Add(Text("•", "sdk-setup__bullet-mark"));
+            row.Add(Text(text, "sdk-setup__bullet-text"));
+            return row;
         }
 
         VisualElement BuildFooter()

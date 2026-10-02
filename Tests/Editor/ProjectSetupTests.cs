@@ -168,11 +168,38 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
-        public void TagsCount_ByName_InAnyOrder_AndTheProjectsOwnAreKept()
+        public void TagsInTheWrongOrder_ArePutInTheClientsOrder()
         {
-            // Tags are stored on GameObjects as text, so their order doesn't matter and nothing replaces "Enemy".
-            var tags = new[] { "Enemy" }.Concat(SdkTags().Reverse()).ToArray();
-            Assert.IsEmpty(InitialiseOnLoad.PlanLayersAndTags(SdkLayers(), tags).MissingTags);
+            // A built space stores a tag as its position in the list, so the order has to be the client's.
+            var plan = InitialiseOnLoad.PlanLayersAndTags(SdkLayers(), SdkTags().Reverse().ToArray());
+            Assert.IsEmpty(plan.MissingTags);
+            Assert.IsEmpty(plan.ExtraTags);
+            Assert.IsTrue(plan.TagsOutOfOrder);
+            CollectionAssert.AreEqual(SdkTags(), plan.WantedTags);
+        }
+
+        [Test]
+        public void ExtraTagsAndLayers_AreRemoved()
+        {
+            var layers = SdkLayers();
+            layers[27] = "Water2";
+            var tags = new[] { "Enemy", "__BA_UserTag0" }.Concat(SdkTags()).ToArray();
+            var plan = InitialiseOnLoad.PlanLayersAndTags(layers, tags);
+            CollectionAssert.AreEqual(new[] { "Enemy", "__BA_UserTag0" }, plan.ExtraTags);
+            CollectionAssert.AreEqual(SdkTags(), plan.WantedTags);
+            var removal = plan.Removals.Single();
+            Assert.AreEqual(27, removal.Index);
+            Assert.AreEqual("Water2", removal.Current);
+            Assert.IsEmpty(plan.Renames);
+        }
+
+        [Test]
+        public void TheClient_KeepsItsOwnLayersAndTags()
+        {
+            var layers = SdkLayers();
+            layers[27] = "AvatarPreview";
+            var tags = SdkTags().Concat(new[] { "ClientOnly" }).ToArray();
+            Assert.IsTrue(InitialiseOnLoad.PlanLayersAndTags(layers, tags, removeExtras: false).IsEmpty);
         }
 
         [Test]

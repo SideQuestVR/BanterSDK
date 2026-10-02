@@ -38,7 +38,7 @@ namespace BS.LocalMultiplayer.Objects
         /// <summary>Unity's built-in Ignore Raycast layer: invisible to the desktop grab ray and the hand's grab scan.</summary>
         public const int ProximityLayer = 2;
 
-        private static readonly string[] DefaultTags = { "__BA_LocalPlayer" };
+        private static readonly string[] DefaultTags = { "BSLocalCharacter" };
         private const float MinAcquireInterval = 0.34f; // ≈ 3 claims/sec
 
         private string[] _localPlayerTags = DefaultTags;

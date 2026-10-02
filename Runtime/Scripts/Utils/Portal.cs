@@ -16,7 +16,7 @@ namespace BS
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("__BA_LocalPlayer") && CanActivate)
+            if (other.CompareTag("BSLocalCharacter") && CanActivate)
             {
                 CanActivate = false;
                 GetComponent<FaceTarget>().enabled = false;

@@ -44,26 +44,36 @@ namespace BS.SDKEditor.Setup
         public override int Order => 10;
         public override string FixLabel => "Set up";
         public override string Why =>
-            "Scenes store layers by number, so each of the SDK's layers has to be in the slot the client uses (Grabbable is 20, Menu 22...). " +
-            "Its tags are how teleporters, portals and triggers recognise the player.";
+            "A built space stores layers and tags as numbers: the layer's slot, and the tag's position in the tag list. So each SDK layer " +
+            "has to be in the slot the client uses (Grabbable is 20, Menu 22...), the tags have to be the client's in the client's order, " +
+            "and nothing else can be in the lists. The BSLocalCharacter tags are how teleporters, portals and triggers recognise the player.";
         public override string WithoutIt =>
             "Grab handles that aren't on the client's Grabbable layer can't be grabbed, layer masks don't line up with the client's, " +
-            "and in Play mode portals and teleporters don't see the player.";
+            "objects end up with a different tag in the client, and in Play mode portals and teleporters don't see the player.";
         public override string FixChanges =>
-            "Names layers 3 and 6 to 24 the way the client does (25 and up are left alone), renaming any slot that has another name (the item's details list them). " +
-            "Adds the SDK's tags after your own; existing tags are kept.";
+            "Names layers 3 and 6 to 24 the way the client does, renaming any slot that has another name, and removes every other layer " +
+            "name (25 and up belong to the client). Replaces the tag list with the SDK's, in the client's order, removing any other tags " +
+            "(the item's details list them). Objects still using a removed tag or layer are listed by the Builder's checklist.";
 
         public override SetupStatus Evaluate()
         {
             var plan = InitialiseOnLoad.PlanLayersAndTags();
             if (plan.IsEmpty)
-                return SetupStatus.Done("All of the SDK's layers and tags are set up.");
+                return SetupStatus.Done("All of the SDK's layers and tags are set up, and nothing else.");
 
             var parts = new List<string>();
-            if (plan.Layers.Count > 0)
-                parts.Add(Count(plan.Layers.Count, "layer"));
+            var removals = plan.Removals.ToList();
+            var layerFixes = plan.Layers.Count - removals.Count;
+            if (layerFixes > 0)
+                parts.Add(Count(layerFixes, "layer") + " to set up");
+            if (removals.Count > 0)
+                parts.Add(Count(removals.Count, "extra layer") + " to remove");
             if (plan.MissingTags.Count > 0)
-                parts.Add(Count(plan.MissingTags.Count, "tag"));
+                parts.Add(Count(plan.MissingTags.Count, "tag") + " to add");
+            if (plan.ExtraTags.Count > 0)
+                parts.Add(Count(plan.ExtraTags.Count, "extra tag") + " to remove");
+            if (plan.TagsOutOfOrder)
+                parts.Add("tags to put in order");
 
             var details = new StringBuilder();
             var renames = plan.Renames.ToList();
@@ -71,11 +81,21 @@ namespace BS.SDKEditor.Setup
                 details.AppendLine($"Layer {rename.Index} \"{rename.Current}\" becomes \"{rename.Wanted}\".");
             if (renames.Count > 8)
                 details.AppendLine($"...and {renames.Count - 8} more renamed layers.");
+            if (removals.Count > 0)
+                details.AppendLine("Removes layers: " + string.Join(", ", removals.Select(removal => $"{removal.Index} \"{removal.Current}\"")) + ".");
             if (plan.MissingTags.Count > 0)
-                details.AppendLine("Adds tags: " + string.Join(", ", plan.MissingTags.Take(6)) +
-                                   (plan.MissingTags.Count > 6 ? $" and {plan.MissingTags.Count - 6} more." : "."));
-            return SetupStatus.NeedsFix(string.Join(" and ", parts) + " to set up", details.ToString().TrimEnd());
+                details.AppendLine("Adds tags: " + List(plan.MissingTags));
+            if (plan.ExtraTags.Count > 0)
+                details.AppendLine("Removes tags: " + List(plan.ExtraTags));
+            if (plan.TagsChange)
+                details.AppendLine("Puts the tags in the client's order: UserTag1-32, then the BSLocalCharacter tags.");
+            return SetupStatus.NeedsFix(Capitalise(string.Join(", ", parts)), details.ToString().TrimEnd());
         }
+
+        static string List(List<string> items) =>
+            string.Join(", ", items.Take(6)) + (items.Count > 6 ? $" and {items.Count - 6} more." : ".");
+
+        static string Capitalise(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text.Substring(1);
 
         public override bool Fix() => InitialiseOnLoad.SetupLayersAndTags();
 

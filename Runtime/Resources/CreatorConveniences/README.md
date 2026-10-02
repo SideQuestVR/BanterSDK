@@ -26,7 +26,7 @@ In SDK Play Mode, clicking the seat sits the desktop player. **Space** stands th
 
 ## Teleporter (`BSTeleporter`)
 
-When the local player walks into the trigger collider, they are teleported to `destination`: its position, facing its Y rotation, with velocity stopped. `cooldown` (0.5 s) stops the teleporter re-firing straight away. Only colliders tagged `__BA_LocalPlayer` count; don't give that tag to anything else. Move the prefab's `Destination` child to set the landing point, keeping it outside the trigger. The portal visual uses `FaceTarget` on the mesh, not the root, so the trigger and destination don't turn with the camera.
+When the local player walks into the trigger collider, they are teleported to `destination`: its position, facing its Y rotation, with velocity stopped. `cooldown` (0.5 s) stops the teleporter re-firing straight away. Only colliders tagged `BSLocalCharacter` count; don't give that tag to anything else. Move the prefab's `Destination` child to set the landing point, keeping it outside the trigger. The portal visual uses `FaceTarget` on the mesh, not the root, so the trigger and destination don't turn with the camera.
 
 ## Scene Settings (`BSSettings`)
 

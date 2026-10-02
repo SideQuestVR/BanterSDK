@@ -138,12 +138,12 @@ namespace BS
 
             // A trigger body, so trigger zones in the space notice the player. Tagged like
             // Banter's torso: Portal and the Creator Conveniences teleporter only react to
-            // __BA_LocalPlayer. A trigger, so flying never shoves props around.
+            // BSLocalCharacter. A trigger, so flying never shoves props around.
             var body = new GameObject("Body");
             body.transform.SetParent(root.transform, false);
             body.layer = 23; // PhysicsPlayer
-            try { body.tag = "__BA_LocalPlayer"; }
-            catch (UnityException) { LogLine.Do("[Desktop] Tag __BA_LocalPlayer is missing (Creator SDK > Setup); portals won't see the player."); }
+            try { body.tag = "BSLocalCharacter"; }
+            catch (UnityException) { LogLine.Do("[Desktop] Tag BSLocalCharacter is missing (Creator SDK > Setup); portals won't see the player."); }
             // Topped out well under the eye: UI Toolkit's world picking treats any collider on the
             // camera's ray as a blocker, and only a near-vertical look down should ever meet this.
             var bodyCollider = body.AddComponent<CapsuleCollider>();

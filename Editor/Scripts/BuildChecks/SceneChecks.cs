@@ -39,7 +39,7 @@ namespace BS.SDKEditor.BuildChecks
         }
     }
 
-    /// <summary>Tags outside the SDK's list may not exist in the client.</summary>
+    /// <summary>The client only has Unity's built-in tags and the SDK's; a built space stores a tag as its position in that list.</summary>
     sealed class UnsupportedTagsCheck : BuildCheck
     {
         public override string Id => "scene.tags";
@@ -51,11 +51,66 @@ namespace BS.SDKEditor.BuildChecks
         {
             foreach (var use in SceneCreatorBuildCheck.CollectUnsupportedTags(context.Scene))
             {
-                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
-                        $"Custom tag '{use.Tag}' is used by {use.Objects.Count} object(s)",
-                        "The client may not define this tag, so scripts comparing against it may not work. " +
-                        "Use one of the SDK's tags instead. Tags are left unchanged.")
-                    .WithTargets(use.Objects.Select(context.Target)));
+                var replacement = SceneCreatorBuildCheck.ReplacementTag(use.Tag);
+                var renamed = replacement != "Untagged";
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error,
+                        $"Tag '{use.Tag}' isn't one of the client's, and {use.Objects.Count} object(s) use it",
+                        (renamed ? $"'{use.Tag}' is now called '{replacement}'. " : "The client doesn't have this tag. ") +
+                        "In the client these objects would get a different tag, or none, so scripts comparing against it break. " +
+                        "Use Untagged, UserTag1-32 or a BSLocalCharacter tag.")
+                    .WithTargets(use.Objects.Select(context.Target))
+                    .WithFix(renamed ? $"Change to {replacement}" : "Remove the tag", issue =>
+                    {
+                        var changed = false;
+                        foreach (var go in issue.Resolve<GameObject>())
+                        {
+                            try
+                            {
+                                Undo.RecordObject(go, "Change tag");
+                                go.tag = replacement;
+                                changed = true;
+                            }
+                            catch (UnityException)
+                            {
+                                Debug.LogWarning($"[Creator SDK] There's no '{replacement}' tag yet: run 'SDK layers and tags' in " +
+                                                 "Creator SDK > Setup first.");
+                                return changed;
+                            }
+                        }
+                        return changed;
+                    }));
+            }
+        }
+    }
+
+    /// <summary>The client uses layers 25 and up for itself; the SDK sets up the rest.</summary>
+    sealed class UnsupportedLayersCheck : BuildCheck
+    {
+        public override string Id => "scene.layers";
+        public override string Title => "Layers";
+        public override string Description => "Objects only use Unity's built-in layers and the SDK's (3 and 6 to 24).";
+        public override int Order => 61;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            foreach (var use in SceneCreatorBuildCheck.CollectUnsupportedLayers(context.Scene))
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error,
+                        $"{use.Objects.Count} object(s) are on layer {use.Layer}, which the SDK doesn't set up",
+                        "Layers 25 and up belong to the client, which uses them for its own rendering and physics, so these objects " +
+                        "would behave unpredictably in a space. Move them to one of the SDK's layers (Creator SDK > Setup sets them up).")
+                    .WithTargets(use.Objects.Select(context.Target))
+                    .WithFix("Move to Default", issue =>
+                    {
+                        var changed = false;
+                        foreach (var go in issue.Resolve<GameObject>())
+                        {
+                            Undo.RecordObject(go, "Move to Default layer");
+                            go.layer = 0;
+                            changed = true;
+                        }
+                        return changed;
+                    }));
             }
         }
     }

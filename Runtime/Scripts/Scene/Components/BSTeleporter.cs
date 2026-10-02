@@ -39,7 +39,7 @@ namespace BS
         [See(initial = "0.5")][SerializeField] internal float cooldown = 0.5f;
 
         // Banter's local player torso and the SDK's desktop player body both carry this tag.
-        internal const string LocalPlayerTag = "__BA_LocalPlayer";
+        internal const string LocalPlayerTag = "BSLocalCharacter";
 
         float readyAt;
         bool warnedNoDestination;
