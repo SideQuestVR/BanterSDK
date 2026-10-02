@@ -472,7 +472,7 @@ namespace BS
         /// </summary>
         private void SetupRenderingMode()
         {
-            gameObject.layer = LayerMask.NameToLayer("Menu");
+            gameObject.layer = LayerMask.NameToLayer("UI");
             
             if (!screenSpace)
             {
@@ -1034,7 +1034,7 @@ namespace BS
 
                 }
 
-                gameObject.layer = LayerMask.NameToLayer("Menu");
+                gameObject.layer = LayerMask.NameToLayer("UI");
 
                 // The mesh's material is still holding the texture that was just destroyed, and the
                 // panel has to be re-pinned to the new one, or mesh mode goes blank.
