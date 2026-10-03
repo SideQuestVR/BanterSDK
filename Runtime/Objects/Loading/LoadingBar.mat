@@ -91,8 +91,8 @@ Material:
     - _ZWrite: 0
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 0}
-    - _Color1: {r: 0.4251958, g: 0.77311593, b: 0.990566, a: 1}
-    - _Color2: {r: 0.42352945, g: 0.7725491, b: 0.9921569, a: 1}
+    - _Color1: {r: 0.5566038, g: 0.5566038, b: 0.5566038, a: 1}
+    - _Color2: {r: 0.5471698, g: 0.5471698, b: 0.5471698, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _KeyboardPosition: {r: 0, g: 0, b: 0, a: 0}
     - _KeyboardRotation: {r: 0, g: 0, b: 0, a: 0}
