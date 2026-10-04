@@ -146,13 +146,6 @@ const base64 = await obj.ObjectTextureToBase64(0);   // materialIndex
 // component added through AddComponent, one record per object
 const records = obj.Serialise();        // includes all descendants (traverse = true)
 const single = obj.Serialise(false);    // just this object
-
-// Recompute the cached hierarchy path for this object and everything under it
-// (SetName and SetParent already call this for you)
-obj.UpdatePath();
-
-// Re-invoke the callback registered with WatchTransform, passing the current transform
-obj.WatchTransformCallback();
 ```
 
 ## GameObject Events

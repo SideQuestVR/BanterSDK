@@ -233,7 +233,7 @@ layer.edges;   // Read-only view of the current edge set
 
 ## UIColorPicker
 
-A native colour picker: a hue/saturation wheel with a draggable marker, brightness and opacity bars, editable hex / hsl / rgb fields, preset and recent swatches, and a presets-only mode. Constructed with the owning panel: `new BS.UIColorPicker(panel, parent?)`. The element is implemented by the `com.sidequest.color-picker` package, which registers element type 108 with the UI bridge; the page only ever sends strings.
+A native colour picker: a hue/saturation wheel with a draggable marker, brightness and opacity bars, editable hex / hsl / rgb fields, preset and recent swatches, and a presets-only mode. Constructed with the owning panel: `new BS.UIColorPicker(panel, parent?)`.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|

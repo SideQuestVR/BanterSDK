@@ -40,9 +40,8 @@ scene.On("user-state-changed", (e) => {
 });
 ```
 
-`user.props` now populates for keys you have not seen before, and `oldValue` is the real previous
-value rather than always `null`. See `user-state` under [State Events](#state-events) for the same
-updates with real JSON values.
+Each change's `oldValue` is the previous value. See `user-state` under [State Events](#state-events)
+for the same updates with real JSON values.
 
 ## Keyboard Events
 
@@ -105,8 +104,8 @@ someUser.On("state", (e) => console.log(e.detail.changes));
 ```
 
 Values are mirrored on `scene.spaceStateJson.public` / `.protected` (real JSON, keyed by full
-dotted path) and on `user.state`. The string mirrors `scene.spaceState` and `user.props` are still
-maintained exactly as before.
+dotted path) and on `user.state`. The string mirrors `scene.spaceState` and `user.props` stay
+up to date too.
 
 ### State errors
 

@@ -136,8 +136,8 @@ The built-in component methods (`rb.AddForce(...)`, `audio.PlayOneShot(...)`, et
 
 ## State Management
 
-Two surfaces, both live. The **string API** below is unchanged and keeps working; the **JSON API**
-after it adds real values, nested paths, deletes and errors you can catch.
+There are two ways to work with shared state: the **string API** below, and the **JSON API** after
+it, which adds real values, nested paths, deletes and errors you can catch.
 
 ```js
 // Set public properties (visible to all, persists)
@@ -174,9 +174,8 @@ await scene.SpaceStateDelete("game.board");           // removes the path AND ev
 await scene.SpaceStateSet("title", "Arena", { protected: true });
 ```
 
-**`Set` replaces, `Merge` merges.** A bare object-set on the server merges into existing leaves, so
-`SpaceStateSet` clears the subtree first to give you real replace semantics; `SpaceStateMerge`
-exposes the merge behaviour under an honest name.
+**`Set` replaces, `Merge` merges.** `SpaceStateSet` replaces everything at the path;
+`SpaceStateMerge` keeps the existing keys and sets only the ones you pass.
 
 ### JSON user state
 
@@ -192,8 +191,7 @@ await scene.UserStateDelete("loadout");
 await scene.UserStateSet("status", "afk", { moderatorsCanWrite: true });
 ```
 
-Writes take no user id, because user state is owner-writes-only — the server derives the owner from
-the connection and ignores anything a client claims.
+Writes take no user id, because you can only ever write your own user state.
 
 ### Errors
 
@@ -223,8 +221,8 @@ Two things to keep in mind:
 - **Protecting a space-state key is permanent for the room** (its 24 h lifetime). The first
   protected write to a key locks it, and a page cannot unprotect it.
 
-> Moderator-writable *user* state is accepted and namespaced now, but the server does not enforce
-> moderator writes yet — in practice every user prop is currently owner-only.
+> Moderator writes to user state aren't supported yet: for now only the owner can write their user
+> state, even with `moderatorsCanWrite`.
 
 ### Limits
 
@@ -306,7 +304,4 @@ await scene.LightingDataSet(lighting);          // apply a previously stored pay
 
 `Deserialise` also accepts a single object's `Serialise(true)` output (run it through `JSON.stringify` first — `Serialise(true)` returns an array, and `Deserialise` takes the JSON string), so a subtree can be saved and restored on its own.
 
-Two low-level pipes round out the scene surface:
-
-- `scene.ScriptGraphRequest(payload)` — raw request pipe behind [Advanced: ScriptGraphBridge](script-graph-bridge.md); prefer the typed wrapper.
-- `scene.SendToVisualScripting(returnId, data)` — resolves a waiting [Visual Scripting](visual-scripting.md) callback with a JSON payload.
+`scene.SendToVisualScripting(returnId, data)` sends a JSON payload to a [Visual Scripting](visual-scripting.md) graph, where it arrives through the `On BullSchript Callback Received` node with the matching `Return ID`.

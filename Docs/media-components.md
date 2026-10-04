@@ -106,7 +106,7 @@ Creates a portal to another space.
 
 ```js
 obj.AddComponent(new BS.Portal({
-    url: "https://space.bant.ing",
+    url: "https://my-world.worldspace.host",
     instance: "instance-id"
 }));
 ```

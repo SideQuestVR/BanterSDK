@@ -6,7 +6,7 @@ Ready-made objects for common space features, under `GameObject > BS` (also the 
 - **Grab**: one preset per grab type (Point, Point as a gun, Cylinder, Ball, Soft) and a climbable handhold.
 - **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Kit Item, Billboard, Collider Events.
 
-The player prefabs are in `Runtime/Resources/CreatorConveniences/Prefabs/`, built on SDK components (`BSSpawn`, `BSSeat`, `BSTeleporter`, `BSSettings`). They used to be Visual Scripting graphs; the graphs are gone. Objects that still use the old graphs are flagged by the build checklist ("Visual Scripting machine(s) have no graph"). Replace them with the new prefabs.
+The player prefabs are built on SDK components (`BSSpawn`, `BSSeat`, `BSTeleporter`, `BSSettings`).
 
 ## Spawn Point and Spawn Range (`BSSpawn`)
 
@@ -20,7 +20,7 @@ Clicking the seat sits the local player on it. Moving (the move stick or WASD) o
 
 `BSSeat` sets up the `BSAttachedObject` beside it as a seat: Physics + AvatarAttachTo, jointed, `isSeat`, and never auto-attached. It also listens for clicks on its colliders and adds a kinematic Rigidbody if there is none. Without one, the client would add a dynamic Rigidbody and the chair would fall.
 
-In the prefab, the seat components are on the `SitPoint` child at the top of the cushion. The player sits there, facing its forward. The child's trigger box is on the **UI layer**: the client clicks any layer, but the SDK's desktop player only clicks the UI and Menu layers. The visible parts use `Runtime/Resources/CreatorConveniences/Materials/Seat.mat` (URP Lit).
+In the prefab, the seat components are on the `SitPoint` child at the top of the cushion. The player sits there, facing its forward. The child's trigger box is on the **UI layer**: the client clicks any layer, but the SDK's desktop player only clicks the UI and Menu layers. The visible parts use the `Seat` material (URP Lit).
 
 In SDK Play Mode, clicking the seat sits the desktop player. **Space** stands them up (unless they're holding something, when Space is the held object's primary button), and so does moving while flying (right mouse + WASD).
 
@@ -74,9 +74,3 @@ Checks only report. A **Fix** button changes things only when clicked, with undo
 - **Unattended (batch) builds** stop on any error and never show dialogs.
 
 The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone. `Creator SDK > Tools > Run Build Checklist` runs it and logs the results to the Console.
-
-## Known limitations
-
-These components need a client and injection build that include them (component types 75–78). Until the page's injection bundle knows them, a space that uses them makes the page's script fail to sync components.
-
-Seating, standing up, and teleporting by walking in have been exercised in SDK Play Mode only. They still need testing in the client, with a second client to confirm the behaviour stays local to one player.

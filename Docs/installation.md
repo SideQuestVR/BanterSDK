@@ -16,13 +16,13 @@ Alternatively, place the `com.sidequest.creator-sdk` folder directly in your pro
 
 ## First Run: the Setup Panel
 
-The first time the SDK loads in a project, the **Setup** panel opens (`Creator SDK/Setup` opens it again). It has buttons for the Builder and this documentation (which opens in a browser panel inside Unity, docked next to the Game view, when your Ora version has one), and a project setup checklist:
+The first time the SDK loads in a project, the **Setup** panel opens (`Creator SDK/Setup` opens it again). It has buttons for the Builder and this documentation (which opens in a browser panel inside Unity, docked next to the Game view, where available), and a project setup checklist:
 
 | Item | | What it sets up |
 |------|-|-----------------|
 | Android and Windows build support | Required | Spaces are built for both. Add missing modules in Unity Hub. |
 | SDK layers and tags | Required | Scenes store layer numbers, so each SDK layer has to be in the client's slot (Grabbable is 20). |
-| API compatibility level | Required | .NET Standard 2.1, which the SDK's Basis packages need. |
+| API compatibility level | Required | .NET Standard 2.1, which the SDK needs. |
 | Space page (WebRoot) | Required | `Assets/WebRoot/index.html`, which Play mode serves and the Builder uploads. |
 | TextMesh Pro essentials | Required | The fonts BS Text draws with, so Unity's TMP importer doesn't interrupt Play mode. |
 | Universal Render Pipeline | Required | Forward on Quest and Forward+ on Windows, as the client renders. |

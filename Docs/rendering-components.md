@@ -43,11 +43,10 @@ all four tint by `color` (the Transparent twins also honour its alpha):
 | `Unlit/Diffuse`, `Unlit/DiffuseTransparent` | Mesh UVs, tiled by `textureScale` |
 | `Unlit/DiffuseTriplanar`, `Unlit/DiffuseTriplanarTransparent` | World-space triplanar (no UVs needed); `textureScale` = tiles per metre |
 
-Texture references may also use a registered scheme instead of a URL. The `com.sidequest.textures-cc0`
-package registers `cc0:{slug}/{map}/{size}` (map = `basecolor`, `normal` or `mask`; the mask file packs
-R = AO, G = roughness, B = metallic, so `roughnessMap` and `aoMap` can both point at it): the in-build
-256px preview shows immediately and the CDN file at the requested size is swapped in when it arrives.
-Other packages can register their own scheme with `BSMaterial.RegisterTextureSource(IBSTextureSource)`.
+Texture references may also use the `cc0:{slug}/{map}/{size}` scheme for CC0 library textures
+(map = `basecolor`, `normal` or `mask`; the mask packs R = AO, G = roughness, B = metallic, so
+`roughnessMap` and `aoMap` can both point at it). A 256 px preview shows immediately, and the texture
+at the requested size replaces it once it has downloaded.
 
 ## Text
 

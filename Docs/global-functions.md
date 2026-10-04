@@ -33,8 +33,6 @@ BS.IsPlayerTag("BSLocalCharacterHead"); // true
 |--------|-------|
 | `HEAD` | `"BSLocalCharacterHead"` |
 
-`BS.IS_DEV` is a boolean development flag baked into the SDK bundle.
-
 **Enum aliases:** `BS.CT` = `BS.ComponentType`, `BS.PN` = `BS.PropertyName`, `BS.L` = `BS.BSLayers`.
 
 ## Color
@@ -93,13 +91,3 @@ await scene.SetComponents(query);    // push local values to Unity
 ```
 
 To stream property changes back from Unity, use a component's `WatchProperties(props)` method (see [Component Base Class & Events](component-base.md)); it builds the underlying watch query (`{ id, properties }`) and passes it to `scene.WatchProperties`.
-
-## SceneSettings Serialization
-
-`SceneSettings` converts to and from its wire string.
-
-```js
-const settings = new BS.SceneSettings();
-const data = settings.Serialize();  // string form sent to Unity
-settings.Deserialize(data);         // apply a serialized settings string
-```

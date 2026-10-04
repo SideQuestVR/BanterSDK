@@ -36,5 +36,5 @@
   - [Math Types](math-types.md)
   - [Global Functions & Utility Types](global-functions.md)
   - [Enums & Constants](enums.md)
-  - [Internal & Legacy APIs](internal-legacy-apis.md)
+  - [Legacy APIs](legacy-apis.md)
   - [Additional Resources](resources.md)

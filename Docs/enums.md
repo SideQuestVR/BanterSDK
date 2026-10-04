@@ -107,12 +107,9 @@ Command letters are `M` moveTo, `L` lineTo, `C` cubic bezier, `Q` quadratic bezi
 through, `A` arc/ellipse, `Z` close, `H` begin holes. Curve `type` is `CatmullRom`, `Line` or
 `Path`.
 
-`ExtrudeGeometry` does not bevel. `EdgesGeometry` and `WireframeGeometry` are deliberately absent —
-both consume an existing geometry and emit line segments rather than triangles, so they do not fit
-a component that drives a MeshFilter.
+`ExtrudeGeometry` does not bevel, and there are no edge or wireframe geometry types.
 
-**Note that no numeric property can be `0`.** Every one is read with `||`, so a zero falls back to
-that property's default.
+**No numeric property can be `0`:** a zero falls back to that property's default.
 
 ## PropertyName (BS.PN)
 

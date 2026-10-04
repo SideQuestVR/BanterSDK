@@ -141,16 +141,14 @@ Elements live between two markers, which the SDK creates the first time it needs
 | `instance` | added by Unity | Pairs the element with one `BSSnippet` component. Hand-written elements can omit it. |
 | anything else | no | The snippet's own settings, editable in the Inspector. |
 
-`position`, `rotation` and `scale` are plain Unity local values in the object's own space — no
-A-Frame axis flipping — written as space-separated numbers (`scale` also accepts a single number for
-uniform scale).
+`position`, `rotation` and `scale` are plain Unity local values in the object's own space, written as
+space-separated numbers (`scale` also accepts a single number for uniform scale).
 
 A snippet must have `script` or `asset`. If it somehow has both, `script` wins and the runtime logs
 a warning.
 
 The element names are hyphenated (`bs-snippet`, `bs-gizmo`) because the HTML custom-element standard
-requires a hyphen in the name — a bare `<snippet>` cannot be registered as a custom element. If a
-snippet definition still arrives using the old unprefixed names, the SDK converts them on the way in.
+requires a hyphen in the name — a bare `<snippet>` cannot be registered as a custom element.
 
 ## Runtime Behaviour
 
@@ -208,7 +206,8 @@ Design guidance:
   That is what makes the Inspector able to show good fields without a schema.
 - Add a `<bs-gizmo>` for anything positional. A creator who can see the screen rectangle will place
   it correctly the first time.
-- Treat attribute values as untrusted creator input — validate before use.- Declare `single="true"` if two placements would fight over one resource. It is far kinder than
+- Treat attribute values as untrusted creator input — validate before use.
+- Declare `single="true"` if two placements would fight over one resource. It is far kinder than
   letting a creator discover the clash in-world.
 
 ## Housekeeping & Gotchas
