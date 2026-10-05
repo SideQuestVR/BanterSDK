@@ -1,5 +1,7 @@
 # Core Concepts
 
+A world is a Unity scene plus a web page. The scene holds everything you lay out in the Editor; the page, `Assets/WebRoot/index.html`, runs your JavaScript, which reaches into the scene through the `BS` API. Objects you place in Unity and objects you create from JavaScript live in the same scene, so you can mix the two freely.
+
 ## Scene
 The scene is the top-level singleton that manages all GameObjects, components, users, and communication with Unity. Access it via `BS.Scene.GetInstance()`.
 
