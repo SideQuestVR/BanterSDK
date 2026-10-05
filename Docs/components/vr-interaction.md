@@ -1,5 +1,7 @@
 # VR Interaction Components
 
+Let players grab, hold and attach objects in VR.
+
 ## Grababble
 
 Makes an object grabbable in VR with full input control.

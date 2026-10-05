@@ -1,5 +1,7 @@
 # Rendering & Visual Components
 
+Lights, materials, text, billboards, mirrors and other components that change how objects look.
+
 ## Light
 
 Adds lighting to the scene.

@@ -1,5 +1,7 @@
 # Audio Components
 
+Play sound in 3D space with AudioSource.
+
 ## AudioSource
 
 Plays audio in 3D space.

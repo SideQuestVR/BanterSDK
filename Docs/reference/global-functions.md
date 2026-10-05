@@ -1,5 +1,7 @@
 # Global Functions & Utility Types
 
+Top-level `BS` functions and the helper types the API passes around: Color, joint limits and drives, and ComponentQuery.
+
 ## Global Functions
 
 | Function | Returns | Description |
