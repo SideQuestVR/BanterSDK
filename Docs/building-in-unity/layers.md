@@ -25,7 +25,7 @@ Builder's checklist flags objects on them, with a button to move them to Default
 | 24 | CharacterHandColliders | The local player's physics hands. Don't put your own objects here. |
 
 From JavaScript, use the `BS.L` names, e.g. `new BS.GameObject({ layer: BS.L.UserLayer9 })` (see
-[BSLayers (BS.L)](enums.md#bslayers-bsl)).
+[BSLayers (BS.L)](../reference/enums.md#bslayers-bsl)).
 
 ## Movement and Collisions
 

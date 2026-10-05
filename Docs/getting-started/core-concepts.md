@@ -13,7 +13,7 @@ Components add functionality to GameObjects. Physics, rendering, audio, interact
 Every GameObject has a transform controlling its position, rotation, and scale in 3D space. Set these in the constructor or modify later with methods like `SetPosition()`.
 
 ## Assets
-Large content such as textures, audio, and 3D models is tracked as assets rather than passed inline. See [Asset System](asset-system.md).
+Large content such as textures, audio, and 3D models is tracked as assets rather than passed inline. See [Asset System](../javascript-api/asset-system.md).
 
 ## Node Graphs
-Worlds can also be scripted without JavaScript, using node graphs authored in the Unity Editor. See [Visual Scripting](visual-scripting.md).
+Worlds can also be scripted without JavaScript, using node graphs authored in the Unity Editor. See [Visual Scripting](../visual-scripting/overview.md).

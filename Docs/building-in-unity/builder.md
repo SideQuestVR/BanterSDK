@@ -2,7 +2,7 @@
 
 The Builder builds and publishes your world without leaving Unity. Open it via `Creator SDK/Builder`, or **Open Builder** in the Setup panel; the window docks next to the Inspector.
 
-![The Builder window](images/builder-window.png)
+![The Builder window](../images/builder-window.png)
 
 ## Opening & Signing In
 
@@ -37,6 +37,6 @@ The **Upload after building** toggle is remembered per project.
 
 A confirmation dialog summarizes every build before it runs — build mode, plus the scene file and destination world. **Cancel** backs out without building.
 
-Once confirmed, every build first validates the scene's visual scripting graphs (see [Visual Scripting](visual-scripting.md)). Disallowed nodes stop the build, with details in the logs.
+Once confirmed, every build first validates the scene's visual scripting graphs (see [Visual Scripting](../visual-scripting/overview.md)). Disallowed nodes stop the build, with details in the logs.
 
 The **Logs** pane at the bottom of the window streams build and upload progress; the status bar mirrors the latest entry, and a progress bar appears above it during uploads. **Clear logs** empties the pane.

@@ -90,4 +90,4 @@ await scene.QueryComponents(query);  // read values from Unity
 await scene.SetComponents(query);    // push local values to Unity
 ```
 
-To stream property changes back from Unity, use a component's `WatchProperties(props)` method (see [Component Base Class & Events](component-base.md)); it builds the underlying watch query (`{ id, properties }`) and passes it to `scene.WatchProperties`.
+To stream property changes back from Unity, use a component's `WatchProperties(props)` method (see [Component Base Class & Events](../javascript-api/component-base.md)); it builds the underlying watch query (`{ id, properties }`) and passes it to `scene.WatchProperties`.
