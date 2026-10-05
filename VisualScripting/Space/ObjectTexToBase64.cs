@@ -24,7 +24,8 @@ namespace BS.VisualScripting
         {
             material = ValueInput("Material Index", 0);
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
-            base64 = ValueOutput<string>("Base64", flow => {
+            base64 = ValueOutput<string>("Base64", flow =>
+            {
                 return BSScene.Instance().GameObjectTextureToBase64(flow.GetValue<GameObject>(gameObject), flow.GetValue<int>(material));
             });
         }

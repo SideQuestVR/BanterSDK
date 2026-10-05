@@ -151,9 +151,9 @@ namespace BS.VisualScripting
             // Extract element ID from event name
             var parts = data.name.Split('_');
             var elementIdFromEvent = parts.Length > 1 ? parts[1] : "";
-            
+
             flow.SetValue(triggeredElementId, elementIdFromEvent);
-            
+
             // Parse mouse event arguments
             if (data.arguments != null && data.arguments.Length >= 2)
             {
@@ -164,7 +164,7 @@ namespace BS.VisualScripting
                     flow.SetValue(mousePosition, parsedPos);
                 else
                     flow.SetValue(mousePosition, Vector2.zero);
-                
+
                 // Mouse button
                 if (data.arguments[1] is int button)
                     flow.SetValue(mouseButton, button);
@@ -172,7 +172,7 @@ namespace BS.VisualScripting
                     flow.SetValue(mouseButton, parsedButton);
                 else
                     flow.SetValue(mouseButton, 0);
-                    
+
                 // Modifier keys (if available)
                 if (data.arguments.Length > 2 && data.arguments[2] is string modKeys)
                     flow.SetValue(modifierKeys, modKeys);
@@ -190,19 +190,19 @@ namespace BS.VisualScripting
         private bool TryParseVector2(string value, out Vector2 result)
         {
             result = Vector2.zero;
-            
+
             if (string.IsNullOrEmpty(value))
                 return false;
-                
+
             var parts = value.Split(',');
-            if (parts.Length >= 2 && 
-                float.TryParse(parts[0].Trim(), out var x) && 
+            if (parts.Length >= 2 &&
+                float.TryParse(parts[0].Trim(), out var x) &&
                 float.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;
             }
-            
+
             return false;
         }
     }

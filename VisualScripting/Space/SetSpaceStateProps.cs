@@ -26,7 +26,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var propKey = flow.GetValue<string>(key);
                 var propValue = flow.GetValue<string>(value);
                 var propIsPublic = flow.GetValue<bool>(isPublic);
@@ -42,7 +43,7 @@ namespace BS.VisualScripting
 
                 return outputTrigger;
             });
-            
+
             outputTrigger = ControlOutput("");
             key = ValueInput("Property Name", string.Empty);
             value = ValueInput("Value", string.Empty);

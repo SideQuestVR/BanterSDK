@@ -22,7 +22,7 @@ namespace BS.VisualScripting
         protected override void Definition()
         {
             textAsset = ValueInput<TextAsset>("File");
-            jsCode = ValueOutput("BullSchript", (flow) => 
+            jsCode = ValueOutput("BullSchript", (flow) =>
             {
                 var asset = flow.GetValue<TextAsset>(textAsset);
                 if (asset == null)

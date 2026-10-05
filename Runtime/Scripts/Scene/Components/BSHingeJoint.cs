@@ -106,7 +106,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "HingeJoint" +  PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.useLimits + useLimits + PropertyName.limits + limits + PropertyName.useMotor + useMotor + PropertyName.useSpring + useSpring + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
+            return "HingeJoint" + PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.useLimits + useLimits + PropertyName.limits + limits + PropertyName.useMotor + useMotor + PropertyName.useSpring + useSpring + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -200,7 +200,8 @@ namespace BS
                     var vallimits = (BSVector5)values[i];
                     if (vallimits.n == PropertyName.limits)
                     {
-                        componentType.limits = new JointLimits(){
+                        componentType.limits = new JointLimits()
+                        {
                             bounciness = vallimits.x,
                             bounceMinVelocity = vallimits.y,
                             contactDistance = vallimits.z,

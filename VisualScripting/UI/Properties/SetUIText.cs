@@ -30,7 +30,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 LogVerbose("========== TRIGGERED ==========");
 
                 var targetId = flow.GetValue<string>(elementId);

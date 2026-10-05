@@ -96,7 +96,7 @@ namespace BS.VisualScripting
     [UnitShortTitle("AudioSourceSpectrumData")]
     [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(AudioSource))]
-     public class AudioSourceSpectrumData : Unit
+    public class AudioSourceSpectrumData : Unit
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;

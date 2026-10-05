@@ -14,7 +14,7 @@ namespace BS.VisualScripting
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
-    
+
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
@@ -26,7 +26,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _prompt = flow.GetValue<string>(prompt);
                 var _ratio = flow.GetValue<AiImageRatio>(ratio);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>

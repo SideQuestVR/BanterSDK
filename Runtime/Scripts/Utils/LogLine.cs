@@ -42,7 +42,7 @@ public class LogLine
 #if UNITY_EDITOR
                 Debug.Log(string.Format("<color=#4f4f4f>" + tag + "</color> <color=#{0:X2}{1:X2}{2:X2}>{3}</color>", (byte)(color.r * 255f), (byte)(color.g * 255f), (byte)(color.b * 255f), line));
 #elif !LOGLINE_OFF
-                Debug.Log(string.Format(DateTime.Now.ToString("HH:mm:ss.fff") + ": " + tag + " {0}", line));
+            Debug.Log(string.Format(DateTime.Now.ToString("HH:mm:ss.fff") + ": " + tag + " {0}", line));
 #endif
             //Console.WriteLine(string.Format(tag + " " + line));
         }

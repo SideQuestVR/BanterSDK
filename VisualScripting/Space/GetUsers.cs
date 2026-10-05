@@ -18,14 +18,15 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            info = ValueOutput("Users Array", (f) => {
+            info = ValueOutput("Users Array", (f) =>
+            {
                 var data = BSScene.Instance().users;
                 if (data == null)
                 {
                     return null;
                 }
 
-                List<BSUser> users = new ();
+                List<BSUser> users = new();
                 for (var i = 0; i < data.Count; i++)
                 {
                     users.Add(new BSUser()

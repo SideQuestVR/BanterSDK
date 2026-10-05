@@ -21,10 +21,10 @@ namespace BS.UI.Core
                 Debug.LogWarning("[UIPanelExtensions] Panel reference is null, using fallback panel ID");
                 return "Panel_0";
             }
-            
+
             return panel.GetFormattedPanelId();
         }
-        
+
         /// <summary>
         /// Check if this panel's ID is valid
         /// </summary>
@@ -33,11 +33,11 @@ namespace BS.UI.Core
         public static bool HasValidPanelId(this BSUIPanel panel)
         {
             if (panel == null) return false;
-            
+
             // Panel is valid if it has been initialized (internal ID >= 0)
             return panel.ValidateForUIOperation("HasValidPanelId");
         }
-        
+
         /// <summary>
         /// Check if this panel is currently in use (i.e., properly initialized)
         /// </summary>
@@ -46,11 +46,11 @@ namespace BS.UI.Core
         public static bool IsPanelIdInUse(this BSUIPanel panel)
         {
             if (panel == null) return false;
-            
+
             // Panel is in use if it's been properly initialized
             return panel.ValidateForUIOperation("IsPanelIdInUse");
         }
-        
+
         /// <summary>
         /// Validate that this panel is ready for UI operations
         /// Checks for null panel and required components
@@ -65,11 +65,11 @@ namespace BS.UI.Core
                 Debug.LogWarning($"[UIPanelExtensions] Panel reference is null for {operationName}");
                 return false;
             }
-            
+
             // Use the panel's own validation method
             return panel.ValidateForUIOperation(operationName);
         }
-        
+
         /// <summary>
         /// Get the panel that contains the specified element ID
         /// </summary>
@@ -79,7 +79,7 @@ namespace BS.UI.Core
         {
             return UIElementResolver.FindPanelForElement(elementId);
         }
-        
+
         /// <summary>
         /// Validate that an element exists and is ready for UI operations
         /// </summary>
@@ -90,7 +90,7 @@ namespace BS.UI.Core
         {
             return UIElementResolver.ValidateElementForOperation(elementId, operationName);
         }
-        
+
         /// <summary>
         /// Get the formatted panel ID for an element
         /// </summary>

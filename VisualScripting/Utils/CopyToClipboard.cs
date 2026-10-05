@@ -20,7 +20,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _text = flow.GetValue<string>(text);
                 UniClipboard.SetText(_text);
                 return outputTrigger;

@@ -100,7 +100,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal override void DestroyStuff()
         {
@@ -144,7 +144,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Portal" +  PropertyName.url + url + PropertyName.instance + instance;
+            return "Portal" + PropertyName.url + url + PropertyName.instance + instance;
         }
 
         internal override void Init(List<object> constructorProperties = null)

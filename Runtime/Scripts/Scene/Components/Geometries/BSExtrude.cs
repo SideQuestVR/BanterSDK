@@ -108,7 +108,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Extrude" +  PropertyName.shapePoints + shapePoints + PropertyName.curvePoints + curvePoints + PropertyName.depth + depth + PropertyName.depthSegments + depthSegments + PropertyName.segments + segments;
+            return "Extrude" + PropertyName.shapePoints + shapePoints + PropertyName.curvePoints + curvePoints + PropertyName.depth + depth + PropertyName.depthSegments + depthSegments + PropertyName.segments + segments;
         }
 
         internal override void Init(List<object> constructorProperties = null)

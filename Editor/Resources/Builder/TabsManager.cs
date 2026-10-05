@@ -9,7 +9,7 @@ public class TabsManager
         this.rootVisualElement = rootVisualElement;
         SetupTabs();
     }
-     public enum ActiveTab
+    public enum ActiveTab
     {
         Space,
         Avatar,
@@ -96,7 +96,7 @@ public class TabsManager
 
     void SetActivePosition()
     {
-        
+
         EditorPrefs.SetString("BanterBuilder_BanterActiveTab", activeTabName.ToString());
         switch (activeTabName)
         {

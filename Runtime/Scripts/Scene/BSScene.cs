@@ -47,7 +47,7 @@ namespace BS
         public const string RefreshRate = "RefreshRate";
         public const string ClippingPlane = "ClippingPlane";
         public const string SpawnPoint = "SpawnPoint";
-        
+
         public const string PhysicsMoveSpeed = "PhysicsMoveSpeed";
         public const string PhysicsMoveAcceleration = "PhysicsMoveAcceleration";
         public const string PhysicsAirControlSpeed = "PhysicsAirControlSpeed";
@@ -343,7 +343,7 @@ namespace BS
             {
                 interaction.onClick.Invoke(point, normal);
             }
-        EventBus.Trigger("OnClick", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, normal }));
+            EventBus.Trigger("OnClick", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, normal }));
             link.OnClick(obj, point, normal);
         }
         #endregion
@@ -387,10 +387,10 @@ namespace BS
                 return;
             }
             link.OnUserLeft(user);
-           UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
-            {
-                EventBus.Trigger("OnUserLeft", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
-            }, $"{nameof(BSScene)}.{nameof(RemoveUser)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+             {
+                 EventBus.Trigger("OnUserLeft", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+             }, $"{nameof(BSScene)}.{nameof(RemoveUser)}"));
         }
         public void LookedAtMirror()
         {
@@ -516,10 +516,12 @@ namespace BS
                 byte[] bytes = SaveTextureToImage.Do(renderer.sharedMaterials[materialIndex].mainTexture, -1, -1, SaveTextureToImage.SaveTextureFileFormat.PNG);
                 // Utils.SaveTextureToFile(_lensCam.targetTexture, Path.Join(dir, $"{DateTime.Now:yyyy-MM-dd}_{DateTime.Now:HH-mm-ss}_" + (DateTime.Now - DateTime.UnixEpoch).TotalMilliseconds + ".jpg"));
                 // await new WaitUntil(() => isDone);
-                if(bytes != null)
+                if (bytes != null)
                 {
                     return Convert.ToBase64String(bytes);
-                }else{
+                }
+                else
+                {
                     return null;
                 }
                 // return Convert.ToBase64String(((Texture2D)renderer.sharedMaterials[materialIndex].mainTexture).EncodeToPNG());
@@ -1361,7 +1363,7 @@ namespace BS
                     if (banterComp != null)
                     {
                         banterComp.progress = progress;
-                    }                    
+                    }
                     link.Send(APICommands.EVENT + APICommands.PROGRESS + MessageDelimiters.PRIMARY + cid + MessageDelimiters.SECONDARY + progress);
                 });
             }
@@ -1425,7 +1427,7 @@ namespace BS
                         }
                     }
                     else
-                    { 
+                    {
                         SendError(reqId, "UPDATE_COMPONENT: Component not found: " + componentId);
                     }
                 }
@@ -1642,7 +1644,7 @@ namespace BS
                 return;
             }
             var banterObject = GetGameObject(int.Parse(msgParts[0]));
-              if (banterObject != null)
+            if (banterObject != null)
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
                 {
@@ -1678,7 +1680,7 @@ namespace BS
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
                 {
                     var child = banterObject.transform.Find(path);
-                    if(child)
+                    if (child)
                     {
                         child.gameObject.AddComponent<BSObjectId>();
                         await new WaitForEndOfFrame();
@@ -1747,11 +1749,11 @@ namespace BS
             }
             else
             {
-                
+
                 SendError(reqId, "GET_BOUNDS: Object not found: " + msgParts[1]);
             }
         }
-        
+
         public void SetJsObjectTag(string msg, int reqId)
         {
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
@@ -1775,7 +1777,7 @@ namespace BS
                 SendError(reqId, "SET_TAG: Object not found: " + msgParts[0]);
             }
         }
-        
+
         public void SetJsObjectName(string msg, int reqId)
         {
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
@@ -1799,7 +1801,7 @@ namespace BS
                 SendError(reqId, "SET_NAME: Object not found: " + msgParts[0]);
             }
         }
-        
+
         public void SetJsObjectLayer(string msg, int reqId)
         {
             var msgParts = msg.Split(MessageDelimiters.PRIMARY);
@@ -1880,7 +1882,7 @@ namespace BS
                     else if (hasParentAndWorldPosStays)
                     {
                         var parentObject = GetGameObject(int.Parse(msgParts[1]));
-                        newObject = GameObject.Instantiate(gameObject,parentObject.transform, msgParts[2] == "1");
+                        newObject = GameObject.Instantiate(gameObject, parentObject.transform, msgParts[2] == "1");
                     }
                     else if (hasPose)
                     {
@@ -1902,7 +1904,7 @@ namespace BS
                     {
                         newObject = GameObject.Instantiate(gameObject);
                     }
-                    
+
                     var objectId = newObject.GetComponent<BSObjectId>();
                     objectId.GenerateId(true);
                     newObject.transform.parent = settings.parentTransform;
@@ -1923,7 +1925,7 @@ namespace BS
                     }
                     await new WaitForEndOfFrame();
                     SendObjectUpdate(newObject, reqId);
-                 }, $"{nameof(BSScene)}.{nameof(InstantiateJsObject)}"));
+                }, $"{nameof(BSScene)}.{nameof(InstantiateJsObject)}"));
             }
             else
             {
@@ -2111,7 +2113,8 @@ namespace BS
                 try
                 {
                     SendObjectUpdate(int.Parse(msg), reqId);
-                }catch (Exception e)
+                }
+                catch (Exception e)
                 {
                     Debug.LogError("[Banter] Error updating object: " + e.Message + ", " + msg);
                 }
@@ -2390,60 +2393,60 @@ namespace BS
                 }
                 // try
                 // {
-                    var go = new GameObject(parts[2]);
-                    go.transform.parent = settings.parentTransform;
-                    try
+                var go = new GameObject(parts[2]);
+                go.transform.parent = settings.parentTransform;
+                try
+                {
+                    go.layer = int.Parse(parts[3]);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Could not set layer! " + msg);
+                }
+                try
+                {
+                    go.tag = parts[4];
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Could not set tag! " + msg);
+                }
+                try
+                {
+                    if (!parts[5].Equals("undefined"))
                     {
-                        go.layer = int.Parse(parts[3]);
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError("Could not set layer! " + msg);
-                    }
-                    try
-                    {
-                        go.tag = parts[4];
-                    }
-                    catch (Exception e)
-                    {
-                        Debug.LogError("Could not set tag! " + msg);
-                    }
-                    try
-                    {
-                        if (!parts[5].Equals("undefined"))
+                        var parentObject = GetGameObject(int.Parse(parts[5]));
+                        if (parentObject != null)
                         {
-                            var parentObject = GetGameObject(int.Parse(parts[5]));
-                            if (parentObject != null)
-                            {
-                                go.transform.SetParent(parentObject.transform, true);
-                            }
+                            go.transform.SetParent(parentObject.transform, true);
                         }
                     }
-                    catch (Exception e)
-                    {
-                        Debug.LogError("Could not set parent! " + msg);
-                    }
-                    go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]));
-                    var rotation = new Quaternion(NumberFormat.Parse(parts[9]), NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
-                    if (rotation == Quaternion.identity)
-                    {
-                        go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
-                    }
-                    else
-                    {
-                        go.transform.localRotation = rotation;
-                    }
-                    go.transform.localScale = new Vector3(NumberFormat.Parse(parts[16]), NumberFormat.Parse(parts[17]), NumberFormat.Parse(parts[18]));
-                    var objId = go.AddComponent<BSObjectId>();
-                    objId.jsId = parts[0];
-                    AddBanterObject(go, objId, true);
-                    link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
-                    await new WaitForSeconds(2);
-                    if (parts[1] == "0")
-                    {
-                        Debug.Log("Creating object that is not active: " + go.name);
-                        go.SetActive(false);
-                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError("Could not set parent! " + msg);
+                }
+                go.transform.localPosition = new Vector3(NumberFormat.Parse(parts[6]), NumberFormat.Parse(parts[7]), NumberFormat.Parse(parts[8]));
+                var rotation = new Quaternion(NumberFormat.Parse(parts[9]), NumberFormat.Parse(parts[10]), NumberFormat.Parse(parts[11]), NumberFormat.Parse(parts[12]));
+                if (rotation == Quaternion.identity)
+                {
+                    go.transform.localEulerAngles = new Vector3(NumberFormat.Parse(parts[13]), NumberFormat.Parse(parts[14]), NumberFormat.Parse(parts[15]));
+                }
+                else
+                {
+                    go.transform.localRotation = rotation;
+                }
+                go.transform.localScale = new Vector3(NumberFormat.Parse(parts[16]), NumberFormat.Parse(parts[17]), NumberFormat.Parse(parts[18]));
+                var objId = go.AddComponent<BSObjectId>();
+                objId.jsId = parts[0];
+                AddBanterObject(go, objId, true);
+                link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
+                await new WaitForSeconds(2);
+                if (parts[1] == "0")
+                {
+                    Debug.Log("Creating object that is not active: " + go.name);
+                    go.SetActive(false);
+                }
                 // }
                 // catch (Exception e)
                 // {
@@ -3015,7 +3018,7 @@ namespace BS
 
         public void SetSettings(string msg, int reqId)
         {
-            
+
             var settingsParts = msg.Split(MessageDelimiters.PRIMARY);
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {

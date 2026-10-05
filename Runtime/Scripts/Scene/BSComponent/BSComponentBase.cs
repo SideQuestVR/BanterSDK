@@ -37,7 +37,7 @@ namespace BS
         // and serializing it clashes with generated subclass fields named "progress"
         // (e.g. BSAOBaking) — Unity logs "same field name serialized multiple times" per build.
         [NonSerialized][HideInInspector] public UnityEvent<float> progress = new UnityEvent<float>();
-        [HideInInspector]public UnityEvent<bool, string> loaded = new UnityEvent<bool, string>();
+        [HideInInspector] public UnityEvent<bool, string> loaded = new UnityEvent<bool, string>();
         internal bool _loaded;
         public bool IsLoaded => _loaded;
         internal float percentage;

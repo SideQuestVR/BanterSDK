@@ -93,7 +93,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Icosahedron" +  PropertyName.radius + radius + PropertyName.detail + detail;
+            return "Icosahedron" + PropertyName.radius + radius + PropertyName.detail + detail;
         }
 
         internal override void Init(List<object> constructorProperties = null)

@@ -60,7 +60,7 @@ public class Vector5
     public float z;
     public float w;
     public float v;
-    
+
 }
 
 [Serializable]
@@ -246,7 +246,7 @@ public struct BSFloat
         return v.x;
     }
 
-    
+
 }
 
 [Serializable]

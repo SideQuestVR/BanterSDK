@@ -24,7 +24,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var syncObject = flow.GetValue<BSSyncedObject>(syncedObject);
                 syncObject._TakeOwnership();
 
@@ -58,7 +59,8 @@ namespace BS.VisualScripting
             syncedObject.SetDefaultValue(null);
             syncedObject.NullMeansSelf();
 
-            isOwner = ValueOutput<bool>("Is Owner", (flow) => {
+            isOwner = ValueOutput<bool>("Is Owner", (flow) =>
+            {
                 var syncObject = flow.GetValue<BSSyncedObject>(syncedObject);
                 return syncObject._DoIOwn();
             });

@@ -14,18 +14,18 @@ namespace BS.VisualScripting
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
-        
+
         [DoNotSerialize]
         public ControlOutput outputTrigger;
-        
+
         // Amplitude of the haptic impulse (0 to 1)
         [DoNotSerialize]
         public ValueInput amplitude;
-        
+
         // Duration of the haptic impulse in seconds
         [DoNotSerialize]
         public ValueInput duration;
-        
+
         // XRNode representing which hand/controller to target (e.g., XRNode.LeftHand or XRNode.RightHand)
         [DoNotSerialize]
         public ValueInput hand;
@@ -63,7 +63,7 @@ namespace BS.VisualScripting
                 }, $"{nameof(SendHapticImpulse)}.{nameof(Definition)}"));
                 return outputTrigger;
             });
-            
+
             outputTrigger = ControlOutput("Out");
 
             // Define node inputs with default values

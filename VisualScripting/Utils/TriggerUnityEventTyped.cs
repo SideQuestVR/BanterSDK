@@ -75,7 +75,7 @@ namespace BS.VisualScripting
                 case EventDataType.Object:
                     Value = ValueInput<Object>(nameof(Value), null);
                     break;
-                // None = no value port
+                    // None = no value port
             }
 
             trigger = ControlInput("", (flow) =>

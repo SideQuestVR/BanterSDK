@@ -68,7 +68,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "SphereCollider" +  PropertyName.isTrigger + isTrigger + PropertyName.radius + radius;
+            return "SphereCollider" + PropertyName.isTrigger + isTrigger + PropertyName.radius + radius;
         }
 
         internal override void Init(List<object> constructorProperties = null)

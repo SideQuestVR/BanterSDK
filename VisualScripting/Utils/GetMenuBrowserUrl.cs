@@ -23,7 +23,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            url = ValueOutput<string>("URL", flow => {
+            url = ValueOutput<string>("URL", flow =>
+            {
                 try
                 {
                     // Use reflection to find MenuBrowserMessager without compile-time reference

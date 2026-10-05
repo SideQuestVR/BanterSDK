@@ -320,48 +320,48 @@ namespace BS.LocalMultiplayer.State
                 switch (request.Op)
                 {
                     case "get":
-                    {
-                        bool found = _service.TryGet(path, out JToken current);
-                        var reply = new JObject { ["ok"] = true };
-                        if (found) reply["value"] = current;
-                        request.Respond(reply.ToString(Formatting.None));
-                        return;
-                    }
-                    case "getAll":
-                    {
-                        var pub = new JObject();
-                        var prot = new JObject();
-                        foreach (var entry in _service.Entries())
-                            (_service.IsKeyPublic(entry.Key) ? pub : prot)[entry.Key] = entry.Value;
-                        request.Respond(new JObject
                         {
-                            ["ok"] = true,
-                            ["revision"] = _service.Revision,
-                            ["public"] = pub,
-                            ["protected"] = prot
-                        }.ToString(Formatting.None));
-                        return;
-                    }
+                            bool found = _service.TryGet(path, out JToken current);
+                            var reply = new JObject { ["ok"] = true };
+                            if (found) reply["value"] = current;
+                            request.Respond(reply.ToString(Formatting.None));
+                            return;
+                        }
+                    case "getAll":
+                        {
+                            var pub = new JObject();
+                            var prot = new JObject();
+                            foreach (var entry in _service.Entries())
+                                (_service.IsKeyPublic(entry.Key) ? pub : prot)[entry.Key] = entry.Value;
+                            request.Respond(new JObject
+                            {
+                                ["ok"] = true,
+                                ["revision"] = _service.Revision,
+                                ["public"] = pub,
+                                ["protected"] = prot
+                            }.ToString(Formatting.None));
+                            return;
+                        }
                     case "set":
-                    {
-                        // Replace semantics: the server's object-set MERGES, so a true replace has
-                        // to clear the subtree first.
-                        var result = await _service.ReplaceAsync(path, value, scope);
-                        request.Respond(Envelope(result));
-                        return;
-                    }
+                        {
+                            // Replace semantics: the server's object-set MERGES, so a true replace has
+                            // to clear the subtree first.
+                            var result = await _service.ReplaceAsync(path, value, scope);
+                            request.Respond(Envelope(result));
+                            return;
+                        }
                     case "merge":
-                    {
-                        var result = await _service.SetAsync(path, value, scope);
-                        request.Respond(Envelope(result));
-                        return;
-                    }
+                        {
+                            var result = await _service.SetAsync(path, value, scope);
+                            request.Respond(Envelope(result));
+                            return;
+                        }
                     case "delete":
-                    {
-                        var result = await _service.DeleteAsync(path, scope);
-                        request.Respond(Envelope(result));
-                        return;
-                    }
+                        {
+                            var result = await _service.DeleteAsync(path, scope);
+                            request.Respond(Envelope(result));
+                            return;
+                        }
                     default:
                         request.Respond(Envelope(false, StateErrors.UnknownMessageType));
                         return;

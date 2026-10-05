@@ -220,7 +220,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "AOBaking" +  PropertyName.subdivisionLevel + subdivisionLevel + PropertyName.sampleCount + sampleCount + PropertyName.aoIntensity + aoIntensity + PropertyName.aoBias + aoBias + PropertyName.aoRadius + aoRadius + PropertyName.hideSourceObjects + hideSourceObjects + PropertyName.targetShaderName + targetShaderName + PropertyName.isProcessing + isProcessing + PropertyName.progress + progress;
+            return "AOBaking" + PropertyName.subdivisionLevel + subdivisionLevel + PropertyName.sampleCount + sampleCount + PropertyName.aoIntensity + aoIntensity + PropertyName.aoBias + aoBias + PropertyName.aoRadius + aoRadius + PropertyName.hideSourceObjects + hideSourceObjects + PropertyName.targetShaderName + targetShaderName + PropertyName.isProcessing + isProcessing + PropertyName.progress + progress;
         }
 
         internal override void Init(List<object> constructorProperties = null)

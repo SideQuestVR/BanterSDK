@@ -48,7 +48,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -75,14 +76,14 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUIBorder] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set border width
                     SendStyleCommand(panelId, elemId, "border-width", $"{width}px");
-                    
+
                     // Set border color
                     var colorHex = $"#{ColorUtility.ToHtmlStringRGBA(color)}";
                     SendStyleCommand(panelId, elemId, "border-color", colorHex);
-                    
+
                     // Set border radius (general or individual corners)
                     if (radius > 0)
                     {

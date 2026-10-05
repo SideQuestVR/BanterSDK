@@ -48,7 +48,7 @@ namespace BS
         public long author_users_id;
         public string name;
     }
-    
+
     [Serializable]
     public class UserAvatar
     {
@@ -135,7 +135,7 @@ namespace BS
             return null;
         }
         private static Regex ExtExtractor = new Regex("\\.(\\w{3,4})($|\\?)");
-        static ConcurrentDictionary<string,UnityEngine.Object> objectCache = new ConcurrentDictionary<string,UnityEngine.Object>();
+        static ConcurrentDictionary<string, UnityEngine.Object> objectCache = new ConcurrentDictionary<string, UnityEngine.Object>();
 
         // UnityWebRequest.timeout defaults to 0, which means "wait forever". A half-open socket
         // (flaky wifi, captive portal, stalled CDN) therefore never completes, and because a
@@ -197,7 +197,7 @@ namespace BS
             if (objectCache.TryGetValue(key, out Object value))
             {
                 // Sometimes the cached object gets destroyed explicitly elsewhere (MipMaps.Do), so we need to check for null
-                if(value==null)
+                if (value == null)
                 {
                     objectCache.TryRemove(key, out _);
                 }
@@ -285,7 +285,7 @@ namespace BS
         {
             if (url.Contains("?"))
                 url = url.Split('?')[0];
-            
+
             try
             {
                 var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/communities/space-info?space_url=" + UnityWebRequest.EscapeURL(url));

@@ -14,7 +14,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            isFavourited = ValueOutput<bool>("isFavourited", flow => {
+            isFavourited = ValueOutput<bool>("isFavourited", flow =>
+            {
                 return BSScene.Instance().data.IsSpaceFavourited();
             });
         }

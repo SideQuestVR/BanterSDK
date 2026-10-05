@@ -6,9 +6,9 @@ using UnityEngine;
 public class ObjectScreenshotter
 {
     public static void CaptureGameObject(
-        GameObject target, 
-        string outputPath, 
-        int resolution = 512, 
+        GameObject target,
+        string outputPath,
+        int resolution = 512,
         bool angled45 = true,
         float spotlightIntensity = 0f,
         int isolateLayer = -1)
@@ -107,7 +107,7 @@ public class ObjectScreenshotter
         Object.DestroyImmediate(tex);
         Object.DestroyImmediate(rt);
         Object.DestroyImmediate(camGO);
-        
+
         // Restore particle systems
         foreach (var ps in disabledParticles)
         {

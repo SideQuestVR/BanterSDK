@@ -17,7 +17,7 @@ namespace BS.UI.Core
         private static readonly Dictionary<string, string> _elementToPanelCache = new Dictionary<string, string>();
         private static readonly Dictionary<string, BSUIPanel> _panelInstanceCache = new Dictionary<string, BSUIPanel>();
         private static readonly object _cacheLock = new object();
-        
+
         /// <summary>
         /// Find the BSUIPanel that contains the specified element
         /// </summary>
@@ -30,7 +30,7 @@ namespace BS.UI.Core
                 Debug.LogWarning("[UIElementResolver] Element ID is null or empty");
                 return null;
             }
-            
+
             // Check cache first
             lock (_cacheLock)
             {
@@ -42,17 +42,17 @@ namespace BS.UI.Core
                     {
                         return cachedPanel;
                     }
-                    
+
                     // Remove invalid cache entries
                     _elementToPanelCache.Remove(elementId);
                     _panelInstanceCache.Remove(cachedPanelId);
                 }
             }
-            
+
             // Search through all registered UIElementBridge instances
             var bridge = FindBridgeForElement(elementId);
             if (bridge == null) return null;
-            
+
             // Find the BSUIPanel component on the same GameObject as the bridge
             var panel = bridge.GetComponent<BSUIPanel>();
             if (panel != null)
@@ -65,10 +65,10 @@ namespace BS.UI.Core
                     _panelInstanceCache[panelId] = panel;
                 }
             }
-            
+
             return panel;
         }
-        
+
         /// <summary>
         /// Find the UIElementBridge that contains the specified element
         /// </summary>
@@ -80,12 +80,12 @@ namespace BS.UI.Core
             {
                 return null;
             }
-            
+
             // Get all registered panel instances using reflection since _panelInstances is private
             var bridgeType = typeof(UIElementBridge);
-            var panelInstancesField = bridgeType.GetField("_panelInstances", 
+            var panelInstancesField = bridgeType.GetField("_panelInstances",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            
+
             if (panelInstancesField?.GetValue(null) is Dictionary<string, UIElementBridge> panelInstances)
             {
                 // Search through each bridge's elements
@@ -98,10 +98,10 @@ namespace BS.UI.Core
                     }
                 }
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// Get the formatted panel ID for the element (e.g., "PanelSettings 5")
         /// </summary>
@@ -112,7 +112,7 @@ namespace BS.UI.Core
             var panel = FindPanelForElement(elementId);
             return panel?.GetFormattedPanelId();
         }
-        
+
         /// <summary>
         /// Validate that an element exists in the UI system
         /// </summary>
@@ -122,7 +122,7 @@ namespace BS.UI.Core
         {
             return FindBridgeForElement(elementId) != null;
         }
-        
+
         /// <summary>
         /// Validate that an element exists and is ready for UI operations
         /// </summary>
@@ -136,22 +136,22 @@ namespace BS.UI.Core
                 Debug.LogWarning($"[UIElementResolver] Element ID is null or empty for {operationName}");
                 return false;
             }
-            
+
             var panel = FindPanelForElement(elementId);
             if (panel == null)
             {
                 Debug.LogWarning($"[UIElementResolver] No panel found containing element '{elementId}' for {operationName}");
                 return false;
             }
-            
+
             if (!panel.ValidateForUIOperation(operationName))
             {
                 return false;
             }
-            
+
             return true;
         }
-        
+
         /// <summary>
         /// Clear the element-to-panel cache
         /// Call this when elements are created or destroyed to maintain cache accuracy
@@ -165,7 +165,7 @@ namespace BS.UI.Core
                 Debug.Log("[UIElementResolver] Cleared element-to-panel cache");
             }
         }
-        
+
         /// <summary>
         /// Remove a specific element from the cache
         /// Call this when an element is destroyed
@@ -174,7 +174,7 @@ namespace BS.UI.Core
         public static void InvalidateElementCache(string elementId)
         {
             if (string.IsNullOrEmpty(elementId)) return;
-            
+
             lock (_cacheLock)
             {
                 if (_elementToPanelCache.TryGetValue(elementId, out var panelId))
@@ -184,7 +184,7 @@ namespace BS.UI.Core
                 }
             }
         }
-        
+
         /// <summary>
         /// Get cache statistics for debugging
         /// </summary>
@@ -202,7 +202,7 @@ namespace BS.UI.Core
             }
         }
     }
-    
+
     /// <summary>
     /// Cache statistics for debugging
     /// </summary>
@@ -212,7 +212,7 @@ namespace BS.UI.Core
         public int ElementMappings;
         public int PanelInstances;
         public string[] CachedElements;
-        
+
         public override string ToString()
         {
             return $"UIElementResolver Cache: {ElementMappings} element mappings, {PanelInstances} panel instances";

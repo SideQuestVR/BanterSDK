@@ -21,7 +21,7 @@ namespace BS
         private bool _EnableSpiderMan = false;
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
         private bool _EnableHandHold = true;
-        public bool EnableHandHold{ get { return _EnableHandHold; } set { _EnableHandHold = value; scene.events.OnEnableHandHoldChanged.Invoke(value); } }
+        public bool EnableHandHold { get { return _EnableHandHold; } set { _EnableHandHold = value; scene.events.OnEnableHandHoldChanged.Invoke(value); } }
         private bool _EnableRadar = true;
         public bool EnableRadar { get { return _EnableRadar; } set { _EnableRadar = value; scene.events.OnEnableRadarChanged.Invoke(value); } }
         private bool _EnableNametags = true;
@@ -42,7 +42,7 @@ namespace BS
         public Vector2 ClippingPlane { get { return _ClippingPlane; } set { _ClippingPlane = value; scene.events.OnClippingPlaneChanged.Invoke(value); } }
         private Vector4 _SpawnPoint = Vector4.zero;
         public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
-        
+
         // Physics settings
         private float _physicsMoveSpeed = 2f;
         public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { Debug.Log($"[MoveSpeed] _physicsMoveSpeed={value}"); _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
@@ -53,30 +53,30 @@ namespace BS
         private float _physicsAirControlAcceleration = 6f;
         public float PhysicsAirControlAcceleration { get { return _physicsAirControlAcceleration; } set { _physicsAirControlAcceleration = value; scene.events.OnPhysicsAirControlAccelerationChanged.Invoke(value); } }
         private float _physicsDrag = 0f;
-        public float PhysicsDrag { get { return _physicsDrag; } set { _physicsDrag = value; scene.events.OnPhysicsDragChanged.Invoke(value); } } 
+        public float PhysicsDrag { get { return _physicsDrag; } set { _physicsDrag = value; scene.events.OnPhysicsDragChanged.Invoke(value); } }
         private float _physicsFreeFallAngularDrag = 6f;
-        public float PhysicsFreeFallAngularDrag { get { return _physicsFreeFallAngularDrag; } set { _physicsFreeFallAngularDrag = value; scene.events.OnPhysicsFreeFallAngularDragChanged.Invoke(value); } } 
+        public float PhysicsFreeFallAngularDrag { get { return _physicsFreeFallAngularDrag; } set { _physicsFreeFallAngularDrag = value; scene.events.OnPhysicsFreeFallAngularDragChanged.Invoke(value); } }
         private float _physicsJumpStrength = 1f;
-        public float PhysicsJumpStrength { get { return _physicsJumpStrength; } set { _physicsJumpStrength = value; scene.events.OnPhysicsJumpStrengthChanged.Invoke(value); } } 
+        public float PhysicsJumpStrength { get { return _physicsJumpStrength; } set { _physicsJumpStrength = value; scene.events.OnPhysicsJumpStrengthChanged.Invoke(value); } }
         private float _physicsHandPositionStrength = 1f;
-        public float PhysicsHandPositionStrength { get { return _physicsHandPositionStrength; } set { _physicsHandPositionStrength = value; scene.events.OnPhysicsHandPositionStrengthChanged.Invoke(value); } } 
+        public float PhysicsHandPositionStrength { get { return _physicsHandPositionStrength; } set { _physicsHandPositionStrength = value; scene.events.OnPhysicsHandPositionStrengthChanged.Invoke(value); } }
         private float _physicsHandRotationStrength = 1f;
-        public float PhysicsHandRotationStrength { get { return _physicsHandRotationStrength; } set { _physicsHandRotationStrength = value; scene.events.OnPhysicsHandRotationStrengthChanged.Invoke(value); } } 
+        public float PhysicsHandRotationStrength { get { return _physicsHandRotationStrength; } set { _physicsHandRotationStrength = value; scene.events.OnPhysicsHandRotationStrengthChanged.Invoke(value); } }
         private float _physicsHandSpringiness = 10f;
-        public float PhysicsHandSpringiness { get { return _physicsHandSpringiness; } set { _physicsHandSpringiness = value; scene.events.OnPhysicsHandSpringinessChanged.Invoke(value); } } 
+        public float PhysicsHandSpringiness { get { return _physicsHandSpringiness; } set { _physicsHandSpringiness = value; scene.events.OnPhysicsHandSpringinessChanged.Invoke(value); } }
         private float _physicsGrappleRange = 512f;
-        public float PhysicsGrappleRange { get { return _physicsGrappleRange; } set { _physicsGrappleRange = value; scene.events.OnPhysicsGrappleRangeChanged.Invoke(value); } } 
+        public float PhysicsGrappleRange { get { return _physicsGrappleRange; } set { _physicsGrappleRange = value; scene.events.OnPhysicsGrappleRangeChanged.Invoke(value); } }
         private float _physicsGrappleReelSpeed = 1;
-        public float PhysicsGrappleReelSpeed { get { return _physicsGrappleReelSpeed; } set { _physicsGrappleReelSpeed = value; scene.events.OnPhysicsGrappleReelSpeedChanged.Invoke(value); } } 
+        public float PhysicsGrappleReelSpeed { get { return _physicsGrappleReelSpeed; } set { _physicsGrappleReelSpeed = value; scene.events.OnPhysicsGrappleReelSpeedChanged.Invoke(value); } }
         private float _physicsGrappleSpringiness = 10;
-        public float PhysicsGrappleSpringiness { get { return _physicsGrappleSpringiness; } set { _physicsGrappleSpringiness = value; scene.events.OnPhysicsGrappleSpringinessChanged.Invoke(value); } } 
+        public float PhysicsGrappleSpringiness { get { return _physicsGrappleSpringiness; } set { _physicsGrappleSpringiness = value; scene.events.OnPhysicsGrappleSpringinessChanged.Invoke(value); } }
         private bool _physicsGorillaMode = false;
-        public bool PhysicsGorillaMode { get { return _physicsGorillaMode; } set { _physicsGorillaMode = value; scene.events.OnPhysicsGorillaModeChanged.Invoke(value); } } 
+        public bool PhysicsGorillaMode { get { return _physicsGorillaMode; } set { _physicsGorillaMode = value; scene.events.OnPhysicsGorillaModeChanged.Invoke(value); } }
 
-        
+
         public bool IsSettingsLocked = false;
         public bool IsPhysicsSettingsLocked = false;
-        
+
         public Transform LeftHand = null;
         public Transform RightHand = null;
         public Transform Head = null;
@@ -147,7 +147,7 @@ namespace BS
 
             IsSettingsLocked = false;
             IsPhysicsSettingsLocked = false;
-            
+
             EnableDevTools = true;
             EnableDefaultTextures = true;
             EnableTeleport = true;
@@ -163,7 +163,7 @@ namespace BS
             RefreshRate = 72.0f;
             ClippingPlane = new Vector2(0.02f, 1500.0f);
             SpawnPoint = Vector4.zero;
-            
+
             PhysicsMoveSpeed = 2f;
             PhysicsMoveAcceleration = 1f;
             PhysicsAirControlSpeed = 3.8f;
@@ -171,14 +171,14 @@ namespace BS
             PhysicsDrag = 0;
             PhysicsFreeFallAngularDrag = 6;
             PhysicsJumpStrength = 1;
-            PhysicsHandPositionStrength = 1; 
+            PhysicsHandPositionStrength = 1;
             PhysicsHandRotationStrength = 1;
             PhysicsHandSpringiness = 10;
             PhysicsGrappleRange = 512;
             PhysicsGrappleReelSpeed = 1;
             PhysicsGrappleSpringiness = 10;
             PhysicsGorillaMode = false;
-            
+
             if (SceneAssetBundle != null)
             {
                 await SceneAssetBundle.Unload();

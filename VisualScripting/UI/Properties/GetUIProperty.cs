@@ -41,7 +41,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var propName = flow.GetValue<UIPropertyNameVS>(propertyName);
@@ -75,13 +76,14 @@ namespace BS.VisualScripting
                         flow.SetValue(propertyValue, null);
                         return outputTrigger;
                     }
-                    
+
                     // Convert enum to property name
                     var propNameStr = GetPropertyName(propName);
 
                     // Set up callback to receive the value
                     _currentEventName = $"UIProperty_{elemId}_{propNameStr}";
-                    _currentCallback = (CustomEventArgs args) => {
+                    _currentCallback = (CustomEventArgs args) =>
+                    {
                         if (!graphReference.isValid)
                         {
                             CleanupCallback();
@@ -105,13 +107,13 @@ namespace BS.VisualScripting
                         // Clean up callback after use
                         CleanupCallback();
                     };
-                    
+
                     // Register for the callback event
                     EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
-                    
+
                     // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propNameStr}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -136,7 +138,7 @@ namespace BS.VisualScripting
             elementIdOutput = ValueOutput<string>("Element ID");
             propertyValue = ValueOutput<object>("Value");
         }
-        
+
         private void CleanupCallback()
         {
             if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))

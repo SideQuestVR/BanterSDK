@@ -54,7 +54,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         private async Task SetupBundle(List<PropertyName> changedProperties)
         {
@@ -87,33 +87,34 @@ namespace BS
             }
         }
 
-        internal async Task AfterBundleLoad() {
-                // A download started from Visual Scripting or C# at Play start can finish before the page's first load
-                // created the settings (both branches use them): register once they exist, unless this bundle was
-                // destroyed or unloaded meanwhile.
-                if (this == null || assetBundle == null) return;
-                if (!await scene.WhenSettingsReady("Asset bundle '" + name + "'") || this == null || assetBundle == null) return;
-                if (isScene)
+        internal async Task AfterBundleLoad()
+        {
+            // A download started from Visual Scripting or C# at Play start can finish before the page's first load
+            // created the settings (both branches use them): register once they exist, unless this bundle was
+            // destroyed or unloaded meanwhile.
+            if (this == null || assetBundle == null) return;
+            if (!await scene.WhenSettingsReady("Asset bundle '" + name + "'") || this == null || assetBundle == null) return;
+            if (isScene)
+            {
+                await SetupSceneBundle();
+            }
+            else
+            {
+                assetPaths = assetBundle.GetAllAssetNames().ToList();
+                scene.settings.KitBundles.Add(this);
+                foreach (var path in assetPaths)
                 {
-                    await SetupSceneBundle();
-                }
-                else
-                {
-                    assetPaths = assetBundle.GetAllAssetNames().ToList();
-                    scene.settings.KitBundles.Add(this);
-                    foreach (var path in assetPaths)
+                    if (path.EndsWith(".prefab"))
                     {
-                        if (path.EndsWith(".prefab"))
-                        {
-                            scene.settings.KitPaths.Add(path, this);
-                        }
+                        scene.settings.KitPaths.Add(path, this);
                     }
                 }
+            }
         }
 
         internal async Task LoadBundle(List<PropertyName> changedProperties)
         {
-            if(isLoading)
+            if (isLoading)
             {
                 LogLine.Do("Waiting for bundle to load before loading again...");
                 await new WaitUntil(() => !isLoading);
@@ -317,7 +318,7 @@ namespace BS
                                     box.isTrigger = true;
                                     box.size = new Vector3(rt.rect.width, rt.rect.height, 0.01f);
                                     box.center = new Vector3(0f, 0f, 0.015f);
-                                    
+
                                     // Founds some spaces that have huge canvases with no rectT scaling, so cap it
                                     if (rt.localScale.x >= 1f && rt.rect.width > 10f)
                                     {
@@ -361,8 +362,10 @@ namespace BS
             try
             {
                 await assetBundle.UnloadAsync(true);
-            }catch(Exception e){
-                Debug.Log(e.Message); 
+            }
+            catch (Exception e)
+            {
+                Debug.Log(e.Message);
             }
             assetBundle = null;
             // Play can stop before any page has loaded, when there are no settings yet.
@@ -436,7 +439,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "AssetBundle" +  PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
+            return "AssetBundle" + PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
         }
 
         internal override void Init(List<object> constructorProperties = null)

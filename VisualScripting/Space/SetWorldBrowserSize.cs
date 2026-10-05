@@ -25,7 +25,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _width = flow.GetValue<int>(width);
                 var _height = flow.GetValue<int>(height);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>

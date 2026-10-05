@@ -23,7 +23,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         void SetupGeometry()
@@ -88,7 +88,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Mobius" +  PropertyName.stacks + stacks + PropertyName.slices + slices;
+            return "Mobius" + PropertyName.stacks + stacks + PropertyName.slices + slices;
         }
 
         internal override void Init(List<object> constructorProperties = null)

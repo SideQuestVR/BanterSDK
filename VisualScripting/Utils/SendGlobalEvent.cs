@@ -16,8 +16,8 @@ namespace BS.VisualScripting
     [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class SendGlobalEvent : Unit
-    {        
-         [SerializeAs(nameof(argumentCount))]
+    {
+        [SerializeAs(nameof(argumentCount))]
         private int _argumentCount;
 
         [DoNotSerialize]

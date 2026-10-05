@@ -57,7 +57,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         internal override void DestroyStuff() { }
@@ -107,7 +107,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "SyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned;
+            return "SyncedObject" + PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned;
         }
 
         internal override void Init(List<object> constructorProperties = null)

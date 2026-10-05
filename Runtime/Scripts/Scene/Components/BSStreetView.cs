@@ -31,7 +31,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -83,7 +83,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "StreetView" +  PropertyName.panoId + panoId;
+            return "StreetView" + PropertyName.panoId + panoId;
         }
 
         internal override void Init(List<object> constructorProperties = null)

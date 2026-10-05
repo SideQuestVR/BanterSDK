@@ -50,7 +50,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         // BANTER COMPILED CODE 
         BSScene _scene;

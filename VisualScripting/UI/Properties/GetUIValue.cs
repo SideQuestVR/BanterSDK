@@ -34,7 +34,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -58,9 +59,9 @@ namespace BS.VisualScripting
 
                 try
                 {
-                // Clean up any existing callback
-                CleanupCallback();
-                
+                    // Clean up any existing callback
+                    CleanupCallback();
+
                     // Get the panel ID for message routing
                     var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
                     if (panelId == null)
@@ -69,51 +70,52 @@ namespace BS.VisualScripting
                         flow.SetValue(value, 0f);
                         return outputTrigger;
                     }
-                
-                // Set up callback to receive the value
-                _currentEventName = $"UIProperty_{elemId}_value";
-                _currentCallback = (CustomEventArgs args) => {
-                    if (!graphReference.isValid)
-                    {
-                        CleanupCallback();
-                        return;
-                    }
 
-                    var callbackFlow = Flow.New(graphReference);
-
-                    if (args.arguments != null && args.arguments.Length > 0)
+                    // Set up callback to receive the value
+                    _currentEventName = $"UIProperty_{elemId}_value";
+                    _currentCallback = (CustomEventArgs args) =>
                     {
-                        // Try to parse as float, fallback to 0
-                        var rawValue = args.arguments[0];
-                        float floatValue = 0f;
-                        
-                        if (rawValue is float f)
-                            floatValue = f;
-                        else if (rawValue is string s && float.TryParse(s, out var parsed))
-                            floatValue = parsed;
-                        else if (rawValue != null && float.TryParse(rawValue.ToString(), out var parsedStr))
-                            floatValue = parsedStr;
-                            
-                        callbackFlow.SetValue(value, floatValue);
+                        if (!graphReference.isValid)
+                        {
+                            CleanupCallback();
+                            return;
+                        }
+
+                        var callbackFlow = Flow.New(graphReference);
+
+                        if (args.arguments != null && args.arguments.Length > 0)
+                        {
+                            // Try to parse as float, fallback to 0
+                            var rawValue = args.arguments[0];
+                            float floatValue = 0f;
+
+                            if (rawValue is float f)
+                                floatValue = f;
+                            else if (rawValue is string s && float.TryParse(s, out var parsed))
+                                floatValue = parsed;
+                            else if (rawValue != null && float.TryParse(rawValue.ToString(), out var parsedStr))
+                                floatValue = parsedStr;
+
+                            callbackFlow.SetValue(value, floatValue);
 #if BANTER_UI_DEBUG
                         Debug.Log($"[GetUIValue] Received value: {floatValue} for {_currentEventName}");
 #endif
-                    }
-                    else
-                    {
-                        callbackFlow.SetValue(value, 0f);
-                    }
-                    
-                    // Clean up callback after use
-                    CleanupCallback();
-                };
-                    
+                        }
+                        else
+                        {
+                            callbackFlow.SetValue(value, 0f);
+                        }
+
+                        // Clean up callback after use
+                        CleanupCallback();
+                    };
+
                     // Register for the callback event
                     EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
-                    
+
                     // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}value";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -136,7 +138,7 @@ namespace BS.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             value = ValueOutput<float>("Value");
         }
-        
+
         private void CleanupCallback()
         {
             if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))

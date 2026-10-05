@@ -91,10 +91,12 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-             inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
                     BSScene.Instance().events.OnGetUserState.Invoke(_key, _uid);
                 }, $"{nameof(GetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
@@ -107,7 +109,7 @@ namespace BS.VisualScripting
 
     }
 
-    
+
     [UnitTitle("Set User Saved Value")]
     [UnitShortTitle("SetUserSavedValue")]
     [UnitCategory("BS\\User")]
@@ -130,11 +132,13 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-             inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
                 var _value = flow.GetValue<string>(value);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
                     BSScene.Instance().events.OnSetUserState.Invoke(_key, _uid, _value);
                 }, $"{nameof(SetUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;
@@ -169,10 +173,12 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-             inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _key = flow.GetValue<string>(key);
                 var _uid = flow.GetValue<string>(uid);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
                     BSScene.Instance().events.OnRemoveUserState.Invoke(_key, _uid);
                 }, $"{nameof(RemoveUserSavedValue)}.{nameof(Definition)}"));
                 return outputTrigger;

@@ -22,7 +22,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(canRotate);
                 Debug.Log("[MouseLook] ActionsSystem.canRotate set to " + value);
                 ActionsSystem.canRotate = value;

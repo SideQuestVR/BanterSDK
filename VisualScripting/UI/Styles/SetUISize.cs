@@ -48,7 +48,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var widthValue = flow.GetValue<float>(width);
@@ -73,14 +74,14 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUISize] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     var widthStr = FormatLength(widthValue, widthUnitValue);
                     var heightStr = FormatLength(heightValue, heightUnitValue);
-                    
+
                     // Format: panelId|SET_UI_STYLE|elementId§styleName§value
                     var widthMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}width{MessageDelimiters.SECONDARY}{widthStr}";
                     var heightMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}height{MessageDelimiters.SECONDARY}{heightStr}";
-                    
+
                     // Send commands through UIElementBridge
                     UIElementBridge.HandleMessage(widthMessage);
                     UIElementBridge.HandleMessage(heightMessage);
