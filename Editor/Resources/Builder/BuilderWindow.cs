@@ -963,9 +963,9 @@ public class BuilderWindow : EditorWindow
             {
                 uploadWebOnly.SetEnabled(false);
                 uploadEverything.SetEnabled(false);
-                EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() =>
+                EditorCoroutineUtility.StartCoroutine(UploadWebOnly(succeeded =>
                 {
-                    status.AddStatus("Upload complete.");
+                    status.AddStatus(succeeded ? "Upload complete." : "Upload failed.");
                     uploadWebOnly.SetEnabled(true);
                     uploadEverything.SetEnabled(true);
                 }), this);
@@ -991,9 +991,9 @@ public class BuilderWindow : EditorWindow
                 confirmCallback = null;
                 uploadWebOnly.SetEnabled(false);
                 uploadEverything.SetEnabled(false);
-                EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
+                EditorCoroutineUtility.StartCoroutine(UploadEverything(succeeded =>
                 {
-                    status.AddStatus("Upload complete.");
+                    status.AddStatus(succeeded ? "Upload complete." : "Upload failed.");
                     uploadWebOnly.SetEnabled(true);
                     uploadEverything.SetEnabled(true);
                 }), this);
@@ -1106,51 +1106,72 @@ public class BuilderWindow : EditorWindow
         EndUploadProgress("Upload complete");
     }
 
-    private IEnumerator UploadWebOnly(Action callback)
+    private enum WorldFileUploadResult
     {
-        BeginUploadProgress(3);
-        yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-        yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-        yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
-        callback();
-        EndUploadProgress("Upload complete");
+        Skipped,
+        Succeeded,
+        Failed
     }
-    private IEnumerator UploadEverything(Action callback)
+
+    private IEnumerator UploadWebOnly(Action<bool> callback)
     {
-        // callback runs in finally so it always fires — even if an upload step throws — restoring
-        // button state and releasing the assembly-reload lock the scene build hands off (see
-        // BuildAssetBundles). A leaked lock would wedge script recompilation until an editor restart.
+        return UploadWorldFiles(new[]
+        {
+            ("index.html", UploadAssetType.Index),
+            ("script.js", UploadAssetType.Js),
+            ("bullshcript.js", UploadAssetType.Js)
+        }, callback);
+    }
+    private IEnumerator UploadEverything(Action<bool> callback)
+    {
+        // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
+        // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
+        // to legacy per-platform windows.banter / android.banter for spaces that predate it.
+        return UploadWorldFiles(new[]
+        {
+            ("asset.world", UploadAssetType.WorldAsset),
+            ("index.html", UploadAssetType.Index),
+            ("script.js", UploadAssetType.Js),
+            ("bullshcript.js", UploadAssetType.Js)
+        }, callback, true);
+    }
+
+    private IEnumerator UploadWorldFiles((string name, UploadAssetType type)[] files, Action<bool> callback, bool pruneRuntimeOverrides = false)
+    {
+        // callback runs in finally so it always restores button state and releases any assembly-reload
+        // lock handed to the upload, including when a nested coroutine throws.
+        bool succeeded = false;
         try
         {
             uploadHadFailure = false;
             uploadedWorldAssetUtc = default;
-            BeginUploadProgress(4);
-            // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
-            // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
-            // to legacy per-platform windows.banter / android.banter for spaces that predate it. Missing
-            // file is skipped.
-            yield return UploadWorldFile("asset.world", UploadAssetType.WorldAsset, UploadAssetTypePlatform.Any, NextUploadStep("Uploading asset.world"));
-            yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-            yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-            yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+            BeginUploadProgress(files.Length);
+            foreach (var file in files)
+            {
+                WorldFileUploadResult result = WorldFileUploadResult.Skipped;
+                yield return UploadWorldFile(file.name, file.type, UploadAssetTypePlatform.Any,
+                    NextUploadStep("Uploading " + file.name), value => result = value);
+                if (result == WorldFileUploadResult.Failed)
+                {
+                    yield break;
+                }
+            }
 
-            // Only now that the world itself is up: the runtime overrides we are about to drop are
-            // only redundant because the scene that just shipped contains them — so that has to be
-            // TRUE, not assumed. See PruneBlockedReason.
-            var blocked = uploadHadFailure
-                ? "part of the upload failed"
-                : PruneBlockedReason();
-            if (blocked == null)
-                yield return RuntimeOverridePrune.Run(sq, selectedWorld?.WorldId, SelectedWorldSlug,
-                                                      msg => status.AddStatus(msg));
-            else
-                status.AddStatus("Skipping runtime-override cleanup — " + blocked + ".");
-
-            EndUploadProgress("Upload complete");
+            if (pruneRuntimeOverrides)
+            {
+                var blocked = uploadHadFailure ? "part of the upload failed" : PruneBlockedReason();
+                if (blocked == null)
+                    yield return RuntimeOverridePrune.Run(sq, selectedWorld?.WorldId, SelectedWorldSlug,
+                        msg => status.AddStatus(msg));
+                else
+                    status.AddStatus("Skipping runtime-override cleanup — " + blocked + ".");
+            }
+            succeeded = true;
         }
         finally
         {
-            callback?.Invoke();
+            EndUploadProgress(succeeded ? "Upload complete" : "Upload failed");
+            callback?.Invoke(succeeded);
         }
     }
 
@@ -1220,7 +1241,7 @@ public class BuilderWindow : EditorWindow
 
     // Uploads a WebRoot file and attaches it to the selected world (asset.world, index.html, script.js…),
     // via /v2/worlds/{worlds_id}/assets/type/{type}/platform/{platform}. Callers pass platform Any (0).
-    private IEnumerator UploadWorldFile(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null)
+    private IEnumerator UploadWorldFile(string name, UploadAssetType type, UploadAssetTypePlatform platform, Action<float> onProgress = null, Action<WorldFileUploadResult> onCompleted = null)
     {
         var file = Path.Join(Path.Join(assetBundleRoot, assetBundleDirectory), name);
         if (File.Exists(file))
@@ -1230,15 +1251,18 @@ public class BuilderWindow : EditorWindow
         else
         {
             status.AddStatus("File not found, skipping: " + file);
+            onCompleted?.Invoke(WorldFileUploadResult.Skipped);
             yield break;
         }
         var data = File.ReadAllBytes(file);
         string slug = SelectedWorldSlug;
         string baseUrl = string.IsNullOrEmpty(SelectedWorldUrl) ? ("https://" + slug + ".worldspace.host") : SelectedWorldUrl;
+        WorldFileUploadResult result = WorldFileUploadResult.Failed;
         yield return sq.UploadFileToWorld(name, data, selectedWorld?.WorldId, slug, (text) =>
         {
             status.AddStatus("Uploaded " + file + " to " + baseUrl + "/" + name);
             if (name == "asset.world") uploadedWorldAssetUtc = File.GetLastWriteTimeUtc(file);
+            result = WorldFileUploadResult.Succeeded;
         }, e =>
         {
             // Recorded as well as logged: an upload step failing does not throw, so without this
@@ -1248,6 +1272,7 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("FAILED UPLOADING " + file + " to " + baseUrl + "/" + name);
             Debug.LogException(e);
         }, type, platform, onProgress);
+        onCompleted?.Invoke(result);
     }
 
     public void Remove(VisualElement element)
@@ -2038,13 +2063,13 @@ public class BuilderWindow : EditorWindow
                     // the upload is done rather than mid-flight.
                     bool unlockAfterUpload = reloadLockHeld;
                     lockHandedToUpload = reloadLockHeld;
-                    EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
-                    {
-                        status.AddStatus("Upload complete.");
-                        uploadWebOnly.SetEnabled(true);
-                        uploadEverything.SetEnabled(true);
-                        if (unlockAfterUpload) EditorApplication.UnlockReloadAssemblies();
-                    }), this);
+                    EditorCoroutineUtility.StartCoroutine(UploadEverything(succeeded =>
+                {
+                    status.AddStatus(succeeded ? "Upload complete." : "Upload failed.");
+                    uploadWebOnly.SetEnabled(true);
+                    uploadEverything.SetEnabled(true);
+                    if (unlockAfterUpload) EditorApplication.UnlockReloadAssemblies();
+                }), this);
                 }
             }
             finally
