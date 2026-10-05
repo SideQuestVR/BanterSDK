@@ -32,13 +32,14 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var res = flow.GetValue<Vector2>(resolution);
                 var isScreenSpace = flow.GetValue<bool>(screenSpace);
-                #if BANTER_UI_DEBUG
+#if BANTER_UI_DEBUG
                 Debug.Log("[CreateUIPanel] Attempting to create UI Panel...");
-                #endif
+#endif
                 try
                 {
                     // Get or add BSUIPanel component
@@ -52,9 +53,9 @@ namespace BS.VisualScripting
                     panel.Resolution = res;
                     panel.ScreenSpace = isScreenSpace;
 
-                    #if BANTER_UI_DEBUG
+#if BANTER_UI_DEBUG
                     Debug.Log($"[CreateUIPanel] Created panel successfully");
-                    #endif
+#endif
 
                     flow.SetValue(panelReference, panel);
                 }

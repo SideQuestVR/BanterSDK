@@ -14,7 +14,7 @@ namespace BS
         [See(initial = "0")][SerializeField] internal LightType type = 0;
 
         [Tooltip("The color of the light.")]
-        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1,1,1,1);
+        [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);
 
         [Tooltip("The brightness of the light.")]
         [See(initial = "1")][SerializeField] internal float intensity = 1f;
@@ -75,7 +75,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Light" +  PropertyName.type + type + PropertyName.color + color + PropertyName.intensity + intensity + PropertyName.range + range + PropertyName.spotAngle + spotAngle + PropertyName.innerSpotAngle + innerSpotAngle + PropertyName.shadows + shadows;
+            return "Light" + PropertyName.type + type + PropertyName.color + color + PropertyName.intensity + intensity + PropertyName.range + range + PropertyName.spotAngle + spotAngle + PropertyName.innerSpotAngle + innerSpotAngle + PropertyName.shadows + shadows;
         }
 
         internal override void Init(List<object> constructorProperties = null)

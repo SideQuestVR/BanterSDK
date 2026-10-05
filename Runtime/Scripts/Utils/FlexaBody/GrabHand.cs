@@ -108,7 +108,7 @@ namespace SideQuest.FlexaBody
 
             if (_gripping && _handData.Input_Grab < grabSettings.ReleaseThreshold)
                 _gripping = false;
-            else if(!_gripping && _handData.Input_Grab > grabSettings.GrabThreshold)
+            else if (!_gripping && _handData.Input_Grab > grabSettings.GrabThreshold)
             {
                 _gripping = true;
                 _startGripTime = Time.time + grabSettings.GripTime;
@@ -123,7 +123,7 @@ namespace SideQuest.FlexaBody
             Settings_Grab grabSettings = _grabSettings;
             Collider[] cols = Physics.OverlapSphere(_physicsHand.RB.position, grabSettings.GrabRange, grabSettings.GrabLayers, QueryTriggerInteraction.Collide);
 
-            if(cols.Length > 0f)
+            if (cols.Length > 0f)
             {
                 Collider grabCol = cols[0];
                 if (PreferredCollider != null && Array.IndexOf(cols, PreferredCollider) >= 0)
@@ -245,16 +245,22 @@ namespace SideQuest.FlexaBody
             joint.linearLimit = new SoftJointLimit { limit = 0.15f };
 
             // Drives
-            JointDrive drive = new JointDrive { positionSpring = grabSettings.GrabPositionDrive.x,
-                                                positionDamper = grabSettings.GrabPositionDrive.y,
-                                                maximumForce = grabSettings.GrabPositionDrive.z };
+            JointDrive drive = new JointDrive
+            {
+                positionSpring = grabSettings.GrabPositionDrive.x,
+                positionDamper = grabSettings.GrabPositionDrive.y,
+                maximumForce = grabSettings.GrabPositionDrive.z
+            };
             joint.xDrive = drive;
             joint.yDrive = drive;
             joint.zDrive = drive;
 
-            drive = new JointDrive {    positionSpring = grabSettings.GrabRotationDrive.x,
-                                        positionDamper = grabSettings.GrabRotationDrive.y,
-                                        maximumForce = grabSettings.GrabRotationDrive.z };
+            drive = new JointDrive
+            {
+                positionSpring = grabSettings.GrabRotationDrive.x,
+                positionDamper = grabSettings.GrabRotationDrive.y,
+                maximumForce = grabSettings.GrabRotationDrive.z
+            };
 
             joint.rotationDriveMode = RotationDriveMode.Slerp;
             joint.slerpDrive = drive;
@@ -263,7 +269,7 @@ namespace SideQuest.FlexaBody
             joint.autoConfigureConnectedAnchor = false;
 
             Rigidbody r = _handData.HeldHandle.RB;
-            if(r)
+            if (r)
                 _handData.RotOffset = Quaternion.Inverse(_physicsHand.RB.rotation) * r.rotation;
             else
                 _handData.RotOffset = Quaternion.Inverse(_physicsHand.RB.rotation) * _handData.HeldHandle.transform.rotation;

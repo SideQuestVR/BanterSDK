@@ -54,7 +54,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -83,13 +84,13 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUISpacing] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set margin properties
                     SendStyleCommand(panelId, elemId, "margin-top", FormatLength(mTop, unitVal));
                     SendStyleCommand(panelId, elemId, "margin-right", FormatLength(mRight, unitVal));
                     SendStyleCommand(panelId, elemId, "margin-bottom", FormatLength(mBottom, unitVal));
                     SendStyleCommand(panelId, elemId, "margin-left", FormatLength(mLeft, unitVal));
-                    
+
                     // Set padding properties
                     SendStyleCommand(panelId, elemId, "padding-top", FormatLength(pTop, unitVal));
                     SendStyleCommand(panelId, elemId, "padding-right", FormatLength(pRight, unitVal));

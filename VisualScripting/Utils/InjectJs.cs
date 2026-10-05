@@ -23,7 +23,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var code = flow.GetValue<string>(jsCode);
                 var returnCode = flow.GetValue<string>(returnId);
                 BSScene.Instance().link.pipe.view.EvaluateJS(code,

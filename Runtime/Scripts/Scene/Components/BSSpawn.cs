@@ -188,7 +188,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Spawn" +  PropertyName.radius + radius;
+            return "Spawn" + PropertyName.radius + radius;
         }
 
         internal override void Init(List<object> constructorProperties = null)

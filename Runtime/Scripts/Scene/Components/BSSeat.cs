@@ -232,7 +232,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Seat" +  PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
+            return "Seat" + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
         }
 
         internal override void Init(List<object> constructorProperties = null)

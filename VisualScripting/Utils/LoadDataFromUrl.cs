@@ -16,7 +16,7 @@ namespace BS.VisualScripting
     {
         [DoNotSerialize]
         public ValueInput url;
-        
+
         [DoNotSerialize]
         public ValueInput generateMipmaps;
 
@@ -50,7 +50,8 @@ namespace BS.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var genMipmaps = flow.GetValue<bool>(this.generateMipmaps);
 
-            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
                 yield return failure;
                 yield break;
             }
@@ -129,14 +130,16 @@ namespace BS.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var method = flow.GetValue<string>(this.method);
 
-            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
                 yield return failure;
                 yield break;
             }
 
             using (var request = method == "POST" ? UnityWebRequest.Put(url, flow.GetValue<string>(body)) : UnityWebRequest.Get(url))
             {
-                if(method == "POST") {
+                if (method == "POST")
+                {
                     request.SetRequestHeader("Content-Type", flow.GetValue<string>(this.contentType));
                 }
                 yield return request.SendWebRequest();
@@ -144,7 +147,9 @@ namespace BS.VisualScripting
                 if (request.result != UnityWebRequest.Result.Success)
                 {
                     yield return failure;
-                }else{
+                }
+                else
+                {
                     flow.SetValue(this.text, request.downloadHandler.text);
                     yield return success;
                 }
@@ -195,7 +200,8 @@ namespace BS.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var type = flow.GetValue<AudioType>(audioType);
 
-            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
                 yield return failure;
                 yield break;
             }

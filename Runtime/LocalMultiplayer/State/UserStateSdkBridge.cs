@@ -277,50 +277,50 @@ namespace BS.LocalMultiplayer.State
             switch (request.Op)
             {
                 case "get":
-                {
-                    string target = string.IsNullOrEmpty(userId) ? _service.OwnRoomSessionId : ResolveRoomSessionId(userId);
-                    bool found = _service.TryGetProp(target, key, out var value, scope);
-                    var reply = new JObject { ["ok"] = true };
-                    if (found) reply["value"] = value;
-                    request.Respond(reply.ToString(Formatting.None));
-                    return;
-                }
+                    {
+                        string target = string.IsNullOrEmpty(userId) ? _service.OwnRoomSessionId : ResolveRoomSessionId(userId);
+                        bool found = _service.TryGetProp(target, key, out var value, scope);
+                        var reply = new JObject { ["ok"] = true };
+                        if (found) reply["value"] = value;
+                        request.Respond(reply.ToString(Formatting.None));
+                        return;
+                    }
                 case "getAll":
-                {
-                    string target = string.IsNullOrEmpty(userId) ? _service.OwnRoomSessionId : ResolveRoomSessionId(userId);
-                    var props = new JObject();
-                    foreach (var pair in _service.Props(target)) props[pair.Key] = pair.Value;
-                    request.Respond(new JObject { ["ok"] = true, ["state"] = props }
-                        .ToString(Formatting.None));
-                    return;
-                }
+                    {
+                        string target = string.IsNullOrEmpty(userId) ? _service.OwnRoomSessionId : ResolveRoomSessionId(userId);
+                        var props = new JObject();
+                        foreach (var pair in _service.Props(target)) props[pair.Key] = pair.Value;
+                        request.Respond(new JObject { ["ok"] = true, ["state"] = props }
+                            .ToString(Formatting.None));
+                        return;
+                    }
                 case "set":
                 case "merge":
-                {
-                    // Writes are owner-only by construction: there is no user-id input, because a
-                    // parameter that can only ever hold one legal value is a trap.
-                    //
-                    // Validate BEFORE answering. These are queued for the next flush, so we cannot
-                    // report the server's verdict here -- but answering ok to a key the codec will
-                    // refuse would make the page's promise resolve on a write that never happens.
-                    if (!_service.TrySetOwnProp(key, body["value"], scope, out string setError))
                     {
-                        request.Respond(Envelope(false, setError));
+                        // Writes are owner-only by construction: there is no user-id input, because a
+                        // parameter that can only ever hold one legal value is a trap.
+                        //
+                        // Validate BEFORE answering. These are queued for the next flush, so we cannot
+                        // report the server's verdict here -- but answering ok to a key the codec will
+                        // refuse would make the page's promise resolve on a write that never happens.
+                        if (!_service.TrySetOwnProp(key, body["value"], scope, out string setError))
+                        {
+                            request.Respond(Envelope(false, setError));
+                            return;
+                        }
+                        request.Respond(Envelope(true, null));
                         return;
                     }
-                    request.Respond(Envelope(true, null));
-                    return;
-                }
                 case "delete":
-                {
-                    if (!_service.TryRemoveOwnProp(key, scope, out string delError))
                     {
-                        request.Respond(Envelope(false, delError));
+                        if (!_service.TryRemoveOwnProp(key, scope, out string delError))
+                        {
+                            request.Respond(Envelope(false, delError));
+                            return;
+                        }
+                        request.Respond(Envelope(true, null));
                         return;
                     }
-                    request.Respond(Envelope(true, null));
-                    return;
-                }
 
                 default:
                     request.Respond(Envelope(false, StateErrors.UnknownMessageType));

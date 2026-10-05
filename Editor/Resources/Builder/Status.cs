@@ -48,7 +48,7 @@ public class Status
         buildProgress.Rebuild();
         if (!skipWrite)
         {
-            File.AppendAllLines(logFile, new string[] { text + ":::" + DateTime.Now.ToString("HH:mm:ss") }); 
+            File.AppendAllLines(logFile, new string[] { text + ":::" + DateTime.Now.ToString("HH:mm:ss") });
         }
     }
     public void ClearLogs()

@@ -21,7 +21,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(canTeleport);
                 ActionsSystem.canTeleport = value;
                 return outputTrigger;

@@ -18,7 +18,7 @@ namespace BS
         [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
         [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
 
-         [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
+        [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
         [See(initial = "0.5")][SerializeField] internal float gunTriggerSensitivity = 0.5f;
 
         [Tooltip("Rate at which held events are fired (in seconds).")]
@@ -71,7 +71,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal override void StartStuff()
         {
@@ -94,7 +94,8 @@ namespace BS
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            if(!banterGrabHandle) {
+            if (!banterGrabHandle)
+            {
                 banterGrabHandle = gameObject.GetComponent<BSGrabHandle>();
                 if (!banterGrabHandle)
                 {
@@ -225,7 +226,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Grababble" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius + PropertyName.gunTriggerSensitivity + gunTriggerSensitivity + PropertyName.gunTriggerFireRate + gunTriggerFireRate + PropertyName.gunTriggerAutoFire + gunTriggerAutoFire + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
+            return "Grababble" + PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius + PropertyName.gunTriggerSensitivity + gunTriggerSensitivity + PropertyName.gunTriggerFireRate + gunTriggerFireRate + PropertyName.gunTriggerAutoFire + gunTriggerAutoFire + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
         }
 
         internal override void Init(List<object> constructorProperties = null)

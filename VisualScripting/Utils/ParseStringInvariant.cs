@@ -22,7 +22,8 @@ namespace BS.VisualScripting
         protected override void Definition()
         {
             stringInput = ValueInput("string", "");
-            floatOutput = ValueOutput<float>("float", flow => {
+            floatOutput = ValueOutput<float>("float", flow =>
+            {
                 return float.Parse(flow.GetValue<string>(stringInput), CultureInfo.InvariantCulture);
             });
         }

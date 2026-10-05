@@ -274,7 +274,7 @@ namespace BS
 
             LogLine.Do($"Banter DevTools " + (_devToolsEnabled ? "enabled." : "disabled."));
 #else
-            _devToolsEnabled = ! _devToolsEnabled;
+            _devToolsEnabled = !_devToolsEnabled;
 #endif
             if (Application.isPlaying)
             {
@@ -389,31 +389,31 @@ namespace BS
             AppDomain.CurrentDomain.UnhandledException +=
                 (object sender, UnhandledExceptionEventArgs args) =>
                     Debug.LogError("[AppDomain.CurrentDomain.UnhandledException]: " + (Exception)args.ExceptionObject);
-                    TaskScheduler.UnobservedTaskException +=
-                (object sender, UnobservedTaskExceptionEventArgs args) =>
+            TaskScheduler.UnobservedTaskException +=
+        (object sender, UnobservedTaskExceptionEventArgs args) =>
+            {
+                args.SetObserved();
+
+                // Teardown noise: aborted overlapped IO (Win32 995 from killed process
+                // pipes / closed handles), cancelled or disposed background reads, and
+                // connects abandoned after a cancel (Unity's AI Assistant times out its
+                // relay WebSocket connect that way). These surface via the finalizer long
+                // after shutdown started — not actionable.
+                bool benignTeardown = true;
+                foreach (var inner in args.Exception.Flatten().InnerExceptions)
+                {
+                    if (!IsTeardownNoise(inner))
                     {
-                        args.SetObserved();
+                        benignTeardown = false;
+                        break;
+                    }
+                }
 
-                        // Teardown noise: aborted overlapped IO (Win32 995 from killed process
-                        // pipes / closed handles), cancelled or disposed background reads, and
-                        // connects abandoned after a cancel (Unity's AI Assistant times out its
-                        // relay WebSocket connect that way). These surface via the finalizer long
-                        // after shutdown started — not actionable.
-                        bool benignTeardown = true;
-                        foreach (var inner in args.Exception.Flatten().InnerExceptions)
-                        {
-                            if (!IsTeardownNoise(inner))
-                            {
-                                benignTeardown = false;
-                                break;
-                            }
-                        }
+                if (benignTeardown)
+                    return;
 
-                        if (benignTeardown)
-                            return;
-
-                        Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
-                    };
+                Debug.LogError("[TaskScheduler.UnobservedTaskException]: " + args.Exception);
+            };
         }
 
         // Cancelled, disposed or aborted IO is noise; a transport wrapper (a WebSocket or HTTP failure) says

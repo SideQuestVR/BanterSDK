@@ -31,7 +31,7 @@ namespace BS.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return true; 
+            return true;
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)

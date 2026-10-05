@@ -27,11 +27,11 @@ namespace BS
         {
             // throw new NotImplementedException();
         }
-        
+
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         internal override void Init(List<object> constructorProperties = null)

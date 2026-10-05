@@ -32,7 +32,7 @@ namespace BS
                 SetLoadedIfNot();
             }
         }
-        internal override void UpdateStuff() {}
+        internal override void UpdateStuff() { }
         // BANTER COMPILED CODE 
         BSScene _scene;
         public BSScene scene

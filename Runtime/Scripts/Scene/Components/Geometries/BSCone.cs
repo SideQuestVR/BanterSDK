@@ -10,7 +10,7 @@ namespace BS
     [WatchComponent]
     public class BSCone : BSComponentBase
     {
-        
+
         [Tooltip("Radius of the cone")]
         [See(initial = "1")][SerializeField] internal float radius;
         [Tooltip("Height of the cone")]
@@ -36,7 +36,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         void SetupGeometry()
@@ -71,7 +71,7 @@ namespace BS
                 Destroy(geometry);
             }
 
-         }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -111,7 +111,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Cone" +  PropertyName.radius + radius + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Cone" + PropertyName.radius + radius + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

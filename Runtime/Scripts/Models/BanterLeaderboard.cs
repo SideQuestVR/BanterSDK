@@ -4,7 +4,8 @@ using System;
 namespace BS
 {
     [Serializable]
-    public class Score{
+    public class Score
+    {
         public string id;
         public string name;
         public float score;
@@ -12,14 +13,16 @@ namespace BS
     }
 
     [Serializable]
-    public class Board{
+    public class Board
+    {
         public Score[] scores;
         public string sort;
     }
 
 
     [Serializable]
-    public class UpdateScores{
+    public class UpdateScores
+    {
         public string board;
         public Board scores;
     }

@@ -14,7 +14,7 @@ namespace BS.VisualScripting
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
-    
+
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
@@ -23,7 +23,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _board = flow.GetValue<string>(board);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {

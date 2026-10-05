@@ -40,7 +40,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
@@ -66,16 +67,16 @@ namespace BS.VisualScripting
 
                     // Generate unique element ID if not provided
                     var scrollViewElementId = string.IsNullOrEmpty(elemId) ? $"ui_scrollview_{System.Guid.NewGuid().ToString("N")[..8]}" : elemId;
-                    
+
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementType = "1"; // UIElementType.ScrollView = 1
                     string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
                     var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
-                    
+
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{scrollViewElementId}{MessageDelimiters.SECONDARY}{elementType}{MessageDelimiters.SECONDARY}{parentElementId}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 

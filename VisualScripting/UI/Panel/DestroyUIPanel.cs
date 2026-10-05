@@ -21,7 +21,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var panel = flow.GetValue<BSUIPanel>(panelReference);
 
                 if (panel == null)

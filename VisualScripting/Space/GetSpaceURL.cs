@@ -14,7 +14,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            spaceUrl = ValueOutput<string>("spaceUrl", flow => {
+            spaceUrl = ValueOutput<string>("spaceUrl", flow =>
+            {
                 return BSScene.Instance().CurrentUrl;
             });
         }

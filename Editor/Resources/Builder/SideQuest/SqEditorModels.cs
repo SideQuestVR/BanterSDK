@@ -249,7 +249,7 @@ namespace BS.SDKEditor
         /// </summary>
         [JsonProperty("upload_uri")]
         public string UploadURI { get; set; }
-        
+
         [JsonProperty("contentType")] public string ContentType { get; set; }
 
         /// <summary>
@@ -453,7 +453,7 @@ namespace BS.SDKEditor
         public DateTimeOffset AchievementCreatedAt { get; set; }
 
     }
-    
+
     /// <summary>
     /// Represents basic upload creation request
     /// </summary>
@@ -461,11 +461,11 @@ namespace BS.SDKEditor
     {
         [JsonProperty("avatars_id")]
         public long AvatarId { get; set; }
-        
+
         [JsonProperty("high_avatar_files_id")]
         public long HighId { get; set; }
 
-        [JsonProperty("version",NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
         public long Version { get; set; }
 
         [JsonProperty("low_avatar_files_id")]
@@ -473,14 +473,14 @@ namespace BS.SDKEditor
 
         [JsonProperty("is_public")]
         public bool Public { get; set; }
-        
-        [JsonProperty("name")] 
+
+        [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty("preview_image",NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("preview_image", NullValueHandling = NullValueHandling.Ignore)]
         public long PreviewImage { get; set; }
     }
-    
+
     /// <summary>
     /// Create avatar slot
     /// </summary>
@@ -492,11 +492,11 @@ namespace BS.SDKEditor
         public long UsersID { get; set; }
         [JsonProperty("avatars_id")]
         public long AvatarId { get; set; }
-        
+
         [JsonProperty("is_selected")]
         public bool IsSelected { get; set; }
     }
-    
+
     public class SqAvatarSlotSelect
     {
         [JsonProperty("user_avatars_id")]

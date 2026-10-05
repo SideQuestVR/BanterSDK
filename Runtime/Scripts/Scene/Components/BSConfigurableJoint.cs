@@ -201,7 +201,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "ConfigurableJoint" +  PropertyName.targetPosition + targetPosition + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.xMotion + xMotion + PropertyName.yMotion + yMotion + PropertyName.zMotion + zMotion + PropertyName.angularXMotion + angularXMotion + PropertyName.angularYMotion + angularYMotion + PropertyName.angularZMotion + angularZMotion + PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.secondaryAxis + secondaryAxis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.targetRotation + targetRotation + PropertyName.targetVelocity + targetVelocity + PropertyName.targetAngularVelocity + targetAngularVelocity + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.rotationDriveMode + rotationDriveMode + PropertyName.configuredInWorldSpace + configuredInWorldSpace + PropertyName.swapBodies + swapBodies + PropertyName.connectedBody + connectedBody + PropertyName.linearLimit + linearLimit + PropertyName.lowAngularXLimit + lowAngularXLimit + PropertyName.highAngularXLimit + highAngularXLimit + PropertyName.angularYLimit + angularYLimit + PropertyName.angularZLimit + angularZLimit + PropertyName.xDrive + xDrive + PropertyName.yDrive + yDrive + PropertyName.zDrive + zDrive + PropertyName.angularXDrive + angularXDrive + PropertyName.angularYZDrive + angularYZDrive + PropertyName.slerpDrive + slerpDrive;
+            return "ConfigurableJoint" + PropertyName.targetPosition + targetPosition + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.xMotion + xMotion + PropertyName.yMotion + yMotion + PropertyName.zMotion + zMotion + PropertyName.angularXMotion + angularXMotion + PropertyName.angularYMotion + angularYMotion + PropertyName.angularZMotion + angularZMotion + PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.secondaryAxis + secondaryAxis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.targetRotation + targetRotation + PropertyName.targetVelocity + targetVelocity + PropertyName.targetAngularVelocity + targetAngularVelocity + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.rotationDriveMode + rotationDriveMode + PropertyName.configuredInWorldSpace + configuredInWorldSpace + PropertyName.swapBodies + swapBodies + PropertyName.connectedBody + connectedBody + PropertyName.linearLimit + linearLimit + PropertyName.lowAngularXLimit + lowAngularXLimit + PropertyName.highAngularXLimit + highAngularXLimit + PropertyName.angularYLimit + angularYLimit + PropertyName.angularZLimit + angularZLimit + PropertyName.xDrive + xDrive + PropertyName.yDrive + yDrive + PropertyName.zDrive + zDrive + PropertyName.angularXDrive + angularXDrive + PropertyName.angularYZDrive + angularYZDrive + PropertyName.slerpDrive + slerpDrive;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -511,7 +511,8 @@ namespace BS
                     var vallinearLimit = (BSVector3)values[i];
                     if (vallinearLimit.n == PropertyName.linearLimit)
                     {
-                        componentType.linearLimit = new SoftJointLimit(){
+                        componentType.linearLimit = new SoftJointLimit()
+                        {
                             limit = vallinearLimit.x,
                             bounciness = vallinearLimit.y,
                             contactDistance = vallinearLimit.z
@@ -524,7 +525,8 @@ namespace BS
                     var vallowAngularXLimit = (BSVector3)values[i];
                     if (vallowAngularXLimit.n == PropertyName.lowAngularXLimit)
                     {
-                        componentType.lowAngularXLimit = new SoftJointLimit(){
+                        componentType.lowAngularXLimit = new SoftJointLimit()
+                        {
                             limit = vallowAngularXLimit.x,
                             bounciness = vallowAngularXLimit.y,
                             contactDistance = vallowAngularXLimit.z
@@ -537,7 +539,8 @@ namespace BS
                     var valhighAngularXLimit = (BSVector3)values[i];
                     if (valhighAngularXLimit.n == PropertyName.highAngularXLimit)
                     {
-                        componentType.highAngularXLimit = new SoftJointLimit(){
+                        componentType.highAngularXLimit = new SoftJointLimit()
+                        {
                             limit = valhighAngularXLimit.x,
                             bounciness = valhighAngularXLimit.y,
                             contactDistance = valhighAngularXLimit.z
@@ -550,7 +553,8 @@ namespace BS
                     var valangularYLimit = (BSVector3)values[i];
                     if (valangularYLimit.n == PropertyName.angularYLimit)
                     {
-                        componentType.angularYLimit = new SoftJointLimit(){
+                        componentType.angularYLimit = new SoftJointLimit()
+                        {
                             limit = valangularYLimit.x,
                             bounciness = valangularYLimit.y,
                             contactDistance = valangularYLimit.z
@@ -563,7 +567,8 @@ namespace BS
                     var valangularZLimit = (BSVector3)values[i];
                     if (valangularZLimit.n == PropertyName.angularZLimit)
                     {
-                        componentType.angularZLimit = new SoftJointLimit(){
+                        componentType.angularZLimit = new SoftJointLimit()
+                        {
                             limit = valangularZLimit.x,
                             bounciness = valangularZLimit.y,
                             contactDistance = valangularZLimit.z
@@ -576,7 +581,8 @@ namespace BS
                     var valxDrive = (BSVector4)values[i];
                     if (valxDrive.n == PropertyName.xDrive)
                     {
-                        componentType.xDrive = new JointDrive(){
+                        componentType.xDrive = new JointDrive()
+                        {
                             positionSpring = valxDrive.x,
                             positionDamper = valxDrive.y,
                             maximumForce = valxDrive.z,
@@ -590,7 +596,8 @@ namespace BS
                     var valyDrive = (BSVector4)values[i];
                     if (valyDrive.n == PropertyName.yDrive)
                     {
-                        componentType.yDrive = new JointDrive(){
+                        componentType.yDrive = new JointDrive()
+                        {
                             positionSpring = valyDrive.x,
                             positionDamper = valyDrive.y,
                             maximumForce = valyDrive.z,
@@ -604,7 +611,8 @@ namespace BS
                     var valzDrive = (BSVector4)values[i];
                     if (valzDrive.n == PropertyName.zDrive)
                     {
-                        componentType.zDrive = new JointDrive(){
+                        componentType.zDrive = new JointDrive()
+                        {
                             positionSpring = valzDrive.x,
                             positionDamper = valzDrive.y,
                             maximumForce = valzDrive.z,
@@ -618,7 +626,8 @@ namespace BS
                     var valangularXDrive = (BSVector4)values[i];
                     if (valangularXDrive.n == PropertyName.angularXDrive)
                     {
-                        componentType.angularXDrive = new JointDrive(){
+                        componentType.angularXDrive = new JointDrive()
+                        {
                             positionSpring = valangularXDrive.x,
                             positionDamper = valangularXDrive.y,
                             maximumForce = valangularXDrive.z,
@@ -632,7 +641,8 @@ namespace BS
                     var valangularYZDrive = (BSVector4)values[i];
                     if (valangularYZDrive.n == PropertyName.angularYZDrive)
                     {
-                        componentType.angularYZDrive = new JointDrive(){
+                        componentType.angularYZDrive = new JointDrive()
+                        {
                             positionSpring = valangularYZDrive.x,
                             positionDamper = valangularYZDrive.y,
                             maximumForce = valangularYZDrive.z,
@@ -646,7 +656,8 @@ namespace BS
                     var valslerpDrive = (BSVector4)values[i];
                     if (valslerpDrive.n == PropertyName.slerpDrive)
                     {
-                        componentType.slerpDrive = new JointDrive(){
+                        componentType.slerpDrive = new JointDrive()
+                        {
                             positionSpring = valslerpDrive.x,
                             positionDamper = valslerpDrive.y,
                             maximumForce = valslerpDrive.z,

@@ -51,7 +51,7 @@ namespace BS
 
         [Tooltip("The mass scale of this body.")]
         [See(initial = "1")][SerializeField] internal float massScale = 1f;
-        
+
         [Tooltip("The rigidbody that this joint connects to. Can be null for world-anchored joints. Accepts GameObject name or asset reference.")]
         [See(initial = "", isAssetReference = true)][SerializeField] internal string connectedBody = "";
         // BANTER COMPILED CODE 
@@ -107,7 +107,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "SpringJoint" +  PropertyName.anchor + anchor + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.spring + spring + PropertyName.damper + damper + PropertyName.minDistance + minDistance + PropertyName.maxDistance + maxDistance + PropertyName.tolerance + tolerance + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
+            return "SpringJoint" + PropertyName.anchor + anchor + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.spring + spring + PropertyName.damper + damper + PropertyName.minDistance + minDistance + PropertyName.maxDistance + maxDistance + PropertyName.tolerance + tolerance + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
         }
 
         internal override void Init(List<object> constructorProperties = null)

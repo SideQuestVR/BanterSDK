@@ -108,7 +108,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Lathe" +  PropertyName.shapePoints + shapePoints + PropertyName.segments + segments + PropertyName.radialSegments + radialSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength;
+            return "Lathe" + PropertyName.shapePoints + shapePoints + PropertyName.segments + segments + PropertyName.radialSegments + radialSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

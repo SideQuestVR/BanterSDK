@@ -60,7 +60,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var posType = flow.GetValue<UIPositionType>(positionType);
@@ -89,11 +90,11 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUIPosition] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set position type
                     string positionValue = posType == UIPositionType.Absolute ? "absolute" : "relative";
                     SendStyleCommand(panelId, elemId, "position", positionValue);
-                    
+
                     // Set position values
                     SendStyleCommand(panelId, elemId, "left", FormatLength(leftVal, leftUnitVal));
                     SendStyleCommand(panelId, elemId, "top", FormatLength(topVal, topUnitVal));

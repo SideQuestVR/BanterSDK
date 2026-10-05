@@ -44,11 +44,12 @@ namespace BS.SDKEditor
             }
             return output;
         }
-        
+
         private static List<string> GetElementsFromStateGraph(GraphReference reference, StateGraph graph)
         {
             var output = new List<string>();
-            if (graph == null) {
+            if (graph == null)
+            {
                 return output;
             }
             // get this layer's elements
@@ -92,7 +93,8 @@ namespace BS.SDKEditor
                                 if (childGraph is StateGraph)
                                 {
                                     output = output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterState)state, false), (StateGraph)childGraph)).ToList();
-                                } else
+                                }
+                                else
                                 {
                                     output = output.Concat(GrabElements(e, reference.ChildReference((INesterState)state, false))).ToList();
                                 }
@@ -100,11 +102,11 @@ namespace BS.SDKEditor
                         }
                     }
                 }
-                
+
             }
             return output;
         }
-        private static List<string> GrabElements(IGraphElement e,GraphReference reference)
+        private static List<string> GrabElements(IGraphElement e, GraphReference reference)
         {
             var output = new List<string>();
 
@@ -113,13 +115,13 @@ namespace BS.SDKEditor
             {
                 return output;
             }
-            
+
             if (e is StateUnit)
             {
                 if ((((StateUnit)e).nest?.source == GraphSource.Embed && ((StateUnit)e).nest?.graph?.elements.Count() > 0) || ((StateUnit)e).nest?.source == GraphSource.Macro)
                 {
                     output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
-                } 
+                }
             }
             else if (e is SubgraphUnit)
             {
@@ -127,7 +129,7 @@ namespace BS.SDKEditor
                 {
                     output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
                 }
-            } 
+            }
             else
             {
                 try
@@ -161,9 +163,11 @@ namespace BS.SDKEditor
                     {
                         continue;
                     }
-                    try{
+                    try
+                    {
                         output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
-                    }catch(Exception ex)
+                    }
+                    catch (Exception ex)
                     {
                         Debug.Log($"Could not add element {e?.GetType()}{e?.guid} {assetPath} {sga.graph.title} because of {ex} ");
                     }
@@ -183,7 +187,7 @@ namespace BS.SDKEditor
                 //Debug.Log($"stategraphasset {sga.name} has {sga.graph?.elements.Count()} elements");
                 output = output.Concat(GetElementsFromStateGraph(sga.GetReference().AsReference(), sga.graph)).ToList();
             }
-            
+
             return output;
         }
 
@@ -194,7 +198,8 @@ namespace BS.SDKEditor
             {
                 return output;
             }
-            try{
+            try
+            {
                 var reference = scriptMachine.GetReference().AsReference();
                 foreach (var e in scriptMachine.graph?.elements)
                 {
@@ -204,30 +209,37 @@ namespace BS.SDKEditor
                 {
                     output = output.Concat(GrabElements(e, reference)).ToList();
                 }
-            }catch  (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Debug.Log($"Could not add scriptMachine {scriptMachine?.GetType()}{scriptMachine?.GetInstanceID()} {scriptMachine?.name} because of {ex} ");
             }
             return output;
         }
-       
+
         public static bool CheckVsNodes() => CheckVsNodes(SceneManager.GetActiveScene().GetRootGameObjects());
 
         /// <summary>
         /// Logs every node the client won't run, from the project's graph assets and prefabs and from
         /// every machine under <paramref name="sceneRoots"/>. False if there are any, or on error.
         /// </summary>
-        public static bool CheckVsNodes(IEnumerable<GameObject> sceneRoots, bool refresh = true) {
-            try {
+        public static bool CheckVsNodes(IEnumerable<GameObject> sceneRoots, bool refresh = true)
+        {
+            try
+            {
                 var notAllowedElements = CollectDisallowedElements(sceneRoots, refresh);
-                if(notAllowedElements.Count() > 0) {
+                if (notAllowedElements.Count() > 0)
+                {
                     Debug.LogError("[VisualScripting] Found elements that are not allowed for Visual Scripting");
-                    foreach(var element in notAllowedElements) {
+                    foreach (var element in notAllowedElements)
+                    {
                         Debug.LogError("[VisualScripting] Element not allowed in Banter: " + element);
                     }
                     return false;
                 }
-            } catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.LogError($"[VisualScripting] Encountered an error while searching in all scripts {e.Message} {e.StackTrace}");
                 return false;
             }
@@ -239,7 +251,8 @@ namespace BS.SDKEditor
         /// prefab's root machine, and every machine (inactive included) under <paramref name="sceneRoots"/>.
         /// Throws if a prefab can't be inspected, since then the answer isn't known.
         /// </summary>
-        public static List<string> CollectDisallowedElements(IEnumerable<GameObject> sceneRoots, bool refresh) {
+        public static List<string> CollectDisallowedElements(IEnumerable<GameObject> sceneRoots, bool refresh)
+        {
             var everything = new List<string>();
             if (refresh) AssetDatabase.Refresh();
             string[] scriptguids = AssetDatabase.FindAssets("t:ScriptGraphAsset");
@@ -250,7 +263,7 @@ namespace BS.SDKEditor
             {
                 everything.AddRange(FindNodesFromScriptGraphAssetGuid(guid));
                 //everything = (List<string>)everything.Concat(FindNodesFromScriptGraphAssetGuid(guid));
-            }            
+            }
             foreach (string guid in stateguids)
             {
                 everything.AddRange(FindNodesFromStateGraphAssetGuid(guid));
@@ -260,7 +273,7 @@ namespace BS.SDKEditor
             {
                 var assetPath = p;
                 UnityEngine.Object o = AssetDatabase.LoadMainAssetAtPath(assetPath);
-                if(o != null)
+                if (o != null)
                 {
                     try
                     {
@@ -272,7 +285,8 @@ namespace BS.SDKEditor
                         var stateMachine = go.GetComponent<StateMachine>();
                         if (stateMachine?.nest?.source == GraphSource.Embed)
                             everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
-                    } catch (Exception e)
+                    }
+                    catch (Exception e)
                     {
                         Debug.Log($"Error while loading prefabs to search from them in path {assetPath} {e.Message} {e.StackTrace}");
                         throw new InvalidOperationException($"Could not inspect the Visual Scripting in prefab {assetPath}: {e.Message}", e);
@@ -280,13 +294,16 @@ namespace BS.SDKEditor
                 }
             }
             // Every machine in the scene, not just those on root objects.
-            foreach (var root in sceneRoots ?? Enumerable.Empty<GameObject>()) {
+            foreach (var root in sceneRoots ?? Enumerable.Empty<GameObject>())
+            {
                 if (root == null) continue;
-                foreach (var scriptMachine in root.GetComponentsInChildren<ScriptMachine>(true)) {
+                foreach (var scriptMachine in root.GetComponentsInChildren<ScriptMachine>(true))
+                {
                     if (scriptMachine?.nest?.source == GraphSource.Embed)
                         everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
                 }
-                foreach (var stateMachine in root.GetComponentsInChildren<StateMachine>(true)) {
+                foreach (var stateMachine in root.GetComponentsInChildren<StateMachine>(true))
+                {
                     if (stateMachine?.nest?.source == GraphSource.Embed)
                         everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
                 }
@@ -295,7 +312,8 @@ namespace BS.SDKEditor
             return everything.Distinct().Where(IsDisallowed).ToList();
         }
 
-        static bool IsDisallowed(string id) {
+        static bool IsDisallowed(string id)
+        {
             bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
             bool isBanterVs = (id?.StartsWith("BS.VisualScripting.") ?? false) || (id?.StartsWith("Banter.VisualScripting.") ?? false);
             bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;

@@ -188,7 +188,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "KitAsset" +  PropertyName.path + path;
+            return "KitAsset" + PropertyName.path + path;
         }
 
         internal override void Init(List<object> constructorProperties = null)

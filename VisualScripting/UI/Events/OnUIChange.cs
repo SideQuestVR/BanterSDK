@@ -106,15 +106,15 @@ namespace BS.VisualScripting
         {
             // Extract element ID from event name
             var elementIdFromEvent = data.name.Replace("UIChange_", "");
-            
+
             flow.SetValue(changedElementId, elementIdFromEvent);
-            
+
             // Parse arguments if available
             if (data.arguments != null)
             {
                 if (data.arguments.Length >= 1)
                     flow.SetValue(newValue, data.arguments[0]);
-                    
+
                 if (data.arguments.Length >= 2)
                     flow.SetValue(oldValue, data.arguments[1]);
                 else

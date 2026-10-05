@@ -17,7 +17,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            info = ValueOutput("Language", (f) => {
+            info = ValueOutput("Language", (f) =>
+            {
                 return BSScene.Instance().events.GetUserLanguage();
             });
         }

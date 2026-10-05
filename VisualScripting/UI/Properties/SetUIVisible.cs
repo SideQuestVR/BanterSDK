@@ -30,7 +30,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var visibleValue = flow.GetValue<bool>(visible);
@@ -58,10 +59,10 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUIVisible] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Format: panelId|SET_UI_PROPERTY|elementId§propertyName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}visible{MessageDelimiters.SECONDARY}{(visibleValue ? "1" : "0")}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
                 }

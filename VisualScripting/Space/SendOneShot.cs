@@ -26,7 +26,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _allInstances = flow.GetValue<bool>(allInstances);
                 var _data = flow.GetValue<string>(data);
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>

@@ -30,7 +30,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var enabledValue = flow.GetValue<bool>(enabled);
@@ -58,10 +59,10 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUIEnabled] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Format: panelId|SET_UI_PROPERTY|elementId§propertyName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}enabled{MessageDelimiters.SECONDARY}{(enabledValue ? "1" : "0")}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
                 }

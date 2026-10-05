@@ -76,7 +76,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var type = flow.GetValue<UIElementTypeVS>(elementType);
                 var target = flow.GetValue<GameObject>(gameObject);
                 var panel = target?.GetComponent<BSUIPanel>();
@@ -102,16 +103,16 @@ namespace BS.VisualScripting
                 {
                     // Generate unique element ID
                     var elemId = string.IsNullOrEmpty(retId) ? $"ui_elem_{System.Guid.NewGuid().ToString("N")[..8]}" : retId;
-                    
+
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementTypeValue = ((int)type).ToString();
                     string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
                     var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
-                    
+
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{elementTypeValue}{MessageDelimiters.SECONDARY}{parentElementId}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 

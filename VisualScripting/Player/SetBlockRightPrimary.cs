@@ -21,7 +21,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(blockInput);
                 ActionsSystem.Blocker_RightPrimary.All = value;
                 return outputTrigger;

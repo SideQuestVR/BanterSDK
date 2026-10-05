@@ -37,7 +37,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         void SetupGeometry()
@@ -78,7 +78,7 @@ namespace BS
                 Destroy(material);
             }
 
-         }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -119,7 +119,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Cylinder" +  PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Cylinder" + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.height + height + PropertyName.radialSegments + radialSegments + PropertyName.heightSegments + heightSegments + PropertyName.openEnded + openEnded + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

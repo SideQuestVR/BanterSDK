@@ -26,7 +26,8 @@ namespace BS.VisualScripting
             Target = ValueInput(typeof(VisualScriptingEvent), nameof(Target));
             Target.SetDefaultValue(null);
             Target.NullMeansSelf();
-            trigger = ControlInput("", (flow) => {
+            trigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<VisualScriptingEvent>(Target);
                 target.OnCustomEvent?.Invoke();
                 return triggered;

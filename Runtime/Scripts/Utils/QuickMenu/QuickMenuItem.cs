@@ -40,7 +40,7 @@ namespace BS
         }
 
         private bool _isVisible = true;
-        
+
         public object Value
         {
             get => _value;

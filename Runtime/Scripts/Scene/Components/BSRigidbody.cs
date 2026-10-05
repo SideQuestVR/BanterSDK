@@ -288,7 +288,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Rigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
+            return "Rigidbody" + PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
         }
 
         internal override void Init(List<object> constructorProperties = null)

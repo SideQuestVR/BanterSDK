@@ -18,7 +18,7 @@ namespace BS.UI.Elements
             get => text;
             set => text = value;
         }
-        
+
         [UIProperty(propertyName: "enabled")]
         public bool IsEnabled
         {
@@ -77,5 +77,5 @@ namespace BS.UI.Elements
             base.Blur();
         }
     }
-    
+
 }

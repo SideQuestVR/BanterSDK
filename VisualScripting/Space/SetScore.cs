@@ -19,7 +19,7 @@ namespace BS.VisualScripting
     {
         [DoNotSerialize]
         public ControlInput inputTrigger;
-    
+
         [DoNotSerialize]
         public ControlOutput outputTrigger;
 
@@ -37,12 +37,14 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _board = flow.GetValue<string>(board);
                 var _sort = flow.GetValue<SortType>(sort);
                 var _score = flow.GetValue<float>(score);
                 var _unique = flow.GetValue<bool>(unique);
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => {
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                {
                     BSScene.Instance().events.OnLeaderBoardScore.Invoke(_board, _score, _sort == SortType.ASC ? "asc" : "desc", _unique);
                 }, $"{nameof(SetScore)}.{nameof(Definition)}"));
                 return outputTrigger;

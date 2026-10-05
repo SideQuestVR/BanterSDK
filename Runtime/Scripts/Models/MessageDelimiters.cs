@@ -3,7 +3,7 @@ namespace BS
     [MessageDelimiters]
     public class MessageDelimiters
     {
-        
+
         public const string PRIMARY = "¶";
         public const string SECONDARY = "§";
         public const string TERTIARY = "|";

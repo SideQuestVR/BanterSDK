@@ -22,8 +22,9 @@ namespace BS.VisualScripting
         {
             idOrName = ValueInput("id, uid, or name", string.Empty);
 
-            info = ValueOutput("Name", (f) => {
-                var data = BSScene.Instance().users.FirstOrDefault(user => 
+            info = ValueOutput("Name", (f) =>
+            {
+                var data = BSScene.Instance().users.FirstOrDefault(user =>
                 {
                     var value = f.GetValue<string>(idOrName);
 

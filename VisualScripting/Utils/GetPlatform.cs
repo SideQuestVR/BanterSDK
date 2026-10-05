@@ -20,7 +20,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var platformString = BSScene.Instance().events.GetPlatform?.Invoke() ?? "";
                 flow.SetValue(platform, platformString);
                 return outputTrigger;

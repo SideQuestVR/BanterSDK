@@ -34,7 +34,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
@@ -57,8 +58,8 @@ namespace BS.VisualScripting
                 try
                 {
                     // Clean up any existing callback
-                CleanupCallback();
-                
+                    CleanupCallback();
+
                     // Get the panel ID for message routing
                     var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
                     if (panelId == null)
@@ -67,40 +68,41 @@ namespace BS.VisualScripting
                         flow.SetValue(textValue, "");
                         return outputTrigger;
                     }
-                
-                // Set up callback to receive the value
-                _currentEventName = $"UIProperty_{elemId}_text";
-                _currentCallback = (CustomEventArgs args) => {
-                    if (!graphReference.isValid)
-                    {
-                        CleanupCallback();
-                        return;
-                    }
 
-                    var callbackFlow = Flow.New(graphReference);
-
-                    if (args.arguments != null && args.arguments.Length > 0)
+                    // Set up callback to receive the value
+                    _currentEventName = $"UIProperty_{elemId}_text";
+                    _currentCallback = (CustomEventArgs args) =>
                     {
-                        callbackFlow.SetValue(textValue, args.arguments[0]?.ToString() ?? "");
+                        if (!graphReference.isValid)
+                        {
+                            CleanupCallback();
+                            return;
+                        }
+
+                        var callbackFlow = Flow.New(graphReference);
+
+                        if (args.arguments != null && args.arguments.Length > 0)
+                        {
+                            callbackFlow.SetValue(textValue, args.arguments[0]?.ToString() ?? "");
 #if BANTER_UI_DEBUG
                         Debug.Log($"[GetUIText] Received text value: '{args.arguments[0]}' for {_currentEventName}");
 #endif
-                    }
-                    else
-                    {
-                        callbackFlow.SetValue(textValue, "");
-                    }
-                    
-                    // Clean up callback after use
-                    CleanupCallback();
-                };
-                    
+                        }
+                        else
+                        {
+                            callbackFlow.SetValue(textValue, "");
+                        }
+
+                        // Clean up callback after use
+                        CleanupCallback();
+                    };
+
                     // Register for the callback event
                     EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
-                    
+
                     // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}text";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -123,7 +125,7 @@ namespace BS.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             textValue = ValueOutput<string>("Text");
         }
-        
+
         private void CleanupCallback()
         {
             if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))

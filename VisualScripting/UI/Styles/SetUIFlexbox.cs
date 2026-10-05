@@ -78,7 +78,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -104,7 +105,7 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUIFlexbox] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set flex-direction
                     string flexDirValue = flexDir switch
                     {
@@ -115,7 +116,7 @@ namespace BS.VisualScripting
                         _ => "column"
                     };
                     SendStyleCommand(panelId, elemId, "flex-direction", flexDirValue);
-                    
+
                     // Set justify-content
                     string justifyValue = justifyAlign switch
                     {
@@ -128,7 +129,7 @@ namespace BS.VisualScripting
                         _ => "flex-start"
                     };
                     SendStyleCommand(panelId, elemId, "justify-content", justifyValue);
-                    
+
                     // Set align-items
                     string alignValue = alignItemsVal switch
                     {
@@ -139,7 +140,7 @@ namespace BS.VisualScripting
                         _ => "stretch"
                     };
                     SendStyleCommand(panelId, elemId, "align-items", alignValue);
-                    
+
                     // Set flex-wrap
                     string wrapValue = flexWrapVal switch
                     {
@@ -149,7 +150,7 @@ namespace BS.VisualScripting
                         _ => "nowrap"
                     };
                     SendStyleCommand(panelId, elemId, "flex-wrap", wrapValue);
-                    
+
                     // Set flex-grow and flex-shrink
                     SendStyleCommand(panelId, elemId, "flex-grow", flexGrowVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
                     SendStyleCommand(panelId, elemId, "flex-shrink", flexShrinkVal.ToString(System.Globalization.CultureInfo.InvariantCulture));

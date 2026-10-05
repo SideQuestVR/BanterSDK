@@ -33,7 +33,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         void SetupGeometry()
@@ -67,7 +67,7 @@ namespace BS
                 Destroy(geometry);
             }
 
-         }
+        }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
             SetupGeometry();
@@ -106,7 +106,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "TorusKnot" +  PropertyName.radius + radius + PropertyName.tube + tube + PropertyName.radialSegments + radialSegments + PropertyName.tubularSegments + tubularSegments + PropertyName.p + p + PropertyName.q + q;
+            return "TorusKnot" + PropertyName.radius + radius + PropertyName.tube + tube + PropertyName.radialSegments + radialSegments + PropertyName.tubularSegments + tubularSegments + PropertyName.p + p + PropertyName.q + q;
         }
 
         internal override void Init(List<object> constructorProperties = null)

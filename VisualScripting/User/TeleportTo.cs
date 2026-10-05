@@ -34,7 +34,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var position = flow.GetValue<Vector3>(targetPosition);
                 var rotation = flow.GetValue<float>(targetRotation);
                 var rotationVec = flow.GetValue<Vector3>(targetRotationVector);

@@ -88,7 +88,7 @@ namespace SideQuest.FlexaBody
         {
             bool trigger = false, stick = false, click = false, primary = false, secondary = false;
 
-            if(block)
+            if (block)
             {
                 InputBlockList blockList = InputBlocks[handData.HandID == HandID.Left ? 0 : 1];
                 trigger = blockList.Trigger;

@@ -42,7 +42,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var document = flow.GetValue<UIDocument>(uiDocument);
                 var prefix = flow.GetValue<string>(elementPrefix);
@@ -67,12 +68,12 @@ namespace BS.VisualScripting
 
                     // Check for existing UIDocument on the GameObject or use provided one
                     var documentToUse = document ?? target.GetComponent<UIDocument>();
-                    
+
                     if (documentToUse != null)
                     {
                         // Initialize panel with the UIDocument
                         LogVerbose("Initializing panel with UIDocument");
-                        
+
                         if (panel.InitializeWithExistingDocument(documentToUse))
                         {
                             bridge = UIElementResolverHelper.GetUIElementBridge(panel);
@@ -98,7 +99,7 @@ namespace BS.VisualScripting
                             flow.SetValue(elementSummary, "Error: No UIDocument available");
                             return outputTrigger;
                         }
-                        
+
                         // Process from panel's main document
                         var mainDocument = GetMainDocument(bridge);
                         if (mainDocument?.rootVisualElement != null)
@@ -133,7 +134,7 @@ namespace BS.VisualScripting
                 }
                 catch (System.Exception e)
                 {
-                Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
+                    Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
                     flow.SetValue(elementCount, 0);
                     flow.SetValue(elementSummary, $"Error: {e.Message}");
                 }
@@ -158,7 +159,7 @@ namespace BS.VisualScripting
             {
                 var bridgeType = typeof(UIElementBridge);
                 var mainDocField = bridgeType.GetField("mainDocument", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                
+
                 return mainDocField?.GetValue(bridge) as UIDocument;
             }
             catch (System.Exception e)

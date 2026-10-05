@@ -43,7 +43,7 @@ namespace BS
                 if (!UnityEditor.BuildPipeline.isBuildingPlayer)
                     GenerateId(IsDuplicateId(Id));
 #else
-                GenerateId();
+            GenerateId();
 #endif
             scene.AddBanterObject(gameObject, this);
             SyncProperties(true);

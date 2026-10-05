@@ -19,7 +19,7 @@ namespace BS
 
         public Action<long> CloneAvatar = _ => { };
 
-        public Action<(string eventName, KeyValuePair<string,string>[] keyValues)> SendTelemetry = _ => { };
+        public Action<(string eventName, KeyValuePair<string, string>[] keyValues)> SendTelemetry = _ => { };
 
         /// <summary>
         /// Reads and writes the current world's persisted files. Unimplemented here on purpose: a
