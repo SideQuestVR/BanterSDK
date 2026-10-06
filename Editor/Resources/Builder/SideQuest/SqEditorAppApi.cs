@@ -55,7 +55,7 @@ namespace BS.SDKEditor
     public class SqEditorAppApi
     {
         // Static HttpClient for connection pooling and better performance
-        private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler
+        private static readonly HttpClient SharedHttpClient = new HttpClient(new HttpClientHandler
         {
             // Disable automatic decompression to avoid conflicts
             AutomaticDecompression = System.Net.DecompressionMethods.None
@@ -64,12 +64,29 @@ namespace BS.SDKEditor
             Timeout = TimeSpan.FromMinutes(20) // Global timeout
         };
 
+        // The client every request goes through: the shared one above, unless a test injects its own.
+        private readonly HttpClient _httpClient;
+
+        /// <summary>
+        /// Delay before upload attempt <c>attempt + 1</c> after attempt <c>attempt</c> failed
+        /// (2 s, then 4 s). Tests set it to zero.
+        /// </summary>
+        internal Func<int, TimeSpan> UploadRetryDelay = attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt));
+
         /// <summary>
         /// Create a new instance
         /// </summary>
         /// <param name="config">The configuration options that should be used</param>
-        public SqEditorAppApi(SqEditorAppApiConfig config)
+        public SqEditorAppApi(SqEditorAppApiConfig config) : this(config, null)
         {
+        }
+
+        /// <summary>
+        /// Test seam: sends every request through <paramref name="httpClient"/> (null = the shared client).
+        /// </summary>
+        internal SqEditorAppApi(SqEditorAppApiConfig config, HttpClient httpClient)
+        {
+            _httpClient = httpClient ?? SharedHttpClient;
             Config = config;
             LoadData();
         }
@@ -588,15 +605,21 @@ namespace BS.SDKEditor
         public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
-            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
+            Exception requestError = null;
+            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, e => requestError = e, name, data.Length, spaceSlug);
 
             if (_uploadRequest == null)
             {
-                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                OnError?.Invoke(requestError ?? new SqEditorApiException("Failed to get upload request"));
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
+            // Attach only once the CDN has confirmed the bytes. /create-upload makes the files row before
+            // any bytes exist, and attaching repoints the community's live slot at that row while the API
+            // deletes the file it replaces, so a failed PUT must never reach the attach.
+            var uploaded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, _ => uploaded = true, OnError, OnProgress);
+            if (!uploaded) yield break;
 
             yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId ?? 0, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
@@ -609,15 +632,22 @@ namespace BS.SDKEditor
         public IEnumerator UploadFileToWorld(string name, byte[] data, string worldsId, string worldSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
-            yield return GetWorldUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, worldsId, worldSlug);
+            Exception requestError = null;
+            yield return GetWorldUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, e => requestError = e, name, data.Length, worldsId, worldSlug);
 
             if (_uploadRequest == null)
             {
-                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                OnError?.Invoke(requestError ?? new SqEditorApiException("Failed to get upload request"));
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
+            // Attach only once the CDN has confirmed the bytes. /create-upload makes the files row before
+            // any bytes exist, and attaching repoints the world's live slot (asset.world, index.html, a
+            // named Extra file...) at that row while the API deletes the file it replaces, so a failed
+            // PUT must never reach the attach: the world would load nothing and the old file is gone.
+            var uploaded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, _ => uploaded = true, OnError, OnProgress);
+            if (!uploaded) yield break;
 
             yield return AttachToWorld(() => OnCompleted?.Invoke(_uploadRequest), OnError, worldsId, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
@@ -625,21 +655,30 @@ namespace BS.SDKEditor
         public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
+            Exception requestError = null;
             UnityEngine.Debug.Log("Before Upload");
-            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
+            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, e => requestError = e, name, data.Length, spaceSlug);
             UnityEngine.Debug.Log("After Upload");
             if (_uploadRequest == null)
             {
-                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                OnError?.Invoke(requestError ?? new SqEditorApiException("Failed to get upload request"));
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest, data, name, (text) => { }, OnError, OnProgress);
+            // Hand out the file id only for bytes the CDN accepted: callers attach or reference it
+            // (avatars), and a files row with nothing behind it breaks whatever points at it.
+            var uploaded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, _ => uploaded = true, OnError, OnProgress);
+            if (!uploaded) yield break;
             OnCompleted?.Invoke(_uploadRequest);
 
         }
 
-        private IEnumerator UploadFileInternal(SqEditorCreateUpload upload, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError, Action<float> OnProgress = null)
+        /// <summary>
+        /// PUTs the bytes to the signed CDN URL. Exactly one of <paramref name="OnUploaded"/> (only after
+        /// a 2xx response) and <paramref name="OnError"/> runs.
+        /// </summary>
+        private IEnumerator UploadFileInternal(SqEditorCreateUpload upload, byte[] data, string name, Action<long> OnUploaded, Action<Exception> OnError, Action<float> OnProgress = null)
         {
             // The upload runs on a worker thread, so it may not touch UI. It only
             // ever writes this cell; the coroutine below reads it on the main
@@ -662,16 +701,19 @@ namespace BS.SDKEditor
                 yield return null;
             }
 
-            // Check for exceptions
-            if (uploadTask.IsFaulted)
+            // Check for exceptions. A cancelled task is a failure too: reading .Result on it would throw
+            // out of the coroutine instead of reporting the error.
+            if (uploadTask.IsFaulted || uploadTask.IsCanceled)
             {
-                var ex = uploadTask.Exception?.InnerException ?? uploadTask.Exception;
+                var ex = uploadTask.Exception?.InnerException
+                         ?? (Exception)uploadTask.Exception
+                         ?? new SqEditorApiNetworkException("The upload was cancelled before the CDN confirmed it.");
                 OnError?.Invoke(ex);
                 yield break;
             }
 
             // Return the response code
-            OnCompleted?.Invoke(uploadTask.Result);
+            OnUploaded?.Invoke(uploadTask.Result);
         }
 
         private async Task<long> UploadFileWithRetryAsync(SqEditorCreateUpload upload, byte[] data, string name, int maxRetries = 3, Action<float> onProgress = null)
@@ -744,9 +786,9 @@ namespace BS.SDKEditor
                 // If this wasn't the last attempt, wait before retrying with exponential backoff
                 if (attempt < maxRetries)
                 {
-                    var delaySeconds = Math.Pow(2, attempt); // 2, 4, 8 seconds
-                    LogLine.Do($"Retrying in {delaySeconds} seconds...");
-                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                    var delay = UploadRetryDelay(attempt); // 2, then 4 seconds
+                    LogLine.Do($"Retrying in {delay.TotalSeconds} seconds...");
+                    await Task.Delay(delay);
                 }
             }
 

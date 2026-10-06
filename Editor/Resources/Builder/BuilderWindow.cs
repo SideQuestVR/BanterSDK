@@ -964,7 +964,7 @@ public class BuilderWindow : EditorWindow
                 uploadEverything.SetEnabled(false);
                 EditorCoroutineUtility.StartCoroutine(UploadWebOnly(() =>
                 {
-                    status.AddStatus("Upload complete.");
+                    status.AddStatus(UploadFinishedStatus);
                     uploadWebOnly.SetEnabled(true);
                     uploadEverything.SetEnabled(true);
                 }), this);
@@ -992,7 +992,7 @@ public class BuilderWindow : EditorWindow
                 uploadEverything.SetEnabled(false);
                 EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
                 {
-                    status.AddStatus("Upload complete.");
+                    status.AddStatus(UploadFinishedStatus);
                     uploadWebOnly.SetEnabled(true);
                     uploadEverything.SetEnabled(true);
                 }), this);
@@ -1107,12 +1107,13 @@ public class BuilderWindow : EditorWindow
 
     private IEnumerator UploadWebOnly(Action callback)
     {
+        uploadHadFailure = false;
         BeginUploadProgress(3);
         yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
         yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
         yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
         callback();
-        EndUploadProgress("Upload complete");
+        EndUploadProgress(uploadHadFailure ? "Upload failed" : "Upload complete");
     }
     private IEnumerator UploadEverything(Action callback)
     {
@@ -1145,7 +1146,7 @@ public class BuilderWindow : EditorWindow
             else
                 status.AddStatus("Skipping runtime-override cleanup — " + blocked + ".");
 
-            EndUploadProgress("Upload complete");
+            EndUploadProgress(uploadHadFailure ? "Upload failed" : "Upload complete");
         }
         finally
         {
@@ -1153,8 +1154,16 @@ public class BuilderWindow : EditorWindow
         }
     }
 
-    /// <summary>Set by UploadWorldFile; read by UploadEverything's post-upload cleanup.</summary>
+    /// <summary>
+    /// Set by UploadWorldFile; read by UploadEverything's post-upload cleanup and by the final status.
+    /// Reset at the start of UploadWebOnly and UploadEverything.
+    /// </summary>
     private bool uploadHadFailure;
+
+    /// <summary>The last status line of an upload run: it must not claim success when a step failed.</summary>
+    private string UploadFinishedStatus => uploadHadFailure
+        ? "Upload finished with errors - see the FAILED lines above."
+        : "Upload complete.";
 
     /// <summary>The scene and asset.world this session last built, for the prune gate.</summary>
     private string lastBuiltScenePath;
@@ -1211,7 +1220,7 @@ public class BuilderWindow : EditorWindow
             status.AddStatus("Uploaded " + name);
         }, e =>
         {
-            status.AddStatus("FAILED UPLOADING " + name);
+            status.AddStatus("FAILED UPLOADING " + name + ": " + e?.Message);
             Debug.LogException(e);
         }, onProgress);
         Debug.Log("Uploading1: " + file);
@@ -1244,7 +1253,7 @@ public class BuilderWindow : EditorWindow
             // flag the post-upload cleanup would run on a half-uploaded world and drop runtime
             // overrides the world does not actually contain yet.
             uploadHadFailure = true;
-            status.AddStatus("FAILED UPLOADING " + file + " to " + baseUrl + "/" + name);
+            status.AddStatus("FAILED UPLOADING " + file + " to " + baseUrl + "/" + name + ": " + e?.Message);
             Debug.LogException(e);
         }, type, platform, onProgress);
     }
@@ -2036,7 +2045,7 @@ public class BuilderWindow : EditorWindow
                     lockHandedToUpload = reloadLockHeld;
                     EditorCoroutineUtility.StartCoroutine(UploadEverything(() =>
                     {
-                        status.AddStatus("Upload complete.");
+                        status.AddStatus(UploadFinishedStatus);
                         uploadWebOnly.SetEnabled(true);
                         uploadEverything.SetEnabled(true);
                         if (unlockAfterUpload) EditorApplication.UnlockReloadAssemblies();
