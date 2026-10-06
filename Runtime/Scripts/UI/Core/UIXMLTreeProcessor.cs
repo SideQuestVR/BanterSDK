@@ -42,15 +42,15 @@ namespace BS.UI.Core
 
             var elementMap = new Dictionary<VisualElement, string>();
             var usedIds = new HashSet<string>();
-            
+
             // First pass: collect all existing IDs to avoid conflicts
             CollectExistingIds(rootElement, usedIds);
-            
+
             // Second pass: assign IDs and register elements
             ProcessElementRecursive(bridge, rootElement, elementMap, usedIds, prefix, 0);
-            
+
             LogVerbose($"Processed {elementMap.Count} elements from UXML tree");
-            
+
             return elementMap;
         }
 
@@ -78,13 +78,13 @@ namespace BS.UI.Core
         private static void ProcessElementRecursive(UIElementBridge bridge, VisualElement element, Dictionary<VisualElement, string> elementMap, HashSet<string> usedIds, string prefix, int depth)
         {
             string elementId = GetOrAssignElementId(element, usedIds, prefix);
-            
+
             // Register element with bridge using reflection to access private _elements field
             RegisterElementWithBridge(bridge, elementId, element);
-            
+
             // Track the mapping
             elementMap[element] = elementId;
-            
+
             LogVerbose($"Registered element '{elementId}' (type: {element.GetType().Name}, depth: {depth})");
 
             // Process children recursively
@@ -135,7 +135,7 @@ namespace BS.UI.Core
             }
 
             usedIds.Add(uniqueId);
-            
+
             // Set the name on the element for future reference
             if (string.IsNullOrEmpty(element.name))
             {
@@ -185,13 +185,13 @@ namespace BS.UI.Core
         {
             var updatedMap = new Dictionary<string, string>(); // old ID -> new ID
             var hierarchyDepth = new Dictionary<VisualElement, int>();
-            
+
             // Calculate hierarchy depths
             foreach (var kvp in elementMap)
             {
                 hierarchyDepth[kvp.Key] = CalculateDepth(kvp.Key);
             }
-            
+
             // Generate new IDs
             foreach (var kvp in elementMap)
             {
@@ -199,16 +199,16 @@ namespace BS.UI.Core
                 var oldId = kvp.Value;
                 var depth = hierarchyDepth[element];
                 var newId = namingConvention(element, depth);
-                
+
                 if (oldId != newId)
                 {
                     updatedMap[oldId] = newId;
                     element.name = newId;
-                    
+
                     // Update registration in bridge
                     UnregisterElementFromBridge(bridge, oldId);
                     RegisterElementWithBridge(bridge, newId, element);
-                    
+
                     LogVerbose($"Updated element ID: '{oldId}' -> '{newId}'");
                 }
             }
@@ -221,13 +221,13 @@ namespace BS.UI.Core
         {
             int depth = 0;
             var parent = element.parent;
-            
+
             while (parent != null)
             {
                 depth++;
                 parent = parent.parent;
             }
-            
+
             return depth;
         }
 
@@ -266,13 +266,13 @@ namespace BS.UI.Core
         {
             var summary = ElementSummary.Create();
             var typeCounts = new Dictionary<string, int>();
-            
+
             foreach (var kvp in elementMap)
             {
                 var element = kvp.Key;
                 var elementId = kvp.Value;
                 var typeName = element.GetType().Name;
-                
+
                 summary.Elements.Add(new ElementInfo
                 {
                     Id = elementId,
@@ -283,13 +283,13 @@ namespace BS.UI.Core
                     IsVisible = element.style.display != DisplayStyle.None,
                     ClassList = string.Join(", ", element.GetClasses())
                 });
-                
+
                 typeCounts[typeName] = typeCounts.GetValueOrDefault(typeName, 0) + 1;
             }
-            
+
             summary.TypeCounts = typeCounts;
             summary.TotalElements = elementMap.Count;
-            
+
             return summary;
         }
     }
@@ -307,7 +307,7 @@ namespace BS.UI.Core
         public int ChildCount;
         public bool IsVisible;
         public string ClassList;
-        
+
         public override string ToString()
         {
             return $"{Id} ({Type}) - Children: {ChildCount}, Visible: {IsVisible}";
@@ -323,7 +323,7 @@ namespace BS.UI.Core
         public List<ElementInfo> Elements;
         public Dictionary<string, int> TypeCounts;
         public int TotalElements;
-        
+
         public static ElementSummary Create()
         {
             return new ElementSummary
@@ -333,7 +333,7 @@ namespace BS.UI.Core
                 TotalElements = 0
             };
         }
-        
+
         public override string ToString()
         {
             var typeInfo = string.Join(", ", TypeCounts?.Select(kvp => $"{kvp.Key}: {kvp.Value}") ?? new string[0]);

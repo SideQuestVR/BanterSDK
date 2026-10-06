@@ -42,7 +42,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         internal override void StartStuff()
@@ -143,7 +143,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Text" +  PropertyName.text + text + PropertyName.color + color + PropertyName.horizontalAlignment + horizontalAlignment + PropertyName.verticalAlignment + verticalAlignment + PropertyName.fontSize + fontSize + PropertyName.richText + richText + PropertyName.enableWordWrapping + enableWordWrapping + PropertyName.rectTransformSizeDelta + rectTransformSizeDelta;
+            return "Text" + PropertyName.text + text + PropertyName.color + color + PropertyName.horizontalAlignment + horizontalAlignment + PropertyName.verticalAlignment + verticalAlignment + PropertyName.fontSize + fontSize + PropertyName.richText + richText + PropertyName.enableWordWrapping + enableWordWrapping + PropertyName.rectTransformSizeDelta + rectTransformSizeDelta;
         }
 
         internal override void Init(List<object> constructorProperties = null)

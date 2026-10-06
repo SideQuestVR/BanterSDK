@@ -12,7 +12,7 @@ public class Wait
             while (!condition())
             {
                 UnityEngine.Debug.Log("Wait.Until(() => condition())");
-                await new WaitForSeconds(frequency/1000f);
+                await new WaitForSeconds(frequency / 1000f);
             }
             UnityEngine.Debug.Log("Wait.Until(() => condition())");
         }, $"{nameof(Wait)}.{nameof(Until)}");

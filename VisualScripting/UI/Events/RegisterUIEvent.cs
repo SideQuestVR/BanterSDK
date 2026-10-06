@@ -30,7 +30,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var eventTypeValue = flow.GetValue<UIEventType>(eventType);
@@ -67,13 +68,13 @@ namespace BS.VisualScripting
                         Debug.LogError($"[RegisterUIEvent] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Convert event type to string name
                     var eventName = eventTypeValue.ToEventName();
-                    
+
                     // Format: panelId|REGISTER_UI_EVENT|elementId§eventType
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.REGISTER_UI_EVENT}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{eventName}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 

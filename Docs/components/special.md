@@ -95,7 +95,7 @@ obj.AddComponent(new BS.MonoBehaviour({
 
 ## ScriptGraph
 
-Hosts Unity Visual Scripting machines on the object and mirrors a small summary to JS — see [Visual Scripting](visual-scripting.md) for editing the graphs themselves.
+Hosts Unity Visual Scripting machines on the object and mirrors a small summary to JS — see [Visual Scripting](../visual-scripting/overview.md) for editing the graphs themselves.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|

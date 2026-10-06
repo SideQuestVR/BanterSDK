@@ -34,7 +34,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         void SetupGeometry()
@@ -106,7 +106,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Ring" +  PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Ring" + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

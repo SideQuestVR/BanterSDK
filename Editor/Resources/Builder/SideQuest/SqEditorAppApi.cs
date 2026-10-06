@@ -153,7 +153,7 @@ namespace BS.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorAvatar>($"/v2/avatars", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
+            yield return JsonPost<SqEditorAvatar>($"/v2/avatars", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name }, (av) =>
             {
                 OnCompleted?.Invoke(av);
             }, OnError, true, false);
@@ -165,7 +165,7 @@ namespace BS.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
+            yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name }, (av) =>
             {
                 OnCompleted?.Invoke(av);
             }, OnError, true, false, "PUT");
@@ -179,15 +179,15 @@ namespace BS.SDKEditor
             }
             yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars/mine", OnCompleted, OnError, true);
         }
-        
-         public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
+
+        public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
         {
             if (Data.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true}, OnCompleted, OnError, true, false);
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true }, OnCompleted, OnError, true, false);
         }
         public IEnumerator SelectAvatar(Action OnCompleted, Action<Exception> OnError, long userAvatarId)
         {
@@ -196,10 +196,10 @@ namespace BS.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true}, (u) =>
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true }, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false,"PATCH");
+            }, OnError, true, false, "PATCH");
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
@@ -861,7 +861,7 @@ namespace BS.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name).Replace(".",""), Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name).Replace(".", ""), Name = name }, (u) =>
 
             {
                 if (u == null)
@@ -1154,8 +1154,8 @@ namespace BS.SDKEditor
                 return request;
             }, withAuth, OnCompleted, OnError);
         }
-        
-        
+
+
         private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, string method = "POST")
         {
             var uri = new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath);

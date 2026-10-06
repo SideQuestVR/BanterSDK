@@ -44,7 +44,7 @@ namespace BS
 
         [Tooltip("Enable or disable the Z axis rotation for the billboard.")]
         [See(initial = "true")][SerializeField] internal bool enableZAxis = true;
-        
+
         internal override void StartStuff()
         {
             SetLoadedIfNot();
@@ -52,7 +52,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         internal override void DestroyStuff()
@@ -108,7 +108,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Billboard" +  PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
+            return "Billboard" + PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
         }
 
         internal override void Init(List<object> constructorProperties = null)

@@ -103,7 +103,10 @@ namespace BS.LocalMultiplayer.Tests
             Assert.AreEqual(Other, _binder.GetRecord("b").OwnerRoomSessionId);
             _session.Deliver(ObjectMessages.OwnerChanged, new JObject
             {
-                ["object"] = Record("a", Other, 1, 2), ["previousOwnerRoomSessionId"] = Me, ["reason"] = "acquired", ["revision"] = 7
+                ["object"] = Record("a", Other, 1, 2),
+                ["previousOwnerRoomSessionId"] = Me,
+                ["reason"] = "acquired",
+                ["revision"] = 7
             });
             Assert.IsFalse(_binder.IsOwnedBySelf(_binder.GetRecord("a")));
             _session.Deliver(ObjectMessages.Updated, new JObject { ["object"] = Record("a", Other, 1, 3, locked: true), ["reason"] = "locked", ["revision"] = 8 });
@@ -133,7 +136,10 @@ namespace BS.LocalMultiplayer.Tests
             JoinWith(Me);
             _session.Reply = (type, body) => Task.FromResult(new JObject
             {
-                ["type"] = ObjectMessages.Result, ["ok"] = true, ["revision"] = 1, ["object"] = Record("kQx3", Other, 0, 1)
+                ["type"] = ObjectMessages.Result,
+                ["ok"] = true,
+                ["revision"] = 1,
+                ["object"] = Record("kQx3", Other, 0, 1)
             });
             var record = await _binder.CreateObjectAsync("object", SyncedObjectOrigin.Scene, "kQx3", SyncedObjectDisconnectPolicy.Transfer);
             Assert.AreEqual("kQx3", record.ObjectId);
@@ -168,7 +174,10 @@ namespace BS.LocalMultiplayer.Tests
             JoinWith(Me, Record("a", Me, 0, 1));
             _session.Reply = (type, body) => Task.FromResult(new JObject
             {
-                ["ok"] = false, ["error"] = "object_locked", ["revision"] = 4, ["object"] = Record("a", Other, 3, 4, locked: true)
+                ["ok"] = false,
+                ["error"] = "object_locked",
+                ["revision"] = 4,
+                ["object"] = Record("a", Other, 3, 4, locked: true)
             });
             var error = Assert.ThrowsAsync<LocalRelayException>(() => _binder.AcquireObjectAsync("a", locked: true));
             Assert.AreEqual("object_locked", error.Code);

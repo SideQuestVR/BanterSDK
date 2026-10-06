@@ -33,7 +33,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _url = flow.GetValue<string>(url);
                 var _addColliders = flow.GetValue<bool>(addColliders);
                 var _climbable = flow.GetValue<bool>(climbable);
@@ -73,7 +74,8 @@ namespace BS.VisualScripting
                 GameObject oldGameObject = oldQuestHome != null ? oldQuestHome.gameObject : null;
 
                 // Subscribe to loaded event to handle success/failure
-                questHomeComponent.loaded.AddListener((success, message) => {
+                questHomeComponent.loaded.AddListener((success, message) =>
+                {
                     if (success)
                     {
                         // New Quest Home loaded successfully

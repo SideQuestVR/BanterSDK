@@ -56,7 +56,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal override void StartStuff()
         {
@@ -74,7 +74,7 @@ namespace BS
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;
             Rigidbody rb = grabHandle.Col ? grabHandle.Col.attachedRigidbody : null;
-            if(rb)
+            if (rb)
             {
                 grabHandle.WorldObj = rb.GetComponentInParent<WorldObject>();
                 if (!grabHandle.WorldObj)
@@ -122,7 +122,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "GrabHandle" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
+            return "GrabHandle" + PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
         }
 
         internal override void Init(List<object> constructorProperties = null)

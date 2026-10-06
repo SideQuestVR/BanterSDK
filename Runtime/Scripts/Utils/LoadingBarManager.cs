@@ -452,7 +452,7 @@ namespace BS
         public async Task LoadOut()
         {
             LogLine.Do($"[LOADING] LoadOut state={state} scene.state={scene.state}");
-            if (state == LoadingState.Loading || scene.state==SceneState.LOAD_FAILED)
+            if (state == LoadingState.Loading || scene.state == SceneState.LOAD_FAILED)
             {
                 return;
             }

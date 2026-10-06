@@ -147,7 +147,10 @@ namespace BS.LocalMultiplayer.Tests
             record.Revision = ++_revision;
             held.Reply.SetResult(new JObject
             {
-                ["ok"] = false, ["error"] = "object_locked", ["revision"] = record.Revision, ["object"] = RecordOf(id, record)
+                ["ok"] = false,
+                ["error"] = "object_locked",
+                ["revision"] = record.Revision,
+                ["object"] = RecordOf(id, record)
             });
         }
 

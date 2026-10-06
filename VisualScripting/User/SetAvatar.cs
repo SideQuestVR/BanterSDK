@@ -23,7 +23,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var local = flow.GetValue<string>(localAvatarUrl);
                 var remote = flow.GetValue<string>(remoteAvatarUrl);
                 BSScene.Instance().events.OnAvatarSet?.Invoke(remote, local);

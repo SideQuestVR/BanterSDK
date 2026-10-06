@@ -42,7 +42,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -102,7 +103,8 @@ namespace BS.VisualScripting
             System.Action<CustomEventArgs> callback = null;
             var eventName = $"UIStyle_{elemId}_{propertyName}";
 
-            callback = (CustomEventArgs args) => {
+            callback = (CustomEventArgs args) =>
+            {
                 if (args.arguments != null && args.arguments.Length > 0)
                 {
                     result = args.arguments[0]?.ToString() ?? "";

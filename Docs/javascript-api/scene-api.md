@@ -304,4 +304,4 @@ await scene.LightingDataSet(lighting);          // apply a previously stored pay
 
 `Deserialise` also accepts a single object's `Serialise(true)` output (run it through `JSON.stringify` first — `Serialise(true)` returns an array, and `Deserialise` takes the JSON string), so a subtree can be saved and restored on its own.
 
-`scene.SendToVisualScripting(returnId, data)` sends a JSON payload to a [Visual Scripting](visual-scripting.md) graph, where it arrives through the `On BullSchript Callback Received` node with the matching `Return ID`.
+`scene.SendToVisualScripting(returnId, data)` sends a JSON payload to a [Visual Scripting](../visual-scripting/overview.md) graph, where it arrives through the `On BullSchript Callback Received` node with the matching `Return ID`.

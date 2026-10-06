@@ -33,7 +33,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         void SetupPhysicMaterial(List<PropertyName> changedProperties = null)
         {
@@ -109,7 +109,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "PhysicMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction;
+            return "PhysicMaterial" + PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction;
         }
 
         internal override void Init(List<object> constructorProperties = null)

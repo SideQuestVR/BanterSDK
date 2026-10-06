@@ -48,7 +48,7 @@ namespace BS.VisualScripting
 
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
-        {   
+        {
             flow.SetValue(result, data.arguments[0]);
             flow.SetValue(type, data.arguments[1]);
         }

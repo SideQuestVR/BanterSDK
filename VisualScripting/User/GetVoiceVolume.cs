@@ -17,7 +17,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            volume = ValueOutput<float>("Volume", flow => {
+            volume = ValueOutput<float>("Volume", flow =>
+            {
                 return BSStarterUpper.voiceVolume;
             });
         }

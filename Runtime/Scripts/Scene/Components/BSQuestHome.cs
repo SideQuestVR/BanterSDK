@@ -852,7 +852,7 @@ namespace BS
         }
         internal override void UpdateStuff()
         {
-            
+
         }
         // BANTER COMPILED CODE 
         public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
@@ -885,7 +885,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "QuestHome" +  PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
+            return "QuestHome" + PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
         }
 
         internal override void Init(List<object> constructorProperties = null)

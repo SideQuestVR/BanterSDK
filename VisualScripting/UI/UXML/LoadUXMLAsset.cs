@@ -35,7 +35,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var vta = flow.GetValue<VisualTreeAsset>(visualTreeAsset);
                 var resPath = flow.GetValue<string>(resourcePath);
@@ -99,20 +100,20 @@ namespace BS.VisualScripting
 #if BANTER_UI_DEBUG
                         Debug.Log($"{LogPrefix} Applied panel settings from BSUIPanel");
 #endif
+                        }
+                        else
+                        {
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} No panel settings found, document will use its own or default settings");
+#endif
+                        }
                     }
                     else
                     {
 #if BANTER_UI_DEBUG
-                        Debug.Log($"{LogPrefix} No panel settings found, document will use its own or default settings");
-#endif
-                    }
-                }
-                else
-                {
-#if BANTER_UI_DEBUG
                     Debug.Log($"{LogPrefix} UIDocument already has panel settings, preserving existing configuration");
 #endif
-                }
+                    }
 
                     // Force rebuild of the UI
                     if (document.rootVisualElement != null)
@@ -151,7 +152,7 @@ namespace BS.VisualScripting
             {
                 var panelType = typeof(BSUIPanel);
                 var panelSettingsField = panelType.GetField("panelSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
+
                 return panelSettingsField?.GetValue(panel) as PanelSettings;
             }
             catch (System.Exception e)

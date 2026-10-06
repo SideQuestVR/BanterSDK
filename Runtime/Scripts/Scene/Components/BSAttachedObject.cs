@@ -74,12 +74,12 @@ namespace BS
         [See(initial = "true")][SerializeField] internal bool unseatOnJump = true;
 
 
-        [SerializeField] [HideInInspector] BSAttachment attachment = new BSAttachment();
+        [SerializeField][HideInInspector] BSAttachment attachment = new BSAttachment();
 
         [Method]
         public void _Attach(string uid)
         {
-            this.uid = attachment.uid = uid; 
+            this.uid = attachment.uid = uid;
             UpdateCallback(null);
             BSScene.Instance().data.AttachObject(attachment);
         }
@@ -105,7 +105,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         internal override void DestroyStuff() { }
@@ -206,7 +206,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "AttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
+            return "AttachedObject" + PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
         }
 
         internal override void Init(List<object> constructorProperties = null)

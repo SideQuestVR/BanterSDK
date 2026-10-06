@@ -21,7 +21,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            isLoaded = ValueOutput<bool>("Is Loaded", (flow) => {
+            isLoaded = ValueOutput<bool>("Is Loaded", (flow) =>
+            {
                 var gltfComp = flow.GetValue<BSGLTF>(gltfObject);
                 return gltfComp.IsLoaded;
             });

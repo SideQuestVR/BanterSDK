@@ -74,7 +74,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
 
         internal override void DestroyStuff()
@@ -158,7 +158,7 @@ namespace BS
                 grabHandle = gameObject.AddComponent<GrabHandle>();
             }
 
-            grabHandle._handleFunctions = new HandleFunction[]{handleController};
+            grabHandle._handleFunctions = new HandleFunction[] { handleController };
             Rigidbody rb = grabHandle.Col?.attachedRigidbody;
             if (rb)
             {
@@ -211,7 +211,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "HeldEvents" +  PropertyName.sensitivity + sensitivity + PropertyName.fireRate + fireRate + PropertyName.auto + auto + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
+            return "HeldEvents" + PropertyName.sensitivity + sensitivity + PropertyName.fireRate + fireRate + PropertyName.auto + auto + PropertyName.blockLeftPrimary + blockLeftPrimary + PropertyName.blockLeftSecondary + blockLeftSecondary + PropertyName.blockRightPrimary + blockRightPrimary + PropertyName.blockRightSecondary + blockRightSecondary + PropertyName.blockLeftThumbstick + blockLeftThumbstick + PropertyName.blockLeftThumbstickClick + blockLeftThumbstickClick + PropertyName.blockRightThumbstick + blockRightThumbstick + PropertyName.blockRightThumbstickClick + blockRightThumbstickClick + PropertyName.blockLeftTrigger + blockLeftTrigger + PropertyName.blockRightTrigger + blockRightTrigger;
         }
 
         internal override void Init(List<object> constructorProperties = null)

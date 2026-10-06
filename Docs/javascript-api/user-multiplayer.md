@@ -17,7 +17,7 @@ user.props;     // Custom properties
 
 ## Attaching Objects to Users
 
-Attach objects to a user's body with the `AttachedObject` component (see [AttachedObject](vr-interaction-components.md#attachedobject)):
+Attach objects to a user's body with the `AttachedObject` component (see [AttachedObject](../components/vr-interaction.md#attachedobject)):
 
 ```js
 // Attach an object to a user's right hand

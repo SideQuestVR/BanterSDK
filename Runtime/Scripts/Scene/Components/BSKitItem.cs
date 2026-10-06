@@ -77,7 +77,8 @@ namespace BS
             }
             else
             {
-                if(!scene.bundlesLoaded) {
+                if (!scene.bundlesLoaded)
+                {
                     await new WaitUntil(() => scene.bundlesLoaded);
                 }
                 if (KitBundle == null)
@@ -100,13 +101,14 @@ namespace BS
             try
             {
                 GameObject asset = KitBundle.LoadAsset<GameObject>(loadPath);
-                if(resetTransform) {
+                if (resetTransform)
+                {
                     asset.transform.localPosition = Vector3.zero;
                     asset.transform.localRotation = Quaternion.identity;
                 }
                 item = Instantiate(asset, transform, false);
                 scene.kitItems.Add(item);
-                
+
                 foreach (Transform transform in item.GetComponentsInChildren<Transform>(true))
                 {
                     var canvas = transform.gameObject.GetComponent<Canvas>();
@@ -125,12 +127,12 @@ namespace BS
                                 box.center = new Vector3(0f, 0f, 0.015f);
                             }
                             var trackedDeviceRaycaster = canvas.gameObject.GetComponent<TrackedDeviceRaycaster>();
-                            if(trackedDeviceRaycaster)
+                            if (trackedDeviceRaycaster)
                                 Destroy(trackedDeviceRaycaster);
                         }
                     }
                 }
-                
+
                 SetLoadedIfNot();
             }
             catch (Exception e)
@@ -149,7 +151,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal override void StartStuff() { }
         internal void UpdateCallback(List<PropertyName> changedProperties)
@@ -186,7 +188,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "KitItem" +  PropertyName.path + path + PropertyName.resetTransform + resetTransform;
+            return "KitItem" + PropertyName.path + path + PropertyName.resetTransform + resetTransform;
         }
 
         internal override void Init(List<object> constructorProperties = null)

@@ -113,9 +113,9 @@ namespace BS.VisualScripting.UI.Helpers
 
         private static void LogVerbose(string message)
         {
-            #if BANTER_UI_DEBUG
+#if BANTER_UI_DEBUG
             Debug.Log($"{LogPrefix} {message}");
-            #endif
+#endif
         }
     }
 }

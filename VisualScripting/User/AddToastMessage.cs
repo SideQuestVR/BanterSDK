@@ -27,12 +27,13 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _message = flow.GetValue<string>(message);
                 var _color = flow.GetValue<Color>(color);
                 var _timeout = flow.GetValue<int>(timeout);
                 var _delay = flow.GetValue<int>(delay);
-                
+
                 BSScene.Instance().events.OnToast?.Invoke(_message, _timeout, _delay, _color);
 
                 return outputTrigger;

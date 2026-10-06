@@ -17,13 +17,13 @@ namespace BS.UI.Bridge
         /// <param name="parameters">The parameters to pass to the method</param>
         /// <returns>True if method was handled, false if method not found</returns>
         bool DispatchMethod(string methodName, string[] parameters);
-        
+
         /// <summary>
         /// Gets the type name for this UI element (used for factory creation).
         /// </summary>
         string GetUIElementTypeName();
     }
-    
+
     /// <summary>
     /// Utility class for parsing parameters in generated UI method dispatchers.
     /// </summary>
@@ -38,7 +38,7 @@ namespace BS.UI.Bridge
             }
             return Vector2.zero;
         }
-        
+
         public static Vector3 ParseVector3(string value)
         {
             var parts = value.Split('|');

@@ -40,7 +40,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var property = flow.GetValue<UIStyleProperty>(styleProperty);
@@ -80,7 +81,8 @@ namespace BS.VisualScripting
 
                     // Set up callback to receive the value
                     _currentEventName = $"UIStyle_{elemId}_{propertyName}";
-                    _currentCallback = (CustomEventArgs args) => {
+                    _currentCallback = (CustomEventArgs args) =>
+                    {
                         if (!graphReference.isValid)
                         {
                             CleanupCallback();

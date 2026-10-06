@@ -80,7 +80,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -108,10 +109,10 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUITypography] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set font size
                     SendStyleCommand(panelId, elemId, "font-size", $"{fontSizeVal}px");
-                    
+
                     // Set font style
                     string styleValue = fontStyleVal switch
                     {
@@ -120,7 +121,7 @@ namespace BS.VisualScripting
                         _ => "normal"
                     };
                     SendStyleCommand(panelId, elemId, "font-style", styleValue);
-                    
+
                     // Set font weight
                     string weightValue = fontWeightVal switch
                     {
@@ -129,7 +130,7 @@ namespace BS.VisualScripting
                         _ => "normal"
                     };
                     SendStyleCommand(panelId, elemId, "font-weight", weightValue);
-                    
+
                     // Set text align
                     string alignValue = textAlignVal switch
                     {
@@ -140,19 +141,19 @@ namespace BS.VisualScripting
                         _ => "left"
                     };
                     SendStyleCommand(panelId, elemId, "text-align", alignValue);
-                    
+
                     // Set text color
                     var colorHex = $"#{ColorUtility.ToHtmlStringRGBA(textColorVal)}";
                     SendStyleCommand(panelId, elemId, "color", colorHex);
-                    
+
                     // Set line height
                     if (lineHeightVal > 0)
                         SendStyleCommand(panelId, elemId, "line-height", lineHeightVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    
+
                     // Set letter spacing
                     if (letterSpacingVal != 0)
                         SendStyleCommand(panelId, elemId, "letter-spacing", $"{letterSpacingVal}px");
-                    
+
                     // Set white space
                     string whiteSpaceValue = whiteSpaceVal switch
                     {

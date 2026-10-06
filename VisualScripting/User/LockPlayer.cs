@@ -17,7 +17,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 BSScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(true);
                 return outputTrigger;
             });
@@ -39,7 +40,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 BSScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(false);
                 return outputTrigger;
             });

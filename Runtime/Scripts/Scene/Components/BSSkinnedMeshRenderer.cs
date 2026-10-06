@@ -271,7 +271,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "SkinnedMeshRenderer" +  PropertyName.blendShapes + blendShapes + PropertyName.bones + bones + PropertyName.rootBoneInstanceId + rootBoneInstanceId + PropertyName.updateWhenOffscreen + updateWhenOffscreen + PropertyName.skinnedMotionVectors + skinnedMotionVectors + PropertyName.quality + quality;
+            return "SkinnedMeshRenderer" + PropertyName.blendShapes + blendShapes + PropertyName.bones + bones + PropertyName.rootBoneInstanceId + rootBoneInstanceId + PropertyName.updateWhenOffscreen + updateWhenOffscreen + PropertyName.skinnedMotionVectors + skinnedMotionVectors + PropertyName.quality + quality;
         }
 
         internal override void Init(List<object> constructorProperties = null)

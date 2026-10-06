@@ -27,7 +27,7 @@ namespace BS
 
         internal override void StartStuff()
         {
-            
+
         }
 
         internal override void DestroyStuff()
@@ -37,11 +37,11 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-           
+
         }
         // BANTER COMPILED CODE 
         public System.Int32 Fps { get { return fps; } set { fps = value; UpdateCallback(new List<PropertyName> { PropertyName.fps }); } }
@@ -75,7 +75,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "MonoBehaviour" +  PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
+            return "MonoBehaviour" + PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
         }
 
         internal override void Init(List<object> constructorProperties = null)

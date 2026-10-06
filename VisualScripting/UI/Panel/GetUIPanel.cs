@@ -22,7 +22,8 @@ namespace BS.VisualScripting
         {
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
 
-            panel = ValueOutput<BSUIPanel>("Panel", (flow) => {
+            panel = ValueOutput<BSUIPanel>("Panel", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
 
                 BSUIPanel foundPanel = null;

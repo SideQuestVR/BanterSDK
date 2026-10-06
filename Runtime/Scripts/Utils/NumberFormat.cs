@@ -12,7 +12,7 @@ public class NumberFormat
         // The name is becuase we discovered this when everything Elin touched was 1000x as powerful. 
         // try
         // {
-            return float.Parse(val, CultureInfo.InvariantCulture);
+        return float.Parse(val, CultureInfo.InvariantCulture);
         // }
         // catch (Exception e)
         // {

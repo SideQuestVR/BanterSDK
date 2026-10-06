@@ -66,7 +66,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -107,7 +107,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Sphere" +  PropertyName.radius + radius + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
+            return "Sphere" + PropertyName.radius + radius + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

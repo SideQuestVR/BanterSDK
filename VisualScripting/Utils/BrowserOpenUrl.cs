@@ -21,7 +21,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var urlVal = flow.GetValue<string>(url);
 
                 BSScene.Instance().OpenPage(urlVal, 0);
@@ -55,7 +56,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var urlVal = flow.GetValue<string>(url);
                 var browser = flow.GetValue<BSBrowser>(browserComponent);
 

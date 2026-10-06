@@ -149,7 +149,7 @@ BS.L.CharacterColliders     // 23
 BS.L.CharacterHandColliders // 24
 ```
 
-What each layer does is in [Layers](layers.md). The old names still work but are deprecated:
+What each layer does is in [Layers](../building-in-unity/layers.md). The old names still work but are deprecated:
 `NetworkPlayer` (17), `RPMAvatarHead` (18) and `RPMAvatarBody` (19) are user layers now,
 `HandColliders` is 21 (now `Invisible`), and `PhysicsPlayer` is `CharacterColliders`.
 

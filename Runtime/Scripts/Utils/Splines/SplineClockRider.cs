@@ -25,10 +25,10 @@ namespace BS
         [SerializeField] private SplineContainer _spline;
 
         [Tooltip("Seconds for one full loop of the spline.")]
-        [Min(0.1f)] [SerializeField] private double _loopSeconds = 30.0;
+        [Min(0.1f)][SerializeField] private double _loopSeconds = 30.0;
 
         [Tooltip("Where this object sits on the loop, as a fraction (0..1). Offset each rider to space a train.")]
-        [Range(0f, 1f)] [SerializeField] private float _phaseOffset = 0f;
+        [Range(0f, 1f)][SerializeField] private float _phaseOffset = 0f;
 
         [Tooltip("Reverse the direction of travel around the loop.")]
         [SerializeField] private bool _reverse = false;

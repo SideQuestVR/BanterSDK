@@ -12,7 +12,7 @@ namespace BS.UI.Elements
     [UIElement(typeof(VisualElement), "UIVisualElement")]
     public partial class BSUIElement : VisualElement
     {
-        
+
         [UIProperty(propertyName: "enabled")]
         public bool IsEnabled
         {

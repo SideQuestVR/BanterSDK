@@ -103,7 +103,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         void SetupAudio(List<PropertyName> changedProperties)
         {
@@ -179,7 +179,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "AudioSource" +  PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
+            return "AudioSource" + PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
         }
 
         internal override void Init(List<object> constructorProperties = null)

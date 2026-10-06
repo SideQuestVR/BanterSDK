@@ -76,7 +76,7 @@ public class BSSceneEvents
     public UnityEvent<float> OnPhysicsGrappleSpringinessChanged = new UnityEvent<float>();
     public UnityEvent<bool> OnPhysicsGorillaModeChanged = new UnityEvent<bool>();
     #endregion
-    
+
     public UnityEvent<string, float, string, bool> OnLeaderBoardScore = new UnityEvent<string, float, string, bool>();
     public UnityEvent<string> OnLeaderBoardClear = new UnityEvent<string>();
     public UnityEvent OnGetLeaderBoard = new UnityEvent();
@@ -214,7 +214,7 @@ public class BSSceneEvents
         OnPhysicsGrappleReelSpeedChanged.RemoveAllListeners();
         OnPhysicsGrappleSpringinessChanged.RemoveAllListeners();
         OnPhysicsGorillaModeChanged.RemoveAllListeners();
-            
+
         // Legacy stuff
         OnLegacyEnabled.RemoveAllListeners();
         OnLegacyPlayerLockChanged.RemoveAllListeners();

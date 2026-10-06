@@ -26,7 +26,7 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => 
+            inputTrigger = ControlInput("", (flow) =>
             {
                 var colString = flow.GetValue<string>(hexColor);
                 if (colString[0] != '#')

@@ -69,7 +69,7 @@ namespace BS
         [See(initial = "0")][SerializeField] internal int childrenLayer;
         bool loadStarted;
 
-         private static Dictionary<string, Task<byte[]>> gltfCache = new Dictionary<string, Task<byte[]>>();
+        private static Dictionary<string, Task<byte[]>> gltfCache = new Dictionary<string, Task<byte[]>>();
         public static void ClearCache()
         {
             gltfCache.Clear();
@@ -104,12 +104,13 @@ namespace BS
                     var renderer = child.GetComponent<Renderer>();
                     if (renderer != null)
                     {
-                        if (renderer.sharedMaterial.HasTexture("_MainTex")) {
+                        if (renderer.sharedMaterial.HasTexture("_MainTex"))
+                        {
                             var _MainTex = renderer.sharedMaterial.mainTexture;
                             if (_MainTex != null)
                             {
                                 DestroyImmediate(_MainTex);
-                            } 
+                            }
                         }
                         DestroyImmediate(renderer.sharedMaterial);
                         renderer.sharedMaterial = null;
@@ -245,7 +246,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -287,7 +288,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "GLTF" +  PropertyName.url + url + PropertyName.generateMipMaps + generateMipMaps + PropertyName.addColliders + addColliders + PropertyName.nonConvexColliders + nonConvexColliders + PropertyName.slippery + slippery + PropertyName.climbable + climbable + PropertyName.legacyRotate + legacyRotate + PropertyName.childrenLayer + childrenLayer;
+            return "GLTF" + PropertyName.url + url + PropertyName.generateMipMaps + generateMipMaps + PropertyName.addColliders + addColliders + PropertyName.nonConvexColliders + nonConvexColliders + PropertyName.slippery + slippery + PropertyName.climbable + climbable + PropertyName.legacyRotate + legacyRotate + PropertyName.childrenLayer + childrenLayer;
         }
 
         internal override void Init(List<object> constructorProperties = null)

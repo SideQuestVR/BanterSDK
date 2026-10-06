@@ -38,7 +38,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal void UpdateCallback(List<PropertyName> changedProperties) { }
         internal override void StartStuff()

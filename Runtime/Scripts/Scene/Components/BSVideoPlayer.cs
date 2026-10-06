@@ -272,7 +272,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         // BANTER COMPILED CODE 
         public System.Single Time { get { return time; } set { time = value; UpdateCallback(new List<PropertyName> { PropertyName.time }); } }
@@ -316,7 +316,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "VideoPlayer" +  PropertyName.time + time + PropertyName.url + url + PropertyName.volume + volume + PropertyName.loop + loop + PropertyName.playOnAwake + playOnAwake + PropertyName.skipOnDrop + skipOnDrop + PropertyName.waitForFirstFrame + waitForFirstFrame + PropertyName.isPlaying + isPlaying + PropertyName.isLooping + isLooping + PropertyName.isPrepared + isPrepared + PropertyName.isMuted + isMuted + PropertyName.duration + duration;
+            return "VideoPlayer" + PropertyName.time + time + PropertyName.url + url + PropertyName.volume + volume + PropertyName.loop + loop + PropertyName.playOnAwake + playOnAwake + PropertyName.skipOnDrop + skipOnDrop + PropertyName.waitForFirstFrame + waitForFirstFrame + PropertyName.isPlaying + isPlaying + PropertyName.isLooping + isLooping + PropertyName.isPrepared + isPrepared + PropertyName.isMuted + isMuted + PropertyName.duration + duration;
         }
 
         internal override void Init(List<object> constructorProperties = null)

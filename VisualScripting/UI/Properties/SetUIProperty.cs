@@ -51,7 +51,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var propName = flow.GetValue<UIPropertyNameVS>(propertyName);
@@ -74,14 +75,14 @@ namespace BS.VisualScripting
                         Debug.LogError($"[SetUIProperty] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Convert enum to property name and format value
                     var propNameStr = GetPropertyName(propName);
                     var valueStr = FormatPropertyValue(propValue, propName);
-                    
+
                     // Format: panelId|SET_UI_PROPERTY|elementId§propertyName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propNameStr}{MessageDelimiters.SECONDARY}{valueStr}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
                 }

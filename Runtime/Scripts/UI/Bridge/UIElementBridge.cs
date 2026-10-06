@@ -21,10 +21,10 @@ namespace BS.UI.Bridge
 
         // Registry for multiple panel instances
         private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
-        
+
         public string panelId;
         public BSUIPanel banterUiPanel;
-        
+
         public static UIElementBridge GetPanelInstance(string panelId)
         {
             _panelInstances.TryGetValue(panelId, out var instance);
@@ -42,7 +42,7 @@ namespace BS.UI.Bridge
             }
             return false;
         }
-        
+
         public static void RegisterPanelInstance(string panelId, UIElementBridge instance, BSUIPanel banterUIPanel)
         {
             if (string.IsNullOrEmpty(panelId))
@@ -56,7 +56,7 @@ namespace BS.UI.Bridge
             instance.banterUiPanel = banterUIPanel;
             LogVerbose($"Registered panel instance: {panelId}");
         }
-        
+
         public static void UnregisterPanelInstance(string panelId)
         {
             if (_panelInstances.ContainsKey(panelId))
@@ -65,16 +65,16 @@ namespace BS.UI.Bridge
                 LogVerbose($"Unregistered panel instance: {panelId}");
             }
         }
-        
+
         private Dictionary<string, VisualElement> _elements = new Dictionary<string, VisualElement>();
         private Dictionary<VisualElement, string> _elementToId = new Dictionary<VisualElement, string>(); // Reverse lookup for O(1) element ID retrieval
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
         public UIDocument mainDocument;
         public BSLink banterLink;
-        
+
         // Store event callbacks for unregistration
         private Dictionary<(string elementId, UIEventType eventType), object> _registeredCallbacks = new Dictionary<(string, UIEventType), object>();
-        
+
         // Texture cache for background images
         private static Dictionary<string, Texture2D> _textureCache = new Dictionary<string, Texture2D>();
         private static Dictionary<string, Task<Texture2D>> _downloadingTextures = new Dictionary<string, Task<Texture2D>>();
@@ -148,7 +148,7 @@ namespace BS.UI.Bridge
             UICommands.FORCE_UI_LAYOUT,
             UICommands.MEASURE_UI_ELEMENT
         };
-        
+
         /// <summary>
         /// Check if a message is a UI command
         /// </summary>
@@ -160,11 +160,11 @@ namespace BS.UI.Bridge
             // So we need to check the second part for the UI command
             var parts = message.Split(MessageDelimiters.PRIMARY);
             if (parts.Length < 2) return false;
-            
+
             string command = parts[1]; // Second part is the command
             return _uiCommandPrefixes.Contains(command);
         }
-        
+
         // Handle all UI messages with required panel targeting
         public static void HandleMessage(string message)
         {
@@ -197,7 +197,7 @@ namespace BS.UI.Bridge
                 Debug.LogError($"[UIElementBridge] Error handling message: {e.Message}\nMessage: {message}");
             }
         }
-        
+
         private void ProcessCommand(string command, string[] data)
         {
             switch (command)
@@ -205,27 +205,27 @@ namespace BS.UI.Bridge
                 case UICommands.CREATE_UI_ELEMENT:
                     CreateUIElement(data);
                     break;
-                    
+
                 case UICommands.DESTROY_UI_ELEMENT:
                     DestroyUIElement(data);
                     break;
-                    
+
                 case UICommands.ATTACH_UI_CHILD:
                     AttachChild(data);
                     break;
-                    
+
                 case UICommands.DETACH_UI_CHILD:
                     DetachChild(data);
                     break;
-                    
+
                 case UICommands.SET_UI_PROPERTY:
                     SetProperty(data);
                     break;
-                    
+
                 case UICommands.GET_UI_PROPERTY:
                     GetProperty(data);
                     break;
-                    
+
                 case UICommands.SET_UI_STYLE:
                     SetStyle(data);
                     break;
@@ -237,33 +237,33 @@ namespace BS.UI.Bridge
                 case UICommands.CALL_UI_METHOD:
                     CallMethod(data);
                     break;
-                    
+
                 case UICommands.REGISTER_UI_EVENT:
                     RegisterEvent(data);
                     break;
-                    
+
                 case UICommands.UNREGISTER_UI_EVENT:
                     UnregisterEvent(data);
                     break;
-                    
+
                 case UICommands.SET_UI_FOCUS:
                     SetFocus(data);
                     break;
-                    
+
                 case UICommands.CLEAR_UI_FOCUS:
                     ClearFocus(data);
                     break;
-                    
+
                 case UICommands.BATCH_UI_UPDATE:
                     ProcessBatchUpdate(data);
                     break;
-                    
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unknown command: {command}");
                     break;
             }
         }
-        
+
         private void CreateUIElement(string[] data)
         {
 
@@ -274,14 +274,14 @@ namespace BS.UI.Bridge
             }
             LogVerbose("Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
-            
+
             var elementId = data[0];
             var elementType = data[1];
             var parentId = data[2];
             LogVerbose("Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
             // Create the appropriate VisualElement based on type
             VisualElement element = CreateElementByType(elementType);
-            
+
             if (element != null)
             {
                 _elements[elementId] = element;
@@ -306,11 +306,11 @@ namespace BS.UI.Bridge
                         Debug.LogWarning("[UIElementBridge] No valid parent found and root element is missing.");
                     }
                 }
-                
+
                 LogVerbose($"Created element: {elementId} of type {elementType}");
             }
         }
-        
+
         private VisualElement CreateElementByType(string type)
         {
             // Parse the UIElementType enum value
@@ -349,28 +349,28 @@ namespace BS.UI.Bridge
                     _ => new VisualElement()
                 };
             }
-            
+
             return new VisualElement();
         }
-        
+
         private void DestroyUIElement(string[] data)
         {
             if (data.Length < 1) return;
-            
+
             var elementId = data[0];
-            
+
             if (_elements.TryGetValue(elementId, out var element))
             {
                 // Clean up any registered event callbacks for this element
                 var callbacksToRemove = _registeredCallbacks.Keys
                     .Where(key => key.elementId == elementId)
                     .ToList();
-                    
+
                 foreach (var key in callbacksToRemove)
                 {
                     _registeredCallbacks.Remove(key);
                 }
-                
+
                 element.RemoveFromHierarchy();
                 _elements.Remove(elementId);
                 _elementToId.Remove(element);
@@ -378,15 +378,15 @@ namespace BS.UI.Bridge
                 LogVerbose($"Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
             }
         }
-        
+
         private void AttachChild(string[] data)
         {
             if (data.Length < 3) return;
-            
+
             var parentId = data[0];
             var childId = data[1];
             var index = int.Parse(data[2]);
-            
+
             if (_elements.TryGetValue(parentId, out var parent) &&
                 _elements.TryGetValue(childId, out var child))
             {
@@ -398,25 +398,25 @@ namespace BS.UI.Bridge
                 {
                     parent.Add(child);
                 }
-                
+
                 LogVerbose($"Attached {childId} to {parentId}");
             }
         }
-        
+
         private void DetachChild(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var parentId = data[0];
             var childId = data[1];
-            
+
             if (_elements.TryGetValue(childId, out var child))
             {
                 child.RemoveFromHierarchy();
                 LogVerbose($"Detached {childId} from {parentId}");
             }
         }
-        
+
         private void SetProperty(string[] data)
         {
             if (data.Length < 3)
@@ -544,7 +544,7 @@ namespace BS.UI.Bridge
             // If we get here, the property wasn't handled by any method
             Debug.LogWarning($"[UIElementBridge] Unhandled property '{propertyName}' for element type '{element.GetType().Name}' with value '{value}'");
         }
-        
+
         private void GetProperty(string[] data)
         {
             if (data.Length < 2) return;
@@ -560,18 +560,18 @@ namespace BS.UI.Bridge
                 Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get property '{propertyName}'");
                 return;
             }
-            
+
             // Get the property value based on property name and element type
             var propertyValue = GetElementProperty(element, propertyName);
-            
+
             // Trigger EventBus event for Visual Scripting to receive the value
             // Format: UIProperty_{elementId}_{propertyName} with the property value
             var eventName = $"UIProperty_{elementId}_{propertyName}";
             Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { propertyValue }));
-            
+
             LogVerbose($"Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
         }
-        
+
         private object GetElementProperty(VisualElement element, string propertyName)
         {
             // Handle common UI properties
@@ -583,7 +583,7 @@ namespace BS.UI.Bridge
                     if (element is TextField textField)
                         return textField.value ?? "";
                     break;
-                    
+
                 case "value":
                     if (element is Slider slider)
                         return slider.value;
@@ -594,33 +594,33 @@ namespace BS.UI.Bridge
                     if (element is DropdownField dropdown)
                         return dropdown.value ?? "";
                     break;
-                    
+
                 case "enabled":
                     return element.enabledSelf ? "1" : "0";
-                    
+
                 case "visible":
                     return element.style.display == UnityEngine.UIElements.DisplayStyle.Flex ? "1" : "0";
-                    
+
                 case "checked":
                     if (element is Toggle toggleChecked)
                         return toggleChecked.value ? "1" : "0";
                     break;
-                    
+
                 case "name":
                     return element.name ?? "";
-                    
+
                 case "tooltip":
                     return element.tooltip ?? "";
-                    
+
                 // Add more properties as needed
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unhandled get property '{propertyName}' for element type '{element.GetType().Name}'");
                     return null;
             }
-            
+
             return null;
         }
-        
+
         private void SetElementValue(VisualElement element, string value)
         {
             switch (element)
@@ -639,17 +639,17 @@ namespace BS.UI.Bridge
                     break;
             }
         }
-        
+
         private void SetStyle(string[] data)
         {
             if (data.Length < 3) return;
-            
+
             var elementId = data[0];
             var styleNameString = data[1];
             var value = data[2];
-            
+
             if (!_elements.TryGetValue(elementId, out var element)) return;
-            
+
             // Convert string to enum
             var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
 
@@ -684,7 +684,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.JustifyContent:
                     element.style.justifyContent = ParseEnum<Justify>(value);
                     break;
-                    
+
                 // Size Properties
                 case UIStyleProperty.Width:
                     element.style.width = ParseLength(value);
@@ -704,7 +704,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.MaxHeight:
                     element.style.maxHeight = ParseLength(value);
                     break;
-                    
+
                 // Position Properties
                 case UIStyleProperty.Position:
                     element.style.position = ParseEnum<Position>(value);
@@ -721,7 +721,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.Bottom:
                     element.style.bottom = ParseLength(value);
                     break;
-                    
+
                 // Margin Properties
                 case UIStyleProperty.Margin:
                     var margin = ParseSpacing(value);
@@ -742,7 +742,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.MarginLeft:
                     element.style.marginLeft = ParseLength(value);
                     break;
-                    
+
                 // Padding Properties
                 case UIStyleProperty.Padding:
                     var padding = ParseSpacing(value);
@@ -763,7 +763,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.PaddingLeft:
                     element.style.paddingLeft = ParseLength(value);
                     break;
-                    
+
                 // Border Properties
                 case UIStyleProperty.BorderWidth:
                     var borderWidth = ParseFloat(value);
@@ -803,7 +803,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.BorderBottomRightRadius:
                     element.style.borderBottomRightRadius = ParseLength(value);
                     break;
-                    
+
                 // Border Color Properties
                 case UIStyleProperty.BorderColor:
                     var borderColor = ParseColor(value);
@@ -824,7 +824,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.BorderLeftColor:
                     element.style.borderLeftColor = ParseColor(value);
                     break;
-                    
+
                 // Background Properties
                 case UIStyleProperty.BackgroundColor:
                     element.style.backgroundColor = ParseColor(value);
@@ -832,7 +832,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.BackgroundImage:
                     SetBackgroundImage(element, value);
                     break;
-                    
+
                 // Color Properties
                 case UIStyleProperty.Color:
                     element.style.color = ParseColor(value);
@@ -840,7 +840,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.Opacity:
                     element.style.opacity = ParseFloat(value);
                     break;
-                    
+
                 // Text Properties
                 case UIStyleProperty.FontSize:
                     element.style.fontSize = ParseLength(value);
@@ -860,7 +860,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.TextOverflow:
                     element.style.textOverflow = ParseEnum<TextOverflow>(value);
                     break;
-                    
+
                 // Display Properties
                 case UIStyleProperty.Display:
                     element.style.display = ParseEnum<DisplayStyle>(value);
@@ -871,7 +871,7 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.Overflow:
                     element.style.overflow = ParseEnum<Overflow>(value);
                     break;
-                    
+
                 // Unity-specific Text Properties
                 case UIStyleProperty.UnityTextAlign:
                     element.style.unityTextAlign = ParseEnum<TextAnchor>(value);
@@ -903,7 +903,7 @@ namespace BS.UI.Bridge
                     Debug.LogWarning($"[UIElementBridge] Unsupported style property: {styleProperty} ({styleNameString})");
                     break;
             }
-            
+
             LogVerbose($"Set style {styleProperty} = '{value}' on element {elementId}");
         }
 
@@ -1151,9 +1151,9 @@ namespace BS.UI.Bridge
         {
             if (string.IsNullOrEmpty(value))
                 return new StyleLength(StyleKeyword.Initial);
-            
+
             value = value.Trim().ToLower();
-            
+
             // Handle CSS keywords (only those supported by Unity)
             switch (value)
             {
@@ -1172,87 +1172,87 @@ namespace BS.UI.Bridge
                     // Unity doesn't directly support these, fallback to auto
                     return new StyleLength(StyleKeyword.Auto);
             }
-            
+
             // Parse numeric values with units
             var match = System.Text.RegularExpressions.Regex.Match(value, @"^(-?\d*\.?\d+)(px|%|em|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc)?$");
             if (match.Success)
             {
                 var numericValue = float.Parse(match.Groups[1].Value);
                 var unit = match.Groups[2].Value;
-                
+
                 switch (unit)
                 {
                     case "":
                     case "px":
                         return new StyleLength(numericValue);
-                    
+
                     case "%":
                         return new StyleLength(Length.Percent(numericValue));
-                    
+
                     case "em":
                     case "rem":
                         // Convert em/rem to pixels (assuming 16px base font size)
                         return new StyleLength(numericValue * 16f);
-                    
+
                     case "vw":
                         // Viewport width percentage (assuming 1920px viewport)
                         return new StyleLength(numericValue * 1920f / 100f);
-                    
+
                     case "vh":
                         // Viewport height percentage (assuming 1080px viewport)
                         return new StyleLength(numericValue * 1080f / 100f);
-                    
+
                     case "vmin":
                         // Smaller of vw or vh
                         var minViewport = Mathf.Min(1920f, 1080f);
                         return new StyleLength(numericValue * minViewport / 100f);
-                    
+
                     case "vmax":
                         // Larger of vw or vh
                         var maxViewport = Mathf.Max(1920f, 1080f);
                         return new StyleLength(numericValue * maxViewport / 100f);
-                    
+
                     case "cm":
                         // Centimeters to pixels (96 DPI)
                         return new StyleLength(numericValue * 37.795f);
-                    
+
                     case "mm":
                         // Millimeters to pixels
                         return new StyleLength(numericValue * 3.7795f);
-                    
+
                     case "in":
                         // Inches to pixels
                         return new StyleLength(numericValue * 96f);
-                    
+
                     case "pt":
                         // Points to pixels
                         return new StyleLength(numericValue * 1.333f);
-                    
+
                     case "pc":
                         // Picas to pixels
                         return new StyleLength(numericValue * 16f);
-                    
+
                     default:
                         return new StyleLength(numericValue);
                 }
             }
-            
+
             // Fallback: try to parse as float
             if (float.TryParse(value, out float fallbackValue))
             {
                 return new StyleLength(fallbackValue);
             }
-            
+
             return new StyleLength(StyleKeyword.Initial);
         }
-        
+
         private StyleColor ParseColor(string value)
         {
             if (string.IsNullOrEmpty(value))
                 return new StyleColor(StyleKeyword.Initial);
-            
+
             value = value.Trim().ToLower();
-            
+
             // Handle CSS keywords (only those supported by Unity)
             switch (value)
             {
@@ -1266,20 +1266,20 @@ namespace BS.UI.Bridge
                 case "currentcolor":
                     return new StyleColor(StyleKeyword.Initial); // Fallback
             }
-            
+
             // Handle named colors
             Color namedColor = ParseNamedColor(value);
             if (namedColor != Color.clear)
             {
                 return new StyleColor(namedColor);
             }
-            
+
             // Handle hex colors (#RGB, #RRGGBB)
             if (ColorUtility.TryParseHtmlString(value, out Color hexColor))
             {
                 return new StyleColor(hexColor);
             }
-            
+
             // Handle rgba() format
             var rgbaMatch = System.Text.RegularExpressions.Regex.Match(value, @"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)");
             if (rgbaMatch.Success)
@@ -1290,7 +1290,7 @@ namespace BS.UI.Bridge
                 var a = rgbaMatch.Groups[4].Success ? float.Parse(rgbaMatch.Groups[4].Value) : 1f;
                 return new StyleColor(new Color(r, g, b, a));
             }
-            
+
             // Handle hsla() format (basic conversion)
             var hslaMatch = System.Text.RegularExpressions.Regex.Match(value, @"hsla?\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*(?:,\s*([\d.]+))?\s*\)");
             if (hslaMatch.Success)
@@ -1299,17 +1299,17 @@ namespace BS.UI.Bridge
                 var s = int.Parse(hslaMatch.Groups[2].Value) / 100f;
                 var l = int.Parse(hslaMatch.Groups[3].Value) / 100f;
                 var a = hslaMatch.Groups[4].Success ? float.Parse(hslaMatch.Groups[4].Value) : 1f;
-                
+
                 // Convert HSL to RGB
                 var rgbColor = HSLToRGB(h, s, l);
                 rgbColor.a = a;
                 return new StyleColor(rgbColor);
             }
-            
+
             // Fallback to white
             return new StyleColor(Color.white);
         }
-        
+
         private Color ParseNamedColor(string colorName)
         {
             return colorName switch
@@ -1332,11 +1332,11 @@ namespace BS.UI.Bridge
                 _ => Color.clear // Indicates not found
             };
         }
-        
+
         private Color HSLToRGB(float h, float s, float l)
         {
             float r, g, b;
-            
+
             if (s == 0f)
             {
                 r = g = b = l; // Achromatic
@@ -1347,22 +1347,22 @@ namespace BS.UI.Bridge
                 {
                     if (t < 0f) t += 1f;
                     if (t > 1f) t -= 1f;
-                    if (t < 1f/6f) return p + (q - p) * 6f * t;
-                    if (t < 1f/2f) return q;
-                    if (t < 2f/3f) return p + (q - p) * (2f/3f - t) * 6f;
+                    if (t < 1f / 6f) return p + (q - p) * 6f * t;
+                    if (t < 1f / 2f) return q;
+                    if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6f;
                     return p;
                 }
-                
+
                 var q = l < 0.5f ? l * (1f + s) : l + s - l * s;
                 var p = 2f * l - q;
-                r = hue2rgb(p, q, h + 1f/3f);
+                r = hue2rgb(p, q, h + 1f / 3f);
                 g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1f/3f);
+                b = hue2rgb(p, q, h - 1f / 3f);
             }
-            
+
             return new Color(r, g, b, 1f);
         }
-        
+
         /// <summary>
         /// Sets background image from URL or CSS value
         /// </summary>
@@ -1518,21 +1518,21 @@ namespace BS.UI.Bridge
             var colon = value.IndexOf(':');
             return colon > 0 && _imageSources.ContainsKey(value.Substring(0, colon));
         }
-        
+
         /// <summary>
         /// Parses background-image CSS value to extract URL
         /// </summary>
         private string ParseBackgroundImageUrl(string value)
         {
             if (string.IsNullOrEmpty(value)) return null;
-            
+
             // Handle url("...") format
             var urlMatch = System.Text.RegularExpressions.Regex.Match(value, @"url\s*\(\s*['""]?([^'""()]+)['""]?\s*\)");
             if (urlMatch.Success)
             {
                 return urlMatch.Groups[1].Value.Trim();
             }
-            
+
             // Handle direct URL (fallback)
             if (value.StartsWith("http://") || value.StartsWith("https://") || value.StartsWith("data:")
                 || value.StartsWith("res:", StringComparison.OrdinalIgnoreCase)
@@ -1543,7 +1543,7 @@ namespace BS.UI.Bridge
 
             return null;
         }
-        
+
         /// <summary>
         /// Gets texture from cache or downloads it using Get.Texture
         /// </summary>
@@ -1576,17 +1576,17 @@ namespace BS.UI.Bridge
             // Start download
             var downloadTask = DownloadTexture(url);
             _downloadingTextures[url] = downloadTask;
-            
+
             try
             {
                 var texture = await downloadTask;
-                
+
                 // Cache the result
                 if (texture != null)
                 {
                     _textureCache[url] = texture;
                 }
-                
+
                 return texture;
             }
             finally
@@ -1595,7 +1595,7 @@ namespace BS.UI.Bridge
                 _downloadingTextures.Remove(url);
             }
         }
-        
+
         /// <summary>
         /// Decodes a base64 data: URI into a Texture2D. Returns null if the URI is malformed,
         /// not base64-encoded, or the payload is not a PNG/JPG Unity can load.
@@ -1653,7 +1653,7 @@ namespace BS.UI.Bridge
                 return null;
             }
         }
-        
+
         /// <summary>
         /// Clears the texture cache to free memory
         /// </summary>
@@ -1670,21 +1670,21 @@ namespace BS.UI.Bridge
             _downloadingTextures.Clear();
             LogVerbose("Cleared texture cache");
         }
-        
+
         private float[] ParseSpacing(string value)
         {
             if (string.IsNullOrEmpty(value))
                 return new float[] { 0, 0, 0, 0 };
-            
+
             var parts = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            
+
             // Parse each part as a length and extract the numeric value
             float[] ParsedValues = new float[parts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
                 var styleLength = ParseLength(parts[i]);
                 // Extract the float value from StyleLength
-                if (styleLength.keyword == StyleKeyword.Auto || 
+                if (styleLength.keyword == StyleKeyword.Auto ||
                     styleLength.keyword == StyleKeyword.Initial)
                 {
                     ParsedValues[i] = 0f;
@@ -1694,7 +1694,7 @@ namespace BS.UI.Bridge
                     ParsedValues[i] = styleLength.value.value;
                 }
             }
-            
+
             // Apply CSS shorthand rules: top, right, bottom, left
             if (ParsedValues.Length == 1)
             {
@@ -1722,10 +1722,10 @@ namespace BS.UI.Bridge
                 // Top | Right | Bottom | Left
                 return new[] { ParsedValues[0], ParsedValues[1], ParsedValues[2], ParsedValues[3] };
             }
-            
+
             return new float[] { 0, 0, 0, 0 };
         }
-        
+
         private float ParseFloat(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0f;
@@ -1815,12 +1815,12 @@ namespace BS.UI.Bridge
             var y = parts.Length > 1 ? Component(parts[1]) : Length.Percent(50);
             return new StyleTransformOrigin(new TransformOrigin(x, y));
         }
-        
+
         private StyleEnum<T> ParseEnum<T>(string value) where T : struct, System.Enum
         {
             if (string.IsNullOrEmpty(value))
                 return new StyleEnum<T>(StyleKeyword.Initial);
-                
+
             // Handle CSS keywords (only those supported by Unity)
             switch (value.ToLower())
             {
@@ -1834,13 +1834,13 @@ namespace BS.UI.Bridge
                     // Unity doesn't support inherit, fallback to initial
                     return new StyleEnum<T>(StyleKeyword.Initial);
             }
-            
+
             // Try to parse as enum
             if (System.Enum.TryParse<T>(value, true, out T enumValue))
             {
                 return new StyleEnum<T>(enumValue);
             }
-            
+
             // Handle specific enum conversions
             if (typeof(T) == typeof(Align))
             {
@@ -1913,20 +1913,20 @@ namespace BS.UI.Bridge
                     _ => new StyleEnum<T>(StyleKeyword.Initial)
                 };
             }
-            
+
             return new StyleEnum<T>(StyleKeyword.Initial);
         }
-        
+
         private void CallMethod(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var methodName = data[1];
             var args = data.Skip(2).ToArray();
-            
+
             if (!_elements.TryGetValue(elementId, out var element)) return;
-            
+
             // Try to use the generated method dispatcher first
             if (element is IUIMethodDispatcher dispatcher)
             {
@@ -1945,7 +1945,7 @@ namespace BS.UI.Bridge
                 }
             }
         }
-        
+
         private void RegisterEvent(string[] data)
         {
             if (data.Length < 2) return;
@@ -2046,27 +2046,27 @@ namespace BS.UI.Bridge
 
             LogVerbose($"Registered {eventType} event for element {elementId}");
         }
-        
+
         private void UnregisterEvent(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var eventTypeString = data[1];
-            
+
             if (!_elements.TryGetValue(elementId, out var element)) return;
-            
+
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
             var callbackKey = (elementId, eventType);
-            
+
             // Check if callback is registered
             if (!_registeredCallbacks.TryGetValue(callbackKey, out var callback))
             {
                 Debug.LogWarning($"[UIElementBridge] No registered callback found for {eventType} event on element {elementId}");
                 return;
             }
-            
+
             // Unregister Unity event callbacks based on event type
             switch (eventType)
             {
@@ -2075,7 +2075,7 @@ namespace BS.UI.Bridge
                     if (callback is EventCallback<ClickEvent> clickCallback)
                         element.UnregisterCallback(clickCallback);
                     break;
-                    
+
                 // Mouse events
                 case UIEventType.MouseDown:
                     if (callback is EventCallback<MouseDownEvent> mouseDownCallback)
@@ -2109,7 +2109,7 @@ namespace BS.UI.Bridge
                     if (callback is EventCallback<WheelEvent> wheelCallback)
                         element.UnregisterCallback(wheelCallback);
                     break;
-                    
+
                 // Keyboard events
                 case UIEventType.KeyDown:
                     if (callback is EventCallback<KeyDownEvent> keyDownCallback)
@@ -2119,7 +2119,7 @@ namespace BS.UI.Bridge
                     if (callback is EventCallback<KeyUpEvent> keyUpCallback)
                         element.UnregisterCallback(keyUpCallback);
                     break;
-                    
+
                 // Focus events
                 case UIEventType.Focus:
                     if (callback is EventCallback<FocusEvent> focusCallback)
@@ -2137,7 +2137,7 @@ namespace BS.UI.Bridge
                     if (callback is EventCallback<FocusOutEvent> focusOutCallback)
                         element.UnregisterCallback(focusOutCallback);
                     break;
-                    
+
                 // Input events
                 case UIEventType.Change:
                     // Try to unregister different change event types
@@ -2152,40 +2152,40 @@ namespace BS.UI.Bridge
                     else if (callback is EventCallback<ChangeEvent<Vector2>> vector2ChangeCallback)
                         element.UnregisterCallback(vector2ChangeCallback);
                     break;
-                    
-                    
+
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported event type for unregistration: {eventType}");
                     break;
             }
-            
+
             // Remove from stored callbacks
             _registeredCallbacks.Remove(callbackKey);
             LogVerbose($"Unregistered {eventType} event for element {elementId}");
         }
-        
+
         private void SetFocus(string[] data)
         {
             if (data.Length < 1) return;
-            
+
             var elementId = data[0];
             if (_elements.TryGetValue(elementId, out var element))
             {
                 element.Focus();
             }
         }
-        
+
         private void ClearFocus(string[] data)
         {
             if (data.Length < 1) return;
-            
+
             var elementId = data[0];
             if (_elements.TryGetValue(elementId, out var element))
             {
                 element.Blur();
             }
         }
-        
+
         private void ProcessBatchUpdate(string[] data)
         {
             // Process multiple updates in a single frame
@@ -2198,7 +2198,7 @@ namespace BS.UI.Bridge
                 }
             }
         }
-        
+
         private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
             LogVerbose($"SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
@@ -2311,7 +2311,7 @@ namespace BS.UI.Bridge
                 _ => $"UI{eventType}"
             };
         }
-        
+
         private void TriggerVisualScriptingEvent(string elementId, UIEventType eventType, EventBase evt)
         {
             switch (eventType)
@@ -2322,13 +2322,13 @@ namespace BS.UI.Bridge
                         var eventName = $"UIClick_{elementId}";
                         var mousePosition = new UnityEngine.Vector2(clickEvt.localPosition.x, clickEvt.localPosition.y);
                         var mouseButton = clickEvt.button;
-                        
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIClick", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
-                        
+
                         LogVerbose($"Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
                     }
                     break;
-                    
+
                 case UIEventType.Change:
                     if (evt is ChangeEvent<string> changeEvt)
                     {
@@ -2488,7 +2488,7 @@ namespace BS.UI.Bridge
                     break;
             }
         }
-        
+
         private string BuildEventDataJson(EventBase evt)
         {
             // The float interpolations below must be culture-invariant: on comma-decimal
@@ -2498,139 +2498,139 @@ namespace BS.UI.Bridge
             System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
             try
             {
-            // Build JSON manually for better control and Unity compatibility
-            var jsonBuilder = new System.Text.StringBuilder();
-            jsonBuilder.Append("{");
-            
-            // Add common event properties
-            jsonBuilder.Append($"\"timestamp\":{evt.timestamp},");
-            jsonBuilder.Append($"\"eventTypeId\":{evt.eventTypeId}");
-            
-            // Add event-specific data based on event type
-            switch (evt)
-            {
-                case ChangeEvent<string> changeEvt:
-                    jsonBuilder.Append($",\"newValue\":\"{EscapeJsonString(changeEvt.newValue)}\"");
-                    jsonBuilder.Append($",\"previousValue\":\"{EscapeJsonString(changeEvt.previousValue)}\"");
-                    break;
+                // Build JSON manually for better control and Unity compatibility
+                var jsonBuilder = new System.Text.StringBuilder();
+                jsonBuilder.Append("{");
 
-                // Sliders and toggles: without these the page's change event had no value at all.
-                case ChangeEvent<float> floatChangeEvt:
-                    jsonBuilder.Append($",\"newValue\":{floatChangeEvt.newValue}");
-                    jsonBuilder.Append($",\"previousValue\":{floatChangeEvt.previousValue}");
-                    break;
+                // Add common event properties
+                jsonBuilder.Append($"\"timestamp\":{evt.timestamp},");
+                jsonBuilder.Append($"\"eventTypeId\":{evt.eventTypeId}");
 
-                case ChangeEvent<int> intChangeEvt:
-                    jsonBuilder.Append($",\"newValue\":{intChangeEvt.newValue}");
-                    jsonBuilder.Append($",\"previousValue\":{intChangeEvt.previousValue}");
-                    break;
+                // Add event-specific data based on event type
+                switch (evt)
+                {
+                    case ChangeEvent<string> changeEvt:
+                        jsonBuilder.Append($",\"newValue\":\"{EscapeJsonString(changeEvt.newValue)}\"");
+                        jsonBuilder.Append($",\"previousValue\":\"{EscapeJsonString(changeEvt.previousValue)}\"");
+                        break;
 
-                case ChangeEvent<bool> boolChangeEvt:
-                    jsonBuilder.Append($",\"newValue\":{boolChangeEvt.newValue.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"previousValue\":{boolChangeEvt.previousValue.ToString().ToLower()}");
-                    break;
+                    // Sliders and toggles: without these the page's change event had no value at all.
+                    case ChangeEvent<float> floatChangeEvt:
+                        jsonBuilder.Append($",\"newValue\":{floatChangeEvt.newValue}");
+                        jsonBuilder.Append($",\"previousValue\":{floatChangeEvt.previousValue}");
+                        break;
 
-                case KeyDownEvent keyDown:
-                    jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
-                    jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");
-                    jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case KeyUpEvent keyUp:
-                    jsonBuilder.Append($",\"keyCode\":{(int)keyUp.keyCode}");
-                    jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyUp.character.ToString())}\"");
-                    jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case MouseDownEvent mouseDown:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseDown.localMousePosition.x},\"y\":{mouseDown.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseDown.mousePosition.x},\"y\":{mouseDown.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"button\":{mouseDown.button}");
-                    jsonBuilder.Append($",\"clickCount\":{mouseDown.clickCount}");
-                    jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case MouseUpEvent mouseUp:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseUp.localMousePosition.x},\"y\":{mouseUp.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseUp.mousePosition.x},\"y\":{mouseUp.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"button\":{mouseUp.button}");
-                    jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case ClickEvent click:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{click.localPosition.x},\"y\":{click.localPosition.y}}}");
-                    jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{click.deltaPosition.x},\"y\":{click.deltaPosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{click.position.x},\"y\":{click.position.y}}}");
-                    jsonBuilder.Append($",\"button\":{click.button}");
-                    jsonBuilder.Append($",\"clickCount\":{click.clickCount}");
-                    jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case MouseMoveEvent mouseMove:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseMove.localMousePosition.x},\"y\":{mouseMove.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseMove.mousePosition.x},\"y\":{mouseMove.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{mouseMove.mouseDelta.x},\"y\":{mouseMove.mouseDelta.y}}}");
-                    break;
-                    
-                case MouseEnterEvent mouseEnter:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseEnter.localMousePosition.x},\"y\":{mouseEnter.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseEnter.mousePosition.x},\"y\":{mouseEnter.mousePosition.y}}}");
-                    break;
-                    
-                case MouseLeaveEvent mouseLeave:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseLeave.localMousePosition.x},\"y\":{mouseLeave.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseLeave.mousePosition.x},\"y\":{mouseLeave.mousePosition.y}}}");
-                    break;
-                    
-                case WheelEvent wheel:
-                    jsonBuilder.Append($",\"delta\":{{\"x\":{wheel.delta.x},\"y\":{wheel.delta.y}}}");
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{wheel.localMousePosition.x},\"y\":{wheel.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{wheel.mousePosition.x},\"y\":{wheel.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case FocusEvent focusEvt:
-                    jsonBuilder.Append($",\"direction\":\"{focusEvt.direction.ToString()}\"");
-                    break;
-                    
-                case BlurEvent blurEvt:
-                    jsonBuilder.Append($",\"direction\":\"{blurEvt.direction.ToString()}\"");
-                    break;
-            }
+                    case ChangeEvent<int> intChangeEvt:
+                        jsonBuilder.Append($",\"newValue\":{intChangeEvt.newValue}");
+                        jsonBuilder.Append($",\"previousValue\":{intChangeEvt.previousValue}");
+                        break;
 
-            jsonBuilder.Append("}");
-            return jsonBuilder.ToString();
+                    case ChangeEvent<bool> boolChangeEvt:
+                        jsonBuilder.Append($",\"newValue\":{boolChangeEvt.newValue.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"previousValue\":{boolChangeEvt.previousValue.ToString().ToLower()}");
+                        break;
+
+                    case KeyDownEvent keyDown:
+                        jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
+                        jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");
+                        jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLower()}");
+                        break;
+
+                    case KeyUpEvent keyUp:
+                        jsonBuilder.Append($",\"keyCode\":{(int)keyUp.keyCode}");
+                        jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyUp.character.ToString())}\"");
+                        jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLower()}");
+                        break;
+
+                    case MouseDownEvent mouseDown:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseDown.localMousePosition.x},\"y\":{mouseDown.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseDown.mousePosition.x},\"y\":{mouseDown.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"button\":{mouseDown.button}");
+                        jsonBuilder.Append($",\"clickCount\":{mouseDown.clickCount}");
+                        jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLower()}");
+                        break;
+
+                    case MouseUpEvent mouseUp:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseUp.localMousePosition.x},\"y\":{mouseUp.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseUp.mousePosition.x},\"y\":{mouseUp.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"button\":{mouseUp.button}");
+                        jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLower()}");
+                        break;
+
+                    case ClickEvent click:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{click.localPosition.x},\"y\":{click.localPosition.y}}}");
+                        jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{click.deltaPosition.x},\"y\":{click.deltaPosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{click.position.x},\"y\":{click.position.y}}}");
+                        jsonBuilder.Append($",\"button\":{click.button}");
+                        jsonBuilder.Append($",\"clickCount\":{click.clickCount}");
+                        jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLower()}");
+                        break;
+
+                    case MouseMoveEvent mouseMove:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseMove.localMousePosition.x},\"y\":{mouseMove.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseMove.mousePosition.x},\"y\":{mouseMove.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{mouseMove.mouseDelta.x},\"y\":{mouseMove.mouseDelta.y}}}");
+                        break;
+
+                    case MouseEnterEvent mouseEnter:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseEnter.localMousePosition.x},\"y\":{mouseEnter.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseEnter.mousePosition.x},\"y\":{mouseEnter.mousePosition.y}}}");
+                        break;
+
+                    case MouseLeaveEvent mouseLeave:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseLeave.localMousePosition.x},\"y\":{mouseLeave.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseLeave.mousePosition.x},\"y\":{mouseLeave.mousePosition.y}}}");
+                        break;
+
+                    case WheelEvent wheel:
+                        jsonBuilder.Append($",\"delta\":{{\"x\":{wheel.delta.x},\"y\":{wheel.delta.y}}}");
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{wheel.localMousePosition.x},\"y\":{wheel.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{wheel.mousePosition.x},\"y\":{wheel.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLower()}");
+                        break;
+
+                    case FocusEvent focusEvt:
+                        jsonBuilder.Append($",\"direction\":\"{focusEvt.direction.ToString()}\"");
+                        break;
+
+                    case BlurEvent blurEvt:
+                        jsonBuilder.Append($",\"direction\":\"{blurEvt.direction.ToString()}\"");
+                        break;
+                }
+
+                jsonBuilder.Append("}");
+                return jsonBuilder.ToString();
             }
             finally
             {
                 System.Threading.Thread.CurrentThread.CurrentCulture = restoreCulture;
             }
         }
-        
+
         private string EscapeJsonString(string str)
         {
             if (string.IsNullOrEmpty(str)) return "";
             return str.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
         }
-        
+
         private void SendToJavaScript(string message)
         {
             if (banterLink != null)
@@ -2643,7 +2643,7 @@ namespace BS.UI.Bridge
                 Debug.LogWarning($"[UIElementBridge] BSLink not found, cannot send: {message}");
             }
         }
-        
+
         // Public API for other systems
         public VisualElement GetElement(string elementId)
         {
@@ -2693,7 +2693,7 @@ namespace BS.UI.Bridge
         {
             return !string.IsNullOrEmpty(elementId) && _elements.ContainsKey(elementId);
         }
-        
+
         public void RegisterDocument(string name, UIDocument document)
         {
             _documents[name] = document;

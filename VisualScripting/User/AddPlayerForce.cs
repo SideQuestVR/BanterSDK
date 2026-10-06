@@ -24,7 +24,8 @@ namespace BS.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _force = flow.GetValue<Vector3>(force);
                 var _forceMode = flow.GetValue<ForceMode>(forceMode);
                 BSScene.Instance().events.OnAddPlayerForce?.Invoke(_force, _forceMode);

@@ -106,9 +106,9 @@ namespace BS.VisualScripting
         {
             // Extract element ID from event name
             var elementIdFromEvent = data.name.Replace("UIClick_", "");
-            
+
             flow.SetValue(clickedElementId, elementIdFromEvent);
-            
+
             // Parse arguments if available
             if (data.arguments != null && data.arguments.Length >= 2)
             {
@@ -116,7 +116,7 @@ namespace BS.VisualScripting
                     flow.SetValue(mousePosition, mousePos);
                 else if (data.arguments[0] is string mousePosStr && TryParseVector2(mousePosStr, out var parsedPos))
                     flow.SetValue(mousePosition, parsedPos);
-                
+
                 if (data.arguments[1] is int button)
                     flow.SetValue(mouseButton, button);
                 else if (data.arguments[1] is string buttonStr && int.TryParse(buttonStr, out var parsedButton))
@@ -132,19 +132,19 @@ namespace BS.VisualScripting
         private bool TryParseVector2(string value, out Vector2 result)
         {
             result = Vector2.zero;
-            
+
             if (string.IsNullOrEmpty(value))
                 return false;
-                
+
             var parts = value.Split(',');
-            if (parts.Length >= 2 && 
-                float.TryParse(parts[0].Trim(), out var x) && 
+            if (parts.Length >= 2 &&
+                float.TryParse(parts[0].Trim(), out var x) &&
                 float.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;
             }
-            
+
             return false;
         }
     }

@@ -28,7 +28,7 @@ namespace BS
         public RenderTexture renderTexture;
         UIElementBridge uiElementBridge;
 
-        [See(initial = "512,512")][SerializeField] internal Vector2 resolution = new Vector2(512,512);
+        [See(initial = "512,512")][SerializeField] internal Vector2 resolution = new Vector2(512, 512);
         [See(initial = "false")][HideInInspector][SerializeField] internal bool screenSpace = false;
 
         [Tooltip("Render onto the mesh already on this object instead of UI Toolkit's own flat quad, and " +
@@ -59,7 +59,7 @@ namespace BS
 
         private InputDevice _leftDevice;
         private InputDevice _rightDevice;
-        
+
         // Internal panel management
         private static int nextPanelId = 0;
         private int internalPanelId = -1;
@@ -184,7 +184,7 @@ namespace BS
                         gameObject.AddComponent<AddPanelStuff>();
                         createdUIDocument = true;
                     }
-                    
+
                     // Load panel settings from resources using internal panel ID
                     var panelSettingsName = GetPanelSettingsName();
                     panelSettings = Resources.Load<PanelSettings>($"UI/{panelSettingsName}");
@@ -201,7 +201,7 @@ namespace BS
                         Debug.LogError($"[BSUIPanel] Failed to load PanelSettings: {panelSettingsName}. Make sure the asset exists in Resources/UI/ folder.");
                         return false;
                     }
-                    
+
                     uiDocument.panelSettings = panelSettings;
                     uiDocument.worldSpaceSizeMode = UIDocument.WorldSpaceSizeMode.Fixed;
                     uiDocument.worldSpaceSize = new Vector2(resolution.x, resolution.y); // Convert pixels to meters
@@ -209,7 +209,7 @@ namespace BS
                     uiDocument.panelSettings.scaleMode = PanelScaleMode.ConstantPhysicalSize;
                     LogVerbose($"Created UIDocument with loaded panel settings: {panelSettingsName}");
                 }
-                
+
                 LogVerbose($"Initialized with existing UIDocument and panel settings: {panelSettings.name}");
 
                 // Add stylesheets
@@ -473,7 +473,7 @@ namespace BS
         private void SetupRenderingMode()
         {
             gameObject.layer = LayerMask.NameToLayer("UI");
-            
+
             if (!screenSpace)
             {
                 // World space setup - create render texture and mesh
@@ -502,12 +502,12 @@ namespace BS
                     Destroy(renderTexture);
                     renderTexture = null;
                 }
-                
+
                 if (uiDocument != null)
                 {
                     uiDocument.panelSettings.targetTexture = null;
                 }
-                
+
                 var renderer = gameObject.GetComponent<MeshRenderer>();
                 if (renderer != null)
                 {
@@ -851,11 +851,11 @@ namespace BS
         private bool createdUIDocument = false;
 
         public static bool IsScreenSpaceActive = false;
-        
+
         // Static tracking of screenSpace panels
         private static readonly HashSet<BSUIPanel> screenSpacePanels = new HashSet<BSUIPanel>();
         private static readonly object screenSpaceLock = new object();
-        
+
         /// <summary>
         /// Register or unregister a panel as screenSpace and update the global flag
         /// </summary>
@@ -871,18 +871,18 @@ namespace BS
                 {
                     screenSpacePanels.Remove(panel);
                 }
-                
+
                 // Update the global flag based on whether any panels are screenSpace
                 bool wasActive = IsScreenSpaceActive;
                 IsScreenSpaceActive = screenSpacePanels.Count > 0;
-                
+
                 if (wasActive != IsScreenSpaceActive)
                 {
                     LogVerbose($"IsScreenSpaceActive changed to: {IsScreenSpaceActive} (Active panels: {screenSpacePanels.Count})");
                 }
             }
         }
-        
+
         /// <summary>
         /// Remove a panel from screenSpace tracking when it's destroyed
         /// </summary>
@@ -935,17 +935,17 @@ namespace BS
             {
                 Destroy(uiDocument);
                 var addPanelStiff = gameObject.GetComponent<AddPanelStuff>();
-                if(addPanelStiff)
+                if (addPanelStiff)
                 {
                     Destroy(addPanelStiff);
                 }
                 var panelRaycaster = gameObject.GetComponent<PanelRaycaster>();
-                if(panelRaycaster)
+                if (panelRaycaster)
                 {
                     Destroy(panelRaycaster);
                 }
                 var panelEventHandler = gameObject.GetComponent<PanelEventHandler>();
-                if(panelEventHandler)
+                if (panelEventHandler)
                 {
                     Destroy(panelEventHandler);
                 }
@@ -953,14 +953,14 @@ namespace BS
             }
 
             // Destroy mesh components if we created them
-                if (createdMeshRenderer)
+            if (createdMeshRenderer)
+            {
+                var renderer = gameObject.GetComponent<MeshRenderer>();
+                if (renderer != null)
                 {
-                    var renderer = gameObject.GetComponent<MeshRenderer>();
-                    if (renderer != null)
-                    {
-                        Destroy(renderer);
-                    }
+                    Destroy(renderer);
                 }
+            }
 
             if (createdMeshFilter)
             {
@@ -976,7 +976,7 @@ namespace BS
             createdMeshRenderer = false;
             createdMeshFilter = false;
 
-            
+
             UpdateScreenSpaceTracking(this, screenSpace);
             scene.events.OnBanterUiPanelActiveChanged?.Invoke();
         }
@@ -1200,7 +1200,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         // BANTER COMPILED CODE 
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
@@ -1241,7 +1241,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "UIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.meshInput + meshInput + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
+            return "UIPanel" + PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.meshInput + meshInput + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
         }
 
         internal override void Init(List<object> constructorProperties = null)

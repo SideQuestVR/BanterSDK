@@ -165,7 +165,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Teleporter" +  PropertyName.stopVelocity + stopVelocity + PropertyName.cooldown + cooldown;
+            return "Teleporter" + PropertyName.stopVelocity + stopVelocity + PropertyName.cooldown + cooldown;
         }
 
         internal override void Init(List<object> constructorProperties = null)

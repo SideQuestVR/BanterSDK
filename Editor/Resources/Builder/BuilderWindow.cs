@@ -93,7 +93,7 @@ public class BuilderWindow : EditorWindow
 
     GameObject avatarGameObject;
     VisualElement dropAvatarContainer;
-   
+
     string assetBundleRoot = "Assets";
     string assetBundleDirectory = "WebRoot";
     LoginManager loginManager;
@@ -131,8 +131,8 @@ public class BuilderWindow : EditorWindow
 
     Label SelectAvatar;
     Button ShowAvatar;
-    
-    
+
+
     private bool handleEnabled = false;
     private bool handlePosition = false;
     private Vector3 posePosition = Vector3.zero;
@@ -248,7 +248,7 @@ public class BuilderWindow : EditorWindow
 
     public void OnEnable()
     {
-        
+
         SceneView.duringSceneGui += OnSceneGUI;
         // Here as well as in ShowMainWindow: a window restored with the layout keeps whatever title it was saved with.
         titleContent = new GUIContent("Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
@@ -304,10 +304,10 @@ public class BuilderWindow : EditorWindow
             SetupExistingAvatars();
         };
         if (avatarGameObject != null)
-        { 
-            RefreshAvatarView(); 
+        {
+            RefreshAvatarView();
         }
-        RefreshView(); 
+        RefreshView();
         // The checklist runs when the window opens on a scene, after it has finished setting up.
         if (mode == BSBuilderBundleMode.Scene)
             EditorApplication.update += RunChecklistOnOpen;
@@ -375,7 +375,7 @@ public class BuilderWindow : EditorWindow
             buildButton.SetEnabled(true);
         }
     }
-    
+
     private void OnSceneGUI(SceneView sceneView)
     {
         if (!handleEnabled)
@@ -393,9 +393,9 @@ public class BuilderWindow : EditorWindow
             Handles.color = Color.green;
             newRot = Handles.Disc(newRot, newPos, newRot * new Vector3(0, 1, 0), handleSize * 0.7f, false, 1);
             Handles.color = Color.red;
-            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(1, 0, 0), handleSize * 0.7f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot * new Vector3(1, 0, 0), handleSize * 0.7f, false, 1);
             Handles.color = Color.blue;
-            newRot = Handles.Disc(newRot, newPos, newRot *  new Vector3(0, 0, 1), handleSize * 0.7f, false, 1);
+            newRot = Handles.Disc(newRot, newPos, newRot * new Vector3(0, 0, 1), handleSize * 0.7f, false, 1);
         }
         if (EditorGUI.EndChangeCheck())
         {
@@ -500,7 +500,7 @@ public class BuilderWindow : EditorWindow
                 avatarIsPublicToggle.value = selectedExistingAvatar.Public;
             }
         });
-        
+
         SetupExistingAvatars();
 
         buildAvatarButton = rootVisualElement.Q<Label>("buildAvatarButton");
@@ -714,7 +714,7 @@ public class BuilderWindow : EditorWindow
             poseRotation = Quaternion.identity;
             SceneView.RepaintAll();
         });
-        
+
         RightFootMirror.RegisterCallback<MouseUpEvent>((e) =>
         {
             var offset = currentFlexaPose.leftFoot.InverseTransformDirection(currentFlexaPose.leftFoot.position);
@@ -788,14 +788,14 @@ public class BuilderWindow : EditorWindow
         avatarIdDropdown.choices = new List<string>();
         avatarIdDropdown.choices.Add("<New Avatar>");
         avatarIdDropdown.SetValueWithoutNotify(avatarIdDropdown.choices[0]);
-        
+
         EditorCoroutineUtility.StartCoroutine(sq.GetAvatars(list =>
         {
             myAvatars = list;
             foreach (SqEditorAvatar av in list)
             {
                 avatarIdDropdown.choices.Add($"{av.Name} (ID: {av.AvatarId})");
-                if(selectedExistingAvatar?.AvatarId==av.AvatarId)
+                if (selectedExistingAvatar?.AvatarId == av.AvatarId)
                     avatarIdDropdown.SetValueWithoutNotify(avatarIdDropdown.choices[^1]);
             }
         }, e =>
@@ -807,7 +807,8 @@ public class BuilderWindow : EditorWindow
         avatarIsPublicToggle.value = selectedExistingAvatar?.Public ?? true;
     }
 
-    void GetExistingPose(ref Pose pose, string key, string defaults) {
+    void GetExistingPose(ref Pose pose, string key, string defaults)
+    {
         var posePositionString = ProjectPrefs.GetString(key, defaults);
         var poseParts = posePositionString.Split(';');
         if (poseParts.Length == 2)
@@ -1205,12 +1206,12 @@ public class BuilderWindow : EditorWindow
         if (File.Exists(file) || bytes != null)
         {
             status.AddStatus("Upload started: " + file + "...");
-            Debug.Log(  "Upload started: " + file);
+            Debug.Log("Upload started: " + file);
         }
         else
         {
             status.AddStatus("File not found, skipping: " + file);
-            Debug.Log(  "File not found, skipping: " + file);
+            Debug.Log("File not found, skipping: " + file);
             yield break;
         }
         var data = bytes == null ? File.ReadAllBytes(file) : bytes;
@@ -1265,7 +1266,7 @@ public class BuilderWindow : EditorWindow
 
     void GetHeadObjects()
     {
-        if(avatarGameObject == null)
+        if (avatarGameObject == null)
         {
             return;
         }
@@ -1273,7 +1274,7 @@ public class BuilderWindow : EditorWindow
         {
             if (t.GetComponent<FlexaHead>())
             {
-                if(!headGameObjects.Contains(t.gameObject))
+                if (!headGameObjects.Contains(t.gameObject))
                 {
                     headGameObjects.Add(t.gameObject);
                 }
@@ -1285,7 +1286,7 @@ public class BuilderWindow : EditorWindow
     }
     FlexaPose GetFlexaPose()
     {
-        if(avatarGameObject == null)
+        if (avatarGameObject == null)
         {
             return null;
         }
@@ -1671,7 +1672,7 @@ public class BuilderWindow : EditorWindow
         confirmSyncedGraphs.style.display = syncedNote == null ? DisplayStyle.None : DisplayStyle.Flex;
         confirmSyncedGraphs.text = syncedNote ?? "";
     }
-   void AddRemoveFlexaHead()
+    void AddRemoveFlexaHead()
     {
         bool isDirty = false;
         try
@@ -1690,7 +1691,8 @@ public class BuilderWindow : EditorWindow
                     isDirty = true;
                 }
             }
-        }catch (Exception e)
+        }
+        catch (Exception e)
         {
             Debug.LogWarning("Error occurred while adding/removing FlexaHead components: " + e);
         }
@@ -1742,7 +1744,7 @@ public class BuilderWindow : EditorWindow
 
         rootVisualElement.Add(list);
     }
-    
+
     bool ValidateAvatarBones()
     {
 
@@ -1791,7 +1793,7 @@ public class BuilderWindow : EditorWindow
         if (!hasAllBones)
         {
             status.AddStatus("Avatar has missing bones!");
-            MissingBones.text = "Avatar (" + (avatarGameObject?.name??"<Unknown>") + ") has missing bones:\n\n<color=#AFAFAF>" + missingBones.Substring(0, missingBones.Length - 1) + "</color>";
+            MissingBones.text = "Avatar (" + (avatarGameObject?.name ?? "<Unknown>") + ") has missing bones:\n\n<color=#AFAFAF>" + missingBones.Substring(0, missingBones.Length - 1) + "</color>";
             return false;
         }
         MissingBones.text = "";
@@ -1971,7 +1973,8 @@ public class BuilderWindow : EditorWindow
             return;
         }
         ShowBuildConfirm(checklist, "Build");
-        confirmCallback = async () => {
+        confirmCallback = async () =>
+        {
             // Basis' scene build switches the active build target, which schedules a domain reload.
             // That reload is deferred until this async method yields — at which point it destroys the
             // continuation and the auto-upload coroutine before they run (build succeeds, nothing
@@ -2032,7 +2035,8 @@ public class BuilderWindow : EditorWindow
 
                 if (autoUpload.value && sq.User != null)
                 {
-                    if (!HasSelectedWorld) {
+                    if (!HasSelectedWorld)
+                    {
                         status.AddStatus("No world selected, please select or create a world to upload.");
                         return;
                     }

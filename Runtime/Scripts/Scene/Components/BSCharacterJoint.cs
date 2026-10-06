@@ -106,7 +106,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "CharacterJoint" +  PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.swingAxis + swingAxis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.enableProjection + enableProjection + PropertyName.projectionDistance + projectionDistance + PropertyName.projectionAngle + projectionAngle + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
+            return "CharacterJoint" + PropertyName.anchor + anchor + PropertyName.axis + axis + PropertyName.swingAxis + swingAxis + PropertyName.connectedAnchor + connectedAnchor + PropertyName.autoConfigureConnectedAnchor + autoConfigureConnectedAnchor + PropertyName.enableProjection + enableProjection + PropertyName.projectionDistance + projectionDistance + PropertyName.projectionAngle + projectionAngle + PropertyName.breakForce + breakForce + PropertyName.breakTorque + breakTorque + PropertyName.enableCollision + enableCollision + PropertyName.enablePreprocessing + enablePreprocessing + PropertyName.connectedMassScale + connectedMassScale + PropertyName.massScale + massScale + PropertyName.connectedBody + connectedBody;
         }
 
         internal override void Init(List<object> constructorProperties = null)

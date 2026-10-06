@@ -59,7 +59,7 @@ namespace BS
         {
             return msg.Substring((command + MessageDelimiters.PRIMARY).Length);
         }
-        
+
         async void ParseCommand(string msg)
         {
             if (msg.StartsWith(APICommands.LOG))
@@ -177,7 +177,7 @@ namespace BS
                 {
                     scene.SetLoaded();
                     return scene.loaded;
-                });                
+                });
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "After Banter Scene Loaded.");
                 OnUnitySceneLoaded();
                 _ = TaskRunner.Run(async () =>
@@ -196,8 +196,9 @@ namespace BS
                 var data = GetMsgData(msg, APICommands.INJECT_JS_CALLBACK).Split(MessageDelimiters.SECONDARY);
                 scene.events.OnJsCallbackRecieved.Invoke(data[0], data[1], true);
             }
-            else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS)) {
-                    scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
+            else if (msg.StartsWith(APICommands.KEYBOARD_FOCUS))
+            {
+                scene.events.KeyboardFocus.Invoke(GetMsgData(msg, APICommands.KEYBOARD_FOCUS));
             }
             else if (msg.StartsWith(APICommands.TELEMETRY))
             {
@@ -226,7 +227,8 @@ namespace BS
             {
                 return;
             }
-            try{
+            try
+            {
                 if (msg.StartsWith(APICommands.OBJECT_ADDED))
                 {
                     scene.AddJsObject(GetMsgData(msg, APICommands.OBJECT_ADDED), id);
@@ -538,7 +540,9 @@ namespace BS
                 {
                     Debug.Log("[Banter] Unknown parse request message: " + msg + " id: " + id);
                 }
-            }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 Debug.Log("[Banter] Error parsing request: " + e.Message);
             }
         }
@@ -690,7 +694,7 @@ namespace BS
             }
             //end of debug stuff
 #endif
-            if(msg.StartsWith(APICommands.SCENE_READY))
+            if (msg.StartsWith(APICommands.SCENE_READY))
             {
                 Debug.Log("got scene ready");
             }
@@ -769,7 +773,7 @@ namespace BS
             });
         }
 
-        
+
         Dictionary<int, Action<string>> messageHandlers = new Dictionary<int, Action<string>>();
         int msgCount;
         private void ParseMessageResponse(string msg)
@@ -784,7 +788,7 @@ namespace BS
         public void Send(string data, Action<string> callback = null)
         {
             var id = ++msgCount;
-            if(msgCount > 99999999)
+            if (msgCount > 99999999)
             {
                 msgCount = 0; // Reset to avoid overflow
             }

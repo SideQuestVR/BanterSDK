@@ -170,7 +170,7 @@ namespace BS
             }
             geometryCache.Clear();
         }
-        
+
         /// <summary>
         /// Each named surface has its own Geometry class, which is what applies the unit-cube
         /// normalisation - the surface functions have no size parameters of their own and range
@@ -225,7 +225,7 @@ namespace BS
         private Mesh GetCachedMesh()
         {
             var signature = GetSignature();
-            if(geometryCache.ContainsKey(signature))
+            if (geometryCache.ContainsKey(signature))
             {
                 return geometryCache[signature];
             }
@@ -337,7 +337,7 @@ namespace BS
                         mesh = BuildParametric();
                         break;
                 }
-                if(mesh)
+                if (mesh)
                 {
                     geometryCache.Add(signature, mesh);
                 }
@@ -351,7 +351,7 @@ namespace BS
 
         internal override void UpdateStuff()
         {
-            
+
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
@@ -440,7 +440,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Geometry" +  PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints + PropertyName.curvePoints + curvePoints + PropertyName.shapePoints + shapePoints;
+            return "Geometry" + PropertyName.geometryType + geometryType + PropertyName.parametricType + parametricType + PropertyName.width + width + PropertyName.height + height + PropertyName.depth + depth + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments + PropertyName.depthSegments + depthSegments + PropertyName.radius + radius + PropertyName.segments + segments + PropertyName.thetaStart + thetaStart + PropertyName.thetaLength + thetaLength + PropertyName.phiStart + phiStart + PropertyName.phiLength + phiLength + PropertyName.radialSegments + radialSegments + PropertyName.openEnded + openEnded + PropertyName.radiusTop + radiusTop + PropertyName.radiusBottom + radiusBottom + PropertyName.innerRadius + innerRadius + PropertyName.outerRadius + outerRadius + PropertyName.thetaSegments + thetaSegments + PropertyName.phiSegments + phiSegments + PropertyName.tube + tube + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc + PropertyName.p + p + PropertyName.q + q + PropertyName.stacks + stacks + PropertyName.slices + slices + PropertyName.detail + detail + PropertyName.parametricPoints + parametricPoints + PropertyName.curvePoints + curvePoints + PropertyName.shapePoints + shapePoints;
         }
 
         internal override void Init(List<object> constructorProperties = null)

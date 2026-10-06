@@ -62,7 +62,7 @@ namespace SideQuest.FlexaBody
 
         public Pose GetGrabPose(PhysicsHand physHand, Vector3 grabPos)
         {
-            switch(GrabType)
+            switch (GrabType)
             {
                 case GrabType.Point: return GetGrabPose_Point(physHand);
                 case GrabType.Cylinder: return GetGrabPose_Cylinder(physHand, grabPos);

@@ -68,7 +68,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "MeshCollider" +  PropertyName.convex + convex + PropertyName.isTrigger + isTrigger;
+            return "MeshCollider" + PropertyName.convex + convex + PropertyName.isTrigger + isTrigger;
         }
 
         internal override void Init(List<object> constructorProperties = null)

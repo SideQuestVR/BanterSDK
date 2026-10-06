@@ -139,9 +139,9 @@ namespace BS.VisualScripting
             // Extract element ID from event name
             var parts = data.name.Split('_');
             var elementIdFromEvent = parts.Length > 1 ? parts[1] : "";
-            
+
             flow.SetValue(triggeredElementId, elementIdFromEvent);
-            
+
             // Parse keyboard event arguments
             if (data.arguments != null)
             {
@@ -150,7 +150,7 @@ namespace BS.VisualScripting
                     flow.SetValue(key, keyName);
                 else
                     flow.SetValue(key, "");
-                
+
                 // Key code
                 if (data.arguments.Length > 1 && data.arguments[1] is int code)
                     flow.SetValue(keyCode, code);
@@ -158,7 +158,7 @@ namespace BS.VisualScripting
                     flow.SetValue(keyCode, parsedCode);
                 else
                     flow.SetValue(keyCode, 0);
-                    
+
                 // Modifier keys
                 if (data.arguments.Length > 2 && data.arguments[2] is string modKeys)
                     flow.SetValue(modifierKeys, modKeys);
