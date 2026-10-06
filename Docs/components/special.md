@@ -1,5 +1,7 @@
 # Special Components
 
+Kit prefabs, synced and world objects, avatar pedestals, MonoBehaviours, script graphs, AO baking and more.
+
 ## KitItem
 
 Instantiates a prefab from an asset bundle. For prefabs that ship inside the world build, see [KitAsset](#kitasset).

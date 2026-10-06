@@ -1,5 +1,7 @@
 # Visual Scripting
 
+Script a world with node graphs instead of code: setup, a first graph, the SDK's BS nodes and how graphs work with JavaScript.
+
 ## Overview
 
 The SDK ships Unity Visual Scripting plus its own library of BS nodes: node graphs that run on `Script Machine` components. Graphs execute inside the space at runtime — you can build interactive behaviour (buttons, levers, doors, vehicles, leaderboards) without writing any JavaScript.

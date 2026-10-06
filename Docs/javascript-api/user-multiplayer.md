@@ -1,5 +1,7 @@
 # User & Multiplayer
 
+Who's in the space, attaching objects to users, and keeping state in sync for everyone.
+
 ## UserData
 
 Information about connected users:

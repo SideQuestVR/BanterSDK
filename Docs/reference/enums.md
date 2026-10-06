@@ -1,5 +1,7 @@
 # Enums & Constants
 
+The enums and constants the API uses, such as component types (`BS.CT`), layers (`BS.L`) and controller buttons.
+
 ## ComponentType (BS.CT)
 
 Used with `GetComponent()`. Shorthand: `BS.CT`

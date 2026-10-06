@@ -1,5 +1,7 @@
 # Media & Content Components
 
+Bring outside content into a world: glTF models, asset bundles, video, web browsers, Street View and portals.
+
 ## GLTF
 
 Loads 3D models in glTF/GLB format.

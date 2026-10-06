@@ -1,5 +1,7 @@
 # Math Types
 
+Vector2, Vector3, Vector4 and Quaternion: the types the API uses for positions, rotations, scales and colours.
+
 ## Vector2
 
 2D vector for UV coordinates, UI sizes, etc.

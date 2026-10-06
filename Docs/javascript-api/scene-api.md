@@ -1,5 +1,7 @@
 # Scene API
 
+The scene singleton: what's in the world, waiting for it to load, finding and creating objects, shared state, and the page, speech and AI helpers.
+
 ## Getting the Scene
 
 ```js

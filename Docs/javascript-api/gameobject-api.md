@@ -1,5 +1,7 @@
 # GameObject API
 
+Create GameObjects from JavaScript and work with their transform, hierarchy, components and events.
+
 ## Creating GameObjects
 
 Use the `BS.GameObject` constructor with a configuration object:

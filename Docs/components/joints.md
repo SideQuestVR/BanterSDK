@@ -1,5 +1,7 @@
 # Joint Components
 
+Joints that connect Rigidbodies together: character, fixed, hinge, spring and fully configurable.
+
 ## CharacterJoint
 
 Human-like joint with swing and twist limits.
