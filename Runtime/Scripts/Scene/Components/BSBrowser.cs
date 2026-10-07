@@ -70,6 +70,10 @@ namespace BS
         /// texture is in the asset registry as <see cref="TextureAssetId"/>, for materials and the page.
         /// </summary>
         public UnityEvent<Texture2D> OnBrowserTexture = new UnityEvent<Texture2D>();
+        // Only read in Greenfield (its menu browser sets it), so creators don't see it: it does nothing in their spaces.
+#if !GREENFIELD_PROJECT
+        [HideInInspector]
+#endif
         public bool IsStreamingBrowser = false;
 
         /// <summary>Asset reference of this browser's texture: <c>asset_browser_</c> + the component's id, which the page sees as the BS.Browser's <c>unityId</c>.</summary>
