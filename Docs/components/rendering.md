@@ -4,6 +4,8 @@
 
 Adds lighting to the scene.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.Light({
     type: BS.LightType.Point,           // Point, Directional, Spot
@@ -16,9 +18,15 @@ obj.AddComponent(new BS.Light({
 }));
 ```
 
+![Light in the Unity Inspector](../images/components/light.png)
+
+</div>
+
 ## Material
 
 Applies a material/shader to the object.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Material({
@@ -34,6 +42,10 @@ obj.AddComponent(new BS.Material({
     normalStrength: 1
 }));
 ```
+
+![BS Material in the Unity Inspector](../images/components/material.png)
+
+</div>
 
 The bundled diffuse shaders come in two families, each with an opaque and an alpha-blended twin, and
 all four tint by `color` (the Transparent twins also honour its alpha):
@@ -52,6 +64,8 @@ at the requested size replaces it once it has downloaded.
 
 3D text rendering.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.Text({
     text: "Hello World",
@@ -65,9 +79,15 @@ obj.AddComponent(new BS.Text({
 }));
 ```
 
+![BS Text in the Unity Inspector](../images/components/text.png)
+
+</div>
+
 ## Billboard
 
 Makes object always face the camera.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Billboard({
@@ -78,13 +98,23 @@ obj.AddComponent(new BS.Billboard({
 }));
 ```
 
+![BS Billboard in the Unity Inspector](../images/components/billboard.png)
+
+</div>
+
 ## Mirror
 
 Creates a reflective mirror surface.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.Mirror());
 ```
+
+![BS Mirror in the Unity Inspector](../images/components/mirror.png)
+
+</div>
 
 **Methods:**
 
@@ -97,9 +127,15 @@ mirror.AddCullingLayer(6);   // Also render this layer
 
 Inverts mesh normals (renders inside-out).
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.InvertedMesh());
 ```
+
+![BS Inverted Mesh in the Unity Inspector](../images/components/inverted-mesh.png)
+
+</div>
 
 ## SkinnedMeshRenderer
 
@@ -116,11 +152,17 @@ Controls a skinned mesh's renderer — most usefully its blend shapes on importe
 
 **Methods:**
 
+<div class="docs-tabs">
+
 ```js
 const smr = obj.GetComponent(BS.CT.SkinnedMeshRenderer);
 smr.SetBlendShapeWeight(0, 100);   // Set the weight of blend shape 0
 smr.GetBlendShapeWeight(0);        // Trigger the weight query for blend shape 0
 smr.GetBlendShapeIndex("smile");   // Trigger the index lookup for a named blend shape
 ```
+
+![BS Skinned Mesh Renderer in the Unity Inspector](../images/components/skinned-mesh-renderer.png)
+
+</div>
 
 The `Get*` methods invoke the lookup Unity-side; they do not return the value to JavaScript.

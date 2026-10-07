@@ -4,6 +4,8 @@
 
 Adds physics simulation to an object.
 
+<div class="docs-tabs">
+
 ```js
 const rb = obj.AddComponent(new BS.Rigidbody({
     mass: 1,                    // Weight (default: 1)
@@ -23,6 +25,10 @@ const rb = obj.AddComponent(new BS.Rigidbody({
     freezeRotationZ: false
 }));
 ```
+
+![Rigidbody in the Unity Inspector](../images/components/rigidbody.png)
+
+</div>
 
 **Methods:**
 
@@ -69,6 +75,8 @@ rb.isKinematic = true;
 
 Box-shaped collision volume.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.BoxCollider({
     isTrigger: false,                      // Trigger mode (no physics response)
@@ -77,9 +85,15 @@ obj.AddComponent(new BS.BoxCollider({
 }));
 ```
 
+![Box Collider in the Unity Inspector](../images/components/box-collider.png)
+
+</div>
+
 ## SphereCollider
 
 Sphere-shaped collision volume.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.SphereCollider({
@@ -88,9 +102,15 @@ obj.AddComponent(new BS.SphereCollider({
 }));
 ```
 
+![Sphere Collider in the Unity Inspector](../images/components/sphere-collider.png)
+
+</div>
+
 ## CapsuleCollider
 
 Capsule-shaped collision volume (cylinder with hemisphere ends).
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.CapsuleCollider({
@@ -100,9 +120,15 @@ obj.AddComponent(new BS.CapsuleCollider({
 }));
 ```
 
+![Capsule Collider in the Unity Inspector](../images/components/capsule-collider.png)
+
+</div>
+
 ## MeshCollider
 
 Uses the object's mesh for collision (more expensive).
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.MeshCollider({
@@ -111,17 +137,29 @@ obj.AddComponent(new BS.MeshCollider({
 }));
 ```
 
+![Mesh Collider in the Unity Inspector](../images/components/mesh-collider.png)
+
+</div>
+
 ## ColliderEvents
 
 Enables collision and trigger events on the GameObject. Required for `collision-enter`, `collision-exit`, `trigger-enter`, `trigger-exit` events.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.ColliderEvents());
 ```
 
+![BS Collider Events in the Unity Inspector](../images/components/collider-events.png)
+
+</div>
+
 ## PhysicMaterial
 
 Controls surface friction.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.PhysicMaterial({
@@ -129,6 +167,10 @@ obj.AddComponent(new BS.PhysicMaterial({
     staticFriction: 0.6    // Friction when stationary
 }));
 ```
+
+![BS Physic Material in the Unity Inspector](../images/components/physic-material.png)
+
+</div>
 
 ## PhysicsMaterial
 
@@ -142,6 +184,8 @@ Full surface material: friction, bounce, and how the two combine between touchin
 | `frictionCombine` | number | 0 | How friction of two touching surfaces combines |
 | `bounceCombine` | number | 0 | How bounciness of two touching surfaces combines |
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.PhysicsMaterial({
     dynamicFriction: 0.4,
@@ -151,3 +195,7 @@ obj.AddComponent(new BS.PhysicsMaterial({
     bounceCombine: 3
 }));
 ```
+
+![BS Physics Material in the Unity Inspector](../images/components/physics-material.png)
+
+</div>

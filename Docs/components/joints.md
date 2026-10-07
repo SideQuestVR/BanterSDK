@@ -4,6 +4,8 @@
 
 Human-like joint with swing and twist limits.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.CharacterJoint({
     anchor: new BS.Vector3(0, 0, 0),
@@ -21,9 +23,15 @@ obj.AddComponent(new BS.CharacterJoint({
 }));
 ```
 
+![Character Joint in the Unity Inspector](../images/components/character-joint.png)
+
+</div>
+
 ## FixedJoint
 
 Locks two objects together.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.FixedJoint({
@@ -37,11 +45,17 @@ obj.AddComponent(new BS.FixedJoint({
 }));
 ```
 
+![Fixed Joint in the Unity Inspector](../images/components/fixed-joint.png)
+
+</div>
+
 ## HingeJoint
 
 Rotates around a single axis (like a door).
 
 **IMPORTANT:** The `connectedBody` is the `rigidbody.id` on the other GameObject. Without it, the hinge connects to world space. You must link joints and their connected bodies together!
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.HingeJoint({
@@ -66,9 +80,15 @@ obj.AddComponent(new BS.HingeJoint({
 }));
 ```
 
+![Hinge Joint in the Unity Inspector](../images/components/hinge-joint.png)
+
+</div>
+
 ## SpringJoint
 
 Elastic connection between objects.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.SpringJoint({
@@ -87,9 +107,15 @@ obj.AddComponent(new BS.SpringJoint({
 }));
 ```
 
+![Spring Joint in the Unity Inspector](../images/components/spring-joint.png)
+
+</div>
+
 ## ConfigurableJoint
 
 Fully customizable joint with per-axis control.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.ConfigurableJoint({
@@ -116,3 +142,7 @@ obj.AddComponent(new BS.ConfigurableJoint({
     connectedBody: "other-object-id"
 }));
 ```
+
+![Configurable Joint in the Unity Inspector](../images/components/configurable-joint.png)
+
+</div>

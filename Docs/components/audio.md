@@ -4,6 +4,8 @@
 
 Plays audio in 3D space.
 
+<div class="docs-tabs">
+
 ```js
 const audio = obj.AddComponent(new BS.AudioSource({
     volume: 1,              // 0 to 1
@@ -17,6 +19,10 @@ const audio = obj.AddComponent(new BS.AudioSource({
     spatialBlend: 1         // 0 = 2D, 1 = 3D
 }));
 ```
+
+![BS Audio Source in the Unity Inspector](../images/components/audio-source.png)
+
+</div>
 
 **Methods:**
 

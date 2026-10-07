@@ -8,19 +8,31 @@ Instantiates a prefab that ships inside the world build, addressed by its kit-ma
 |----------|------|---------|-------------|
 | `path` | string | "" | Manifest path of the prefab |
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.KitAsset({
     path: "CartoonCubeWorld/Prefabs/Props/Apple.prefab"
 }));
 ```
 
+![BS Kit Asset in the Unity Inspector](../images/components/kit-asset.png)
+
+</div>
+
 ## SyncedObject
 
 Enables network synchronization for the object.
 
+<div class="docs-tabs">
+
 ```js
 const sync = obj.AddComponent(new BS.SyncedObject());
 ```
+
+![BS Synced Object in the Unity Inspector](../images/components/synced-object.png)
+
+</div>
 
 **Methods:**
 
@@ -33,9 +45,15 @@ sync.DoIOwn();          // Trigger the ownership check Unity-side (no value is r
 
 Marks object as part of the world (non-interactive).
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.WorldObject());
 ```
+
+![BS World Object in the Unity Inspector](../images/components/world-object.png)
+
+</div>
 
 ## AvatarPedestal
 
@@ -55,6 +73,8 @@ Loads a Meta Quest home environment from an APK URL.
 | `addColliders` | boolean | true | Add colliders to opaque meshes |
 | `climbable` | boolean | false | Put those colliders on the Grabbable layer (20) so surfaces can be climbed |
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.QuestHome({
     url: "https://cdn.sidequestvr.com/file/167567/canyon_environment.apk",
@@ -62,6 +82,10 @@ obj.AddComponent(new BS.QuestHome({
     climbable: false
 }));
 ```
+
+![BS Quest Home in the Unity Inspector](../images/components/quest-home.png)
+
+</div>
 
 ## MonoBehaviour
 
@@ -74,6 +98,8 @@ Runs JavaScript source strings on a lifecycle schedule: `startFunction` once on 
 | `updateFunction` | string | "" | JS source run at `fps` |
 | `destroyFunction` | string | "" | JS source run on destroy |
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.MonoBehaviour({
     fps: 10,
@@ -82,6 +108,10 @@ obj.AddComponent(new BS.MonoBehaviour({
     destroyFunction: "console.log('gone');"
 }));
 ```
+
+![BS Mono Behaviour in the Unity Inspector](../images/components/mono-behaviour.png)
+
+</div>
 
 ## ScriptGraph
 
@@ -92,12 +122,18 @@ Hosts Unity Visual Scripting machines on the object and mirrors a small summary 
 | `machineCount` | number | 0 | Number of script machines on the object (maintained by Unity) |
 | `graphTitles` | string | "" | Comma-separated graph titles, by machine index |
 
+<div class="docs-tabs">
+
 ```js
 const graphs = await obj.AddComponent(new BS.ScriptGraph());
 graphs.CreateMachine();     // Add a machine with an empty Start/Update graph
 graphs.RemoveMachine(0);    // Remove the machine at index 0
 graphs.RefreshMachines();   // Recount machines and resync machineCount/graphTitles
 ```
+
+![BS Script Graph in the Unity Inspector](../images/components/script-graph.png)
+
+</div>
 
 ## AOBaking
 
@@ -124,6 +160,8 @@ Merges child meshes and bakes ambient occlusion into vertex colors for improved 
    - **Detail objects** (furniture, props, decorations)
 
    This layered approach ensures large occluders are in place before baking smaller objects.
+
+<div class="docs-tabs">
 
 ```js
 // Create parent with child primitives
@@ -155,6 +193,10 @@ aoBaker.Preview();
 // Clear and restore original meshes
 aoBaker.Clear();
 ```
+
+![BS AO Baking in the Unity Inspector](../images/components/ao-baking.png)
+
+</div>
 
 **Properties:**
 

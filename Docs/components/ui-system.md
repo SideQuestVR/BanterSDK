@@ -6,6 +6,8 @@ Create 2D user interfaces in VR with the UI system.
 
 Container for UI elements. Must be added to a GameObject first.
 
+<div class="docs-tabs">
+
 ```js
 const panelObj = new BS.GameObject({ name: "UIPanel" });
 const panel = panelObj.AddComponent(new BS.UIPanel({
@@ -21,6 +23,10 @@ const panel = panelObj.AddComponent(new BS.UIPanel({
     exitSoundUrl: ""
 }));
 ```
+
+![BS UI Panel in the Unity Inspector](../images/components/ui-panel.png)
+
+</div>
 
 **Methods:**
 

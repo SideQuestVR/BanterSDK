@@ -4,6 +4,8 @@ Simple shape components for quick prototyping.
 
 ## Box
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.Box({
     width: 1,
@@ -15,7 +17,13 @@ obj.AddComponent(new BS.Box({
 }));
 ```
 
+![BS Box in the Unity Inspector](../images/components/box.png)
+
+</div>
+
 ## Sphere
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Sphere({
@@ -29,9 +37,15 @@ obj.AddComponent(new BS.Sphere({
 }));
 ```
 
+![BS Sphere in the Unity Inspector](../images/components/sphere.png)
+
+</div>
+
 ## Plane
 
 Plane faces -Z direction (forward).
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Plane({
@@ -42,9 +56,15 @@ obj.AddComponent(new BS.Plane({
 }));
 ```
 
+![BS Plane in the Unity Inspector](../images/components/plane.png)
+
+</div>
+
 ## Cylinder
 
 Curved side faces -Z direction (forward).
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Cylinder({
@@ -59,7 +79,13 @@ obj.AddComponent(new BS.Cylinder({
 }));
 ```
 
+![BS Cylinder in the Unity Inspector](../images/components/cylinder.png)
+
+</div>
+
 ## Cone
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Cone({
@@ -73,7 +99,13 @@ obj.AddComponent(new BS.Cone({
 }));
 ```
 
+![BS Cone in the Unity Inspector](../images/components/cone.png)
+
+</div>
+
 ## Circle
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Circle({
@@ -84,7 +116,13 @@ obj.AddComponent(new BS.Circle({
 }));
 ```
 
+![BS Circle in the Unity Inspector](../images/components/circle.png)
+
+</div>
+
 ## Torus
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Torus({
@@ -96,7 +134,13 @@ obj.AddComponent(new BS.Torus({
 }));
 ```
 
+![BS Torus in the Unity Inspector](../images/components/torus.png)
+
+</div>
+
 ## TorusKnot
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.TorusKnot({
@@ -109,7 +153,13 @@ obj.AddComponent(new BS.TorusKnot({
 }));
 ```
 
+![BS Torus Knot in the Unity Inspector](../images/components/torus-knot.png)
+
+</div>
+
 ## Capsule
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Capsule({
@@ -120,9 +170,15 @@ obj.AddComponent(new BS.Capsule({
 }));
 ```
 
+![BS Capsule in the Unity Inspector](../images/components/capsule.png)
+
+</div>
+
 ## Ring
 
 Flat ring (annulus).
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Ring({
@@ -135,6 +191,10 @@ obj.AddComponent(new BS.Ring({
 }));
 ```
 
+![BS Ring in the Unity Inspector](../images/components/ring.png)
+
+</div>
+
 ## Polyhedra
 
 `Dodecahedron`, `Icosahedron`, `Octahedron`, and `Tetrahedron` share the same two parameters.
@@ -144,10 +204,16 @@ obj.AddComponent(new BS.Ring({
 | `radius` | number | 0.5 | Radius of the solid |
 | `detail` | number | 0 | Subdivision detail (0 = the raw solid) |
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.Icosahedron({ radius: 0.5, detail: 0 }));
 // Same constructor for BS.Dodecahedron, BS.Octahedron, BS.Tetrahedron
 ```
+
+![BS Icosahedron in the Unity Inspector](../images/components/icosahedron.png)
+
+</div>
 
 ## Procedural Geometry
 
@@ -196,10 +262,21 @@ Shapes built from point data.
 | `stacks` | number | 5 | Tessellation in one direction |
 | `slices` | number | 5 | Tessellation in the other |
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.Tube({ curvePoints: points, radius: 0.2 }));
 obj.AddComponent(new BS.Pillow({ stacks: 16, slices: 16 }));
 ```
+
+![BS Extrude in the Unity Inspector](../images/components/extrude.png)
+![BS Lathe in the Unity Inspector](../images/components/lathe.png)
+![BS Tube in the Unity Inspector](../images/components/tube.png)
+![BS Shape in the Unity Inspector](../images/components/shape.png)
+![BS Pillow in the Unity Inspector](../images/components/pillow.png)
+![BS Horn in the Unity Inspector](../images/components/horn.png)
+
+</div>
 
 ## Parametric Shapes
 
@@ -221,6 +298,8 @@ Mathematical surfaces. Each is a standalone component taking `stacks` and `slice
 
 `Pillow` and `Horn` (above) belong to the same family; the enum also carries `Apple` and `Custom`.
 
+<div class="docs-tabs">
+
 ```js
 // As a standalone component — stacks/slices control tessellation
 obj.AddComponent(new BS.Klein({ stacks: 32, slices: 32 }));
@@ -233,3 +312,8 @@ obj.AddComponent(new BS.Geometry({
     slices: 32
 }));
 ```
+
+![BS Klein in the Unity Inspector](../images/components/klein.png)
+![BS Geometry in the Unity Inspector](../images/components/geometry.png)
+
+</div>

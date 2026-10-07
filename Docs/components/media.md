@@ -4,6 +4,8 @@
 
 Loads 3D models in glTF/GLB format.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.GLTF({
     url: "https://example.com/model.glb",
@@ -17,9 +19,15 @@ obj.AddComponent(new BS.GLTF({
 }));
 ```
 
+![BS GLTF in the Unity Inspector](../images/components/gltf.png)
+
+</div>
+
 ## VideoPlayer
 
 Plays video on a surface.
+
+<div class="docs-tabs">
 
 ```js
 const video = obj.AddComponent(new BS.VideoPlayer({
@@ -31,6 +39,10 @@ const video = obj.AddComponent(new BS.VideoPlayer({
     waitForFirstFrame: true
 }));
 ```
+
+![BS Video Player in the Unity Inspector](../images/components/video-player.png)
+
+</div>
 
 **Properties:**
 
@@ -54,6 +66,8 @@ video.MuteToggle();   // Toggle mute
 
 Embedded web browser on a surface.
 
+<div class="docs-tabs">
+
 ```js
 const browser = obj.AddComponent(new BS.Browser({
     url: "https://example.com",
@@ -64,6 +78,10 @@ const browser = obj.AddComponent(new BS.Browser({
     actions: ""             // Startup actions
 }));
 ```
+
+![BS Browser in the Unity Inspector](../images/components/browser.png)
+
+</div>
 
 **Methods:**
 
@@ -101,15 +119,23 @@ The page your space runs in is a browser too, though nothing shows it unless you
 
 Google Street View panorama viewer.
 
+<div class="docs-tabs">
+
 ```js
 obj.AddComponent(new BS.StreetView({
     panoId: "CAoSLEFGM..."  // Street View panorama ID
 }));
 ```
 
+![BS Street View in the Unity Inspector](../images/components/street-view.png)
+
+</div>
+
 ## Portal
 
 Creates a portal to another space.
+
+<div class="docs-tabs">
 
 ```js
 obj.AddComponent(new BS.Portal({
@@ -117,3 +143,7 @@ obj.AddComponent(new BS.Portal({
     instance: "instance-id"
 }));
 ```
+
+![BS Portal in the Unity Inspector](../images/components/portal.png)
+
+</div>
