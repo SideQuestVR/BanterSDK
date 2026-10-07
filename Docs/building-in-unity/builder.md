@@ -8,7 +8,7 @@ The Builder builds and publishes your world without leaving Unity. Open it via `
 
 While you're signed out, the header shows **Sign in** and a device code.
 
-1. Open sdq.st/link in a browser and sign in to your SideQuest account.
+1. Open https://altvr.app/link in a browser and sign in to your SideQuest account.
 2. Enter the code shown in the window.
 3. The window polls until the account is linked, then greets you by name.
 
