@@ -121,7 +121,7 @@ Event nodes start a graph's control flow when something happens in the space. Al
 | Node | Purpose |
 |------|---------|
 | On Global Event | A named global event fired (see `Trigger Global Event`). Configurable argument count |
-| On Space Browser Texture | A space browser texture is available. Outputs the `Texture` |
+| On World Browser Texture | The space's own page has a new texture: when it first paints, and again after a resize. Outputs the `Texture` (materials can use it as `asset_browser_world`) |
 
 **Leaderboard events** (`Events > BS > Leaderboard`)
 
@@ -189,6 +189,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Is Space Favourited | Whether the local user favourited the space |
 | Load Quest Home | Load a Quest home environment |
 | Send a One Shot Message | Broadcast a one-shot network message |
+| Set World Browser Size | Size the space's own page in pixels (default 1024 × 768), for example 1920 × 1080 to fill a 16:9 screen through `asset_browser_world`. Clamped to 320–3840 × 180–2160; 0 × 0 restores the default, as does loading the next space |
 | Set Space State Property | Set a public/protected space state property (string value) |
 | Set Space State Value | Set a value at a dotted `Path`. `Value Is JSON?` switches the text between a plain string and parsed JSON, so numbers, booleans, arrays and objects all work. Optional `Request Id` correlates the result |
 | Delete Space State Value | Remove a `Path` **and everything under it** |
