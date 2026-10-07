@@ -4,7 +4,11 @@ Ready-made objects for common space features, under `GameObject > BS` (also the 
 
 - **Player**: Spawn Point, Spawn Range, Seat, Teleporter, Scene Settings.
 - **Grab**: one preset per grab type (Point, Point as a gun, Cylinder, Ball, Soft) and a climbable handhold.
-- **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Kit Item, Billboard, Collider Events.
+- **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Billboard, Collider Events.
+
+New objects land where Unity's own `GameObject` menu puts them: under the object you right-clicked, otherwise at the Scene view's centre (or the world origin, if **Preferences > Scene View > Create Objects at Origin** is on).
+
+The mirror, browser, UI panel, portal, text and glTF model only build their visuals in Play mode, so the Scene view outlines them in blue instead, whether they came from this menu or **Add Component**: their size, and an arrow on the side they're seen from. The mirror, browser, UI panel and text all face the object's back (−Z), the opposite of the blue axis; a glTF model faces the blue axis (unless **Legacy Rotate** is on); the portal turns to face the player. Text also shows what it says. Select one to see its size in metres.
 
 The player prefabs are built on SDK components (`BSSpawn`, `BSSeat`, `BSTeleporter`, `BSSettings`).
 
@@ -55,6 +59,34 @@ Each grab preset is a Rigidbody root with `BSWorldObject` and `BSSyncedObject`, 
 | Climbable Handhold | Cylinder | No Rigidbody, so grabbing it holds on to the world. |
 
 Replace the placeholder meshes with your own and keep the handle collider on the Grabbable layer. Don't use `BSGrababble` for objects placed in the editor: it only sets itself up when a page script sets its properties.
+
+## Objects
+
+Each object is one SDK component, set up for the usual case:
+
+| Object | What you get |
+|---|---|
+| Mirror | `BSMirror`: a 2.5 × 2.5 m mirror, seen from the object's back (−Z). |
+| Browser | `BSBrowser` showing `https://sidequestvr.com`; see [Browser](#browser-bsbrowser). |
+| Video Player | A 1.6 × 0.9 m quad with `BSVideoPlayer`; the video plays on it. |
+| Text | `BSText` saying "Hello World" at font size 2, wrapping inside a 20 × 5 m area, read from −Z. |
+| Audio Source | `BSAudioSource` with Spatial Blend 1, so it's heard from where it is. |
+| Portal | `BSPortal`, a doorway to another space; see [Portal](#portal-bsportal). |
+| GLTF Model | `BSGLTF` with Add Colliders on. Set its `url`; the model loads in Play mode, facing +Z. |
+| Synced Object | A 0.3 m cube with a Rigidbody and `BSSyncedObject`, so every player sees it move. |
+| UI Panel | `BSUIPanel`: 512 × 512 pixels at 100 pixels per metre, so 5.12 m square, read from −Z. |
+| Billboard | A quad with `BSBillboard`, which turns it to face the player. |
+| Collider Events | A 2 m trigger box standing on the object, with `BSColliderEvents` reporting enter and exit to the page and Visual Scripting. |
+
+### Browser (`BSBrowser`)
+
+Shows a web page in the space. Set `url` to your page. The page is `pageWidth` × `pageHeight` pixels (1280 × 720) and is drawn at 1300 pixels per metre, so about 0.98 × 0.55 m, centred on the object and read from its back (−Z). Change the page size to resize it, or scale the object; **Pixels Per Unit** doesn't change it. The page loads in Play mode; until then the blue outline shows where it will be. Clicks and scrolling reach the page.
+
+### Portal (`BSPortal`)
+
+A doorway to another space: set `url` to that space's address, and `instance` to send players to one particular instance of it. In Play mode the portal looks the space up and shows its name and icon (a placeholder landscape if it has no icon, and "Unknown Space" if the address isn't a space). When the local player walks into it, the client takes them there. In SDK Play Mode you stay in your world: the Console says where the portal would go.
+
+The ring is about 2.15 m across, 0.8 m above the object, and turns about its vertical axis to face the player, so the object's rotation doesn't matter; the blue outline in the Scene view turns towards the camera the same way.
 
 ## Build checklist
 

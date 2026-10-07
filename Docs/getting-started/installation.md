@@ -1,10 +1,10 @@
 # Installation
 
-Requires Unity 6000.3.10f1 or newer, with the Android and Windows build support modules.
+Requires Unity 6000.3.21f1 or newer, with the Android and Windows build support modules.
 
 In short: import the installer package, press **Fix All** in the Setup panel that opens, then import the **Basics** sample to explore a working world.
 
-?> **New to Unity?** Install [Unity Hub](https://unity.com/download), add Unity 6000.3.10f1 or newer with the **Android Build Support** and **Windows Build Support** modules, and create a new project from the **Universal 3D** template. The Setup panel takes care of the rest.
+?> **New to Unity?** Install [Unity Hub](https://unity.com/download), add Unity 6000.3.21f1 or newer with the **Android Build Support** and **Windows Build Support** modules, and create a new project from the **Universal 3D** template. The Setup panel takes care of the rest.
 
 ## Installer Package
 

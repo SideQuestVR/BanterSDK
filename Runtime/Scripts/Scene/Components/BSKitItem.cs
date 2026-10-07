@@ -9,6 +9,9 @@ using UnityEngine.InputSystem.UI;
 using UnityEngine.Networking;
 namespace BS
 {
+    // Deprecated: kept for content that already uses it and for scripts (the snippet runtime adds one), but
+    // not offered in Add Component.
+    [AddComponentMenu("")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]

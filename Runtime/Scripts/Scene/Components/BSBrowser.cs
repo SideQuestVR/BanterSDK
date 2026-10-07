@@ -145,6 +145,15 @@ namespace BS
                 browser.name = "BSBrowser";
 
                 _oraView = browser.GetComponent<OraView>();
+                // The SDK's prefab is saved inactive and without Ora's components: a serialized reference to Ora's
+                // scripts is a missing script wherever Ora is the precompiled DLL, which is every creator project, and
+                // the browser then never loads (as BSStarterUpper notes for the space view). So they're added here,
+                // configured before anything on the object wakes.
+                if (_oraView == null)
+                    _oraView = AddWebView(browser);
+                WebViewCreated?.Invoke(this, browser);
+                if (!browser.activeSelf)
+                    browser.SetActive(true);
                 if (_oraView != null)
                 {
                     _oraView.browserMessage.AddListener(OnBrowserMessage);
@@ -169,6 +178,44 @@ namespace BS
                     doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
             }
             SetLoadedIfNot();
+        }
+
+        /// <summary>
+        /// Raised when a browser has made its web view, while that object is still inactive, so the host app can add
+        /// its own components before they wake (Greenfield adds its VR keyboard handler).
+        /// </summary>
+        public static event Action<BSBrowser, GameObject> WebViewCreated;
+
+        // UIToolkitInputHandler keeps its view in a private serialized field and doesn't look for one itself.
+        static readonly System.Reflection.FieldInfo InputHandlerWebView =
+            typeof(UIToolkitInputHandler).GetField("webview", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        static readonly System.Reflection.FieldInfo InputHandlerScrollSensitivity =
+            typeof(UIToolkitInputHandler).GetField("scrollSensitivity", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        // What Prefabs/Browser/BSBrowser used to serialize on its OraView and UIToolkitInputHandler.
+        static OraView AddWebView(GameObject browser)
+        {
+            var view = browser.AddComponent<OraView>();
+            view.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.6269.2 Safari/537.36";
+            view.injectShims = true;
+            view.injectMediaAndWebRTC = true;
+            view.size = new Vector2Int(1280, 720);
+            view.renderMode = SideQuest.Ora.RenderMode.UIToolkit;
+            view.uiToolkitElementClass = "world-web-view";
+            view.sizingMode = SizingMode.UIToolkit;
+            view.scaleTransform = browser.transform;
+            view.skipUploadWhenInvisible = true;
+
+            if (InputHandlerWebView == null)
+            {
+                // Without its view the handler throws in Start, so the browser goes without input instead.
+                Debug.LogWarning("[BSBrowser] This Ora's UIToolkitInputHandler has no webview field, so the browser won't take clicks.");
+                return view;
+            }
+            var input = browser.AddComponent<UIToolkitInputHandler>();
+            InputHandlerWebView.SetValue(input, view);
+            InputHandlerScrollSensitivity?.SetValue(input, 50f);
+            return view;
         }
 
         void OnTextureChanged(Texture2D texture)

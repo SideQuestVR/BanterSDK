@@ -2,7 +2,7 @@
 
 Create interactive 3D VR spaces using JavaScript. The SideQuest Creator SDK provides a complete API for building multiplayer virtual reality experiences.
 
-Requires Unity 6000.3.10f1 or newer. Download the installer, **[Install-com.sidequest.creator-sdk-latest.unitypackage](https://altvr.app/files/Install-com.sidequest.creator-sdk-latest.unitypackage)**, or see [Installation](Docs/getting-started/installation.md) for the embedded-package option.
+Requires Unity 6000.3.21f1 or newer. Download the installer, **[Install-com.sidequest.creator-sdk-latest.unitypackage](https://altvr.app/files/Install-com.sidequest.creator-sdk-latest.unitypackage)**, or see [Installation](Docs/getting-started/installation.md) for the embedded-package option.
 
 ## Documentation
 

@@ -10,19 +10,16 @@ GameObject:
   m_Component:
   - component: {fileID: 1012935950955946819}
   - component: {fileID: -5056332295726519426}
-  - component: {fileID: 9199636538612451187}
-  - component: {fileID: 1076193004078119966}
   - component: {fileID: 8523665646371873324}
   - component: {fileID: -8841201173230740025}
   - component: {fileID: 5027846383786797693}
-  - component: {fileID: 5698720496317685600}
   m_Layer: 5
   m_Name: BSBrowser
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &1012935950955946819
 Transform:
   m_ObjectHideFlags: 0
@@ -61,94 +58,6 @@ MonoBehaviour:
   m_PivotReferenceSize: 0
   m_Pivot: 0
   m_WorldSpaceCollider: {fileID: 0}
---- !u!114 &9199636538612451187
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1012935950955946818}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 56fdc6b83ed3d14428d9cf7eea6d2900, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SideQuest.Ora::SideQuest.Ora.OraView
-  id: 
-  url: 
-  userAgent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML,
-    like Gecko) Chrome/123.0.6269.2 Safari/537.36
-  customInjectedJavascript: {fileID: 0}
-  injectShims: 1
-  injectMediaAndWebRTC: 1
-  injectAudioSourceRedirection: 0
-  blockedDomains: []
-  volumeChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  size: {x: 1280, y: 720}
-  renderMode: 3
-  uiToolkitElementClass: world-web-view
-  sizingMode: 3
-  scaleTransform: {fileID: 1012935950955946819}
-  actualSize: {x: 1024, y: 768}
-  disableTouchScroll: 0
-  openDevTools: 0
-  openBrowser: 0
-  showLogs: 0
-  userMedia:
-    texture: {fileID: 0}
-    audioListener: {fileID: 0}
-    audioSource: {fileID: 0}
-  displayMedia:
-    texture: {fileID: 0}
-    audioListener: {fileID: 0}
-    audioSource: {fileID: 0}
-  textureChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  domReady:
-    m_PersistentCalls:
-      m_Calls: []
-  addressChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  loadStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  loadFailed:
-    m_PersistentCalls:
-      m_Calls: []
-  browserMessage:
-    m_PersistentCalls:
-      m_Calls: []
-  userMediaStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  userMediaEnded:
-    m_PersistentCalls:
-      m_Calls: []
-  texture2D: {fileID: 0}
-  initialised: 0
-  cachedScale: {x: 0, y: 0, z: 0}
-  cachedRect: {x: 0, y: 0}
-  cachedUIElementBounds: {x: 0, y: 0}
-  maxUploadFps: 0
-  skipUploadWhenInvisible: 1
-  loadOnInitialised: 0
---- !u!114 &1076193004078119966
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1012935950955946818}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 37112c9ec52f16b4ca644a63fdebcc25, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SideQuest.Ora::UIToolkitInputHandler
-  webview: {fileID: 9199636538612451187}
-  scrollSensitivity: 50
 --- !u!114 &8523665646371873324
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -186,18 +95,3 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8a410b213209442fb15a69799f0240a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UIElements.PanelEventHandler
---- !u!114 &5698720496317685600
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1012935950955946818}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1cea1fcaa686d4945aa199f2d6db77b9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: SideQuest.Greenfield.UI::SideQuest.Greenfield.UI.BrowserKeyboardHandler
-  _keyboard: {fileID: 0}
-  _keyboardParent: {fileID: 0}
-  _manager: {fileID: 0}

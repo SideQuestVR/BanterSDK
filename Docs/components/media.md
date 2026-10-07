@@ -17,23 +17,6 @@ obj.AddComponent(new BS.GLTF({
 }));
 ```
 
-## AssetBundle
-
-Loads Unity asset bundles (for advanced content).
-
-```js
-obj.AddComponent(new BS.AssetBundle({
-    windowsUrl: "https://example.com/windows.bundle",
-    androidUrl: "https://example.com/android.bundle",
-    osxUrl: null,
-    linuxUrl: null,
-    iosUrl: null,
-    vosUrl: null,               // Vision OS
-    isScene: false,             // Load as scene vs prefabs
-    legacyShaderFix: false
-}));
-```
-
 ## VideoPlayer
 
 Plays video on a surface.

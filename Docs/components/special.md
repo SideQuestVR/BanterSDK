@@ -1,18 +1,8 @@
 # Special Components
 
-## KitItem
-
-Instantiates a prefab from an asset bundle. For prefabs that ship inside the world build, see [KitAsset](#kitasset).
-
-```js
-obj.AddComponent(new BS.KitItem({
-    path: "assets/prefabs/myitem.prefab"
-}));
-```
-
 ## KitAsset
 
-Instantiates a prefab that ships inside the world build, addressed by its kit-manifest path. Unlike `KitItem`, which loads out of an uploaded kit asset bundle registered against the space, nothing is downloaded and no per-space registration is needed — the prefab is already in the build. The path is the kit manifest's own `path` field, relative to the kit package's Assets root.
+Instantiates a prefab that ships inside the world build, addressed by its kit-manifest path. Nothing is downloaded and no per-space registration is needed: the prefab is already in the build. The path is the kit manifest's own `path` field, relative to the kit package's Assets root.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|

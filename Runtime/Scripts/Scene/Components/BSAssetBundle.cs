@@ -13,6 +13,8 @@ using UnityEngine.UI;
 
 namespace BS
 {
+    // Created from scripts only (the page's BS.AssetBundle, the snippet runtime), so not offered in Add Component.
+    [AddComponentMenu("")]
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]

@@ -97,7 +97,8 @@ internal static class CreatorConveniencesMenu
         // from the player's own trigger actions while held.
         var root = GrabbableRoot("Grab Gun", command, 0.8f);
         var grip = Primitive(PrimitiveType.Cube, "Grip", root.transform, Vector3.zero, new Vector3(0.03f, 0.1f, 0.045f));
-        grip.transform.localRotation = Quaternion.Euler(-15f, 0f, 0f);
+        // The bottom raked back, like a pistol grip.
+        grip.transform.localRotation = Quaternion.Euler(15f, 0f, 0f);
         Primitive(PrimitiveType.Cube, "Barrel", root.transform, new Vector3(0f, 0.065f, 0.06f), new Vector3(0.035f, 0.045f, 0.2f));
         Child("Muzzle", root.transform).transform.localPosition = new Vector3(0f, 0.065f, 0.165f);
 
@@ -145,8 +146,9 @@ internal static class CreatorConveniencesMenu
     private static void CreateHandhold(MenuCommand command)
     {
         // No rigidbody: a hand that grabs it holds on to the world, so players can climb it.
+        // The bar is on the object's origin, so it lands where the menu places things, like every other preset.
         var root = Begin("Handhold", command);
-        var bar = Primitive(PrimitiveType.Cylinder, "Bar", root.transform, new Vector3(0f, 1.2f, 0f), new Vector3(0.05f, 0.3f, 0.05f));
+        var bar = Primitive(PrimitiveType.Cylinder, "Bar", root.transform, Vector3.zero, new Vector3(0.05f, 0.3f, 0.05f));
         bar.transform.localRotation = Quaternion.Euler(0f, 0f, 90f);
         MakeHandle(bar, BSGrabType.Cylinder, 0.025f);
         Finish(root, "Handhold");
@@ -200,9 +202,6 @@ internal static class CreatorConveniencesMenu
 
     [MenuItem(Root + "Objects/UI Panel", false, 38)]
     private static void CreateUIPanel(MenuCommand command) => CreateComponentObject<BSUIPanel>("UI Panel", command);
-
-    [MenuItem(Root + "Objects/Kit Item", false, 39)]
-    private static void CreateKitItem(MenuCommand command) => CreateComponentObject<BSKitItem>("Kit Item", command);
 
     [MenuItem(Root + "Objects/Billboard", false, 40)]
     private static void CreateBillboard(MenuCommand command)
@@ -265,22 +264,24 @@ internal static class CreatorConveniencesMenu
         return go;
     }
 
-    // Under the object the menu was opened on, or at the Scene view's focus. Not SetParentAndAlign:
-    // it copies the parent's layer onto the whole new hierarchy, and seats and grab handles depend on
-    // theirs.
+    // Where Unity's own GameObject menu puts a new object, so these land like a cube would: under the object the
+    // menu was opened on, under the default parent, at the world origin or the Scene view's pivot (as Preferences >
+    // Scene View says), and in the prefab being edited. Parenting there copies the parent's layer onto the whole new
+    // hierarchy and resets the root's scale, though, and seats, grab handles and the video screen depend on theirs,
+    // so both are put back.
     private static void Place(GameObject go, MenuCommand command)
     {
-        var parent = command.context as GameObject;
-        if (parent)
-        {
-            go.transform.SetParent(parent.transform, false);
-            go.transform.localPosition = Vector3.zero;
-            go.transform.localRotation = Quaternion.identity;
-        }
-        else if (SceneView.lastActiveSceneView != null)
-        {
-            go.transform.position = SceneView.lastActiveSceneView.pivot;
-        }
+        var transforms = go.GetComponentsInChildren<Transform>(true);
+        var layers = new int[transforms.Length];
+        for (var i = 0; i < transforms.Length; i++)
+            layers[i] = transforms[i].gameObject.layer;
+        var scale = go.transform.localScale;
+
+        ObjectFactory.PlaceGameObject(go, command.context as GameObject);
+
+        for (var i = 0; i < transforms.Length; i++)
+            transforms[i].gameObject.layer = layers[i];
+        go.transform.localScale = scale;
     }
 
     private static void Finish(GameObject go, string displayName)

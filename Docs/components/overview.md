@@ -7,7 +7,7 @@ const obj = new BS.GameObject({ name: "MyObject" });
 obj.AddComponent(new BS.ComponentName({ property: value }));
 ```
 
-**Constructor convention:** every component with configurable properties accepts either positional arguments or a single config object as its first argument (components with no properties, such as `BS.ColliderEvents` and `BS.WorldObject`, take no constructor arguments at all). A plain object in the first position is treated as the config bag — set any of the component's properties, omit the rest for their defaults, and include an `id` field to choose the component's JavaScript ID. A few components have long positional lists (`BS.AssetBundle` starts with six platform URLs; `BS.ConfigurableJoint` and `BS.Geometry` run past thirty parameters), so the config-object form is preferred throughout these docs.
+**Constructor convention:** every component with configurable properties accepts either positional arguments or a single config object as its first argument (components with no properties, such as `BS.ColliderEvents` and `BS.WorldObject`, take no constructor arguments at all). A plain object in the first position is treated as the config bag — set any of the component's properties, omit the rest for their defaults, and include an `id` field to choose the component's JavaScript ID. A few components have long positional lists (`BS.ConfigurableJoint` and `BS.Geometry` run past thirty parameters), so the config-object form is preferred throughout these docs.
 
 ```js
 // Equivalent constructions:
