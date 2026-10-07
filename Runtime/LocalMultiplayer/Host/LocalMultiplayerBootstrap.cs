@@ -131,11 +131,6 @@ namespace BS.LocalMultiplayer
         {
             if (!s_enabled || scene == null) return;
             if (LocalMultiplayerHost.Instance != null) return;
-            if (BSStarterUpper.AutoStartDisabled)
-            {
-                ExplainSkip("the Banter desktop controller is switched off (its switch is in Creator SDK > Setup, under Tools), so there is no local player to network.");
-                return;
-            }
             if (BSDesktopController.Instance == null)
             {
                 ExplainSkip("there is no SDK desktop player in this Play, so there is no local player to network.");

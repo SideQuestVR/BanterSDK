@@ -84,7 +84,6 @@ namespace BS.LocalMultiplayer.Editor
         string _oraVersion;
         bool _oraOk;
         bool _flexaBody;
-        bool _desktopDisabled;
         bool _runInBackground;
         string[] _roomFiles = Array.Empty<string>();
         long _roomBytes;
@@ -316,7 +315,6 @@ namespace BS.LocalMultiplayer.Editor
             _oraOk = ora != null && LocalMpPackages.MeetsMinimum(ora.version, LocalMpPackages.OraMinimumVersion);
 
             _flexaBody = LocalMpPackages.Find(LocalMpPackages.FlexaBodyName) != null;
-            _desktopDisabled = BSStarterUpper.AutoStartDisabled;
             _runInBackground = PlayerSettings.runInBackground;
 
             _roomFiles = RoomStateFiles.List(RoomStateFiles.DirectoryFor(_root));
@@ -592,25 +590,6 @@ namespace BS.LocalMultiplayer.Editor
             {
                 EditorGUILayout.HelpBox($"Local multiplayer needs Ora {LocalMpPackages.OraMinimumVersion} or newer: its "
                                         + "Electron app runs the relay.", MessageType.Error);
-            }
-
-            if (_desktopDisabled)
-            {
-                EditorGUILayout.HelpBox("The desktop controller is off. Each player needs the desktop player: it is "
-                                        + "that player's body and local user.", MessageType.Warning);
-                using (new EditorGUI.DisabledScope(_playing))
-                {
-                    if (GUILayout.Button("Turn On the Desktop Controller"))
-                    {
-                        BSStarterUpper.ToggleAutoStart();
-                        _nextEnvironmentRefresh = 0;
-                        GUIUtility.ExitGUI();
-                    }
-                }
-            }
-            else
-            {
-                Row("Desktop player", "on");
             }
 
             if (_flexaBody)
@@ -992,8 +971,8 @@ namespace BS.LocalMultiplayer.Editor
             }
             if (_host == null)
             {
-                EditorGUILayout.HelpBox("Local multiplayer isn't running in this player: it is off in the settings, the "
-                                        + "desktop controller is off, or Play is still starting.", MessageType.Info);
+                EditorGUILayout.HelpBox("Local multiplayer isn't running in this player: it is off in the settings, or Play is "
+                                        + "still starting.", MessageType.Info);
                 return;
             }
 

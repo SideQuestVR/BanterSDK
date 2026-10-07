@@ -69,7 +69,7 @@ namespace BS.LocalMultiplayer.Avatars
             }
             else
             {
-                const string message = "No desktop player (the desktop controller is off), so the others see no avatar for this player and attachments and seats have no local rig.";
+                const string message = "No desktop player in this Play, so the others see no avatar for this player and attachments and seats have no local rig.";
                 Debug.LogWarning("[LocalMP][Avatars] " + message);
                 host.Diagnostics?.Set("avatars.noDesktopPlayer", DiagnosticLevel.Warning, message);
             }

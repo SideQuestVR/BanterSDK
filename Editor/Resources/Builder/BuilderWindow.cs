@@ -180,12 +180,6 @@ public class BuilderWindow : EditorWindow
         BSStarterUpper.ToggleDevTools();
     }
 
-    [MenuItem(GreenfieldMenu + "Toggle Desktop Controller (Camera + Keyboard Input)")]
-    public static void ToggleAutoStart()
-    {
-        BSStarterUpper.ToggleAutoStart();
-    }
-
     [MenuItem(GreenfieldMenu + "Configure Visual Scripting")]
     public static void VisualScript()
     {

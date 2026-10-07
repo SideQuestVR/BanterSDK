@@ -5,15 +5,19 @@ namespace BS.SDKEditor.Setup
 {
     // The SDK's own rows in the Setup panel's Tools section. Local multiplayer adds its window from its own assembly.
 
-    sealed class DesktopControllerSetupTool : SetupTool
+    // The checklist's Visual Scripting item only offers its button while something's missing; this runs it any time.
+    sealed class ConfigureVisualScriptingSetupTool : SetupTool
     {
-        public override string Title => "Desktop controller";
+        public override string Title => "Configure Visual Scripting";
         public override string Description =>
-            "In Play mode, fly the camera and grab, click and type with the mouse and keyboard. Switch it off to drive the " +
-            "player another way. It takes effect the next time you press Play.";
+            "Rebuilds the node library from the SDK's list, as the Visual Scripting nodes item above does. Run it again if BS " +
+            "components or the SDK's nodes are missing from the fuzzy finder. It takes a minute or so.";
         public override int Order => 20;
-        public override bool? IsOn => !BSStarterUpper.AutoStartDisabled;
-        public override void Run() => BSStarterUpper.ToggleAutoStart();
+        public override string ButtonLabel => "Run";
+        public override bool Available => !EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling;
+        public override string UnavailableReason =>
+            EditorApplication.isCompiling ? "Wait for scripts to finish compiling." : "Stop Play mode first.";
+        public override void Run() => VsNodeGeneration.SetVSTypesAndAssemblies();
     }
 
     sealed class PageDeveloperToolsSetupTool : SetupTool

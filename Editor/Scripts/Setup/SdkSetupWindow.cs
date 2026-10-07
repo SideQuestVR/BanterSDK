@@ -20,8 +20,7 @@ namespace BS.SDKEditor.Setup
         const string StyleSheetPath = "Packages/com.sidequest.creator-sdk/Editor/Scripts/Setup/SdkSetupWindow.uss";
         // The list's look, shared with the Builder's pre-build checklist.
         public const string ChecklistStyleSheetPath = "Packages/com.sidequest.creator-sdk/Editor/Scripts/Setup/Checklist.uss";
-        // Used when the package doesn't name its documentation (package.json "documentationUrl").
-        const string FallbackDocumentationUrl = "https://greenfield-registry.sdq.st/-/web/detail/com.sidequest.creator-sdk";
+        public const string DocumentationUrl = "https://altvr.app/docs/";
         static readonly Vector2 DefaultSize = new Vector2(580, 760);
 
         static List<SetupTool> s_Tools;
@@ -58,15 +57,6 @@ namespace BS.SDKEditor.Setup
             // At least 40 points below the main window's top, which leaves room for this window's title bar.
             return new Rect(main.x + Mathf.Max(0, (main.width - size.x) / 2), main.y + Mathf.Max(40, (main.height - size.y) / 2),
                 size.x, size.y);
-        }
-
-        public static string DocumentationUrl
-        {
-            get
-            {
-                var url = PackageManagerUtility.documentationUrl;
-                return string.IsNullOrEmpty(url) ? FallbackDocumentationUrl : url;
-            }
         }
 
         /// <summary>
@@ -140,7 +130,7 @@ namespace BS.SDKEditor.Setup
             content.Add(BuildActions());
             content.Add(BuildSetupSection());
             content.Add(BuildToolsSection());
-            content.Add(BuildGettingStarted());
+            content.Add(BuildBottomDocumentation());
             scroll.Add(content);
             root.Add(scroll);
             root.Add(BuildFooter());
@@ -236,39 +226,13 @@ namespace BS.SDKEditor.Setup
             return section;
         }
 
-        // Closed at first; the view data key makes Unity remember whether it was left open.
-        VisualElement BuildGettingStarted()
+        // The documentation again at the end, for whoever has scrolled down to here.
+        static VisualElement BuildBottomDocumentation()
         {
-            var foldout = new Foldout { text = "Getting started", value = false, viewDataKey = "sdk-setup-getting-started" };
-            foldout.AddToClassList("sdk-setup__getting-started");
-
-            foldout.Add(Text("Layers", "sdk-setup__topic-title"));
-            foldout.Add(Bullet("<b>Your objects:</b> UserLayer1–15."));
-            foldout.Add(Bullet("<b>Stand, teleport, grapple:</b> Default, Water and UserLayer1–8 (the grapple skips UserLayer1). " +
-                               "UserLayer9–15 are ignored by all three."));
-            foldout.Add(Bullet("<b>Collisions:</b> the player's body passes through UserLayer2–8; the hands only touch UserLayer9–15, " +
-                               "Grabbable and Invisible."));
-            foldout.Add(Bullet("<b>Grabbable</b> is for things to pick up. <b>Invisible</b> is hidden from the player's view but still solid."));
-            foldout.Add(Bullet("<b>Hands off:</b> CharacterColliders and CharacterHandColliders are the player's body and hands, and " +
-                               "every layer above them belongs to the client."));
-
-            foldout.Add(Text("Tags", "sdk-setup__topic-title"));
-            foldout.Add(Bullet("<b>Your objects:</b> UserTag1–32."));
-            foldout.Add(Bullet("<b>The player:</b> BSLocalCharacter, plus its LeftHand, RightHand, Head and Feet versions. Check for " +
-                               "them in triggers, but never put them on your own objects."));
-            foldout.Add(Bullet("<b>Nothing else:</b> built spaces store tags by position, so Setup removes any other tag and the " +
-                               "Builder's checklist renames old __BA_ tags."));
-
-            foldout.Add(Text("The documentation's Layers and Tags sections have the full tables.", "sdk-setup__hint"));
-            return foldout;
-        }
-
-        static VisualElement Bullet(string text)
-        {
-            var row = Element("sdk-setup__bullet");
-            row.Add(Text("•", "sdk-setup__bullet-mark"));
-            row.Add(Text(text, "sdk-setup__bullet-text"));
-            return row;
+            var card = ActionCard("sdk-setup__action-icon--docs", "Documentation",
+                "Layers and tags, every component and the scripting API.", OpenDocumentation);
+            card.AddToClassList("sdk-setup__action--bottom");
+            return card;
         }
 
         VisualElement BuildFooter()
@@ -334,8 +298,7 @@ namespace BS.SDKEditor.Setup
             _summary.text = SummaryText(rows.Select(row => (row.check.Importance, row.status)).ToList(), busy);
             _restartBanner.style.display = ProjectSetup.AnyRestartPending ? DisplayStyle.Flex : DisplayStyle.None;
 
-            // Rebuilt with the checklist: a switch can change elsewhere (the Local Multiplayer window turns the desktop
-            // controller on) and some tools only work in or out of Play mode.
+            // Rebuilt with the checklist: some tools only work in or out of Play mode, or while nothing is compiling.
             _tools.Clear();
             var tools = Tools;
             for (var i = 0; i < tools.Count; i++)
@@ -498,26 +461,10 @@ namespace BS.SDKEditor.Setup
                 body.Add(Text(tool.UnavailableReason, "checklist-row__details"));
             row.Add(body);
 
-            var isOn = tool.IsOn;
-            if (isOn.HasValue)
-            {
-                var toggle = new Toggle { value = isOn.Value };
-                toggle.AddToClassList("sdk-setup__tool-toggle");
-                toggle.SetEnabled(available);
-                toggle.RegisterValueChangedCallback(change =>
-                {
-                    if (change.newValue != tool.IsOn)
-                        RunTool(tool);
-                });
-                row.Add(toggle);
-            }
-            else
-            {
-                var button = new Button(() => RunTool(tool)) { text = tool.ButtonLabel };
-                button.AddToClassList("checklist-row__action");
-                button.SetEnabled(available);
-                row.Add(button);
-            }
+            var button = new Button(() => RunTool(tool)) { text = tool.ButtonLabel };
+            button.AddToClassList("checklist-row__action");
+            button.SetEnabled(available);
+            row.Add(button);
             return row;
         }
 

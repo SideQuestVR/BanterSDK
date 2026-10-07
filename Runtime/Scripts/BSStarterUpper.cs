@@ -36,32 +36,6 @@ namespace BS
         private OraManager oraManager;
 
         private const string BANTER_DEVTOOLS_ENABLED = "BANTER_DEVTOOLS_ENABLED";
-        private const string BANTER_AUTOSTART_DISABLED = "BANTER_AUTOSTART_DISABLED";
-
-        // Editor-only convenience toggle: when on, skips the desktop controller (fly camera, mouse
-        // grab/click, local user) and the HardwareKeyboardInput setup that spams the console when
-        // Active Input Handling is set to the new Input System. Never matters outside the Editor
-        // (always false in a build).
-        public static bool AutoStartDisabled
-        {
-            get
-            {
-#if UNITY_EDITOR
-                return UnityEditor.EditorPrefs.GetBool(BANTER_AUTOSTART_DISABLED, false);
-#else
-                return false;
-#endif
-            }
-        }
-
-#if UNITY_EDITOR
-        public static void ToggleAutoStart()
-        {
-            bool newValue = !UnityEditor.EditorPrefs.GetBool(BANTER_AUTOSTART_DISABLED, false);
-            UnityEditor.EditorPrefs.SetBool(BANTER_AUTOSTART_DISABLED, newValue);
-            LogLine.Do("Banter desktop controller (camera, mouse grab/click, hardware keyboard input) " + (newValue ? "disabled." : "enabled."));
-        }
-#endif
 
         void Awake()
         {
@@ -98,14 +72,11 @@ namespace BS
 
 #if !GREENFIELD_PROJECT
             SetupExtraEvents();
-            if (!AutoStartDisabled)
-            {
 #if !BANTER_FLEX
-                BSDesktopController.Spawn(scene);
+            BSDesktopController.Spawn(scene);
 #else
-                LogLine.Do("FlexaBody is installed, so the SDK desktop controller is not spawned.");
+            LogLine.Do("FlexaBody is installed, so the SDK desktop controller is not spawned.");
 #endif
-            }
             StartCoroutine(OpenPageDev());
 #endif
 #if UNITY_EDITOR
@@ -124,15 +95,12 @@ namespace BS
             {
                 oraManager.oraWebRTCManager = gameObject.AddComponent<OraWebRTCManager>();
             }
-            if (!AutoStartDisabled)
+            oraManager.hardwareKeyboardInput = gameObject.GetComponent<HardwareKeyboardInput>();
+            if (!oraManager.hardwareKeyboardInput)
             {
-                oraManager.hardwareKeyboardInput = gameObject.GetComponent<HardwareKeyboardInput>();
-                if (!oraManager.hardwareKeyboardInput)
-                {
-                    oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
-                }
-                oraManager.SubscribeHardwareKeyboard();
+                oraManager.hardwareKeyboardInput = gameObject.AddComponent<HardwareKeyboardInput>();
             }
+            oraManager.SubscribeHardwareKeyboard();
             // The prefab carries no Ora components: Ora ships both as a DLL and as source, and a
             // serialized reference to one form is a missing script under the other. So the space
             // view is configured here, with what the prefab used to serialize. OraView registers its
