@@ -75,10 +75,7 @@ Event nodes start a graph's control flow when something happens in the space. Al
 
 | Node | Purpose |
 |------|---------|
-| On Ai Image | An AI image generation finished. Outputs `Data` |
-| On Ai Model | An AI model generation finished. Outputs `Data` |
 | On Ai SpeechToText | A speech-to-text result arrived. Filter by `Return ID`; outputs `Data` |
-| On Base64 CDN Link | A Base64 To CDN upload finished. Outputs `Data` |
 | On Camera Snap | A camera snapshot is ready. Outputs `Data` |
 
 **Browser events** (`Events > BS > Browser`)
@@ -121,6 +118,7 @@ Event nodes start a graph's control flow when something happens in the space. Al
 | Node | Purpose |
 |------|---------|
 | On Global Event | A named global event fired (see `Trigger Global Event`). Configurable argument count |
+| On Base64 CDN Link | A Base64 To CDN upload finished. Outputs `Data` |
 | On World Browser Texture | The space's own page has a new texture: when it first paints, and again after a resize. Outputs the `Texture` (materials can use it as `asset_browser_world`) |
 
 **Leaderboard events** (`Events > BS > Leaderboard`)
@@ -197,12 +195,8 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Set a Score on a Leaderboard | Write a score to a leaderboard |
 | Get the Current Leaderboard | Fetch leaderboard data |
 | Clear Scores on a Leaderboard | Clear a leaderboard |
-| Generate Ai Image | Request an AI-generated image |
-| Generate Ai Model | Request an AI-generated 3D model |
 | Start Speech To Text | Start speech-to-text capture |
 | Stop Speech To Text | Stop capture and request the transcription |
-| Base64 To CDN | Upload base64 data to the CDN |
-| GameObject texture to Base64 | Read an object's texture as base64 |
 | Select file (GLB/JPG/PNG) | Ask the user to pick a file |
 
 **User** (`BS > User`) — act on users.
@@ -236,6 +230,8 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Load Text from URL | Download text |
 | Load Audio from URL | Download an audio clip |
 | Load glTF/glb from URL | Download and spawn a glTF/glb model |
+| GameObject texture to Base64 | Read an object's texture as base64 |
+| Base64 To CDN | Upload base64 data to the CDN (pairs with `On Base64 CDN Link`) |
 | Trigger Global Event | Fire a named global event (pairs with `On Global Event`) |
 | Trigger VisualScriptingEvent | Invoke a VisualScriptingEvent component's UnityEvent (deprecated — use Trigger Visual Scripting Relay) |
 | Trigger Visual Scripting Relay | Invoke a typed visual scripting relay |

@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Base64 CDN Link")]
     [UnitShortTitle("On Base64 CDN Link")]
-    [UnitCategory("Events\\BS\\AI")]
+    [UnitCategory("Events\\BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnBase64CDNLink : EventUnit<CustomEventArgs>
     {

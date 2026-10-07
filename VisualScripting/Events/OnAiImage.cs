@@ -1,3 +1,5 @@
+// Switched off for now: AI image and 3D model generation. Delete this #if and its #endif to bring the node back.
+#if false
 using Unity.VisualScripting;
 using BS;
 using System.Diagnostics;
@@ -50,3 +52,4 @@ namespace BS.VisualScripting
         }
     }
 }
+#endif
