@@ -260,9 +260,12 @@ namespace BS.SDKEditor
          *
          * Deliberately manual: an element whose component sits in a scene that isn't open looks orphaned from here.
          * Saved scenes and prefabs are searched for the id first, and the ones they still use are left alone.
+         * Run from the Setup panel's Tools section.
          */
-        [MenuItem("Creator SDK/Snippets/Recover Orphaned Snippets...")]
-        static void RecoverOrphanedSnippets()
+#if GREENFIELD_PROJECT
+        [MenuItem("Greenfield/Creator SDK/Recover Orphaned Snippets...")]
+#endif
+        internal static void RecoverOrphanedSnippets()
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
             {

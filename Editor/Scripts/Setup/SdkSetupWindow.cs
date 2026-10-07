@@ -9,9 +9,10 @@ using UnityEngine.UIElements;
 namespace BS.SDKEditor.Setup
 {
     /// <summary>
-    /// The Creator SDK's Setup panel: buttons for the Builder and the documentation, and the project
+    /// The Creator SDK's Setup panel: buttons for the Builder and the documentation, the project
     /// setup checklist, where every item has its own fix button and Fix All runs the Required and Recommended
-    /// ones. Hovering an item explains why it's needed, what goes wrong without it and what its fix changes.
+    /// ones, and the tools (every <see cref="SetupTool"/>), which the Creator SDK menu doesn't list. Hovering a
+    /// checklist item explains why it's needed, what goes wrong without it and what its fix changes.
     /// <see cref="ProjectSetup"/> opens it the first time the SDK loads in a project.
     /// </summary>
     public sealed class SdkSetupWindow : EditorWindow
@@ -23,7 +24,10 @@ namespace BS.SDKEditor.Setup
         const string FallbackDocumentationUrl = "https://greenfield-registry.sdq.st/-/web/detail/com.sidequest.creator-sdk";
         static readonly Vector2 DefaultSize = new Vector2(580, 760);
 
+        static List<SetupTool> s_Tools;
+
         VisualElement _list;
+        VisualElement _tools;
         Label _summary;
         Button _fixAll;
         VisualElement _restartBanner;
@@ -135,6 +139,7 @@ namespace BS.SDKEditor.Setup
             content.Add(BuildHeader());
             content.Add(BuildActions());
             content.Add(BuildSetupSection());
+            content.Add(BuildToolsSection());
             content.Add(BuildGettingStarted());
             scroll.Add(content);
             root.Add(scroll);
@@ -217,6 +222,17 @@ namespace BS.SDKEditor.Setup
             section.Add(_list);
             section.Add(Text("Hover over an item to see why it's needed and what its fix changes. Fix All runs the Required and " +
                              "Recommended fixes; Optional ones only run from their own button.", "sdk-setup__hint"));
+            return section;
+        }
+
+        VisualElement BuildToolsSection()
+        {
+            var section = Element("sdk-setup__tools");
+            var heading = Element("checklist__heading");
+            heading.Add(Text("Tools", "checklist__title"));
+            section.Add(heading);
+            _tools = Element("checklist__list");
+            section.Add(_tools);
             return section;
         }
 
@@ -317,6 +333,18 @@ namespace BS.SDKEditor.Setup
             _fixAll.SetEnabled(fixable > 0 && !busy);
             _summary.text = SummaryText(rows.Select(row => (row.check.Importance, row.status)).ToList(), busy);
             _restartBanner.style.display = ProjectSetup.AnyRestartPending ? DisplayStyle.Flex : DisplayStyle.None;
+
+            // Rebuilt with the checklist: a switch can change elsewhere (the Local Multiplayer window turns the desktop
+            // controller on) and some tools only work in or out of Play mode.
+            _tools.Clear();
+            var tools = Tools;
+            for (var i = 0; i < tools.Count; i++)
+            {
+                var row = BuildToolRow(tools[i]);
+                if (i == tools.Count - 1)
+                    row.AddToClassList("checklist-row--last");
+                _tools.Add(row);
+            }
 
             // Background fixes (an import, a package install) and compiles finish on their own; look again until they
             // do. Play mode ending is an event of its own.
@@ -447,6 +475,64 @@ namespace BS.SDKEditor.Setup
                 case SetupState.RestartPending: return "restart";
                 default: return "working";
             }
+        }
+
+        // -- Tools --------------------------------------------------------------------
+
+        static IReadOnlyList<SetupTool> Tools => s_Tools ?? (s_Tools =
+            TypeCache.GetTypesDerivedFrom<SetupTool>()
+                .Where(type => !type.IsAbstract && type.GetConstructor(Type.EmptyTypes) != null)
+                .Select(type => (SetupTool)Activator.CreateInstance(type))
+                .OrderBy(tool => tool.Order)
+                .ThenBy(tool => tool.Title, StringComparer.Ordinal)
+                .ToList());
+
+        VisualElement BuildToolRow(SetupTool tool)
+        {
+            var row = Element("checklist-row");
+            var body = Element("checklist-row__body");
+            body.Add(Text(tool.Title, "checklist-row__title"));
+            body.Add(Text(tool.Description, "checklist-row__summary"));
+            var available = tool.Available;
+            if (!available && !string.IsNullOrEmpty(tool.UnavailableReason))
+                body.Add(Text(tool.UnavailableReason, "checklist-row__details"));
+            row.Add(body);
+
+            var isOn = tool.IsOn;
+            if (isOn.HasValue)
+            {
+                var toggle = new Toggle { value = isOn.Value };
+                toggle.AddToClassList("sdk-setup__tool-toggle");
+                toggle.SetEnabled(available);
+                toggle.RegisterValueChangedCallback(change =>
+                {
+                    if (change.newValue != tool.IsOn)
+                        RunTool(tool);
+                });
+                row.Add(toggle);
+            }
+            else
+            {
+                var button = new Button(() => RunTool(tool)) { text = tool.ButtonLabel };
+                button.AddToClassList("checklist-row__action");
+                button.SetEnabled(available);
+                row.Add(button);
+            }
+            return row;
+        }
+
+        void RunTool(SetupTool tool)
+        {
+            try
+            {
+                tool.Run();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                Debug.LogError($"[Creator SDK] {tool.Title} failed ({e.Message}).");
+            }
+            QueueRefresh();
         }
 
         void FixAll()

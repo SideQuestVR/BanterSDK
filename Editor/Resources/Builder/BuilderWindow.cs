@@ -153,62 +153,51 @@ public class BuilderWindow : EditorWindow
     }
 
 
+    // The Creator SDK menu has only Setup and Builder; creators find everything else in the Setup panel. Greenfield
+    // has no Setup panel, so its SDK tools live in its own menu.
 #if GREENFIELD_PROJECT
-    [MenuItem("Creator SDK/Tools/Compile C# Components")]
+    const string GreenfieldMenu = "Greenfield/Creator SDK/";
+
+    [MenuItem(GreenfieldMenu + "Compile C# Components")]
     public static void CompileAllComponents()
     {
         OnCompileAll.Invoke();
     }
-    [MenuItem("Creator SDK/Tools/Clear C# Components")]
+    [MenuItem(GreenfieldMenu + "Clear C# Components")]
     public static void ClearAllComponents()
     {
         OnClearAll.Invoke();
     }
-    [MenuItem("Creator SDK/Tools/Compile Injection")]
+    [MenuItem(GreenfieldMenu + "Compile Injection")]
     public static void CompileInjection()
     {
         OnCompileInjection.Invoke();
     }
-#else
-    [MenuItem("Creator SDK/Tools/Setup Layers")]
-    public static void SetupLayersAndTags()
-    {
-        InitialiseOnLoad.SetupLayersAndTags();
-    }
-#endif
-    [MenuItem("Creator SDK/Tools/Toggle Dev Tools")]
+
+    [MenuItem(GreenfieldMenu + "Toggle Dev Tools")]
     public static void ToggleDevTools()
     {
         BSStarterUpper.ToggleDevTools();
     }
 
-    [MenuItem("Creator SDK/Tools/Toggle Desktop Controller (Camera + Keyboard Input)")]
+    [MenuItem(GreenfieldMenu + "Toggle Desktop Controller (Camera + Keyboard Input)")]
     public static void ToggleAutoStart()
     {
         BSStarterUpper.ToggleAutoStart();
     }
 
-#if GREENFIELD_PROJECT
-    [MenuItem("Creator SDK/Tools/Configure Visual Scripting")]
+    [MenuItem(GreenfieldMenu + "Configure Visual Scripting")]
     public static void VisualScript()
     {
         OnVisualScript.Invoke();
     }
-#else 
-    [MenuItem("Creator SDK/Tools/Configure Visual Scripting")]
-    public static void VisualScript()
-    {
-        VsNodeGeneration.SetVSTypesAndAssemblies();
-    }
-#endif 
 
-#if GREENFIELD_PROJECT
-    [MenuItem("Creator SDK/Tools/Domain Reload")]
+    [MenuItem(GreenfieldMenu + "Domain Reload")]
     public static void DomainReload()
     {
         EditorUtility.RequestScriptReload();
     }
-#endif 
+#endif
 
     private SqEditorAppApi sq;
 
@@ -333,7 +322,10 @@ public class BuilderWindow : EditorWindow
         RunChecklist(forBuild: false, quiet: true);
     }
 
-    [MenuItem("Creator SDK/Tools/Clear All Asset Bundles")]
+    // Creators run it from the Setup panel's Tools section.
+#if GREENFIELD_PROJECT
+    [MenuItem(GreenfieldMenu + "Clear All Asset Bundles")]
+#endif
     public static void ClearAllAssetBundles()
     {
         // Fetch all asset paths in the project

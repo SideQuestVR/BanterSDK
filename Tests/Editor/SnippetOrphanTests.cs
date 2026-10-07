@@ -6,7 +6,7 @@ using NUnit.Framework;
 namespace BS.SDKEditor.Tests
 {
     /// <summary>
-    /// Creator SDK > Snippets > Recover Orphaned Snippets: which elements in index.html count as orphaned, which of
+    /// Recover orphaned snippets (the Setup panel's Tools): which elements in index.html count as orphaned, which of
     /// them a closed scene or prefab still uses, and which can get an object again.
     /// </summary>
     public class SnippetOrphanTests

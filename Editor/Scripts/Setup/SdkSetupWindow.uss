@@ -173,6 +173,19 @@
     opacity: 0.6;
 }
 
+/* -- Tools ------------------------------------------------------------------------ */
+
+/* Uses the checklist's heading, list and row classes; a row ends in a button or this switch. */
+.sdk-setup__tools {
+    margin-top: 22px;
+}
+
+.sdk-setup__tool-toggle {
+    flex-shrink: 0;
+    align-self: center;
+    margin: 0 0 0 10px;
+}
+
 /* -- Getting started ------------------------------------------------------------ */
 
 .sdk-setup__getting-started {

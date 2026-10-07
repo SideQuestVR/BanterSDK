@@ -13,7 +13,7 @@ An object can carry several Script Machines, each running its own graph. A graph
 
 ## Setup
 
-One-time setup: press **Generate nodes** on the Visual Scripting nodes item in the Setup panel (or run `Creator SDK/Tools/Configure Visual Scripting`). This configures the project's Visual Scripting settings and rebuilds the node library.
+One-time setup: press **Generate nodes** on the Visual Scripting nodes item in the Setup panel (`Creator SDK > Setup`). This configures the project's Visual Scripting settings and rebuilds the node library.
 
 Run it again if the BS nodes described below do not appear in the fuzzy finder, or after updating the SDK.
 

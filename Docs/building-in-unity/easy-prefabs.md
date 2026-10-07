@@ -73,4 +73,4 @@ Checks only report. A **Fix** button changes things only when clicked, with undo
 - **Errors marked "blocks the build"** stop it; other errors can be built past interactively.
 - **Unattended (batch) builds** stop on any error and never show dialogs.
 
-The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone. `Creator SDK > Tools > Run Build Checklist` runs it and logs the results to the Console.
+The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone.

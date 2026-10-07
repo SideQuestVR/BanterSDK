@@ -152,8 +152,7 @@ namespace BS.SDKEditor
             // exists in this repo precisely because that has happened. Fail instead.
             if (Application.isBatchMode)
             {
-                Debug.LogError($"{Tag} Publish blocked: {count} convex mesh collider(s) on static geometry. "
-                               + "Untick Convex on them, or run Creator SDK > Tools > Fix Convex Colliders.");
+                Debug.LogError($"{Tag} Publish blocked: {count} convex mesh collider(s) on static geometry. To fix: {HowToFix}.");
                 return false;
             }
 
@@ -176,7 +175,7 @@ namespace BS.SDKEditor
                 sb.AppendLine($"  ...and {findings.Count - shown} more (full list in the console)");
 
             sb.AppendLine();
-            sb.Append("To fix: untick Convex on each Mesh Collider, or run Creator SDK > Tools > Fix Convex Colliders.");
+            sb.Append($"To fix: {HowToFix}.");
             return sb.ToString();
         }
 
@@ -191,32 +190,7 @@ namespace BS.SDKEditor
             + "MeshCollider with non-kinematic Rigidbody is not supported\" error, then left behind "
             + "once the Rigidbody is gone.\n";
 
-        [MenuItem("Creator SDK/Tools/Validate Colliders")]
-        public static void ValidateMenu()
-        {
-            var report = new StringBuilder();
-            int count = FindInto(OpenSceneRoots(), report, null);
-            if (count == 0) Debug.Log($"{Tag} {report}");
-            else Debug.LogWarning($"{Tag} {report}");
-        }
-
-        /// <summary>
-        /// Unticks Convex on everything the validator flags. Deliberately a separate, explicit action
-        /// rather than something the publish gate does on its own, because it changes collision shape.
-        /// </summary>
-        [MenuItem("Creator SDK/Tools/Fix Convex Colliders")]
-        public static void FixMenu()
-        {
-            var findings = new List<Finding>();
-            int count = FindInto(OpenSceneRoots(), null, findings);
-            if (count == 0)
-            {
-                Debug.Log($"{Tag} Nothing to fix.");
-                return;
-            }
-
-            Untick(findings);
-        }
+        const string HowToFix = "untick Convex on each Mesh Collider, or press Untick Convex on the Builder's checklist";
 
         /// <summary>Unticks Convex on the given findings, with undo, and logs what changed.</summary>
         public static void Untick(IReadOnlyCollection<Finding> findings)

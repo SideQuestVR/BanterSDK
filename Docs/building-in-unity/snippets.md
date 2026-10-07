@@ -214,8 +214,8 @@ Design guidance:
 
 - **Removing the component removes its element.** Closing a scene does not: elements owned by scenes
   that are merely unloaded are left alone, because they still belong to that scene. If elements do
-  get stranded (an object deleted while scripts were reloading, say), `Creator SDK > Snippets > Recover
-  Orphaned Snippets...` lists the ones no scene or prefab uses. **Add to Scene** gives each a new object
+  get stranded (an object deleted while scripts were reloading, say), **Recover orphaned snippets** in
+  the Setup panel's Tools (`Creator SDK > Setup`) lists the ones no scene or prefab uses. **Add to Scene** gives each a new object
   at the origin, linked to its element, so every setting you made is kept; **Remove** deletes them from
   `index.html`. Elements a closed scene or a prefab still uses are listed but left alone.
 - **`index.html` is a project file.** It ships with your world and belongs in version control; the

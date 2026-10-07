@@ -59,7 +59,7 @@ namespace SideQuest.BundleAnalyzer
         ToolbarButton m_CancelButton;
         ProgressBar m_LoadProgressBar;
 
-        [MenuItem("Creator SDK/Tools/Bundle Analyzer")]
+        // Creators open it from the Builder's Analyze button (OpenAndAnalyze), which loads the open scene.
         public static void Open()
         {
             var window = GetWindow<BundleAnalyzerWindow>();

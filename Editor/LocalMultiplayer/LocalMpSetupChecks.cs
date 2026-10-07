@@ -3,8 +3,8 @@ using UnityEditor;
 
 namespace BS.LocalMultiplayer.Editor
 {
-    // Local multiplayer's items in the Setup panel's checklist. Like the rest of this assembly they only
-    // exist when local multiplayer can run (an Ora with the relay, no FlexaBody).
+    // Local multiplayer's items in the Setup panel: two checklist items, and its window in Tools. Like the rest of
+    // this assembly they only exist when local multiplayer can run (an Ora with the relay, no FlexaBody).
 
     /// <summary>The extra editor players are Multiplayer Play Mode virtual players.</summary>
     sealed class MppmSetupCheck : SetupCheck
@@ -78,5 +78,15 @@ namespace BS.LocalMultiplayer.Editor
             PlayerSettings.runInBackground = true;
             return true;
         }
+    }
+
+    /// <summary>The Local Multiplayer window, first in the Setup panel's Tools section.</summary>
+    sealed class LocalMultiplayerSetupTool : SetupTool
+    {
+        public override string Title => "Local Multiplayer";
+        public override string Description =>
+            "Test your world's multiplayer in the editor with up to three extra players, using Multiplayer Play Mode.";
+        public override int Order => 10;
+        public override void Run() => LocalMultiplayerWindow.Open();
     }
 }

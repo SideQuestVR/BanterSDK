@@ -23,8 +23,7 @@ namespace BS.SDKEditor
     /// <summary>
     /// The Visual Scripting node library for spaces: which assemblies and types the fuzzy finder offers nodes
     /// for (the SDK's components and the Unity APIs the client runs), and building the node database from
-    /// them. Run from the Setup panel's checklist, Creator SDK/Tools/Configure Visual Scripting and,
-    /// in Greenfield, its own code generation. It never shows a dialog, so it also runs in batch mode.
+    /// them. Run from the Setup panel's checklist and, in Greenfield, its own code generation. It never shows a dialog, so it also runs in batch mode.
     /// </summary>
     public static class VsNodeGeneration
     {

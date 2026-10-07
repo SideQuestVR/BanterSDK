@@ -59,7 +59,7 @@ Don't add a script tag for the SDK itself: the browser injects `window.BS` into 
 
 1. Give the ball something to land on: `GameObject > 3D Object > Plane` adds a floor at the origin.
 2. Press **Play**. Play mode serves the page and runs it against the open scene, and the ball drops onto the floor in front of you.
-3. Click the ball. To see what it logged, turn on `Creator SDK > Tools > Toggle Dev Tools` for the page's developer console.
+3. Click the ball. To see what it logged, open the page's developer console: in the Setup panel (`Creator SDK > Setup`), press **Open** on **Page developer tools** while the space is playing.
 
 ?> The ball is on the **UI** layer because the SDK's desktop player in Play mode only clicks the UI and Menu layers. In the headset every layer is clickable. See [Layers](../building-in-unity/layers.md).
 

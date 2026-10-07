@@ -37,6 +37,18 @@ The first time the SDK loads in a project, the **Setup** panel opens (`Creator S
 
 **Fix All** runs every Required and Recommended fix. Each item also has its own button, and hovering over an item explains why it's needed, what goes wrong without it and what its fix changes. Nothing in the project changes until you press a button. When local multiplayer is available, the list also offers Multiplayer Play Mode (Optional) and Run In Background (Recommended).
 
+Below the checklist, **Tools** has the SDK's other windows and switches (the `Creator SDK` menu only lists Setup and Builder):
+
+| Tool | What it does |
+|------|--------------|
+| Local Multiplayer | Opens the window for testing your world's multiplayer in the editor with extra players (when local multiplayer is available). |
+| Desktop controller | A switch for Play mode's fly camera and mouse and keyboard input. Takes effect the next time you press Play. |
+| Page developer tools | Opens the developer tools for your world's page: its console, network requests and elements. Works in Play mode. |
+| Recover orphaned snippets | Finds snippets in `index.html` that no scene or prefab uses; see [Snippets](../building-in-unity/snippets.md). |
+| Clear asset bundles | Removes the AssetBundle name from every asset and empties Unity's cache of downloaded asset bundles. |
+
+The Builder covers the rest: its checklist runs the build checks (and fixes convex colliders), and its **Analyze bundle** button opens the Bundle Analyzer.
+
 ## Samples
 
 Import samples via `Window > Package Manager > SideQuest Creator SDK > Samples`. Unity copies them into `Assets/Samples/`; open a sample's scene from there and press **Play** to try it.

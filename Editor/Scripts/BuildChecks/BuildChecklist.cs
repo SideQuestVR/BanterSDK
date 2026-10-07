@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using LongBunnyLabs;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -166,27 +165,6 @@ namespace BS.SDKEditor.BuildChecks
         {
             var scene = SceneManager.GetSceneByPath(scenePath);
             return scene.IsValid() && scene.isLoaded;
-        }
-
-        [MenuItem("Creator SDK/Tools/Run Build Checklist")]
-        static void RunFromMenu()
-        {
-            var scenePath = ProjectPrefs.GetString("BanterBuilder_ScenePath", "");
-            if (string.IsNullOrEmpty(scenePath))
-                scenePath = SceneManager.GetActiveScene().path;
-            if (string.IsNullOrEmpty(scenePath))
-            {
-                Debug.LogWarning($"{LogTag} Save the scene first, or pick it in the Builder.");
-                return;
-            }
-            try
-            {
-                Log(Run(scenePath, null, false, (title, done) => EditorUtility.DisplayProgressBar("Build checklist", title, done)));
-            }
-            finally
-            {
-                EditorUtility.ClearProgressBar();
-            }
         }
     }
 }

@@ -39,8 +39,12 @@ namespace BS.SDKEditor
 
         const string PROPERTY_NAME = "activeInputHandler";
         const string PROJECT_SETTINGS_PATH = "ProjectSettings/ProjectSettings.asset";
-        const string MENU_PATH = "Creator SDK/Tools/Fix Active Input Handling";
-        const string MENU_DISPLAY = "Creator SDK > Tools > Fix Active Input Handling";
+        // Where the creator can fix it: the Setup panel's Active Input Handling item, and the Builder's checklist.
+#if GREENFIELD_PROJECT
+        const string FIX_WHERE = "the Builder's checklist";
+#else
+        const string FIX_WHERE = "Creator SDK > Setup or the Builder's checklist";
+#endif
         const string RESTART_LATER = "[Banter] Active Input Handling is now \"Both\". Restart Unity when you're ready for it to take effect.";
 
         // -- Detection ----------------------------------------------------------
@@ -161,8 +165,8 @@ namespace BS.SDKEditor
 
         // -- Prompt -------------------------------------------------------------
 
-        [MenuItem(MENU_PATH)]
-        public static void PromptFromMenu()
+        /// <summary>Asks, then switches to Both, saves scenes and restarts Unity. The Builder checklist's fix.</summary>
+        public static void PromptAndFix()
         {
             var current = Current;
 
@@ -208,7 +212,7 @@ namespace BS.SDKEditor
 
         static string DeclineMessage(InputHandling current)
         {
-            return "[Banter] Active Input Handling is \"" + Label(current) + "\", not \"Both\". SDK Play Mode input may not work. Fix it with " + MENU_DISPLAY + ".";
+            return "[Banter] Active Input Handling is \"" + Label(current) + "\", not \"Both\". SDK Play Mode input may not work. Fix it from " + FIX_WHERE + ".";
         }
 
         /// <summary>Read-only build warning. Never changes settings or restarts Unity.</summary>
@@ -256,7 +260,7 @@ namespace BS.SDKEditor
                 if (!Application.isBatchMode)
                 {
                     EditorUtility.DisplayDialog("Could not check out Player Settings",
-                        assetPath + " is not editable. Check it out in your version control system, then run " + MENU_DISPLAY + " again.",
+                        assetPath + " is not editable. Check it out in your version control system, then fix it again from " + FIX_WHERE + ".",
                         "OK");
                 }
                 return false;
@@ -424,7 +428,7 @@ namespace BS.SDKEditor
 #if !GREENFIELD_PROJECT
     /// <summary>
     /// Gated off in the Greenfield host project, which owns its own project settings and is
-    /// deliberately already set to "Both". The menu item stays available everywhere.
+    /// deliberately already set to "Both". The Builder checklist's fix stays available everywhere.
     /// </summary>
     [InitializeOnLoad]
     internal static class ActiveInputHandlingBootstrap

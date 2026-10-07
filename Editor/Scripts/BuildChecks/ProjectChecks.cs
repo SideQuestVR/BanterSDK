@@ -133,7 +133,7 @@ namespace BS.SDKEditor.BuildChecks
                 .WithFix("Set to Both (restarts Unity)", _ =>
                 {
                     // Asks first, then saves scenes and restarts.
-                    ActiveInputHandlingCheck.PromptFromMenu();
+                    ActiveInputHandlingCheck.PromptAndFix();
                     return false;
                 }, needsLoadedScene: false, interactive: true));
         }
