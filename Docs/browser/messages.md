@@ -40,7 +40,7 @@ In Visual Scripting, use **On Receive Browser Message** (`Events > BS > Browser`
 
 ## From your space to a page
 
-Run a `postmessage` [action](bs-browser.md#actions) on the browser. The page receives it as a `bantermessage` event:
+Run a `postmessage` [action](bs-browser.md#actions) on the browser. The page receives it as a `bsmessage` event:
 
 ```js
 // Your space
@@ -52,7 +52,7 @@ browser.RunActions(JSON.stringify({
 ```html
 <!-- The page -->
 <script>
-  window.addEventListener("bantermessage", (e) => {
+  window.addEventListener("bsmessage", (e) => {
     const message = JSON.parse(e.detail.message);
     document.getElementById("title").textContent = message.show;
   });
@@ -94,7 +94,7 @@ screen.On("browser-message", (e) => {
     else setTimeout(() => toSpace(message), 100);
   }
   document.getElementById("add").addEventListener("click", () => toSpace({ event: "clicked" }));
-  window.addEventListener("bantermessage", (e) => {
+  window.addEventListener("bsmessage", (e) => {
     document.getElementById("count").textContent = JSON.parse(e.detail.message).count;
   });
 </script>
@@ -102,7 +102,7 @@ screen.On("browser-message", (e) => {
 
 ## Tips
 
-- **Keep messages on one line and small.** `JSON.stringify` output is fine. Messages pass through the browser on their way, and a very large one slows things down.
+- **Keep messages small.** Messages pass through the browser on their way, and a very large one slows things down.
 - **Avoid the `§` and `¶` characters**: they split messages on the way through.
 - **Say who's talking.** With several browsers, include a field such as `from` in every message.
 - **Ready before you send.** A message posted before the page has loaded its listener is lost. Have the page say it's ready first, as in the examples.

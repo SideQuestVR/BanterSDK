@@ -75,7 +75,7 @@ browser.RunActions(JSON.stringify({
 | `click2d` | `numParam1`, `numParam2`: x and y in page pixels | Presses the mouse at that point. It's a press only, so a page that waits for a full click may not react. |
 | `keypress` | `strParam1`: one character, or a key name such as `Return`, `Backspace` or `Space` | Types the key into the page. |
 | `runscript` | `strParam1`: JavaScript | Runs the code in the page. Its result only appears in the Unity Console. |
-| `postmessage` | `strParam1`: the message | Raises a `bantermessage` event in the page; see [Messages](messages.md#from-your-space-to-a-page). |
+| `postmessage` | `strParam1`: the message | Raises a `bsmessage` event in the page; see [Messages](messages.md#from-your-space-to-a-page). |
 
 - **Startup actions run before the page has loaded**, so begin them with a `delayseconds` long enough for it to load. There's no "page loaded" event; have the page [send a message](messages.md) when it's ready instead.
 - **Avoid the `§` character** in actions and messages: it's used to split messages on the way through and cuts them short.

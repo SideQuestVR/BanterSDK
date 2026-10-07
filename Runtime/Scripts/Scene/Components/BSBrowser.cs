@@ -84,8 +84,9 @@ namespace BS
         Coroutine _actionsCoroutine;
         List<BrowserAction> _pendingActions = new List<BrowserAction>();
 
-        const string BANTER_DISPATCH_MESSAGE_TEMPLATE =
-            @"window.dispatchEvent(new CustomEvent('bantermessage', { detail: { message: '{0}' } }));";
+        // The page gets a 'bsmessage' event. 'bantermessage', its name before the rename, still fires for older pages.
+        const string DISPATCH_MESSAGE_TEMPLATE =
+            @"(() => { const detail = { message: '{0}' }; window.dispatchEvent(new CustomEvent('bsmessage', { detail })); window.dispatchEvent(new CustomEvent('bantermessage', { detail })); })();";
 
 
         [Method]
@@ -292,8 +293,9 @@ namespace BS
                         {
                             try
                             {
-                                var msg = action.strParam1.Replace("\\", "\\\\").Replace("'", "\\'");
-                                _oraView.EvaluateJS(BANTER_DISPATCH_MESSAGE_TEMPLATE.Replace("{0}", msg));
+                                // It goes inside a JavaScript string literal, which a quote, backslash or line break would end or break.
+                                var msg = action.strParam1.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "\\r").Replace("\n", "\\n");
+                                _oraView.EvaluateJS(DISPATCH_MESSAGE_TEMPLATE.Replace("{0}", msg));
                             }
                             catch (Exception ex)
                             {
