@@ -18,7 +18,7 @@ obj.AddComponent(new BS.Light({
 }));
 ```
 
-![Light in the Unity Inspector](../images/components/light.png)
+![BS Light in the Unity Inspector](../images/components/light.png)
 
 </div>
 

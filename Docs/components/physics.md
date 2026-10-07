@@ -26,7 +26,7 @@ const rb = obj.AddComponent(new BS.Rigidbody({
 }));
 ```
 
-![Rigidbody in the Unity Inspector](../images/components/rigidbody.png)
+![BS Rigidbody in the Unity Inspector](../images/components/rigidbody.png)
 
 </div>
 
@@ -85,7 +85,7 @@ obj.AddComponent(new BS.BoxCollider({
 }));
 ```
 
-![Box Collider in the Unity Inspector](../images/components/box-collider.png)
+![BS Box Collider in the Unity Inspector](../images/components/box-collider.png)
 
 </div>
 
@@ -102,7 +102,7 @@ obj.AddComponent(new BS.SphereCollider({
 }));
 ```
 
-![Sphere Collider in the Unity Inspector](../images/components/sphere-collider.png)
+![BS Sphere Collider in the Unity Inspector](../images/components/sphere-collider.png)
 
 </div>
 
@@ -120,7 +120,7 @@ obj.AddComponent(new BS.CapsuleCollider({
 }));
 ```
 
-![Capsule Collider in the Unity Inspector](../images/components/capsule-collider.png)
+![BS Capsule Collider in the Unity Inspector](../images/components/capsule-collider.png)
 
 </div>
 
@@ -137,7 +137,7 @@ obj.AddComponent(new BS.MeshCollider({
 }));
 ```
 
-![Mesh Collider in the Unity Inspector](../images/components/mesh-collider.png)
+![BS Mesh Collider in the Unity Inspector](../images/components/mesh-collider.png)
 
 </div>
 

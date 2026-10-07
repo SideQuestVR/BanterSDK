@@ -23,7 +23,7 @@ obj.AddComponent(new BS.CharacterJoint({
 }));
 ```
 
-![Character Joint in the Unity Inspector](../images/components/character-joint.png)
+![BS Character Joint in the Unity Inspector](../images/components/character-joint.png)
 
 </div>
 
@@ -45,7 +45,7 @@ obj.AddComponent(new BS.FixedJoint({
 }));
 ```
 
-![Fixed Joint in the Unity Inspector](../images/components/fixed-joint.png)
+![BS Fixed Joint in the Unity Inspector](../images/components/fixed-joint.png)
 
 </div>
 
@@ -80,7 +80,7 @@ obj.AddComponent(new BS.HingeJoint({
 }));
 ```
 
-![Hinge Joint in the Unity Inspector](../images/components/hinge-joint.png)
+![BS Hinge Joint in the Unity Inspector](../images/components/hinge-joint.png)
 
 </div>
 
@@ -107,7 +107,7 @@ obj.AddComponent(new BS.SpringJoint({
 }));
 ```
 
-![Spring Joint in the Unity Inspector](../images/components/spring-joint.png)
+![BS Spring Joint in the Unity Inspector](../images/components/spring-joint.png)
 
 </div>
 
@@ -143,6 +143,6 @@ obj.AddComponent(new BS.ConfigurableJoint({
 }));
 ```
 
-![Configurable Joint in the Unity Inspector](../images/components/configurable-joint.png)
+![BS Configurable Joint in the Unity Inspector](../images/components/configurable-joint.png)
 
 </div>
