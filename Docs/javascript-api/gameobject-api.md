@@ -192,7 +192,7 @@ obj.On("trigger-exit", (e) => {
     console.log("Exited trigger:", e.detail.name);
 });
 
-// Browser component message
+// A message from the page in this object's BS Browser (a string; see Browser > Messages)
 obj.On("browser-message", (e) => {
     console.log("Message:", e.detail);
 });

@@ -53,7 +53,7 @@ Your world's JavaScript lives in its page, `Assets/WebRoot/index.html`, which th
 </html>
 ```
 
-Don't add a script tag for the SDK itself: the browser injects `window.BS` into every page.
+Don't add a script tag for the SDK itself: the space browser injects `window.BS` into your page.
 
 ## Run it
 

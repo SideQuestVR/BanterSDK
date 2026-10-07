@@ -155,7 +155,6 @@ namespace BS
                 // configured before anything on the object wakes.
                 if (_oraView == null)
                     _oraView = AddWebView(browser);
-                WebViewCreated?.Invoke(this, browser);
                 if (!browser.activeSelf)
                     browser.SetActive(true);
                 if (_oraView != null)
@@ -183,12 +182,6 @@ namespace BS
             }
             SetLoadedIfNot();
         }
-
-        /// <summary>
-        /// Raised when a browser has made its web view, while that object is still inactive, so the host app can add
-        /// its own components before they wake (Greenfield adds its VR keyboard handler).
-        /// </summary>
-        public static event Action<BSBrowser, GameObject> WebViewCreated;
 
         // UIToolkitInputHandler keeps its view in a private serialized field and doesn't look for one itself.
         static readonly System.Reflection.FieldInfo InputHandlerWebView =

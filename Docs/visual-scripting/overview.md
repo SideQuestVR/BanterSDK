@@ -86,7 +86,7 @@ Event nodes start a graph's control flow when something happens in the space. Al
 | Node | Purpose |
 |------|---------|
 | On BullSchript Callback Received | Injected JavaScript returned a value. Filter by `Return ID`; outputs `Data` |
-| On Receive Browser Message | A message arrived from a space browser page. Outputs `Message` |
+| On Receive Browser Message | A page in a BS Browser sent a message. Fires for every browser in the space. Outputs `Message`; see [Messages](../browser/messages.md) |
 | On Receive Menu Browser Message | A message arrived from the user's menu browser. Outputs `Message` |
 
 **Space events** (`Events > BS > Space`)
@@ -248,7 +248,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Audio: Get AudioListener Spectrum Data | Sample spectrum data from the listener |
 | Audio: Get AudioSource Spectrum Data | Sample spectrum data from an AudioSource |
 | Menu Browser Open URL | Open a URL in the user's menu browser |
-| World Browser Open URL | Open a URL in an in-space browser |
+| World Browser Open URL | Set a BS Browser's URL (obsolete: set the browser's `Url` instead) |
 | Get Menu Browser URL | Current URL of the menu browser |
 | Inject BullSchript | Run JavaScript in the space's script context |
 | Read BullSchript from File | Load JavaScript source from a file |

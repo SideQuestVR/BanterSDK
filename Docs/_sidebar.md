@@ -29,6 +29,12 @@
   - [VR Interaction](/components/vr-interaction.md)
   - [Special](/components/special.md)
   - [UI System](/components/ui-system.md)
+- Browser
+  - [Overview](/browser/overview.md)
+  - [The BS Browser](/browser/bs-browser.md)
+  - [Messages](/browser/messages.md)
+  - [Textures](/browser/textures.md)
+  - [The Space Browser](/browser/space-browser.md)
 - Visual Scripting
   - [Visual Scripting](/visual-scripting/overview.md)
   - [Advanced: ScriptGraphBridge](/visual-scripting/script-graph-bridge.md)

@@ -80,7 +80,7 @@ Each object is one SDK component, set up for the usual case:
 
 ### Browser (`BSBrowser`)
 
-Shows a web page in the space. Set `url` to your page. The page is `pageWidth` × `pageHeight` pixels (1280 × 720) and is drawn at 1300 pixels per metre, so about 0.98 × 0.55 m, centred on the object and read from its back (−Z). Change the page size to resize it, or scale the object; **Pixels Per Unit** doesn't change it. The page loads in Play mode; until then the blue outline shows where it will be. Clicks and scrolling reach the page. Scripts can resize it and show its page on other surfaces: see [Browser](../components/media.md#browser).
+Shows a web page in the space. Set `url` to your page. The page is `pageWidth` × `pageHeight` pixels (1280 × 720) and is drawn at 1300 pixels per metre, so about 0.98 × 0.55 m, centred on the object and read from its back (−Z). Change the page size to resize it, or scale the object; **Pixels Per Unit** doesn't change it. The page loads in Play mode; until then the blue outline shows where it will be. Clicks and scrolling reach the page. For messages, textures and everything else browsers can do, see the [Browser](../browser/overview.md) section.
 
 ### Portal (`BSPortal`)
 
