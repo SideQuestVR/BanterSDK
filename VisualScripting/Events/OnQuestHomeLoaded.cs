@@ -1,6 +1,7 @@
 using Unity.VisualScripting;
 using BS;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace BS.VisualScripting
 {
@@ -22,6 +23,18 @@ namespace BS.VisualScripting
 
         protected override bool register => true;
 
+        // Per graph instance: the BSQuestHome listened to and the listener, so StopListening can remove it.
+        public class QuestHomeData : Data
+        {
+            public BSQuestHome questHome;
+            public UnityAction<bool, string> onLoaded;
+        }
+
+        public override IGraphElementData CreateData()
+        {
+            return new QuestHomeData();
+        }
+
         public override EventHook GetHook(GraphReference reference)
         {
             return new EventHook("OnQuestHomeLoaded");
@@ -39,6 +52,9 @@ namespace BS.VisualScripting
         {
             base.StartListening(stack);
 
+            var data = stack.GetElementData<QuestHomeData>(this);
+            if (data.onLoaded != null) return;
+
             var questHomeGo = Flow.FetchValue<GameObject>(questHomeObject, stack.ToReference());
             if (questHomeGo != null)
             {
@@ -46,7 +62,8 @@ namespace BS.VisualScripting
                 if (questHome != null)
                 {
                     // Subscribe to the loaded UnityEvent
-                    questHome.loaded.AddListener((bool loadSuccess, string message) =>
+                    data.questHome = questHome;
+                    data.onLoaded = (bool loadSuccess, string message) =>
                     {
                         // Trigger the visual scripting event using EventBus
                         var args = new QuestHomeLoadedEventArgs
@@ -57,13 +74,28 @@ namespace BS.VisualScripting
                         };
 
                         EventBus.Trigger("OnQuestHomeLoaded", args);
-                    });
+                    };
+                    questHome.loaded.AddListener(data.onLoaded);
                 }
                 else
                 {
                     Debug.LogWarning("[OnQuestHomeLoaded] No BSQuestHome component found on GameObject");
                 }
             }
+        }
+
+        public override void StopListening(GraphStack stack)
+        {
+            base.StopListening(stack);
+
+            var data = stack.GetElementData<QuestHomeData>(this);
+            if (data.onLoaded == null) return;
+            if (data.questHome != null)
+            {
+                data.questHome.loaded.RemoveListener(data.onLoaded);
+            }
+            data.questHome = null;
+            data.onLoaded = null;
         }
 
         protected override bool ShouldTrigger(Flow flow, QuestHomeLoadedEventArgs args)

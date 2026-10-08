@@ -153,10 +153,27 @@ namespace BS
         }
 
         internal override void UpdateStuff() { }
-        internal override void StartStuff() { }
+        internal override void StartStuff()
+        {
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has instantiated the path set there yet (see
+                // valuesApplied). Without one there is nothing to load, and it counts as loaded
+                // rather than failing the space's load.
+                if (string.IsNullOrEmpty(path))
+                {
+                    SetLoadedIfNot();
+                }
+                else
+                {
+                    ReSetup();
+                }
+            }
+        }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             SetupKitAsset();
         }
         // BANTER COMPILED CODE 

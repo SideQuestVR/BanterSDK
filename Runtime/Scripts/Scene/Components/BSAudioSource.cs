@@ -29,7 +29,7 @@ namespace BS
         [Tooltip("Bypasses any applied audio effects.")]
         [See(initial = "false")][SerializeField] internal bool bypassEffects = false;
 
-        [Tooltip("Bypasses any listener effects such as 3D audio spatialization.")]
+        [Tooltip("Bypasses the global effects on the AudioListener (not 3D spatialisation, which spatialBlend controls).")]
         [See(initial = "false")][SerializeField] internal bool bypassListenerEffects = false;
 
         [Tooltip("Bypasses reverb zones applied to the audio source.")]
@@ -93,11 +93,38 @@ namespace BS
 
         internal override void StartStuff()
         {
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has applied the fields yet (see valuesApplied).
+                _source = GetComponent<AudioSource>();
+                if (_source == null)
+                {
+                    // This component adds the AudioSource, so its fields configure it.
+                    ReSetup();
+                }
+                else
+                {
+                    // An AudioSource already on the object is the creator's own (it holds the clip) and
+                    // keeps its settings; the fields are read back from it so JS sees the values in effect.
+                    volume = _source.volume;
+                    pitch = _source.pitch;
+                    mute = _source.mute;
+                    loop = _source.loop;
+                    bypassEffects = _source.bypassEffects;
+                    bypassListenerEffects = _source.bypassListenerEffects;
+                    bypassReverbZones = _source.bypassReverbZones;
+                    playOnAwake = _source.playOnAwake;
+                    spatialBlend = _source.spatialBlend;
+                    valuesApplied = true;
+                    SyncProperties(true);
+                }
+            }
             SetupAudio(null);
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             SetupAudio(changedProperties);
         }
 
@@ -131,6 +158,24 @@ namespace BS
             if (changedProperties?.Contains(PropertyName.pitch) ?? false)
             {
                 _source.pitch = pitch;
+            }
+            if (changedProperties?.Contains(PropertyName.bypassEffects) ?? false)
+            {
+                _source.bypassEffects = bypassEffects;
+            }
+            if (changedProperties?.Contains(PropertyName.bypassListenerEffects) ?? false)
+            {
+                _source.bypassListenerEffects = bypassListenerEffects;
+            }
+            if (changedProperties?.Contains(PropertyName.bypassReverbZones) ?? false)
+            {
+                _source.bypassReverbZones = bypassReverbZones;
+            }
+            if (changedProperties?.Contains(PropertyName.playOnAwake) ?? false)
+            {
+                // Unity reads playOnAwake when the AudioSource is enabled, so this governs the next
+                // time the object is enabled, not a clip that is already playing.
+                _source.playOnAwake = playOnAwake;
             }
             SetLoadedIfNot();
         }

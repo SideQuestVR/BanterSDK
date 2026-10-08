@@ -127,7 +127,7 @@ namespace BS.SDKEditor
                             && !EditorSceneManager.IsPreviewSceneObject(c))
                 .ToList();
 
-            ResolveDuplicateIds(components, justValidated);
+            var duplicatedFrom = ResolveDuplicateIds(components, justValidated);
 
             foreach (var component in components)
             {
@@ -160,7 +160,15 @@ namespace BS.SDKEditor
                         SnippetHtmlSync.Upsert(component.InstanceId, new XElement(stashed));
                         continue;
                     }
-                    var sibling = SnippetHtmlSync.FindAnyBySlug(component.Slug);
+                    // A duplicate copies the element of the placement it was duplicated from, not
+                    // just the first with its slug.
+                    XElement sibling = null;
+                    if (duplicatedFrom.TryGetValue(component, out var sourceId))
+                    {
+                        sibling = SnippetHtmlSync.Get(sourceId);
+                        if (sibling != null && (string)sibling.Attribute("name") != component.Slug) sibling = null;
+                    }
+                    sibling ??= SnippetHtmlSync.FindAnyBySlug(component.Slug);
                     if (sibling != null)
                     {
                         SnippetHtmlSync.Upsert(component.InstanceId, new XElement(sibling));
@@ -202,8 +210,10 @@ namespace BS.SDKEditor
                     _registry[component.InstanceId] = (component, component.gameObject.scene.path);
         }
 
-        static void ResolveDuplicateIds(List<BSSnippet> components, List<BSSnippet> justValidated)
+        /// <returns>Each re-id'd duplicate mapped to the id it was copied from.</returns>
+        static Dictionary<BSSnippet, string> ResolveDuplicateIds(List<BSSnippet> components, List<BSSnippet> justValidated)
         {
+            var duplicatedFrom = new Dictionary<BSSnippet, string>();
             foreach (var group in components.Where(c => !string.IsNullOrEmpty(c.InstanceId)).GroupBy(c => c.InstanceId))
             {
                 if (group.Count() < 2) continue;
@@ -215,9 +225,11 @@ namespace BS.SDKEditor
                 {
                     if (loser == winner) continue;
                     AssignNewId(loser);
-                    // The per-component pass clones the sibling element for the new id.
+                    // The per-component pass clones the original's element for the new id.
+                    duplicatedFrom[loser] = group.Key;
                 }
             }
+            return duplicatedFrom;
         }
 
         static void AssignNewId(BSSnippet component)

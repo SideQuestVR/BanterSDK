@@ -20,4 +20,10 @@ public class NumberFormat
         //     return null;
         // }
     }
+
+    // The other direction: a number written onto the page bus. Concatenating a float uses the current
+    // culture, which on comma-decimal locales sends "1,5" (the page's parseFloat reads 1).
+    public static string Format(float val) => val.ToString(CultureInfo.InvariantCulture);
+
+    public static string Format(float val, string format) => val.ToString(format, CultureInfo.InvariantCulture);
 }

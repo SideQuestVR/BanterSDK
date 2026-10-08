@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/UserStateSdkBridge.cs" sha256="5e088f3e9c284b785f8bb228090c7767cba4faffc13e7547dee61eef8ff588be" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/UserStateSdkBridge.cs" sha256="a67ac51109ab63ca3b4175d8d564934f607379193c4330f5bd904a504823dfb5" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class UserStateModule ticks; the service is handed
 // in instead of polled from UserStateService.Instance; BSScene.Instance() -> BSScene.Current; the LINQ user lookups are
 // plain loops with the same first-match semantics (the replay drain runs every frame while anything is pending); the
@@ -279,7 +279,11 @@ namespace BS.LocalMultiplayer.State
                 case "get":
                     {
                         string target = string.IsNullOrEmpty(userId) ? _service.OwnRoomSessionId : ResolveRoomSessionId(userId);
-                        bool found = _service.TryGetProp(target, key, out var value, scope);
+                        // Both scopes, like getAll and the VS read: a read names no scope, so a value
+                        // written with moderatorsCanWrite would otherwise never be found.
+                        var otherScope = scope == UserPropScope.OwnerOnly ? UserPropScope.ModeratorWritable : UserPropScope.OwnerOnly;
+                        bool found = _service.TryGetProp(target, key, out var value, scope)
+                                     || _service.TryGetProp(target, key, out value, otherScope);
                         var reply = new JObject { ["ok"] = true };
                         if (found) reply["value"] = value;
                         request.Respond(reply.ToString(Formatting.None));

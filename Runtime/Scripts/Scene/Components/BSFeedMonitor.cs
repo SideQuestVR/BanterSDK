@@ -16,7 +16,7 @@ namespace BS
      * Deliberately NOT a BSComponentBase / [WatchComponent] (see BSCameraFeed). Field names are
      * serialized into published worlds — never rename them.
      */
-    [AddComponentMenu("Banter/Feed Monitor")]
+    [AddComponentMenu("BS/Feed Monitor")]
     public class BSFeedMonitor : MonoBehaviour
     {
         [Tooltip("The BSCameraFeed id to show, or \"program\" / \"preview\" for the newsroom buses.")]

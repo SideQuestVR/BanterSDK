@@ -26,7 +26,7 @@ namespace BS
     [RequireComponent(typeof(BSObjectId))]
     public class BSSphereCollider : UnityComponentBase
     {
-        [See(initial = "false")][SerializeField] internal bool isTrigger;
+        [See(initial = "false")][SerializeField] internal bool isTrigger = false;
         [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
         // BANTER COMPILED CODE 
         public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }

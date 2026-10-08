@@ -48,7 +48,7 @@ namespace BS
     public class BSBrowser : BSComponentBase
     {
         [Tooltip("The URL of the webpage to display")]
-        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "")][SerializeField] internal string url = "";
 
         [Tooltip("The number of mipmaps to use for the browser texture")]
         [See(initial = "4")][SerializeField] internal int mipMaps = 4;
@@ -62,8 +62,8 @@ namespace BS
         [Tooltip("The height of the browser page in pixels")]
         [See(initial = "576")][SerializeField] internal float pageHeight = 720;
 
-        [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
-        [See(initial = "")][SerializeField] internal string actions;
+        [Tooltip("Actions to run as soon as the browser is created, before the page has loaded (start with a delayseconds action to wait for it), as JSON, e.g. {\"actions\":[{\"actionType\":\"click2d\",\"numParam1\":0.5,\"numParam2\":0.5}]}")]
+        [See(initial = "")][SerializeField] internal string actions = "";
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         /// <summary>
         /// This browser's texture: its first frame, and again whenever a resize replaces it. The same
@@ -84,8 +84,9 @@ namespace BS
         Coroutine _actionsCoroutine;
         List<BrowserAction> _pendingActions = new List<BrowserAction>();
 
-        const string BANTER_DISPATCH_MESSAGE_TEMPLATE =
-            @"window.dispatchEvent(new CustomEvent('bantermessage', { detail: { message: '{0}' } }));";
+        // The page gets a 'bsmessage' event. 'bantermessage', its name before the rename, still fires for older pages.
+        const string DISPATCH_MESSAGE_TEMPLATE =
+            @"(() => { const detail = { message: '{0}' }; window.dispatchEvent(new CustomEvent('bsmessage', { detail })); window.dispatchEvent(new CustomEvent('bantermessage', { detail })); })();";
 
 
         [Method]
@@ -155,7 +156,6 @@ namespace BS
                 // configured before anything on the object wakes.
                 if (_oraView == null)
                     _oraView = AddWebView(browser);
-                WebViewCreated?.Invoke(this, browser);
                 if (!browser.activeSelf)
                     browser.SetActive(true);
                 if (_oraView != null)
@@ -183,12 +183,6 @@ namespace BS
             }
             SetLoadedIfNot();
         }
-
-        /// <summary>
-        /// Raised when a browser has made its web view, while that object is still inactive, so the host app can add
-        /// its own components before they wake (Greenfield adds its VR keyboard handler).
-        /// </summary>
-        public static event Action<BSBrowser, GameObject> WebViewCreated;
 
         // UIToolkitInputHandler keeps its view in a private serialized field and doesn't look for one itself.
         static readonly System.Reflection.FieldInfo InputHandlerWebView =
@@ -299,8 +293,9 @@ namespace BS
                         {
                             try
                             {
-                                var msg = action.strParam1.Replace("\\", "\\\\").Replace("'", "\\'");
-                                _oraView.EvaluateJS(BANTER_DISPATCH_MESSAGE_TEMPLATE.Replace("{0}", msg));
+                                // It goes inside a JavaScript string literal, which a quote, backslash or line break would end or break.
+                                var msg = action.strParam1.Replace("\\", "\\\\").Replace("'", "\\'").Replace("\r", "\\r").Replace("\n", "\\n");
+                                _oraView.EvaluateJS(DISPATCH_MESSAGE_TEMPLATE.Replace("{0}", msg));
                             }
                             catch (Exception ex)
                             {

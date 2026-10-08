@@ -24,7 +24,7 @@ namespace BS
     ```js
         const radius = 2;
         const gameObject = new BS.GameObject("MySpawn");
-        const spawn = await gameObject.AddComponent(new BS.BSSpawn(radius));
+        const spawn = await gameObject.AddComponent(new BS.Spawn(radius));
     ```
 
     */

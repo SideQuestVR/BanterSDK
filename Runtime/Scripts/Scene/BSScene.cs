@@ -392,6 +392,21 @@ namespace BS
                  EventBus.Trigger("OnUserLeft", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
              }, $"{nameof(BSScene)}.{nameof(RemoveUser)}"));
         }
+        /// <summary>
+        /// The user a collider belongs to, or null. Greenfield keeps the local UserData on its own
+        /// [LocalUser] object rather than above the rig's colliders, so a collider tagged as the local
+        /// character (BSLocalCharacter, ...Head, ...LeftHand, ...RightHand, ...Feet) is the local user.
+        /// </summary>
+        public UserData GetUserFromCollider(Collider other)
+        {
+            if (other == null) return null;
+            var user = other.GetComponentInParent<UserData>();
+            if (user == null && other.tag.StartsWith("BSLocalCharacter", StringComparison.Ordinal))
+            {
+                user = users.FirstOrDefault(u => u != null && u.isLocal);
+            }
+            return user;
+        }
         public void LookedAtMirror()
         {
             LookAtMirror = LookAtMirror + 0.001f;
@@ -535,17 +550,22 @@ namespace BS
         public void ObjectTextureToBase64(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
-            var obj = GetObjectByBid(parts[0]);
-            var extra = "null";
-            if (obj.gameObject != null)
+            // The page sends the object's unityId (its instance id), like every other object request; a lookup
+            // by BSObjectId.Id only matched objects whose Id happened to equal it.
+            var gameObject = int.TryParse(parts[0], out var oid) ? GetGameObject(oid) : null;
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
             {
-                var b64 = GameObjectTextureToBase64(obj.gameObject, int.Parse(parts[1]));
-                if (b64 != null)
+                var extra = "null";
+                if (gameObject != null && parts.Length > 1 && int.TryParse(parts[1], out var materialIndex))
                 {
-                    extra = b64;
+                    var b64 = GameObjectTextureToBase64(gameObject, materialIndex);
+                    if (b64 != null)
+                    {
+                        extra = b64;
+                    }
                 }
-            }
-            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OBJECT_TEX_TO_BASE_64 + MessageDelimiters.SECONDARY + extra);
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OBJECT_TEX_TO_BASE_64 + MessageDelimiters.SECONDARY + extra);
+            }, $"{nameof(BSScene)}.{nameof(ObjectTextureToBase64)}"));
         }
         public void SelectFile(string msg, int reqId)
         {
@@ -802,11 +822,18 @@ namespace BS
                 }
                 else
                 {
-                    var user = users.FirstOrDefault(x => id == null ? x.isLocal : x.id == id);
+                    // Owner-writes-only, as in the app: only the local user's props, whatever id is named.
+                    var user = users.FirstOrDefault(x => x != null && x.isLocal);
+                    if (user != null && !string.IsNullOrEmpty(id) && id != user.id && id != user.uid)
+                    {
+                        Debug.LogWarning("[Banter] Ignoring SetUserProps aimed at another user: user props are owner-writes-only.");
+                        user = null;
+                    }
                     if (user != null && props.Length > 0)
                     {
                         user.SetProps(props);
-                        UserPropChanged(props, user.id);
+                        // uid, as Greenfield's bridge sends: the page keys scene.users by uid.
+                        UserPropChanged(props, user.uid);
                     }
                 }
 #endif
@@ -1329,7 +1356,8 @@ namespace BS
             var obj = go.GetComponent<BSObjectId>();
             var cid = comp.GetInstanceID();
             BSComponent banterComp = null;
-            if (obj != null)
+            // AddJsComponent registers components on inactive objects itself; their Awake comes later.
+            if (obj != null && !obj.mainThreadComponentMap.ContainsKey(cid))
             {
                 obj.mainThreadComponentMap.Add(cid, comp);
                 comp.loaded.AddListener((success, message) =>
@@ -1364,7 +1392,7 @@ namespace BS
                     {
                         banterComp.progress = progress;
                     }
-                    link.Send(APICommands.EVENT + APICommands.PROGRESS + MessageDelimiters.PRIMARY + cid + MessageDelimiters.SECONDARY + progress);
+                    link.Send(APICommands.EVENT + APICommands.PROGRESS + MessageDelimiters.PRIMARY + cid + MessageDelimiters.SECONDARY + NumberFormat.Format(progress));
                 });
             }
         }
@@ -1489,7 +1517,8 @@ namespace BS
                 switch (paramType)
                 {
                     case PropertyType.String:
-                        paramList.Add(paramParts[1]);
+                        // The JS side wrote it with encodeWireText (generated components).
+                        paramList.Add(WireText.Decode(paramParts[1]));
                         break;
                     case PropertyType.Bool:
                         paramList.Add(paramParts[1] == "1");
@@ -1512,55 +1541,104 @@ namespace BS
                         var vec4Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
                         paramList.Add(new Vector4(NumberFormat.Parse(vec4Parts[0]), NumberFormat.Parse(vec4Parts[1]), NumberFormat.Parse(vec4Parts[2]), NumberFormat.Parse(vec4Parts[3])));
                         break;
+                    case PropertyType.Quaternion:
+                        var quatParts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
+                        paramList.Add(new Quaternion(NumberFormat.Parse(quatParts[0]), NumberFormat.Parse(quatParts[1]), NumberFormat.Parse(quatParts[2]), NumberFormat.Parse(quatParts[3])));
+                        break;
                 }
             }
 
-            await banterComponent.CallMethod(methodName, paramList, (returnValue) =>
+            // Every call answers its request, or the page's await on a void method never settles:
+            // "!mr!" alone for no return value, "!mr!¶<value>" otherwise, an error if the call threw.
+            try
             {
-                if (returnValue != null)
+                // JS sends a Quaternion argument as a Vector4; turn it back into one where the target method takes a
+                // Quaternion, or typed dispatch (Rigidbody.MoveRotation) never matches. Main thread: the component map isn't thread-safe.
+                if (paramList.Exists(p => p is Vector4))
                 {
-                    var strReturnValue = returnValue;
-                    if (returnValue is bool)
-                    {
-                        strReturnValue = PropertyType.Bool + MessageDelimiters.TERTIARY + ((bool)returnValue ? "1" : "0");
-                    }
-                    else if (returnValue is float)
-                    {
-                        strReturnValue = PropertyType.Float + MessageDelimiters.TERTIARY + ((float)returnValue).ToString(CultureInfo.InvariantCulture.NumberFormat);
-                    }
-                    else if (returnValue is int)
-                    {
-                        strReturnValue = PropertyType.Int + MessageDelimiters.TERTIARY + ((int)returnValue).ToString(CultureInfo.InvariantCulture.NumberFormat);
-                    }
-                    else if (returnValue is Vector2)
-                    {
-                        var vec = (Vector2)returnValue;
-                        strReturnValue = PropertyType.Vector2 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat);
-                    }
-                    else if (returnValue is Vector3)
-                    {
-                        var vec = (Vector3)returnValue;
-                        strReturnValue = PropertyType.Vector3 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.z.ToString(CultureInfo.InvariantCulture.NumberFormat);
-                    }
-                    else if (returnValue is Vector4)
-                    {
-                        var vec = (Vector4)returnValue;
-                        strReturnValue = PropertyType.Vector4 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.z.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.w.ToString(CultureInfo.InvariantCulture.NumberFormat);
-                    }
-                    else if (returnValue is Quaternion)
-                    {
-                        var vec = (Quaternion)returnValue;
-                        strReturnValue = PropertyType.Vector4 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.z.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.w.ToString(CultureInfo.InvariantCulture.NumberFormat);
-                    }
-                    link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.METHOD_RETURN + MessageDelimiters.PRIMARY + strReturnValue);
+                    await banterComponent.ObjectOnMainThread(component => Vector4ParamsToQuaternions(component, methodName, paramList));
                 }
-            });
+
+                await banterComponent.CallMethod(methodName, paramList, (returnValue) =>
+                {
+                    if (returnValue == null)
+                    {
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.METHOD_RETURN);
+                    }
+                    else
+                    {
+                        var strReturnValue = returnValue;
+                        if (returnValue is bool)
+                        {
+                            strReturnValue = PropertyType.Bool + MessageDelimiters.TERTIARY + ((bool)returnValue ? "1" : "0");
+                        }
+                        else if (returnValue is float)
+                        {
+                            strReturnValue = PropertyType.Float + MessageDelimiters.TERTIARY + ((float)returnValue).ToString(CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        else if (returnValue is int)
+                        {
+                            strReturnValue = PropertyType.Int + MessageDelimiters.TERTIARY + ((int)returnValue).ToString(CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        else if (returnValue is Vector2)
+                        {
+                            var vec = (Vector2)returnValue;
+                            strReturnValue = PropertyType.Vector2 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        else if (returnValue is Vector3)
+                        {
+                            var vec = (Vector3)returnValue;
+                            strReturnValue = PropertyType.Vector3 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.z.ToString(CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        else if (returnValue is Vector4)
+                        {
+                            var vec = (Vector4)returnValue;
+                            strReturnValue = PropertyType.Vector4 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.z.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.w.ToString(CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        else if (returnValue is Quaternion)
+                        {
+                            var vec = (Quaternion)returnValue;
+                            strReturnValue = PropertyType.Vector4 + MessageDelimiters.TERTIARY + vec.x.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.y.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.z.ToString(CultureInfo.InvariantCulture.NumberFormat) + MessageDelimiters.TERTIARY + vec.w.ToString(CultureInfo.InvariantCulture.NumberFormat);
+                        }
+                        else if (returnValue is IConvertible)
+                        {
+                            // Anything else goes raw; numbers (double, long, ...) still in the invariant culture.
+                            strReturnValue = Convert.ToString(returnValue, CultureInfo.InvariantCulture);
+                        }
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.METHOD_RETURN + MessageDelimiters.PRIMARY + strReturnValue);
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[Banter] CallMethod {methodName} failed: {e}");
+                SendError(reqId, $"CALL_METHOD: {methodName} failed: {e.Message}");
+            }
             // }
             // catch (Exception ex)
             // {
             //     Debug.LogError("CallMethodOnJsComponent threw an exception: "  +full);
             //     Debug.LogException(ex);
             // }
+        }
+        static void Vector4ParamsToQuaternions(BSComponentBase component, string methodName, List<object> parameters)
+        {
+            if (component == null) return;
+            var overloads = component.GetType()
+                .GetMethods(System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic)
+                .Where(m => m.Name == methodName)
+                .Select(m => m.GetParameters())
+                .Where(p => p.Length == parameters.Count)
+                .ToList();
+            for (int i = 0; i < parameters.Count; i++)
+            {
+                if (parameters[i] is Vector4 v
+                    && overloads.Any(p => p[i].ParameterType == typeof(Quaternion))
+                    && !overloads.Any(p => p[i].ParameterType == typeof(Vector4)))
+                {
+                    parameters[i] = new Quaternion(v.x, v.y, v.z, v.w);
+                }
+            }
         }
         public void SetJsObjectActive(string msg, int reqId)
         {
@@ -1737,8 +1815,8 @@ namespace BS
                              }
                          }
                          var center = bounds.center;
-                         var extents = bounds.extents;
-                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + center.x + MessageDelimiters.PRIMARY + center.y + MessageDelimiters.PRIMARY + center.z + MessageDelimiters.PRIMARY + extents.x + MessageDelimiters.PRIMARY + extents.y + MessageDelimiters.PRIMARY + extents.z);
+                         var size = bounds.size;
+                         link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GET_BOUNDS + MessageDelimiters.PRIMARY + NumberFormat.Format(center.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(center.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(center.z) + MessageDelimiters.PRIMARY + NumberFormat.Format(size.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(size.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(size.z));
                      }
                      else
                      {
@@ -1768,7 +1846,16 @@ namespace BS
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
-                     banterObject.tag = msgParts[1];
+                     try
+                     {
+                         banterObject.tag = msgParts[1];
+                     }
+                     catch (UnityException e)
+                     {
+                         // A tag missing from the project's tag list throws; answer, or the page's await hangs.
+                         SendError(reqId, "SET_TAG: " + e.Message);
+                         return;
+                     }
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BSScene)}.{nameof(SetJsObjectName)}"));
             }
@@ -1858,7 +1945,10 @@ namespace BS
                  }
 
                  if (didHit)
-                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + hit.point.x + MessageDelimiters.PRIMARY + hit.point.y + MessageDelimiters.PRIMARY + hit.point.z + MessageDelimiters.PRIMARY + hit.normal.x + MessageDelimiters.PRIMARY + hit.normal.y + MessageDelimiters.PRIMARY + hit.normal.z);
+                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.z) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.z));
+                 else
+                     // A miss still answers the request (bare command, no hit data), or the page's promise never settles.
+                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST);
              }, $"{nameof(BSScene)}.{nameof(PhysicsRaycast)}"));
         }
         public void InstantiateJsObject(string msg, int reqId)
@@ -1907,7 +1997,11 @@ namespace BS
 
                     var objectId = newObject.GetComponent<BSObjectId>();
                     objectId.GenerateId(true);
-                    newObject.transform.parent = settings.parentTransform;
+                    // Only an unparented copy goes under the scene root; a requested parent stays.
+                    if (!hasParent && !hasParentAndWorldPosStays && !hasPoseAndParent)
+                    {
+                        newObject.transform.parent = settings.parentTransform;
+                    }
                     AddBanterObject(newObject, objectId);
                     var banterObject = GetBanterObject(newObject.GetInstanceID());
                     await new WaitForEndOfFrame();
@@ -1979,10 +2073,22 @@ namespace BS
                      SendError(reqId, "ADD_COMPONENT: Component type not found: " + componentType);
                      return;
                  }
+                 // A component added to an inactive object doesn't Awake, and Awake is what registers it.
+                 var inactive = !gameObject.activeInHierarchy;
+                 if (inactive)
+                 {
+                     RegisterComponentOnMainThread(gameObject, comp);
+                 }
                  comp.jsId = linkId;
                  var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), linkId, componentType);
                  if (banterComp != null)
                  {
+                     // Nor does it Start, and some components only report loaded from Start: hidden content
+                     // mustn't hold the scene's load gate.
+                     if (inactive)
+                     {
+                         banterComp.loaded = true;
+                     }
                      link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
                      APICommands.COMPONENT_ADDED + MessageDelimiters.PRIMARY + banterComp.banterObject.oid + MessageDelimiters.PRIMARY + banterComp.cid +
                      MessageDelimiters.PRIMARY + (int)banterComp.type + MessageDelimiters.PRIMARY + linkId);
@@ -2014,7 +2120,8 @@ namespace BS
                     switch (type)
                     {
                         case PropertyType.String:
-                            var valString = propParts[2];
+                            // The JS side wrote it with encodeWireText (generated components).
+                            var valString = WireText.Decode(propParts[2]);
                             updates.Add(new BSString() { n = name, x = valString });
                             banterComp.UpdateProperty(name, valString);
                             break;
@@ -2100,6 +2207,10 @@ namespace BS
                      SendObjectUpdate(banterObject, reqId);
                  }, $"{nameof(BSScene)}.{nameof(SetParent)}"));
             }
+            else
+            {
+                SendError(reqId, "SET_PARENT: Object not found: " + (banterObject == null ? msgParts[1] : msgParts[0]));
+            }
         }
         public async Task WaitForEndOfFrame(int reqId)
         {
@@ -2117,6 +2228,7 @@ namespace BS
                 catch (Exception e)
                 {
                     Debug.LogError("[Banter] Error updating object: " + e.Message + ", " + msg);
+                    SendError(reqId, "OBJECT_UPDATE: " + e.Message);
                 }
             }, $"{nameof(BSScene)}.{nameof(UpdateJsObject)}"));
         }
@@ -2138,20 +2250,27 @@ namespace BS
         {
             if (banterObject != null)
             {
-                int parent = 0;
-                // No settings means no world root yet (OnLoad's queued task creates it), so nothing can be the root's
-                // child: report the real parent. BSPipe ignores page messages until the first LoadStarted, so this only
-                // matters if a request is ever handled before that task has run.
-                if (banterObject.activeSelf && banterObject.transform.parent != null && (settings == null || settings.parentTransform != banterObject.transform.parent))
-                {
-                    parent = banterObject.transform.parent.gameObject.GetInstanceID();
-                }
-                link.Send(GetObjectUpdateString(banterObject, reqId, parent, null));
+                link.Send(GetObjectUpdateString(banterObject, reqId, PageParentId(banterObject), null));
             }
             else
             {
                 SendError(reqId, "SEND_UPDATE: Object not found...");
             }
+        }
+        /// <summary>
+        /// The parent id the page is told about: the real parent's, active or not, and 0 for none or the world root.
+        /// </summary>
+        int PageParentId(GameObject go)
+        {
+            var parent = go.transform.parent;
+            // No settings means no world root yet (OnLoad's queued task creates it), so nothing can be the root's
+            // child: report the real parent. BSPipe ignores page messages until the first LoadStarted, so this only
+            // matters if a request is ever handled before that task has run.
+            if (parent == null || (settings != null && settings.parentTransform == parent))
+            {
+                return 0;
+            }
+            return parent.gameObject.GetInstanceID();
         }
 
         public void DestroyJsObject(int oid, int reqId)
@@ -2384,7 +2503,7 @@ namespace BS
                 SendError(reqId, "ADD_OBJECT: Message is malformed: " + msg);
                 return;
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
             {
                 if (settings == null)
                 {
@@ -2440,13 +2559,14 @@ namespace BS
                 var objId = go.AddComponent<BSObjectId>();
                 objId.jsId = parts[0];
                 AddBanterObject(go, objId, true);
-                link.Send(GetObjectUpdateString(go, reqId, 0, parts[0]));
-                await new WaitForSeconds(2);
+                // Deactivate in the same main-thread step, so an active:false object is never seen, never
+                // collides and reports inactive in the reply. BSObjectId has already woken (it registers in
+                // Awake); components added to it while inactive are registered by AddJsComponent instead.
                 if (parts[1] == "0")
                 {
-                    Debug.Log("Creating object that is not active: " + go.name);
                     go.SetActive(false);
                 }
+                link.Send(GetObjectUpdateString(go, reqId, PageParentId(go), parts[0]));
                 // }
                 // catch (Exception e)
                 // {
@@ -2840,6 +2960,11 @@ namespace BS
                 return;
             }
             var banterComponent = GetBanterComponent(int.Parse(msgParts[0]));
+            if (banterComponent == null)
+            {
+                SendError(reqId, "WATCH_PROPERTIES: Component not found: " + msgParts[0]);
+                return;
+            }
             var properties = msgParts[1].Split(MessageDelimiters.SECONDARY);
             var props = new PropertyName[properties.Length];
             for (int i = 0; i < properties.Length; i++)
@@ -2847,6 +2972,8 @@ namespace BS
                 props[i] = (PropertyName)int.Parse(properties[i]);
             }
             await banterComponent.WatchProperties(props);
+            // The page awaits this request; without an answer that await never settles.
+            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.WATCH_PROPERTIES);
         }
         public async Task QueryComponents(string msg, int reqId)
         {
@@ -3077,10 +3204,12 @@ namespace BS
                                  settings.EnableAvatars = setting[1] == "1";
                                  break;
                              case SettingsMap.MaxOccupancy:
-                                 settings.MaxOccupancy = int.Parse(setting[1]);
+                                 // NumberFormat, not int.Parse: a fractional value such as "72.5" threw and
+                                 // dropped every setting after it in the message.
+                                 settings.MaxOccupancy = (int)NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.RefreshRate:
-                                 settings.RefreshRate = int.Parse(setting[1]);
+                                 settings.RefreshRate = NumberFormat.Parse(setting[1]);
                                  break;
                              case SettingsMap.ClippingPlane:
                                  var clippingParts = setting[1].Split(MessageDelimiters.TERTIARY);
@@ -3361,13 +3490,13 @@ namespace BS
 
         public void SetActionsSystemBlockLeftThumbstickClick(bool value, int reqId)
         {
-            ActionsSystem.Blocker_LeftThumbstick.All = value;
+            ActionsSystem.Blocker_LeftThumbstickClick.All = value;
             SendReply(reqId, "");
         }
 
         public void SetActionsSystemBlockRightThumbstickClick(bool value, int reqId)
         {
-            ActionsSystem.Blocker_RightThumbstick.All = value;
+            ActionsSystem.Blocker_RightThumbstickClick.All = value;
             SendReply(reqId, "");
         }
 

@@ -10,17 +10,17 @@ namespace BS
     [WatchComponent]
     public class BSTorus : BSComponentBase
     {
-        [Tooltip("Radius of the inner circle")]
-        [See(initial = "1")][SerializeField] internal float radius;
-        [Tooltip("How tubular it is.")]
-        [See(initial = "1")][SerializeField] internal float tube;
+        [Tooltip("The overall outer radius of the torus, tube included.")]
+        [See(initial = "1")][SerializeField] internal float radius = 1;
+        [Tooltip("The radius of the tube.")]
+        [See(initial = "1")][SerializeField] internal float tube = 1;
 
         [Tooltip("Number of radial segments")]
-        [See(initial = "8")][SerializeField] internal int radialSegments;
+        [See(initial = "8")][SerializeField] internal int radialSegments = 8;
         [Tooltip("Number of tubular segments")]
-        [See(initial = "6")][SerializeField] internal int tubularSegments;
+        [See(initial = "6")][SerializeField] internal int tubularSegments = 6;
         [Tooltip("Arc length of the ring in radians")]
-        [See(initial = "Math.PI * 2")][SerializeField] internal float arc;
+        [See(initial = "Math.PI * 2")][SerializeField] internal float arc = Mathf.PI * 2f;
 
 
 
@@ -38,10 +38,8 @@ namespace BS
         void SetupGeometry()
         {
             var geometry = GetComponent<BSGeometry>();
-            var shouldSetGeometry = false;
             if (geometry == null)
             {
-                shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BSGeometry>();
             }
             geometry.geometryType = GeometryType.TorusGeometry;
@@ -51,10 +49,9 @@ namespace BS
             geometry.tubularSegments = tubularSegments;
             geometry.arc = arc;
 
-            if (shouldSetGeometry)
-            {
-                geometry.SetGeometry();
-            }
+            // Every call, not only when the geometry was just added: this also runs for each
+            // property change, and the mesh has to follow. Unchanged values hit BSGeometry's cache.
+            geometry.SetGeometry();
         }
 
         internal override void DestroyStuff()

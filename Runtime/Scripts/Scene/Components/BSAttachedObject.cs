@@ -35,7 +35,7 @@ namespace BS
     public class BSAttachedObject : BSComponentBase
     {
         [Tooltip("Player uid for the object to attach to.")]
-        [See(initial = "")][SerializeField] internal string uid;
+        [See(initial = "")][SerializeField] internal string uid = "";
 
         [Tooltip("Position of the attachment relative to the parent object.")]
         [See(initial = "0,0,0")][SerializeField] internal Vector3 attachmentPosition = Vector3.zero;

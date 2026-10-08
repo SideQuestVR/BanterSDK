@@ -6,7 +6,7 @@ namespace BS
     // sections whose include flag is unchecked, and strips the component itself from sections that
     // keep it. See CustomSceneProcessor. Deliberately not [WatchComponent] — never scripting-exposed.
     [DisallowMultipleComponent]
-    [AddComponentMenu("Banter/Platform Filter")]
+    [AddComponentMenu("BS/Platform Filter")]
     public class BSPlatformFilter : MonoBehaviour
     {
         [Tooltip("Ship this GameObject and all its children in mobile (Quest/Android) builds.")]

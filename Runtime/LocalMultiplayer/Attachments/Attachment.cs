@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="0f1669d7b7b4a63a26018d8c081252cd8e96e2da14f7e5c7829590bcc33541e5" mode="port" />
+// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="c0818b6e8641387ce32964d2e3416274df58bee0495cf8b80cd37209dcc6b319" mode="port" />
 // The Attachment component (AttachmentsSystem.cs:16-45) with the system reference typed to the port, plus the
 // host's lifetime guard: after a script reload or once the host is gone, OnDestroy does nothing.
 using System;

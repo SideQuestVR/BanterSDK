@@ -25,7 +25,7 @@ namespace BS
         [Tooltip("Enable angular limits for the joint.")]
         [See(initial = "false")][SerializeField] internal bool useLimits = false;
         [Tooltip("Angular limits for the joint.")]
-        [See(initial = "{bounciness: 0, bounceMinVelocity: 0, contactDistance: 0, min: -90, max: 90}")][SerializeField] internal JointLimits limits = new JointLimits();
+        [See(initial = "{bounciness: 0, bounceMinVelocity: 0, contactDistance: 0, min: -90, max: 90}")][SerializeField] internal JointLimits limits = new JointLimits { min = -90f, max = 90f, bounciness = 0f, bounceMinVelocity = 0f, contactDistance = 0f };
 
         [Tooltip("Enable the joint motor.")]
         [See(initial = "false")][SerializeField] internal bool useMotor = false;

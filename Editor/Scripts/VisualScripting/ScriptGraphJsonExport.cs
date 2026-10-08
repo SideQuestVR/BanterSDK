@@ -32,13 +32,13 @@ namespace BS.SDKEditor
             WriteEnvelope(envelope, machine.gameObject.name);
         }
 
-        [MenuItem("Assets/Banter/Export Script Graph JSON...", true)]
+        [MenuItem("Assets/BS/Export Script Graph JSON...", true)]
         static bool ValidateExportFromAsset()
         {
             return Selection.activeObject is ScriptGraphAsset;
         }
 
-        [MenuItem("Assets/Banter/Export Script Graph JSON...")]
+        [MenuItem("Assets/BS/Export Script Graph JSON...")]
         static void ExportFromAsset()
         {
             var asset = (ScriptGraphAsset)Selection.activeObject;

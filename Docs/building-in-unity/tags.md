@@ -12,12 +12,13 @@ that still use one, with a button to fix them.
 |---|---|
 | Untagged, Respawn, Finish, EditorOnly, MainCamera, Player, GameController | Unity's built-in tags. Objects tagged EditorOnly are left out of the build. |
 | UserTag1 – UserTag32 | Yours. Tag your own objects with these and compare against them in your scripts. |
-| BSLocalCharacter | The local player's body. Portals, teleporters and trigger volumes look for it. |
+| BSLocalCharacter | The local player's body (torso). Portals, teleporters and trigger volumes look for it. |
 | BSLocalCharacterLeftHand, BSLocalCharacterRightHand | The local player's physics hands. |
-| BSLocalCharacterHead | The local player's head (`BS.PlayerTag.HEAD` in JavaScript). |
-| BSLocalCharacterFeet | The local player's feet: the rolling ball they move on. |
+| BSLocalCharacterHead | The local player's head. |
+| BSLocalCharacterFeet | The local player's feet: the rolling ball they move on, and the collider just above it. |
 
-Only the local player carries the BSLocalCharacter tags; don't put them on your own objects.
+Only the local player carries the BSLocalCharacter tags; don't put them on your own objects. In Play mode the
+SDK's desktop player only has `BSLocalCharacter` (on its body), so test hand, head and feet checks in the app.
 
 ## Detecting the Player
 
@@ -25,7 +26,8 @@ Only the local player carries the BSLocalCharacter tags; don't put them on your 
   Visual Scripting, the GettingStarted sample's `isColliderLocalPlayer` subgraph does the check.
 - Touching a synced object with the body, either hand, the head or the feet takes ownership of it.
 - In JavaScript, `collision-enter` and `trigger-enter` events carry the other object's tag in
-  `e.detail.tag`, and `BS.IsPlayerTag(tag)` is true for the player's head.
+  `e.detail.tag`, and `BS.IsPlayerTag(tag)` is true for any of the five BSLocalCharacter tags
+  (`BS.PlayerTag.BODY`, `HEAD`, `LEFT_HAND`, `RIGHT_HAND`, `FEET`).
 
 ## Old Tags
 

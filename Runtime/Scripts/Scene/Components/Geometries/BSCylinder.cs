@@ -11,23 +11,21 @@ namespace BS
     public class BSCylinder : BSComponentBase
     {
         [Tooltip("Radius of the top of the cylinder")]
-        [See(initial = "1")][SerializeField] internal float radiusTop;
+        [See(initial = "1")][SerializeField] internal float radiusTop = 1;
         [Tooltip("Radius of the bottom of the cylinder")]
-        [See(initial = "1")][SerializeField] internal float radiusBottom;
+        [See(initial = "1")][SerializeField] internal float radiusBottom = 1;
         [Tooltip("Height of the cylinder")]
-        [See(initial = "1")][SerializeField] internal float height;
+        [See(initial = "1")][SerializeField] internal float height = 1;
         [Tooltip("Number of segments around the cylinder")]
-        [See(initial = "32")][SerializeField] internal int radialSegments;
+        [See(initial = "32")][SerializeField] internal int radialSegments = 32;
         [Tooltip("Number of segments along the height of the cylinder")]
-        [See(initial = "1")][SerializeField] internal int heightSegments;
+        [See(initial = "1")][SerializeField] internal int heightSegments = 1;
         [Tooltip("Whether the cylinder is open-ended")]
-        [See(initial = "false")][SerializeField] internal bool openEnded;
+        [See(initial = "false")][SerializeField] internal bool openEnded = false;
         [Tooltip("Start angle of the cylinder in radians")]
-        [See(initial = "0")][SerializeField] internal float thetaStart;
+        [See(initial = "0")][SerializeField] internal float thetaStart = 0;
         [Tooltip("Angle length of the cylinder in radians")]
-        [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength;
-        [Tooltip("Radius of the cylinder")]
-
+        [See(initial = "Math.PI * 2")][SerializeField] internal float thetaLength = Mathf.PI * 2f;
 
         internal override void StartStuff()
         {
@@ -43,10 +41,8 @@ namespace BS
         void SetupGeometry()
         {
             var geometry = GetComponent<BSGeometry>();
-            var shouldSetGeometry = false;
             if (geometry == null)
             {
-                shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BSGeometry>();
             }
             geometry.geometryType = GeometryType.CylinderGeometry;
@@ -59,10 +55,9 @@ namespace BS
             geometry.thetaStart = thetaStart;
             geometry.thetaLength = thetaLength;
 
-            if (shouldSetGeometry)
-            {
-                geometry.SetGeometry();
-            }
+            // Every call, not only when the geometry was just added: this also runs for each
+            // property change, and the mesh has to follow. Unchanged values hit BSGeometry's cache.
+            geometry.SetGeometry();
         }
 
         internal override void DestroyStuff()

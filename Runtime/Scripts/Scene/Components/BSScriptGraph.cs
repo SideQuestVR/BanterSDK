@@ -19,7 +19,7 @@ namespace BS
     public class BSScriptGraph : BSComponentBase
     {
         [Tooltip("Number of ScriptMachines on this object.")]
-        [See(initial = "0")][SerializeField] internal int machineCount;
+        [See(initial = "0")][SerializeField] internal int machineCount = 0;
 
         [Tooltip("Comma-separated graph titles of the ScriptMachines on this object, by machine index.")]
         [See(initial = "")][SerializeField] internal string graphTitles = "";

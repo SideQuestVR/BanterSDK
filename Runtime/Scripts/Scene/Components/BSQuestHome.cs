@@ -34,7 +34,7 @@ namespace BS
     public class BSQuestHome : BSComponentBase
     {
         [Tooltip("The URL of the Quest Home APK file to be loaded.")]
-        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "")][SerializeField] internal string url = "";
 
         [Tooltip("Enable to automatically add colliders to opaque meshes.")]
         [See(initial = "true")][SerializeField] internal bool addColliders = true;

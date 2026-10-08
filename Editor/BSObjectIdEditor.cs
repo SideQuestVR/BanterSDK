@@ -22,6 +22,7 @@ namespace BS.SDKEditor
             myInspector.Q<TextField>("id").value = script.Id;
             myInspector.Q<Button>("generate").RegisterCallback<ClickEvent>(ev =>
             {
+                Undo.RecordObject(script, "Generate Id");
                 script.ForceGenerateId();
                 myInspector.Q<TextField>("id").value = script.Id;
                 EditorUtility.SetDirty(script);

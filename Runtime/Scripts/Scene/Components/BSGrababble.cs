@@ -13,7 +13,7 @@ namespace BS
     public class BSGrababble : BSComponentBase
     {
         [Tooltip("Defines the type of grab interaction (Point, Cylinder, Ball, Soft).")]
-        [See(initial = "0")][SerializeField] internal BSGrabType grabType;
+        [See(initial = "0")][SerializeField] internal BSGrabType grabType = BSGrabType.Point;
 
         [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
         [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
@@ -75,6 +75,27 @@ namespace BS
         }
         internal override void StartStuff()
         {
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has set up the grab handle, world object and held
+                // events yet (see valuesApplied). A BSGrabHandle or BSHeldEvents that was already on
+                // the object was configured there directly and keeps its settings.
+                var properties = new List<PropertyName>();
+                if (!GetComponent<BSGrabHandle>())
+                {
+                    properties.Add(PropertyName.grabType);
+                    properties.Add(PropertyName.grabRadius);
+                }
+                if (!GetComponent<BSHeldEvents>())
+                {
+                    properties.AddRange(new[] { PropertyName.gunTriggerSensitivity, PropertyName.gunTriggerFireRate,
+                        PropertyName.gunTriggerAutoFire, PropertyName.blockLeftPrimary, PropertyName.blockLeftSecondary,
+                        PropertyName.blockRightPrimary, PropertyName.blockRightSecondary, PropertyName.blockLeftThumbstick,
+                        PropertyName.blockLeftThumbstickClick, PropertyName.blockRightThumbstick,
+                        PropertyName.blockRightThumbstickClick, PropertyName.blockLeftTrigger, PropertyName.blockRightTrigger });
+                }
+                UpdateCallback(properties);
+            }
             SetLoadedIfNot();
         }
         internal override void DestroyStuff()
@@ -94,6 +115,7 @@ namespace BS
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             if (!banterGrabHandle)
             {
                 banterGrabHandle = gameObject.GetComponent<BSGrabHandle>();

@@ -10,20 +10,25 @@ There are two halves, and they meet in `Assets/WebRoot/index.html`:
 
 - **`BSSnippet`**, a Unity Editor component. It fetches the snippet, writes a `<bs-snippet>` element
   into your `index.html`, and gives you an inspector and gizmos for editing that element's
-  attributes. It is an authoring-time component only — it is never part of the built world and is
-  invisible to the JS API.
+  attributes. It only does anything in the Editor: it is saved into the built world like any other
+  component, but does nothing there and is invisible to the JS API.
 - **`<bs-snippet>`**, a custom element in the runtime. When the space loads, it reads its own
   attributes and loads the snippet's payload. This is what actually does the work in-world.
 
-Because the element in `index.html` is the real artifact, a snippet keeps working even if the
-`BSSnippet` component is later removed — and equally, you can hand-write a `<bs-snippet>` element
-yourself and skip Unity entirely.
+Because the element in `index.html` is the real artifact, you can also hand-write a `<bs-snippet>`
+element yourself and skip Unity entirely. Removing a `BSSnippet` component removes its element, and
+with it the snippet.
+
+!> **One world per project.** Every scene in a project shares the one `Assets/WebRoot/index.html`,
+so snippets placed in one scene are also in the page published with every other scene, and run there.
+Keep one scene per project. The Setup panel's **One scene per project** item and the Builder's
+checklist both warn when a project has more than one.
 
 ## Adding a Snippet
 
-1. Select the GameObject that should own the snippet. Its transform is the reference frame for the
-   snippet's gizmos, so put it where the feature belongs in the world.
-2. Click **Add Component** and search for *Snippet*.
+1. Create an empty GameObject for the snippet and leave it at the origin, unrotated and unscaled (see
+   [Gizmos](#gizmos) for why).
+2. Click **Add Component > BS > Snippet** (or search for *Snippet*).
 3. Type the snippet's slug (for example `video-player`) into the **Slug** field and press Enter.
 
 The snippet is fetched from `https://altvr.app/api/snippets/<slug>`, given a unique `instance` id,
@@ -89,9 +94,15 @@ how big a panel is, which way it faces.
 | `position` | all | A fixed local offset, used when `attribute` is absent or unparseable. |
 | `rotation` | `plane`, `box`, `sphere` | Euler angles in degrees. |
 
-All values are in the owning GameObject's local space. Dragging a `position` handle updates the
-Inspector field live, and vice versa. A gizmo with an unknown type, or a `position` gizmo with no
-`attribute`, is skipped with one console warning.
+Dragging a `position` handle updates the Inspector field live, and vice versa. A gizmo with an
+unknown type, or a `position` gizmo with no `attribute`, is skipped with one console warning.
+
+!> **The preview follows the GameObject; the world doesn't.** The Scene view draws the gizmos relative
+to the snippet's GameObject (its position and rotation, with its scale applied to their size), but at
+runtime the snippet only reads its own settings: its `position` is a world position, and the
+GameObject's transform is ignored. Keep snippet objects at the origin with no rotation and a scale of
+1, and move the feature with its `position` handle or setting, so the preview shows where it will
+really be.
 
 ## How the HTML Stays in Sync
 
@@ -141,8 +152,8 @@ Elements live between two markers, which the SDK creates the first time it needs
 | `instance` | added by Unity | Pairs the element with one `BSSnippet` component. Hand-written elements can omit it. |
 | anything else | no | The snippet's own settings, editable in the Inspector. |
 
-`position`, `rotation` and `scale` are plain Unity local values in the object's own space, written as
-space-separated numbers (`scale` also accepts a single number for uniform scale).
+`position`, `rotation` (Euler degrees) and `scale` are world values, written as space-separated
+numbers (`scale` also accepts a single number for uniform scale).
 
 A snippet must have `script` or `asset`. If it somehow has both, `script` wins and the runtime logs
 a warning.
@@ -220,6 +231,9 @@ Design guidance:
   `index.html`. Elements a closed scene or a prefab still uses are listed but left alone.
 - **`index.html` is a project file.** It ships with your world and belongs in version control; the
   snippet section is a normal part of its diff.
+- **The snippet section is XML.** Unity reads the marked section as XML, so hand-written elements must
+  be well formed: quote every attribute, close every element (`<bs-gizmo ... />`), and write `&` as
+  `&amp;`. If the section doesn't parse, Unity reports it and stops writing to it until you fix it.
 - **Hand-written elements are first-class.** An element with no `instance` attribute is never touched
   by the Unity side — useful for pasting a local copy of a snippet definition to test against without
   a round trip. A new `BSSnippet` whose slug matches an existing element clones that element instead

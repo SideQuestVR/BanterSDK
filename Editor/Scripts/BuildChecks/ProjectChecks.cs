@@ -14,8 +14,8 @@ namespace BS.SDKEditor.BuildChecks
         // Not "Visual Scripting nodes": that's the Setup panel's node-library item.
         public override string Title => "Visual Scripting node support";
         public override string Description =>
-            "Visual Scripting graphs only use nodes the client can run: graph assets anywhere in the project, graphs on prefabs' root " +
-            "objects, and every graph in this scene.";
+            "Visual Scripting graphs only use nodes the client can run: graph assets anywhere in the project, every graph on prefabs, " +
+            "and every graph in this scene, subgraphs and state graphs included.";
         public override int Order => 10;
         // Not knowing is as bad as knowing they're there: the space would break in the client.
         public override bool BlockOnException => true;
@@ -82,6 +82,35 @@ namespace BS.SDKEditor.BuildChecks
                     SdkSetupWindow.Open();
                     return false;
                 }, needsLoadedScene: false, interactive: true));
+        }
+    }
+
+    /// <summary>
+    /// Every scene shares the one space page, so the other scenes' snippets and scripts are published with this world.
+    /// The Setup panel lists it too, as a Recommended item, which the "Project setup" row leaves out.
+    /// </summary>
+    sealed class OneSceneCheck : BuildCheck
+    {
+        public override string Id => "project.one-scene";
+        public override string Title => "One scene per project";
+        public override string Description =>
+            "The project holds only this world's scene. Every scene shares the one space page, Assets/WebRoot/index.html, so the " +
+            "snippets and scripts for the other scenes would be published with this world.";
+        public override int Order => 5;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var others = OneSceneSetupCheck.ScenePaths()
+                .Where(path => !string.Equals(path, context.ScenePath, System.StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (others.Count == 0)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"This project has {others.Count} other scene(s)",
+                    "Every scene shares the one space page, Assets/WebRoot/index.html, so the snippets placed in the other scenes, and " +
+                    "any page script written for them, are published with this world and run in it. Keep one world per project: move " +
+                    "the other scenes to projects of their own, or delete the ones you don't need.")
+                .WithTargets(others.Select(path => BuildCheckTarget.ForAsset(AssetDatabase.LoadAssetAtPath<SceneAsset>(path)))));
         }
     }
 #else

@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 {
     [UnitTitle("GameObject texture to Base64")]
     [UnitShortTitle("ObjectTextureToBase64")]
-    [UnitCategory("BS\\AI")]
+    [UnitCategory("BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class ObjectTexToBase64 : Unit
     {

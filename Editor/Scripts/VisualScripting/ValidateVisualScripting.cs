@@ -24,89 +24,34 @@ namespace BS.SDKEditor
         }
 #endif
 
-        private static List<string> GetElementsFromIGraph(GraphReference reference, IGraph graph)
+        // Cap against a macro that nests itself, as in ScriptGraphSession.IsBlockedDeep.
+        private const int MaxNestDepth = 16;
+
+        /// <summary>
+        /// Every element of <paramref name="graph"/> and of every graph nested in it: embedded subgraphs,
+        /// state units, states and transitions. The client only checks a machine's top-level graph, so a
+        /// node inside a nest that isn't checked here runs as soon as the parent's flow reaches it.
+        /// </summary>
+        private static List<string> GetElementsDeep(IGraph graph, GraphReference reference, int depth = 0)
         {
             var output = new List<string>();
-            if (graph == null || graph.elements.Count == 0)
+            if (graph == null || depth > MaxNestDepth)
             {
                 return output;
             }
-
             foreach (var e in graph.elements)
             {
-                // no analytics identifier implemented, but they're harmless
-                if (e is StickyNote || e is GraphGroup)
-                {
-                    continue;
-                }
-
-                output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
+                output.AddRange(GrabElements(e, reference, depth));
             }
             return output;
         }
 
         private static List<string> GetElementsFromStateGraph(GraphReference reference, StateGraph graph)
         {
-            var output = new List<string>();
-            if (graph == null)
-            {
-                return output;
-            }
-            // get this layer's elements
-            output = GetElementsFromIGraph(reference, graph);
-            // get each states' elements
-            if (graph.states.Count() > 0)
-            {
-                foreach (var transition in graph.transitions)
-                {
-                    if (transition is INesterStateTransition)
-                    {
-                        IGraph childGraph = ((INesterStateTransition)transition).childGraph;
-                        if (childGraph?.elements.Count() > 0)
-                        {
-                            foreach (var e in childGraph.elements)
-                            {
-                                var stateName = !String.IsNullOrEmpty(childGraph.title) ? childGraph.title : "Script State";
-                                if (childGraph is StateGraph)
-                                {
-                                    output = output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterStateTransition)transition, false), (StateGraph)childGraph)).ToList();
-                                }
-                                else
-                                {
-                                    output = output.Concat(GrabElements(e, reference.ChildReference((INesterStateTransition)transition, false))).ToList();
-                                }
-                            }
-                        }
-                    }
-                }
-
-                foreach (var state in graph.states)
-                {
-                    if (state is INesterState)
-                    {
-                        IGraph childGraph = ((INesterState)state).childGraph;
-                        if (childGraph?.elements.Count() > 0)
-                        {
-                            foreach (var e in childGraph.elements)
-                            {
-                                var stateName = !String.IsNullOrEmpty(childGraph.title) ? childGraph.title : "Script State";
-                                if (childGraph is StateGraph)
-                                {
-                                    output = output.Concat(GetElementsFromStateGraph(reference.ChildReference((INesterState)state, false), (StateGraph)childGraph)).ToList();
-                                }
-                                else
-                                {
-                                    output = output.Concat(GrabElements(e, reference.ChildReference((INesterState)state, false))).ToList();
-                                }
-                            }
-                        }
-                    }
-                }
-
-            }
-            return output;
+            return GetElementsDeep(graph, reference);
         }
-        private static List<string> GrabElements(IGraphElement e, GraphReference reference)
+
+        private static List<string> GrabElements(IGraphElement e, GraphReference reference, int depth = 0)
         {
             var output = new List<string>();
 
@@ -141,6 +86,12 @@ namespace BS.SDKEditor
                     Debug.Log($"Could not add element {e?.guid} {reference?.graph?.title} because of {ex}");
                 }
             }
+
+            // And whatever it nests: an embedded subgraph or state graph, a state's or transition's graph.
+            if (e is IGraphParentElement parent)
+            {
+                output.AddRange(GetElementsDeep(parent.childGraph, reference, depth + 1));
+            }
             return output;
         }
 
@@ -156,22 +107,7 @@ namespace BS.SDKEditor
             var sga = AssetDatabase.LoadAssetAtPath<ScriptGraphAsset>(assetPath);
             if (sga?.graph?.elements.Count() > 0)
             {
-                foreach (var e in sga.graph.elements)
-                {
-                    // no analytics identifier implemented, but they're harmless
-                    if (e is StickyNote || e is GraphGroup)
-                    {
-                        continue;
-                    }
-                    try
-                    {
-                        output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.Log($"Could not add element {e?.GetType()}{e?.guid} {assetPath} {sga.graph.title} because of {ex} ");
-                    }
-                }
+                output = GetElementsDeep(sga.graph, sga.GetReference().AsReference());
             }
             return output;
         }
@@ -248,7 +184,8 @@ namespace BS.SDKEditor
 
         /// <summary>
         /// The node identifiers the client won't run: from every script/state graph asset, every
-        /// prefab's root machine, and every machine (inactive included) under <paramref name="sceneRoots"/>.
+        /// machine in every prefab, and every machine (inactive included) under <paramref name="sceneRoots"/>,
+        /// nested graphs included.
         /// Throws if a prefab can't be inspected, since then the answer isn't known.
         /// </summary>
         public static List<string> CollectDisallowedElements(IEnumerable<GameObject> sceneRoots, bool refresh)
@@ -278,13 +215,17 @@ namespace BS.SDKEditor
                     try
                     {
                         GameObject go = (GameObject)o;
-                        var scriptMachine = go.GetComponent<ScriptMachine>();
-                        if (scriptMachine?.nest?.source == GraphSource.Embed)
-                            everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
-
-                        var stateMachine = go.GetComponent<StateMachine>();
-                        if (stateMachine?.nest?.source == GraphSource.Embed)
-                            everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
+                        // Every machine in the prefab, not just the root's first.
+                        foreach (var scriptMachine in go.GetComponentsInChildren<ScriptMachine>(true))
+                        {
+                            if (scriptMachine?.nest?.source == GraphSource.Embed)
+                                everything.AddRange(GetElementsFromScriptMachine(scriptMachine));
+                        }
+                        foreach (var stateMachine in go.GetComponentsInChildren<StateMachine>(true))
+                        {
+                            if (stateMachine?.nest?.source == GraphSource.Embed)
+                                everything.AddRange(GetElementsFromStateGraph(stateMachine.GetReference().AsReference(), stateMachine.graph));
+                        }
                     }
                     catch (Exception e)
                     {
@@ -317,9 +258,9 @@ namespace BS.SDKEditor
             bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
             bool isBanterVs = (id?.StartsWith("BS.VisualScripting.") ?? false) || (id?.StartsWith("Banter.VisualScripting.") ?? false);
             bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;
-            bool isColombiaVs = id?.StartsWith("SideQuest.Columbia.VisualScripting.") ?? false;
 
-            return !(id == null || isVs || isBanterVs || isPicaVoxelVs || isColombiaVs || VsStubsAllowed.members.Contains(id));
+            // Mirrors the client's BanterStubsAllowed.IsBlocked: nothing outside these is allowed.
+            return !(id == null || isVs || isBanterVs || isPicaVoxelVs || VsStubsAllowed.members.Contains(id));
         }
     }
 }

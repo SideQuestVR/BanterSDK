@@ -16,15 +16,15 @@ The player prefabs are built on SDK components (`BSSpawn`, `BSSeat`, `BSTeleport
 
 When the space loads, one of the scene's active spawns is picked at random, and the local player is teleported there. The teleport uses the spawn's position and its Y rotation as the player's facing. `radius` spreads arrivals: players land at a random point within that many metres, on the horizontal plane. Spawn Point has radius 0 and Spawn Range has radius 5; otherwise they are the same component. For several spawn locations, add several spawns.
 
-The teleport is a spawn teleport with velocity stopped, the same as the `TeleportTo` unit with `Is Spawn` on. A spawn added by a page script after the space has loaded doesn't move anyone. Scripts can call `Spawn()` on any spawn to send the local player there.
+The teleport stops the player's velocity. A spawn added by a page script after the space has loaded doesn't move anyone. Scripts can call `Spawn()` on any spawn to send the local player there.
 
 ## Seat (`BSSeat`)
 
 Clicking the seat sits the local player on it. Moving (the move stick or WASD) or jumping stands them up, unless `unseatOnMove` / `unseatOnJump` are off.
 
-`BSSeat` sets up the `BSAttachedObject` beside it as a seat: Physics + AvatarAttachTo, jointed, `isSeat`, and never auto-attached. It also listens for clicks on its colliders and adds a kinematic Rigidbody if there is none. Without one, the client would add a dynamic Rigidbody and the chair would fall.
+`BSSeat` sets up the `BSAttachedObject` beside it as a seat: Physics + AvatarAttachTo, jointed, `isSeat`, and never auto-attached. It also listens for clicks on the colliders it has when it starts (so add colliders before the seat when building one from a script) and adds a kinematic Rigidbody if there is none. Without one, the client would add a dynamic Rigidbody and the chair would fall.
 
-In the prefab, the seat components are on the `SitPoint` child at the top of the cushion. The player sits there, facing its forward. The child's trigger box is on the **UI layer**: the client clicks any layer, but the SDK's desktop player only clicks the UI and Menu layers. The visible parts use the `Seat` material (URP Lit).
+In the prefab, the seat components are on the `SitPoint` child at the top of the cushion. The player sits there, facing its forward. The child's trigger box is on the **UI layer**: only the UI and Menu layers can be clicked, in the app and in Play mode. The visible parts use the `Seat` material (URP Lit).
 
 In SDK Play Mode, clicking the seat sits the desktop player. **Space** stands them up (unless they're holding something, when Space is the held object's primary button), and so does moving while flying (right mouse + WASD).
 
@@ -58,7 +58,7 @@ Each grab preset is a Rigidbody root with `BSWorldObject` and `BSSyncedObject`, 
 | Soft (Any Shape) | Soft | Wherever the hand touches the collider. |
 | Climbable Handhold | Cylinder | No Rigidbody, so grabbing it holds on to the world. |
 
-Replace the placeholder meshes with your own and keep the handle collider on the Grabbable layer. Don't use `BSGrababble` for objects placed in the editor: it only sets itself up when a page script sets its properties.
+Replace the placeholder meshes with your own and keep the handle collider on the Grabbable layer. `BSGrababble` (see [VR Interaction](../components/vr-interaction.md#grababble)) is the all-in-one alternative: it adds the grab handle, `BSWorldObject` and held events itself and moves the object to the Grabbable layer, whether you add it in the Inspector or from a script.
 
 ## Objects
 
@@ -80,29 +80,10 @@ Each object is one SDK component, set up for the usual case:
 
 ### Browser (`BSBrowser`)
 
-Shows a web page in the space. Set `url` to your page. The page is `pageWidth` × `pageHeight` pixels (1280 × 720) and is drawn at 1300 pixels per metre, so about 0.98 × 0.55 m, centred on the object and read from its back (−Z). Change the page size to resize it, or scale the object; **Pixels Per Unit** doesn't change it. The page loads in Play mode; until then the blue outline shows where it will be. Clicks and scrolling reach the page.
+Shows a web page in the space. Set `url` to your page. The page is `pageWidth` × `pageHeight` pixels (1280 × 720) and is drawn at 1300 pixels per metre, so about 0.98 × 0.55 m, centred on the object and read from its back (−Z). Change the page size to resize it, or scale the object; **Pixels Per Unit** doesn't change it. The page loads in Play mode; until then the blue outline shows where it will be. Clicks and scrolling reach the page. For messages, textures and everything else browsers can do, see the [Browser](../browser/overview.md) section.
 
 ### Portal (`BSPortal`)
 
-A doorway to another space: set `url` to that space's address, and `instance` to send players to one particular instance of it. In Play mode the portal looks the space up and shows its name and icon (a placeholder landscape if it has no icon, and "Unknown Space" if the address isn't a space). When the local player walks into it, the client takes them there. In SDK Play Mode you stay in your world: the Console says where the portal would go.
+A doorway to another space: set `url` to that space's address. In Play mode the portal looks the space up and shows its name and icon (a placeholder landscape if it has no icon, and "Unknown Space" if the address isn't a space). When the local player walks into it, the client takes them there. In SDK Play Mode you stay in your world: the Console says where the portal would go.
 
 The ring is about 2.15 m across, 0.8 m above the object, and turns about its vertical axis to face the player, so the object's rotation doesn't matter; the blue outline in the Scene view turns towards the camera the same way.
-
-## Build checklist
-
-When the Builder opens on a scene, on **Re-check**, and before every build, the Builder checks the scene and lists what it finds:
-
-- the project setup: one row for the Setup panel's required items (missing build support blocks the build)
-- Visual Scripting nodes the client won't run
-- convex colliders on large static geometry
-- missing scripts and graphs, scene cameras and audio listeners, pink materials
-- oversized or uncompressed Android textures, uncompressed long audio, overall scene size
-- the prefabs above set up wrongly
-
-Checks only report. A **Fix** button changes things only when clicked, with undo; **Fix All** runs every fix that doesn't ask first; **Select** shows what an issue is about.
-
-- **Notes and warnings** are listed in the confirmation, whose button becomes **Build anyway**.
-- **Errors marked "blocks the build"** stop it; other errors can be built past interactively.
-- **Unattended (batch) builds** stop on any error and never show dialogs.
-
-The checklist inspects the scene the builder is set to build, not whatever is open, and leaves the open scenes and their dirty state alone.

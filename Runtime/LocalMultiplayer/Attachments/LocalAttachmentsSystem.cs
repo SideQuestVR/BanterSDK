@@ -1,5 +1,5 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="0f1669d7b7b4a63a26018d8c081252cd8e96e2da14f7e5c7829590bcc33541e5" mode="port" />
-// AttachmentsSystem (:47-615) on the SDK desktop player, line by line. Substitutions:
+// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="c0818b6e8641387ce32964d2e3416274df58bee0495cf8b80cd37209dcc6b319" mode="port" />
+// AttachmentsSystem (:47-686) on the SDK desktop player, line by line. Substitutions:
 //   _flexaBall (torso Rigidbody)      -> ILocalRig.TorsoBody / Torso, the desktop rig's hip anchor
 //   _physicsHands.PhysHands[0/1].RB   -> ILocalRig.LeftHand / RightHand
 //   FlexaMover.AttachToSeat           -> BSDesktopController.Seat, skipped while already seated ("if (SeatJoint) return;")
@@ -7,7 +7,7 @@
 //                                        seat was left, as RemoveSeatJoint raises OnSeatRemoved
 //   FlexaMover.OnSeatRemoved          -> the Seat(...) stand-up callback -> OnDesktopSeatRemoved (port of OnFlexaSeatRemoved)
 //   FlexaMover.SetSeated(isSeat)      -> nothing here: the orb's seated leg pose follows the seat the desktop player sits on
-//   `??` on UnityEngine.Object        -> explicit null checks (:296, :307, :567), i.e. what a shipped build does
+//   `??` on UnityEngine.Object        -> explicit null checks (:327, :338, :638), i.e. what a shipped build does
 //   Destroy                           -> DestroyImmediate only while the host tears down
 // Deviations (plan parity ledger): RestoreRemoteReproductions on the player's own leave, and the host teardown.
 using System;
@@ -27,8 +27,7 @@ namespace BS.LocalMultiplayer.Attachments
     /// </summary>
     /// <remarks>
     /// Production quirks are kept, each noted once in the diagnostics when it shows: a local Physics attachment
-    /// ignores its offsets and a Physics Head one joints to the torso; a Physics detach leaves the joint behind
-    /// (:511), so the object stays stuck; re-attaching stacks components; attaching or seating with a remote uid acts
+    /// ignores its offsets and a Physics Head one joints to the torso; attaching or seating with a remote uid acts
     /// on this player's own rig and is not broadcast; a standing pilot is never detached when it stands up.
     /// </remarks>
     internal sealed class LocalAttachmentsSystem
@@ -221,7 +220,17 @@ namespace BS.LocalMultiplayer.Attachments
             var isPilot = data.avatarAttachmentType == AvatarAttachmentType.AvatarAttachTo;
             var isAttachment = data.avatarAttachmentType == AvatarAttachmentType.AttachToAvatar;
 
-            if (_attachments.ContainsKey(data.attachedObject) && !isAttachment)
+            // Attaching an object that is already attached the same way reconfigures that attachment: it used to
+            // add a second Attachment, orphaning the first and the components it added, so a detach removed nothing.
+            if (_attachments.TryGetValue(data.attachedObject, out var current) && current != null && !current.isDestroyed
+                && current.data != null && current.data.avatarAttachmentType == data.avatarAttachmentType
+                && current.data.attachmentType == data.attachmentType)
+            {
+                Reattach(current, data);
+                return;
+            }
+
+            if (_attachments.ContainsKey(data.attachedObject))
             {
                 Detach(data.attachedObject);
                 Debug.LogWarning("[LocalMP][Attachments] Object already attached, detaching first");
@@ -232,8 +241,6 @@ namespace BS.LocalMultiplayer.Attachments
                 DetachAvatar(data.uid);
                 Debug.LogWarning("[LocalMP][Attachments] Avatar already attached, detaching first");
             }
-
-            var restacks = isAttachment && _attachments.ContainsKey(data.attachedObject);
 
             if (!data.attachedObject.gameObject)
             {
@@ -279,7 +286,32 @@ namespace BS.LocalMultiplayer.Attachments
                 if (!string.IsNullOrEmpty(seatId)) LocalPilotChanged?.Invoke(seatId, true);
             }
 
-            NoteAttachQuirks(data, isPilot, isAttachment, restacks);
+            NoteAttachQuirks(data, isPilot, isAttachment);
+        }
+
+        // Same object, same kind of attachment: HandleAttachment finds the joint/constraint/body this Attachment
+        // already added (it keeps owning them) and points them at the new target and offsets.
+        void Reattach(Attachment attachment, BSAttachment data)
+        {
+            var previous = attachment.data;
+            bool wasBroadcast = previous.autoSync && IsLocalUid(previous.uid);
+            bool broadcast = data.autoSync && IsLocalUid(data.uid);
+            if (wasBroadcast && !broadcast)
+                RaiseLocalAttachmentChanged(previous, false);
+
+            attachment.data = data;
+            attachment.isAttached = false;
+            try
+            {
+                HandleAttachment(attachment);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+
+            if (broadcast)
+                RaiseLocalAttachmentChanged(data, true);
         }
 
         bool IsCurrent(int generation) => IsLive && _generation == generation;
@@ -306,6 +338,9 @@ namespace BS.LocalMultiplayer.Attachments
         Rigidbody GetRigidBody(Attachment attachment)
         {
             attachment.data.attachedObject.gameObject.TryGetComponent(out Rigidbody rigidBody);
+            // Added by an attachment detached this frame and waiting to be removed: this one owns it now.
+            if (rigidBody && _bodiesToDestroy.Remove(rigidBody))
+                attachment.rigidbodyWasAdded = true;
             if (!rigidBody)
             {
                 attachment.data.attachedObject.gameObject.TryGetComponent(out Collider col);
@@ -353,7 +388,7 @@ namespace BS.LocalMultiplayer.Attachments
             if (_attached.data.attachmentType == AttachmentType.Physics)
             {
                 _attached.attachedRigidbody = GetRigidBody(_attached);
-                _attached.data.attachedObject.gameObject.TryGetComponent(out _attached.configurableJoint);
+                _attached.configurableJoint = FindLiveJoint(_attached.data.attachedObject.gameObject);
 
                 // Setup configurable joint where needed.
                 // Never add one for a PILOT (seat/vehicle): the local rider is held by the desktop seat, and remote
@@ -525,7 +560,7 @@ namespace BS.LocalMultiplayer.Attachments
                 _diag.Quirk("pilotDetachWithoutBody",
                     "Detaching a pilot attachment without a Rigidbody (a NonPhysics AvatarAttachTo never gets one) throws "
                     + "and leaves the pilot entry behind, so later seats with the same uid fail to attach: production "
-                    + "does the same (Greenfield AttachmentsSystem.cs:521-522 -> :459).");
+                    + "does the same (Greenfield AttachmentsSystem.cs:549-550 -> :490).");
             }
             var bodyColliders = body.GetComponentsInChildren<Collider>();
             if (playerColliders == null) return;
@@ -585,11 +620,6 @@ namespace BS.LocalMultiplayer.Attachments
 
             bool isLocalPilotWithJoint = isPilot && attachment.data.jointAvatar;
 
-            // Never true (isLocalPilotWithJoint is exactly isPilot && jointAvatar), so a Physics AttachToAvatar
-            // keeps its joint after a detach: the Rigidbody below can't be removed and the object stays pinned.
-            if (attachment.configurableJointWasAdded && !isLocalPilotWithJoint && isPilot && attachment.data.jointAvatar)
-                DestroyObject(attachment.configurableJoint);
-
             if (isLocalPilotWithJoint)
             {
                 ToggleDesktopSeat(false); // seatPoint unused on release
@@ -599,16 +629,27 @@ namespace BS.LocalMultiplayer.Attachments
             if (isPilot)
                 IgnoreCollision(attachment.attachedRigidbody, false);
 
-            if (!isPilot && attachment.configurableJointWasAdded && attachment.configurableJoint != null && !_tearingDown)
+            // The joint HandleAttachment added (never for a pilot) is what holds a Physics attachment to the
+            // player. Its removal sat behind `!isLocalPilotWithJoint && isPilot && jointAvatar`, which can never
+            // be true, so a detached object stayed stuck (and its Rigidbody, which the joint needs, stayed too).
+            bool jointRemoved = false;
+            if (attachment.configurableJointWasAdded && attachment.configurableJoint != null)
             {
-                _diag.Quirk("physicsDetachStuck",
-                    "A Physics attachment keeps its ConfigurableJoint after a detach, so it stays stuck to the player here "
-                    + "(and Unity refuses to remove its Rigidbody) while other players see it drop: production does the "
-                    + "same (Greenfield AttachmentsSystem.cs:509-512, :525-526).");
+                _releasedJoints.Add(attachment.configurableJoint);
+                DestroyObject(attachment.configurableJoint);
+                jointRemoved = true;
             }
 
-            if (attachment.rigidbodyWasAdded)
-                DestroyObject(attachment.attachedRigidbody);
+            if (attachment.rigidbodyWasAdded && attachment.attachedRigidbody != null)
+            {
+                // Unity won't remove a Rigidbody while a joint on it still exists, and Destroy only takes the
+                // joint away at the end of the frame: remove the body a frame later (at once while tearing down,
+                // where the joint went immediately).
+                if (jointRemoved && !_tearingDown)
+                    DestroyBodyNextFrame(attachment.attachedRigidbody);
+                else
+                    DestroyObject(attachment.attachedRigidbody);
+            }
 
             if (attachment.attacheeBodyWasAdded)
                 DestroyObject(attachment.attacheeBody);
@@ -817,7 +858,7 @@ namespace BS.LocalMultiplayer.Attachments
         /// <summary>
         /// The host is going away. Hands the attach and detach delegates back to the SDK if they are still ours, and
         /// unless play mode is exiting (the scene dies anyway): puts reproduced objects back, stands the player up and
-        /// removes every component this system added, the joint a detach leaves behind included. That is what a
+        /// removes every component this system added, all at once. That is what a
         /// failed install or a script reload during Play needs.
         /// </summary>
         public void TearDown()
@@ -866,7 +907,7 @@ namespace BS.LocalMultiplayer.Attachments
             _savedDetach = null;
         }
 
-        // Teardown only: unlike DestroyAttachmentComponents it never throws and removes the joint too.
+        // Teardown only: unlike DestroyAttachmentComponents it never throws and removes everything at once.
         void RemoveForTeardown(Attachment attachment)
         {
             if (attachment == null || attachment.isDestroyed)
@@ -905,6 +946,31 @@ namespace BS.LocalMultiplayer.Attachments
             Object.DestroyImmediate(attachment);
         }
 
+        // Joints a detach handed to Destroy (which only takes effect at the end of the frame), so an attach in
+        // the same frame adds its own instead of adopting one about to disappear.
+        readonly HashSet<ConfigurableJoint> _releasedJoints = new();
+        // Bodies a detach added and will remove next frame, unless an attach adopts them first.
+        readonly HashSet<Rigidbody> _bodiesToDestroy = new();
+
+        ConfigurableJoint FindLiveJoint(GameObject go)
+        {
+            _releasedJoints.RemoveWhere(joint => joint == null);
+            foreach (var joint in go.GetComponents<ConfigurableJoint>())
+            {
+                if (!_releasedJoints.Contains(joint))
+                    return joint;
+            }
+            return null;
+        }
+
+        async void DestroyBodyNextFrame(Rigidbody body)
+        {
+            _bodiesToDestroy.Add(body);
+            await new WaitForUpdate();
+            if (_bodiesToDestroy.Remove(body) && body != null)
+                DestroyObject(body);
+        }
+
         void DestroyObject(Object target)
         {
             // Destroy ignores what is already gone; DestroyImmediate does not.
@@ -918,7 +984,7 @@ namespace BS.LocalMultiplayer.Attachments
 
         // ---------------------------------------------------------------- quirk notes
 
-        void NoteAttachQuirks(BSAttachment data, bool isPilot, bool isAttachment, bool restacks)
+        void NoteAttachQuirks(BSAttachment data, bool isPilot, bool isAttachment)
         {
             if (!IsLive)
                 return;
@@ -928,31 +994,25 @@ namespace BS.LocalMultiplayer.Attachments
                 _diag.Quirk("remoteUid",
                     "Attaching with a uid that isn't this player's (another player's, or none) attaches to THIS player's "
                     + "rig (or seats them) and broadcasts nothing: "
-                    + "production does the same (Greenfield AttachmentsSystem.cs:181, :190, :196).");
-            }
-            if (restacks)
-            {
-                _diag.Quirk("restack",
-                    "Attaching an object again without detaching stacks a second set of components, and a later detach "
-                    + "removes none of them: production does the same (Greenfield AttachmentsSystem.cs:160-187, :329-340).");
+                    + "production does the same (Greenfield AttachmentsSystem.cs:191, :200, :206).");
             }
             if (isAttachment && !data.autoSync && local)
             {
                 _diag.Quirk("autoSyncOff",
                     "An attachment with autoSync off stays on this player only; other players never see it "
-                    + "(Greenfield AttachmentsSystem.cs:189-191). Seats always sync.");
+                    + "(Greenfield AttachmentsSystem.cs:199-201). Seats always sync.");
             }
             if (isPilot && data.attachmentType != AttachmentType.Physics)
             {
                 _diag.Quirk("nonPhysicsPilot",
                     "A NonPhysics AvatarAttachTo seats no one and adds an inert ParentConstraint to the torso, but "
-                    + "'pilot' is still broadcast (Greenfield AttachmentsSystem.cs:327-340, :196-200).");
+                    + "'pilot' is still broadcast (Greenfield AttachmentsSystem.cs:358-371, :206-210).");
             }
             else if (isPilot && !data.jointAvatar)
             {
                 _diag.Quirk("unjointedPilot",
                     "An AvatarAttachTo with jointAvatar off seats no one, but still takes the vehicle's ownership, "
-                    + "ignores rider collisions and broadcasts 'pilot' (Greenfield AttachmentsSystem.cs:300-324).");
+                    + "ignores rider collisions and broadcasts 'pilot' (Greenfield AttachmentsSystem.cs:331-355).");
             }
         }
 
@@ -963,14 +1023,14 @@ namespace BS.LocalMultiplayer.Attachments
                 _diag.Quirk("physicsOffsets",
                     "A Physics attachment ignores its attachment position and rotation on the player wearing it: the "
                     + "joint pins the object's origin to the body part. Other players apply the offsets "
-                    + "(Greenfield AttachmentsSystem.cs:267-299 vs :563-565).");
+                    + "(Greenfield AttachmentsSystem.cs:298-330 vs :634-636).");
             }
             var anchor = DesktopAttachmentTargets.Resolve(data.attachmentType, data.avatarAttachmentPoint, data.physicsAttachmentPoint);
             if (anchor == DesktopAnchor.Head && rig != null && targetBody == rig.TorsoBody)
             {
                 _diag.Quirk("physicsHead",
                     "A Physics Head attachment joints to the torso: the head camera has no Rigidbody "
-                    + "(Greenfield AttachmentsSystem.cs:296, :433-435).");
+                    + "(Greenfield AttachmentsSystem.cs:327, :464-466).");
             }
         }
 
@@ -983,7 +1043,7 @@ namespace BS.LocalMultiplayer.Attachments
                 return;
             _diag.Quirk("detachOtherUid",
                 "Detaching a broadcast attachment with a uid other than the wearer's detaches it here but sends no "
-                + "clear, so other players keep seeing it: production does the same (Greenfield AttachmentsSystem.cs:494-496).");
+                + "clear, so other players keep seeing it: production does the same (Greenfield AttachmentsSystem.cs:525-527).");
         }
     }
 }

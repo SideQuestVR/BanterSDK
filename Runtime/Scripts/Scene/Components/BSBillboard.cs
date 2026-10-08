@@ -47,6 +47,11 @@ namespace BS
 
         internal override void StartStuff()
         {
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has added the FaceTarget yet (see valuesApplied).
+                ReSetup();
+            }
             SetLoadedIfNot();
         }
 
@@ -66,6 +71,12 @@ namespace BS
         FaceTarget lookAt;
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
+            if (lookAt == null)
+            {
+                // A copy made with Instantiate already carries its original's FaceTarget.
+                lookAt = GetComponent<FaceTarget>();
+            }
             if (lookAt == null)
             {
                 lookAt = gameObject.AddComponent<FaceTarget>();

@@ -1,7 +1,8 @@
-// <mirror source="Assets/Systems/Avatar/Nametags/RemoteNametag.cs" sha256="365b7993afa11673dc0977eafa2ce1d7a3288151314738fbac81d1dafe328979" mode="port" />
-// <mirror source="Assets/Systems/Avatar/Nametags/NametagService.cs" sha256="445c7f11ad8bdac009dad3a7e599b10102d87306afdff280b89aa2b91e41e276" mode="port" />
-// RemoteNametag's placement and visibility (:56-86) with the "Always" display mode, at NametagService's size and
-// height (:31, :34) and parented under the player for its lifetime (:179-182). The baked pill texture is replaced by a
+// <mirror source="Assets/Systems/Avatar/Nametags/RemoteNametag.cs" sha256="0f0538ea918abad9e64d46d08120144c9b84b582d0344a46c109cbd9bdbdc7a2" mode="port" />
+// <mirror source="Assets/Systems/Avatar/Nametags/NametagService.cs" sha256="ed4b08022c5ca1479d56c7f67df3a22003d46161aec781efba4c0d6777766199" mode="port" />
+// RemoteNametag's placement and visibility (:56-88) with the "Always" display mode, hidden while the space turns
+// nametags off (NametagService.SceneAllowsNametags, :372-379), at NametagService's size and height (:31, :34) and
+// parented under the player for its lifetime (:179-182). The baked pill texture is replaced by a
 // world-space uGUI label (the Creator SDK has no NametagGenerator, and TextMeshPro isn't referenced), built like
 // PacketParty's PeerAvatar label with the built-in LegacyRuntime font.
 using UnityEngine;
@@ -113,10 +114,13 @@ namespace BS.LocalMultiplayer.Avatars
         {
             if (!_live) return;
 
-            // Hide until the player's body is on screen (placed and posed).
+            // Hide until the player's body is on screen (placed and posed), and while the space hides nametags
+            // (SceneSettings.EnableNametags, as NametagService.SceneAllowsNametags).
             if (_canvas != null)
             {
-                bool visible = _view == null || _view.IsBodyVisible;
+                var scene = BSScene.Current;
+                bool sceneAllows = scene == null || scene.settings == null || scene.settings.EnableNametags;
+                bool visible = sceneAllows && (_view == null || _view.IsBodyVisible);
                 if (_canvas.enabled != visible) _canvas.enabled = visible;
             }
 

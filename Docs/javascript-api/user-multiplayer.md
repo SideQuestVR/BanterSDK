@@ -7,39 +7,65 @@ Information about connected users:
 ```js
 const user = scene.localUser;
 
-user.id;        // User ID
-user.uid;       // Session UID
+user.uid;       // The player's id: the same on every visit, and the key of scene.users
+user.id;        // The player's session id for this visit (one-shots name their sender by it)
 user.name;      // Display name
-user.color;     // Avatar color
+user.color;     // A colour as hex text: "4488FF" for you, "AAAAAA" for everyone else
 user.isLocal;   // Is this the local player
-user.props;     // Custom properties
+user.props;     // Their user state, as strings
+user.state;     // The same user state as real JSON values
 ```
+
+Use `uid` to tell players apart. On your own page, your `id` can read `"local"` until you've joined the
+room. `color` isn't the avatar's colour. [Multiplayer](../multiplayer/overview.md#players) has more on
+players.
 
 ## Attaching Objects to Users
 
-Attach objects to a user's body with the `AttachedObject` component (see [AttachedObject](../components/vr-interaction.md#attachedobject)):
+Attach objects to the player with the `AttachedObject` component (see [AttachedObject](../components/vr-interaction.md#attachedobject)).
+An attachment always goes on the **local player**, whatever `uid` you give it: `Attach()` on a player's
+own page attaches to that player. Pass `"me"` (or `scene.localUser.uid`).
 
 ```js
-// Attach an object to a user's right hand
-const attached = await obj.AddComponent(new BS.AttachedObject({
-    uid: scene.localUser.uid,
-    attachmentType: BS.AttachmentType.RightHand,
-    autoAttach: true
+// A hat in your scene that whoever clicks it puts on
+// (it needs a BS Object Id to be found, and a collider on the UI layer to be clicked)
+const hat = await scene.Find("Hat");
+const attached = await hat.AddComponent(new BS.AttachedObject({
+    uid: "me",
+    attachmentType: BS.AttachmentType.NonPhysics,   // follow the point, no physics
+    avatarAttachmentPoint: BS.AvatarBoneName.HEAD,
+    attachmentPosition: new BS.Vector3(0, 0.15, 0), // offset from the head
+    autoSync: true                                  // show it on your avatar for everyone else too
 }));
 
-// Attach/detach for a specific user at runtime
-attached.Attach(scene.localUser.uid);
-attached.Detach(scene.localUser.uid);
+let wearing = false;
+hat.On("click", async () => {
+    if (wearing) return; // attaching twice stacks: see below
+    wearing = true;
+    await attached.Attach("me");
+});
 
-// Attachment types:
-BS.AttachmentType.Head
-BS.AttachmentType.LeftHand
-BS.AttachmentType.RightHand
-BS.AttachmentType.LeftFoot
-BS.AttachmentType.RightFoot
-BS.AttachmentType.Chest
-BS.AttachmentType.Back
+// Take it off again
+async function takeOffHat() {
+    wearing = false;
+    await attached.Detach("me");
+}
 ```
+
+| Setting | What it does |
+|---|---|
+| `attachmentType` | `BS.AttachmentType.NonPhysics` follows the point with no physics, offset by `attachmentPosition` and `attachmentRotation`. `BS.AttachmentType.Physics` (the default) joins the object to the point with a physics joint, adding a Rigidbody if it has none; the offsets aren't used, and `Detach` doesn't release it yet, so use `NonPhysics` for anything that comes off again. |
+| `attachmentPoint` | For `Physics`: a `BS.PhysicsAttachmentPoint`, `LeftHand`, `RightHand` or `Torso`. For the head, use `NonPhysics`. |
+| `avatarAttachmentPoint` | For `NonPhysics`: a `BS.AvatarBoneName`. `HEAD` and `NECK` follow the head, the hand, forearm and finger bones follow that hand, and every other bone follows the body. |
+| `avatarAttachmentType` | `BS.AvatarAttachmentType.AttachToAvatar` (the default) puts the object on the player; `AvatarAttachTo` puts the player on the object, like a seat. |
+| `autoSync` | Others see the object on your avatar too. Their copy of the object is moved, so it has to exist for every player with the same [BS Object Id](../multiplayer/overview.md#bsobjectid). |
+| `autoAttach` | Attach as soon as the component starts. |
+
+Attach an object once: attaching it again before `Detach` stacks a second attachment, and `Detach` then
+leaves it on.
+
+In Play mode without local multiplayer, only head attachments and seats are shown; other attachment points
+leave the object where it is.
 
 ## State Synchronization
 
@@ -65,15 +91,20 @@ scene.On("space-state", (e) => {
     e.detail.changes.forEach(c => console.log(c.path, "=", c.value));
 });
 
-// Send message to all users
-scene.OneShot({
+// Send a message to everyone else in the space (an object is sent as JSON)
+await scene.OneShot({
     type: "player-action",
     data: { x: 1, y: 2 }
-}, true);
+});
 
 // Receive messages
 scene.On("one-shot", (e) => {
-    console.log("From:", e.detail.fromId);
-    console.log("Data:", e.detail.data);
+    const sender = Object.values(scene.users).find(u => u.id === e.detail.fromId);
+    const message = JSON.parse(e.detail.data); // always a string
+    console.log("From:", sender ? sender.name : e.detail.fromId);
+    console.log("Data:", message.data);
 });
 ```
+
+A one-shot never comes back to the player who sent it, and `fromId` is the sender's `id`, not their
+`uid`. See [One-Shot Events](scene-events.md#one-shot-events) and [Scene API: State Management](scene-api.md#state-management).

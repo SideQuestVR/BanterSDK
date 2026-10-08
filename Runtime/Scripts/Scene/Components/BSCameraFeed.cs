@@ -20,7 +20,7 @@ namespace BS
      * Field names are serialized into published worlds — never rename them.
      */
     [DisallowMultipleComponent]
-    [AddComponentMenu("Banter/Camera Feed")]
+    [AddComponentMenu("BS/Camera Feed")]
     public class BSCameraFeed : MonoBehaviour
     {
         [Tooltip("The id monitors, cuts and recordings use for this feed. Unique within the space; defaults to the GameObject's name.")]

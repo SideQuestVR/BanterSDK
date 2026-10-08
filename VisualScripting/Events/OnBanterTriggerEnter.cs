@@ -27,7 +27,8 @@ namespace BS.VisualScripting
         protected override void AssignArguments(Flow flow, Collider other)
         {
             base.AssignArguments(flow, other);
-            var user = other.gameObject.GetComponentInParent<UserData>();
+            // Not just GetComponentInParent: Greenfield's local UserData isn't above the rig's colliders.
+            var user = BSScene.Instance().GetUserFromCollider(other);
             if (user != null)
             {
                 flow.SetValue(this.user, new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });

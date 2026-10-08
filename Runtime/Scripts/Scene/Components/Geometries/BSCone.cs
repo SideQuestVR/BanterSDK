@@ -12,9 +12,9 @@ namespace BS
     {
 
         [Tooltip("Radius of the cone")]
-        [See(initial = "1")][SerializeField] internal float radius;
+        [See(initial = "1")][SerializeField] internal float radius = 1;
         [Tooltip("Height of the cone")]
-        [See(initial = "1")][SerializeField] internal float height;
+        [See(initial = "1")][SerializeField] internal float height = 1;
         [Tooltip("Number of segments around the cone")]
         [See(initial = "32")][SerializeField] internal int radialSegments = 32;
         [Tooltip("Number of segments along the height of the cone")]
@@ -42,10 +42,8 @@ namespace BS
         void SetupGeometry()
         {
             var geometry = GetComponent<BSGeometry>();
-            var shouldSetGeometry = false;
             if (geometry == null)
             {
-                shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BSGeometry>();
             }
             geometry.geometryType = GeometryType.CylinderGeometry;
@@ -57,10 +55,9 @@ namespace BS
             geometry.openEnded = openEnded;
             geometry.thetaStart = thetaStart;
             geometry.thetaLength = thetaLength;
-            if (shouldSetGeometry)
-            {
-                geometry.SetGeometry();
-            }
+            // Every call, not only when the geometry was just added: this also runs for each
+            // property change, and the mesh has to follow. Unchanged values hit BSGeometry's cache.
+            geometry.SetGeometry();
         }
 
         internal override void DestroyStuff()

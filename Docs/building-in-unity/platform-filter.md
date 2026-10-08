@@ -1,6 +1,6 @@
 # Platform Filter (BSPlatformFilter)
 
-A Unity Editor component that includes or excludes a GameObject per platform at build time. Add it with **Add Component** by searching for *Platform Filter* (one per GameObject). It is not part of the JS API — the component never ships and is invisible to scripts by design.
+A Unity Editor component that includes or excludes a GameObject per platform at build time. Add it with **Add Component > BS > Platform Filter**, or search for *Platform Filter* (one per GameObject). It is not part of the JS API — the component never ships and is invisible to scripts by design.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|

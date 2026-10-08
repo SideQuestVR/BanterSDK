@@ -66,15 +66,59 @@ namespace BS
             if (UnityEditor.BuildPipeline.isBuildingPlayer)
                 return;
 
-            GenerateId(IsDuplicateId(Id));
+            if (Application.isPlaying)
+            {
+                GenerateId(IsDuplicateId(Id));
+                return;
+            }
+            // A prefab asset's Id is only the template its instances start from, and a scene open as a preview
+            // (Prefab Mode, the Builder checklist's copy) isn't the placed objects: changing their Id here only
+            // churned an in-memory copy, and hid the duplicates the checklist looks for.
+            if (UnityEditor.EditorUtility.IsPersistent(this) || UnityEditor.SceneManagement.EditorSceneManager.IsPreviewScene(gameObject.scene))
+                return;
+
+            if (string.IsNullOrEmpty(Id) || IsDuplicateId(Id))
+            {
+                // A random Id rather than the instance id: instance ids restart every editor session, so a saved
+                // one can come round again on a new object.
+                ForceGenerateId();
+                KeepEditorId();
+            }
+        }
+
+        /// <summary>
+        /// Saves an Id given outside Play mode. A prefab instance's new Id has to be recorded as an override, or
+        /// the scene saves without it and every copy of the prefab is back on the prefab's Id when the scene
+        /// reopens (two Seats from GameObject > BS sharing one network id); the object is marked dirty so the
+        /// scene gets saved at all. Deferred: OnValidate runs in the middle of loading, duplicating and
+        /// instantiating, where recording a modification isn't safe.
+        /// </summary>
+        void KeepEditorId()
+        {
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (this == null || Application.isPlaying || UnityEditor.EditorUtility.IsPersistent(this))
+                    return;
+                if (UnityEditor.PrefabUtility.IsPartOfPrefabInstance(this))
+                    UnityEditor.PrefabUtility.RecordPrefabInstancePropertyModifications(this);
+                UnityEditor.EditorUtility.SetDirty(this);
+            };
         }
 #endif
         private bool IsDuplicateId(string id)
         {
-            var all = GameObject.FindObjectsOfType<BSObjectId>();
+            // Inactive objects too: a disabled copy shares the network id just the same.
+            var all = FindObjectsByType<BSObjectId>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (var u in all)
+            {
+#if UNITY_EDITOR
+                // A preview scene's copies (Prefab Mode, the Builder checklist) aren't part of the world.
+                if (UnityEditor.SceneManagement.EditorSceneManager.IsPreviewScene(u.gameObject.scene))
+                    continue;
+#endif
                 if (u != this && u.Id == id)
                     return true;
+            }
             return false;
         }
         public void GenerateId(bool force = false)

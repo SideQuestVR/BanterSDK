@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/SdkWireCodec.cs" sha256="e351cd0358f04e13955d5c8f161a14909e037503058e215f4bcb52db25dba455" mode="verbatim" />
+// <mirror source="Assets/Systems/Networking/State/SdkWireCodec.cs" sha256="1c1d3ec92a1d7fe3e402487f0486f540d5ce12070fd7a1f7aa487ed943144517" mode="verbatim" />
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -36,7 +36,7 @@ namespace BS.LocalMultiplayer.State
         /// <summary>Server cap: 16 KiB of UTF-8, measured on the encoded form.</summary>
         public const int MaxValueBytes = 16 * 1024;
 
-        /// <summary>Client-local keys injected into the page's public map; never written to the server.</summary>
+        /// <summary>Reserved names: never written to the server or accepted from the page. Only ss_err reaches the page.</summary>
         public const string RevisionKey = "ss_rev";
         public const string ProtectedKeysKey = "ss_protected";
         public const string CanProtectKey = "ss_can_protect";

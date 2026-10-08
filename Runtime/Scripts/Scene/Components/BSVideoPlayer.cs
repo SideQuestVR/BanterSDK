@@ -15,7 +15,7 @@ namespace BS
     public class BSVideoPlayer : BSComponentBase
     {
         [Tooltip("The URL of the video to be played.")]
-        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "")][SerializeField] internal string url = "";
 
         [Tooltip("The volume of the video player (0.0 to 1.0).")]
         [See(initial = "0.5")][SerializeField] internal float volume = 0.5f;
@@ -103,6 +103,7 @@ namespace BS
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             SetupVideo(changedProperties);
         }
         void SetVideoPlayer()
@@ -158,11 +159,39 @@ namespace BS
         void SetupVideo(List<PropertyName> changedProperties)
         {
             SetVideoPlayer();
+            // Before the url, which starts playback: arriving with it (as from any JS constructor),
+            // these used to land only after the video had already been told to play.
+            if (changedProperties.Contains(PropertyName.playOnAwake))
+            {
+                _source.playOnAwake = playOnAwake;
+            }
+            if (changedProperties.Contains(PropertyName.skipOnDrop))
+            {
+                _source.skipOnDrop = skipOnDrop;
+            }
+            if (changedProperties.Contains(PropertyName.waitForFirstFrame))
+            {
+                _source.waitForFirstFrame = waitForFirstFrame;
+            }
             if (changedProperties.Contains(PropertyName.url))
             {
+                var wasPlaying = _source.isPlaying;
                 _source.Stop();
                 _source.url = url;
-                _source.Play();
+                if (!string.IsNullOrEmpty(url))
+                {
+                    // Plays when playOnAwake asks for it, or carries on when a video was already
+                    // playing (a screen switched to another video). Otherwise it is only prepared, so
+                    // the first frame is ready and PlayToggle, which needs isPrepared, can start it.
+                    if (playOnAwake || wasPlaying)
+                    {
+                        _source.Play();
+                    }
+                    else
+                    {
+                        _source.Prepare();
+                    }
+                }
             }
             if (changedProperties.Contains(PropertyName.volume))
             {
@@ -184,24 +213,51 @@ namespace BS
             {
                 _source.time = time;
             }
-            if (changedProperties.Contains(PropertyName.playOnAwake))
-            {
-                _source.playOnAwake = playOnAwake;
-            }
-            if (changedProperties.Contains(PropertyName.skipOnDrop))
-            {
-                _source.skipOnDrop = skipOnDrop;
-            }
-            if (changedProperties.Contains(PropertyName.waitForFirstFrame))
-            {
-                _source.waitForFirstFrame = waitForFirstFrame;
-            }
             SetLoadedIfNot();
         }
         internal override void StartStuff()
         {
+            var hadPlayer = GetComponent<VideoPlayer>() != null;
             SetVideoPlayer();
             _source.loopPointReached += VideoEnded;
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has applied the fields yet (see valuesApplied).
+                var properties = new List<PropertyName>();
+                if (hadPlayer)
+                {
+                    // A VideoPlayer already on the object is the creator's own (its render target,
+                    // say) and keeps its settings, read back into the fields so JS sees them. Only a
+                    // url set here is applied to it - that is what this component is for.
+                    loop = _source.isLooping;
+                    playOnAwake = _source.playOnAwake;
+                    skipOnDrop = _source.skipOnDrop;
+                    waitForFirstFrame = _source.waitForFirstFrame;
+                    if (string.IsNullOrEmpty(url))
+                    {
+                        url = _source.url;
+                    }
+                    else if (url != _source.url)
+                    {
+                        properties.Add(PropertyName.url);
+                    }
+                }
+                else
+                {
+                    // This component adds the VideoPlayer, so its fields configure it.
+                    properties.AddRange(new[] { PropertyName.volume, PropertyName.loop, PropertyName.playOnAwake,
+                        PropertyName.skipOnDrop, PropertyName.waitForFirstFrame });
+                    if (!string.IsNullOrEmpty(url))
+                    {
+                        properties.Add(PropertyName.url);
+                    }
+                }
+                UpdateCallback(properties);
+                if (hadPlayer)
+                {
+                    SyncProperties(true);
+                }
+            }
         }
         void VideoEnded(VideoPlayer v)
         {

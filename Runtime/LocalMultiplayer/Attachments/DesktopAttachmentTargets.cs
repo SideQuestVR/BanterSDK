@@ -1,6 +1,6 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="0f1669d7b7b4a63a26018d8c081252cd8e96e2da14f7e5c7829590bcc33541e5" mode="port" />
-// DesktopAttachmentTargets is the switch of GetAttachmentTransform (:364-442) with FlexaBody's parts swapped for the
-// desktop rig's; AttachmentJoint is the joint set-up of HandleAttachment (:271-288), lifted out so both are testable.
+// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="c0818b6e8641387ce32964d2e3416274df58bee0495cf8b80cd37209dcc6b319" mode="port" />
+// DesktopAttachmentTargets is the switch of GetAttachmentTransform (:395-473) with FlexaBody's parts swapped for the
+// desktop rig's; AttachmentJoint is the joint set-up of HandleAttachment (:302-319), lifted out so both are testable.
 using BS;
 using UnityEngine;
 

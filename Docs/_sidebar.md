@@ -2,9 +2,11 @@
   - [Overview](/)
   - [Installation](/getting-started/installation.md)
   - [Quick Start](/getting-started/quick-start.md)
+  - [Testing in Play Mode](/getting-started/testing-in-play-mode.md)
   - [Core Concepts](/getting-started/core-concepts.md)
 - Building in Unity
   - [The Builder Window](/building-in-unity/builder.md)
+  - [Publishing Your World](/building-in-unity/publishing.md)
   - [Layers](/building-in-unity/layers.md)
   - [Tags](/building-in-unity/tags.md)
   - [Easy Prefabs](/building-in-unity/easy-prefabs.md)
@@ -17,7 +19,11 @@
   - [GameObject API](/javascript-api/gameobject-api.md)
   - [Component Base Class & Events](/javascript-api/component-base.md)
   - [User & Multiplayer](/javascript-api/user-multiplayer.md)
-  - [Asset System](/javascript-api/asset-system.md)
+  - [Saving Data](/javascript-api/saving-data.md)
+  - [Recording](/javascript-api/recording.md)
+- Multiplayer
+  - [Overview](/multiplayer/overview.md)
+  - [Testing Multiplayer Locally](/multiplayer/local-testing.md)
 - Components
   - [Overview](/components/overview.md)
   - [Physics](/components/physics.md)
@@ -27,8 +33,15 @@
   - [Audio](/components/audio.md)
   - [Media & Content](/components/media.md)
   - [VR Interaction](/components/vr-interaction.md)
+  - [Spawn, Seats & Settings](/components/player-setup.md)
   - [Special](/components/special.md)
   - [UI System](/components/ui-system.md)
+- Browser
+  - [Overview](/browser/overview.md)
+  - [The BS Browser](/browser/bs-browser.md)
+  - [Messages](/browser/messages.md)
+  - [Textures](/browser/textures.md)
+  - [The Space Browser](/browser/space-browser.md)
 - Visual Scripting
   - [Visual Scripting](/visual-scripting/overview.md)
   - [Advanced: ScriptGraphBridge](/visual-scripting/script-graph-bridge.md)
@@ -37,4 +50,6 @@
   - [Global Functions & Utility Types](/reference/global-functions.md)
   - [Enums & Constants](/reference/enums.md)
   - [Legacy APIs](/reference/legacy-apis.md)
+  - [Troubleshooting](/reference/troubleshooting.md)
+  - [Performance](/reference/performance.md)
   - [Additional Resources](/reference/resources.md)

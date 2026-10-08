@@ -15,7 +15,7 @@ namespace BS.SDKEditor.BuildChecks
 
         public override string Id => "bs.seat";
         public override string Title => "Seats";
-        public override string Description => "Every seat has a collider to click, on a layer SDK Play mode can click (UI or Menu).";
+        public override string Description => "Every seat has a collider to click, on a clickable layer (UI or Menu).";
         public override int Order => 300;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -42,9 +42,9 @@ namespace BS.SDKEditor.BuildChecks
             if (notClickableInSdk.Count > 0)
             {
                 issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
-                        $"{notClickableInSdk.Count} seat(s) can't be clicked in SDK Play Mode",
-                        "The SDK's desktop player only clicks colliders on the UI (5) or Menu (22) layer. The client clicks any " +
-                        "layer, but put the seat's click collider on the UI layer to test it here.")
+                        $"{notClickableInSdk.Count} seat(s) can't be clicked",
+                        "Only colliders on the UI (5) or Menu (22) layer can be clicked, in the client and in SDK Play Mode. Put " +
+                        "the seat's click collider on the UI layer.")
                     .WithTargets(context.TargetsOf(notClickableInSdk))
                     .WithFix("Move the seats' colliders to the UI layer", issue =>
                     {
@@ -68,6 +68,77 @@ namespace BS.SDKEditor.BuildChecks
         // The colliders BSSeat listens to: its own and its children's, but not a nested seat's.
         static IEnumerable<Collider> ClickColliders(BSSeat seat) =>
             seat.GetComponentsInChildren<Collider>(true).Where(col => col.GetComponentInParent<BSSeat>(true) == seat);
+    }
+
+    /// <summary>
+    /// Players match synced objects, seats and attachments by their BSObjectId, so two objects sharing one get
+    /// mixed up. Copies of a prefab used to end up sharing the prefab's Id once the scene was saved and reopened.
+    /// </summary>
+    sealed class DuplicateObjectIdsCheck : BuildCheck
+    {
+        public override string Id => "bs.object-ids";
+        public override string Title => "Object IDs";
+        public override string Description =>
+            "Every object's BSObjectId is its own. Players match synced objects, seats and attachments by it, so objects " +
+            "sharing one get mixed up.";
+        public override int Order => 305;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            // The first object with an Id keeps it; the copies after it are the ones to change.
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var copies = new List<BSObjectId>();
+            foreach (var objectId in context.Components<BSObjectId>())
+            {
+                if (!string.IsNullOrEmpty(objectId.Id) && !seen.Add(objectId.Id))
+                    copies.Add(objectId);
+            }
+            if (copies.Count == 0)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"{copies.Count} object(s) have the same object ID as another object",
+                    "In the space, players find a synced object, seat or attachment by this ID, so objects that share one get " +
+                    "mixed up: one moves the other, or two seats count as one. Copies of a prefab often share the prefab's ID.")
+                .WithTargets(context.TargetsOf(copies))
+                .WithFix("Give each a new ID", issue => GiveNewIds(issue.Resolve<GameObject>()
+                    .Select(go => go.GetComponent<BSObjectId>())
+                    .Where(objectId => objectId != null)
+                    .ToList())));
+        }
+
+        /// <summary>
+        /// A new random Id for each of <paramref name="objectIds"/> still sharing its Id in the open scene (opening
+        /// it may have renamed some already), as one Undo step, kept as a prefab override and marked for saving.
+        /// </summary>
+        internal static bool GiveNewIds(List<BSObjectId> objectIds)
+        {
+            Undo.IncrementCurrentGroup();
+            var group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Give objects new IDs");
+            var changed = false;
+            foreach (var objectId in objectIds)
+            {
+                if (!SharesId(objectId))
+                    continue;
+                Undo.RecordObject(objectId, "Give objects new IDs");
+                objectId.ForceGenerateId();
+                if (PrefabUtility.IsPartOfPrefabInstance(objectId))
+                    PrefabUtility.RecordPrefabInstancePropertyModifications(objectId);
+                UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(objectId.gameObject.scene);
+                changed = true;
+            }
+            Undo.CollapseUndoOperations(group);
+            return changed;
+        }
+
+        static bool SharesId(BSObjectId objectId)
+        {
+            if (string.IsNullOrEmpty(objectId.Id))
+                return false;
+            return objectId.gameObject.scene.GetRootGameObjects()
+                .SelectMany(root => root.GetComponentsInChildren<BSObjectId>(true))
+                .Any(other => other != objectId && other.Id == objectId.Id);
+        }
     }
 
     /// <summary>Hands only find grab handles on the Grabbable layer, through the handle's own collider.</summary>
@@ -111,28 +182,6 @@ namespace BS.SDKEditor.BuildChecks
                         "A grab handle is held through a collider on the same object. Add one (a trigger is fine).")
                     .WithTargets(context.TargetsOf(noCollider)));
             }
-        }
-    }
-
-    /// <summary>BSGrababble configures itself only when a page script sets its properties.</summary>
-    sealed class GrababbleCheck : BuildCheck
-    {
-        public override string Id => "bs.grababble";
-        public override string Title => "Grababble";
-        public override string Description => "No object uses BSGrababble, which can't be picked up when it's placed in the editor.";
-        public override int Order => 320;
-
-        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
-        {
-            var grababbles = context.Components<BSGrababble>().ToList();
-            if (grababbles.Count == 0)
-                return;
-            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
-                    $"{grababbles.Count} object(s) use BSGrababble, which doesn't set itself up in a scene",
-                    "BSGrababble adds its grab handle only when a page script sets its properties, so placed in the editor it " +
-                    "can't be picked up. Use a preset from GameObject > BS > Grab, or a BSGrabHandle on a Grabbable-layer " +
-                    "collider with BSWorldObject on the rigidbody.")
-                .WithTargets(context.TargetsOf(grababbles)));
         }
     }
 

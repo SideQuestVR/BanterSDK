@@ -19,7 +19,7 @@ namespace BS.VisualScripting
         Object
     }
 
-    [AddComponentMenu("Banter/Visual Scripting Relay")]
+    [AddComponentMenu("BS/Visual Scripting Relay")]
     public class VisualScriptingEventTyped : MonoBehaviour
     {
         public EventDataType dataType = EventDataType.None;

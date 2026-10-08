@@ -10,7 +10,7 @@ namespace BS
     [RequireComponent(typeof(BSObjectId))]
     public class BSConfigurableJoint : UnityComponentBase
     {
-        [Tooltip("The target position of the joint in world space.")]
+        [Tooltip("The position the linear drives move towards, in the joint's space (world space when configuredInWorldSpace is on).")]
         [See(initial = "0,0,0")][SerializeField] internal Vector3 targetPosition = Vector3.zero;
 
         [Tooltip("If true, the connected anchor will be automatically configured.")]
@@ -76,7 +76,7 @@ namespace BS
         [Tooltip("The rotation drive mode.")]
         [See(initial = "0")][SerializeField] internal RotationDriveMode rotationDriveMode = RotationDriveMode.XYAndZ;
 
-        [Tooltip("Enable projection for the joint.")]
+        [Tooltip("Calculate the target values in world space instead of the joint's own space.")]
         [See(initial = "false")][SerializeField] internal bool configuredInWorldSpace = false;
 
         [Tooltip("Swap the bodies connected by the joint.")]
@@ -106,27 +106,27 @@ namespace BS
 
         // X Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The drive for the x-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
-        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive xDrive = new JointDrive();
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive xDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
 
         // Y Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The drive for the y-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
-        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive yDrive = new JointDrive();
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive yDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
 
         // Z Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The drive for the z-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
-        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive zDrive = new JointDrive();
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive zDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
 
         // Angular X Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The drive for the angular x-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
-        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive angularXDrive = new JointDrive();
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive angularXDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
 
         // Angular YZ Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The drive for the angular YZ-axis. Vector3(positionSpring, positionDamper, maximumForce).")]
-        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive angularYZDrive = new JointDrive();
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive angularYZDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
 
         // Slerp Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The slerp drive for rotation. Vector3(positionSpring, positionDamper, maximumForce).")]
-        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive slerpDrive = new JointDrive();
+        [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive slerpDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
         // BANTER COMPILED CODE 
         public UnityEngine.Vector3 TargetPosition { get { return targetPosition; } set { targetPosition = value; } }
         public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }

@@ -71,8 +71,6 @@ namespace BS
         // released when the slot resolves again and on destroy.
         readonly Dictionary<int, Action> assetFollowers = new Dictionary<int, Action>();
 
-        bool UpdateCallbackRan = false;
-
         private static Dictionary<string, Material> materialCache = new Dictionary<string, Material>();
 
         public static void ClearCache()
@@ -145,11 +143,30 @@ namespace BS
         }
         internal override void StartStuff()
         {
-            if (!UpdateCallbackRan)
+            if (!valuesApplied)
             {
-                _ = SetupMaterial();
+                // Placed in the Inspector, so nothing has applied the fields yet (see valuesApplied).
+                // The exception is every value still at its default on a renderer that already has a
+                // material: that is a JS handle on the creator's own material, from when Inspector
+                // values never applied, and building one would swap it for a plain white
+                // Unlit/Diffuse. It's left alone until a property is set, as before.
+                var meshRenderer = GetComponent<MeshRenderer>();
+                if (meshRenderer != null && meshRenderer.sharedMaterial != null && HasDefaultValues())
+                {
+                    _ = SetupMaterial();
+                }
+                else
+                {
+                    ReSetup();
+                }
             }
         }
+
+        bool HasDefaultValues() =>
+            shaderType == ShaderType.Custom && shaderName == "Unlit/Diffuse" && string.IsNullOrEmpty(texture) &&
+            color == new Vector4(1, 1, 1, 1) && side == MaterialSide.Front && !generateMipMaps &&
+            string.IsNullOrEmpty(cacheBust) && string.IsNullOrEmpty(normalMap) && string.IsNullOrEmpty(roughnessMap) &&
+            string.IsNullOrEmpty(aoMap) && textureScale == 1f && normalStrength == 1f;
 
         internal override void UpdateStuff()
         {
@@ -157,7 +174,7 @@ namespace BS
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
-            UpdateCallbackRan = true;
+            valuesApplied = true;
             _ = SetupMaterial(changedProperties);
         }
         async Task SetupMaterial(List<PropertyName> changedProperties = null)

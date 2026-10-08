@@ -26,8 +26,8 @@ namespace BS
     [RequireComponent(typeof(BSObjectId))]
     public class BSMeshCollider : UnityComponentBase
     {
-        [See(initial = "false")][SerializeField] internal bool convex;
-        [See(initial = "false")][SerializeField] internal bool isTrigger;
+        [See(initial = "false")][SerializeField] internal bool convex = false;
+        [See(initial = "false")][SerializeField] internal bool isTrigger = false;
         // BANTER COMPILED CODE 
         public System.Boolean Convex { get { return convex; } set { convex = value; } }
         public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
