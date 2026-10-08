@@ -76,6 +76,62 @@ namespace BS.SDKEditor.Tests
         // ---- seats ----
 
         [Test]
+        public void ObjectIds_Shared_FlagsEachCopyAfterTheFirst()
+        {
+            CreateObjectId("first", "same");
+            CreateObjectId("second", "same");
+            CreateObjectId("third", "same");
+            CreateObjectId("other", "different");
+
+            var issues = Run(new DuplicateObjectIdsCheck());
+            Assert.AreEqual(1, issues.Count);
+            Assert.AreEqual(BuildCheckSeverity.Warning, issues[0].Severity);
+            CollectionAssert.AreEqual(new[] { "second", "third" }, issues[0].Targets.Select(target => target.Label));
+            Assert.IsNotNull(issues[0].Fix);
+        }
+
+        [Test]
+        public void ObjectIds_UniqueOrEmpty_Pass()
+        {
+            CreateObjectId("a", "one");
+            CreateObjectId("b", "two");
+            CreateObjectId("c", "");
+            CreateObjectId("d", "");
+
+            Assert.IsEmpty(Run(new DuplicateObjectIdsCheck()));
+        }
+
+        [Test]
+        public void ObjectIds_Fix_GivesEachCopyItsOwnId()
+        {
+            var first = CreateObjectId("first", "same");
+            var second = CreateObjectId("second", "same");
+            var third = CreateObjectId("third", "same");
+            try
+            {
+                Assert.IsTrue(DuplicateObjectIdsCheck.GiveNewIds(new List<BSObjectId> { second, third }));
+                Assert.AreEqual("same", first.Id);
+                Assert.AreNotEqual("same", second.Id);
+                Assert.AreNotEqual("same", third.Id);
+                Assert.AreNotEqual(second.Id, third.Id);
+                // Nothing shares an Id any more, so a second run changes nothing.
+                Assert.IsFalse(DuplicateObjectIdsCheck.GiveNewIds(new List<BSObjectId> { first, second, third }));
+            }
+            finally
+            {
+                foreach (var objectId in new[] { first, second, third })
+                    Undo.ClearUndo(objectId);
+            }
+        }
+
+        BSObjectId CreateObjectId(string name, string id)
+        {
+            var objectId = Create(name).AddComponent<BSObjectId>();
+            objectId.Id = id;
+            return objectId;
+        }
+
+        [Test]
         public void Seat_OnDefaultLayer_CantBeClickedInTheSdk()
         {
             var seat = Create("seat");

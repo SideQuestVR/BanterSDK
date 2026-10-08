@@ -69,18 +69,23 @@ A page with a button counts clicks in your space and shows the total. The space 
 
 ```js
 // index.html: your space's script
-const screen = new BS.GameObject({ name: "Counter", localPosition: new BS.Vector3(0, 1.5, 2) });
-const browser = screen.AddComponent(new BS.Browser({ url: "https://example.com/counter.html", pageWidth: 800, pageHeight: 450 }));
-let count = 0;
+window.addEventListener("bs-loaded", () => {
+    const scene = BS.Scene.GetInstance();
+    scene.On("unity-loaded", async () => {
+        const screen = new BS.GameObject({ name: "Counter", localPosition: new BS.Vector3(0, 1.5, 2) });
+        const browser = await screen.AddComponent(new BS.Browser({ url: "https://example.com/counter.html", pageWidth: 800, pageHeight: 450 }));
+        let count = 0;
 
-screen.On("browser-message", (e) => {
-    const message = JSON.parse(e.detail);
-    if (message.event === "clicked") {
-        count++;
-        browser.RunActions(JSON.stringify({
-            actions: [{ actionType: "postmessage", strParam1: JSON.stringify({ count }) }]
-        }));
-    }
+        screen.On("browser-message", (e) => {
+            const message = JSON.parse(e.detail);
+            if (message.event === "clicked") {
+                count++;
+                browser.RunActions(JSON.stringify({
+                    actions: [{ actionType: "postmessage", strParam1: JSON.stringify({ count }) }]
+                }));
+            }
+        });
+    });
 });
 ```
 
@@ -100,9 +105,10 @@ screen.On("browser-message", (e) => {
 </script>
 ```
 
+The page can live on any web server. To publish it with your world instead, upload it on altvr.app (your world's page, **Edit world**, **Assets**): it's then served from your world's address, such as `https://my-world.worldspace.host/counter.html`. A page you only put in `Assets/WebRoot` works in Play mode but isn't uploaded by the Builder; see [What gets uploaded](../building-in-unity/publishing.md#what-gets-uploaded).
+
 ## Tips
 
 - **Keep messages small.** Messages pass through the browser on their way, and a very large one slows things down.
-- **Avoid the `§` and `¶` characters**: they split messages on the way through.
 - **Say who's talking.** With several browsers, include a field such as `from` in every message.
 - **Ready before you send.** A message posted before the page has loaded its listener is lost. Have the page say it's ready first, as in the examples.

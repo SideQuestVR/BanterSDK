@@ -22,10 +22,13 @@ rb.mass = 2;              // pushed to Unity immediately
 rb.useGravity = false;    // same — every property setter syncs
 ```
 
+An assignment made before the component is linked is sent once it is.
+
 **Reading values back:**
 
 ```js
-// Read one property from Unity (waits for the Unity link first)
+// Read one property from Unity (waits for the Unity link first);
+// resolves with the value, including 0, false and ""
 const mass = await rb.GetProperty(BS.PropertyName.mass);
 
 // Read several at once
@@ -51,6 +54,7 @@ await rb.SetProperties([BS.PropertyName.mass, BS.PropertyName.drag]);
 
 ```js
 // Ask Unity to stream changes to these properties back to JS
+// (the component must be linked first: await AddComponent or Async)
 rb.WatchProperties([BS.PropertyName.velocity]);
 
 // Remove the component (from Unity too)
@@ -61,6 +65,10 @@ await rb.Async();
 ```
 
 `BS.PN` is a shorthand alias for `BS.PropertyName` (e.g. `BS.PN.mass`).
+
+**Methods** — a component's own methods (`rb.AddForce(...)`, `audio.PlayOneShot(...)` and so on) return a
+Promise that resolves with the method's return value, or `undefined` for one that returns nothing. See
+`CallMethod` in [Batch Operations & Watching](scene-api.md#batch-operations-amp-watching).
 
 ## Event Methods (GameEventTarget)
 
@@ -90,4 +98,6 @@ component.On("loaded", () => { /* ... */ });        // finished loading; isLoade
 component.On("unity-linked", (e) => { /* ... */ }); // linked to Unity; e.detail = { id, unityId, oid }
 ```
 
-Listening for `"unity-loaded"` on the Scene calls the listener immediately if Unity has already loaded.
+Neither fires again for a listener added afterwards: add them before `AddComponent`, or check `isLoaded`
+and `hasUnity` first. Listening for `"unity-loaded"` on the Scene is the exception: it calls the listener
+immediately if Unity has already loaded.

@@ -15,7 +15,7 @@ namespace BS
     {
         TextMeshPro tmpComponent;
         [Tooltip("The text content to display.")]
-        [See(initial = "")][SerializeField] internal string text;
+        [See(initial = "")][SerializeField] internal string text = "";
 
         [Tooltip("The color of the text in RGBA format.")]
         [See(initial = "1,1,1,1")][SerializeField] internal Vector4 color = new Vector4(1, 1, 1, 1);

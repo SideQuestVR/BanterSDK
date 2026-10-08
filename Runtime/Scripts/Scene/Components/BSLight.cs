@@ -10,7 +10,7 @@ namespace BS
     [RequireComponent(typeof(BSObjectId))]
     public class BSLight : UnityComponentBase
     {
-        [Tooltip("The type of light (0 = Point, 1 = Directional, 2 = Spot).")]
+        [Tooltip("The type of light (0 = Spot, 1 = Directional, 2 = Point).")]
         [See(initial = "0")][SerializeField] internal LightType type = 0;
 
         [Tooltip("The color of the light.")]

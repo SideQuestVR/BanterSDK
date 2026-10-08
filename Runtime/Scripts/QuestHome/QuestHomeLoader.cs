@@ -6,7 +6,7 @@ namespace BS
     /// Simple helper script to load Quest Home environments with minimal setup.
     /// Just attach to a GameObject, set the APK URL in the Inspector, and it loads automatically on Start.
     /// </summary>
-    [AddComponentMenu("Banter/Quest Home Loader")]
+    [AddComponentMenu("BS/Quest Home Loader")]
     public class QuestHomeLoader : MonoBehaviour
     {
         [Header("Quest Home Settings")]

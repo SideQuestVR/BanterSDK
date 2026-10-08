@@ -145,6 +145,52 @@ namespace BS.SDKEditor.Setup
         public override bool Fix() => InitialiseOnLoad.CreateWebRoot();
     }
 
+    /// <summary>Every scene in a project shares the one space page, so a project should hold one world.</summary>
+    sealed class OneSceneSetupCheck : SetupCheck
+    {
+        public override string Id => "sdk.one-scene";
+        public override string Title => "One scene per project";
+        public override int Order => 35;
+        public override SetupImportance Importance => SetupImportance.Recommended;
+        public override string Why =>
+            "Every scene in a project shares the one space page, Assets/WebRoot/index.html: its scripts, and the snippets placed in " +
+            "any of the scenes.";
+        public override string WithoutIt =>
+            "A world built from one scene is published with the page's scripts and snippets for the other scenes too, and they run " +
+            "in it. Keep one world per project.";
+        public override string ManualActionLabel => "Show scenes";
+
+        /// <summary>Every scene under Assets, sorted.</summary>
+        internal static List<string> ScenePaths() =>
+            AssetDatabase.FindAssets("t:SceneAsset", new[] { "Assets" })
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => path.EndsWith(".unity", System.StringComparison.OrdinalIgnoreCase))
+                .Distinct()
+                .OrderBy(path => path, System.StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+        public override SetupStatus Evaluate()
+        {
+            var scenes = ScenePaths();
+            if (scenes.Count <= 1)
+                return SetupStatus.Done(scenes.Count == 1 ? scenes[0] : "No scenes yet.");
+            return SetupStatus.NeedsManualFix($"This project has {scenes.Count} scenes",
+                "Keep your world's scene, and move each other world to a project of its own (or delete the scenes you don't need):\n" +
+                string.Join("\n", scenes.Select(path => "• " + path)));
+        }
+
+        public override bool Fix() => false;
+
+        public override void ManualAction()
+        {
+            var scenes = ScenePaths().Select(AssetDatabase.LoadAssetAtPath<SceneAsset>).Where(scene => scene != null).ToArray();
+            if (scenes.Length == 0)
+                return;
+            Selection.objects = scenes;
+            EditorGUIUtility.PingObject(scenes[0]);
+        }
+    }
+
     sealed class TextMeshProSetupCheck : SetupCheck
     {
         public override string Id => "sdk.textmeshpro";

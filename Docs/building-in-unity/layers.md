@@ -15,16 +15,16 @@ Builder's checklist flags objects on them, with a button to move them to Default
 | 2 | Ignore Raycast | Unity built-in. Ground and grapple use it; teleport doesn't. |
 | 3 | UserLayer1 | Yours. Solid and walkable, and you can teleport onto it, but the grapple ignores it. |
 | 4 | Water | Unity built-in. For movement it counts like Default. |
-| 5 | UI | World-space UI that the pointer clicks. The player's body and hands pass through it. |
+| 5 | UI | Anything players click or point at: world-space UI, buttons, seats, clickable objects. The player's body and hands pass through it. |
 | 6–12 | UserLayer2–8 | Yours. Ground, teleport and grapple all use them, but the player's body and hands pass through. |
 | 13–19 | UserLayer9–15 | Yours. Teleport, grapple and ground ignore them; the player's body and hands still bump into them. |
-| 20 | Grabbable | Things the player can pick up. `BSGrabbable` puts its object here for you. |
+| 20 | Grabbable | Things the player can pick up. `BSGrababble` puts its object here for you. |
 | 21 | Invisible | Hidden from the player's own view (mirrors still show it). Still solid. |
-| 22 | Menu | The client's menus. Recording cameras leave it out; the player's body and hands pass through it. |
+| 22 | Menu | The client's menus, and clickable like UI. Recording cameras leave it out; the player's body and hands pass through it. |
 | 23 | CharacterColliders | The local player's body: the rolling ball, torso and head. Don't put your own objects here. |
 | 24 | CharacterHandColliders | The local player's physics hands. Don't put your own objects here. |
 
-From JavaScript, use the `BS.L` names, e.g. `new BS.GameObject({ layer: BS.L.UserLayer9 })` (see
+From JavaScript, use the `BS.L` names, e.g. `new BS.GameObject({ layer: BS.L.UserLayer9 })` or `BS.L.UI` (see
 [BSLayers (BS.L)](../reference/enums.md#bslayers-bsl)).
 
 ## Movement and Collisions
@@ -37,10 +37,13 @@ What works on each layer (✓ = yes):
 | Teleport onto it | ✓ | | ✓ | ✓ | | | | |
 | Grapple to it | ✓ | ✓ | | ✓ | | | | |
 | Grab it | | | | | | ✓ | | |
+| Click or point at it | | | | | | | | ✓ |
 | Body bumps into it | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
 | Hands bump into it | | | | | ✓ | ✓ | ✓ | |
 
 - **Grab** only ever looks at Grabbable, so a grabbable object needs a collider on that layer.
+- **Click** only ever looks at UI and Menu, in the app and in Play mode, so anything a player clicks (a
+  button, a seat, an object with a `click` listener) needs a collider on one of those two layers.
 - **Body** is the CharacterColliders layer and **hands** are CharacterHandColliders. The hands
   only touch UserLayer9–15, Grabbable and Invisible; they pass through everything else.
 - **Invisible** objects are hidden from the player's camera, and from the hand camera and

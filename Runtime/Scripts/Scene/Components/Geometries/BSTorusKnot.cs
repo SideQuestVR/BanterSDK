@@ -10,9 +10,9 @@ namespace BS
     [WatchComponent]
     public class BSTorusKnot : BSComponentBase
     {
-        [Tooltip("Radius of the inner circle")]
+        [Tooltip("The overall radius of the knot, tube included.")]
         [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
-        [Tooltip("How tubular it is.")]
+        [Tooltip("The radius of the tube.")]
         [See(initial = "0.4")][SerializeField] internal float tube = 0.4f;
 
         [Tooltip("Number of radial segments")]
@@ -39,10 +39,8 @@ namespace BS
         void SetupGeometry()
         {
             var geometry = GetComponent<BSGeometry>();
-            var shouldSetGeometry = false;
             if (geometry == null)
             {
-                shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BSGeometry>();
             }
             geometry.geometryType = GeometryType.TorusKnotGeometry;
@@ -53,10 +51,9 @@ namespace BS
             geometry.p = p;
             geometry.q = q;
 
-            if (shouldSetGeometry)
-            {
-                geometry.SetGeometry();
-            }
+            // Every call, not only when the geometry was just added: this also runs for each
+            // property change, and the mesh has to follow. Unchanged values hit BSGeometry's cache.
+            geometry.SetGeometry();
         }
 
         internal override void DestroyStuff()

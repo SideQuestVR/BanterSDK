@@ -43,32 +43,55 @@ namespace BS
         private Vector4 _SpawnPoint = Vector4.zero;
         public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
 
+        /// <summary>
+        /// The physics settings every space starts from. They are the Greenfield client's own FlexaBody tuning, so a
+        /// space that never sets them (or a SetSettings that resends them untouched) changes nothing. scene.ts
+        /// SceneSettings and the BS Settings component repeat these values and must stay equal; Greenfield's
+        /// ScenePhysicsDefaultsTests checks all three against the FlexaBody assets.
+        /// </summary>
+        public static class Defaults
+        {
+            public const float PhysicsMoveSpeed = 3.25f;
+            public const float PhysicsMoveAcceleration = 4.6f;
+            public const float PhysicsAirControlSpeed = 2.4f;
+            public const float PhysicsAirControlAcceleration = 6f;
+            public const float PhysicsDrag = 0f;
+            public const float PhysicsFreeFallAngularDrag = 6f;
+            public const float PhysicsJumpStrength = 1f;
+            public const float PhysicsHandPositionStrength = 1f;
+            public const float PhysicsHandRotationStrength = 1f;
+            public const float PhysicsHandSpringiness = 10f;
+            public const float PhysicsGrappleRange = 512f;
+            public const float PhysicsGrappleReelSpeed = 1f;
+            public const float PhysicsGrappleSpringiness = 10f;
+        }
+
         // Physics settings
-        private float _physicsMoveSpeed = 2f;
-        public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { Debug.Log($"[MoveSpeed] _physicsMoveSpeed={value}"); _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
-        private float _physicsMoveAcceleration = 1f;
+        private float _physicsMoveSpeed = Defaults.PhysicsMoveSpeed;
+        public float PhysicsMoveSpeed { get { return _physicsMoveSpeed; } set { _physicsMoveSpeed = value; scene.events.OnPhysicsMoveSpeedChanged.Invoke(value); } }
+        private float _physicsMoveAcceleration = Defaults.PhysicsMoveAcceleration;
         public float PhysicsMoveAcceleration { get { return _physicsMoveAcceleration; } set { _physicsMoveAcceleration = value; scene.events.OnPhysicsMoveAccelerationChanged.Invoke(value); } }
-        private float _physicsAirControlSpeed = 3.8f;
+        private float _physicsAirControlSpeed = Defaults.PhysicsAirControlSpeed;
         public float PhysicsAirControlSpeed { get { return _physicsAirControlSpeed; } set { _physicsAirControlSpeed = value; scene.events.OnPhysicsAirControlSpeedChanged.Invoke(value); } }
-        private float _physicsAirControlAcceleration = 6f;
+        private float _physicsAirControlAcceleration = Defaults.PhysicsAirControlAcceleration;
         public float PhysicsAirControlAcceleration { get { return _physicsAirControlAcceleration; } set { _physicsAirControlAcceleration = value; scene.events.OnPhysicsAirControlAccelerationChanged.Invoke(value); } }
-        private float _physicsDrag = 0f;
+        private float _physicsDrag = Defaults.PhysicsDrag;
         public float PhysicsDrag { get { return _physicsDrag; } set { _physicsDrag = value; scene.events.OnPhysicsDragChanged.Invoke(value); } }
-        private float _physicsFreeFallAngularDrag = 6f;
+        private float _physicsFreeFallAngularDrag = Defaults.PhysicsFreeFallAngularDrag;
         public float PhysicsFreeFallAngularDrag { get { return _physicsFreeFallAngularDrag; } set { _physicsFreeFallAngularDrag = value; scene.events.OnPhysicsFreeFallAngularDragChanged.Invoke(value); } }
-        private float _physicsJumpStrength = 1f;
+        private float _physicsJumpStrength = Defaults.PhysicsJumpStrength;
         public float PhysicsJumpStrength { get { return _physicsJumpStrength; } set { _physicsJumpStrength = value; scene.events.OnPhysicsJumpStrengthChanged.Invoke(value); } }
-        private float _physicsHandPositionStrength = 1f;
+        private float _physicsHandPositionStrength = Defaults.PhysicsHandPositionStrength;
         public float PhysicsHandPositionStrength { get { return _physicsHandPositionStrength; } set { _physicsHandPositionStrength = value; scene.events.OnPhysicsHandPositionStrengthChanged.Invoke(value); } }
-        private float _physicsHandRotationStrength = 1f;
+        private float _physicsHandRotationStrength = Defaults.PhysicsHandRotationStrength;
         public float PhysicsHandRotationStrength { get { return _physicsHandRotationStrength; } set { _physicsHandRotationStrength = value; scene.events.OnPhysicsHandRotationStrengthChanged.Invoke(value); } }
-        private float _physicsHandSpringiness = 10f;
+        private float _physicsHandSpringiness = Defaults.PhysicsHandSpringiness;
         public float PhysicsHandSpringiness { get { return _physicsHandSpringiness; } set { _physicsHandSpringiness = value; scene.events.OnPhysicsHandSpringinessChanged.Invoke(value); } }
-        private float _physicsGrappleRange = 512f;
+        private float _physicsGrappleRange = Defaults.PhysicsGrappleRange;
         public float PhysicsGrappleRange { get { return _physicsGrappleRange; } set { _physicsGrappleRange = value; scene.events.OnPhysicsGrappleRangeChanged.Invoke(value); } }
-        private float _physicsGrappleReelSpeed = 1;
+        private float _physicsGrappleReelSpeed = Defaults.PhysicsGrappleReelSpeed;
         public float PhysicsGrappleReelSpeed { get { return _physicsGrappleReelSpeed; } set { _physicsGrappleReelSpeed = value; scene.events.OnPhysicsGrappleReelSpeedChanged.Invoke(value); } }
-        private float _physicsGrappleSpringiness = 10;
+        private float _physicsGrappleSpringiness = Defaults.PhysicsGrappleSpringiness;
         public float PhysicsGrappleSpringiness { get { return _physicsGrappleSpringiness; } set { _physicsGrappleSpringiness = value; scene.events.OnPhysicsGrappleSpringinessChanged.Invoke(value); } }
         private bool _physicsGorillaMode = false;
         public bool PhysicsGorillaMode { get { return _physicsGorillaMode; } set { _physicsGorillaMode = value; scene.events.OnPhysicsGorillaModeChanged.Invoke(value); } }
@@ -153,6 +176,7 @@ namespace BS
             EnableTeleport = true;
             EnableForceGrab = false;
             EnableSpiderMan = false;
+            EnableHandHold = true;
             EnableRadar = true;
             EnableNametags = true;
             EnablePortals = true;
@@ -164,19 +188,19 @@ namespace BS
             ClippingPlane = new Vector2(0.02f, 1500.0f);
             SpawnPoint = Vector4.zero;
 
-            PhysicsMoveSpeed = 2f;
-            PhysicsMoveAcceleration = 1f;
-            PhysicsAirControlSpeed = 3.8f;
-            PhysicsAirControlAcceleration = 6;
-            PhysicsDrag = 0;
-            PhysicsFreeFallAngularDrag = 6;
-            PhysicsJumpStrength = 1;
-            PhysicsHandPositionStrength = 1;
-            PhysicsHandRotationStrength = 1;
-            PhysicsHandSpringiness = 10;
-            PhysicsGrappleRange = 512;
-            PhysicsGrappleReelSpeed = 1;
-            PhysicsGrappleSpringiness = 10;
+            PhysicsMoveSpeed = Defaults.PhysicsMoveSpeed;
+            PhysicsMoveAcceleration = Defaults.PhysicsMoveAcceleration;
+            PhysicsAirControlSpeed = Defaults.PhysicsAirControlSpeed;
+            PhysicsAirControlAcceleration = Defaults.PhysicsAirControlAcceleration;
+            PhysicsDrag = Defaults.PhysicsDrag;
+            PhysicsFreeFallAngularDrag = Defaults.PhysicsFreeFallAngularDrag;
+            PhysicsJumpStrength = Defaults.PhysicsJumpStrength;
+            PhysicsHandPositionStrength = Defaults.PhysicsHandPositionStrength;
+            PhysicsHandRotationStrength = Defaults.PhysicsHandRotationStrength;
+            PhysicsHandSpringiness = Defaults.PhysicsHandSpringiness;
+            PhysicsGrappleRange = Defaults.PhysicsGrappleRange;
+            PhysicsGrappleReelSpeed = Defaults.PhysicsGrappleReelSpeed;
+            PhysicsGrappleSpringiness = Defaults.PhysicsGrappleSpringiness;
             PhysicsGorillaMode = false;
 
             if (SceneAssetBundle != null)

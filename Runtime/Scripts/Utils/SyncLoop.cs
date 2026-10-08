@@ -25,9 +25,11 @@ namespace BS
         [Tooltip("Fired at each shared-clock interval boundary — the same instant on every client.")]
         public UnityEvent OnSync;
 
-        // Edge detector: arm near the end of an interval, fire as the clock crosses the boundary. The 1s
-        // window matches Banter's SyncLoop and tolerates frame-rate/clock jitter around the boundary.
-        private bool _armed;
+        // Edge detector on the boundary count: fires once when the clock enters a new interval. Banter's version
+        // armed in the last second of an interval and fired in the first, windows that overlap once the
+        // interval is under 2 s, so it fired every frame there.
+        private double _countedInterval; // the interval _lastBoundary counts in; 0 until the first frame
+        private long _lastBoundary;
         private bool _hasRun;
 
         private void Update()
@@ -35,13 +37,26 @@ namespace BS
             if (interval <= 0.0 || _hasRun) return;
 
             double now = SyncedClock.NowSeconds;
-            double sinceLast = now - Math.Floor(now / interval) * interval; // 0..interval
+            long boundary = (long)Math.Floor(now / interval);
 
-            if (sinceLast > interval - 1.0)
-                _armed = true;
-            if (sinceLast < 1.0 && _armed)
+            if (interval != _countedInterval)
             {
-                _armed = false;
+                // First frame, or the interval changed: count from here. Like Banter's, a loop that starts
+                // mid-interval first fires at the next boundary.
+                _countedInterval = interval;
+                _lastBoundary = boundary;
+                return;
+            }
+            // Same interval, or the clock stepped back (a server offset update): nothing new crossed, and a
+            // boundary that already fired doesn't fire again.
+            if (boundary <= _lastBoundary) return;
+            _lastBoundary = boundary;
+
+            // Only close to the boundary, as Banter's 1 s window did: after a long hitch the moment has passed
+            // and the next boundary realigns everyone. An interval under 1 s always qualifies.
+            double sinceBoundary = now - boundary * interval;
+            if (sinceBoundary < Math.Min(1.0, interval))
+            {
                 OnSync?.Invoke();
                 if (runOnce) _hasRun = true;
             }

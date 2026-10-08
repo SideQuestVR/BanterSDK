@@ -83,11 +83,11 @@ namespace BS
 
         [Header("Player physics")]
         [Tooltip("Walking speed.")]
-        [See(initial = "2")][SerializeField] internal float physicsMoveSpeed = 2f;
+        [See(initial = "3.25")][SerializeField] internal float physicsMoveSpeed = 3.25f;
         [Tooltip("How quickly players reach walking speed.")]
-        [See(initial = "1")][SerializeField] internal float physicsMoveAcceleration = 1f;
+        [See(initial = "4.6")][SerializeField] internal float physicsMoveAcceleration = 4.6f;
         [Tooltip("Speed players can steer at in the air.")]
-        [See(initial = "3.8")][SerializeField] internal float physicsAirControlSpeed = 3.8f;
+        [See(initial = "2.4")][SerializeField] internal float physicsAirControlSpeed = 2.4f;
         [Tooltip("How quickly players steer in the air.")]
         [See(initial = "6")][SerializeField] internal float physicsAirControlAcceleration = 6f;
         [Tooltip("Drag on the player's body.")]

@@ -158,7 +158,7 @@ namespace BS.UI.Bridge
         {
             // With panel targeting, format is: panelId|command|data
             // So we need to check the second part for the UI command
-            var parts = message.Split(MessageDelimiters.PRIMARY);
+            var parts = message.Split(MessageDelimiters.PRIMARY, 3);
             if (parts.Length < 2) return false;
 
             string command = parts[1]; // Second part is the command
@@ -171,7 +171,8 @@ namespace BS.UI.Bridge
             try
             {
                 LogVerbose($"Handling message: {message}");
-                var parts = message.Split(MessageDelimiters.PRIMARY);
+                // Bounded: the data comes last and can hold a ¶ of its own.
+                var parts = message.Split(MessageDelimiters.PRIMARY, 3);
                 if (parts.Length < 2)
                 {
                     Debug.LogError($"[UIElementBridge] Invalid message format, expected panelId|command|data: {message}");
@@ -180,7 +181,13 @@ namespace BS.UI.Bridge
 
                 var panelId = parts[0];
                 var command = parts[1];
-                var data = parts.Length > 2 ? parts[2].Split(MessageDelimiters.SECONDARY) : new string[0];
+                // A property or style value (a Label's text, a TextField's value) is free text and
+                // the last field, so splitting at most twice keeps any § in it. Other commands carry
+                // a variable number of fields.
+                var valueLast = command == UICommands.SET_UI_PROPERTY || command == UICommands.SET_UI_STYLE;
+                var data = parts.Length > 2
+                    ? (valueLast ? parts[2].Split(MessageDelimiters.SECONDARY, 3) : parts[2].Split(MessageDelimiters.SECONDARY))
+                    : new string[0];
 
                 var targetBridge = GetPanelInstance(panelId);
                 if (targetBridge != null)
@@ -331,12 +338,14 @@ namespace BS.UI.Bridge
                     // AddClass/RemoveClass from JS silently do nothing on every box, which is what
                     // kept USS classes inert and forced every style to travel per-property.
                     0 => new BSUIElement(), // VisualElement
-                    1 => new ScrollView(), // ScrollView
+                    // The BS versions of ScrollView and Toggle: only they handle the scrollPosition
+                    // and checked properties JS sets.
+                    1 => new BSUIScrollView(), // ScrollView -> BSUIScrollView
                     2 => new ListView(), // ListView
                     10 => new BSUIButton(), // Button -> BSUIButton
                     11 => new BSUILabel(), // Label -> BSUILabel
                     12 => new BSUITextField(), // TextField -> BSUITextField
-                    13 => new Toggle(), // Toggle
+                    13 => new BSUIToggle(), // Toggle -> BSUIToggle
                     // BSUISlider, not Slider: only it dispatches SetRange/SetValue and the camelCase
                     // minValue/maxValue from JS; a plain Slider stays on its 0..10 default range.
                     14 => new BSUISlider(), // Slider -> BSUISlider
@@ -606,6 +615,11 @@ namespace BS.UI.Bridge
                         return toggleChecked.value ? "1" : "0";
                     break;
 
+                case "scrollposition":
+                    if (element is ScrollView scrollView)
+                        return scrollView.scrollOffset;
+                    break;
+
                 case "name":
                     return element.name ?? "";
 
@@ -650,8 +664,13 @@ namespace BS.UI.Bridge
 
             if (!_elements.TryGetValue(elementId, out var element)) return;
 
-            // Convert string to enum
-            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
+            // Convert string to enum. An unknown name does nothing: it used to fall back to
+            // BackgroundColor and paint the background with the value.
+            if (!UIStylePropertyHelper.TryFromUSSName(styleNameString, out var styleProperty))
+            {
+                Debug.LogWarning($"[UIElementBridge] Unknown style property '{styleNameString}' - ignored.");
+                return;
+            }
 
             // Apply style based on property enum
             switch (styleProperty)
@@ -920,8 +939,12 @@ namespace BS.UI.Bridge
                 return;
             }
 
-            // Convert string to enum
-            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
+            // Convert string to enum (an unknown name used to read back the background colour)
+            if (!UIStylePropertyHelper.TryFromUSSName(styleNameString, out var styleProperty))
+            {
+                Debug.LogWarning($"[UIElementBridge] Unknown style property '{styleNameString}' - ignored.");
+                return;
+            }
 
             // Get style value from resolved style
             string styleValue = GetStyleValue(element, styleProperty);
@@ -2209,7 +2232,9 @@ namespace BS.UI.Bridge
             // Build event data as JSON object based on event type
             var eventDataJson = BuildEventDataJson(evt);
 
-            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{eventDataJson}";
+            // The JSON can carry what a user typed; escaping the bus delimiters keeps it one field
+            // (it still parses to the same values).
+            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{WireText.EscapeDelimiters(eventDataJson)}";
 
             // Send UI events directly to TypeScript without panel ID prefix
             // TypeScript doesn't need panel ID for element routing

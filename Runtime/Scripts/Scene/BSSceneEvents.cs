@@ -58,6 +58,7 @@ public class BSSceneEvents
     public UnityEvent<string, string, bool> OnJsCallbackRecieved = new UnityEvent<string, string, bool>();
     public UnityEvent<string, string> OnAvatarSet = new UnityEvent<string, string>();
     public UnityEvent<string, string> OnGuestAvatarSet = new UnityEvent<string, string>();
+    /// <summary>Show a toast. Arguments: message, timeout (ms), delay (ms), accent colour.</summary>
     public UnityEvent<string, int, int, Color> OnToast = new UnityEvent<string, int, int, Color>();
 
     #region Physics Settings

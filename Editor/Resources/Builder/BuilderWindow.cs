@@ -1095,10 +1095,10 @@ public class BuilderWindow : EditorWindow
     private IEnumerator UploadWebOnly(Action callback)
     {
         uploadHadFailure = false;
-        BeginUploadProgress(3);
+        BeginUploadProgress(2);
         yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-        yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-        yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+        var script = WorldScriptFile();
+        yield return UploadWorldFile(script, UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading " + script));
         callback();
         EndUploadProgress(uploadHadFailure ? "Upload failed" : "Upload complete");
     }
@@ -1111,15 +1111,15 @@ public class BuilderWindow : EditorWindow
         {
             uploadHadFailure = false;
             uploadedWorldAssetUtc = default;
-            BeginUploadProgress(4);
+            BeginUploadProgress(3);
             // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
             // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
             // to legacy per-platform windows.banter / android.banter for spaces that predate it. Missing
             // file is skipped.
             yield return UploadWorldFile("asset.world", UploadAssetType.WorldAsset, UploadAssetTypePlatform.Any, NextUploadStep("Uploading asset.world"));
             yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
-            yield return UploadWorldFile("script.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading script.js"));
-            yield return UploadWorldFile("bullshcript.js", UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading bullshcript.js"));
+            var script = WorldScriptFile();
+            yield return UploadWorldFile(script, UploadAssetType.Js, UploadAssetTypePlatform.Any, NextUploadStep("Uploading " + script));
 
             // Only now that the world itself is up: the runtime overrides we are about to drop are
             // only redundant because the scene that just shipped contains them — so that has to be
@@ -1139,6 +1139,22 @@ public class BuilderWindow : EditorWindow
         {
             callback?.Invoke();
         }
+    }
+
+    /// <summary>
+    /// The WebRoot script to upload. A world has ONE script slot, served at both /script.js and /bullshcript.js, and
+    /// a second upload of that type replaces the first, so uploading both files left whichever went last under both
+    /// names. script.js wins; the older bullshcript.js is only uploaded when there's no script.js.
+    /// </summary>
+    private string WorldScriptFile()
+    {
+        var webRoot = Path.Join(assetBundleRoot, assetBundleDirectory);
+        var hasScript = File.Exists(Path.Join(webRoot, "script.js"));
+        var hasBullshcript = File.Exists(Path.Join(webRoot, "bullshcript.js"));
+        if (hasScript && hasBullshcript)
+            status.AddStatus("WebRoot has both script.js and bullshcript.js, but a world has one script file (served under both names), " +
+                             "so only script.js is uploaded. Move what bullshcript.js does into script.js.");
+        return hasScript || !hasBullshcript ? "script.js" : "bullshcript.js";
     }
 
     /// <summary>

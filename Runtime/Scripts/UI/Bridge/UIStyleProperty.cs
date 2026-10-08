@@ -261,13 +261,33 @@ namespace BS.UI.Bridge
         }
 
         /// <summary>
-        /// Converts USS property name to UIStyleProperty enum
+        /// Converts USS property name to UIStyleProperty enum. An unknown name gives
+        /// BackgroundColor; use <see cref="TryFromUSSName"/> to tell the two apart.
         /// </summary>
         public static UIStyleProperty FromUSSName(string ussName)
         {
-            if (string.IsNullOrEmpty(ussName)) return UIStyleProperty.BackgroundColor;
+            return TryFromUSSName(ussName, out var property) ? property : UIStyleProperty.BackgroundColor;
+        }
 
-            var name = ussName.ToLower();
+        /// <summary>
+        /// Converts a USS property name (kebab-case, or the camelCase JS spelling) to the enum.
+        /// False for a name that isn't one, which callers must not treat as any property — the old
+        /// fallback to BackgroundColor turned SetStyle("fontSize", ...) into a background colour.
+        /// </summary>
+        public static bool TryFromUSSName(string ussName, out UIStyleProperty property)
+        {
+            property = default;
+            if (string.IsNullOrEmpty(ussName)) return false;
+
+            // camelCase to kebab-case (fontSize → font-size), so either spelling works.
+            var kebab = new System.Text.StringBuilder(ussName.Length + 4);
+            for (var i = 0; i < ussName.Length; i++)
+            {
+                var c = ussName[i];
+                if (char.IsUpper(c) && i > 0 && (char.IsLower(ussName[i - 1]) || char.IsDigit(ussName[i - 1]))) kebab.Append('-');
+                kebab.Append(char.ToLowerInvariant(c));
+            }
+            var name = kebab.ToString();
 
             // Unity's own properties are spelled with a leading dash in USS (-unity-text-align),
             // but the JS side derives its names by kebab-casing camelCase — `unityTextAlign`
@@ -275,7 +295,7 @@ namespace BS.UI.Bridge
             // require every caller to know which one this table happens to use.
             if (name.StartsWith("unity-")) name = "-" + name;
 
-            return name switch
+            UIStyleProperty? match = name switch
             {
                 // Layout Properties (Flexbox)
                 "align-content" => UIStyleProperty.AlignContent,
@@ -394,8 +414,11 @@ namespace BS.UI.Bridge
                 "transition-timing-function" => UIStyleProperty.TransitionTimingFunction,
                 "transition-delay" => UIStyleProperty.TransitionDelay,
 
-                _ => UIStyleProperty.BackgroundColor // Default fallback
+                _ => null
             };
+            if (match == null) return false;
+            property = match.Value;
+            return true;
         }
     }
 }

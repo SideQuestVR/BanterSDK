@@ -15,49 +15,49 @@ namespace BS
     public class BSRigidbody : BSComponentBase
     {
         [Tooltip("The mass of the rigidbody, affecting its inertia and interactions with forces.")]
-        [See(initial = "1")][SerializeField] internal float mass;
+        [See(initial = "1")][SerializeField] internal float mass = 1;
 
         [Tooltip("The linear drag of the rigidbody, reducing its velocity over time.")]
-        [See(initial = "0")][SerializeField] internal float drag;
+        [See(initial = "0")][SerializeField] internal float drag = 0;
 
         [Tooltip("The angular drag of the rigidbody, reducing rotational motion over time.")]
-        [See(initial = "0.05")][SerializeField] internal float angularDrag;
+        [See(initial = "0.05")][SerializeField] internal float angularDrag = 0.05f;
 
         [Tooltip("Determines if the rigidbody is kinematic (not affected by physics but can be moved via code).")]
-        [See(initial = "false")][SerializeField] internal bool isKinematic;
+        [See(initial = "false")][SerializeField] internal bool isKinematic = false;
 
         [Tooltip("Determines if gravity affects this rigidbody.")]
-        [See(initial = "true")][SerializeField] internal bool useGravity;
+        [See(initial = "true")][SerializeField] internal bool useGravity = true;
 
         [Tooltip("Sets the center of mass for the rigidbody, affecting rotation and stability.")]
-        [See(initial = "0,0,0")][SerializeField] internal Vector3 centerOfMass;
+        [See(initial = "0,0,0")][SerializeField] internal Vector3 centerOfMass = Vector3.zero;
 
         [Tooltip("The collision detection mode for the rigidbody, affecting physics precision.")]
-        [See(initial = "0")][SerializeField] internal CollisionDetectionMode collisionDetectionMode;
+        [See(initial = "0")][SerializeField] internal CollisionDetectionMode collisionDetectionMode = CollisionDetectionMode.Discrete;
 
         [Tooltip("The velocity of the rigidbody, representing its movement in world space.")]
-        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 velocity;
+        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 velocity = Vector3.zero;
 
         [Tooltip("The angular velocity of the rigidbody, representing its rotational movement.")]
-        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 angularVelocity;
+        [Watch(initial = "0,0,0")][SerializeField] internal Vector3 angularVelocity = Vector3.zero;
 
         [Tooltip("Locks movement along the X axis.")]
-        [See(initial = "false")][SerializeField] internal bool freezePositionX;
+        [See(initial = "false")][SerializeField] internal bool freezePositionX = false;
 
         [Tooltip("Locks movement along the Y axis.")]
-        [See(initial = "false")][SerializeField] internal bool freezePositionY;
+        [See(initial = "false")][SerializeField] internal bool freezePositionY = false;
 
         [Tooltip("Locks movement along the Z axis.")]
-        [See(initial = "false")][SerializeField] internal bool freezePositionZ;
+        [See(initial = "false")][SerializeField] internal bool freezePositionZ = false;
 
         [Tooltip("Locks rotation around the X axis.")]
-        [See(initial = "false")][SerializeField] internal bool freezeRotationX;
+        [See(initial = "false")][SerializeField] internal bool freezeRotationX = false;
 
         [Tooltip("Locks rotation around the Y axis.")]
-        [See(initial = "false")][SerializeField] internal bool freezeRotationY;
+        [See(initial = "false")][SerializeField] internal bool freezeRotationY = false;
 
         [Tooltip("Locks rotation around the Z axis.")]
-        [See(initial = "false")][SerializeField] internal bool freezeRotationZ;
+        [See(initial = "false")][SerializeField] internal bool freezeRotationZ = false;
 
         [Method]
         public void _AddForce(Vector3 force, ForceMode mode)
@@ -134,7 +134,53 @@ namespace BS
         Rigidbody _rigidbody;
         internal override void StartStuff()
         {
+            if (!valuesApplied)
+            {
+                ApplyInspectorValues();
+            }
             SetupRigidbody();
+        }
+
+        // Placed in the Inspector, so nothing has applied the fields yet (see valuesApplied).
+        void ApplyInspectorValues()
+        {
+            _rigidbody = GetComponent<Rigidbody>();
+            // mass 0 is a component saved before these fields had defaults: it never applied anything
+            // and its other fields are zeros too (no gravity), so it keeps Unity's defaults as before.
+            if (_rigidbody == null && mass > 0)
+            {
+                // This component adds the Rigidbody, so its fields configure it.
+                var properties = new List<PropertyName> { PropertyName.mass, PropertyName.drag, PropertyName.angularDrag,
+                    PropertyName.isKinematic, PropertyName.useGravity, PropertyName.collisionDetectionMode,
+                    PropertyName.freezePositionX, PropertyName.freezePositionY, PropertyName.freezePositionZ,
+                    PropertyName.freezeRotationX, PropertyName.freezeRotationY, PropertyName.freezeRotationZ };
+                // Setting either explicitly turns off Unity's automatic value, and a velocity on a
+                // kinematic body logs a warning, so only the ones actually set.
+                if (centerOfMass != Vector3.zero) properties.Add(PropertyName.centerOfMass);
+                if (!isKinematic && velocity != Vector3.zero) properties.Add(PropertyName.velocity);
+                if (!isKinematic && angularVelocity != Vector3.zero) properties.Add(PropertyName.angularVelocity);
+                UpdateCallback(properties);
+                return;
+            }
+            // A Rigidbody already on the object is the creator's own and keeps its settings. Either
+            // way the fields are read back from the Rigidbody, so JS sees the values in effect.
+            SetupRigidbody();
+            mass = _rigidbody.mass;
+            drag = _rigidbody.linearDamping;
+            angularDrag = _rigidbody.angularDamping;
+            isKinematic = _rigidbody.isKinematic;
+            useGravity = _rigidbody.useGravity;
+            centerOfMass = _rigidbody.centerOfMass;
+            collisionDetectionMode = _rigidbody.collisionDetectionMode;
+            var constraints = _rigidbody.constraints;
+            freezePositionX = (constraints & RigidbodyConstraints.FreezePositionX) != 0;
+            freezePositionY = (constraints & RigidbodyConstraints.FreezePositionY) != 0;
+            freezePositionZ = (constraints & RigidbodyConstraints.FreezePositionZ) != 0;
+            freezeRotationX = (constraints & RigidbodyConstraints.FreezeRotationX) != 0;
+            freezeRotationY = (constraints & RigidbodyConstraints.FreezeRotationY) != 0;
+            freezeRotationZ = (constraints & RigidbodyConstraints.FreezeRotationZ) != 0;
+            valuesApplied = true;
+            SyncProperties(true);
         }
         void SetupRigidbody(List<PropertyName> changedProperties = null)
         {
@@ -221,6 +267,7 @@ namespace BS
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             SetupRigidbody(changedProperties);
         }
 

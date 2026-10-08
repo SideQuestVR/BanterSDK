@@ -4,7 +4,7 @@ The web browser isn't an add-on here: it's what the platform is built on. Every 
 
 ## Every space is a website
 
-A space lives at a URL. Each world you publish gets its own address (the Builder shows it under the **World** dropdown, for example `https://my-world.worldspace.host`), and visiting a space means loading that page.
+A space lives at a URL. Each world you publish gets its own address (the Builder shows it under the **World** dropdown, for example `https://my-world.worldspace.host`; see [Your world's address](../building-in-unity/publishing.md#your-worlds-address)), and visiting a space means loading that page.
 
 The page is your world's `Assets/WebRoot/index.html`. When someone joins:
 
@@ -48,7 +48,7 @@ Or create one from your space's script:
 
 ```js
 const screen = new BS.GameObject({ name: "Screen", localPosition: new BS.Vector3(0, 1.5, 2) });
-const browser = screen.AddComponent(new BS.Browser({
+const browser = await screen.AddComponent(new BS.Browser({
     url: "https://example.com",
     pageWidth: 1280,
     pageHeight: 720

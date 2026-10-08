@@ -323,6 +323,10 @@ namespace BS
                 {
                     scene.TimeScale(GetMsgData(msg, APICommands.TIME_SCALE), id);
                 }
+                else if (msg.StartsWith(APICommands.ADD_PLAYER_FORCE))
+                {
+                    scene.AddPlayerForce(GetMsgData(msg, APICommands.ADD_PLAYER_FORCE), id);
+                }
                 else if (msg.StartsWith(APICommands.DEEP_LINK))
                 {
                     var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
@@ -609,7 +613,7 @@ namespace BS
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_SET_REFRESH_RATE))
                 {
-                    scene.events.OnRefreshRateChanged.Invoke(float.Parse(GetMsgData(msg, APICommands.LEGACY_SET_REFRESH_RATE)));
+                    scene.events.OnRefreshRateChanged.Invoke(NumberFormat.Parse(GetMsgData(msg, APICommands.LEGACY_SET_REFRESH_RATE)));
                 }
                 else if (msg.StartsWith(APICommands.LEGACY_GORILLA_PLAYER))
                 {
@@ -719,6 +723,9 @@ namespace BS
             }
         }
 
+        // The marker that starts a batch from the page (batch-updater.ts).
+        static readonly int BatchMarkerLength = (MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY).Length;
+
         public void SetupPipe(OraView view, OraManager manager)
         {
             // #if UNITY_ANDROID && !UNITY_EDITOR
@@ -741,8 +748,12 @@ namespace BS
             {
                 if (msg.StartsWith(MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY))
                 {
-                    var delim = MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY;
-                    var parts = msg.Substring(delim.Length).Split(delim);
+                    // Length-prefixed (WireFrame), so a ¶§| inside a message can't split the batch.
+                    var parts = new List<string>();
+                    if (!WireFrame.Unpack(msg, BatchMarkerLength, parts))
+                    {
+                        Debug.LogError($"[Banter] Dropped the rest of a malformed message batch: {(msg.Length > 200 ? msg.Substring(0, 200) : msg)}");
+                    }
                     foreach (var part in parts)
                     {
                         try
@@ -864,43 +875,43 @@ namespace BS
                     case PropertyName.position:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.position + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
                             break;
                         }
                     case PropertyName.localPosition:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localPosition + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
                             break;
                         }
                     case PropertyName.eulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.eulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
                             break;
                         }
                     case PropertyName.localEulerAngles:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localEulerAngles + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
                             break;
                         }
                     case PropertyName.rotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.w + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.rotation + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.w));
                             break;
                         }
                     case PropertyName.localRotation:
                         {
                             var value = (Quaternion)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.w + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localRotation + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.w));
                             break;
                         }
                     case PropertyName.localScale:
                         {
                             var value = (Vector3)update.value;
-                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.x + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.y + "") + MessageDelimiters.TERTIARY + NumberFormat.Parse(value.z + ""));
+                            updatesString.Append(MessageDelimiters.SECONDARY + (int)PropertyName.localScale + MessageDelimiters.TERTIARY + NumberFormat.Format(value.x) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.y) + MessageDelimiters.TERTIARY + NumberFormat.Format(value.z));
                             break;
                         }
                 }
@@ -1021,27 +1032,28 @@ namespace BS
         public void OnOneShot(string data, string fromId, bool fromAdmin)
         {
             EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
-            Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + data);
+            // Another user's text: WireText keeps any delimiter in it from cutting the data or the batch.
+            Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + WireText.Encode(data));
         }
 
         public void OnUserJoined(UserData user)
         {
-            Send(APICommands.EVENT + APICommands.USER_JOINED + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + user.name + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color);
+            Send(APICommands.EVENT + APICommands.USER_JOINED + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + WireText.Encode(user.name) + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color);
         }
 
         public void OnUserLeft(UserData user)
         {
-            Send(APICommands.EVENT + APICommands.USER_LEFT + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + user.name + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color);
+            Send(APICommands.EVENT + APICommands.USER_LEFT + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + WireText.Encode(user.name) + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color);
         }
 
         public void OnClick(GameObject obj, Vector3 point, Vector3 normal)
         {
-            Send(APICommands.EVENT + APICommands.CLICKED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + point.x + MessageDelimiters.SECONDARY + point.y + MessageDelimiters.SECONDARY + point.z + MessageDelimiters.SECONDARY + normal.x + MessageDelimiters.SECONDARY + normal.y + MessageDelimiters.SECONDARY + normal.z);
+            Send(APICommands.EVENT + APICommands.CLICKED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.z));
         }
 
         public void OnGrab(GameObject obj, Vector3 point, HandSide side)
         {
-            Send(APICommands.EVENT + APICommands.GRABBED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + point.x + MessageDelimiters.SECONDARY + point.y + MessageDelimiters.SECONDARY + point.z + MessageDelimiters.SECONDARY + (int)side);
+            Send(APICommands.EVENT + APICommands.GRABBED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + (int)side);
         }
 
         public void OnRelease(GameObject obj, HandSide side)
@@ -1061,22 +1073,22 @@ namespace BS
 
         public void OnControllerAxisUpdate(HandSide hand, float x, float y)
         {
-            Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + x.ToString("F3") + MessageDelimiters.SECONDARY + y.ToString("F3"));
+            Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + NumberFormat.Format(x, "F3") + MessageDelimiters.SECONDARY + NumberFormat.Format(y, "F3"));
         }
 
         public void OnPoseUpdate(Transform head, Transform leftHand, Transform rightHand)
         {
             Send(APICommands.EVENT + APICommands.POSE_UPDATE + MessageDelimiters.PRIMARY +
-            head.position.x + MessageDelimiters.SECONDARY + head.position.y + MessageDelimiters.SECONDARY + head.position.z + MessageDelimiters.SECONDARY +
-            head.rotation.x + MessageDelimiters.SECONDARY + head.rotation.y + MessageDelimiters.SECONDARY + head.rotation.z + MessageDelimiters.SECONDARY + head.rotation.w + MessageDelimiters.SECONDARY +
-            leftHand.position.x + MessageDelimiters.SECONDARY + leftHand.position.y + MessageDelimiters.SECONDARY + leftHand.position.z + MessageDelimiters.SECONDARY +
-            leftHand.rotation.x + MessageDelimiters.SECONDARY + leftHand.rotation.y + MessageDelimiters.SECONDARY + leftHand.rotation.z + MessageDelimiters.SECONDARY + leftHand.rotation.w + MessageDelimiters.SECONDARY +
-            rightHand.position.x + MessageDelimiters.SECONDARY + rightHand.position.y + MessageDelimiters.SECONDARY + rightHand.position.z + MessageDelimiters.SECONDARY +
-            rightHand.rotation.x + MessageDelimiters.SECONDARY + rightHand.rotation.y + MessageDelimiters.SECONDARY + rightHand.rotation.z + MessageDelimiters.SECONDARY + rightHand.rotation.w);
+            NumberFormat.Format(head.position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.position.z) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(head.rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.rotation.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(head.rotation.w) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(leftHand.position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.position.z) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(leftHand.rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.rotation.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(leftHand.rotation.w) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(rightHand.position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.position.z) + MessageDelimiters.SECONDARY +
+            NumberFormat.Format(rightHand.rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.rotation.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(rightHand.rotation.w));
         }
         public void OnTriggerAxisUpdate(HandSide hand, float value)
         {
-            Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + value.ToString("F3"));
+            Send(APICommands.EVENT + APICommands.TRIGGER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + NumberFormat.Format(value, "F3"));
         }
         public void OnAframeTrigger(string data)
         {
@@ -1084,12 +1096,13 @@ namespace BS
         }
         public void OnMenuBrowserMessage(string data)
         {
-            Send(APICommands.EVENT + APICommands.MENU_BROWSER_MESSAGE + MessageDelimiters.PRIMARY + data);
+            Send(APICommands.EVENT + APICommands.MENU_BROWSER_MESSAGE + MessageDelimiters.PRIMARY + WireText.Encode(data));
         }
         public void OnReceiveBrowserMessage(BSBrowser browser, string message)
         {
             EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
-            Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + message);
+            // Text from any web page: WireText keeps any delimiter in it from cutting the message or the batch.
+            Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + WireText.Encode(message));
         }
         public void OnKeyPress(KeyCode key)
         {
@@ -1100,26 +1113,26 @@ namespace BS
         {
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
-            var userData = collision.gameObject.GetComponentInParent<UserData>();
-            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + contact[0].point.x + MessageDelimiters.SECONDARY + contact[0].point.y + MessageDelimiters.SECONDARY + contact[0].point.z + MessageDelimiters.SECONDARY + contact[0].normal.x + MessageDelimiters.SECONDARY + contact[0].normal.y + MessageDelimiters.SECONDARY + contact[0].normal.z + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            var userData = scene.GetUserFromCollider(collision.collider);
+            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnCollisionStay(GameObject obj, Collision collision)
         {
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
-            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + contact[0].point.x + MessageDelimiters.SECONDARY + contact[0].point.y + MessageDelimiters.SECONDARY + contact[0].point.z + MessageDelimiters.SECONDARY + contact[0].normal.x + MessageDelimiters.SECONDARY + contact[0].normal.y + MessageDelimiters.SECONDARY + contact[0].normal.z + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name);
+            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name);
         }
 
         public void _OnCollisionExit(GameObject obj, Collision collision)
         {
-            var userData = collision.gameObject.GetComponentInParent<UserData>();
+            var userData = scene.GetUserFromCollider(collision.collider);
             Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerEnter(GameObject obj, Collider collider)
         {
-            var userData = collider.GetComponentInParent<UserData>();
+            var userData = scene.GetUserFromCollider(collider);
             Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
@@ -1130,7 +1143,7 @@ namespace BS
 
         public void _OnTriggerExit(GameObject obj, Collider collider)
         {
-            var userData = collider.GetComponentInParent<UserData>();
+            var userData = scene.GetUserFromCollider(collider);
             Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 

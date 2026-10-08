@@ -5,7 +5,7 @@ Listen to scene events with `scene.On(eventName, callback)`. All event methods a
 ## Core Events
 
 ```js
-// Scene has settled, all objects enumerated
+// Scene has settled: no new objects for about 3 seconds
 scene.On("loaded", () => {
     console.log("Scene loaded");
 });
@@ -15,6 +15,11 @@ scene.On("unity-loaded", () => {
     console.log("Ready to interact");
 });
 ```
+
+`loaded` fires once, about 3 seconds after the last object arrived from Unity or from your script, and
+before `unity-loaded`. A listener added after that never runs, so add it at the top of your script.
+`unity-loaded` is safe to listen for late: if Unity has already loaded, the listener runs straight away
+(with no event argument).
 
 ## User Events
 
@@ -40,17 +45,20 @@ scene.On("user-state-changed", (e) => {
 });
 ```
 
-Each change's `oldValue` is the previous value. See `user-state` under [State Events](#state-events)
+`user-joined` fires for every player, you included, and for the players already in the space when you
+arrive. Each change's `oldValue` is the previous value. See `user-state` under [State Events](#state-events)
 for the same updates with real JSON values.
 
 ## Keyboard Events
 
 ```js
-// Keyboard key pressed
+// Keyboard key pressed (in the app only)
 scene.On("key-press", (e) => {
-    console.log(e.detail.key); // BS.KeyCode value
+    console.log(e.detail.key); // BS.KeyCode value, e.g. BS.KeyCode.Space
 });
 ```
+
+`key-press` comes from a physical keyboard in the app. It doesn't fire in Play mode.
 
 ## State Events
 
@@ -122,54 +130,26 @@ Common codes: `not_authorized` (not the owner/moderator), `protected_path` (that
 protected writes), `invalid_path`, `value_too_large`, `too_many_keys`. `rate_limited` is handled for
 you — writes are retried automatically and never surface it.
 
-```js
+## One-Shot Events
 
+```js
 // One-shot message received
 scene.On("one-shot", (e) => {
-    console.log(e.detail.fromId);    // sender user ID
-    console.log(e.detail.fromAdmin); // sender is admin
-    console.log(e.detail.data);      // message data
+    console.log(e.detail.fromId);    // the sender's session id: their user.id
+    console.log(e.detail.fromAdmin); // true when the sender owns the world
+    console.log(e.detail.data);      // the message, as a string
 });
 ```
 
-## Voice Events
+- `fromId` is the sender's `id`, not their `uid`, so find them with
+  `Object.values(scene.users).find(u => u.id === e.detail.fromId)`.
+- `fromAdmin` is `true` only when the sender is the world's owner, so you can trust an owner's message.
+- `data` is always a string: `scene.OneShot()` sends an object as JSON, so `JSON.parse` it.
+- A one-shot never comes back to its sender, and players who arrive later never see it.
+- A message can be about 4 KB of text; a bigger one is dropped.
+- Any text is delivered as sent, line breaks and special characters included.
 
-```js
-// TTS started listening
-scene.On("voice-started", () => {
-    console.log("Listening...");
-});
-
-// TTS transcription result
-scene.On("transcription", (e) => {
-    console.log(e.detail.id, e.detail.message);
-});
-```
-
-## AI & File Events
-
-```js
-// AiImage() finished
-scene.On("ai-image", (e) => {
-    console.log(e.detail.message); // the generated image
-});
-
-// AiModel() finished
-scene.On("ai-model", (e) => {
-    console.log(e.detail.message); // the generated model (GLB)
-});
-
-// Base64ToCDN() upload finished
-scene.On("base-64-to-cdn", (e) => {
-    console.log(e.detail.fileId); // id of the uploaded file
-});
-
-// SelectFile() picker closed
-scene.On("select-file-recv", (e) => {
-    // base64 contents of the chosen file, or "too-large-over-4mb" past the 4MB limit
-    console.log(e.detail.data);
-});
-```
+See [One-shots](../multiplayer/overview.md#one-shots) for a worked example.
 
 ## Pose Events
 
@@ -183,13 +163,19 @@ scene.On("pose-update", (e) => {
 });
 ```
 
+Positions and rotations are in world space. In the app `pose-update` arrives up to 30 times a second
+while the player moves, and not at all while they keep still. In Play mode it only fires with local
+multiplayer on.
+
 ## Component & GameObject Events
 
 Components and GameObjects fire their own events you can listen to:
 
 ```js
 const obj = new BS.GameObject({ name: "Model" });
-const gltf = obj.AddComponent(new BS.GLTF({ url: "model.glb" }));
+const gltf = new BS.GLTF({ url: "model.glb" });
+
+// Listen before adding the component, so no event is missed
 
 // Component finished loading its asset (GLTF, video, audio, etc.)
 gltf.On("loaded", () => {
@@ -206,6 +192,8 @@ gltf.On("unity-linked", (e) => {
     console.log("Unity ID:", e.detail.unityId);
 });
 
+await obj.AddComponent(gltf);
+
 // GameObject received update from Unity
 obj.On("object-update", (e) => {
     console.log("Updated components:", e.detail); // array of component IDs
@@ -218,20 +206,6 @@ obj.On("object-update", (e) => {
 if (gltf.isLoaded) {
     // Asset is ready
 }
-```
-
-## Browser Events
-
-```js
-// Message from menu browser
-scene.On("menu-browser-message", (e) => {
-    console.log(e.detail);
-});
-
-// Legacy A-Frame trigger
-scene.On("aframe-trigger", (e) => {
-    console.log(e.detail.data);
-});
 ```
 
 ## UserData Events
@@ -255,3 +229,8 @@ user.On("collision-exit", (e) => console.log(e.detail.object.name));
 user.On("trigger-enter", (e) => console.log(e.detail.object.name));
 user.On("trigger-exit", (e) => console.log(e.detail.object.name));
 ```
+
+The collision and trigger events fire when a player's collider touches an object that has
+[ColliderEvents](../components/physics.md#colliderevents). The local player's body, head, hands and feet
+always count (in Play mode, only the body), so listening on `scene.localUser` is the dependable case. The same contact also fires on
+the object itself, with the player in `e.detail.user` (see [GameObject Events](gameobject-api.md#gameobject-events)).

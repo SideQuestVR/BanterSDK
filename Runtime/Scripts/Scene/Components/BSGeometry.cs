@@ -92,9 +92,9 @@ namespace BS
     public class BSGeometry : BSComponentBase
     {
         [Tooltip("The type of primitive shape to generate.")]
-        [See(initial = "0")][SerializeField] internal GeometryType geometryType;
+        [See(initial = "0")][SerializeField] internal GeometryType geometryType = GeometryType.BoxGeometry;
         [Tooltip("The type of parametric shape to generate if using ParametricGeometry.")]
-        [See(initial = "0")][SerializeField] internal ParametricGeometryType parametricType;
+        [See(initial = "0")][SerializeField] internal ParametricGeometryType parametricType = ParametricGeometryType.Klein;
         [Tooltip("The width of the shape.")]
         [See(initial = "1")][SerializeField] internal float width = 1;
         [Tooltip("The height of the shape.")]
@@ -114,12 +114,12 @@ namespace BS
         [See(initial = "32")][SerializeField] internal int segments = 32;
         [Tooltip("The starting x angle of the shape.")]
         [See(initial = "0")][SerializeField] internal float thetaStart = 0;
-        [Tooltip("The ending x angle of the shape.")]
+        [Tooltip("How far the shape sweeps from thetaStart, in radians.")]
         [See(initial = "6.283185")][SerializeField] internal float thetaLength = Mathf.PI * 2f;
 
         [Tooltip("The starting y angle of the shape.")]
         [See(initial = "0")][SerializeField] internal float phiStart = 0;
-        [Tooltip("The ending y angle of the shape.")]
+        [Tooltip("How far the shape sweeps from phiStart, in radians.")]
         [See(initial = "6.283185")][SerializeField] internal float phiLength = Mathf.PI * 2f;
 
         [Tooltip("The number of radial segments to divide the shape into.")]

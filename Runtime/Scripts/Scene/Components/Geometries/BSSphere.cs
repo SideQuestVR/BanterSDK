@@ -11,17 +11,17 @@ namespace BS
     public class BSSphere : BSComponentBase
     {
         [Tooltip("Radius of the sphere")]
-        [See(initial = "1")][SerializeField] internal float radius;
+        [See(initial = "1")][SerializeField] internal float radius = 1;
         [Tooltip("Number of horizontal segments")]
-        [See(initial = "16")][SerializeField] internal int widthSegments;
+        [See(initial = "16")][SerializeField] internal int widthSegments = 16;
         [Tooltip("Number of vertical segments")]
-        [See(initial = "16")][SerializeField] internal int heightSegments;
+        [See(initial = "16")][SerializeField] internal int heightSegments = 16;
         [Tooltip("Start angle in radians for the horizontal segments")]
-        [See(initial = "0")][SerializeField] internal float phiStart;
+        [See(initial = "0")][SerializeField] internal float phiStart = 0;
         [Tooltip("Length of the horizontal segments in radians")]
         [See(initial = "Math.PI * 2")][SerializeField] internal float phiLength = Mathf.PI * 2;
         [Tooltip("Start angle in radians for the vertical segments")]
-        [See(initial = "0")][SerializeField] internal float thetaStart;
+        [See(initial = "0")][SerializeField] internal float thetaStart = 0;
         [Tooltip("Length of the vertical segments in radians")]
         [See(initial = "Math.PI")][SerializeField] internal float thetaLength = Mathf.PI;
 
@@ -34,10 +34,8 @@ namespace BS
         void SetupGeometry()
         {
             var geometry = GetComponent<BSGeometry>();
-            var shouldSetGeometry = false;
             if (geometry == null)
             {
-                shouldSetGeometry = true;
                 geometry = gameObject.AddComponent<BSGeometry>();
             }
             geometry.geometryType = GeometryType.SphereGeometry;
@@ -48,10 +46,9 @@ namespace BS
             geometry.phiLength = phiLength;
             geometry.thetaStart = thetaStart;
             geometry.thetaLength = thetaLength;
-            if (shouldSetGeometry)
-            {
-                geometry.SetGeometry();
-            }
+            // Every call, not only when the geometry was just added: this also runs for each
+            // property change, and the mesh has to follow. Unchanged values hit BSGeometry's cache.
+            geometry.SetGeometry();
         }
 
         internal override void DestroyStuff()

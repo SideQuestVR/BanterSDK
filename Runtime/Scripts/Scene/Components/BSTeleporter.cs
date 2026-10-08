@@ -20,7 +20,7 @@ namespace BS
         const stopVelocity = true;
         const cooldown = 0.5;
         const gameObject = new BS.GameObject("MyTeleporter");
-        const teleporter = await gameObject.AddComponent(new BS.BSTeleporter(stopVelocity, cooldown));
+        const teleporter = await gameObject.AddComponent(new BS.Teleporter(stopVelocity, cooldown));
     ```
 
     */

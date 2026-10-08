@@ -19,8 +19,10 @@ namespace BS.VisualScripting
         [DoNotSerialize]
         public ValueInput message;
         [DoNotSerialize]
+        [PortLabel("Delay (s)")]
         public ValueInput delay;
         [DoNotSerialize]
+        [PortLabel("Timeout (s)")]
         public ValueInput timeout;
         [DoNotSerialize]
         public ValueInput color;
@@ -34,7 +36,8 @@ namespace BS.VisualScripting
                 var _timeout = flow.GetValue<int>(timeout);
                 var _delay = flow.GetValue<int>(delay);
 
-                BSScene.Instance().events.OnToast?.Invoke(_message, _timeout, _delay, _color);
+                // Seconds on the node; OnToast carries milliseconds (the host reads timeoutMs / 1000).
+                BSScene.Instance().events.OnToast?.Invoke(_message, _timeout * 1000, _delay * 1000, _color);
 
                 return outputTrigger;
             });

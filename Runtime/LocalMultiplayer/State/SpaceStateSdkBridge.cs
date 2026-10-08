@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/SpaceStateSdkBridge.cs" sha256="130ff7be5e004265b58850cf476bb9f9ffa179914c62537db2a4175b40fd1b6e" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/SpaceStateSdkBridge.cs" sha256="193a4ac8d7fd942c604bebb16b53b07d2d770ef81778f467a08be60b02e18f32" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class SpaceStateModule ticks; the service is
 // handed in instead of polled from SpaceStateService.Instance; BSScene.Instance() -> BSScene.Current (never builds a
 // scene during teardown); the GetSpaceStateValue delegate is put back on unhook when it is still ours.
@@ -230,11 +230,9 @@ namespace BS.LocalMultiplayer.State
                 else protectedObj[key] = rendered;
             }
 
-            // Client-local only; stripped from anything arriving from the page so they can never
-            // round-trip to the server.
-            publicObj[SdkWireCodec.RevisionKey] = _service.Revision.ToString();
-            publicObj[SdkWireCodec.ProtectedKeysKey] = SdkWireCodec.San(string.Join(",", _service.ProtectedKeys));
-            publicObj[SdkWireCodec.CanProtectKey] = _service.CanWriteProtected ? "1" : "0";
+            // No ss_rev / ss_protected / ss_can_protect here: injected into the public map they reached the
+            // page as if they were room keys (scene.spaceState.public, space-state-changed). The revision,
+            // protected set and canProtect travel in the typed snapshot below (the page's space-state event).
 
             var root = new JObject { ["protected"] = protectedObj, ["public"] = publicObj };
             _scene.link.OnFullSpaceState(root.ToString(Formatting.None));

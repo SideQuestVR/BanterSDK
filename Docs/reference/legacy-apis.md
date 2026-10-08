@@ -1,24 +1,11 @@
 # Legacy APIs
 
-These scene methods predate the current component APIs and are kept so older spaces keep working. Prefer the modern equivalent named in each row.
+These scene methods predate the current component APIs and still work, so older spaces keep running. Prefer the modern equivalent named in each row.
 
 | Method | Description |
 |--------|-------------|
-| `LegacyAttachObject(object, whoToShow, part)` | Attaches an object to a player body position (`BS.LegacyAttachmentPosition`); `whoToShow` selects the user. Prefer the `AttachedObject` component. |
-| `LegacySetChildColor(object, color, path)` | Tints a child renderer found by path. Prefer the `Material` component. |
+| `LegacyAttachObject(object, whoToShow, part)` | Attaches an object to the local player's head, body or a hand (`BS.LegacyAttachmentPosition.HEAD`, `BODY`, `LEFT_HAND`, `RIGHT_HAND`), keeping its current local offset. Pass `"me"` as `whoToShow`: attachments only ever go to the local player. Prefer the `AttachedObject` component. |
 | `LegacyLockPlayer()` | Freezes player movement. Prefer `SetCanMove(false)`. |
 | `LegacyUnlockPlayer()` | Restores player movement. Prefer `SetCanMove(true)`. |
-| `LegacySetRefreshRate(rate)` | Sets the headset refresh rate. Prefer `SceneSettings.RefreshRate`. |
-| `LegacySitPlayer(object)` | Seats the player on an object. |
-| `LegacyUnsitPlayer()` | Stands the player back up. |
-| `LegacyGorillaPlayer()` | Enables gorilla-style arm locomotion. Prefer `SceneSettings.PhysicsGorillaMode`. |
-| `LegacyUngorillaPlayer()` | Disables gorilla-style arm locomotion. |
-| `LegacyEnableControllerExtras()` | Enables the extra controller event stream. Prefer `SceneSettings.EnableControllerExtras`. |
-| `LegacyEnableQuaternionPose()` | Enables quaternion pose updates. Prefer `SceneSettings.EnableQuaternionPose`. |
-| `LegacySetVideoUrl(object, url)` | Points an object's video playback at a URL. Prefer the `VideoPlayer` component. |
-| `LegacySendAframeEvent(id, isOn, path)` | Sends an A-Frame style event into the app. |
-| `PlayAvatar(object, session, audio, avatar)` | Plays a recorded avatar performance on an object. |
-| `LegacyPlayAvatar(object, session, audio, avatar)` | Older name for `PlayAvatar`. |
-| `LegacyRequestOwnership(id)` | Requests network ownership of a synced object. See the `SyncedObject` component. |
-| `LegacyDoIOwn(id)` | Asks whether the local user owns a synced object. |
-| `LegacyResetNetworkObject(id)` | Resets a networked object to its original state. |
+| `LegacySetRefreshRate(rate)` | Sets the headset refresh rate (Quest only). Prefer `SceneSettings.RefreshRate`. |
+| `LegacySetVideoUrl(object, url)` | Plays a URL from the start on the first Unity `VideoPlayer` on the object or its children. The object must already be linked (`await object.Async()`). Prefer the `VideoPlayer` component. |

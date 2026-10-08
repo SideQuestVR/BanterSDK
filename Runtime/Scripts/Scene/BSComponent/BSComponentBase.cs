@@ -40,6 +40,19 @@ namespace BS
         [HideInInspector] public UnityEvent<bool, string> loaded = new UnityEvent<bool, string>();
         internal bool _loaded;
         public bool IsLoaded => _loaded;
+
+        /// <summary>
+        /// Set by a component's UpdateCallback once it has applied property values. A component
+        /// created from JS has by the time it starts: Init(constructorProperties) → Deserialise →
+        /// UpdateCallback runs straight after AddComponent. One placed in the Inspector reaches
+        /// StartStuff through Start → Init() with nothing applied, and nothing else ever pushes its
+        /// serialized values, so components whose StartStuff doesn't set everything up itself
+        /// check this there and apply them once — never a second time for a JS-created one.
+        /// Serialized (only ever true at runtime, so never saved true from the editor) so that a
+        /// copy made with Instantiate, which already carries what its original set up (a street
+        /// view or kit item child, a FaceTarget), doesn't set it up a second time.
+        /// </summary>
+        [SerializeField][HideInInspector] internal bool valuesApplied;
         internal float percentage;
         internal int oid;
         internal int cid;

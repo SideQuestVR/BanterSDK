@@ -12,7 +12,10 @@ Build multiplayer VR worlds in Unity, make them interactive with JavaScript or V
 
 - [Installation](getting-started/installation.md): add the SDK to a Unity project and run the Setup panel.
 - [Quick Start](getting-started/quick-start.md): a first scripted object in a few lines of JavaScript.
-- [The Builder Window](building-in-unity/builder.md): build your world and publish it from Unity.
+- [Testing in Play Mode](getting-started/testing-in-play-mode.md): try your world in the Editor with the desktop controls.
+- [Publishing Your World](building-in-unity/publishing.md): build it, upload it and visit it in the app.
 
-The sidebar has everything else: setting a world up in Unity, the JavaScript API, every component,
-Visual Scripting, and the reference tables.
+Keep one world per Unity project: every scene in a project shares the one page, `Assets/WebRoot/index.html`.
+
+The sidebar has everything else: setting a world up in Unity, the JavaScript API, multiplayer, every component,
+browsers, Visual Scripting, troubleshooting and the reference tables.

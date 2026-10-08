@@ -20,7 +20,7 @@ public struct BSVector5
     }
     public string Serialise()
     {
-        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}{MessageDelimiters.SECONDARY}{w}{MessageDelimiters.SECONDARY}{v}";
+        return FormattableString.Invariant($"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}{MessageDelimiters.SECONDARY}{w}{MessageDelimiters.SECONDARY}{v}");
     }
     public void Deserialise(string str)
     {
@@ -79,7 +79,7 @@ public struct BSVector4
     public string Serialise()
     {
         // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y + MessageDelimiters.SECONDARY + z + MessageDelimiters.SECONDARY + w;
-        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}{MessageDelimiters.SECONDARY}{w}";
+        return FormattableString.Invariant($"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}{MessageDelimiters.SECONDARY}{w}");
     }
     public void Deserialise(string str)
     {
@@ -135,7 +135,7 @@ public struct BSVector2
     public string Serialise()
     {
         //return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y;
-        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}";
+        return FormattableString.Invariant($"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}");
     }
     public void Deserialise(string str)
     {
@@ -175,7 +175,7 @@ public struct BSVector3
     public string Serialise()
     {
         //return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x + MessageDelimiters.SECONDARY + y + MessageDelimiters.SECONDARY + z;
-        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}";
+        return FormattableString.Invariant($"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}{MessageDelimiters.SECONDARY}{y}{MessageDelimiters.SECONDARY}{z}");
     }
     public void Deserialise(string str)
     {
@@ -222,7 +222,7 @@ public struct BSFloat
     public string Serialise()
     {
         // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
-        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}";
+        return FormattableString.Invariant($"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}");
     }
     public void Deserialise(string str)
     {
@@ -262,7 +262,7 @@ public struct BSInt
     public string Serialise()
     {
         // return (int)n + MessageDelimiters.SECONDARY + GetShortType() + MessageDelimiters.SECONDARY + x;
-        return $"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}";
+        return FormattableString.Invariant($"{(int)n}{MessageDelimiters.SECONDARY}{GetShortType()}{MessageDelimiters.SECONDARY}{x}");
     }
     public void Deserialise(string str)
     {
@@ -273,7 +273,7 @@ public struct BSInt
             return;
         }
         n = (PropertyName)int.Parse(parts[0]);
-        x = int.Parse(parts[1]);
+        x = int.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture);
     }
 
     public static explicit operator BSInt(int v)

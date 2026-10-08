@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/LocalUserService.cs" sha256="0e8f996c03e79f899e008ac0aa4e10d69e1ea5e9f41a55a73c7b5f8e306bf1dc" mode="port" />
+// <mirror source="Assets/Systems/Networking/LocalUserService.cs" sha256="6e179fb28ec14463a540ce93ac82b6aa9845b72e8a583e70001ef92f59c17124" mode="port" />
 using UnityEngine;
 
 namespace BS.LocalMultiplayer
@@ -75,10 +75,24 @@ namespace BS.LocalMultiplayer
         void ApplyIdentity()
         {
             if (_user == null) return;
+            string previousUid = _user.uid, previousId = _user.id, previousName = _user.name;
             var name = _identity != null ? _identity.DisplayName : null;
             _user.name = !string.IsNullOrEmpty(name) ? name : "Player";
             _user.uid = _identity != null ? _identity.Uid : _user.uid;
             _user.id = _networkSessionId != null ? _networkSessionId : OfflineSessionId;
+            AnnounceIfChanged(previousUid, previousId, previousName);
+        }
+
+        // LocalUserService.AnnounceIfChanged: the page learns a user's fields only from user-joined (refreshed
+        // in place on a repeat join for the same uid), and the scene-ready resync runs before the room join, so
+        // a new session id or name is announced again. A changed uid isn't (the page would add a second user).
+        void AnnounceIfChanged(string previousUid, string previousId, string previousName)
+        {
+            if (_user.uid != previousUid) return;
+            if (_user.id == previousId && _user.name == previousName) return;
+            var scene = BSScene.Current;
+            if (scene == null || scene.link == null || !scene.users.Contains(_user)) return;
+            scene.link.OnUserJoined(_user);
         }
     }
 }

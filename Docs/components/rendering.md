@@ -2,19 +2,29 @@
 
 ## Light
 
-Adds lighting to the scene.
+Adds a real-time light. It wraps a Unity Light: in the Inspector, set the values on the Light component.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `type` | number | 0 | A `BS.LightType`: `Spot` (0), `Directional` (1) or `Point` (2) |
+| `color` | Vector4 | 1, 1, 1, 1 | Colour, RGBA from 0 to 1 |
+| `intensity` | number | 1 | Brightness |
+| `range` | number | 10 | How far the light reaches, in metres (Point and Spot) |
+| `spotAngle` | number | 30 | Cone angle in degrees (Spot) |
+| `innerSpotAngle` | number | 21.8 | Inner cone angle in degrees (Spot) |
+| `shadows` | number | 0 | A `BS.LightShadows`: `None` (0), `Hard` (1) or `Soft` (2) |
+
+The default type is Spot, pointing along the object's +Z. `BS.LightType`'s other members are light types the app can't render in real time.
 
 <div class="docs-tabs">
 
 ```js
-obj.AddComponent(new BS.Light({
-    type: BS.LightType.Point,           // Point, Directional, Spot
-    color: new BS.Vector4(1, 1, 1, 1),  // RGBA
-    intensity: 1,                        // Brightness
-    range: 10,                           // Distance (Point/Spot)
-    spotAngle: 30,                       // Cone angle (Spot only)
-    innerSpotAngle: 21.8,               // Inner cone (Spot only)
-    shadows: BS.LightShadows.None       // None, Hard, Soft
+await obj.AddComponent(new BS.Light({
+    type: BS.LightType.Point,
+    color: new BS.Vector4(1, 0.9, 0.8, 1),
+    intensity: 2,
+    range: 10,
+    shadows: BS.LightShadows.None
 }));
 ```
 
@@ -29,7 +39,7 @@ Applies a material/shader to the object.
 <div class="docs-tabs">
 
 ```js
-obj.AddComponent(new BS.Material({
+await obj.AddComponent(new BS.Material({
     shaderName: "Unlit/Diffuse",        // Shader name
     texture: "https://example.com/texture.png",
     color: new BS.Vector4(1, 1, 1, 1),  // RGBA tint
@@ -55,27 +65,43 @@ all four tint by `color` (the Transparent twins also honour its alpha):
 | `Unlit/Diffuse`, `Unlit/DiffuseTransparent` | Mesh UVs, tiled by `textureScale` |
 | `Unlit/DiffuseTriplanar`, `Unlit/DiffuseTriplanarTransparent` | World-space triplanar (no UVs needed); `textureScale` = tiles per metre |
 
-Texture references may also use the `cc0:{slug}/{map}/{size}` scheme for CC0 library textures
-(map = `basecolor`, `normal` or `mask`; the mask packs R = AO, G = roughness, B = metallic, so
-`roughnessMap` and `aoMap` can both point at it). A 256 px preview shows immediately, and the texture
-at the requested size replaces it once it has downloaded.
+**Texture references.** `texture`, `normalMap`, `roughnessMap` and `aoMap` each take one of:
+
+| Reference | What it loads |
+|---|---|
+| An absolute URL (`https://…/brick.png`) | An image downloaded from the web. `generateMipMaps` applies to it. |
+| `cc0:{slug}/{map}/{size}` | A texture from the CC0 texture library. `map` is `basecolor`, `normal` or `mask`; the mask packs R = AO, G = roughness, B = metallic, so `roughnessMap` and `aoMap` can both point at it. A 256 px preview shows at once for `basecolor`, and the texture at the requested size replaces it once it has downloaded. Resolved by the app; in Play mode only when the `com.sidequest.textures-cc0` package is installed. |
+| `asset_browser_world` or `asset_browser_<id>` | A live web page: your space's own page, or a BS Browser's. The material follows the page, so it stays current when the browser resizes. See [Browser Textures](../browser/textures.md). |
+
+Anything else (a relative path, a typo) leaves the slot at the shader's default.
 
 ## Text
 
-3D text rendering.
+3D text, drawn with TextMesh Pro. It reads from the object's back (−Z), the opposite of its blue axis.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `text` | string | "" | The text |
+| `color` | Vector4 | 1, 1, 1, 1 | Colour, RGBA from 0 to 1 |
+| `fontSize` | number | 2 | Font size |
+| `horizontalAlignment` | number | 1 | A `BS.HorizontalAlignment`: `Left` (0), `Center` (1) or `Right` (2) |
+| `verticalAlignment` | number | 1 | A `BS.VerticalAlignment`: `Top` (0), `Center` (1) or `Bottom` (2) |
+| `richText` | boolean | true | Allow TextMesh Pro rich-text tags such as `<b>` and `<color>` |
+| `enableWordWrapping` | boolean | true | Wrap lines at the edge of the text box |
+| `rectTransformSizeDelta` | Vector2 | 20, 5 | Size of the text box, in metres |
 
 <div class="docs-tabs">
 
 ```js
-obj.AddComponent(new BS.Text({
+await obj.AddComponent(new BS.Text({
     text: "Hello World",
     color: new BS.Vector4(1, 1, 1, 1),
     fontSize: 2,
     horizontalAlignment: BS.HorizontalAlignment.Center,
-    verticalAlignment: BS.VerticalAlignment.Middle,
-    richText: true,                      // Support formatting tags
+    verticalAlignment: BS.VerticalAlignment.Center,
+    richText: true,
     enableWordWrapping: true,
-    rectTransformSizeDelta: new BS.Vector2(10, 5)  // Text box size
+    rectTransformSizeDelta: new BS.Vector2(10, 5)
 }));
 ```
 
@@ -85,16 +111,23 @@ obj.AddComponent(new BS.Text({
 
 ## Billboard
 
-Makes object always face the camera.
+Turns the object to face the player's view.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `smoothing` | number | 0 | 0 turns instantly; larger values turn more smoothly |
+| `enableXAxis` | boolean | true | Rotate around X |
+| `enableYAxis` | boolean | true | Rotate around Y |
+| `enableZAxis` | boolean | true | Rotate around Z |
 
 <div class="docs-tabs">
 
 ```js
-obj.AddComponent(new BS.Billboard({
-    smoothing: 0,        // Rotation smoothing (0 = instant)
-    enableXAxis: true,   // Rotate on X
-    enableYAxis: true,   // Rotate on Y
-    enableZAxis: false   // Rotate on Z
+await obj.AddComponent(new BS.Billboard({
+    smoothing: 0,
+    enableXAxis: false,  // stay upright: turn around Y only
+    enableYAxis: true,
+    enableZAxis: false
 }));
 ```
 
@@ -104,12 +137,22 @@ obj.AddComponent(new BS.Billboard({
 
 ## Mirror
 
-Creates a reflective mirror surface.
+Creates a reflective mirror surface: 2.5 × 2.5 m, seen from the object's back (−Z). Scale the object to change its size.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `renderTextureSize` | number | 1024 | Resolution of the reflection; higher is sharper and costs more |
+| `cameraClear` | number | 1 | What fills the reflection behind objects: 1 = Skybox, 2 = Solid Color, 3 = Depth Only, 4 = Nothing |
+| `backgroundColor` | string | "#000000" | Colour used with Solid Color, as a hex string |
 
 <div class="docs-tabs">
 
 ```js
-obj.AddComponent(new BS.Mirror());
+const mirror = await obj.AddComponent(new BS.Mirror({
+    renderTextureSize: 1024,
+    cameraClear: 2,
+    backgroundColor: "#202030"
+}));
 ```
 
 ![BS Mirror in the Unity Inspector](../images/components/mirror.png)
@@ -119,50 +162,56 @@ obj.AddComponent(new BS.Mirror());
 **Methods:**
 
 ```js
-mirror.SetCullingLayer(5);   // Render only this layer in the mirror
-mirror.AddCullingLayer(6);   // Also render this layer
+mirror.SetCullingLayer(5);   // Show only this layer in the mirror
+mirror.AddCullingLayer(6);   // Also show this layer
 ```
 
 ## InvertedMesh
 
-Inverts mesh normals (renders inside-out).
+Turns the object's mesh inside out, so you see it from inside: a sky sphere, or a room built from a box. It reverses the mesh's triangles once, when it starts. Normals aren't flipped, so it looks best with an unlit material.
 
 <div class="docs-tabs">
 
 ```js
-obj.AddComponent(new BS.InvertedMesh());
+await obj.AddComponent(new BS.Sphere({ radius: 50 }));   // the shape first
+await obj.AddComponent(new BS.InvertedMesh());
 ```
 
 ![BS Inverted Mesh in the Unity Inspector](../images/components/inverted-mesh.png)
 
 </div>
 
+The object needs its mesh by the time the component starts, so add the shape first. If the shape is rebuilt later (a property changes), the new mesh isn't turned inside out.
+
 ## SkinnedMeshRenderer
 
-Controls a skinned mesh's renderer — most usefully its blend shapes on imported models.
+Exposes a skinned mesh, such as a character in your scene, to your script, most usefully its blend shapes. It works with the Skinned Mesh Renderer already on the object and doesn't add one, so add a **BS Skinned Mesh Renderer** in the Inspector next to it and [find it from your script](overview.md#using-objects-placed-in-the-editor). The Skinned Mesh Renderer's own settings win, and are read back into the properties.
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `blendShapes` | string | "" | Blend shape state as a JSON string |
-| `bones` | string | "" | Bone bindings as a JSON string, paths relative to the root bone |
-| `rootBoneInstanceId` | number | 0 | Instance ID of the root bone |
 | `updateWhenOffscreen` | boolean | false | Keep skinning even when no camera sees the mesh |
 | `skinnedMotionVectors` | boolean | true | Motion vectors for the skinned mesh |
-| `quality` | number | 0 | Skin quality (0 = auto) |
+| `quality` | number | 0 | Most bones per vertex: 0 = Auto, or 1, 2 or 4 |
+| `blendShapes` | string | — | Read-only: the blend shapes as JSON, `{"blendShapes":[{"index":0,"name":"smile","weight":0}, …]}` |
+| `bones` | string | — | Read-only: the bones as JSON, `{"bones":[{"name":…,"path":…,"instanceId":…}, …]}`, paths relative to the root bone |
+| `rootBoneInstanceId` | number | — | Read-only: Unity instance ID of the root bone |
 
 **Methods:**
 
 <div class="docs-tabs">
 
 ```js
-const smr = obj.GetComponent(BS.CT.SkinnedMeshRenderer);
-smr.SetBlendShapeWeight(0, 100);   // Set the weight of blend shape 0
-smr.GetBlendShapeWeight(0);        // Trigger the weight query for blend shape 0
-smr.GetBlendShapeIndex("smile");   // Trigger the index lookup for a named blend shape
+const scene = BS.Scene.GetInstance();
+const face = await scene.Find("Face");
+const smr = face.GetComponent(BS.CT.SkinnedMeshRenderer);
+
+const smile = await smr.GetBlendShapeIndex("smile");   // -1 if there's no such shape
+await smr.SetBlendShapeWeight(smile, 100);              // weights run 0 to 100
+const weight = await smr.GetBlendShapeWeight(smile);   // 100
 ```
 
 ![BS Skinned Mesh Renderer in the Unity Inspector](../images/components/skinned-mesh-renderer.png)
 
 </div>
 
-The `Get*` methods invoke the lookup Unity-side; they do not return the value to JavaScript.
+`blendShapes` lists the weights from when the component started; it isn't updated by `SetBlendShapeWeight`.

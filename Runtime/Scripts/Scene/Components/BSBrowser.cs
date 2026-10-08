@@ -48,7 +48,7 @@ namespace BS
     public class BSBrowser : BSComponentBase
     {
         [Tooltip("The URL of the webpage to display")]
-        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "")][SerializeField] internal string url = "";
 
         [Tooltip("The number of mipmaps to use for the browser texture")]
         [See(initial = "4")][SerializeField] internal int mipMaps = 4;
@@ -62,8 +62,8 @@ namespace BS
         [Tooltip("The height of the browser page in pixels")]
         [See(initial = "576")][SerializeField] internal float pageHeight = 720;
 
-        [Tooltip("A comma-separated list of actions to run after the page has loaded (e.g., 'click2d,0.5,0.5')")]
-        [See(initial = "")][SerializeField] internal string actions;
+        [Tooltip("Actions to run as soon as the browser is created, before the page has loaded (start with a delayseconds action to wait for it), as JSON, e.g. {\"actions\":[{\"actionType\":\"click2d\",\"numParam1\":0.5,\"numParam2\":0.5}]}")]
+        [See(initial = "")][SerializeField] internal string actions = "";
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         /// <summary>
         /// This browser's texture: its first frame, and again whenever a resize replaces it. The same

@@ -10,8 +10,8 @@ namespace BS
     Make an object a seat: clicking it sits the local player on it, and moving or jumping stands them up.
     The seat is the object's `BSAttachedObject`, set up to attach the player to the object (physics, jointed,
     seated pose). The player sits at this object's position and faces its forward, so put the seat on a child
-    at the top of the cushion. Its colliders are what gets clicked; use the UI layer so the SDK's desktop
-    player can click them too. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
+    at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
+    the only clickable layers. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
 
     **Properties**
     - `unseatOnMove` - Stand the player up when they push the move stick / WASD.
@@ -30,7 +30,7 @@ namespace BS
         const unseatOnMove = true;
         const unseatOnJump = true;
         const gameObject = new BS.GameObject("MySeat");
-        const seat = await gameObject.AddComponent(new BS.BSSeat(unseatOnMove, unseatOnJump));
+        const seat = await gameObject.AddComponent(new BS.Seat(unseatOnMove, unseatOnJump));
     ```
 
     */

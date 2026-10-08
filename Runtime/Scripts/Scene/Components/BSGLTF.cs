@@ -41,32 +41,32 @@ namespace BS
     public class BSGLTF : BSComponentBase
     {
         [Tooltip("The URL of the GLB file to be loaded.")]
-        [See(initial = "")][SerializeField] internal string url;
+        [See(initial = "")][SerializeField] internal string url = "";
 
         [Tooltip("Enable to generate mipmaps for improved texture scaling.")]
-        [See(initial = "false")][SerializeField] internal bool generateMipMaps;
+        [See(initial = "false")][SerializeField] internal bool generateMipMaps = false;
 
         [Tooltip("Enable to automatically add colliders to the imported model.")]
-        [See(initial = "false")][SerializeField] internal bool addColliders;
+        [See(initial = "false")][SerializeField] internal bool addColliders = false;
 
         [Tooltip("Enable to use non-convex colliders instead of convex ones.")]
-        [See(initial = "false")][SerializeField] internal bool nonConvexColliders;
+        [See(initial = "false")][SerializeField] internal bool nonConvexColliders = false;
 
         [Tooltip("Enable to make colliders slippery (zero friction).")]
-        [See(initial = "false")][SerializeField] internal bool slippery;
+        [See(initial = "false")][SerializeField] internal bool slippery = false;
 
         [Tooltip("Enable to make the model's colliders climbable.")]
-        [See(initial = "false")][SerializeField] internal bool climbable;
+        [See(initial = "false")][SerializeField] internal bool climbable = false;
         // This has been added because unity changed the forward direction of GLTF fast between version 3 and 4. 
         // https://docs.unity3d.com/Packages/com.unity.cloud.gltfast@5.0/manual/UpgradeGuides.html#upgrade-to-4x
         // We decided to leave legacy aframe stuff on the old one by default for compatibility reasons, but 
         // that new stuff will use the forward direction of the new version by default. Aframe shim will set 
         // this to true automaticaly.
         [Tooltip("Enable to rotate the model for compatibility with legacy GLTF forward direction.")]
-        [See(initial = "false")][SerializeField] internal bool legacyRotate;
+        [See(initial = "false")][SerializeField] internal bool legacyRotate = false;
 
         [Tooltip("Set child objects to a specific layer - 0 to disable.")]
-        [See(initial = "0")][SerializeField] internal int childrenLayer;
+        [See(initial = "0")][SerializeField] internal int childrenLayer = 0;
         bool loadStarted;
 
         private static Dictionary<string, Task<byte[]>> gltfCache = new Dictionary<string, Task<byte[]>>();

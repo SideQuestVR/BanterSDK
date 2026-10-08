@@ -20,20 +20,26 @@ namespace BS
         [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
         [See(initial = "1")][SerializeField] internal float staticFriction = 1;
 
-        [Tooltip("The static friction of the material, determining the resistance to starting movement.")]
+        [Tooltip("How bouncy the material is: 0 = no bounce, 1 = bounces back with no loss of energy.")]
         [See(initial = "1")][SerializeField] internal float bounciness = 1;
 
-        [See(initial = "0")][SerializeField] internal PhysicsMaterialCombine frictionCombine;
-        [See(initial = "0")][SerializeField] internal PhysicsMaterialCombine bounceCombine;
+        [See(initial = "0")][SerializeField] internal PhysicsMaterialCombine frictionCombine = PhysicsMaterialCombine.Average;
+        [See(initial = "0")][SerializeField] internal PhysicsMaterialCombine bounceCombine = PhysicsMaterialCombine.Average;
 
         PhysicsMaterial _material;
         Collider _collider;
         internal override void StartStuff()
         {
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has applied the fields yet (see valuesApplied).
+                ReSetup();
+            }
             SetupPhysicMaterial(null);
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             SetupPhysicMaterial(changedProperties);
         }
 
@@ -43,20 +49,22 @@ namespace BS
         }
         void SetupPhysicMaterial(List<PropertyName> changedProperties = null)
         {
-            if (GetComponent<MeshFilter>())
+            if (_collider == null)
+            {
+                _collider = GetComponent<Collider>();
+            }
+            if (_collider == null && GetComponent<MeshFilter>())
+            {
+                // Nothing to put the material on yet: give the mesh a collider.
+                var meshCollider = gameObject.AddComponent<MeshCollider>();
+                meshCollider.convex = true;
+                _collider = meshCollider;
+            }
+            if (_collider != null)
             {
                 if (_material == null)
                 {
                     _material = new PhysicsMaterial();
-                }
-                if (_collider == null)
-                {
-                    _collider = GetComponent<Collider>();
-                }
-                if (_collider == null)
-                {
-                    var meshCollider = gameObject.AddComponent<MeshCollider>();
-                    meshCollider.convex = true;
                 }
 
                 if (changedProperties?.Contains(PropertyName.dynamicFriction) ?? false)
@@ -79,9 +87,11 @@ namespace BS
                 {
                     _material.bounceCombine = bounceCombine;
                 }
-                if (_collider.material != _material)
+                // sharedMaterial: the material getter can hand back a per-collider copy rather than
+                // _material itself.
+                if (_collider.sharedMaterial != _material)
                 {
-                    _collider.material = _material;
+                    _collider.sharedMaterial = _material;
                 }
             }
             SetLoadedIfNot();

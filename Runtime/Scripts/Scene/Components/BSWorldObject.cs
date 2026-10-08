@@ -12,12 +12,6 @@ namespace BS
     public class BSWorldObject : BSComponentBase
     {
 
-        /// <summary>
-        /// Array of colliders associated with this object.
-        /// This array is automatically populated when colliders are collected.
-        /// </summary>
-        [Tooltip("Automatically populated array of colliders associated with this object.")]
-
         WorldObject worldObj;
 
         bool worldObjectAdded;

@@ -55,7 +55,7 @@ namespace BS
         [Tooltip("Whether to use skinned motion vectors.")]
         [See(initial = "true")][SerializeField] internal bool skinnedMotionVectors = true;
 
-        [Tooltip("The quality level of the skinned mesh (0=Auto, 1=Low, 2=Medium, 3=High).")]
+        [Tooltip("The most bones that may affect a vertex (0 = Auto, 1, 2 or 4 bones).")]
         [See(initial = "0")][SerializeField] internal int quality = 0;
 
         BSObjectId _rootBoneObjectId;
@@ -75,12 +75,25 @@ namespace BS
         internal override void StartStuff()
         {
             SetupSkinnedMeshRenderer(null);
+            if (!valuesApplied && _skinnedMeshRenderer != null)
+            {
+                // Placed in the Inspector (see valuesApplied). The SkinnedMeshRenderer is always the
+                // creator's own, set up in its own inspector, so it keeps its settings and the fields
+                // are read back from it instead. The sync also sends the blend shapes and bones just
+                // read, which Init's sync ran too early to include.
+                updateWhenOffscreen = _skinnedMeshRenderer.updateWhenOffscreen;
+                skinnedMotionVectors = _skinnedMeshRenderer.skinnedMotionVectors;
+                quality = (int)_skinnedMeshRenderer.quality;
+                valuesApplied = true;
+                SyncProperties(true);
+            }
         }
 
         internal override void UpdateStuff() { }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             SetupSkinnedMeshRenderer(changedProperties);
         }
 

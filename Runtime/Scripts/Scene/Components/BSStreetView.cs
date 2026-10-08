@@ -27,7 +27,23 @@ namespace BS
                 streetViewObject = null;
             }
         }
-        internal override void StartStuff() { }
+        internal override void StartStuff()
+        {
+            if (!valuesApplied)
+            {
+                // Placed in the Inspector, so nothing has loaded the panoId set there yet (see
+                // valuesApplied). Without one there is nothing to load, and it counts as loaded rather
+                // than holding up the space.
+                if (string.IsNullOrEmpty(panoId))
+                {
+                    SetLoadedIfNot();
+                }
+                else
+                {
+                    ReSetup();
+                }
+            }
+        }
 
         internal override void UpdateStuff()
         {
@@ -35,6 +51,7 @@ namespace BS
         }
         internal void UpdateCallback(List<PropertyName> changedProperties)
         {
+            valuesApplied = true;
             if (photoSphere != null)
             {
                 Destroy(photoSphere);

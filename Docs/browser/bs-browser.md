@@ -10,7 +10,7 @@ In Unity, use **GameObject > BS > Objects > Browser**, or **Add Component > BS B
 
 ```js
 const screen = new BS.GameObject({ name: "Screen", localPosition: new BS.Vector3(0, 1.5, 2) });
-const browser = screen.AddComponent(new BS.Browser({
+const browser = await screen.AddComponent(new BS.Browser({
     url: "https://example.com",
     pageWidth: 1280,
     pageHeight: 720
@@ -78,7 +78,6 @@ browser.RunActions(JSON.stringify({
 | `postmessage` | `strParam1`: the message | Raises a `bsmessage` event in the page; see [Messages](messages.md#from-your-space-to-a-page). |
 
 - **Startup actions run before the page has loaded**, so begin them with a `delayseconds` long enough for it to load. There's no "page loaded" event; have the page [send a message](messages.md) when it's ready instead.
-- **Avoid the `§` character** in actions and messages: it's used to split messages on the way through and cuts them short.
 - **In Visual Scripting**, call the BS Browser's `_RunActions` method with the same JSON text.
 
 ## Events

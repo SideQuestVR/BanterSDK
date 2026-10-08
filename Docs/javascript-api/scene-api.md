@@ -10,12 +10,11 @@ const scene = BS.Scene.GetInstance();
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `objects` | Object | All GameObjects in the scene by ID |
-| `components` | Object | All Components in the scene by ID |
-| `users` | Object | All connected users by UID |
+| `objects` | Object | Every GameObject your page knows about, keyed by its `unityId` |
+| `components` | Object | Every component your page knows about, keyed by its `unityId` |
+| `users` | Object | Everyone in the space, keyed by `uid` |
 | `localUser` | UserData | The current local user |
 | `unityLoaded` | boolean | True when Unity is fully loaded |
-| `domLoaded` | boolean | True when the page DOM has finished loading |
 | `spaceState` | Object | Current space state as strings (`public` / `protected`) |
 | `spaceStateJson` | Object | The same state as real JSON values, keyed by full dotted path (`public` / `protected`) |
 
@@ -30,6 +29,10 @@ Object.values(scene.objects).forEach(o => console.log(o.name));
 console.log(Object.keys(scene.users).length, "users connected");
 console.log(scene.localUser.name); // the local user (set once the local user has joined)
 ```
+
+The page knows about the objects your script creates, and every object in your Unity scene that has a
+BS Object Id. Every BS component adds one, so an object with any BS component on it is included; a plain
+mesh or empty object isn't.
 
 ## Waiting for Load
 
@@ -46,11 +49,15 @@ await scene.WaitForUnity(spawner); // same as spawner.Async()
 
 ```js
 // Find by name (first match)
-const obj = scene.Find("MyObject");
+const obj = await scene.Find("MyObject");
 
 // Find by full hierarchy path
-const child = scene.FindByPath("Parent/Child/GrandChild");
+const child = await scene.FindByPath("Parent/Child/GrandChild");
 ```
+
+Both resolve with `undefined` when nothing matches. They only search the objects the page knows about
+(see [Properties](#properties)), and a path is built from those objects alone: `Parent/Child` only works
+if `Parent` has a BS Object Id too. Top-level objects in your scene have their plain name as their path.
 
 Component property values are cached JS-side. `QueryComponents` re-reads specific properties from Unity:
 
@@ -67,18 +74,27 @@ console.log(rigidbody.velocity, textComponent.text);
 await rigidbody.GetProperties([BS.PN.velocity]);
 ```
 
+A `ComponentQuery` keys components by their `unityId`, so add components that are already linked
+(`await obj.AddComponent(...)` first).
+
 ## Creating & Cloning Objects
 
 ```js
 // Clone an existing object
-const clone = scene.Instantiate(originalObject);
+const copy = await scene.Instantiate(originalObject);
 
-// Clone with position and rotation
-const clone = scene.Instantiate(original, new BS.Vector3(0, 1, 0), new BS.Quaternion(0, 0, 0, 1));
+// Clone at a world position and rotation
+const placed = await scene.Instantiate(originalObject, new BS.Vector3(0, 1, 0), new BS.Quaternion(0, 0, 0, 1));
 
-// Clone with parent
-const clone = scene.Instantiate(original, parentObject, true); // worldPositionStays = true
+// Clone under a parent (worldPositionStays = true keeps the copy's world position)
+const child = await scene.Instantiate(originalObject, parentObject, true);
+
+// Clone at a position and rotation, under a parent
+const placedChild = await scene.Instantiate(originalObject, new BS.Vector3(0, 1, 0), new BS.Quaternion(0, 0, 0, 1), parentObject);
 ```
+
+`Instantiate` resolves with the new GameObject. Unity names it after the original with `(Clone)` on the
+end. An inactive original is switched on for a moment to copy it, so the copy is active.
 
 ```js
 // Register a script-created GameObject and create it Unity-side
@@ -106,17 +122,17 @@ const query = new BS.ComponentQuery()
     .Add(material, [BS.PN.color])
     .Add(rigidbody, [BS.PN.velocity]);
 
-await scene.SetComponents(query);       // fire-and-forget batch
-await scene.SetComponents(query, true); // readBack = true: waits for the Unity round trip
+await scene.SetComponents(query);       // resolves once sent
+await scene.SetComponents(query, true); // readBack = true: resolves once Unity has the values
 ```
 
 `WatchProperties` streams changes from Unity back to the JS side. Updated values land on the component and fire `object-update` on its GameObject:
 
 ```js
-// Per-component form
+// Per-component form (the component must be linked: await AddComponent first)
 rigidbody.WatchProperties([BS.PN.velocity]);
 
-// Scene-level form takes { id, properties }
+// Scene-level form takes { id, properties }. Don't await it: Unity never answers.
 scene.WatchProperties({ id: rigidbody.unityId, properties: [BS.PN.velocity] });
 
 rigidbody.gameObject.On("object-update", (e) => {
@@ -128,16 +144,20 @@ rigidbody.gameObject.On("object-update", (e) => {
 `CallMethod` invokes a method on a component by name. Arguments are strings prefixed with a type code: `0` = bool, `1` = int, `2` = float, `3` = string, `4` = Vector2, `5` = Vector3, `6` = Vector4 or quaternion (vector values `|`-separated):
 
 ```js
-scene.CallMethod(audioSource, "PlayOneShotFromUrl", ["3|https://example.com/ding.mp3"]);
-scene.CallMethod(rigidbody, "AddForce", ["5|0|10|0", "1|" + BS.ForceMode.Impulse]);
+await scene.CallMethod(audioSource, "PlayOneShotFromUrl", ["3|https://example.com/ding.mp3"]);
+await scene.CallMethod(rigidbody, "AddForce", ["5|0|10|0", "1|" + BS.ForceMode.Impulse]);
 ```
 
-The built-in component methods (`rb.AddForce(...)`, `audio.PlayOneShot(...)`, etc.) call this under the hood.
+It resolves with the method's return value: `undefined` for a method that returns nothing, otherwise a
+boolean, a number, a `BS.Vector2`/`Vector3`/`Vector4` (a quaternion comes back as a `Vector4`) or a string.
+The built-in component methods (`rb.AddForce(...)`, `audio.PlayOneShot(...)`, etc.) call this under the
+hood and resolve the same way.
 
 ## State Management
 
 There are two ways to work with shared state: the **string API** below, and the **JSON API** after
-it, which adds real values, nested paths, deletes and errors you can catch.
+it, which adds real values, nested paths, deletes and errors you can catch. [Multiplayer](../multiplayer/overview.md)
+explains when to use space state, user state and one-shots.
 
 ```js
 // Set public properties (visible to all, persists)
@@ -146,16 +166,23 @@ scene.SetPublicSpaceProps({ "score": "100", "level": "3" });
 // Set protected properties (space owner / moderators only)
 scene.SetProtectedSpaceProps({ "gameMode": "competitive" });
 
-// Set your own user properties. The id argument is ignored: user state is
-// owner-writes-only, so you can only ever write your own.
+// Set your own user properties. Leave the id out: user state is owner-writes-only,
+// so a call that names another user's id writes nothing.
 scene.SetUserProps({ "team": "red" });
 
-// Send one-shot message to all users
-scene.OneShot({ action: "explosion", position: [0, 1, 0] }, true); // allInstances
+// Send a one-shot message to everyone else in the space (objects are sent as JSON)
+await scene.OneShot({ action: "explosion", position: [0, 1, 0] });
 ```
 
 These are **fire-and-forget** — they return immediately and cannot report a failure. To learn that a
 write was refused, listen for `space-state-error` / `user-state-error`, or use the JSON API.
+
+Keys and values passed to `SetPublicSpaceProps`, `SetProtectedSpaceProps` and `SetUserProps` can't contain
+`¶ § | ‽ ¤`: a value containing one is cut short, stripped or dropped. The JSON API has no such limit, and
+neither do one-shots, browser messages or component properties.
+
+In Play mode on your own, space state and the JSON API need local multiplayer; see
+[Playing without local multiplayer](../multiplayer/local-testing.md#playing-without-local-multiplayer).
 
 ### JSON space state
 
@@ -187,7 +214,7 @@ await scene.UserStateGet("team", someUid);            // another participant's
 await scene.UserStateGetAll(someUid);
 await scene.UserStateDelete("loadout");
 
-// Let space moderators change this one too (default: only you can)
+// Mark a value as one moderators may change too (not supported yet: see below)
 await scene.UserStateSet("status", "afk", { moderatorsCanWrite: true });
 ```
 
@@ -202,17 +229,21 @@ try {
     await scene.SpaceStateSet("title", "Arena", { protected: true });
 } catch (e) {
     // e.code: "not_authorized" | "protected_path" | "invalid_path" |
-    //         "value_too_large" | "too_many_keys" | "rate_limited" | "timeout" | ...
+    //         "value_too_large" | "too_many_keys" | "timeout" | "app_unavailable" | ...
     console.warn(e.code, e.message, e.path);
 }
 ```
 
+`app_unavailable` means nothing in the app handles state: you get it in Play mode without local
+multiplayer.
+
 ### What "protected" means
 
-| | Space state | User state |
-|---|---|---|
-| Public | anyone in the room may write | you, and space moderators |
-| Protected | the world owner, or an Owner/Moderator of the community hosting it | **only you** — not even a moderator |
+| | Who can write |
+|---|---|
+| Public space state | anyone in the room |
+| Protected space state | the world owner, or an Owner/Moderator of the community hosting it |
+| User state | **only the user it belongs to** |
 
 Two things to keep in mind:
 
@@ -221,87 +252,61 @@ Two things to keep in mind:
 - **Protecting a space-state key is permanent for the room** (its 24 h lifetime). The first
   protected write to a key locks it, and a page cannot unprotect it.
 
-> Moderator writes to user state aren't supported yet: for now only the owner can write their user
-> state, even with `moderatorsCanWrite`.
+> `moderatorsCanWrite` marks a user-state value as one moderators may change, but moderator writes to
+> user state aren't supported yet: for now only the owner can write their user state.
 
 ### Limits
 
 Keys may use `A-Z a-z 0-9 _ - @` and `.` to nest; anything else is encoded transparently, so a key
-with spaces or emoji still round-trips. Values are capped at 16 KB, a space at 2048 properties, and
-a participant at 64 props. Writes are coalesced and batched, so a tight loop of `SetPublicSpaceProps`
-is fine.
+with spaces or emoji still round-trips. Each dotted part can be up to 64 characters (47 UTF-8 bytes
+if it has any other character in it), a whole key up to 256 characters once encoded and 64 parts, and
+no part can be empty (`a..b` or a trailing `.`); a key outside these limits is refused with
+`invalid_path`. Values are capped at 16 KB, a space at 2048 properties, and a participant at 64
+values (each leaf of an object counts). Writes are coalesced and batched, so a tight loop of
+`SetPublicSpaceProps` is fine.
 
-## Browser & Page Methods
-
-```js
-// Open a URL in the user's menu browser
-scene.OpenPage("https://example.com");
-
-// Send message to browser in menu
-scene.SendBrowserMessage("hello from space");
-
-// Deep link with message
-scene.DeepLink("https://example.com", "welcome");
-```
-
-## Text-to-Speech
+## Deep Links
 
 ```js
-// Start voice detection
-scene.StartTTS(true); // voiceDetection = true
-
-// Stop and get transcription (provide ID for tracking)
-scene.StopTTS("request-1");
-
-// Listen for result
-scene.On("transcription", (e) => {
-    console.log(e.detail.id, e.detail.message);
-});
+// Launch another Quest app by its App ID, optionally passing it a message
+scene.DeepLink("1234567890123456", "welcome");
 ```
 
-## AI Generation
-
-```js
-// Generate an AI image (ratio: _1_1, _3_2, _4_3, _16_9, _21_9, _2_3, _3_4, _9_16, _9_21)
-scene.AiImage("a sunset over mountains", BS.AiImageRatio._1_1);
-
-// Generate 3D model from image (simplify: low, med, high)
-scene.AiModel(base64ImageData, BS.AiModelSimplify.med, 512);
-```
+`DeepLink` only works on Quest: the first argument is the other app's Quest App ID (digits only), not a URL. On Windows and in Play mode nothing happens.
 
 ## Utility Methods
 
 ```js
-// Wait for end of frame (sync with Unity render)
-scene.WaitForEndOfFrame();
+// Wait for the end of the current frame (sync with Unity's render)
+await scene.WaitForEndOfFrame();
 
-// Select a file from user
-scene.SelectFile(BS.SelectFileType.Image);
-
-// Upload base64 to CDN
-scene.Base64ToCDN(base64Data, "myfile.png");
-
-// Get YouTube video info
-scene.YtInfo("dQw4w9WgXcQ");
+// Look up a YouTube video's details
+const info = await scene.YtInfo("dQw4w9WgXcQ");
+console.log(info.videoDetails.title, info.videoDetails.lengthSeconds, info.videoDetails.author);
 ```
 
 ```js
-// Get the current platform
-const platform = await scene.GetPlatform();
+// Which device the player is on
+const platform = await scene.GetPlatform(); // e.g. "VR,Unknown,Unknown,Android OS 14 / API-34 (...)"
+const inHeadset = platform.startsWith("VR");
 
-// Grab the texture on one of an object's materials as base64
+// Grab the main texture of one of an object's material slots as base64 PNG (null if there is none)
 const b64 = await scene.ObjectTextureToBase64(obj, 0); // materialIndex = 0
 
 // Save and restore the whole scene
 const saved = scene.Serialise();            // every object + components, as a string
 const restored = scene.Deserialise(saved);  // rebuild; returns the created GameObjects in payload order
 scene.Deserialise(saved, parentObject);     // adopts anything whose recorded parent isn't in the payload
-
-// Baked lighting data
-const lighting = await scene.LightingDataGet(); // persistable string, "" when nothing is baked
-await scene.LightingDataSet(lighting);          // apply a previously stored payload
 ```
+
+`GetPlatform` resolves with four comma-separated fields: `VR` in a headset or `2D` on a flat screen,
+two fields that are always `Unknown`, then the operating system as the device reports it. In Play mode
+it resolves with an empty string.
+
+`ObjectTextureToBase64` reads the Renderer on the object itself (not its children). It only finds
+objects your script created, `scene.Instantiate` copies included, and not once you've set their
+`networkId`; for anything else it resolves with `null`.
 
 `Deserialise` also accepts a single object's `Serialise(true)` output (run it through `JSON.stringify` first — `Serialise(true)` returns an array, and `Deserialise` takes the JSON string), so a subtree can be saved and restored on its own.
 
-`scene.SendToVisualScripting(returnId, data)` sends a JSON payload to a [Visual Scripting](../visual-scripting/overview.md) graph, where it arrives through the `On BullSchript Callback Received` node with the matching `Return ID`.
+`scene.SendToVisualScripting(returnId, data)` sends a JSON payload to a [Visual Scripting](../visual-scripting/overview.md) graph, where it arrives through the `On BullSchript Callback Received` node with the matching `Return ID`, as JSON text (see [The Space Browser](../browser/space-browser.md#run-javascript-in-it-from-visual-scripting)).

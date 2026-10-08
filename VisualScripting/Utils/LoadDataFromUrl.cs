@@ -140,6 +140,8 @@ namespace BS.VisualScripting
             {
                 if (method == "POST")
                 {
+                    // Put builds the raw-body upload; the verb is POST.
+                    request.method = UnityWebRequest.kHttpVerbPOST;
                     request.SetRequestHeader("Content-Type", flow.GetValue<string>(this.contentType));
                 }
                 yield return request.SendWebRequest();
