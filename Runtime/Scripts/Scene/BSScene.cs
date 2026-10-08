@@ -2805,7 +2805,11 @@ namespace BS
                             // Optional app gate: hold the cage open-pending until the app is ready
                             // (e.g. networking connected). No-op when CanOpenLoadingCage is unset.
                             await WaitForCageGate(tcs);
-                            await loadingManager.LoadOut();
+                            // The gate holder may have failed the load while we waited (e.g. the
+                            // networking join failed → Cancel). Re-check: LoadOut's own guard reads
+                            // scene.state, which a late UNITY_READY can overwrite.
+                            if (!HasLoadFailed())
+                                await loadingManager.LoadOut();
                         }
                         catch (Exception e)
                         {
@@ -2824,7 +2828,9 @@ namespace BS
             await tcs.Task;
         }
 
-        private const float LoadingCageGateTimeoutSeconds = 20f;
+        /// <summary>Safety cap on how long <see cref="CanOpenLoadingCage"/> may hold the cage. The gate
+        /// holder can raise it (e.g. networking, whose join + retries can outlast the default).</summary>
+        public float LoadingCageGateTimeoutSeconds = 20f;
 
         // Hold the cage until CanOpenLoadingCage() is true, a newer load supersedes this one, or the
         // safety timeout elapses. No-op when no gate is set.
