@@ -189,6 +189,67 @@ namespace BS.SDKEditor.Tests
             Assert.IsFalse(attached.autoAttach);
         }
 
+        // ---- seat and vehicle attachments ----
+
+        BSAttachedObject CreateAttached(string name, AvatarAttachmentType avatarType, AttachmentType type, bool jointAvatar)
+        {
+            var attached = Create(name).AddComponent<BSAttachedObject>();
+            attached.avatarAttachmentType = avatarType;
+            attached.attachmentType = type;
+            attached.jointAvatar = jointAvatar;
+            return attached;
+        }
+
+        [Test]
+        public void SeatAttachment_NonPhysicsOrUnjointed_SeatsNoOne()
+        {
+            CreateAttached("nonPhysicsSeat", AvatarAttachmentType.AvatarAttachTo, AttachmentType.NonPhysics, true);
+            CreateAttached("unjointedSeat", AvatarAttachmentType.AvatarAttachTo, AttachmentType.Physics, false);
+            CreateAttached("seat", AvatarAttachmentType.AvatarAttachTo, AttachmentType.Physics, true);
+            // An object on a player isn't a seat, whatever its type and joint say.
+            CreateAttached("hat", AvatarAttachmentType.AttachToAvatar, AttachmentType.NonPhysics, false);
+
+            var issues = Run(new SeatAttachmentsCheck());
+            Assert.AreEqual(1, issues.Count);
+            Assert.AreEqual(BuildCheckSeverity.Warning, issues[0].Severity);
+            CollectionAssert.AreEquivalent(new[] { "nonPhysicsSeat", "unjointedSeat" }, issues[0].Targets.Select(target => target.Label));
+            Assert.IsNotNull(issues[0].Fix);
+        }
+
+        [Test]
+        public void SeatAttachment_TheSeatPrefabsSetup_Passes()
+        {
+            Create("seat").AddComponent<BSSeat>();
+            Assert.IsEmpty(Run(new SeatAttachmentsCheck()));
+        }
+
+        [Test]
+        public void SeatAttachment_Fix_MakesThemPhysicsWithJointAvatar()
+        {
+            var nonPhysics = CreateAttached("nonPhysicsSeat", AvatarAttachmentType.AvatarAttachTo, AttachmentType.NonPhysics, true);
+            var unjointed = CreateAttached("unjointedSeat", AvatarAttachmentType.AvatarAttachTo, AttachmentType.Physics, false);
+            var hat = CreateAttached("hat", AvatarAttachmentType.AttachToAvatar, AttachmentType.NonPhysics, false);
+            try
+            {
+                Assert.IsTrue(SeatAttachmentsCheck.MakeSeats(new List<BSAttachedObject> { nonPhysics, unjointed, hat }));
+                foreach (var seat in new[] { nonPhysics, unjointed })
+                {
+                    Assert.AreEqual(AttachmentType.Physics, seat.attachmentType);
+                    Assert.IsTrue(seat.jointAvatar);
+                }
+                // Not a seat: left alone.
+                Assert.AreEqual(AttachmentType.NonPhysics, hat.attachmentType);
+                Assert.IsFalse(hat.jointAvatar);
+                Assert.IsEmpty(Run(new SeatAttachmentsCheck()));
+                Assert.IsFalse(SeatAttachmentsCheck.MakeSeats(new List<BSAttachedObject> { nonPhysics, unjointed, hat }));
+            }
+            finally
+            {
+                foreach (var attached in new[] { nonPhysics, unjointed, hat })
+                    Undo.ClearUndo(attached);
+            }
+        }
+
         // ---- grab handles ----
 
         [Test]

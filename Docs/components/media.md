@@ -32,7 +32,7 @@ await obj.AddComponent(new BS.GLTF({
 
 </div>
 
-Changing `url` loads the new model in place of the old one; a change made while a model is still loading is ignored. The model's parts are separate objects, so a click on one of their colliders isn't reported to the GLTF's object. For a clickable model, leave the model's colliders off and give the object itself a collider, on the UI layer (see [Layers](../building-in-unity/layers.md)).
+The component's `loaded` event fires once the model is in the scene, colliders included. A model that fails to load (a bad URL, or a file that isn't a binary `.glb`) also fires `loaded`, with a warning in the Console, so the space never waits on it; after 60 seconds without an answer it stops waiting too. Changing `url` loads the new model in place of the old one; a change made while a model is still loading is ignored. The model's parts are separate objects, so a click on one of their colliders isn't reported to the GLTF's object. For a clickable model, leave the model's colliders off and give the object itself a collider, on the UI layer (see [Layers](../building-in-unity/layers.md)).
 
 **Node-name markers:** you can mark parts of the model in your 3D tool by putting these in a node's name. They work whatever the properties above say:
 

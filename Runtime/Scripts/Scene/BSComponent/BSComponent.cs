@@ -101,7 +101,42 @@ namespace BS
         }
         public async Task CallMethod(string methodName, List<object> parameters, Action<object> callback)
         {
-            await ObjectOnMainThread(component => callback(component.CallMethod(methodName, parameters)));
+            Task pending = null;
+            await ObjectOnMainThread(component =>
+            {
+                var result = component.CallMethod(methodName, parameters);
+                if (result is Task task)
+                {
+                    pending = task;
+                }
+                else
+                {
+                    callback(result);
+                }
+            });
+            if (pending == null)
+            {
+                return;
+            }
+            // An async [Method] (AudioSource.PlayOneShotFromUrl) hands back its Task, which reached the page as a
+            // stringified Task object. Answer once it has finished instead, with its result if it has one; if it
+            // throws, so does this, and the caller reports the error to the page.
+            await pending;
+            var value = TaskResult(pending);
+            await UnityMainThreadTaskScheduler.Default.EnqueueAsync(TaskRunner.Track(() => callback(value), $"{nameof(BSComponent)}.{nameof(CallMethod)}"));
+        }
+
+        /// <summary>A finished Task's result: null for a plain Task, whose runtime type is Task&lt;VoidTaskResult&gt;.</summary>
+        static object TaskResult(Task task)
+        {
+            for (var type = task.GetType(); type != null && type != typeof(Task); type = type.BaseType)
+            {
+                if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Task<>))
+                {
+                    return type.GetGenericArguments()[0].Name == "VoidTaskResult" ? null : type.GetProperty("Result").GetValue(task);
+                }
+            }
+            return null;
         }
 
         public BSComponentBase Object()

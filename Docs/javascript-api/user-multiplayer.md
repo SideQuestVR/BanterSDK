@@ -32,7 +32,6 @@ own page attaches to that player. Pass `"me"` (or `scene.localUser.uid`).
 const hat = await scene.Find("Hat");
 const attached = await hat.AddComponent(new BS.AttachedObject({
     uid: "me",
-    attachmentType: BS.AttachmentType.NonPhysics,   // follow the point, no physics
     avatarAttachmentPoint: BS.AvatarBoneName.HEAD,
     attachmentPosition: new BS.Vector3(0, 0.15, 0), // offset from the head
     autoSync: true                                  // show it on your avatar for everyone else too
@@ -40,7 +39,7 @@ const attached = await hat.AddComponent(new BS.AttachedObject({
 
 let wearing = false;
 hat.On("click", async () => {
-    if (wearing) return; // attaching twice stacks: see below
+    if (wearing) return;
     wearing = true;
     await attached.Attach("me");
 });
@@ -54,15 +53,13 @@ async function takeOffHat() {
 
 | Setting | What it does |
 |---|---|
-| `attachmentType` | `BS.AttachmentType.NonPhysics` follows the point with no physics, offset by `attachmentPosition` and `attachmentRotation`. `BS.AttachmentType.Physics` (the default) joins the object to the point with a physics joint, adding a Rigidbody if it has none; the offsets aren't used, and `Detach` doesn't release it yet, so use `NonPhysics` for anything that comes off again. |
-| `attachmentPoint` | For `Physics`: a `BS.PhysicsAttachmentPoint`, `LeftHand`, `RightHand` or `Torso`. For the head, use `NonPhysics`. |
-| `avatarAttachmentPoint` | For `NonPhysics`: a `BS.AvatarBoneName`. `HEAD` and `NECK` follow the head, the hand, forearm and finger bones follow that hand, and every other bone follows the body. |
-| `avatarAttachmentType` | `BS.AvatarAttachmentType.AttachToAvatar` (the default) puts the object on the player; `AvatarAttachTo` puts the player on the object, like a seat. |
+| `avatarAttachmentPoint` | Where the object goes: a `BS.AvatarBoneName`. `HEAD` and `NECK` follow the head, the hand, forearm and finger bones follow that hand, and every other bone follows the body. The object follows it exactly. |
+| `attachmentPosition`, `attachmentRotation` | The object's offset from that point. |
+| `avatarAttachmentType` | `BS.AvatarAttachmentType.AttachToAvatar` (the default) puts the object on the player; `AvatarAttachTo` puts the player on the object, like a seat (leave `attachmentType` at its default for that). |
 | `autoSync` | Others see the object on your avatar too. Their copy of the object is moved, so it has to exist for every player with the same [BS Object Id](../multiplayer/overview.md#bsobjectid). |
 | `autoAttach` | Attach as soon as the component starts. |
 
-Attach an object once: attaching it again before `Detach` stacks a second attachment, and `Detach` then
-leaves it on.
+Attaching an object that is already attached moves it to the new settings.
 
 In Play mode without local multiplayer, only head attachments and seats are shown; other attachment points
 leave the object where it is.

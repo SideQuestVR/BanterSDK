@@ -59,6 +59,7 @@ How the local player moves. Each player's app applies them to that player.
 | `PhysicsGrappleRange` | number | 512 | How far the grapple reaches, in metres. |
 | `PhysicsGrappleReelSpeed` | number | 1 | Multiplies how fast holding grip reels the grapple in. |
 | `PhysicsGrappleSpringiness` | number | 10 | Higher makes the grapple's rope bouncier. It applies from the next rope fired. |
+| `PhysicsGorillaMode` | boolean | false | VR only: players get about by pushing their hands against the floor and walls, Gorilla Tag style. Their hands collide with the world, the sticks no longer walk or steer them in the air (turning still works), and a push carries them a short way before they stop. Jumping and teleporting still work unless you turn them off. Desktop and mobile players move as usual. |
 | `PhysicsSettingsLocked` | boolean | false | Locks the settings in this table. See [Locks](#how-settings-are-applied). |
 
 ## Player count
@@ -69,15 +70,16 @@ How many players share an instance of your world isn't a page setting: `MaxOccup
 2. Otherwise, a tag in your page's `<head>`: `<meta name="sq-maxoccupancy" content="8">`, or `<meta name="sq-singleuser">` for one player per instance. The server reads it from your published page and remembers it for about an hour, so a change can take that long to apply.
 3. Otherwise, 20.
 
-## Not available yet
+## Not working yet
 
-`BS.SceneSettings` still has these, and `SetSettings` sends them, but they don't do anything in the app at the moment:
+`BS.SceneSettings` has these, and `SetSettings` sends them, but the app doesn't act on them yet. They're planned:
 
-- `EnableHandHold`, `EnableRadar`, `EnableFriendPositionJoin`, `EnableDefaultTextures`, `EnableDevTools`, `EnableQuaternionPose`, `EnableControllerExtras`.
-- `EnablePortals`. Portals you place always work.
-- `PhysicsGorillaMode`.
-- `PhysicsFreeFallAngularDrag`. It's applied to the player's body, but the body never tumbles in the app, so there's nothing to see.
-- `MaxOccupancy`: see [Player count](#player-count).
+- `EnableHandHold`: players will be able to hold other players' hands.
+- `EnableRadar`: a marker over other players, so they can be found through walls.
+- `EnablePortals`: players will be able to drop portals to other spaces from the menu. Portals you place already work.
+- `EnableDevTools`: whether players can open your page's developer tools in the app.
+- `PhysicsFreeFallAngularDrag`: how quickly a tumbling player's spin slows. The app applies it, but players don't tumble yet.
+- `EnableQuaternionPose`, `EnableControllerExtras`: extra pose data for A-Frame pages.
 
 ## Scene Physics Methods
 
@@ -147,10 +149,10 @@ await scene.SetBlockLeftThumbstick(true);   // false to unblock
 | `SetBlockLeftThumbstick` | Moving (on desktop too, and in SDK Play Mode) |
 | `SetBlockRightThumbstick` | Turning and crouching with the right stick |
 | `SetBlockRightPrimary` | Jumping (the A button) |
-| `SetBlockLeftSecondary` | Teleporting |
+| `SetBlockRightSecondary` | Teleporting (the B button) |
 | `SetBlockLeftTrigger`, `SetBlockRightTrigger` | That hand's trigger, for held objects, and its grapple (on desktop too) |
 | `SetBlockLeftPrimary` | Nothing (on a gamepad, teleporting) |
-| `SetBlockRightSecondary`, `SetBlockLeftThumbstickClick`, `SetBlockRightThumbstickClick` | Nothing yet |
+| `SetBlockLeftSecondary`, `SetBlockLeftThumbstickClick`, `SetBlockRightThumbstickClick` | Nothing yet |
 
 Like the abilities above, blocks stay until you lift them. Blocking a control only stops the app using it: your page still gets the events below.
 

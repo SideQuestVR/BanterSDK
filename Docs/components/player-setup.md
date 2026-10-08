@@ -169,9 +169,9 @@ When it starts, it applies all of its values, so anything you don't set goes bac
 | `physicsGrappleRange` | number | 512 | `PhysicsGrappleRange`: grapple range, in metres |
 | `physicsGrappleReelSpeed` | number | 1 | `PhysicsGrappleReelSpeed`: grapple reel speed |
 | `physicsGrappleSpringiness` | number | 10 | `PhysicsGrappleSpringiness`: grapple springiness |
-| `physicsGorillaMode` | boolean | false | `PhysicsGorillaMode`: players move by pushing off surfaces with their hands |
+| `physicsGorillaMode` | boolean | false | `PhysicsGorillaMode`: in VR, players move by pushing their hands against the floor and walls instead of with the sticks |
 
-`enableHandHold`, `enableRadar`, `enablePortals`, `physicsFreeFallAngularDrag` and `physicsGorillaMode` don't do anything in the app yet: see [Not available yet](../javascript-api/scene-settings.md#not-available-yet). In SDK Play Mode only `clippingPlane` has an effect.
+`enableHandHold`, `enableRadar`, `enablePortals` and `physicsFreeFallAngularDrag` don't work in the app yet: see [Not working yet](../javascript-api/scene-settings.md#not-working-yet). In SDK Play Mode only `clippingPlane` has an effect.
 
 **Locks**
 

@@ -118,11 +118,10 @@ Attaches the object to the local player (a hat, a tool on the hand), or the loca
 |----------|------|---------|-------------|
 | `uid` | string | "" | The player to attach; see the note below |
 | `avatarAttachmentType` | number | `AttachToAvatar` | A `BS.AvatarAttachmentType`: `AttachToAvatar` (0) puts the object on the player, `AvatarAttachTo` (1) puts the player on the object |
-| `attachmentType` | number | `Physics` | A `BS.AttachmentType`: `Physics` (0) holds the object with a physics joint, `NonPhysics` (1) makes it follow exactly. See the note below |
-| `attachmentPoint` | number | `Head` | Where a `Physics` attachment goes: a `BS.PhysicsAttachmentPoint`, `Head` (0), `LeftHand` (1), `RightHand` (2) or `Torso` (3) |
-| `avatarAttachmentPoint` | number | `HEAD` | Where a `NonPhysics` attachment goes: a `BS.AvatarBoneName`. The app follows the head (`HEAD`, `NECK`), the hands (any hand, finger or forearm bone), and the body for anything else |
-| `attachmentPosition` | Vector3 | 0, 0, 0 | Offset from the attachment point (`NonPhysics`) |
-| `attachmentRotation` | Quaternion | 0, 0, 0, 1 | Rotation offset (`NonPhysics`) |
+| `avatarAttachmentPoint` | number | `HEAD` | Where the object goes on the player: a `BS.AvatarBoneName`. The app follows the head (`HEAD`, `NECK`), the hands (any hand, finger or forearm bone), and the body for anything else |
+| `attachmentPosition` | Vector3 | 0, 0, 0 | Offset from the attachment point |
+| `attachmentRotation` | Quaternion | 0, 0, 0, 1 | Rotation offset |
+| `attachmentType` | number | `Physics` | With `AvatarAttachTo`: leave it at `Physics` (0), which holds the player on the seat or vehicle. An object attached to a player ignores it |
 | `autoSync` | boolean | false | Show the attachment on your avatar to the other players (see [Multiplayer](../multiplayer/overview.md#attachments-and-seats)) |
 | `autoAttach` | boolean | false | Attach as soon as the object starts |
 | `jointAvatar` | boolean | true | With `AvatarAttachTo`: hold the player to the object |
@@ -138,7 +137,6 @@ const hat = new BS.GameObject({ name: "Hat" });
 await hat.AddComponent(new BS.Cylinder({ radiusTop: 0.1, radiusBottom: 0.12, height: 0.15 }));
 await hat.AddComponent(new BS.Material({ color: new BS.Vector4(0.1, 0.1, 0.1, 1) }));
 const attached = await hat.AddComponent(new BS.AttachedObject({
-    attachmentType: BS.AttachmentType.NonPhysics,
     avatarAttachmentPoint: BS.AvatarBoneName.HEAD,
     attachmentPosition: new BS.Vector3(0, 0.15, 0)
 }));
@@ -158,4 +156,4 @@ attached.Detach(scene.localUser.uid); // Detach again
 
 Attaching only ever moves the local player: you can't attach an object to someone else. Pass the local player's `uid` (`"me"` works too). In the app any `uid` attaches the local player; in SDK Play Mode another player's `uid` does nothing, and only head attachments and seats are acted out (the object is parented to the camera, or the desktop player sits).
 
-!> To put an object on the player, use `NonPhysics`. The default, `Physics`, can't be let go of again yet: after `Detach` its joint stays and the object stays stuck to the player. It also ignores `attachmentPosition` and `attachmentRotation`, and joints `Head` attachments to the body. Seats and vehicles (`AvatarAttachTo`) work with the default; [Seat](player-setup.md#seat) sets one up for you. Attach an object once: attaching it again before `Detach` stacks a second attachment.
+An object on a player follows its bone exactly, offset by `attachmentPosition` and `attachmentRotation`, until `Detach`. Attaching an object that is already attached moves it to the new settings. For a seat or vehicle (`AvatarAttachTo`), [Seat](player-setup.md#seat) sets everything up for you.

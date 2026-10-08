@@ -134,9 +134,22 @@ namespace BS
             loadStarted = true;
             try
             {
-                SetLoadedIfNot();
-                Importer.ImportGLBAsync(await GetCachedGLTF(), new ImportSettings(), (go, animations) =>
+                // `loaded` fires once the model is in the scene (or couldn't be loaded), not before the download:
+                // it used to fire here, so `loaded` meant nothing and the space could open without the model.
+                var bytes = await GetCachedGLTF();
+                if (this == null)
                 {
+                    return;
+                }
+                if (!IsGlb(bytes))
+                {
+                    LoadFailed("it isn't a binary glTF 2.0 (.glb) file");
+                    return;
+                }
+                var importFinished = false;
+                Importer.ImportGLBAsync(bytes, new ImportSettings(), (go, animations) =>
+                {
+                    importFinished = true;
                     try
                     {
                         foreach (var anim in animations)
@@ -220,14 +233,24 @@ namespace BS
                             }
                         }
                         loadStarted = false;
+                        SetLoadedIfNot();
                     }
                     catch (Exception e)
                     {
-                        SetLoadedIfNot(true, e.Message + " - " + url);
                         Destroy(go);
-                        loadStarted = false;
+                        LoadFailed(e.Message);
                     }
                 });
+                // The importer is a coroutine that never calls back if it throws part way through (a damaged
+                // file), so don't let it hold up the space's load for ever.
+                for (var waited = 0; !importFinished && this != null && waited < ImportTimeoutSeconds; waited++)
+                {
+                    await Task.Delay(1000);
+                }
+                if (!importFinished && this != null)
+                {
+                    LoadFailed($"the import didn't finish within {ImportTimeoutSeconds} s");
+                }
             }
             catch (Exception e)
             {
@@ -235,6 +258,24 @@ namespace BS
                 SetLoadedIfNot(true, e.Message);
                 loadStarted = false;
             }
+        }
+
+        const int ImportTimeoutSeconds = 60;
+
+        // What GLTFUtility checks before it parses: given anything else (an HTML error page, a .gltf) its import
+        // coroutine throws and never calls back.
+        static bool IsGlb(byte[] bytes) =>
+            bytes != null && bytes.Length >= 20 &&
+            bytes[0] == (byte)'g' && bytes[1] == (byte)'l' && bytes[2] == (byte)'T' && bytes[3] == (byte)'F' &&
+            BitConverter.ToUInt32(bytes, 4) == 2;
+
+        // A model that couldn't be loaded still reports loaded, as a success: a failure would cancel the whole
+        // space's load (BSScene's loaded listener), and one missing model shouldn't stop the space opening.
+        void LoadFailed(string reason)
+        {
+            Debug.LogWarning($"[BSGLTF] Couldn't load '{url}': {reason}");
+            loadStarted = false;
+            SetLoadedIfNot(true, reason);
         }
         internal override void DestroyStuff()
         {

@@ -85,6 +85,6 @@ Import samples via `Window > Package Manager > SideQuest Creator SDK > Samples`.
 | Sample | Description |
 |--------|-------------|
 | Basics | Getting-started worlds, each with its own scene: Basics (`BasicScene`: learn how to build worlds), Gadgets (`GadgetsExample`: fun tools to add to your world), Gravity Maze (`RealmsOfGravity`: an example space that manipulates gravity), Networking (`Networking`: learn how to use networking components) |
-| FlexaWorld | A physics-fuelled playground showcasing the best of the FlexaBody system (its scene is in the sample's top folder) |
+| FlexaWorld | A physics-fuelled playground showcasing the best of the FlexaBody system (scene `FlexaWorld.unity`) |
 
 The samples' graphs are listed in [Visual Scripting](../visual-scripting/overview.md#sample-graphs). Because every scene in a project shares one page, import samples into a project of their own, not the one you're building your world in.

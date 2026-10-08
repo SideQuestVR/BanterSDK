@@ -28,6 +28,32 @@ namespace BS
         public bool unseatOnJump = true;
 
         public UnityAndBanterObject attachedObject;
+
+        /// <summary>
+        /// Objects attach to a player without physics: only the player attached to an object (AvatarAttachTo, a
+        /// seat or vehicle) is a Physics attachment. For an object-on-player request that still says Physics (older
+        /// content) this returns a NonPhysics copy, on avatarAttachmentPoint when that was set (anything but HEAD,
+        /// its default) and otherwise on the bone the old physics point named (Torso is the hips). Anything else is
+        /// returned as it is.
+        /// </summary>
+        public BSAttachment WithoutPhysicsOnPlayer()
+        {
+            if (avatarAttachmentType != AvatarAttachmentType.AttachToAvatar || attachmentType != AttachmentType.Physics)
+                return this;
+            var copy = (BSAttachment)MemberwiseClone();
+            copy.attachmentType = AttachmentType.NonPhysics;
+            if (copy.avatarAttachmentPoint == AvatarBoneName.HEAD)
+            {
+                copy.avatarAttachmentPoint = physicsAttachmentPoint switch
+                {
+                    PhysicsAttachmentPoint.LeftHand => AvatarBoneName.LEFTARM_HAND,
+                    PhysicsAttachmentPoint.RightHand => AvatarBoneName.RIGHTARM_HAND,
+                    PhysicsAttachmentPoint.Torso => AvatarBoneName.HIPS,
+                    _ => AvatarBoneName.HEAD,
+                };
+            }
+            return copy;
+        }
     }
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
@@ -43,22 +69,26 @@ namespace BS
         [Tooltip("Rotation of the attachment relative to the parent object.")]
         [See(initial = "0,0,0,1")][SerializeField] internal Quaternion attachmentRotation = Quaternion.identity;
 
-        [Tooltip("Type of attachment, e.g., physics-based or avatar-based.")]
+        [Tooltip("Physics is for attaching the player to this object (a seat or vehicle). An object attached to a player always attaches without physics, whatever this says.")]
+        [HideWhen(nameof(avatarAttachmentType), AvatarAttachmentType.AttachToAvatar)]
         [See(initial = "0")][SerializeField] internal AttachmentType attachmentType = AttachmentType.Physics;
 
         [Tooltip("Select if an object is attached to the player or the player to an object.")]
         [See(initial = "0")][SerializeField] internal AvatarAttachmentType avatarAttachmentType = AvatarAttachmentType.AttachToAvatar;
 
-        [Tooltip("Bone of the avatar where the object is attached.")]
+        [Tooltip("Bone of the player the object attaches to.")]
         [See(initial = "0")][SerializeField] internal AvatarBoneName avatarAttachmentPoint = AvatarBoneName.HEAD;
 
-        [Tooltip("Physics attachment point for this object.")]
-        [See(initial = "0")][SerializeField] internal PhysicsAttachmentPoint attachmentPoint = PhysicsAttachmentPoint.Head;
+        // No longer used: objects attach to a player at avatarAttachmentPoint. Still accepted, so older content that
+        // set it attaches to the matching bone (see BSAttachment.WithoutPhysicsOnPlayer).
+        [Tooltip("Not used any more: objects attach to a player at Avatar Attachment Point.")]
+        [HideInInspector][See(initial = "0")][SerializeField] internal PhysicsAttachmentPoint attachmentPoint = PhysicsAttachmentPoint.Head;
 
         [Tooltip("Automatically synchronizes the attachment position and rotation.")]
         [See(initial = "false")][SerializeField] internal bool autoSync = false;
 
-        [Tooltip("Indicates whether this attachment is jointed to the avatar.")]
+        [Tooltip("For a seat or vehicle (the player attached to this object): hold the player on it with a joint. Not used when attaching an object to a player.")]
+        [HideWhen(nameof(avatarAttachmentType), AvatarAttachmentType.AttachToAvatar)]
         [See(initial = "true")][SerializeField] internal bool jointAvatar = true;
 
         [Tooltip("Automatically attach the object to the avatar.")]

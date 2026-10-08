@@ -6,15 +6,23 @@ namespace BS.LocalMultiplayer.Tests
 {
     /// <summary>
     /// Which part of the local desktop rig an attachment goes to (Greenfield AttachmentsSystem.GetAttachmentTransform):
-    /// hand bones, lower arms and fingers to the hands, head and neck to the camera, everything else to the torso.
+    /// hand bones, lower arms and fingers to the hands, head and neck to the camera, everything else to the torso. Objects
+    /// attach to a player without physics, so an old Physics request first becomes a bone (BSAttachment.WithoutPhysicsOnPlayer).
     /// </summary>
     public class DesktopAttachmentTargetsTests
     {
-        static DesktopAnchor NonPhysics(AvatarBoneName bone, PhysicsAttachmentPoint ignored = PhysicsAttachmentPoint.Head) =>
-            DesktopAttachmentTargets.Resolve(AttachmentType.NonPhysics, bone, ignored);
+        static DesktopAnchor NonPhysics(AvatarBoneName bone) => DesktopAttachmentTargets.Resolve(bone);
 
-        static DesktopAnchor Physics(PhysicsAttachmentPoint point, AvatarBoneName ignored = AvatarBoneName.HEAD) =>
-            DesktopAttachmentTargets.Resolve(AttachmentType.Physics, ignored, point);
+        static BSAttachment OnPlayer(AttachmentType type, AvatarBoneName bone, PhysicsAttachmentPoint point) => new BSAttachment
+        {
+            avatarAttachmentType = AvatarAttachmentType.AttachToAvatar,
+            attachmentType = type,
+            avatarAttachmentPoint = bone,
+            physicsAttachmentPoint = point,
+        };
+
+        static DesktopAnchor Physics(PhysicsAttachmentPoint point, AvatarBoneName bone = AvatarBoneName.HEAD) =>
+            DesktopAttachmentTargets.Resolve(OnPlayer(AttachmentType.Physics, bone, point).WithoutPhysicsOnPlayer().avatarAttachmentPoint);
 
         [Test]
         public void NonPhysics_EveryBone()
@@ -66,14 +74,7 @@ namespace BS.LocalMultiplayer.Tests
         }
 
         [Test]
-        public void NonPhysics_IgnoresThePhysicsPoint()
-        {
-            Assert.AreEqual(DesktopAnchor.Torso, NonPhysics(AvatarBoneName.HIPS, PhysicsAttachmentPoint.LeftHand));
-            Assert.AreEqual(DesktopAnchor.Head, NonPhysics(AvatarBoneName.NECK, PhysicsAttachmentPoint.Torso));
-        }
-
-        [Test]
-        public void Physics_GoesByPhysicsPoint()
+        public void OldPhysicsRequest_GoesWhereItsPhysicsPointWas()
         {
             Assert.AreEqual(DesktopAnchor.Head, Physics(PhysicsAttachmentPoint.Head));
             Assert.AreEqual(DesktopAnchor.LeftHand, Physics(PhysicsAttachmentPoint.LeftHand));
@@ -82,18 +83,30 @@ namespace BS.LocalMultiplayer.Tests
         }
 
         [Test]
-        public void Physics_IgnoresTheBoneName()
+        public void OldPhysicsRequest_KeepsABoneThatWasSet()
         {
-            Assert.AreEqual(DesktopAnchor.Torso, Physics(PhysicsAttachmentPoint.Torso, AvatarBoneName.LEFTARM_HAND));
-            Assert.AreEqual(DesktopAnchor.RightHand, Physics(PhysicsAttachmentPoint.RightHand, AvatarBoneName.HEAD));
+            // HEAD is avatarAttachmentPoint's default, so only another bone counts as set.
+            Assert.AreEqual(DesktopAnchor.LeftHand, Physics(PhysicsAttachmentPoint.Head, AvatarBoneName.LEFTARM_HAND));
+            Assert.AreEqual(DesktopAnchor.Torso, Physics(PhysicsAttachmentPoint.RightHand, AvatarBoneName.CHEST));
         }
 
         [Test]
-        public void UnknownAttachmentType_ResolvesLikePhysics()
+        public void WithoutPhysicsOnPlayer_OnlyTouchesPhysicsObjectsOnAPlayer()
         {
-            // Anything but NonPhysics takes the physics branch.
-            Assert.AreEqual(DesktopAnchor.LeftHand,
-                DesktopAttachmentTargets.Resolve((AttachmentType)7, AvatarBoneName.HEAD, PhysicsAttachmentPoint.LeftHand));
+            var physics = OnPlayer(AttachmentType.Physics, AvatarBoneName.HEAD, PhysicsAttachmentPoint.Torso);
+            var converted = physics.WithoutPhysicsOnPlayer();
+            Assert.AreNotSame(physics, converted, "the component's own attachment is left as it was");
+            Assert.AreEqual(AttachmentType.NonPhysics, converted.attachmentType);
+            Assert.AreEqual(AvatarBoneName.HIPS, converted.avatarAttachmentPoint);
+            Assert.AreEqual(AttachmentType.Physics, physics.attachmentType);
+
+            var nonPhysics = OnPlayer(AttachmentType.NonPhysics, AvatarBoneName.HEAD, PhysicsAttachmentPoint.LeftHand);
+            Assert.AreSame(nonPhysics, nonPhysics.WithoutPhysicsOnPlayer());
+
+            // The player on a seat or vehicle stays a Physics attachment.
+            var seat = new BSAttachment { avatarAttachmentType = AvatarAttachmentType.AvatarAttachTo, attachmentType = AttachmentType.Physics };
+            Assert.AreSame(seat, seat.WithoutPhysicsOnPlayer());
+            Assert.AreEqual(AttachmentType.Physics, seat.attachmentType);
         }
     }
 }

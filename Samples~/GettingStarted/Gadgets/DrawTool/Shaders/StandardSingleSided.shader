@@ -11,366 +11,406 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+//
+// URP port of the Tilt Brush surface shader.
+// Alpha-tested, specular-setup PBR with a normal map: MainTex times Main Color times the
+// stroke's vertex colour.
 
-Shader "Brush/StandardSingleSided" {
-  Properties {
-    _Color ("Main Color", Color) = (1,1,1,1)
-    _SpecColor ("Specular Color", Color) = (0.5, 0.5, 0.5, 0)
-    _Shininess ("Shininess", Range (0.01, 1)) = 0.078125
-    _MainTex ("Base (RGB) TransGloss (A)", 2D) = "white" {}
-    _BumpMap ("Normalmap", 2D) = "bump" {}
-    _Cutoff ("Alpha cutoff", Range(0,1)) = 0.5
-  }
+Shader "Brush/StandardSingleSided"
+{
+    Properties
+    {
+        _Color("Main Color", Color) = (1,1,1,1)
+        _SpecColor("Specular Color", Color) = (0.5, 0.5, 0.5, 0)
+        _Shininess("Shininess", Range(0.01, 1)) = 0.078125
+        _MainTex("Base (RGB) TransGloss (A)", 2D) = "white" {}
+        _BumpMap("Normalmap", 2D) = "bump" {}
+        _Cutoff("Alpha cutoff", Range(0, 1)) = 0.5
+    }
 
-  // -------------------------------------------------------------------------------------------- //
-  // DESKTOP VERSION.
-  // -------------------------------------------------------------------------------------------- //
-  SubShader {
-    Tags {"Queue"="AlphaTest" "IgnoreProjector"="True" "RenderType"="TransparentCutout"}
-    LOD 400
-    Cull Back
+    SubShader
+    {
+        Tags { "RenderType"="TransparentCutout" "Queue"="AlphaTest" "IgnoreProjector"="True" "RenderPipeline"="UniversalPipeline" }
+        Cull Back
 
-    CGPROGRAM
-      #pragma target 3.0
-      #pragma surface surf StandardSpecular vertex:vert alphatest:_Cutoff addshadow
-      #pragma multi_compile __ AUDIO_REACTIVE
-      #pragma multi_compile __ ODS_RENDER ODS_RENDER_CM
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-      #include "include/Brush.cginc"
+        TEXTURE2D(_MainTex);    SAMPLER(sampler_MainTex);
+        TEXTURE2D(_BumpMap);    SAMPLER(sampler_BumpMap);
 
-      struct Input {
-        float2 uv_MainTex;
-        float2 uv_BumpMap;
-        float4 color : Color;
-      };
+        CBUFFER_START(UnityPerMaterial)
+            half4 _Color;
+            half4 _SpecColor;
+            half _Shininess;
+            float4 _MainTex_ST;
+            float4 _BumpMap_ST;
+            half _Cutoff;
+        CBUFFER_END
 
-      sampler2D _MainTex;
-      sampler2D _BumpMap;
-      fixed4 _Color;
-      half _Shininess;
+        // xy: MainTex UV, zw: Normalmap UV.
+        float4 SurfaceUV(float2 uv0, float2 uv1) { return float4(TRANSFORM_TEX(uv0, _MainTex), TRANSFORM_TEX(uv0, _BumpMap)); }
 
-      void vert (inout appdata_full i /*, out Input o*/) {
-        // UNITY_INITIALIZE_OUTPUT(Input, o);
-        // o.tangent = v.tangent;
-        PrepForOds(i.vertex);
-        i.color = TbVertToNative(i.color);
-      }
+        void SurfaceClip(float4 uv, half4 color, float4 positionCS)
+        {
+            clip(SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv.xy).a * color.a - _Cutoff);
+        }
+        ENDHLSL
 
-      void surf (Input IN, inout SurfaceOutputStandardSpecular o) {
-        fixed4 tex = tex2D(_MainTex, IN.uv_MainTex);
-        o.Albedo = tex.rgb * _Color.rgb * IN.color.rgb;
-        o.Smoothness = _Shininess;
-        o.Specular = _SpecColor;
-        o.Normal = UnpackNormal(tex2D(_BumpMap, IN.uv_BumpMap));
-        o.Alpha = tex.a * IN.color.a;
-      }
-    ENDCG
-  }
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForwardOnly" }
 
-  // -------------------------------------------------------------------------------------------- //
-  // MOBILE VERSION - Vert/Frag, MSAA + Alpha-To-Coverage, w/Bump.
-  // -------------------------------------------------------------------------------------------- //
-  SubShader {
-    Tags{ "Queue" = "AlphaTest" "IgnoreProjector" = "True" "RenderType" = "TransparentCutout" }
-    Cull Back
-    LOD 201
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex LitVertex
+            #pragma fragment LitFragment
 
-    Pass {
-      Tags { "LightMode"="ForwardBase" }
-      AlphaToMask On
+            // URP keywords
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ EVALUATE_SH_MIXED EVALUATE_SH_VERTEX
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_IRRADIANCE
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
 
-      CGPROGRAM
-        #pragma vertex vert
-        #pragma fragment frag
-        #pragma target 3.0
+            // Unity keywords
+            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile_fragment _ LIGHTMAP_BICUBIC_SAMPLING
+            #pragma multi_compile_fragment _ REFLECTION_PROBE_ROTATION
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ USE_LEGACY_LIGHTMAPS
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ProbeVolumeVariants.hlsl"
+            #pragma multi_compile_instancing
+            #define _SPECULAR_SETUP
 
-        #include "UnityCG.cginc"
-        #include "Lighting.cginc"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
-        // Disable all the things.
-        #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight noshadow
+            struct Attributes
+            {
+                float4 positionOS        : POSITION;
+                float3 normalOS          : NORMAL;
+                float4 tangentOS         : TANGENT;
+                float4 color             : COLOR;
+                float2 uv0               : TEXCOORD0;
+                float2 staticLightmapUV  : TEXCOORD1;
+                float2 dynamicLightmapUV : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
 
-        struct appdata {
-          float4 vertex : POSITION;
-          float2 uv : TEXCOORD0;
-          half3 normal : NORMAL;
-          fixed4 color : COLOR;
-          float4 tangent : TANGENT;
-        };
+            struct Varyings
+            {
+                float4 positionCS              : SV_POSITION;
+                float4 uv                      : TEXCOORD0;
+                float3 positionWS              : TEXCOORD1;
+                float3 normalWS                : TEXCOORD2;
+                half4  tangentWS               : TEXCOORD3;
+                half4  color                   : TEXCOORD4;
+                half4  fogFactorAndVertexLight : TEXCOORD5;
+            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+                float4 shadowCoord             : TEXCOORD6;
+            #endif
+                DECLARE_LIGHTMAP_OR_SH(staticLightmapUV, vertexSH, 7);
+            #ifdef DYNAMICLIGHTMAP_ON
+                float2 dynamicLightmapUV       : TEXCOORD8;
+            #endif
+            #ifdef USE_APV_PROBE_OCCLUSION
+                float4 probeOcclusion          : TEXCOORD9;
+            #endif
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
 
-        struct v2f {
-          float4 pos : SV_POSITION;
-          float2 uv : TEXCOORD0;
-          half3 worldNormal : NORMAL;
-          fixed4 color : COLOR;
-          half3 tspace0 : TEXCOORD1;
-          half3 tspace1 : TEXCOORD2;
-          half3 tspace2 : TEXCOORD3;
-        };
+            void SurfaceLit(float4 uv, half4 color, float3 positionWS, float3 normalWS, out SurfaceData surface)
+            {
+                surface = (SurfaceData)0;
+                half4 tex = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, uv.xy);
+                surface.albedo = tex.rgb * _Color.rgb * color.rgb;
+                surface.specular = _SpecColor.rgb;
+                surface.smoothness = _Shininess;
+                surface.normalTS = UnpackNormal(SAMPLE_TEXTURE2D(_BumpMap, sampler_BumpMap, uv.zw));
+                surface.occlusion = 1;
+                surface.alpha = tex.a * color.a;
+            }
 
-        sampler2D _MainTex;
-        float4 _MainTex_ST;
-        float4 _MainTex_TexelSize;
-        sampler2D _BumpMap;
+            Varyings LitVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
 
-        fixed _Cutoff;
-        half _MipScale;
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
 
-        float ComputeMipLevel(float2 uv) {
-          float2 dx = ddx(uv);
-          float2 dy = ddy(uv);
-          float delta_max_sqr = max(dot(dx, dx), dot(dy, dy));
-          return max(0.0, 0.5 * log2(delta_max_sqr));
+                output.positionCS = vertexInput.positionCS;
+                output.positionWS = vertexInput.positionWS;
+                output.normalWS = normalInput.normalWS;
+                output.tangentWS = half4(normalInput.tangentWS, input.tangentOS.w * GetOddNegativeScale());
+                output.uv = SurfaceUV(input.uv0, input.staticLightmapUV);
+                output.color = input.color;
+
+                half fogFactor = 0;
+            #if !defined(_FOG_FRAGMENT)
+                fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+            #endif
+                output.fogFactorAndVertexLight = half4(fogFactor, VertexLighting(vertexInput.positionWS, normalInput.normalWS));
+
+                OUTPUT_LIGHTMAP_UV(input.staticLightmapUV, unity_LightmapST, output.staticLightmapUV);
+            #ifdef DYNAMICLIGHTMAP_ON
+                output.dynamicLightmapUV = input.dynamicLightmapUV * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
+            #endif
+                OUTPUT_SH4(vertexInput.positionWS, output.normalWS, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), output.vertexSH, output.probeOcclusion);
+            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+                output.shadowCoord = GetShadowCoord(vertexInput);
+            #endif
+                return output;
+            }
+
+            half4 LitFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                SurfaceClip(input.uv, input.color, input.positionCS);
+
+                SurfaceData surface;
+                SurfaceLit(input.uv, input.color, input.positionWS, input.normalWS, surface);
+
+                float sgn = input.tangentWS.w;
+                float3 bitangent = sgn * cross(input.normalWS, input.tangentWS.xyz);
+                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent, input.normalWS);
+
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.positionCS = input.positionCS;
+                inputData.tangentToWorld = tangentToWorld;
+                inputData.normalWS = NormalizeNormalPerPixel(TransformTangentToWorld(surface.normalTS, tangentToWorld));
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+                inputData.shadowCoord = input.shadowCoord;
+            #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
+                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+            #else
+                inputData.shadowCoord = float4(0, 0, 0, 0);
+            #endif
+                inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactorAndVertexLight.x);
+                inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+            #if defined(_SCREEN_SPACE_IRRADIANCE)
+                inputData.bakedGI = SAMPLE_GI(_ScreenSpaceIrradiance, input.positionCS.xy);
+            #elif defined(DYNAMICLIGHTMAP_ON)
+                inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.dynamicLightmapUV, input.vertexSH, inputData.normalWS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
+            #elif !defined(LIGHTMAP_ON) && (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2))
+                inputData.bakedGI = SAMPLE_GI(input.vertexSH, GetAbsolutePositionWS(inputData.positionWS), inputData.normalWS,
+                    inputData.viewDirectionWS, input.positionCS.xy, input.probeOcclusion, inputData.shadowMask);
+            #else
+                inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.vertexSH, inputData.normalWS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
+            #endif
+
+                half4 color = UniversalFragmentPBR(inputData, surface);
+                color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                return half4(color.rgb, 1.0);
+            }
+            ENDHLSL
         }
 
-        v2f vert (appdata v) {
-          v2f o;
-          o.pos = UnityObjectToClipPos(v.vertex);
-          o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-          o.worldNormal = UnityObjectToWorldNormal(v.normal);
-          o.color = v.color;
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
 
-          half3 wNormal = UnityObjectToWorldNormal(v.normal);
-          half3 wTangent = UnityObjectToWorldDir(v.tangent.xyz);
-          half tangentSign = v.tangent.w * unity_WorldTransformParams.w;
-          half3 wBitangent = cross(wNormal, wTangent) * tangentSign;
-          o.tspace0 = half3(wTangent.x, wBitangent.x, wNormal.x);
-          o.tspace1 = half3(wTangent.y, wBitangent.y, wNormal.y);
-          o.tspace2 = half3(wTangent.z, wBitangent.z, wNormal.z);
-          return o;
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex ShadowVertex
+            #pragma fragment ShadowFragment
+            #pragma multi_compile_instancing
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            // Set by URP for the light whose shadow map is being drawn.
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            Varyings ShadowVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+            #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+            #else
+                float3 lightDirectionWS = _LightDirection;
+            #endif
+                output.positionCS = ApplyShadowClamping(TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS)));
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half4 ShadowFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                return 0;
+            }
+            ENDHLSL
         }
 
-        fixed4 frag (v2f i, fixed vface : VFACE) : SV_Target {
-          fixed4 col = i.color;
-          col.a = tex2D(_MainTex, i.uv).a * col.a;
-          col.a *= 1 + max(0, ComputeMipLevel(i.uv * _MainTex_TexelSize.zw)) * _MipScale;
-          col.a = (col.a - _Cutoff) / max(2 * fwidth(col.a), 0.0001) + 0.5;
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            ZWrite On
+            ColorMask R
 
-          half3 tnormal = UnpackNormal(tex2D(_BumpMap, i.uv));
-          tnormal.z *= vface;
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthVertex
+            #pragma fragment DepthFragment
+            #pragma multi_compile_instancing
 
-          // Transform normal from tangent to world space.
-          half3 worldNormal;
-          worldNormal.x = dot(i.tspace0, tnormal);
-          worldNormal.y = dot(i.tspace1, tnormal);
-          worldNormal.z = dot(i.tspace2, tnormal);
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
 
-          fixed ndotl = saturate(dot(worldNormal, normalize(_WorldSpaceLightPos0.xyz)));
-          fixed3 lighting = ndotl * _LightColor0;
-          lighting += ShadeSH9(half4(worldNormal, 1.0));
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
 
-          col.rgb *= lighting;
+            Varyings DepthVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
 
-          return col;
+            half DepthFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                return input.positionCS.z;
+            }
+            ENDHLSL
         }
 
-      ENDCG
-    } // pass
-  } // subshader
+        Pass
+        {
+            Name "DepthNormalsOnly"
+            Tags { "LightMode"="DepthNormalsOnly" }
+            ZWrite On
 
-  // -------------------------------------------------------------------------------------------- //
-  // MOBILE VERSION - Vert/Frag, Alpha Tested, w/Bump.
-  // -------------------------------------------------------------------------------------------- //
-  SubShader{
-    Tags{ "Queue" = "AlphaTest" "IgnoreProjector" = "True" "RenderType" = "TransparentCutout" }
-    Cull Back
-    LOD 200
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthNormalsVertex
+            #pragma fragment DepthNormalsFragment
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_instancing
 
-    Pass {
-      Tags { "LightMode"="ForwardBase" }
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
 
-      CGPROGRAM
-        #pragma vertex vert
-        #pragma fragment frag
-        #pragma target 3.0
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                float3 normalWS   : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
 
-        #include "UnityCG.cginc"
-        #include "Lighting.cginc"
-        #include "include/MobileSelection.cginc"
+            Varyings DepthNormalsVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
 
-        #pragma multi_compile __ SELECTION_ON
-        #pragma multi_compile_fog
-        // Disable all the things.
-        #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight noshadow
-
-        struct appdata {
-            float4 vertex : POSITION;
-            float2 uv : TEXCOORD0;
-            half3 normal : NORMAL;
-            fixed4 color : COLOR;
-            float4 tangent : TANGENT;
-        };
-
-        struct v2f {
-            float4 pos : SV_POSITION;
-            float2 uv : TEXCOORD0;
-            fixed4 color : COLOR;
-            half3 tspace0 : TEXCOORD1;
-            half3 tspace1 : TANGENT;
-            half3 tspace2 : NORMAL;
-            UNITY_FOG_COORDS(5)
-
-        };
-
-        sampler2D _MainTex;
-        float4 _MainTex_ST;
-        sampler2D _BumpMap;
-
-        fixed _Cutoff;
-
-        v2f vert (appdata v) {
-          v2f o;
-          o.pos = UnityObjectToClipPos(v.vertex);
-          o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-          o.color = v.color;
-
-          half3 wNormal = UnityObjectToWorldNormal(v.normal);
-          half3 wTangent = UnityObjectToWorldDir(v.tangent.xyz);
-          half tangentSign = v.tangent.w * unity_WorldTransformParams.w;
-          half3 wBitangent = cross(wNormal, wTangent) * tangentSign;
-          o.tspace0 = half3(wTangent.x, wBitangent.x, wNormal.x);
-          o.tspace1 = half3(wTangent.y, wBitangent.y, wNormal.y);
-          o.tspace2 = half3(wTangent.z, wBitangent.z, wNormal.z);
-          UNITY_TRANSFER_FOG(o, o.pos);
-          return o;
+            half4 DepthNormalsFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                float3 normalWS = normalize(input.normalWS);
+            #if defined(_GBUFFER_NORMALS_OCT)
+                float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                return half4(PackFloat2To888(saturate(octNormalWS * 0.5 + 0.5)), 0.0);
+            #else
+                return half4(normalWS, 0.0);
+            #endif
+            }
+            ENDHLSL
         }
+    }
 
-        fixed4 frag (v2f i, fixed vface : VFACE) : SV_Target {
-          fixed4 col = i.color;
-          col.a = tex2D(_MainTex, i.uv).a * col.a;
-          if (col.a < _Cutoff) { discard; }
-          half3 tnormal = UnpackNormal(tex2D(_BumpMap, i.uv));
-          tnormal.z *= vface;
-
-          // transform normal from tangent to world space
-          half3 worldNormal;
-          worldNormal.x = dot(i.tspace0, tnormal);
-          worldNormal.y = dot(i.tspace1, tnormal);
-          worldNormal.z = dot(i.tspace2, tnormal);
-
-          fixed ndotl = saturate(dot(worldNormal, normalize(_WorldSpaceLightPos0.xyz)));
-          fixed3 lighting = ndotl * _LightColor0;
-          lighting += ShadeSH9(half4(worldNormal, 1.0));
-
-          col.rgb *= lighting;
-          UNITY_APPLY_FOG(i.fogCoord, col);
-          FRAG_MOBILESELECT(col)
-          return col;
-        }
-      ENDCG
-    } // pass
-  } // subshader
-
-  // -------------------------------------------------------------------------------------------- //
-  // MOBILE VERSION -- vert/frag, MSAA + Alpha-To-Coverage, No Bump.
-  // -------------------------------------------------------------------------------------------- //
-  SubShader {
-    Tags{ "Queue" = "AlphaTest" "IgnoreProjector" = "True" "RenderType" = "TransparentCutout" }
-    Cull Back
-    LOD 150
-
-    Pass {
-      Tags { "LightMode"="ForwardBase" }
-      AlphaToMask On
-
-      CGPROGRAM
-        #pragma vertex vert
-        #pragma fragment frag
-        #pragma target 3.0
-
-        #include "UnityCG.cginc"
-        #include "Lighting.cginc"
-
-        // Disable all the things.
-        #pragma multi_compile_fwdbase nolightmap nodirlightmap nodynlightmap novertexlight noshadow
-
-        struct appdata {
-            float4 vertex : POSITION;
-            float2 uv : TEXCOORD0;
-            half3 normal : NORMAL;
-            fixed4 color : COLOR;
-        };
-
-        struct v2f {
-            float4 pos : SV_POSITION;
-            float2 uv : TEXCOORD0;
-            half3 worldNormal : NORMAL;
-            fixed4 color : COLOR;
-        };
-
-        sampler2D _MainTex;
-        float4 _MainTex_ST;
-        float4 _MainTex_TexelSize;
-
-        fixed _Cutoff;
-        half _MipScale;
-
-        float ComputeMipLevel(float2 uv) {
-          float2 dx = ddx(uv);
-          float2 dy = ddy(uv);
-          float delta_max_sqr = max(dot(dx, dx), dot(dy, dy));
-          return max(0.0, 0.5 * log2(delta_max_sqr));
-        }
-
-        v2f vert (appdata v) {
-          v2f o;
-          o.pos = UnityObjectToClipPos(v.vertex);
-          o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-          o.worldNormal = UnityObjectToWorldNormal(v.normal);
-          o.color = v.color;
-          return o;
-        }
-
-        fixed4 frag (v2f i, fixed vface : VFACE) : SV_Target {
-          fixed4 col = i.color;
-          col.a *= tex2D(_MainTex, i.uv).a;
-          col.a *= 1 + max(0, ComputeMipLevel(i.uv * _MainTex_TexelSize.zw)) * _MipScale;
-          col.a = (col.a - _Cutoff) / max(2 * fwidth(col.a), 0.0001) + 0.5;
-
-          half3 worldNormal = normalize(i.worldNormal * vface);
-
-          fixed ndotl = saturate(dot(worldNormal, normalize(_WorldSpaceLightPos0.xyz)));
-          fixed3 lighting = ndotl * _LightColor0;
-          lighting += ShadeSH9(half4(worldNormal, 1.0));
-
-          col.rgb *= lighting;
-
-          return col;
-        }
-      ENDCG
-    } // pass
-  } // subshader
-
-  // -------------------------------------------------------------------------------------------- //
-  // MOBILE VERSION - Lambert SurfaceShader, Alpha Test, No Bump.
-  // -------------------------------------------------------------------------------------------- //
-  SubShader{
-    Tags {"Queue"="AlphaTest" "IgnoreProjector"="True" "RenderType"="TransparentCutout"}
-    LOD 50
-
-    CGPROGRAM
-      #pragma surface surf Lambert vertex:vert alphatest:_Cutoff
-      #pragma target 3.0
-
-      sampler2D _MainTex;
-      fixed4 _Color;
-
-      struct Input {
-        float2 uv_MainTex;
-        float4 color : COLOR;
-      };
-
-      void vert (inout appdata_full v) {
-      }
-
-      void surf (Input IN, inout SurfaceOutput o) {
-        fixed4 c = tex2D(_MainTex, IN.uv_MainTex) * _Color;
-        o.Albedo = c.rgb * IN.color.rgb;
-        o.Alpha = c.a * IN.color.a;
-      }
-
-    ENDCG
-  } // SubShader
-
-  FallBack "Transparent/Cutout/VertexLit"
-} // shader
+    FallBack "Hidden/Universal Render Pipeline/FallbackError"
+}

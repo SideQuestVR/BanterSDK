@@ -21,6 +21,8 @@ namespace BS
 
         static void Attach(BSAttachment attachment)
         {
+            // Objects attach to the player without physics (an old Physics request goes on the matching bone).
+            attachment = attachment.WithoutPhysicsOnPlayer();
             var go = attachment.attachedObject.gameObject;
             if (go == null || !IsLocalUser(attachment.uid)) return;
             if (attachment.avatarAttachmentType == AvatarAttachmentType.AvatarAttachTo)
@@ -84,9 +86,7 @@ namespace BS
         }
 
         static bool IsHead(BSAttachment attachment) =>
-            attachment.attachmentType == AttachmentType.NonPhysics
-                ? attachment.avatarAttachmentPoint == AvatarBoneName.HEAD || attachment.avatarAttachmentPoint == AvatarBoneName.NECK
-                : attachment.physicsAttachmentPoint == PhysicsAttachmentPoint.Head;
+            attachment.avatarAttachmentPoint == AvatarBoneName.HEAD || attachment.avatarAttachmentPoint == AvatarBoneName.NECK;
 
         // Pages attach to "me" or to the local user's uid.
         static bool IsLocalUser(string uid)

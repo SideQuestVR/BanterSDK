@@ -177,7 +177,7 @@ toggle.OnChange((e) => console.log("Checked:", e.value));
 
 ## UIScrollView
 
-Scrollable container: elements you add to it scroll when they don't fit. Properties: `horizontalScrolling` and `verticalScrolling` (show or hide each scroll bar), `scrollDecelerationRate` and `elasticity` (0 to 1), `tooltip`, `name`.
+Scrollable container: elements you add to it scroll when they don't fit. Properties: `horizontalScrolling` and `verticalScrolling` (show or hide each scroll bar), `scrollPosition` (the scroll offset in pixels, set as `{ x, y }`), `scrollDecelerationRate` and `elasticity` (0 to 1), `tooltip`, `name`.
 
 ```js
 const scrollView = new BS.UIScrollView(panel);
@@ -187,6 +187,7 @@ scrollView.horizontalScrolling = false;
 for (let i = 0; i < 20; i++) {
     new BS.UILabel(panel, scrollView).text = "Row " + i;
 }
+scrollView.scrollPosition = { x: 0, y: 120 }; // scroll down 120 px
 ```
 
 ## UIVisualElement
@@ -281,7 +282,7 @@ picker.OnChange((e) => console.log("Colour:", e.value));   // live while draggin
 
 ## UI Factory Helpers
 
-`BS.BanterUI` extends `UIPanel` with creator methods that pass the panel reference for you: `new BS.BanterUI(resolution?, screenSpace?, meshInput?)` (defaults: `new BS.Vector2(512, 512)`, `false`, `false`).
+`BS.UI` extends `UIPanel` with creator methods that pass the panel reference for you: `new BS.UI(resolution?, screenSpace?, meshInput?)` (defaults: `new BS.Vector2(512, 512)`, `false`, `false`).
 
 | Method | Returns | Description |
 |--------|---------|-------------|
@@ -303,7 +304,7 @@ picker.OnChange((e) => console.log("Colour:", e.value));   // live while draggin
 
 ```js
 const panelObj = new BS.GameObject({ name: "SettingsPanel", localPosition: new BS.Vector3(0, 1.5, 3) });
-const ui = new BS.BanterUI(new BS.Vector2(600, 400));
+const ui = new BS.UI(new BS.Vector2(600, 400));
 await panelObj.AddComponent(ui);
 
 const card = ui.CreateCard("Settings");
@@ -315,7 +316,7 @@ apply.OnClick(() => console.log("applied"));
 
 ## Style Properties Reference
 
-These style properties work; use the camelCase name with `style` and `SetStyles`, or either spelling with `SetStyle`.
+These style properties work; use the camelCase name with `style` and `SetStyles`, or either spelling with `SetStyle`. Values can be written the CSS way, with dashes (`flex-start`, `space-between`, `row-reverse`) or without.
 
 **Layout:**
 - `alignContent`, `alignItems`, `alignSelf` (`flex-start`, `flex-end`, `center`, `stretch`), `justifyContent` (`flex-start`, `flex-end`, `center`, `space-between`, `space-around`)
@@ -350,8 +351,9 @@ These style properties work; use the camelCase name with `style` and `SetStyles`
 - `unityTextOutlineColor`, `unityTextOutlineWidth`
 
 **Display:**
+- `display` (`flex`, `none`): `none` hides the element and takes it out of the layout
 - `visibility` (`visible`, `hidden`), `overflow` (`visible`, `hidden`), `opacity`
-- To hide an element and take it out of the layout, set `element.visible = false`
+- `element.visible = false` also hides an element and takes it out of the layout
 
 **Transform:**
 - `rotate`, `scale`, `translate`, `transformOrigin`

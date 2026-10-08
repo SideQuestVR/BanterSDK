@@ -1,137 +1,339 @@
-// Made with Amplify Shader Editor v1.9.8
-// Available at the Unity Asset Store - http://u3d.as/y3X 
+// Unlit neon tube: Color, brighter towards the silhouette.
+
 Shader "NeonTube"
 {
-	Properties
-	{
-		_Color("Color", Color) = (1,1,1,0)
-		[HideInInspector] __dirty( "", Int ) = 1
-	}
+    Properties
+    {
+        _Color("Color", Color) = (1,1,1,0)
+    }
 
-	SubShader
-	{
-		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry+0" "IsEmissive" = "true"  }
-		Cull Back
-		CGINCLUDE
-		#include "UnityPBSLighting.cginc"
-		#include "Lighting.cginc"
-		#pragma target 3.5
-		#define ASE_VERSION 19800
-		struct Input
-		{
-			float3 worldPos;
-			float3 worldNormal;
-		};
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "Queue"="Geometry" "RenderPipeline"="UniversalPipeline" }
+        Cull Back
 
-		uniform float4 _Color;
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-		inline half4 LightingUnlit( SurfaceOutput s, half3 lightDir, half atten )
-		{
-			return half4 ( 0, 0, 0, s.Alpha );
-		}
+        CBUFFER_START(UnityPerMaterial)
+            float4 _Color;
+        CBUFFER_END
 
-		void surf( Input i , inout SurfaceOutput o )
-		{
-			float3 ase_positionWS = i.worldPos;
-			float3 ase_viewVectorWS = ( _WorldSpaceCameraPos.xyz - ase_positionWS );
-			float3 ase_viewDirWS = normalize( ase_viewVectorWS );
-			float3 ase_normalWS = i.worldNormal;
-			float fresnelNdotV5 = dot( ase_normalWS, ase_viewDirWS );
-			float fresnelNode5 = ( 0.0 + 1.0 * pow( 1.0 - fresnelNdotV5, -0.5 ) );
-			o.Emission = ( _Color * fresnelNode5 ).rgb;
-			o.Alpha = 1;
-		}
+        float4 SurfaceUV(float2 uv0, float2 uv1) { return float4(uv0, 0.0, 0.0); }
 
-		ENDCG
-		CGPROGRAM
-		#pragma surface surf Unlit keepalpha fullforwardshadows 
+        void SurfaceClip(float4 uv, half4 color, float4 positionCS) {}
+        ENDHLSL
 
-		ENDCG
-		Pass
-		{
-			Name "ShadowCaster"
-			Tags{ "LightMode" = "ShadowCaster" }
-			ZWrite On
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			#pragma target 3.5
-			#pragma multi_compile_shadowcaster
-			#pragma multi_compile UNITY_PASS_SHADOWCASTER
-			#pragma skip_variants FOG_LINEAR FOG_EXP FOG_EXP2
-			#include "HLSLSupport.cginc"
-			#if ( SHADER_API_D3D11 || SHADER_API_GLCORE || SHADER_API_GLES || SHADER_API_GLES3 || SHADER_API_METAL || SHADER_API_VULKAN )
-				#define CAN_SKIP_VPOS
-			#endif
-			#include "UnityCG.cginc"
-			#include "Lighting.cginc"
-			#include "UnityPBSLighting.cginc"
-			struct v2f
-			{
-				V2F_SHADOW_CASTER;
-				float3 worldPos : TEXCOORD1;
-				float3 worldNormal : TEXCOORD2;
-				UNITY_VERTEX_INPUT_INSTANCE_ID
-				UNITY_VERTEX_OUTPUT_STEREO
-			};
-			v2f vert( appdata_full v )
-			{
-				v2f o;
-				UNITY_SETUP_INSTANCE_ID( v );
-				UNITY_INITIALIZE_OUTPUT( v2f, o );
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO( o );
-				UNITY_TRANSFER_INSTANCE_ID( v, o );
-				float3 worldPos = mul( unity_ObjectToWorld, v.vertex ).xyz;
-				half3 worldNormal = UnityObjectToWorldNormal( v.normal );
-				o.worldNormal = worldNormal;
-				o.worldPos = worldPos;
-				TRANSFER_SHADOW_CASTER_NORMALOFFSET( o )
-				return o;
-			}
-			half4 frag( v2f IN
-			#if !defined( CAN_SKIP_VPOS )
-			, UNITY_VPOS_TYPE vpos : VPOS
-			#endif
-			) : SV_Target
-			{
-				UNITY_SETUP_INSTANCE_ID( IN );
-				Input surfIN;
-				UNITY_INITIALIZE_OUTPUT( Input, surfIN );
-				float3 worldPos = IN.worldPos;
-				half3 worldViewDir = normalize( UnityWorldSpaceViewDir( worldPos ) );
-				surfIN.worldPos = worldPos;
-				surfIN.worldNormal = IN.worldNormal;
-				SurfaceOutput o;
-				UNITY_INITIALIZE_OUTPUT( SurfaceOutput, o )
-				surf( surfIN, o );
-				#if defined( CAN_SKIP_VPOS )
-				float2 vpos = IN.pos;
-				#endif
-				SHADOW_CASTER_FRAGMENT( IN )
-			}
-			ENDCG
-		}
-	}
-	Fallback "Diffuse"
-	CustomEditor "ASEMaterialInspector"
+        Pass
+        {
+            Name "Unlit"
+            Tags { "LightMode"="UniversalForwardOnly" }
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex UnlitVertex
+            #pragma fragment UnlitFragment
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS        : SV_POSITION;
+                float4 uv                : TEXCOORD0;
+                float3 positionWS        : TEXCOORD1;
+                float3 normalWS          : TEXCOORD2;
+                half4  color             : TEXCOORD3;
+                float2 fogFactorAndDepth : TEXCOORD4; // x: fog factor, y: eye depth
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            half4 SurfaceUnlit(float4 uv, half4 color, float3 positionWS, float3 normalWS, float eyeDepth)
+            {
+                float ndotv = dot(normalize(normalWS), GetWorldSpaceNormalizeViewDir(positionWS));
+                // 1 / sqrt(1 - N.V); the floor keeps it finite where the surface faces the camera.
+                float rim = pow(max(1.0 - ndotv, 1e-3), -0.5);
+                return half4(_Color.rgb * rim, 1.0);
+            }
+
+            Varyings UnlitVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                output.positionCS = vertexInput.positionCS;
+                output.positionWS = vertexInput.positionWS;
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                output.fogFactorAndDepth = float2(ComputeFogFactor(vertexInput.positionCS.z), -vertexInput.positionVS.z);
+                return output;
+            }
+
+            half4 UnlitFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                half4 color = SurfaceUnlit(input.uv, input.color, input.positionWS, input.normalWS, input.fogFactorAndDepth.y);
+                color.rgb = MixFog(color.rgb, InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactorAndDepth.x));
+                return color;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex ShadowVertex
+            #pragma fragment ShadowFragment
+            #pragma multi_compile_instancing
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            // Set by URP for the light whose shadow map is being drawn.
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            Varyings ShadowVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+            #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+            #else
+                float3 lightDirectionWS = _LightDirection;
+            #endif
+                output.positionCS = ApplyShadowClamping(TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS)));
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half4 ShadowFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            ZWrite On
+            ColorMask R
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthVertex
+            #pragma fragment DepthFragment
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half DepthFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                return input.positionCS.z;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthNormalsOnly"
+            Tags { "LightMode"="DepthNormalsOnly" }
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthNormalsVertex
+            #pragma fragment DepthNormalsFragment
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                float3 normalWS   : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthNormalsVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half4 DepthNormalsFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                float3 normalWS = normalize(input.normalWS);
+            #if defined(_GBUFFER_NORMALS_OCT)
+                float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                return half4(PackFloat2To888(saturate(octNormalWS * 0.5 + 0.5)), 0.0);
+            #else
+                return half4(normalWS, 0.0);
+            #endif
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Meta"
+            Tags { "LightMode"="Meta" }
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex SampleMetaVertex
+            #pragma fragment SampleMetaFragment
+            #pragma shader_feature EDITOR_VISUALIZATION
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/MetaInput.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                float2 uv2        : TEXCOORD2;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+            #ifdef EDITOR_VISUALIZATION
+                float2 VizUV      : TEXCOORD2;
+                float4 LightCoord : TEXCOORD3;
+            #endif
+            };
+
+            Varyings SampleMetaVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                output.positionCS = UnityMetaVertexPosition(input.positionOS.xyz, input.uv1, input.uv2);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+            #ifdef EDITOR_VISUALIZATION
+                UnityEditorVizData(input.positionOS.xyz, input.uv0, input.uv1, input.uv2, output.VizUV, output.LightCoord);
+            #endif
+                return output;
+            }
+
+            half4 SampleMetaFragment(Varyings input) : SV_Target
+            {
+                UnityMetaInput metaInput = (UnityMetaInput)0;
+                metaInput.Emission = _Color.rgb;
+            #ifdef EDITOR_VISUALIZATION
+                metaInput.VizUV = input.VizUV;
+                metaInput.LightCoord = input.LightCoord;
+            #endif
+                return UnityMetaFragment(metaInput);
+            }
+            ENDHLSL
+        }
+    }
+
+    FallBack "Hidden/Universal Render Pipeline/FallbackError"
 }
-/*ASEBEGIN
-Version=19800
-Node;AmplifyShaderEditor.FresnelNode;5;-32,80;Inherit;False;Standard;WorldNormal;ViewDir;False;False;5;0;FLOAT3;0,0,1;False;4;FLOAT3;0,0,0;False;1;FLOAT;0;False;2;FLOAT;1;False;3;FLOAT;-0.5;False;1;FLOAT;0
-Node;AmplifyShaderEditor.ColorNode;1;-320,-16;Inherit;False;Property;_Color;Color;0;0;Create;True;0;0;0;False;0;False;1,1,1,0;0,1,0.5115206,1;True;True;0;6;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4;FLOAT3;5
-Node;AmplifyShaderEditor.NormalVertexDataNode;12;-464,336;Inherit;False;0;5;FLOAT3;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.SinTimeNode;13;-624,544;Inherit;False;0;5;FLOAT4;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;14;-144,448;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.RangedFloatNode;16;-160,592;Inherit;False;Property;_Float0;Float 0;1;0;Create;True;0;0;0;False;0;False;0;0.075;0;0;0;1;FLOAT;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;11;224,-16;Inherit;False;2;2;0;COLOR;0,0,0,0;False;1;FLOAT;0;False;1;COLOR;0
-Node;AmplifyShaderEditor.SimpleMultiplyOpNode;15;64,448;Inherit;False;2;2;0;FLOAT3;0,0,0;False;1;FLOAT;0;False;1;FLOAT3;0
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;416,-64;Float;False;True;-1;3;ASEMaterialInspector;0;0;Unlit;NeonTube;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;16;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
-WireConnection;14;0;12;0
-WireConnection;14;1;13;4
-WireConnection;11;0;1;0
-WireConnection;11;1;5;0
-WireConnection;15;0;14;0
-WireConnection;15;1;16;0
-WireConnection;0;2;11;0
-ASEEND*/
-//CHKSM=04E621795DD017EF50D64726C916FEDA00146A4A

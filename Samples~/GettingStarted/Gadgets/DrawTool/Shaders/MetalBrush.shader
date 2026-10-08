@@ -1,50 +1,383 @@
-// Made with Amplify Shader Editor v1.9.4
-// Available at the Unity Asset Store - http://u3d.as/y3X 
+// Metal brush stroke: PBR (metallic setup) in the stroke's vertex colour.
+
 Shader "MetalBrush"
 {
-	Properties
-	{
-		_Metal("Metal", Range( 0 , 1)) = 0.8
-		_Smoothness("Smoothness", Range( 0 , 1)) = 0.9
-		[HideInInspector] __dirty( "", Int ) = 1
-	}
+    Properties
+    {
+        _Metal("Metal", Range(0, 1)) = 0.8
+        _Smoothness("Smoothness", Range(0, 1)) = 0.9
+    }
 
-	SubShader
-	{
-		Tags{ "RenderType" = "Opaque"  "Queue" = "Geometry+0" }
-		Cull Back
-		CGPROGRAM
-		#pragma target 3.0
-		#pragma surface surf Standard keepalpha addshadow fullforwardshadows 
-		struct Input
-		{
-			float4 vertexColor : COLOR;
-		};
+    SubShader
+    {
+        Tags { "RenderType"="Opaque" "Queue"="Geometry" "RenderPipeline"="UniversalPipeline" }
+        Cull Back
 
-		uniform half _Metal;
-		uniform half _Smoothness;
+        HLSLINCLUDE
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-		void surf( Input i , inout SurfaceOutputStandard o )
-		{
-			o.Albedo = i.vertexColor.rgb;
-			o.Metallic = _Metal;
-			o.Smoothness = _Smoothness;
-			o.Alpha = 1;
-		}
+        CBUFFER_START(UnityPerMaterial)
+            half _Metal;
+            half _Smoothness;
+        CBUFFER_END
 
-		ENDCG
-	}
-	Fallback "Diffuse"
-	CustomEditor "ASEMaterialInspector"
+        float4 SurfaceUV(float2 uv0, float2 uv1) { return float4(uv0, 0.0, 0.0); }
+
+        void SurfaceClip(float4 uv, half4 color, float4 positionCS) {}
+        ENDHLSL
+
+        Pass
+        {
+            Name "ForwardLit"
+            Tags { "LightMode"="UniversalForwardOnly" }
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex LitVertex
+            #pragma fragment LitFragment
+
+            // URP keywords
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ EVALUATE_SH_MIXED EVALUATE_SH_VERTEX
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_ATLAS
+            #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_OCCLUSION
+            #pragma multi_compile_fragment _ _SCREEN_SPACE_IRRADIANCE
+            #pragma multi_compile_fragment _ _LIGHT_COOKIES
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #include_with_pragmas "Packages/com.unity.render-pipelines.core/ShaderLibrary/FoveatedRenderingKeywords.hlsl"
+
+            // Unity keywords
+            #pragma multi_compile _ LIGHTMAP_SHADOW_MIXING
+            #pragma multi_compile _ SHADOWS_SHADOWMASK
+            #pragma multi_compile _ DIRLIGHTMAP_COMBINED
+            #pragma multi_compile _ LIGHTMAP_ON
+            #pragma multi_compile_fragment _ LIGHTMAP_BICUBIC_SAMPLING
+            #pragma multi_compile_fragment _ REFLECTION_PROBE_ROTATION
+            #pragma multi_compile _ DYNAMICLIGHTMAP_ON
+            #pragma multi_compile _ USE_LEGACY_LIGHTMAPS
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Fog.hlsl"
+            #include_with_pragmas "Packages/com.unity.render-pipelines.universal/ShaderLibrary/ProbeVolumeVariants.hlsl"
+            #pragma multi_compile_instancing
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS        : POSITION;
+                float3 normalOS          : NORMAL;
+                float4 tangentOS         : TANGENT;
+                float4 color             : COLOR;
+                float2 uv0               : TEXCOORD0;
+                float2 staticLightmapUV  : TEXCOORD1;
+                float2 dynamicLightmapUV : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS              : SV_POSITION;
+                float4 uv                      : TEXCOORD0;
+                float3 positionWS              : TEXCOORD1;
+                float3 normalWS                : TEXCOORD2;
+                half4  tangentWS               : TEXCOORD3;
+                half4  color                   : TEXCOORD4;
+                half4  fogFactorAndVertexLight : TEXCOORD5;
+            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+                float4 shadowCoord             : TEXCOORD6;
+            #endif
+                DECLARE_LIGHTMAP_OR_SH(staticLightmapUV, vertexSH, 7);
+            #ifdef DYNAMICLIGHTMAP_ON
+                float2 dynamicLightmapUV       : TEXCOORD8;
+            #endif
+            #ifdef USE_APV_PROBE_OCCLUSION
+                float4 probeOcclusion          : TEXCOORD9;
+            #endif
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            void SurfaceLit(float4 uv, half4 color, float3 positionWS, float3 normalWS, out SurfaceData surface)
+            {
+                surface = (SurfaceData)0;
+                surface.albedo = color.rgb;
+                surface.metallic = _Metal;
+                surface.smoothness = _Smoothness;
+                surface.normalTS = half3(0, 0, 1);
+                surface.occlusion = 1;
+                surface.alpha = 1;
+            }
+
+            Varyings LitVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+
+                VertexPositionInputs vertexInput = GetVertexPositionInputs(input.positionOS.xyz);
+                VertexNormalInputs normalInput = GetVertexNormalInputs(input.normalOS, input.tangentOS);
+
+                output.positionCS = vertexInput.positionCS;
+                output.positionWS = vertexInput.positionWS;
+                output.normalWS = normalInput.normalWS;
+                output.tangentWS = half4(normalInput.tangentWS, input.tangentOS.w * GetOddNegativeScale());
+                output.uv = SurfaceUV(input.uv0, input.staticLightmapUV);
+                output.color = input.color;
+
+                half fogFactor = 0;
+            #if !defined(_FOG_FRAGMENT)
+                fogFactor = ComputeFogFactor(vertexInput.positionCS.z);
+            #endif
+                output.fogFactorAndVertexLight = half4(fogFactor, VertexLighting(vertexInput.positionWS, normalInput.normalWS));
+
+                OUTPUT_LIGHTMAP_UV(input.staticLightmapUV, unity_LightmapST, output.staticLightmapUV);
+            #ifdef DYNAMICLIGHTMAP_ON
+                output.dynamicLightmapUV = input.dynamicLightmapUV * unity_DynamicLightmapST.xy + unity_DynamicLightmapST.zw;
+            #endif
+                OUTPUT_SH4(vertexInput.positionWS, output.normalWS, GetWorldSpaceNormalizeViewDir(vertexInput.positionWS), output.vertexSH, output.probeOcclusion);
+            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+                output.shadowCoord = GetShadowCoord(vertexInput);
+            #endif
+                return output;
+            }
+
+            half4 LitFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                SurfaceClip(input.uv, input.color, input.positionCS);
+
+                SurfaceData surface;
+                SurfaceLit(input.uv, input.color, input.positionWS, input.normalWS, surface);
+
+                float sgn = input.tangentWS.w;
+                float3 bitangent = sgn * cross(input.normalWS, input.tangentWS.xyz);
+                half3x3 tangentToWorld = half3x3(input.tangentWS.xyz, bitangent, input.normalWS);
+
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.positionCS = input.positionCS;
+                inputData.tangentToWorld = tangentToWorld;
+                inputData.normalWS = NormalizeNormalPerPixel(TransformTangentToWorld(surface.normalTS, tangentToWorld));
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+            #if defined(REQUIRES_VERTEX_SHADOW_COORD_INTERPOLATOR)
+                inputData.shadowCoord = input.shadowCoord;
+            #elif defined(MAIN_LIGHT_CALCULATE_SHADOWS)
+                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+            #else
+                inputData.shadowCoord = float4(0, 0, 0, 0);
+            #endif
+                inputData.fogCoord = InitializeInputDataFog(float4(input.positionWS, 1.0), input.fogFactorAndVertexLight.x);
+                inputData.vertexLighting = input.fogFactorAndVertexLight.yzw;
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+            #if defined(_SCREEN_SPACE_IRRADIANCE)
+                inputData.bakedGI = SAMPLE_GI(_ScreenSpaceIrradiance, input.positionCS.xy);
+            #elif defined(DYNAMICLIGHTMAP_ON)
+                inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.dynamicLightmapUV, input.vertexSH, inputData.normalWS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
+            #elif !defined(LIGHTMAP_ON) && (defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2))
+                inputData.bakedGI = SAMPLE_GI(input.vertexSH, GetAbsolutePositionWS(inputData.positionWS), inputData.normalWS,
+                    inputData.viewDirectionWS, input.positionCS.xy, input.probeOcclusion, inputData.shadowMask);
+            #else
+                inputData.bakedGI = SAMPLE_GI(input.staticLightmapUV, input.vertexSH, inputData.normalWS);
+                inputData.shadowMask = SAMPLE_SHADOWMASK(input.staticLightmapUV);
+            #endif
+
+                half4 color = UniversalFragmentPBR(inputData, surface);
+                color.rgb = MixFog(color.rgb, inputData.fogCoord);
+                return half4(color.rgb, 1.0);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "ShadowCaster"
+            Tags { "LightMode"="ShadowCaster" }
+            ZWrite On
+            ZTest LEqual
+            ColorMask 0
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex ShadowVertex
+            #pragma fragment ShadowFragment
+            #pragma multi_compile_instancing
+            #pragma multi_compile_vertex _ _CASTING_PUNCTUAL_LIGHT_SHADOW
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Shadows.hlsl"
+
+            // Set by URP for the light whose shadow map is being drawn.
+            float3 _LightDirection;
+            float3 _LightPosition;
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            Varyings ShadowVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+
+                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
+                float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
+            #if _CASTING_PUNCTUAL_LIGHT_SHADOW
+                float3 lightDirectionWS = normalize(_LightPosition - positionWS);
+            #else
+                float3 lightDirectionWS = _LightDirection;
+            #endif
+                output.positionCS = ApplyShadowClamping(TransformWorldToHClip(ApplyShadowBias(positionWS, normalWS, lightDirectionWS)));
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half4 ShadowFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                return 0;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode"="DepthOnly" }
+            ZWrite On
+            ColorMask R
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthVertex
+            #pragma fragment DepthFragment
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half DepthFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                return input.positionCS.z;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "DepthNormalsOnly"
+            Tags { "LightMode"="DepthNormalsOnly" }
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma target 3.5
+            #pragma vertex DepthNormalsVertex
+            #pragma fragment DepthNormalsFragment
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+            #pragma multi_compile_instancing
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 color      : COLOR;
+                float2 uv0        : TEXCOORD0;
+                float2 uv1        : TEXCOORD1;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float4 uv         : TEXCOORD0;
+                half4  color      : TEXCOORD1;
+                float3 normalWS   : TEXCOORD2;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            Varyings DepthNormalsVertex(Attributes input)
+            {
+                Varyings output = (Varyings)0;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                output.uv = SurfaceUV(input.uv0, input.uv1);
+                output.color = input.color;
+                return output;
+            }
+
+            half4 DepthNormalsFragment(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                SurfaceClip(input.uv, input.color, input.positionCS);
+                float3 normalWS = normalize(input.normalWS);
+            #if defined(_GBUFFER_NORMALS_OCT)
+                float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                return half4(PackFloat2To888(saturate(octNormalWS * 0.5 + 0.5)), 0.0);
+            #else
+                return half4(normalWS, 0.0);
+            #endif
+            }
+            ENDHLSL
+        }
+    }
+
+    FallBack "Hidden/Universal Render Pipeline/FallbackError"
 }
-/*ASEBEGIN
-Version=19400
-Node;AmplifyShaderEditor.RangedFloatNode;3;-544,320;Inherit;False;Property;_Smoothness;Smoothness;1;0;Create;True;0;0;0;False;0;False;0.9;0;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.RangedFloatNode;1;-544,240;Inherit;False;Property;_Metal;Metal;0;0;Create;True;0;0;0;False;0;False;0.8;0.8;0;1;0;1;FLOAT;0
-Node;AmplifyShaderEditor.VertexColorNode;2;-448,48;Inherit;False;0;5;COLOR;0;FLOAT;1;FLOAT;2;FLOAT;3;FLOAT;4
-Node;AmplifyShaderEditor.StandardSurfaceOutputNode;0;0,0;Half;False;True;-1;2;ASEMaterialInspector;0;0;Standard;MetalBrush;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;False;Back;0;False;;0;False;;False;0;False;;0;False;;False;0;Opaque;0.5;True;True;0;False;Opaque;;Geometry;All;12;all;True;True;True;True;0;False;;False;0;False;;255;False;;255;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;0;False;;False;2;15;10;25;False;0.5;True;0;0;False;;0;False;;0;0;False;;0;False;;0;False;;0;False;;0;False;0;0,0,0,0;VertexOffset;True;False;Cylindrical;False;True;Relative;0;;-1;-1;-1;-1;0;False;0;0;False;;-1;0;False;;0;0;0;False;0.1;False;;0;False;;False;17;0;FLOAT3;0,0,0;False;1;FLOAT3;0,0,0;False;2;FLOAT3;0,0,0;False;3;FLOAT;0;False;4;FLOAT;0;False;5;FLOAT;0;False;6;FLOAT3;0,0,0;False;7;FLOAT3;0,0,0;False;8;FLOAT;0;False;9;FLOAT;0;False;10;FLOAT;0;False;13;FLOAT3;0,0,0;False;11;FLOAT3;0,0,0;False;12;FLOAT3;0,0,0;False;16;FLOAT4;0,0,0,0;False;14;FLOAT4;0,0,0,0;False;15;FLOAT3;0,0,0;False;0
-WireConnection;0;0;2;0
-WireConnection;0;3;1;0
-WireConnection;0;4;3;0
-ASEEND*/
-//CHKSM=EF358BD5D7160BE90CF9753475E722F2A2D39E2C

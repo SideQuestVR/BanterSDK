@@ -1,4 +1,7 @@
 using System;
+using System.Globalization;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace BS.UI.Bridge
@@ -29,24 +32,83 @@ namespace BS.UI.Bridge
     /// </summary>
     public static class UIMethodParameterParser
     {
-        public static Vector2 ParseVector2(string value)
+        public static Vector2 ParseVector2(string value) =>
+            TryParseFloats(value, 2, out var c) ? new Vector2(c[0], c[1]) : Vector2.zero;
+
+        public static Vector3 ParseVector3(string value) =>
+            TryParseFloats(value, 3, out var c) ? new Vector3(c[0], c[1], c[2]) : Vector3.zero;
+
+        /// <summary>For a property: what the page sent, or <paramref name="current"/> (with a warning) if it can't be read.</summary>
+        public static Vector2 ParseVector2(string value, Vector2 current)
         {
-            var parts = value.Split('|');
-            if (parts.Length >= 2)
-            {
-                return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
-            }
-            return Vector2.zero;
+            if (TryParseFloats(value, 2, out var c))
+                return new Vector2(c[0], c[1]);
+            Debug.LogWarning($"[UIElementBridge] Could not read a Vector2 from '{value}' - kept {current}.");
+            return current;
         }
 
-        public static Vector3 ParseVector3(string value)
+        /// <summary>For a property: what the page sent, or <paramref name="current"/> (with a warning) if it can't be read.</summary>
+        public static Vector3 ParseVector3(string value, Vector3 current)
         {
-            var parts = value.Split('|');
-            if (parts.Length >= 3)
+            if (TryParseFloats(value, 3, out var c))
+                return new Vector3(c[0], c[1], c[2]);
+            Debug.LogWarning($"[UIElementBridge] Could not read a Vector3 from '{value}' - kept {current}.");
+            return current;
+        }
+
+        /// <summary>
+        /// Reads <paramref name="count"/> numbers in any form the page sends a vector in: JSON, which is how
+        /// UIElement.serializeValue sends an object ({"x":1,"y":2}), a JSON array, or numbers separated by '|'
+        /// or ','. Always in the invariant culture.
+        /// </summary>
+        public static bool TryParseFloats(string value, int count, out float[] components)
+        {
+            components = new float[count];
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+            value = value.Trim();
+            try
             {
-                return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                if (value.StartsWith("{"))
+                {
+                    var json = JObject.Parse(value);
+                    string[] names = { "x", "y", "z", "w" };
+                    for (var i = 0; i < count; i++)
+                    {
+                        var token = i < names.Length ? json.GetValue(names[i], StringComparison.OrdinalIgnoreCase) : null;
+                        if (token == null || (token.Type != JTokenType.Float && token.Type != JTokenType.Integer))
+                            return false;
+                        components[i] = token.Value<float>();
+                    }
+                    return true;
+                }
+                if (value.StartsWith("["))
+                {
+                    var array = JArray.Parse(value);
+                    if (array.Count < count)
+                        return false;
+                    for (var i = 0; i < count; i++)
+                    {
+                        if (array[i].Type != JTokenType.Float && array[i].Type != JTokenType.Integer)
+                            return false;
+                        components[i] = array[i].Value<float>();
+                    }
+                    return true;
+                }
             }
-            return Vector3.zero;
+            catch (JsonException)
+            {
+                return false;
+            }
+            var parts = value.Split('|', ',');
+            if (parts.Length < count)
+                return false;
+            for (var i = 0; i < count; i++)
+            {
+                if (!float.TryParse(parts[i].Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out components[i]))
+                    return false;
+            }
+            return true;
         }
     }
 }

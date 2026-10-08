@@ -55,6 +55,7 @@ When the Builder opens on a scene, on **Re-check**, before every build and befor
 | Android textures, Audio | Textures at most 2048 px and compressed on Android; audio clips over 10 seconds not kept uncompressed in memory. |
 | Object IDs | No two objects in the scene share a BSObjectId: players match synced objects, seats and attachments by it (see [Multiplayer](../multiplayer/overview.md#bsobjectid)). The fix gives each copy after the first a new ID. |
 | Seats, Grab handles, Scene settings, Spawn points, Teleporters | The [Easy Prefabs](easy-prefabs.md) components are set up correctly: seats have a clickable collider on the UI or Menu layer, grab handles are on the Grabbable layer with their own collider, there's at most one Scene Settings component, there's an active spawn point, and teleporters have a trigger and a destination outside it. |
+| Seat and vehicle attachments | Every Attached Object that puts the player on an object (**Avatar Attach To**) has **Attachment Type** Physics and **Joint Avatar** ticked; otherwise attaching seats no one. The fix sets both. |
 
 Checks only report. A **Fix** button changes things only when clicked, with undo; **Fix All** runs every fix that doesn't ask first; **Select** shows what an issue is about. Passed checks fold into one "other checks passed" row; hover a row to see what it checks.
 

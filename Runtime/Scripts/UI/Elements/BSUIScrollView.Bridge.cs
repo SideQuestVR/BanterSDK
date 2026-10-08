@@ -57,9 +57,7 @@ namespace BS.UI.Elements
             switch (propertyName)
             {
                 case "scrollPosition":
-                    var bVec = new BSVector2();
-                    bVec.Deserialise(propertyValue);
-                    ScrollPosition = (Vector2)bVec;
+                    ScrollPosition = UIMethodParameterParser.ParseVector2(propertyValue, ScrollPosition);
                     return true;
 
                 case "horizontalScrolling":

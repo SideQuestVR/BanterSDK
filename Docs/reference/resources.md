@@ -5,5 +5,5 @@
 - [Unity Getting Started](https://www.youtube.com/watch?v=j48LtUkZRjU&list=PLPV2KyIb3jR5QFsefuO2RlAgWEz6EvVi6)
 - [JavaScript Tutorials](https://www.javascript.com/)
 - [Blender Tutorials](https://www.youtube.com/watch?v=B0J27sf9N1Y)
-- [Discord](https://discord.gg/mPAjUEcwad)
+- [Discord](https://discord.gg/26cvWEpxdM)
 - [SideQuest help desk](https://sdqst.atlassian.net/servicedesk/customer/portals)

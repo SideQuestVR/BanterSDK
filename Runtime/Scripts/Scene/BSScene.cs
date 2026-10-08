@@ -40,8 +40,6 @@ namespace BS
         public const string EnableGuests = "EnableGuests";
         public const string EnableQuaternionPose = "EnableQuaternionPose";
         public const string EnableControllerExtras = "EnableControllerExtras";
-        public const string EnableFriendPositionJoin = "EnableFriendPositionJoin";
-        public const string EnableDefaultTextures = "EnableDefaultTextures";
         public const string EnableAvatars = "EnableAvatars";
         public const string MaxOccupancy = "MaxOccupancy";
         public const string RefreshRate = "RefreshRate";
@@ -3156,7 +3154,14 @@ namespace BS
                  }
                  foreach (var part in settingsParts)
                  {
+                     // Keys the switches below don't know fall through and are ignored: settings that were removed
+                     // (EnableFriendPositionJoin, EnableDefaultTextures) still arrive from older pages, and the
+                     // A-Frame-only EnableQuaternionPose/EnableControllerExtras were never parsed.
                      var setting = part.Split(MessageDelimiters.SECONDARY);
+                     if (setting.Length < 2)
+                     {
+                         continue;
+                     }
                      if (!settings.IsSettingsLocked)
                      {
                          switch (setting[0])
@@ -3182,17 +3187,11 @@ namespace BS
                              case SettingsMap.EnableNametags:
                                  settings.EnableNametags = setting[1] == "1";
                                  break;
-                             case SettingsMap.EnableDefaultTextures:
-                                 settings.EnableDefaultTextures = setting[1] == "1";
-                                 break;
                              case SettingsMap.EnablePortals:
                                  settings.EnablePortals = setting[1] == "1";
                                  break;
                              case SettingsMap.EnableGuests:
                                  settings.EnableGuests = setting[1] == "1";
-                                 break;
-                             case SettingsMap.EnableFriendPositionJoin:
-                                 settings.EnableFriendPositionJoin = setting[1] == "1";
                                  break;
                              case SettingsMap.EnableAvatars:
                                  settings.EnableAvatars = setting[1] == "1";

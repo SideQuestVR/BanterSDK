@@ -21,7 +21,7 @@ numbers are Unity's own.
 | [`BS.PhysicsMaterialCombine`](#physicsmaterialcombine) | Physics material friction and bounce |
 | [`BS.ConfigurableJointMotion`](#configurablejointmotion), [`BS.RotationDriveMode`](#rotationdrivemode) | Joints |
 | [`BS.BSGrabType`](#bsgrabtype) | Grab handles |
-| [`BS.AttachmentType`](#attachment-enums), [`BS.PhysicsAttachmentPoint`](#attachment-enums), [`BS.AvatarAttachmentType`](#attachment-enums), [`BS.AvatarBoneName`](#attachment-enums) | Attached objects |
+| [`BS.AvatarAttachmentType`](#attachment-enums), [`BS.AvatarBoneName`](#attachment-enums), [`BS.AttachmentType`](#attachment-enums) | Attached objects |
 | [`BS.PlayerTag`](global-functions.md#global-functions) | The tags on the local player (strings) |
 | `BS.LegacyAttachmentPosition` | [Legacy APIs](legacy-apis.md) |
 | `BS.UIElementType`, `BS.UIPropertyName` | The [UI system](../components/ui-system.md) |
@@ -337,16 +337,12 @@ BS.BSGrabType.Soft      // 3
 Used by `AttachedObject`; see [Attaching Objects to Users](../javascript-api/user-multiplayer.md#attaching-objects-to-users).
 
 ```js
-BS.AttachmentType.Physics        // 0: held by a physics joint
-BS.AttachmentType.NonPhysics     // 1: follows the point
-
-BS.PhysicsAttachmentPoint.Head       // 0
-BS.PhysicsAttachmentPoint.LeftHand   // 1
-BS.PhysicsAttachmentPoint.RightHand  // 2
-BS.PhysicsAttachmentPoint.Torso      // 3
-
 BS.AvatarAttachmentType.AttachToAvatar  // 0: the object goes on the player
 BS.AvatarAttachmentType.AvatarAttachTo  // 1: the player goes on the object
+
+// For AvatarAttachTo (a seat or vehicle) only: an object on a player ignores it
+BS.AttachmentType.Physics        // 0: the player is held on the object (the default)
+BS.AttachmentType.NonPhysics     // 1
 
 BS.AvatarBoneName.HEAD    // 0
 BS.AvatarBoneName.NECK    // 1

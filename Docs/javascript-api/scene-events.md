@@ -200,6 +200,8 @@ obj.On("object-update", (e) => {
 });
 ```
 
+A GLTF's `loaded` fires once the model is in the scene. A model that fails to load fires it too (with a warning in the Console), so the space never waits on a broken URL.
+
 **Component `isLoaded` property:**
 ```js
 // Check if component has finished loading

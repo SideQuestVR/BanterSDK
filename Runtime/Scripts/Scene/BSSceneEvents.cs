@@ -26,7 +26,6 @@ public class BSSceneEvents
     public UnityEvent<bool> OnEnableNametagsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnablePortalsChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableGuestsChanged = new UnityEvent<bool>();
-    public UnityEvent<bool> OnEnableFriendPositionJoinChanged = new UnityEvent<bool>();
     public UnityEvent<bool> OnEnableAvatarsChanged = new UnityEvent<bool>();
     public UnityEvent<int> OnMaxOccupancyChanged = new UnityEvent<int>();
     public UnityEvent<Vector4> OnSpawnPointChanged = new UnityEvent<Vector4>();
@@ -171,7 +170,6 @@ public class BSSceneEvents
         OnEnableNametagsChanged.RemoveAllListeners();
         OnEnablePortalsChanged.RemoveAllListeners();
         OnEnableGuestsChanged.RemoveAllListeners();
-        OnEnableFriendPositionJoinChanged.RemoveAllListeners();
         OnEnableAvatarsChanged.RemoveAllListeners();
         OnMaxOccupancyChanged.RemoveAllListeners();
         OnSpawnPointChanged.RemoveAllListeners();

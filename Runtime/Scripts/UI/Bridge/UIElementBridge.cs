@@ -1844,97 +1844,42 @@ namespace BS.UI.Bridge
             if (string.IsNullOrEmpty(value))
                 return new StyleEnum<T>(StyleKeyword.Initial);
 
-            // Handle CSS keywords (only those supported by Unity)
-            switch (value.ToLower())
-            {
-                case "auto":
-                    return new StyleEnum<T>(StyleKeyword.Auto);
-                case "initial":
-                    return new StyleEnum<T>(StyleKeyword.Initial);
-                case "none":
-                    return new StyleEnum<T>(StyleKeyword.None);
-                case "inherit":
-                    // Unity doesn't support inherit, fallback to initial
-                    return new StyleEnum<T>(StyleKeyword.Initial);
-            }
+            var name = value.Trim().ToLowerInvariant();
 
-            // Try to parse as enum
-            if (System.Enum.TryParse<T>(value, true, out T enumValue))
+            // The enum's own values first, kebab-case allowed (flex-start, row-reverse, space-between, no-wrap,
+            // upper-left). The CSS keywords used to be checked first, so `display: none` became
+            // StyleKeyword.None instead of DisplayStyle.None and hid nothing (likewise `align-self: auto`).
+            // A number only when it names a value.
+            if (System.Enum.TryParse<T>(name.Replace("-", ""), true, out T enumValue) && System.Enum.IsDefined(typeof(T), enumValue))
             {
                 return new StyleEnum<T>(enumValue);
             }
 
-            // Handle specific enum conversions
-            if (typeof(T) == typeof(Align))
+            // CSS spellings that aren't the enum's names.
+            if (typeof(T) == typeof(TextAnchor))
             {
-                return value.ToLower() switch
+                switch (name)
                 {
-                    "flex-start" => new StyleEnum<T>((T)(object)Align.FlexStart),
-                    "flex-end" => new StyleEnum<T>((T)(object)Align.FlexEnd),
-                    "center" => new StyleEnum<T>((T)(object)Align.Center),
-                    "stretch" => new StyleEnum<T>((T)(object)Align.Stretch),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
+                    case "left":
+                        return new StyleEnum<T>((T)(object)TextAnchor.UpperLeft);
+                    case "center":
+                        return new StyleEnum<T>((T)(object)TextAnchor.MiddleCenter);
+                    case "right":
+                        return new StyleEnum<T>((T)(object)TextAnchor.UpperRight);
+                }
             }
-            else if (typeof(T) == typeof(FlexDirection))
+
+            // Then CSS keywords (only those supported by Unity)
+            switch (name)
             {
-                return value.ToLower() switch
-                {
-                    "row" => new StyleEnum<T>((T)(object)FlexDirection.Row),
-                    "row-reverse" => new StyleEnum<T>((T)(object)FlexDirection.RowReverse),
-                    "column" => new StyleEnum<T>((T)(object)FlexDirection.Column),
-                    "column-reverse" => new StyleEnum<T>((T)(object)FlexDirection.ColumnReverse),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(Justify))
-            {
-                return value.ToLower() switch
-                {
-                    "flex-start" => new StyleEnum<T>((T)(object)Justify.FlexStart),
-                    "flex-end" => new StyleEnum<T>((T)(object)Justify.FlexEnd),
-                    "center" => new StyleEnum<T>((T)(object)Justify.Center),
-                    "space-between" => new StyleEnum<T>((T)(object)Justify.SpaceBetween),
-                    "space-around" => new StyleEnum<T>((T)(object)Justify.SpaceAround),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(Position))
-            {
-                return value.ToLower() switch
-                {
-                    "relative" => new StyleEnum<T>((T)(object)Position.Relative),
-                    "absolute" => new StyleEnum<T>((T)(object)Position.Absolute),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(DisplayStyle))
-            {
-                return value.ToLower() switch
-                {
-                    "flex" => new StyleEnum<T>((T)(object)DisplayStyle.Flex),
-                    "none" => new StyleEnum<T>((T)(object)DisplayStyle.None),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(Visibility))
-            {
-                return value.ToLower() switch
-                {
-                    "visible" => new StyleEnum<T>((T)(object)Visibility.Visible),
-                    "hidden" => new StyleEnum<T>((T)(object)Visibility.Hidden),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(TextAnchor))
-            {
-                return value.ToLower() switch
-                {
-                    "left" => new StyleEnum<T>((T)(object)TextAnchor.UpperLeft),
-                    "center" => new StyleEnum<T>((T)(object)TextAnchor.MiddleCenter),
-                    "right" => new StyleEnum<T>((T)(object)TextAnchor.UpperRight),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
+                case "auto":
+                    return new StyleEnum<T>(StyleKeyword.Auto);
+                case "none":
+                    return new StyleEnum<T>(StyleKeyword.None);
+                case "initial":
+                case "inherit":
+                    // Unity doesn't support inherit, fallback to initial
+                    return new StyleEnum<T>(StyleKeyword.Initial);
             }
 
             return new StyleEnum<T>(StyleKeyword.Initial);

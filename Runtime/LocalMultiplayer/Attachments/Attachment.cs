@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="c0818b6e8641387ce32964d2e3416274df58bee0495cf8b80cd37209dcc6b319" mode="port" />
+// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="b076dc451c46ae3750aa426065d983c21944a1b7c7d5099d053c1edf53e878ef" mode="port" />
 // The Attachment component (AttachmentsSystem.cs:16-45) with the system reference typed to the port, plus the
 // host's lifetime guard: after a script reload or once the host is gone, OnDestroy does nothing.
 using System;
@@ -18,10 +18,10 @@ namespace BS.LocalMultiplayer.Attachments
 
         public Rigidbody attachedRigidbody;
         public bool rigidbodyWasAdded;
-        public ConfigurableJoint configurableJoint;
-        public bool configurableJointWasAdded;
         public ParentConstraint parentConstraint;
         public bool parentConstraintWasAdded;
+        // The object's own Rigidbody, made kinematic while it is attached to the player (given back on detach).
+        public Rigidbody madeKinematic;
         public Rigidbody attacheeBody;
         public Quaternion attacheeInitialRotation;
         public bool attacheeBodyWasAdded;

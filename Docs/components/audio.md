@@ -41,7 +41,7 @@ audio.Play();                                               // Play the Audio So
 audio.PlayOneShot(0);                                       // Play clip 0 from the component's Clips list
 ```
 
-A script can only supply sound by URL, through `PlayOneShotFromUrl`. The URL has to end in `.mp3`, `.wav` or `.ogg` (a query string after it is fine); each sound is downloaded once and kept, so playing it again is instant. The Promise resolves when the download starts, not when the sound has played.
+A script can only supply sound by URL, through `PlayOneShotFromUrl`. The URL has to end in `.mp3`, `.wav` or `.ogg` (a query string after it is fine); each sound is downloaded once and kept, so playing it again is instant. The Promise resolves once the sound has been downloaded and started, and rejects if the download fails.
 
 `Play()` and `PlayOneShot(index)` play clips set in the Inspector: `Play()` the **AudioClip** of the object's Audio Source, `PlayOneShot(index)` an entry in the BS Audio Source's **Clips** list. On a component created from a script they have nothing to play. To use them, set up the object in the editor and [find it from your script](overview.md#using-objects-placed-in-the-editor):
 

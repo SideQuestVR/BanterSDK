@@ -11,29 +11,37 @@ namespace BS
     [RenamedFrom("Banter.SDK.BanterSceneSettings")]
     public class BSSceneSettings
     {
+        // TODO(not wired up in the app yet): whether players may open the page's developer tools from inside the
+        // app (Banter's in-space debugger). Nothing in the client reads it; SDK Play Mode has its own dev tools button.
         private bool _EnableDevTools = true;
         public bool EnableDevTools { get { return _EnableDevTools; } set { _EnableDevTools = value; scene.events.OnEnableDevToolsChanged.Invoke(value); } }
-        public bool EnableDefaultTextures = true;
         private bool _EnableTeleport = true;
         public bool EnableTeleport { get { return _EnableTeleport; } set { _EnableTeleport = value; scene.events.OnEnableTeleportChanged.Invoke(value); } }
         private bool _EnableForceGrab = false;
         public bool EnableForceGrab { get { return _EnableForceGrab; } set { _EnableForceGrab = value; scene.events.OnEnableForceGrabChanged.Invoke(value); } }
         private bool _EnableSpiderMan = false;
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
+        // TODO(not wired up in the app yet): let players grab and hold other players' hands (remote players' hands get
+        // grabbable colliders, also gated by the player's own Hand Holding comfort option). Remote players have no hand
+        // colliders in the client yet.
         private bool _EnableHandHold = true;
         public bool EnableHandHold { get { return _EnableHandHold; } set { _EnableHandHold = value; scene.events.OnEnableHandHoldChanged.Invoke(value); } }
+        // TODO(not wired up in the app yet): show a radar marker over other players so they can be found through walls
+        // (with the player's own Radar option). The client has no radar marker.
         private bool _EnableRadar = true;
         public bool EnableRadar { get { return _EnableRadar; } set { _EnableRadar = value; scene.events.OnEnableRadarChanged.Invoke(value); } }
         private bool _EnableNametags = true;
         public bool EnableNametags { get { return _EnableNametags; } set { _EnableNametags = value; scene.events.OnEnableNametagsChanged.Invoke(value); } }
+        // TODO(not wired up in the app yet): let players drop portals to other spaces from the menu (Banter's Drop Portal
+        // button). The client's menu has no drop-portal action; portals placed in the scene work regardless.
         private bool _EnablePortals = true;
         public bool EnablePortals { get { return _EnablePortals; } set { _EnablePortals = value; scene.events.OnEnablePortalsChanged.Invoke(value); } }
         private bool _EnableGuests = true;
         public bool EnableGuests { get { return _EnableGuests; } set { _EnableGuests = value; scene.events.OnEnableGuestsChanged.Invoke(value); } }
-        private bool _EnableFriendPositionJoin = true;
-        public bool EnableFriendPositionJoin { get { return _EnableFriendPositionJoin; } set { _EnableFriendPositionJoin = value; scene.events.OnEnableFriendPositionJoinChanged.Invoke(value); } }
         private bool _EnableAvatars = true;
         public bool EnableAvatars { get { return _EnableAvatars; } set { _EnableAvatars = value; scene.events.OnEnableAvatarsChanged.Invoke(value); } }
+        // Not acted on, by design: how many players share an instance is decided by the server when they join (the
+        // world's Capacity on altvr.app, else the page's sq-maxoccupancy meta tag, else 20), before the page runs.
         private int _MaxOccupancy = 20;
         public int MaxOccupancy { get { return _MaxOccupancy; } set { _MaxOccupancy = value; scene.events.OnMaxOccupancyChanged.Invoke(value); } }
         private float _RefreshRate = 72.0f;
@@ -77,6 +85,9 @@ namespace BS
         public float PhysicsAirControlAcceleration { get { return _physicsAirControlAcceleration; } set { _physicsAirControlAcceleration = value; scene.events.OnPhysicsAirControlAccelerationChanged.Invoke(value); } }
         private float _physicsDrag = Defaults.PhysicsDrag;
         public float PhysicsDrag { get { return _physicsDrag; } set { _physicsDrag = value; scene.events.OnPhysicsDragChanged.Invoke(value); } }
+        // TODO(not wired up in the app yet): angular drag while the player's body tumbles freely (zero gravity, ragdoll
+        // falls). The client applies it to the torso (ScenePhysicsApplier), but the torso's rotation is always frozen,
+        // so it has no effect until free rotation is used.
         private float _physicsFreeFallAngularDrag = Defaults.PhysicsFreeFallAngularDrag;
         public float PhysicsFreeFallAngularDrag { get { return _physicsFreeFallAngularDrag; } set { _physicsFreeFallAngularDrag = value; scene.events.OnPhysicsFreeFallAngularDragChanged.Invoke(value); } }
         private float _physicsJumpStrength = Defaults.PhysicsJumpStrength;
@@ -172,7 +183,6 @@ namespace BS
             IsPhysicsSettingsLocked = false;
 
             EnableDevTools = true;
-            EnableDefaultTextures = true;
             EnableTeleport = true;
             EnableForceGrab = false;
             EnableSpiderMan = false;
@@ -181,7 +191,6 @@ namespace BS
             EnableNametags = true;
             EnablePortals = true;
             EnableGuests = true;
-            EnableFriendPositionJoin = true;
             EnableAvatars = true;
             MaxOccupancy = 20;
             RefreshRate = 72.0f;

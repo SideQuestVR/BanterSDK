@@ -41,7 +41,7 @@ Sets the space's settings from the scene:
 - player physics
 - the two locks
 
-They are applied when the space loads, again when the page reloads, and whenever a property changes. Spawn point, occupancy, avatars, friend position join, default textures and dev tools are not included. Use one per scene.
+They are applied when the space loads, again when the page reloads, and whenever a property changes. Spawn point, occupancy, avatars and dev tools are not included. Use one per scene.
 
 A page script that calls `scene.SetSettings(...)` sends every setting, so it replaces these if it runs afterwards. Either remove that call, or tick both locks so nothing can change the settings later. The build checklist warns when a page calls `SetSettings` and the settings aren't locked. In SDK Play Mode only the clipping planes have a visible effect; everything else takes effect in the client.
 

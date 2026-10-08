@@ -367,7 +367,7 @@ The graphs, and the BS nodes they show:
 | HeldEvent, HeldEventOneSided | `Basics/ScriptGraphs` | Every held event, for either hand or one |
 | AngularLever, SlidingLever | `Basics/ScriptGraphs` | Levers that report their angle or position, with standard nodes only |
 | ArmatureAttatchment | `Basics/ScriptGraphs` | Attaching an object to an avatar's armature |
-| The player info graph | `Basics/ScriptGraphs` | Get Local User Info, Get User State, On BS Trigger Enter Event Received |
+| `PlayerInfo` | `Basics/ScriptGraphs` | Get Local User Info, Get User State, On BS Trigger Enter Event Received |
 | DrawGadget, DrawGadgetUI | `Gadgets/DrawTool/ScriptGraphs` | A drawing tool: held events, space state properties, Get Local User Info |
 | HandThruster | `Gadgets/FlightThruster/ScriptGraphs` | A hand-held thruster: held events and Rigidbody forces |
 | GravityGun | `Gadgets/GravityTilt/ScripGraphs` | On GunTrigger, and a raycast that changes the direction of gravity |
@@ -385,7 +385,7 @@ The subgraph library in `-SharedAssets-/Subgraphs`, for your own graphs:
 | `SpaceSettings` | SpaceSettings, plus one subgraph per setting (allow guests, portals, spider-man, teleport, clipping plane, nametags, radar, max occupancy, refresh rate), each applied through JavaScript; see [Scene Settings](../javascript-api/scene-settings.md) |
 | `Tweening` | TweenColor, TweenFloat, TweenQuaternion, TweenVector2, TweenVector3 |
 
-**FlexaWorld** (its scene is in the sample's top folder; graphs in `Assets/Prefabs/ScriptGraphs/`):
+**FlexaWorld** (scene `FlexaWorld.unity`; graphs in `Assets/Prefabs/ScriptGraphs/`):
 
 | Graph | Purpose |
 |-------|---------|

@@ -1163,7 +1163,7 @@ GameObject:
   - component: {fileID: 288500884}
   - component: {fileID: 288500883}
   m_Layer: 0
-  m_Name: BanterStarterUpper
+  m_Name: BSStarterUpper
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

@@ -71,6 +71,67 @@ namespace BS.SDKEditor.BuildChecks
     }
 
     /// <summary>
+    /// An attached object that puts the player on it (AvatarAttachTo: a seat or vehicle) only holds the player as a
+    /// Physics attachment with Joint Avatar on. Otherwise attaching seats no one, while other players are still told
+    /// this player is on it.
+    /// </summary>
+    sealed class SeatAttachmentsCheck : BuildCheck
+    {
+        public override string Id => "bs.seat-attachments";
+        public override string Title => "Seat and vehicle attachments";
+        public override string Description =>
+            "Every Attached Object that puts the player on an object (Avatar Attach To) is a Physics attachment with Joint " +
+            "Avatar on, so it holds the player.";
+        public override int Order => 302;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var seatsNoOne = context.Components<BSAttachedObject>().Where(SeatsNoOne).ToList();
+            if (seatsNoOne.Count == 0)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"{seatsNoOne.Count} seat or vehicle attachment(s) seat no one",
+                    "An Attached Object set to Avatar Attach To only holds the player on the object with Attachment Type " +
+                    "Physics and Joint Avatar ticked. Like this, attaching moves no one, but other players are still told the " +
+                    "player is on it.")
+                .WithTargets(context.TargetsOf(seatsNoOne))
+                .WithFix("Make them Physics with Joint Avatar on", issue => MakeSeats(issue.Resolve<GameObject>()
+                    .SelectMany(go => go.GetComponents<BSAttachedObject>())
+                    .ToList())));
+        }
+
+        internal static bool SeatsNoOne(BSAttachedObject attached)
+        {
+            var serialized = new SerializedObject(attached);
+            return serialized.FindProperty("avatarAttachmentType").intValue == (int)AvatarAttachmentType.AvatarAttachTo
+                   && (serialized.FindProperty("attachmentType").intValue != (int)AttachmentType.Physics
+                       || !serialized.FindProperty("jointAvatar").boolValue);
+        }
+
+        /// <summary>Physics and Joint Avatar for each of <paramref name="attachedObjects"/> that seats no one, as one Undo step.</summary>
+        internal static bool MakeSeats(List<BSAttachedObject> attachedObjects)
+        {
+            Undo.IncrementCurrentGroup();
+            var group = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Make seat attachments Physics");
+            var changed = false;
+            foreach (var attached in attachedObjects)
+            {
+                if (attached == null || !SeatsNoOne(attached))
+                    continue;
+                // ApplyModifiedProperties records the Undo and keeps a prefab instance's change as an override.
+                var serialized = new SerializedObject(attached);
+                serialized.FindProperty("attachmentType").intValue = (int)AttachmentType.Physics;
+                serialized.FindProperty("jointAvatar").boolValue = true;
+                serialized.ApplyModifiedProperties();
+                changed = true;
+            }
+            Undo.CollapseUndoOperations(group);
+            return changed;
+        }
+    }
+
+    /// <summary>
     /// Players match synced objects, seats and attachments by their BSObjectId, so two objects sharing one get
     /// mixed up. Copies of a prefab used to end up sharing the prefab's Id once the scene was saved and reopened.
     /// </summary>
