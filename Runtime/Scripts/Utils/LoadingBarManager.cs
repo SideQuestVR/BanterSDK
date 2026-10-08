@@ -17,6 +17,8 @@ namespace BS
     public class LoadingBarManager : MonoBehaviour
     {
         float loadingpercentage;
+        /// <summary>The bar's current fill (0-1), so a status update can change the text without moving it.</summary>
+        public float LoadPercentage => loadingpercentage;
         [SerializeField] Texture2D defaultLoadingImage;
         [SerializeField] Renderer loadingProgress;
         [SerializeField] Texture2D[] maskTextures;
