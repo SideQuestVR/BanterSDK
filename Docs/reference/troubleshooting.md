@@ -100,6 +100,7 @@ Worlds the Builder creates are Private. On altvr.app, open your world's page, ch
 ### Pink materials
 
 - **Everywhere:** the material uses one of Unity's Built-in pipeline shaders (Standard, Legacy Shaders, Mobile, Nature…), its shader is missing or broken, or a material slot is empty. The checklist's **Materials** check lists them. Switch to a URP shader such as **Universal Render Pipeline/Lit**, or select the materials and use **Edit > Rendering > Materials > Convert Selected Built-in Materials to URP**.
+- **A custom shader:** one written for the Built-in pipeline (a surface shader, say) also renders pink, since URP draws none of its passes. Rewrite it for URP or rebuild it in Shader Graph. The **Materials** check flags these too.
 - **Only on Quest, or only on Windows:** the world has no shaders for the graphics API that device uses. Run the Setup panel's **Graphics APIs** item: Auto Graphics API on Android (Quest runs Vulkan), and Direct3D 11, Direct3D 12 and Vulkan on Windows. Then build again.
 
 ### Tags don't match in the app

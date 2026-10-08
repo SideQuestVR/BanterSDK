@@ -1,6 +1,6 @@
 // Made with Amplify Shader Editor v1.9.2.2
 // Ported to URP (was surface shader Unlit/TransparentCutout with parallax + panoramic UVs)
-Shader "Banter/LoadingCageNew"
+Shader "BS/LoadingCageNew"
 {
     Properties
     {

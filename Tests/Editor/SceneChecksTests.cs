@@ -382,5 +382,88 @@ namespace BS.SDKEditor.Tests
         {
             Assert.AreEqual(builtIn, MaterialsCheck.IsBuiltInPipelineShader(shader));
         }
+
+        [TestCase("Resources/unity_builtin_extra", true)]
+        [TestCase("Library/unity default resources", true)]
+        [TestCase("", true)]
+        [TestCase("Packages/com.sidequest.creator-sdk/Runtime/Shaders/MobileStylized.shader", false)]
+        [TestCase("Assets/Shaders/Mobile.shader", false)]
+        public void UnityResources_AreRecognised(string assetPath, bool unity)
+        {
+            Assert.AreEqual(unity, MaterialsCheck.IsUnityResource(assetPath));
+        }
+
+        [Test]
+        public void ProjectShaderWithABuiltInStyleName_IsNotABuiltInShader()
+        {
+            // The SDK's URP shader is called Mobile/StylizedFakeLit, a Built-in shader's name.
+            var shader = Shader.Find("Mobile/StylizedFakeLit");
+            Assume.That(shader != null, "The SDK's Mobile/StylizedFakeLit shader isn't in this project.");
+            var material = new Material(shader);
+            _assets.Add(material);
+            var go = Create("stylized");
+            go.AddComponent<MeshFilter>();
+            go.AddComponent<MeshRenderer>().sharedMaterial = material;
+
+            Assert.IsFalse(Run(new MaterialsCheck()).Any(issue => issue.Title.Contains("Built-in pipeline")));
+        }
+
+        [TestCase(new[] { "ForwardBase", "ForwardAdd", "Deferred", "ShadowCaster", "Meta" }, false)] // a surface shader's passes
+        [TestCase(new[] { "ShadowCaster", "DepthOnly" }, false)]
+        [TestCase(new string[0], false)]
+        [TestCase(new[] { "UniversalForward", "ShadowCaster", "DepthOnly" }, true)]
+        [TestCase(new[] { "UniversalForwardOnly" }, true)]
+        [TestCase(new[] { "SRPDefaultUnlit" }, true)]
+        [TestCase(new[] { "LightweightForward" }, true)]
+        [TestCase(new[] { "" }, true)] // no LightMode tag, which URP draws as unlit
+        [TestCase(new[] { null, "ShadowCaster" }, true)]
+        public void PassesUrpDraws_AreRecognised(string[] lightModes, bool drawn)
+        {
+            Assert.AreEqual(drawn, MaterialsCheck.HasPassUrpDraws(lightModes));
+        }
+
+        [Test]
+        public void CustomShaderForTheBuiltInPipeline_IsFlagged()
+        {
+            Assume.That(UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline != null, "Needs a project rendering with URP.");
+            var builtInOnly = CreateMeshWithShader("built-in", "Hidden/BSTests/ForwardBaseOnly", "ForwardBase");
+            var urp = CreateMeshWithShader("urp", "Hidden/BSTests/UniversalForwardOnly", "UniversalForward");
+
+            var issue = Run(new MaterialsCheck()).Single(found => found.Title.Contains("custom shaders written for the Built-in pipeline"));
+            StringAssert.Contains(builtInOnly.shader.name, issue.Details);
+            StringAssert.DoesNotContain(urp.shader.name, issue.Details);
+        }
+
+        Material CreateMeshWithShader(string name, string shaderName, string lightMode)
+        {
+            var shader = ShaderUtil.CreateShaderAsset(
+                "Shader \"" + shaderName + "\" { SubShader { Pass { Tags { \"LightMode\" = \"" + lightMode + "\" }\n" +
+                "HLSLPROGRAM\n#pragma vertex vert\n#pragma fragment frag\n" +
+                "float4 vert(float4 v : POSITION) : SV_POSITION { return v; }\nhalf4 frag() : SV_Target { return 1; }\nENDHLSL\n" +
+                "} } }");
+            _assets.Add(shader);
+            var material = new Material(shader);
+            _assets.Add(material);
+            var go = Create(name);
+            go.AddComponent<MeshFilter>();
+            go.AddComponent<MeshRenderer>().sharedMaterial = material;
+            return material;
+        }
+
+        [Test]
+        public void ParticleTrails_WithoutAMaterial_AreAnEmptySlot_OnlyWhenOn()
+        {
+            var go = Create("particles");
+            var system = go.AddComponent<ParticleSystem>();
+            var material = new Material(Shader.Find("Sprites/Default"));
+            _assets.Add(material);
+            go.GetComponent<ParticleSystemRenderer>().sharedMaterial = material;
+
+            Assert.IsFalse(Run(new MaterialsCheck()).Any(issue => issue.Title.Contains("empty material slot")));
+
+            var trails = system.trails;
+            trails.enabled = true;
+            Assert.IsTrue(Run(new MaterialsCheck()).Any(issue => issue.Title.Contains("empty material slot")));
+        }
     }
 }

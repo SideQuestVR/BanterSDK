@@ -3,6 +3,7 @@ using System.Linq;
 using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace BS.SDKEditor.BuildChecks
 {
@@ -239,20 +240,21 @@ namespace BS.SDKEditor.BuildChecks
         public override string Id => "render.materials";
         public override string Title => "Materials";
         public override string Description =>
-            "Renderers have no empty material slots, no missing or broken shaders, and none of Unity's Built-in pipeline shaders " +
-            "(Standard, Legacy Shaders, Mobile, Nature...), which render pink in URP.";
+            "Renderers have no empty material slots, no missing or broken shaders, and no shaders made for Unity's Built-in " +
+            "pipeline, its own (Standard, Legacy Shaders, Mobile, Nature...) or custom ones such as surface shaders, which render " +
+            "pink in URP.";
         public override int Order => 90;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
         {
             var emptySlots = new List<GameObject>();
             var builtIn = new Problem();
+            var notUrp = new Problem();
             var broken = new Problem();
 
             foreach (var renderer in context.Components<Renderer>())
             {
-                // A particle renderer's second slot is its optional trail material.
-                var materials = renderer is ParticleSystemRenderer ? new[] { renderer.sharedMaterial } : renderer.sharedMaterials;
+                var materials = renderer is ParticleSystemRenderer particles ? ParticleMaterials(particles) : renderer.sharedMaterials;
                 foreach (var material in materials)
                 {
                     if (material == null)
@@ -264,8 +266,10 @@ namespace BS.SDKEditor.BuildChecks
                     var shader = material.shader;
                     if (shader == null || shader.name == "Hidden/InternalErrorShader" || ShaderUtil.ShaderHasError(shader))
                         broken.Add(material, renderer.gameObject, shader != null ? shader.name : "(none)");
-                    else if (IsBuiltInPipelineShader(shader.name))
+                    else if (IsBuiltInPipelineShader(shader.name) && IsUnityResource(AssetDatabase.GetAssetPath(shader)))
                         builtIn.Add(material, renderer.gameObject, shader.name);
+                    else if (UrpCantDraw(shader))
+                        notUrp.Add(material, renderer.gameObject, shader.name);
                 }
             }
 
@@ -292,12 +296,69 @@ namespace BS.SDKEditor.BuildChecks
                         "Edit > Rendering > Materials > Convert Selected Built-in Materials to URP.")
                     .WithTargets(builtIn.Targets(context)));
             }
+            if (notUrp.Materials.Count > 0)
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{notUrp.Materials.Count} material(s) use custom shaders written for the Built-in pipeline",
+                        "Spaces render with URP, which draws none of these shaders' passes (a surface shader, say), so they " +
+                        "show up pink: " + string.Join(", ", notUrp.Shaders) + ". Rewrite them for URP, or rebuild them in " +
+                        "Shader Graph.")
+                    .WithTargets(notUrp.Targets(context)));
+            }
         }
 
         internal static bool IsBuiltInPipelineShader(string name) =>
             name == "Standard" || name == "Standard (Specular setup)" || name == "Autodesk Interactive"
             || name.StartsWith("Legacy Shaders/") || name.StartsWith("Mobile/") || name.StartsWith("Nature/")
             || name.StartsWith("Particles/Standard");
+
+        /// <summary>
+        /// Whether a shader at <paramref name="assetPath"/> is one of Unity's own rather than a project or package file:
+        /// those names are only Unity's when Unity supplies the shader (the SDK's URP Mobile/StylizedFakeLit isn't).
+        /// A project shader with such a name goes through the pass test like any other.
+        /// </summary>
+        internal static bool IsUnityResource(string assetPath) =>
+            string.IsNullOrEmpty(assetPath) || assetPath == "Resources/unity_builtin_extra" || assetPath == "Library/unity default resources";
+
+        /// <summary>
+        /// A particle renderer's material, and its second slot, the trail material, when the system draws trails (an
+        /// empty one there renders pink like any other).
+        /// </summary>
+        static Material[] ParticleMaterials(ParticleSystemRenderer particles)
+        {
+            var system = particles.GetComponent<ParticleSystem>();
+            if (system == null || !system.trails.enabled)
+                return new[] { particles.sharedMaterial };
+            var shared = particles.sharedMaterials;
+            return new[] { particles.sharedMaterial, shared.Length > 1 ? shared[1] : null };
+        }
+
+        /// <summary>
+        /// Whether URP has no pass of <paramref name="shader"/> to draw, judged on the SubShader Unity picked for the
+        /// project's pipeline. Only answers in a URP project: under another pipeline the picked SubShader isn't the one
+        /// a space uses. Skyboxes draw through the skybox, not a renderer pass.
+        /// </summary>
+        static bool UrpCantDraw(Shader shader)
+        {
+            var pipeline = GraphicsSettings.currentRenderPipeline;
+            if (pipeline == null || !pipeline.GetType().FullName.StartsWith("UnityEngine.Rendering.Universal")
+                || shader.name.StartsWith("Skybox/"))
+                return false;
+            var lightMode = new ShaderTagId("LightMode");
+            var lightModes = new List<string>();
+            for (var pass = 0; pass < shader.passCount; pass++)
+                lightModes.Add(shader.FindPassTagValue(pass, lightMode).name);
+            return !HasPassUrpDraws(lightModes);
+        }
+
+        /// <summary>
+        /// The LightMode tags URP's forward renderer draws: UniversalForward, UniversalForwardOnly, SRPDefaultUnlit, the old
+        /// LightweightForward, and passes with none (null or empty here). A surface shader's generated passes are ForwardBase,
+        /// ForwardAdd, Deferred, ShadowCaster and Meta, so it has none of them.
+        /// </summary>
+        internal static bool HasPassUrpDraws(IEnumerable<string> lightModes) =>
+            lightModes.Any(mode => string.IsNullOrEmpty(mode) || mode == "UniversalForward" || mode == "UniversalForwardOnly"
+                                   || mode == "SRPDefaultUnlit" || mode == "LightweightForward");
 
         sealed class Problem
         {

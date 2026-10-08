@@ -50,7 +50,7 @@ When the Builder opens on a scene, on **Re-check**, before every build and befor
 | Tags, Layers | Objects only use Unity's built-in tags and layers and the SDK's (see [Tags](tags.md) and [Layers](layers.md)). The fix renames old `__BA_` tags or moves objects to Untagged / Default. |
 | Missing scripts, Visual Scripting graphs | No component's script is missing, and every Script Machine and State Machine has its graph. |
 | Cameras and audio listeners | No scene camera draws to the screen and there's no Audio Listener: the player brings both. |
-| Materials | No empty material slots, broken shaders, or Built-in pipeline shaders (they render pink in URP). |
+| Materials | No empty material slots (a particle system's trail material counts while trails are on), broken shaders, or shaders made for the Built-in pipeline, Unity's own or custom ones such as surface shaders (they render pink in URP). |
 | Scene size | About 1,000,000 triangles and 1,024 MB of textures at most: a comfortable budget for a whole space on Quest. |
 | Android textures, Audio | Textures at most 2048 px and compressed on Android; audio clips over 10 seconds not kept uncompressed in memory. |
 | Object IDs | No two objects in the scene share a BSObjectId: players match synced objects, seats and attachments by it (see [Multiplayer](../multiplayer/overview.md#bsobjectid)). The fix gives each copy after the first a new ID. |

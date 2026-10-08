@@ -1,5 +1,5 @@
 // Ported to URP (was built-in CGPROGRAM unlit pass)
-Shader "Unlit/Transparent"
+Shader "BS/Unlit/Transparent"
 {
 	Properties
 	{
