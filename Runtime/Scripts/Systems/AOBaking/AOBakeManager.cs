@@ -162,7 +162,7 @@ namespace BS
         /// </summary>
         public void QueueAllInScene()
         {
-            var allMergers = FindObjectsOfType<PrimitiveMergerAO>();
+            var allMergers = FindObjects.All<PrimitiveMergerAO>();
             QueueBakeAll(allMergers);
             Debug.Log($"[AOBakeManager] Queued {allMergers.Length} objects from scene");
         }

@@ -32,7 +32,7 @@ namespace BS
         /// <summary>
         /// A GameObject handed over directly by an in-process caller (a Visual Scripting unit),
         /// which cannot travel in <see cref="Json"/>. Always null for page-originated ops: a page
-        /// names objects by instance id in its JSON instead, resolved with
+        /// names objects by unityId (BSScene.UnityId) in its JSON instead, resolved with
         /// <see cref="BSHostExtensions.ResolveObject"/>.
         /// </summary>
         public GameObject Target;

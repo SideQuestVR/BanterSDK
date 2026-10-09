@@ -47,8 +47,8 @@ namespace BS.LocalMultiplayer.Objects
         UnityEngine.Events.UnityAction<BSSynced, BSSyncedObject> _onSyncedObject;
         bool _installed;
 
-        // GameObjects (instance ids) present at the first frame: everything else was created at runtime.
-        readonly HashSet<int> _authoredInstanceIds = new HashSet<int>();
+        // GameObjects (BSScene.UnityId) present at the first frame: everything else was created at runtime.
+        readonly HashSet<int> _authoredUnityIds = new HashSet<int>();
         bool _authoredCaptured;
         ObjectManifest _manifest = new ObjectManifest();
         ObjectManifest _lastSent;
@@ -210,10 +210,10 @@ namespace BS.LocalMultiplayer.Objects
 
         void CaptureAuthored()
         {
-            _authoredInstanceIds.Clear();
-            foreach (var objectId in FindObjectsByType<BSObjectId>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            _authoredUnityIds.Clear();
+            foreach (var objectId in FindObjects.All<BSObjectId>(FindObjectsInactive.Include))
             {
-                if (objectId != null) _authoredInstanceIds.Add(objectId.gameObject.GetInstanceID());
+                if (objectId != null) _authoredUnityIds.Add(BSScene.UnityId(objectId.gameObject));
             }
         }
 
@@ -225,9 +225,9 @@ namespace BS.LocalMultiplayer.Objects
             var authored = new List<string>();
             var runtime = new List<string>();
             var seen = new HashSet<int>();
-            Collect(FindObjectsByType<BSSyncedObject>(FindObjectsInactive.Include, FindObjectsSortMode.None), seen, authored, runtime);
-            Collect(FindObjectsByType<BSAttachedObject>(FindObjectsInactive.Include, FindObjectsSortMode.None), seen, authored, runtime);
-            Collect(FindObjectsByType<BSSeat>(FindObjectsInactive.Include, FindObjectsSortMode.None), seen, authored, runtime);
+            Collect(FindObjects.All<BSSyncedObject>(FindObjectsInactive.Include), seen, authored, runtime);
+            Collect(FindObjects.All<BSAttachedObject>(FindObjectsInactive.Include), seen, authored, runtime);
+            Collect(FindObjects.All<BSSeat>(FindObjectsInactive.Include), seen, authored, runtime);
 
             ReportDuplicates();
 
@@ -247,10 +247,10 @@ namespace BS.LocalMultiplayer.Objects
             {
                 if (component == null) continue;
                 var go = component.gameObject;
-                if (!seen.Add(go.GetInstanceID())) continue;
+                if (!seen.Add(BSScene.UnityId(go))) continue;
                 if (!go.TryGetComponent(out BSObjectId objectId) || string.IsNullOrEmpty(objectId.Id)) continue;
                 string id = objectId.Id;
-                if (_authoredInstanceIds.Contains(go.GetInstanceID())) authored.Add(id);
+                if (_authoredUnityIds.Contains(BSScene.UnityId(go))) authored.Add(id);
                 else runtime.Add(id);
                 if (!_paths.TryGetValue(id, out var paths))
                 {

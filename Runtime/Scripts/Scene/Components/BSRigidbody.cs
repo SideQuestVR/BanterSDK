@@ -342,11 +342,11 @@ namespace BS
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Rigidbody);
+            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Rigidbody);
 
             scene.Tick += Tick;
-            oid = gameObject.GetInstanceID();
-            cid = GetInstanceID();
+            oid = BSScene.UnityId(gameObject);
+            cid = BSScene.UnityId(this);
 
             if (constructorProperties != null)
             {

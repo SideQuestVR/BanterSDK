@@ -61,7 +61,7 @@ namespace BS.VisualScripting
                 var texture = flow.GetValue<string>(textureRef);
                 if (!string.IsNullOrEmpty(texture)) body["texture"] = texture;
                 var cameraObject = flow.GetValue<GameObject>(camera);
-                if (cameraObject != null) body["cameraObject"] = cameraObject.GetInstanceID();
+                if (cameraObject != null) body["cameraObject"] = BSScene.UnityId(cameraObject);
                 var presetName = flow.GetValue<string>(preset);
                 if (!string.IsNullOrEmpty(presetName)) body["preset"] = presetName;
                 var takeTitle = flow.GetValue<string>(title);

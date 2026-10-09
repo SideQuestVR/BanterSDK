@@ -17,6 +17,14 @@ namespace BS
         public Action<BSAttachment> AttachObject = _ => { };
         public Action<BSAttachment> DetachObject = _ => { };
 
+        /// <summary>
+        /// Lets go of what the LOCAL player holds, as a normal release does (held events, the page's release
+        /// event, any networked drop). Arguments: the object to let go of, or null for whatever the hand holds;
+        /// the hand, as a <see cref="HandSide"/> value, or -1 for both. True when something was let go. The
+        /// client (and the SDK's desktop player) install the real one; nothing holds anything without them.
+        /// </summary>
+        public Func<UnityEngine.GameObject, int, bool> ReleaseGrab = (_, _) => false;
+
         public Action<long> CloneAvatar = _ => { };
 
         public Action<(string eventName, KeyValuePair<string, string>[] keyValues)> SendTelemetry = _ => { };

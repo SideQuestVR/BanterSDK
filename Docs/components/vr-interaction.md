@@ -54,6 +54,11 @@ await obj.AddComponent(new BS.Grababble({
 
 Added in the Inspector, it keeps the settings of a BS Grab Handle or BS Held Events that's already on the object.
 
+To drop a held object from a script, call `await obj.ReleaseGrab()` (or `scene.ReleaseGrab()` for whatever the
+local player holds). It lets go as if the player had, so `drop` fires; see
+[Letting Go of Held Objects](../javascript-api/scene-api.md#letting-go-of-held-objects). In Visual Scripting,
+use the **Release Grab** node.
+
 ## GrabHandle
 
 A grab point: says how a collider is held. It uses the collider on its own object, so add the collider first and put it on the Grabbable layer. If the collider belongs to a Rigidbody (on the object or a parent), grabbing moves that body; without one, grabbing holds on to the world, like a climbing handhold.

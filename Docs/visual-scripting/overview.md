@@ -198,6 +198,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Teleport To Location | Teleport the player to `Position`, turned to face `Rotation` (degrees around Y) |
 | Lock Player Position | Stop the player moving and grabbing. App only |
 | Unlock Player Position | Release the lock |
+| Release Grab | Make the local player let go of `Object`, or of whatever the `Hand` (Both, Left or Right) holds when `Object` is empty. The object's `drop` event fires as for a normal drop. `Released` is true if something was let go |
 | Add Toast Message | Show a notification with your `Message`, after `Delay` seconds, for `Timeout` seconds (default 5). App only |
 
 **Utils** (`BS > Utils`, `BS > Browser`, `BS > Networking`) — helpers and content loading.

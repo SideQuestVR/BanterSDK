@@ -103,6 +103,8 @@ Gravity and the time scale go back to normal, (0, -9.8, 0) and 1, when the playe
 
 ## Player Control Methods
 
+To make the player drop something they're holding, see [Letting Go of Held Objects](scene-api.md#letting-go-of-held-objects).
+
 Turn the local player's abilities off and on:
 
 ```js

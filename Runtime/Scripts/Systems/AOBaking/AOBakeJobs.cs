@@ -100,8 +100,8 @@ namespace BS
 
             for (int i = 0; i < SampleCount; i++)
             {
-                // Check if raycast hit something (colliderInstanceID != 0 means hit)
-                if (RaycastResults[startIndex + i].colliderInstanceID != 0)
+                // Check if raycast hit something (a valid colliderEntityId means hit)
+                if (RaycastResults[startIndex + i].colliderEntityId.IsValid())
                 {
                     hitCount++;
                 }

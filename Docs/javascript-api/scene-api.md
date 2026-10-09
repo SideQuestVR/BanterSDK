@@ -265,6 +265,22 @@ no part can be empty (`a..b` or a trailing `.`); a key outside these limits is r
 values (each leaf of an object counts). Writes are coalesced and batched, so a tight loop of
 `SetPublicSpaceProps` is fine.
 
+## Letting Go of Held Objects
+
+Make the local player drop what they're holding, as if they had let go themselves:
+
+```js
+await scene.ReleaseGrab();                   // whatever either hand holds
+await scene.ReleaseGrab(BS.HandSide.LEFT);   // only the left hand
+const dropped = await sword.ReleaseGrab();   // only this object, whichever hand holds it
+```
+
+Each resolves `true` if something was let go and `false` if there was nothing to let go. The object's `drop`
+event fires as for a normal drop, and a synced object is dropped for everyone. It only ever acts on the local
+player: an object another player holds stays in their hand (to make them let go, have their own page call it,
+for example from a [one-shot](scene-events.md#one-shot-events)). In SDK Play Mode the desktop player only grabs with the
+right hand, so `BS.HandSide.LEFT` lets go of nothing there.
+
 ## Deep Links
 
 ```js
@@ -303,9 +319,9 @@ scene.Deserialise(saved, parentObject);     // adopts anything whose recorded pa
 two fields that are always `Unknown`, then the operating system as the device reports it. In Play mode
 it resolves with an empty string.
 
-`ObjectTextureToBase64` reads the Renderer on the object itself (not its children). It only finds
-objects your script created, `scene.Instantiate` copies included, and not once you've set their
-`networkId`; for anything else it resolves with `null`.
+`ObjectTextureToBase64` reads the Renderer on the object itself (not its children). It works on any
+object your page can reach (created by your script, or placed in the editor with a BS component) and
+resolves with `null` when the object has no Renderer, the slot has no texture, or the slot doesn't exist.
 
 `Deserialise` also accepts a single object's `Serialise(true)` output (run it through `JSON.stringify` first — `Serialise(true)` returns an array, and `Deserialise` takes the JSON string), so a subtree can be saved and restored on its own.
 

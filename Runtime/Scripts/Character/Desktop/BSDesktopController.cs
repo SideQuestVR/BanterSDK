@@ -744,7 +744,7 @@ namespace BS
         /// <summary>One Camera.main and one AudioListener: this player's.</summary>
         void DisableOtherMainCameras()
         {
-            foreach (var other in FindObjectsByType<Camera>(FindObjectsSortMode.None))
+            foreach (var other in FindObjects.All<Camera>())
             {
                 if (other == _camera || !other.enabled || !other.CompareTag("MainCamera"))
                     continue;
@@ -753,7 +753,7 @@ namespace BS
             }
 
             var ownListener = _head.GetComponent<AudioListener>();
-            foreach (var listener in FindObjectsByType<AudioListener>(FindObjectsSortMode.None))
+            foreach (var listener in FindObjects.All<AudioListener>())
             {
                 if (listener != ownListener && listener.enabled)
                     listener.enabled = false;

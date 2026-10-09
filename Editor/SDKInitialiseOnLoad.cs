@@ -33,7 +33,7 @@ namespace BS.SDKEditor
                 // Only decide here. Creating it now would put it in the edit scene, which Unity saves as
                 // the state to restore when play stops, so it would still be there afterwards.
                 // BSStarterUpper.BeforeEditorPlay creates it once play mode has started.
-                BSStarterUpper.SpawnOnPlay = Object.FindObjectOfType<BSStarterUpper>() == null;
+                BSStarterUpper.SpawnOnPlay = Object.FindAnyObjectByType<BSStarterUpper>() == null;
             }
 #endif
         }

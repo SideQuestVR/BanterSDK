@@ -81,7 +81,7 @@ public class WorldSpaceUIDocument : MonoBehaviour, IPointerMoveHandler, IPointer
 
     public void RebuildPanel()
     {
-        PanelEventHandler[] handlers = FindObjectsOfType<PanelEventHandler>();
+        PanelEventHandler[] handlers = BS.FindObjects.All<PanelEventHandler>();
 
         foreach (PanelEventHandler handler in handlers)
         {

@@ -211,7 +211,7 @@ namespace SideQuest.FlexaBody
             _heldObject = null;
             if (!ReferenceEquals(released, null))
             {
-                // GetInstanceID still works on a destroyed object, which is all the page needs.
+                // BSScene.UnityId still answers for a destroyed object, which is all the page needs.
                 try { Released?.Invoke(released); }
                 catch (Exception e) { Debug.LogException(e); }
             }

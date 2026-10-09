@@ -79,6 +79,33 @@ namespace BS
         public int RegisteredComponentCount => banterComponents.Count;
         /// <summary>Has this load produced anything at all? The missing-world fallback keys off this.</summary>
         public bool HasRegisteredContent => !objects.IsEmpty || !banterComponents.IsEmpty;
+
+        // The page knows objects and components by a number: a JS object's unityId, oid and cid here, and the ids in
+        // events and replies. That was Unity's instance id until Unity 6.4 deprecated it (6.5 rejects it) for EntityId,
+        // which Unity is widening to 64 bits (more than a JS number holds), reuses once its object is destroyed, and
+        // says to keep out of protocols. So the SDK numbers objects itself, the first time anything asks, and never
+        // gives a number to a second object this session; 0 is never given, the page reads it as "no parent". The
+        // table is keyed (weakly) by the object itself, not its EntityId, so a new object that inherits a destroyed
+        // one's EntityId gets its own number, a destroyed object keeps its number while anything still holds it, and
+        // no Unity API is called, which keeps it usable off the main thread. The table and counter live in their own
+        // class so that asking never runs BSScene's static initialisers, which call Unity (Random.Range).
+        sealed class UnityIdBox
+        {
+            internal static readonly System.Runtime.CompilerServices.ConditionalWeakTable<UnityEngine.Object, UnityIdBox> All =
+                new System.Runtime.CompilerServices.ConditionalWeakTable<UnityEngine.Object, UnityIdBox>();
+            static int last;
+            internal readonly int value = Interlocked.Increment(ref last);
+        }
+
+        /// <summary>
+        /// The number the page knows <paramref name="obj"/> by (its <c>unityId</c>, the keys of the object and
+        /// component maps): one per object for its whole life, positive, never another object's. Safe off the main
+        /// thread, and still answers for a destroyed object. 0 for null.
+        /// </summary>
+        public static int UnityId(UnityEngine.Object obj)
+        {
+            return ReferenceEquals(obj, null) ? 0 : UnityIdBox.All.GetValue(obj, _ => new UnityIdBox()).value;
+        }
         public static string ORIGINAL_HOME_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
         public static string CUSTOM_HOME_SPACE = "https://banter-winterland.glitch.me";// https://sq-smoke-sdk.glitch.me https://benvr.co.uk/banter/toyhouse/ sq-lobby.glitch.me "https://sq-homepage.glitch.me/home-space.html";// "https://sq-sdk-smokehouse.glitch.me"; //
         public static string KICKED_SPACE = "https://sq-lobby.glitch.me/?" + UnityEngine.Random.Range(0, 1000000);
@@ -341,7 +368,7 @@ namespace BS
             {
                 interaction.onClick.Invoke(point, normal);
             }
-            EventBus.Trigger("OnClick", new CustomEventArgs(obj.GetInstanceID().ToString(), new object[] { point, normal }));
+            EventBus.Trigger("OnClick", new CustomEventArgs(UnityId(obj).ToString(), new object[] { point, normal }));
             link.OnClick(obj, point, normal);
         }
         #endregion
@@ -496,6 +523,61 @@ namespace BS
             }
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.ADD_PLAYER_FORCE);
         }
+
+        /// <summary>
+        /// Reads a RELEASE_GRAB payload, "side¶unityId": side is a <see cref="HandSide"/> value or -1 for both hands
+        /// (anything else counts as both), unityId the page's id of the object to let go of, or empty for whatever is
+        /// held. False for a malformed payload.
+        /// </summary>
+        internal static bool TryParseReleaseGrab(string msg, out int side, out int? objectId)
+        {
+            side = -1;
+            objectId = null;
+            var parts = (msg ?? "").Split(MessageDelimiters.PRIMARY);
+            if (!int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out side))
+                return false;
+            if (side != (int)HandSide.LEFT && side != (int)HandSide.RIGHT)
+                side = -1;
+            if (parts.Length > 1 && parts[1].Length > 0)
+            {
+                if (!int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var id))
+                    return false;
+                objectId = id;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Lets go of what the local player holds (<see cref="DataBridge.ReleaseGrab"/>) and always answers:
+        /// "!rlg!¶1" when something was let go, "!rlg!¶0" otherwise (nothing held, not held by this player, an
+        /// object that isn't in the scene), or an error for a malformed request.
+        /// </summary>
+        public void ReleaseGrab(string msg, int reqId)
+        {
+            if (!TryParseReleaseGrab(msg, out var side, out var objectId))
+            {
+                SendError(reqId, "RELEASE_GRAB: Message is malformed: " + msg);
+                return;
+            }
+            var target = objectId.HasValue ? GetGameObject(objectId.Value) : null;
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                var released = false;
+                // An id that resolves to nothing (destroyed, never linked) is held by no one.
+                if (!objectId.HasValue || target != null)
+                {
+                    try
+                    {
+                        released = data.ReleaseGrab(target, side);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
+                }
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RELEASE_GRAB + MessageDelimiters.PRIMARY + (released ? "1" : "0"));
+            }, $"{nameof(BSScene)}.{nameof(ReleaseGrab)}"));
+        }
         public void AiModel(string msg, int reqId)
         {
             try
@@ -548,7 +630,7 @@ namespace BS
         public void ObjectTextureToBase64(string msg, int reqId)
         {
             var parts = msg.Split(MessageDelimiters.PRIMARY);
-            // The page sends the object's unityId (its instance id), like every other object request; a lookup
+            // The page sends the object's unityId (see UnityId), like every other object request; a lookup
             // by BSObjectId.Id only matched objects whose Id happened to equal it.
             var gameObject = int.TryParse(parts[0], out var oid) ? GetGameObject(oid) : null;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -1064,7 +1146,7 @@ namespace BS
         #region Manage Banter Objects
         public void AddBanterObject(GameObject gameObject, BSObjectId banterObjectId, bool skipChangeFlush = false)
         {
-            var oid = gameObject.GetInstanceID();
+            var oid = UnityId(gameObject);
             if (!objects.ContainsKey(oid))
             {
                 var banterObject = new BSObject() { oid = oid };
@@ -1352,7 +1434,7 @@ namespace BS
         public void RegisterComponentOnMainThread(GameObject go, BSComponentBase comp)
         {
             var obj = go.GetComponent<BSObjectId>();
-            var cid = comp.GetInstanceID();
+            var cid = UnityId(comp);
             BSComponent banterComp = null;
             // AddJsComponent registers components on inactive objects itself; their Awake comes later.
             if (obj != null && !obj.mainThreadComponentMap.ContainsKey(cid))
@@ -1376,7 +1458,7 @@ namespace BS
                     else
                     {
                         // This is caught in the AddBanterComponent method instead. 
-                        // Debug.LogError("BSComponent is null: " + go.GetInstanceID() + " : " + cid + " : " + comp.name);
+                        // Debug.LogError("BSComponent is null: " + UnityId(go) + " : " + cid + " : " + comp.name);
                     }
                     link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
@@ -1399,7 +1481,7 @@ namespace BS
             var obj = go.GetComponent<BSObjectId>();
             if (obj != null)
             {
-                obj.mainThreadComponentMap.Remove(comp.GetInstanceID());
+                obj.mainThreadComponentMap.Remove(UnityId(comp));
             }
         }
         #endregion
@@ -1760,7 +1842,7 @@ namespace BS
                     {
                         child.gameObject.AddComponent<BSObjectId>();
                         await new WaitForEndOfFrame();
-                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_OBJECT + MessageDelimiters.PRIMARY + child.gameObject.GetInstanceID());
+                        link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.INLINE_OBJECT + MessageDelimiters.PRIMARY + UnityId(child.gameObject));
                     }
                     else
                     {
@@ -1943,7 +2025,7 @@ namespace BS
                  }
 
                  if (didHit)
-                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + hit.collider.gameObject.GetInstanceID() + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.z) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.z));
+                     link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST + MessageDelimiters.PRIMARY + UnityId(hit.collider.gameObject) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.point.z) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.x) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.y) + MessageDelimiters.PRIMARY + NumberFormat.Format(hit.normal.z));
                  else
                      // A miss still answers the request (bare command, no hit data), or the page's promise never settles.
                      link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.RAYCAST);
@@ -2001,7 +2083,7 @@ namespace BS
                         newObject.transform.parent = settings.parentTransform;
                     }
                     AddBanterObject(newObject, objectId);
-                    var banterObject = GetBanterObject(newObject.GetInstanceID());
+                    var banterObject = GetBanterObject(UnityId(newObject));
                     await new WaitForEndOfFrame();
                     foreach (var comp in banterObject.banterComponents)
                     {
@@ -2078,7 +2160,7 @@ namespace BS
                      RegisterComponentOnMainThread(gameObject, comp);
                  }
                  comp.jsId = linkId;
-                 var banterComp = AddBanterComponent(gameObject.GetInstanceID(), comp.GetInstanceID(), linkId, componentType);
+                 var banterComp = AddBanterComponent(UnityId(gameObject), UnityId(comp), linkId, componentType);
                  if (banterComp != null)
                  {
                      // Nor does it Start, and some components only report loaded from Start: hidden content
@@ -2268,7 +2350,7 @@ namespace BS
             {
                 return 0;
             }
-            return parent.gameObject.GetInstanceID();
+            return UnityId(parent.gameObject);
         }
 
         public void DestroyJsObject(int oid, int reqId)
@@ -2333,7 +2415,7 @@ namespace BS
         string GetObjectUpdateString(GameObject go, int reqId, int parent, string linkId)
         {
             return APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY +
-                APICommands.OBJECT_ADDED + MessageDelimiters.PRIMARY + go.GetInstanceID() + MessageDelimiters.PRIMARY + (go.activeSelf ? 1 : 0) +
+                APICommands.OBJECT_ADDED + MessageDelimiters.PRIMARY + UnityId(go) + MessageDelimiters.PRIMARY + (go.activeSelf ? 1 : 0) +
                 MessageDelimiters.PRIMARY + go.name + MessageDelimiters.PRIMARY + go.layer + MessageDelimiters.PRIMARY + go.tag + MessageDelimiters.PRIMARY + parent + MessageDelimiters.PRIMARY + linkId;
         }
 
@@ -2623,7 +2705,7 @@ namespace BS
                     events.OnSceneReset.Invoke();
                 }, $"{nameof(BSScene)}.{nameof(ResetScene)}"));
                 // This seems to be a bug in 2022, hard crash without this line.
-                GameObject.FindObjectsOfType<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
+                FindObjects.All<Cloth>().ToList().ForEach(x => GameObject.Destroy(x));
                 // await Resources.UnloadUnusedAssets();
             }
             catch (Exception e)

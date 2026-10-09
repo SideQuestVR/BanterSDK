@@ -37,7 +37,7 @@ namespace BS
 
         void Awake()
         {
-            oid = gameObject.GetInstanceID();
+            oid = BSScene.UnityId(gameObject);
             scene = BSScene.Instance();
 #if UNITY_EDITOR
                 if (!UnityEditor.BuildPipeline.isBuildingPlayer)
@@ -79,8 +79,8 @@ namespace BS
 
             if (string.IsNullOrEmpty(Id) || IsDuplicateId(Id))
             {
-                // A random Id rather than the instance id: instance ids restart every editor session, so a saved
-                // one can come round again on a new object.
+                // A random Id rather than the number GenerateId uses (BSScene.UnityId): those restart every session,
+                // so a saved one can come round again on a new object.
                 ForceGenerateId();
                 KeepEditorId();
             }
@@ -108,7 +108,7 @@ namespace BS
         private bool IsDuplicateId(string id)
         {
             // Inactive objects too: a disabled copy shares the network id just the same.
-            var all = FindObjectsByType<BSObjectId>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var all = FindObjects.All<BSObjectId>(FindObjectsInactive.Include);
             foreach (var u in all)
             {
 #if UNITY_EDITOR
@@ -125,7 +125,7 @@ namespace BS
         {
             if (string.IsNullOrEmpty(Id) || force)
             {
-                Id = gameObject.GetInstanceID().ToString();
+                Id = BSScene.UnityId(gameObject).ToString();
             }
         }
         public void ForceGenerateId()
@@ -136,7 +136,7 @@ namespace BS
         void OnDestroy()
         {
             mainThreadComponentMap.Clear();
-            BSScene.Instance().DestroyBanterObject(gameObject.GetInstanceID());
+            BSScene.Instance().DestroyBanterObject(BSScene.UnityId(gameObject));
         }
         void Update()
         {

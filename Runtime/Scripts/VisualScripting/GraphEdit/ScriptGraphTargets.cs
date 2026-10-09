@@ -69,7 +69,7 @@ namespace BS
 
         public static List<ScriptMachine> AllMachines()
         {
-            return Object.FindObjectsByType<ScriptMachine>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            return FindObjects.All<ScriptMachine>(FindObjectsInactive.Include)
                 .OrderBy(m => HierarchyPath(m.transform), System.StringComparer.Ordinal)
                 .ThenBy(MachineIndex)
                 .ToList();
@@ -203,7 +203,7 @@ namespace BS
         /// </remarks>
         public static GameObject FindUnregistered(string bid)
         {
-            foreach (var id in Object.FindObjectsByType<BSObjectId>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            foreach (var id in FindObjects.All<BSObjectId>(FindObjectsInactive.Include))
             {
                 if (id.Id == bid) return id.gameObject;
             }

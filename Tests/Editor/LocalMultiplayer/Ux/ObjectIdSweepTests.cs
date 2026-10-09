@@ -12,7 +12,7 @@ namespace BS.LocalMultiplayer.Tests
 {
     /// <summary>
     /// Which networked-object Ids the Local Multiplayer window flags: empty ones, ones another object shares, and
-    /// instance ids (what BSObjectId writes for itself, different in every editor process). Then which scenes
+    /// numeric ids (what BSObjectId writes for itself, different in every editor process). Then which scenes
     /// "Assign Stable Ids" changed, the only ones it offers to save.
     /// </summary>
     public class ObjectIdSweepTests
@@ -68,7 +68,8 @@ namespace BS.LocalMultiplayer.Tests
         {
             foreach (var value in new[] { int.MinValue, -123456, -1, 0, 1, 987654, int.MaxValue })
             {
-                // GetInstanceID().ToString() under any culture: Int32 never groups digits or localises them.
+                // BSScene.UnityId(...).ToString(), or an old SDK's instance id, under any culture: Int32 never groups
+                // digits or localises them.
                 Assert.IsTrue(ObjectIdSweep.IsInstanceIdStyle(value.ToString(CultureInfo.InvariantCulture)), value.ToString());
             }
         }

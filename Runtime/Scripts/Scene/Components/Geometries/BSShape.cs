@@ -97,11 +97,11 @@ namespace BS
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Shape);
+            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Shape);
 
 
-            oid = gameObject.GetInstanceID();
-            cid = GetInstanceID();
+            oid = BSScene.UnityId(gameObject);
+            cid = BSScene.UnityId(this);
 
             if (constructorProperties != null)
             {

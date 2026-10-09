@@ -327,6 +327,10 @@ namespace BS
                 {
                     scene.AddPlayerForce(GetMsgData(msg, APICommands.ADD_PLAYER_FORCE), id);
                 }
+                else if (msg.StartsWith(APICommands.RELEASE_GRAB))
+                {
+                    scene.ReleaseGrab(GetMsgData(msg, APICommands.RELEASE_GRAB), id);
+                }
                 else if (msg.StartsWith(APICommands.DEEP_LINK))
                 {
                     var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
@@ -738,6 +742,8 @@ namespace BS
 #if !GREENFIELD_PROJECT
             // No Banter client in the SDK to attach objects to the local user; emulate the head.
             SdkAttachments.Install(scene);
+            // Nor its hands: a script lets go through the desktop player's mouse hand.
+            SdkGrabRelease.Install(scene);
 #endif
             pipe = new BSPipe(this, view, manager);
             batchUpdater = new BatchUpdater(pipe);
@@ -1048,17 +1054,17 @@ namespace BS
 
         public void OnClick(GameObject obj, Vector3 point, Vector3 normal)
         {
-            Send(APICommands.EVENT + APICommands.CLICKED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.z));
+            Send(APICommands.EVENT + APICommands.CLICKED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.z));
         }
 
         public void OnGrab(GameObject obj, Vector3 point, HandSide side)
         {
-            Send(APICommands.EVENT + APICommands.GRABBED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + (int)side);
+            Send(APICommands.EVENT + APICommands.GRABBED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + (int)side);
         }
 
         public void OnRelease(GameObject obj, HandSide side)
         {
-            Send(APICommands.EVENT + APICommands.RELEASED + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + (int)side);
+            Send(APICommands.EVENT + APICommands.RELEASED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + (int)side);
         }
 
         public void OnButtonPressed(ButtonType button, HandSide side)
@@ -1102,7 +1108,7 @@ namespace BS
         {
             EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
             // Text from any web page: WireText keeps any delimiter in it from cutting the message or the batch.
-            Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + browser.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + WireText.Encode(message));
+            Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + BSScene.UnityId(browser.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(message));
         }
         public void OnKeyPress(KeyCode key)
         {
@@ -1114,37 +1120,37 @@ namespace BS
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
             var userData = scene.GetUserFromCollider(collision.collider);
-            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnCollisionStay(GameObject obj, Collision collision)
         {
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
-            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name);
+            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name);
         }
 
         public void _OnCollisionExit(GameObject obj, Collision collision)
         {
             var userData = scene.GetUserFromCollider(collision.collider);
-            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerEnter(GameObject obj, Collider collider)
         {
             var userData = scene.GetUserFromCollider(collider);
-            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerStay(GameObject obj, Collider collider)
         {
-            Send(APICommands.EVENT + APICommands.TRIGGER_STAY + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name);
+            Send(APICommands.EVENT + APICommands.TRIGGER_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name);
         }
 
         public void _OnTriggerExit(GameObject obj, Collider collider)
         {
             var userData = scene.GetUserFromCollider(collider);
-            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + obj.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.GetInstanceID() + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void CheckPipe()

@@ -35,7 +35,7 @@ namespace BS.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return data.name == flow.GetValue<GameObject>(banterHeldEvents).GetInstanceID().ToString();
+            return data.name == BSScene.UnityId(flow.GetValue<GameObject>(banterHeldEvents)).ToString();
         }
 
         // Setting the value on our port.

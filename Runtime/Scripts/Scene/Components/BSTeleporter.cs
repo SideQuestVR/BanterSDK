@@ -172,11 +172,11 @@ namespace BS
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.Teleporter);
+            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Teleporter);
 
 
-            oid = gameObject.GetInstanceID();
-            cid = GetInstanceID();
+            oid = BSScene.UnityId(gameObject);
+            cid = BSScene.UnityId(this);
 
             if (constructorProperties != null)
             {

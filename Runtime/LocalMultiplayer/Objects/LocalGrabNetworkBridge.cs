@@ -1,8 +1,11 @@
-// <mirror source="Assets/Systems/Networking/GrabNetworkBridge.cs" sha256="79f6703d2f35797c53dc261735941b01e70c9723d61e47d1939597bd8b6d8897" mode="port" />
+// <mirror source="Assets/Systems/Networking/GrabNetworkBridge.cs" sha256="4822b03fa8abe5ece7a6ef8a44ff847265019ab4205f88f4dddd89bb52aa031a" mode="port" />
 // GrabNetworkBridge for the SDK's desktop player: one grabbing hand, the mouse hand (always the right hand), whose
 // GrabHand is the SDK's port of FlexaBody's. Differences, all forced by the desktop player:
 //   - it does NOT call scene.Grab / scene.Release: BSDesktopMouseHand already raises them (Greenfield's bridge does it
-//     itself, GrabNetworkBridge.cs:89, 131);
+//     itself, GrabNetworkBridge.cs:139, 181);
+//   - nor does it install the script release (DataBridge.ReleaseGrab, GrabNetworkBridge.ReleaseFromScript): the SDK's
+//     SdkGrabRelease lets go through BSDesktopMouseHand.ReleaseFromScript, and the Released it raises reaches this
+//     bridge like any release;
 //   - a lost ownership race also ends the desktop press (BSDesktopMouseHand.EndGrab), or the hand's 0.2 s grip window
 //     would grab the same object again on the next physics step; and it lets go only while the hand still holds that
 //     object, where production releases whatever the hand holds;

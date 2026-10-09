@@ -400,7 +400,7 @@ namespace BS
                 return false;
 
             // Skip already registered assets
-            string testId = $"asset_{obj.GetType().Name}_{obj.GetInstanceID()}";
+            string testId = $"asset_{obj.GetType().Name}_{BSScene.UnityId(obj)}";
             if (assets.ContainsKey(testId))
                 return false;
 

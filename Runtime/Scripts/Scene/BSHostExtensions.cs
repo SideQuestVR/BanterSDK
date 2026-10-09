@@ -161,7 +161,7 @@ namespace BS
         }
 
         /// <summary>
-        /// The GameObject a page named by instance id (the <c>unityId</c> of a JS GameObject), or
+        /// The GameObject a page named by its <c>unityId</c> (<see cref="BSScene.UnityId"/>), or
         /// null. Main thread only.
         /// </summary>
         public static GameObject ResolveObject(int instanceId)

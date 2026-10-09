@@ -26,7 +26,7 @@ class CustomSceneProcessor : IProcessSceneWithReport
         if (isBuildingSceneBee)
         {
             LogLine.Do("Removing existing BSStarterUpper if it exists, it will be added at runtime.");
-            BSStarterUpper[] everything = GameObject.FindObjectsOfType<BSStarterUpper>();
+            BSStarterUpper[] everything = FindObjects.All<BSStarterUpper>();
             for (int i = 0; i < everything.Length; i++)
             {
                 LogLine.Do("BSStarterUpper removed.");

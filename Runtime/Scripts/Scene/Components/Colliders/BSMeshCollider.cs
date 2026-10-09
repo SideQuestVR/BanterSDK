@@ -82,8 +82,8 @@ namespace BS
                 componentType.sharedMesh = GetComponent<MeshFilter>().sharedMesh;
             }
 
-            oid = gameObject.GetInstanceID();
-            cid = GetInstanceID();
+            oid = BSScene.UnityId(gameObject);
+            cid = BSScene.UnityId(this);
 
             if (constructorProperties != null)
             {

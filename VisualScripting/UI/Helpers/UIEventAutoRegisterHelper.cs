@@ -72,7 +72,7 @@ namespace BS.VisualScripting.UI.Helpers
             try
             {
                 // Try to find ANY panel that's initialized
-                var allPanels = UnityEngine.Object.FindObjectsOfType<BSUIPanel>();
+                var allPanels = FindObjects.All<BSUIPanel>();
                 LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Found {allPanels.Length} BSUIPanel(s)");
 
                 foreach (var panel in allPanels)
@@ -178,7 +178,7 @@ namespace BS.VisualScripting.UI.Helpers
             try
             {
                 // Try to find ANY panel that's initialized
-                var allPanels = UnityEngine.Object.FindObjectsOfType<BSUIPanel>();
+                var allPanels = FindObjects.All<BSUIPanel>();
 
                 foreach (var panel in allPanels)
                 {

@@ -38,7 +38,7 @@ The **left mouse button** acts on the nearest thing under the cursor, up to 30 m
 
 Colliders on other layers can't be clicked, as in the app (see [Layers](../building-in-unity/layers.md)). A solid collider in front of a grabbable object blocks the grab; trigger colliders don't, unless they're on the Grabbable, UI or Menu layer.
 
-**Holding something:** the object follows the cursor at the distance you grabbed it. Scroll to push it away or pull it in (0.3 to 30 m), and let go of the left button to drop it; flick the mouse as you let go to throw it. You can fly while holding it. The page's `grab` and `release` events fire as in the app, for the right hand.
+**Holding something:** the object follows the cursor at the distance you grabbed it. Scroll to push it away or pull it in (0.3 to 30 m), and let go of the left button to drop it; flick the mouse as you let go to throw it. You can fly while holding it. The page's `grab` and `drop` events fire as in the app, for the right hand.
 
 While you hold an object, these keys are the right controller's buttons, for the object's [Held Events](../components/vr-interaction.md#heldevents):
 

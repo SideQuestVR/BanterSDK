@@ -160,14 +160,21 @@ await obj.Async();
 const ready = await BS.CreateGameObject("Spawned");
 
 // Read back the texture on one of the object's material slots as base64
-// (only for objects your script created: see the Scene API's Utility Methods)
+// (null when the object has no Renderer or the slot has no texture)
 const base64 = await obj.ObjectTextureToBase64(0);   // materialIndex
 
 // Snapshot the object as plain records — identity, local transform, and every
 // component added through AddComponent, one record per object
 const records = obj.Serialise();        // includes all descendants (traverse = true)
 const single = obj.Serialise(false);    // just this object
+
+// Make the local player let go of this object, if they're holding it
+const dropped = await obj.ReleaseGrab(); // true if it was let go
 ```
+
+`ReleaseGrab` lets go with whichever of the local player's hands holds the object, and `drop` fires as for a
+normal drop. It resolves `false` if the local player isn't holding it, including when another player is. See
+[Letting Go of Held Objects](scene-api.md#letting-go-of-held-objects).
 
 ## GameObject Events
 

@@ -71,6 +71,8 @@ public class APICommands
     public const string AI_IMAGE = "!aiimg!";
     public const string AI_MODEL = "!aiglb!";
     public const string ADD_PLAYER_FORCE = "!adpf!";
+    /// <summary>Let go of what the local player holds (request/reply). Payload: "side¶unityId" (side -1 = both hands, unityId empty = whatever is held); reply "!rlg!¶1" when something was released, else "!rlg!¶0".</summary>
+    public const string RELEASE_GRAB = "!rlg!";
     public const string BASE_64_TO_CDN = "!b64cdn!";
     public const string OBJECT_TEX_TO_BASE_64 = "!objtob64!";
     public const string SELECT_FILE = "!sltglb!";

@@ -35,7 +35,7 @@ namespace BS.VisualScripting
                     }
 
                     // Find instance of MenuBrowserMessager
-                    var menuBrowserMessager = UnityEngine.Object.FindObjectOfType(menuBrowserMessagerType);
+                    var menuBrowserMessager = UnityEngine.Object.FindAnyObjectByType(menuBrowserMessagerType);
                     if (menuBrowserMessager == null)
                     {
                         return string.Empty;

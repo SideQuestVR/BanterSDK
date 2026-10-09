@@ -35,8 +35,8 @@ namespace BS.VisualScripting
                 }
                 else
                 {
-                    // If no GameObject specified, get the first panel in the scene
-                    foundPanel = Object.FindObjectOfType<BSUIPanel>();
+                    // If no GameObject specified, get a panel in the scene
+                    foundPanel = Object.FindAnyObjectByType<BSUIPanel>();
                 }
 
                 if (foundPanel == null)

@@ -146,7 +146,7 @@ namespace BS.SDKEditor
 
         public int machineIndex;
 
-        /// <summary>Runtime instance id at save time. Diagnostic only — it does not survive a reload.</summary>
+        /// <summary>Runtime unityId (BSScene.UnityId) at save time. Diagnostic only — it does not survive a reload.</summary>
         public string unityId;
 
         /// <summary>Hierarchy path at save time, used only when the bid cannot be matched.</summary>

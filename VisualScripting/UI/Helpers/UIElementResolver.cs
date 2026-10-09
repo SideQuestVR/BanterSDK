@@ -59,7 +59,7 @@ namespace BS.VisualScripting.UI.Helpers
             }
 
             // Try to find the element in any registered panel
-            var allPanels = Object.FindObjectsOfType<BSUIPanel>();
+            var allPanels = FindObjects.All<BSUIPanel>();
             LogVerbose($"ResolveElementNameToId: Found {allPanels.Length} BSUIPanel(s) in scene");
 
             foreach (var panel in allPanels)

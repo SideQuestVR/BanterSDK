@@ -12,18 +12,19 @@ namespace BS.LocalMultiplayer.Editor
     {
         None,
 
-        /// <summary>No Id: Awake fills in the instance id, which each editor process picks for itself.</summary>
+        /// <summary>No Id: Awake fills in a number (BSScene.UnityId), which each editor process picks itself.</summary>
         Empty,
 
         /// <summary>
-        /// Another object in the loaded scenes has the same Id. Each player renames the copies to its own instance
-        /// ids, and a lookup by Id finds whichever copy comes first (BSScene.GetObjectByBid).
+        /// Another object in the loaded scenes has the same Id. Each player renames the copies to its own numbers
+        /// (BSScene.UnityId), and a lookup by Id finds whichever copy comes first (BSScene.GetObjectByBid).
         /// </summary>
         Duplicate,
 
         /// <summary>
-        /// An instance id (<c>^-?\d+$</c>, ASCII digits). OnValidate and Awake write these to de-duplicate without
-        /// marking the scene dirty, so the saved scene may hold another value, or the same value twice.
+        /// A number (<c>^-?\d+$</c>, ASCII digits): BSScene.UnityId, or an older SDK's instance id. OnValidate and
+        /// Awake write these to de-duplicate without marking the scene dirty, so the saved scene may hold another
+        /// value, or the same value twice.
         /// </summary>
         InstanceIdStyle,
     }
@@ -36,7 +37,7 @@ namespace BS.LocalMultiplayer.Editor
     /// </summary>
     /// <remarks>
     /// Where unstable Ids come from: BSObjectId.Awake and OnValidate call <c>GenerateId(IsDuplicateId(Id))</c>
-    /// (BSObjectId.cs:38-50, 63-70), which writes <c>gameObject.GetInstanceID().ToString()</c> (:80-86) whenever the
+    /// (BSObjectId.cs:38-50, 63-70), which writes <c>BSScene.UnityId(gameObject).ToString()</c> (:80-86) whenever the
     /// Id is empty or a duplicate. That value differs per process and never dirties the scene. A duplicate is
     /// typically a copy of an object that already had an Id, such as a second instance of the shipped Seat
     /// prefab. The fix is <see cref="BSObjectId.ForceGenerateId"/> (:87-90), a random URL-safe Id, recorded for
@@ -67,7 +68,10 @@ namespace BS.LocalMultiplayer.Editor
             return IsInstanceIdStyle(id) ? IdProblem.InstanceIdStyle : IdProblem.None;
         }
 
-        /// <summary><c>^-?\d+$</c> over ASCII digits: what <c>GetInstanceID().ToString()</c> produces.</summary>
+        /// <summary>
+        /// <c>^-?\d+$</c> over ASCII digits: what <c>BSScene.UnityId(...).ToString()</c> produces, and an older SDK's
+        /// <c>GetInstanceID().ToString()</c>.
+        /// </summary>
         internal static bool IsInstanceIdStyle(string id)
         {
             if (string.IsNullOrEmpty(id))

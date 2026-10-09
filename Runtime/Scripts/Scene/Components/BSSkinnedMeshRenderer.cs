@@ -136,7 +136,7 @@ namespace BS
             }
 
             var rootBone = _skinnedMeshRenderer.rootBone;
-            rootBoneInstanceId = rootBone.gameObject.GetInstanceID();
+            rootBoneInstanceId = BSScene.UnityId(rootBone.gameObject);
 
             _rootBoneObjectId = rootBone.GetComponent<BSObjectId>();
             if (_rootBoneObjectId == null)
@@ -194,7 +194,7 @@ namespace BS
                 {
                     name = bone.name,
                     path = GetRelativePath(rootBone, bone),
-                    instanceId = bone.gameObject.GetInstanceID()
+                    instanceId = BSScene.UnityId(bone.gameObject)
                 };
             }
 
@@ -291,11 +291,11 @@ namespace BS
         {
             if (alreadyStarted) { return; }
             alreadyStarted = true;
-            scene.RegisterBanterMonoscript(gameObject.GetInstanceID(), GetInstanceID(), ComponentType.SkinnedMeshRenderer);
+            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.SkinnedMeshRenderer);
 
 
-            oid = gameObject.GetInstanceID();
-            cid = GetInstanceID();
+            oid = BSScene.UnityId(gameObject);
+            cid = BSScene.UnityId(this);
 
             if (constructorProperties != null)
             {

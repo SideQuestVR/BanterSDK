@@ -148,7 +148,7 @@ namespace BS.SDKEditor
             }
             catch (Exception ex)
             {
-                Debug.Log($"Could not add scriptMachine {scriptMachine?.GetType()}{scriptMachine?.GetInstanceID()} {scriptMachine?.name} because of {ex} ");
+                Debug.Log($"Could not add scriptMachine {scriptMachine?.GetType()}{scriptMachine?.GetEntityId()} {scriptMachine?.name} because of {ex} ");
             }
             return output;
         }
@@ -253,7 +253,7 @@ namespace BS.SDKEditor
             return everything.Distinct().Where(IsDisallowed).ToList();
         }
 
-        static bool IsDisallowed(string id)
+        internal static bool IsDisallowed(string id)
         {
             bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
             bool isBanterVs = (id?.StartsWith("BS.VisualScripting.") ?? false) || (id?.StartsWith("Banter.VisualScripting.") ?? false);

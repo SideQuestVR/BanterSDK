@@ -198,7 +198,7 @@ namespace BS.LocalMultiplayer.Objects
         // ReSetup = the same OnSyncedObject call its Start made). Objects that haven't started will announce themselves.
         void ReplayStartedObjects()
         {
-            foreach (var synced in FindObjectsByType<BSSyncedObject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+            foreach (var synced in FindObjects.All<BSSyncedObject>(FindObjectsInactive.Exclude))
             {
                 if (synced != null && synced.IsLoaded) synced.Refresh();
             }

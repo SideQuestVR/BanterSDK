@@ -105,7 +105,7 @@ namespace BS.VisualScripting
                 return elementName;
 
             // Try to find the element in any registered panel
-            var allPanels = UnityEngine.Object.FindObjectsOfType<BSUIPanel>();
+            var allPanels = FindObjects.All<BSUIPanel>();
             foreach (var panel in allPanels)
             {
                 try

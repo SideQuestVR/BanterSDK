@@ -123,6 +123,33 @@ namespace BS
             _gripHeld = false;
         }
 
+        /// <summary>
+        /// Let go now, for a script (scene.ReleaseGrab): GrabHand's own release, so the held events and the page's
+        /// release event fire as for a mouse release. The press ends too, or the grip window would grab again on
+        /// the next physics step while the button is still down. False when the hand holds nothing, or holds
+        /// something other than <paramref name="target"/> (a part of it, or what it's part of, counts).
+        /// </summary>
+        public bool ReleaseFromScript(GameObject target)
+        {
+            if (!_grabHand.IsGrabbing || _grabHand.HeldHandle == null)
+                return false;
+            if (target != null && !IsHeld(target))
+                return false;
+            _gripHeld = false;
+            _gripLatch = false;
+            _placePending = false;
+            _grabHand.PreferredCollider = null;
+            _grabHand.ReleaseGrab();
+            return true;
+        }
+
+        bool IsHeld(GameObject target)
+        {
+            var handle = _grabHand.HeldHandle;
+            var held = handle.RB != null ? handle.RB.transform : handle.transform;
+            return held == target.transform || held.IsChildOf(target.transform) || target.transform.IsChildOf(held);
+        }
+
         /// <summary>Aim the hand along a new cursor ray, keeping the hold distance.</summary>
         public void UpdateAim(Ray ray)
         {

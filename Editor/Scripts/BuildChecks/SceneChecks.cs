@@ -354,11 +354,16 @@ namespace BS.SDKEditor.BuildChecks
         /// <summary>
         /// The LightMode tags URP's forward renderer draws: UniversalForward, UniversalForwardOnly, SRPDefaultUnlit, the old
         /// LightweightForward, and passes with none (null or empty here). A surface shader's generated passes are ForwardBase,
-        /// ForwardAdd, Deferred, ShadowCaster and Meta, so it has none of them.
+        /// ForwardAdd, Deferred, ShadowCaster and Meta, so it has none of them. Compared ignoring case: Unity reports some tags
+        /// upper-cased (SRPDEFAULTUNLIT), which flagged working URP shaders as Built-in ones.
         /// </summary>
         internal static bool HasPassUrpDraws(IEnumerable<string> lightModes) =>
-            lightModes.Any(mode => string.IsNullOrEmpty(mode) || mode == "UniversalForward" || mode == "UniversalForwardOnly"
-                                   || mode == "SRPDefaultUnlit" || mode == "LightweightForward");
+            lightModes.Any(mode => string.IsNullOrEmpty(mode) || UrpLightModes.Contains(mode));
+
+        static readonly HashSet<string> UrpLightModes = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "UniversalForward", "UniversalForwardOnly", "SRPDefaultUnlit", "LightweightForward",
+        };
 
         sealed class Problem
         {

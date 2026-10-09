@@ -26,7 +26,7 @@ internal static class CreatorConveniencesMenu
     [MenuItem("GameObject/BS/Objects/BSStarterUpper", false, 10)]
     static void CreateBanterStarterUpper(MenuCommand menuCommand)
     {
-        var exists = GameObject.FindObjectOfType<BSStarterUpper>();
+        var exists = GameObject.FindAnyObjectByType<BSStarterUpper>();
         if (exists != null)
         {
             Debug.LogWarning("BSStarterUpper already exists in the scene.", exists);
@@ -58,7 +58,7 @@ internal static class CreatorConveniencesMenu
     {
         var parent = command.context as GameObject;
         var scene = parent ? parent.scene : SceneManager.GetActiveScene();
-        foreach (var existing in Object.FindObjectsByType<BSSettings>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        foreach (var existing in FindObjects.All<BSSettings>(FindObjectsInactive.Include))
         {
             if (existing.gameObject.scene != scene)
                 continue;

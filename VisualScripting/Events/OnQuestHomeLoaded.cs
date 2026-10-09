@@ -70,7 +70,7 @@ namespace BS.VisualScripting
                         {
                             success = loadSuccess,
                             message = message,
-                            gameObjectId = questHomeGo.GetInstanceID()
+                            gameObjectId = BSScene.UnityId(questHomeGo)
                         };
 
                         EventBus.Trigger("OnQuestHomeLoaded", args);
@@ -104,7 +104,7 @@ namespace BS.VisualScripting
             if (questHomeGo == null) return false;
 
             // Only trigger if the event is for this specific GameObject
-            return args.gameObjectId == questHomeGo.GetInstanceID();
+            return args.gameObjectId == BSScene.UnityId(questHomeGo);
         }
 
         protected override void AssignArguments(Flow flow, QuestHomeLoadedEventArgs args)

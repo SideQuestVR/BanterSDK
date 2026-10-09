@@ -82,5 +82,28 @@ namespace BS.SDKEditor.Tests
             Assert.IsEmpty(missing, "BS types the client runs that the node library leaves out: " + string.Join(", ", missing));
             Assert.Less(unknown.Count, typeNames.Count / 2, "most of the client's BS types don't resolve; is BS.SDK loaded?");
         }
+
+        [Test]
+        public void ReleaseGrab_IsOfferedAndAllowed()
+        {
+            var unitType = FindType("BS.VisualScripting.ReleaseGrab");
+            var sideType = FindType("BS.VisualScripting.GrabHandSide");
+            Assert.IsNotNull(unitType, "the Release Grab unit isn't loaded");
+            Assert.IsNotNull(sideType);
+            // Units are offered from their assembly; the hand-side enum needs to be on the library for its dropdown.
+            CollectionAssert.Contains(VsNodeGeneration.assemblyAllowList, unitType.Assembly.GetName().Name);
+            Assert.IsTrue(OnTheNodeLibrary(sideType));
+            CollectionAssert.AreEqual(new[] { "Both", "Left", "Right" }, Enum.GetNames(sideType));
+
+            var unit = (Unity.VisualScripting.IUnit)Activator.CreateInstance(unitType);
+            unit.EnsureDefined();
+            CollectionAssert.AreEquivalent(new[] { "Object", "Hand" }, unit.valueInputs.Select(port => port.key));
+            CollectionAssert.AreEquivalent(new[] { "Released" }, unit.valueOutputs.Select(port => port.key));
+
+            // What the build check and the client allow-list key a node by.
+            var id = unit.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
+            Assert.AreEqual("BS.VisualScripting.ReleaseGrab", id);
+            Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
+        }
     }
 }

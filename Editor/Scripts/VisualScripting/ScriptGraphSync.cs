@@ -77,7 +77,7 @@ namespace BS.SDKEditor
         /// </summary>
         /// <remarks>
         /// Matching is on <c>BSObjectId.Id</c>, not on the runtime unityId the override also
-        /// carries: the runtime id is a per-session <c>GetInstanceID()</c> and means nothing here,
+        /// carries: the runtime id is a per-session <c>BSScene.UnityId</c> and means nothing here,
         /// whereas BSObjectId.Id is serialized into the scene and is what the runtime resolved the
         /// machine by in the first place. Hierarchy path is the fallback, for objects whose bid was
         /// regenerated after a duplicate collision.

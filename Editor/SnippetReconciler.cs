@@ -64,13 +64,13 @@ namespace BS.SDKEditor
         }
 
         public static string GetLastError(BSSnippet component) =>
-            component != null && _lastErrors.TryGetValue(component.GetInstanceID(), out var e) ? e.message : null;
+            component != null && _lastErrors.TryGetValue(BSScene.UnityId(component), out var e) ? e.message : null;
 
         static bool HasStandingError(BSSnippet component) =>
-            _lastErrors.TryGetValue(component.GetInstanceID(), out var e) && e.slug == component.Slug;
+            _lastErrors.TryGetValue(BSScene.UnityId(component), out var e) && e.slug == component.Slug;
 
         public static bool IsFetching(BSSnippet component) =>
-            component != null && _fetchInFlight.Contains(component.GetInstanceID());
+            component != null && _fetchInFlight.Contains(BSScene.UnityId(component));
 
         public static void EnsureInstanceId(BSSnippet component)
         {
@@ -120,8 +120,7 @@ namespace BS.SDKEditor
 
         static void Reconcile(List<BSSnippet> justValidated)
         {
-            var components = UnityEngine.Object
-                .FindObjectsByType<BSSnippet>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            var components = FindObjects.All<BSSnippet>(FindObjectsInactive.Include)
                 .Where(c => c.gameObject.scene.IsValid()
                             && c.gameObject.scene.isLoaded
                             && !EditorSceneManager.IsPreviewSceneObject(c))
@@ -242,7 +241,7 @@ namespace BS.SDKEditor
 
         static void StartFetch(BSSnippet component)
         {
-            var key = component.GetInstanceID();
+            var key = BSScene.UnityId(component);
             if (!_fetchInFlight.Add(key)) return;
             _lastErrors.Remove(key);
             var slug = component.Slug;
@@ -455,8 +454,7 @@ namespace BS.SDKEditor
         }
 
         static HashSet<string> ClaimedInstanceIds() =>
-            new HashSet<string>(UnityEngine.Object
-                .FindObjectsByType<BSSnippet>(FindObjectsInactive.Include, FindObjectsSortMode.None)
+            new HashSet<string>(FindObjects.All<BSSnippet>(FindObjectsInactive.Include)
                 .Where(c => c.gameObject.scene.isLoaded && !EditorSceneManager.IsPreviewSceneObject(c))
                 .Select(c => c.InstanceId)
                 .Where(id => !string.IsNullOrEmpty(id)));

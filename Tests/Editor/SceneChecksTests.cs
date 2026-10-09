@@ -414,6 +414,9 @@ namespace BS.SDKEditor.Tests
         [TestCase(new[] { "UniversalForward", "ShadowCaster", "DepthOnly" }, true)]
         [TestCase(new[] { "UniversalForwardOnly" }, true)]
         [TestCase(new[] { "SRPDefaultUnlit" }, true)]
+        [TestCase(new[] { "SRPDEFAULTUNLIT" }, true)] // how Unity reports it for some shaders
+        [TestCase(new[] { "UNIVERSALFORWARD", "SHADOWCASTER" }, true)]
+        [TestCase(new[] { "FORWARDBASE", "SHADOWCASTER" }, false)]
         [TestCase(new[] { "LightweightForward" }, true)]
         [TestCase(new[] { "" }, true)] // no LightMode tag, which URP draws as unlit
         [TestCase(new[] { null, "ShadowCaster" }, true)]
