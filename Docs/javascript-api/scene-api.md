@@ -288,7 +288,7 @@ right hand, so `BS.HandSide.LEFT` lets go of nothing there.
 scene.DeepLink("1234567890123456", "welcome");
 ```
 
-`DeepLink` only works on Quest: the first argument is the other app's Quest App ID (digits only), not a URL. On Windows and in Play mode nothing happens.
+`DeepLink` only works on Quest: the first argument is the other app's Quest App ID (digits only), not a URL. On Windows and in Play mode nothing happens. In a graph, use the **Deep Link** node (`BS > Utils`).
 
 ## Utility Methods
 

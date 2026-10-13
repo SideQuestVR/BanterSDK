@@ -285,5 +285,7 @@ namespace BS
         isPhysicsSettingsLocked,
         stopVelocity,
         cooldown,
+        exitPosition,
+        useExitPosition,
     }
 }

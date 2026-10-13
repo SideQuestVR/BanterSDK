@@ -7,7 +7,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Camera Snap")]
     [UnitShortTitle("On Camera Snap")]
-    [UnitCategory("Events\\BS\\AI")]
+    [UnitCategory("Events\\BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnCameraSnap : EventUnit<CustomEventArgs>
     {

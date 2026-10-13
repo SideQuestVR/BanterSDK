@@ -51,6 +51,13 @@ Only spawns that are in the scene while the space loads take part in the arrival
 
 Clicking a seat sits the local player on it, and moving or jumping stands them up; see [Seat](../building-in-unity/easy-prefabs.md#seat-bsseat). The player sits at the seat object's position, facing its forward.
 
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `unseatOnMove` | boolean | true | Stand up when the player pushes the move stick (WASD on desktop) |
+| `unseatOnJump` | boolean | true | Stand up when the player jumps |
+| `useExitPosition` | boolean | false | Teleport the player to `exitPosition` when they get off, however they get off |
+| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). They face the way the seat faces |
+
 <div class="docs-tabs">
 
 ```js

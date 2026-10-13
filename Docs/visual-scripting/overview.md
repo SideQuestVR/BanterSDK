@@ -188,6 +188,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 |------|---------|
 | Get User Info | The BSUser whose id, uid or name matches the input (null when nobody does). Its output port is labelled `Name`, but it holds the whole BSUser: name, id, uid, color, isLocal, isSpaceAdmin |
 | Get Local User Info | The local user's BSUser |
+| User From Collider | The user a `Collider` belongs to (a player's body or hands), local or remote: `Is User`, `Is Local User` (the local player's own body or hands), their `User Info` (BSUser) and their `User Data` component, or false and nulls for anything else. The JavaScript twin is `e.detail.user` on collision and trigger events |
 | Get User State | A user's head position/rotation (despite the name — it is not a prop reader) |
 | Get Local User State | The local user's head position/rotation |
 | Set My User State Value | Set one of **your own** synced props. `Value Is JSON?` parses the text; `Moderators Can Write?` opens it to space moderators (default: only you). No user id — user state is owner-writes-only |
@@ -213,6 +214,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Trigger Visual Scripting Relay | Fire a **Visual Scripting Relay** component's event (`Add Component > BS > Visual Scripting Relay`), passing it a `Value` of the relay's type, so a graph can drive UnityEvents set up in the Inspector |
 | Get Platform | Which platform the user is on, as comma-separated text that starts with `VR` or `2D` and ends with the operating system (empty in Play mode) |
 | Copy Text To Clipboard | Copy a string to the user's clipboard |
+| Deep Link | Launch another Quest app by its `App ID` (digits only, not a URL), optionally passing it a `Message`. Quest only: on Windows and in Play mode nothing happens |
 | Color: TryParseHtmlString | Parse an HTML color string into a Color |
 | String To Float Invariant Culture | Locale-safe string → float |
 | Float To String Invariant Culture | Locale-safe float → string |

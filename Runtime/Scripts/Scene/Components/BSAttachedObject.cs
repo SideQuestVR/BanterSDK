@@ -106,12 +106,16 @@ namespace BS
 
         [SerializeField][HideInInspector] BSAttachment attachment = new BSAttachment();
 
+        /// <summary>Raised after an attach or detach for a user went to the scene, with that user's uid ("me" for the local player).</summary>
+        internal event Action<string> Attached, Detached;
+
         [Method]
         public void _Attach(string uid)
         {
             this.uid = attachment.uid = uid;
             UpdateCallback(null);
             BSScene.Instance().data.AttachObject(attachment);
+            Attached?.Invoke(uid);
         }
 
         [Method]
@@ -120,6 +124,7 @@ namespace BS
             this.uid = attachment.uid = uid;
             UpdateCallback(null);
             BSScene.Instance().data.DetachObject(attachment);
+            Detached?.Invoke(uid);
         }
 
         internal override void StartStuff()

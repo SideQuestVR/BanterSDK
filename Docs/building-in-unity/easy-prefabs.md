@@ -24,6 +24,8 @@ Clicking the seat sits the local player on it. Moving (the move stick or WASD) o
 
 `BSSeat` sets up the `BSAttachedObject` beside it as a seat: Physics + AvatarAttachTo, jointed, `isSeat`, and never auto-attached. It also listens for clicks on the colliders it has when it starts (so add colliders before the seat when building one from a script) and adds a kinematic Rigidbody if there is none. Without one, the client would add a dynamic Rigidbody and the chair would fall.
 
+Turn on **Use Exit Position** to put the player somewhere else when they get off, however they get off (standing up, moving or jumping): **Exit Position** is relative to the seat, so it moves with it, and the player faces the way the seat faces. Selecting the seat draws it as an orange circle with a line for the facing.
+
 In the prefab, the seat components are on the `SitPoint` child at the top of the cushion. The player sits there, facing its forward. The child's trigger box is on the **UI layer**: only the UI and Menu layers can be clicked, in the app and in Play mode. The visible parts use the `Seat` material (URP Lit).
 
 In SDK Play Mode, clicking the seat sits the desktop player. **Space** stands them up (unless they're holding something, when Space is the held object's primary button), and so does moving while flying (right mouse + WASD).

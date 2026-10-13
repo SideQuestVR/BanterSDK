@@ -6,7 +6,7 @@ namespace BS.VisualScripting
 
     [UnitTitle("On Ai SpeechToText")]
     [UnitShortTitle("On Ai SpeechToText")]
-    [UnitCategory("Events\\BS\\AI")]
+    [UnitCategory("Events\\BS\\Utils")]
     [TypeIcon(typeof(BSObjectId))]
     public class OnSTT : EventUnit<CustomEventArgs>
     {

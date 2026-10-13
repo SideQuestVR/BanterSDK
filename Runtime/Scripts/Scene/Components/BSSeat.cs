@@ -12,10 +12,13 @@ namespace BS
     seated pose). The player sits at this object's position and faces its forward, so put the seat on a child
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
     the only clickable layers. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
+    Turn on `useExitPosition` to put the player somewhere else when they get off (beside a bench, outside a car).
 
     **Properties**
     - `unseatOnMove` - Stand the player up when they push the move stick / WASD.
     - `unseatOnJump` - Stand the player up when they jump.
+    - `useExitPosition` - Teleport the player to `exitPosition` when they get off the seat, however they get off.
+    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). They face the way the seat faces.
 
     **Methods**
     ```js
@@ -29,8 +32,10 @@ namespace BS
     ```js
         const unseatOnMove = true;
         const unseatOnJump = true;
+        const useExitPosition = true;
+        const exitPosition = new BS.Vector3(0, 0, 0.6);
         const gameObject = new BS.GameObject("MySeat");
-        const seat = await gameObject.AddComponent(new BS.Seat(unseatOnMove, unseatOnJump));
+        const seat = await gameObject.AddComponent(new BS.Seat(unseatOnMove, unseatOnJump, useExitPosition, exitPosition));
     ```
 
     */
@@ -47,7 +52,17 @@ namespace BS
         [Tooltip("Stand the player up when they jump (Space in the SDK's Play Mode).")]
         [See(initial = "true")][SerializeField] internal bool unseatOnJump = true;
 
+        [Tooltip("Teleport the player to Exit Position when they get off the seat (standing up, moving or jumping).")]
+        [See(initial = "false")][SerializeField] internal bool useExitPosition = false;
+
+        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). They face the way the seat faces.")]
+        [See(initial = "0,0,0.6")][SerializeField] internal Vector3 exitPosition = new Vector3(0f, 0f, 0.6f);
+
         const string LocalUser = "me";
+
+        // The local player sits on this seat: set when they attach through it, cleared when they get off.
+        bool seated;
+        BSAttachedObject hookedTo;
 
         BSAttachedObject attached;
         UnityAction<Vector3, Vector3> onClick;
@@ -86,6 +101,12 @@ namespace BS
 
         internal override void DestroyStuff()
         {
+            if (hookedTo != null)
+            {
+                hookedTo.Attached -= OnAttached;
+                hookedTo.Detached -= OnDetached;
+                hookedTo = null;
+            }
             foreach (var events in clickSources)
             {
                 if (events != null && events.onClick != null)
@@ -134,12 +155,55 @@ namespace BS
             {
                 return false;
             }
+            if (hookedTo != attached)
+            {
+                // Every way off the seat ends in its detach: Stand, the client's unseat on move or jump, a page's Detach.
+                attached.Attached += OnAttached;
+                attached.Detached += OnDetached;
+                hookedTo = attached;
+            }
             // Before the attached object's own Init, its first sync sends these values; after it, resend.
             if (ApplySeatSettings(attached, unseatOnMove, unseatOnJump) && attached.oid != 0)
             {
                 attached.SyncProperties(true);
             }
             return true;
+        }
+
+        void OnAttached(string uid)
+        {
+            if (IsLocalUser(uid))
+            {
+                seated = true;
+            }
+        }
+
+        void OnDetached(string uid)
+        {
+            if (!seated || !IsLocalUser(uid))
+            {
+                return;
+            }
+            seated = false;
+            if (useExitPosition && isActiveAndEnabled)
+            {
+                StartCoroutine(TeleportToExit(transform.TransformPoint(exitPosition), transform.eulerAngles.y));
+            }
+        }
+
+        // A frame later, once the client has let the player go (the seat joint and the seated loco stack are undone).
+        System.Collections.IEnumerator TeleportToExit(Vector3 position, float yaw)
+        {
+            yield return null;
+            BSScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, yaw, 0f), true, false);
+        }
+
+        static bool IsLocalUser(string uid)
+        {
+            if (string.IsNullOrEmpty(uid)) return false;
+            if (uid == LocalUser) return true;
+            var scene = BSScene.Instance();
+            return scene != null && scene.users.Exists(user => user != null && user.isLocal && user.uid == uid);
         }
 
         // The client joints the player to the seat's rigidbody, and adds a dynamic one if there is
@@ -200,11 +264,23 @@ namespace BS
             Gizmos.color = new Color(0.3f, 0.8f, 1f);
             Gizmos.DrawWireSphere(transform.position, 0.1f);
             Gizmos.DrawLine(transform.position, transform.position + transform.forward * 0.5f);
+            if (useExitPosition)
+            {
+                // Where they stand after getting off: a feet marker and the way they face.
+                var exit = transform.TransformPoint(exitPosition);
+                var facing = Vector3.ProjectOnPlane(transform.forward, Vector3.up).normalized;
+                Gizmos.color = new Color(1f, 0.6f, 0.2f);
+                Gizmos.DrawWireSphere(exit, 0.15f);
+                Gizmos.DrawLine(transform.position, exit);
+                Gizmos.DrawLine(exit, exit + facing * 0.4f);
+            }
         }
 #endif
         // BANTER COMPILED CODE 
         public System.Boolean UnseatOnMove { get { return unseatOnMove; } set { unseatOnMove = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnMove }); } }
         public System.Boolean UnseatOnJump { get { return unseatOnJump; } set { unseatOnJump = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnJump }); } }
+        public System.Boolean UseExitPosition { get { return useExitPosition; } set { useExitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.useExitPosition }); } }
+        public UnityEngine.Vector3 ExitPosition { get { return exitPosition; } set { exitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.exitPosition }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -227,12 +303,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.unseatOnMove, PropertyName.unseatOnJump, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.unseatOnMove, PropertyName.unseatOnJump, PropertyName.useExitPosition, PropertyName.exitPosition, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "Seat" + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
+            return "Seat" +  PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump + PropertyName.useExitPosition + useExitPosition + PropertyName.exitPosition + exitPosition;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -316,6 +392,24 @@ namespace BS
                         changedProperties.Add(PropertyName.unseatOnJump);
                     }
                 }
+                if (values[i] is BSBool)
+                {
+                    var valuseExitPosition = (BSBool)values[i];
+                    if (valuseExitPosition.n == PropertyName.useExitPosition)
+                    {
+                        useExitPosition = valuseExitPosition.x;
+                        changedProperties.Add(PropertyName.useExitPosition);
+                    }
+                }
+                if (values[i] is BSVector3)
+                {
+                    var valexitPosition = (BSVector3)values[i];
+                    if (valexitPosition.n == PropertyName.exitPosition)
+                    {
+                        exitPosition = new Vector3(valexitPosition.x, valexitPosition.y, valexitPosition.z);
+                        changedProperties.Add(PropertyName.exitPosition);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -342,6 +436,30 @@ namespace BS
                     name = PropertyName.unseatOnJump,
                     type = PropertyType.Bool,
                     value = unseatOnJump,
+                    componentType = ComponentType.Seat,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.useExitPosition,
+                    type = PropertyType.Bool,
+                    value = useExitPosition,
+                    componentType = ComponentType.Seat,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.exitPosition,
+                    type = PropertyType.Vector3,
+                    value = exitPosition,
                     componentType = ComponentType.Seat,
                     oid = oid,
                     cid = cid
