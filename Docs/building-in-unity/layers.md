@@ -18,7 +18,7 @@ Builder's checklist flags objects on them, with a button to move them to Default
 | 5 | UI | Anything players click or point at: world-space UI, buttons, seats, clickable objects. The player's body and hands pass through it. |
 | 6–12 | UserLayer2–8 | Yours. Ground, teleport and grapple all use them, but the player's body and hands pass through. |
 | 13–19 | UserLayer9–15 | Yours. Teleport, grapple and ground ignore them; the player's body and hands still bump into them. |
-| 20 | Grabbable | Things the player can pick up. `BSGrababble` puts its object here for you. |
+| 20 | Grabbable | Things the player can pick up, and grapple to. `BSGrababble` puts its object here for you. |
 | 21 | Invisible | Hidden from the player's own view (mirrors still show it). Still solid. |
 | 22 | Menu | The client's menus, and clickable like UI. Recording cameras leave it out; the player's body and hands pass through it. |
 | 23 | CharacterColliders | The local player's body: the rolling ball, torso and head. Don't put your own objects here. |
@@ -35,7 +35,7 @@ What works on each layer (✓ = yes):
 |---|---|---|---|---|---|---|---|---|
 | Stand on it (ground) | ✓ | ✓ | ✓ | ✓ | | ✓ | | |
 | Teleport onto it | ✓ | | ✓ | ✓ | | | | |
-| Grapple to it | ✓ | ✓ | | ✓ | | | | |
+| Grapple to it | ✓ | ✓ | | ✓ | | ✓ | | |
 | Grab it | | | | | | ✓ | | |
 | Click or point at it | | | | | | | | ✓ |
 | Body bumps into it | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
