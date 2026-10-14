@@ -160,6 +160,7 @@ namespace BS
             else if (msg.StartsWith(APICommands.SCENE_START))
             {
                 scene.state = SceneState.SCENE_START;
+                scene.RestartEmptySceneGrace();
             }
             // else if (msg.StartsWith(APICommands.DOM_READY))
             // {

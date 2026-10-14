@@ -179,7 +179,8 @@ namespace BS
         public bool bundlesLoaded = false;
         public bool loading = false;
         // Realtime stamp of when `state` first reached SCENE_READY for the current load; -1 while
-        // not ready. Drives SetLoaded's empty-scene grace window. Reset at the top of LoadUrl.
+        // not ready. Drives SetLoaded's empty-scene grace window. Reset at the top of LoadUrl and
+        // whenever a new document starts (RestartEmptySceneGrace).
         float sceneReadySince = -1f;
         // How long a ready scene may sit with ZERO registered components before we call it loaded
         // anyway. Long enough for a space whose script registers objects after an async delay
@@ -2933,11 +2934,24 @@ namespace BS
             catch (Exception e) { LogLine.Err($"[LOADING] loading-cage gate threw: {e}"); return true; }
         }
 
+        /// <summary>
+        /// A new document is starting (its LoadStarted, or its Scene's SCENE_START): time SetLoaded's
+        /// empty-scene grace from THIS page's SCENE_READY. A ready from the document it replaced (the
+        /// view's about:blank start-up page, or a space left mid-load, which on Windows keeps running
+        /// until the next page commits) would otherwise have spent the grace already, and the page's
+        /// own empty SCENE_READY (world.asset probe still in flight) would open the cage at once.
+        /// </summary>
+        internal void RestartEmptySceneGrace()
+        {
+            sceneReadySince = -1f;
+        }
+
         public async Task OnLoad(string instanceId)
         {
             // This is fired when the page loads or realods from the browser end, so it can be fired becuase 
             // we have explicitly naviagted the page, but also becuase someone hut f5 in the debugger. 
             state = SceneState.NONE;
+            RestartEmptySceneGrace();
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
                  if (settings != null)

@@ -55,10 +55,11 @@ public class BSPipe
 
     // The space view starts on about:blank. On Windows, Ora's Electron injects the SDK into that document too, but it
     // only attaches its LoadStarted/DomReady listeners at the window's first paint: that document never gets a
-    // LoadStarted, so BSScene.OnLoad (which creates BSScene.settings) never runs for it. The injection starts a Scene by
-    // itself, so the blank document sends SCENE_START, object update requests for every scene object (a parented one
-    // then threw on the null settings: "Error updating object") and, if the real page is held for 3 s, a SCENE_READY
-    // for a page that is not a space. Until a page has started loading, nothing the view sends is about a space. On
+    // LoadStarted, so BSScene.OnLoad (which creates BSScene.settings) never runs for it. From 2026-09-18 to 2026-10-13 the
+    // injection started a Scene by itself, so the blank document sent SCENE_START, object update requests for every scene
+    // object (a parented one then threw on the null settings: "Error updating object") and, if the real page was held
+    // for 3 s, a SCENE_READY for a page that is not a space. It now skips about: and only uses a Scene the page makes; this
+    // gate stays as the guard. Until a page has started loading, nothing the view sends is about a space. On
     // Windows a real page's LoadStarted always comes first (OraView.LoadUrl waits for the window, and the listeners come
     // with it). Ora's Android compat channel can deliver a page's first messages ahead of its LoadStarted; OnLoad's state
     // reset already discarded those before this gate existed.
