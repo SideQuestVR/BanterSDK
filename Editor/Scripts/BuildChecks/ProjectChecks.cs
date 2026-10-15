@@ -168,12 +168,12 @@ namespace BS.SDKEditor.BuildChecks
         }
     }
 
-    /// <summary>Spaces are tuned for Forward on Android and Forward+ on Windows.</summary>
+    /// <summary>Spaces use Forward on Android and Forward+ or Forward on Windows.</summary>
     sealed class UrpRendererCheck : BuildCheck
     {
         public override string Id => "project.urp-renderer";
         public override string Title => "URP renderer";
-        public override string Description => "The URP renderers use Forward on Android and Forward+ on Windows, as the client does.";
+        public override string Description => "The URP renderers use Forward on Android and Forward+ or Forward on Windows, which the client can render.";
         public override int Order => 40;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
@@ -183,7 +183,7 @@ namespace BS.SDKEditor.BuildChecks
             if (mismatches.Count == 0)
                 return;
 
-            var details = "Suggested rendering modes: Windows Forward+, Android Forward.\n" +
+            var details = UrpRendererBuildCheck.SuggestedModes + "\n" +
                           string.Join("\n", mismatches.Select(mismatch => "• " + mismatch.Description));
             var canChange = UrpRendererBuildCheck.TryPlanChange(mismatches, sharedRendererConflict, out var plan);
             if (!canChange)

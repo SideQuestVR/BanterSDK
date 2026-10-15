@@ -526,6 +526,17 @@ namespace BS
         /// </summary>
         public static async Task<AssetBundle> EncryptedAssetBundle(string url, string password, Action<float> progress = null, string versionTag = null)
         {
+            return (await EncryptedAssetBundleWithSection(url, password, progress, versionTag)).bundle;
+        }
+
+        /// <summary>
+        /// <see cref="EncryptedAssetBundle"/>, plus the connector section that was loaded for this
+        /// platform (its build metadata, e.g. <c>RenderingPath</c>). The section is null if the
+        /// connector didn't come through, which callers treat like an older bundle.
+        /// </summary>
+        public static async Task<(AssetBundle bundle, BasisBundleGenerated section)> EncryptedAssetBundleWithSection(
+            string url, string password, Action<float> progress = null, string versionTag = null)
+        {
             await BasisLoadHandler.EnsureInitializationComplete();
 
             var loadable = new BasisLoadableBundle { UnlockPassword = password };
@@ -545,7 +556,11 @@ namespace BS
             if (wrapper.AssetBundle == null)
                 throw new Exception("Unable to decrypt/load encrypted bundle from " + url);
 
-            return wrapper.AssetBundle;
+            BasisBundleGenerated section = null;
+            var connector = wrapper.LoadableBundle.BasisBundleConnector;
+            if (connector?.BasisBundleGenerated != null)
+                connector.GetPlatform(out section);
+            return (wrapper.AssetBundle, section);
         }
 
         public static async Task<AudioClip> Audio(string url, Action<float> progress = null)

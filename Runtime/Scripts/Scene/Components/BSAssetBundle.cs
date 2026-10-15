@@ -49,6 +49,18 @@ namespace BS
         public AssetBundle assetBundle;
         List<string> assetPaths;
         bool isLoading = false;
+
+        // The loaded section's BasisBundleGenerated.RenderingPath; null for raw bundles and for
+        // .bee bundles built before the field existed.
+        string sceneRenderingPath;
+
+        /// <summary>
+        /// Raised for every scene bundle just before its scene loads (Single mode), with the scene
+        /// name and the rendering path its bundle recorded (<c>BasisBundleGenerated.RenderingPath</c>
+        /// values, or null when unknown: a raw bundle or an older build). The host uses it to match
+        /// its renderer to the world before the first frame renders.
+        /// </summary>
+        public static event Action<string, string> SceneBundleLoading;
         internal override void StartStuff()
         {
             // _ = SetupBundle();
@@ -194,6 +206,7 @@ namespace BS
         // Only scene bundles are ever encrypted — kits and other bundles are always raw, so skip the peek.
         private async Task<AssetBundle> LoadPlatformBundle(string url, Action<float> progress = null)
         {
+            sceneRenderingPath = null;
             if (isScene && !string.IsNullOrEmpty(url))
             {
                 byte[] head = await Get.PeekHeader(url, 8);
@@ -210,7 +223,9 @@ namespace BS
                     // a re-uploaded world is never re-downloaded. Not harvested from the peek above:
                     // that is a ranged request, and a 206 carries no ETag or Last-Modified.
                     string versionTag = await BasisContentVersion.ResolveRequestedTagAsync(url);
-                    return await Get.EncryptedAssetBundle(url, GreenfieldBundleCrypto.Password, progress, versionTag);
+                    var (bundle, section) = await Get.EncryptedAssetBundleWithSection(url, GreenfieldBundleCrypto.Password, progress, versionTag);
+                    sceneRenderingPath = section?.RenderingPath;
+                    return bundle;
                 }
             }
             else
@@ -248,6 +263,14 @@ namespace BS
             if (scenes.Length > 0)
             {
                 string sceneName = System.IO.Path.GetFileNameWithoutExtension(scenes[0]);
+                try
+                {
+                    SceneBundleLoading?.Invoke(sceneName, sceneRenderingPath);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
                 await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
                 if (legacyShaderFix)
                 {

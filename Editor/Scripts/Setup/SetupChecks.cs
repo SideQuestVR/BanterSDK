@@ -255,11 +255,11 @@ namespace BS.SDKEditor.Setup
         public override string FixLabel => "Set rendering modes";
         public override string ManualActionLabel => "Open Graphics settings";
         public override string Why =>
-            "The client renders with the Universal Render Pipeline: Forward on Quest (Android) and Forward+ on Windows. " +
-            "Matching it here shows your space the way players will see it.";
+            "The client renders with the Universal Render Pipeline: Forward on Quest (Android), and on Windows Forward+ or " +
+            "Forward, whichever your space was built with. Matching it here shows your space the way players will see it.";
         public override string WithoutIt =>
-            "Without URP, materials made for the built-in pipeline render pink in the client. With other rendering modes, " +
-            "lights look different here than in the client (Forward limits the lights per object; Forward+ doesn't).";
+            "Without URP, materials made for the built-in pipeline render pink in the client. With other rendering modes " +
+            "(Deferred), lights look different here than in the client.";
         public override string FixChanges =>
             "Sets the rendering mode on the Universal Renderer assets your Android and Windows quality levels use. " +
             "Switching a project to URP isn't done here: use Project Settings > Graphics and Unity's Render Pipeline Converter.";
@@ -268,7 +268,7 @@ namespace BS.SDKEditor.Setup
         {
             var mismatches = UrpRendererBuildCheck.FindMismatches(Targets, Targets.Select(_ => true).ToArray(), out var sharedRendererConflict);
             if (mismatches.Count == 0)
-                return SetupStatus.Done("Forward on Android, Forward+ on Windows.");
+                return SetupStatus.Done("Forward on Android, Forward+ or Forward on Windows.");
             var details = string.Join("\n", mismatches.Select(mismatch => "• " + mismatch.Description));
             if (mismatches.Any(mismatch => mismatch.Renderer == null))
                 return SetupStatus.NeedsManualFix("This project doesn't render with URP everywhere", details);

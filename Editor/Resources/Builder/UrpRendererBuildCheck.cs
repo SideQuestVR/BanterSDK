@@ -40,7 +40,7 @@ internal static class UrpRendererBuildCheck
 
         int choice = EditorUtility.DisplayDialogComplex(
             "Scene build renderer check",
-            "Suggested modes: Windows Forward+, Android Forward.\n\n" + details +
+            SuggestedModes + "\n\n" + details +
             (canChange ? "\n\nChange the listed renderer assets?" :
                          "\n\nSome assets are missing, read-only, or shared by both targets. Review them manually."),
             canChange ? "Change and Build" : "Inspect Setup",
@@ -111,11 +111,26 @@ internal static class UrpRendererBuildCheck
         AssetDatabase.SaveAssets();
     }
 
+    /// <summary>What the dialog and the checklist tell creators.</summary>
+    internal const string SuggestedModes =
+        "Suggested modes: Windows Forward+ or Forward (the client matches the world's choice), Android Forward.";
+
+    /// <summary>
+    /// Modes the client can render a target's section with, its first choice first. Android runs
+    /// Forward only. Windows runs Forward+ by default and switches to a Forward renderer for worlds
+    /// whose bundle records Forward (see UrpRenderingPathResolver), so either is fine there.
+    /// </summary>
+    internal static RenderingMode[] AcceptedModes(BuildTarget target) =>
+        target == BuildTarget.Android
+            ? new[] { RenderingMode.Forward }
+            : new[] { RenderingMode.ForwardPlus, RenderingMode.Forward };
+
     internal static List<Mismatch> FindMismatches(BuildTarget[] targets, bool[] selected,
         out bool sharedRendererConflict)
     {
         var result = new List<Mismatch>();
-        var expectedByRenderer = new Dictionary<UniversalRendererData, RenderingMode>();
+        // Modes every target using a renderer accepts; empty means no single mode suits them all.
+        var acceptedByRenderer = new Dictionary<UniversalRendererData, List<RenderingMode>>();
         sharedRendererConflict = false;
         for (int targetIndex = 0; targetIndex < targets.Length; targetIndex++)
         {
@@ -123,7 +138,8 @@ internal static class UrpRendererBuildCheck
                 continue;
 
             BuildTarget target = targets[targetIndex];
-            RenderingMode expected = target == BuildTarget.Android ? RenderingMode.Forward : RenderingMode.ForwardPlus;
+            RenderingMode[] accepted = AcceptedModes(target);
+            RenderingMode expected = accepted[0];
             string platform = target == BuildTarget.Android ? "Android" : "Windows";
             string targetName = NamedBuildTarget.FromBuildTargetGroup(BuildPipeline.GetBuildTargetGroup(target)).TargetName;
             int[] levels = QualitySettings.GetActiveQualityLevelsForPlatform(targetName);
@@ -179,11 +195,11 @@ internal static class UrpRendererBuildCheck
                     });
                     continue;
                 }
-                if (expectedByRenderer.TryGetValue(renderer, out var priorMode) && priorMode != expected)
-                    sharedRendererConflict = true;
+                if (acceptedByRenderer.TryGetValue(renderer, out var acceptedSoFar))
+                    acceptedSoFar.RemoveAll(mode => Array.IndexOf(accepted, mode) < 0);
                 else
-                    expectedByRenderer[renderer] = expected;
-                if (renderer.renderingMode != expected)
+                    acceptedByRenderer[renderer] = new List<RenderingMode>(accepted);
+                if (Array.IndexOf(accepted, renderer.renderingMode) < 0)
                 {
                     result.Add(new Mismatch
                     {
@@ -194,6 +210,24 @@ internal static class UrpRendererBuildCheck
                         Expected = expected
                     });
                 }
+            }
+        }
+
+        // A renderer used by both platforms needs a mode both accept (Forward), so suggest that
+        // one rather than each platform's first choice.
+        foreach (var mismatch in result)
+        {
+            if (mismatch.Renderer == null || !acceptedByRenderer.TryGetValue(mismatch.Renderer, out var acceptedModes))
+                continue;
+            if (acceptedModes.Count == 0)
+            {
+                sharedRendererConflict = true;
+            }
+            else if (!acceptedModes.Contains(mismatch.Expected))
+            {
+                mismatch.Description = mismatch.Description.Replace(
+                    "(suggested " + ModeName(mismatch.Expected) + ")", "(suggested " + ModeName(acceptedModes[0]) + ")");
+                mismatch.Expected = acceptedModes[0];
             }
         }
         return result;
