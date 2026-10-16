@@ -1,5 +1,7 @@
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using UnityEngine.UIElements;
 
 namespace BS.SDKEditor
@@ -10,6 +12,7 @@ namespace BS.SDKEditor
     /// Editor only, like the snippet gizmos: nothing is added to the object, the scene or the build. The sizes are the
     /// ones the components create at runtime, measured from their prefabs and panel settings.
     /// </summary>
+    [InitializeOnLoad]
     static class BSComponentGizmos
     {
         // The snippet gizmos' colours.
@@ -30,6 +33,35 @@ namespace BS.SDKEditor
         static float s_PanelPixelsPerUnit;
 
         static GUIStyle s_LabelStyle;
+
+        // Scene GUI repaint events can arrive after culling; submit for every camera render instead.
+        static BSComponentGizmos() => RenderPipelineManager.beginCameraRendering += DrawSeatPreviews;
+
+        static void DrawSeatPreviews(ScriptableRenderContext context, Camera camera)
+        {
+            if (Application.isPlaying || camera.cameraType != CameraType.SceneView) return;
+            SceneView view = null;
+            foreach (SceneView candidate in SceneView.sceneViews)
+                if (candidate.camera == camera) { view = candidate; break; }
+            if (view == null || !view.drawGizmos) return;
+            if (GizmoUtility.TryGetGizmoInfo(typeof(BSSeat), out var info) && !info.gizmoEnabled) return;
+            var drawn = false;
+            foreach (var seat in StageUtility.GetCurrentStageHandle().FindComponentsOfType<BSSeat>())
+            {
+                if (!seat.isActiveAndEnabled || (Tools.visibleLayers & (1 << seat.gameObject.layer)) == 0
+                    || SceneVisibilityManager.instance.IsHidden(seat.gameObject)) continue;
+                BSSeat.DrawPlacementPreview(seat.transform, camera);
+                drawn = true;
+            }
+            if (drawn) EditorApplication.delayCall += () => { if (view != null) view.Repaint(); };
+        }
+
+        [DrawGizmo(Shown)]
+        static void DrawSeat(BSSeat visual, GizmoType type)
+        {
+            if (Application.isPlaying) return;
+            if (Selected(type)) Label(visual.transform.position + visual.transform.up * .4f, "Seat · arrow shows facing direction");
+        }
 
         [DrawGizmo(Shown)]
         static void DrawMirror(BSMirror mirror, GizmoType type)

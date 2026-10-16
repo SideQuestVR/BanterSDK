@@ -88,6 +88,8 @@ namespace BS
 
         PressOwner _pressOwner;
         GameObject _clickTarget;
+        GameObject _hoverTarget;
+        PointerEventData _hoverPointer;
 
         bool _seated;
         Transform _seat;
@@ -184,6 +186,7 @@ namespace BS
 
         void OnDestroy()
         {
+            SetHoverTarget(null);
             if (Instance == this)
                 Instance = null;
             SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -196,6 +199,26 @@ namespace BS
                 Destroy(_hand.gameObject);
         }
 
+        void OnDisable()
+        {
+            SetHoverTarget(null);
+        }
+
+#if UNITY_EDITOR
+        void OnGUI()
+        {
+            var visual = _hoverTarget != null ? _hoverTarget.GetComponentInParent<BSSeat>() : null;
+            if (visual == null || !visual.IsVisible)
+                return;
+            var content = new GUIContent("Click to sit");
+            var size = GUI.skin.box.CalcSize(content);
+            var position = Event.current.mousePosition + new Vector2(18f, 18f);
+            position.x = Mathf.Clamp(position.x, 0f, Mathf.Max(0f, Screen.width - size.x));
+            position.y = Mathf.Clamp(position.y, 0f, Mathf.Max(0f, Screen.height - size.y));
+            GUI.Box(new Rect(position, size), content);
+        }
+#endif
+
         void OnSceneLoaded(Scene loaded, LoadSceneMode mode)
         {
             EnsureEventSystem();
@@ -207,9 +230,13 @@ namespace BS
             var mouse = Mouse.current;
             var keyboard = Keyboard.current;
             if (mouse == null || keyboard == null)
+            {
+                SetHoverTarget(null);
                 return;
+            }
 
-            var pointerUsable = IsUsablePoint(mouse.position.ReadValue());
+            var pointerPosition = mouse.position.ReadValue();
+            var pointerUsable = IsUsablePoint(pointerPosition) && _camera.pixelRect.Contains(pointerPosition);
             SetPointerUsable(pointerUsable);
 
             UpdateFlyState(mouse);
@@ -263,6 +290,7 @@ namespace BS
 
         void BeginFly(Mouse mouse)
         {
+            SetHoverTarget(null);
             _flying = true;
             _cursorBeforeFly = mouse.position.ReadValue();
             Cursor.lockState = CursorLockMode.Locked;
@@ -348,6 +376,8 @@ namespace BS
                 return;
             }
 
+            SetHoverTarget(null);
+
             var eventSystem = EventSystem.current;
             if (eventSystem == null)
                 return;
@@ -374,8 +404,14 @@ namespace BS
             if (_hand.IsActive)
                 _hand.UpdateAim(ray);
 
+            UpdateHover(screenPoint, ray);
+
             if (mouse.leftButton.wasPressedThisFrame)
+            {
                 BeginPress(screenPoint, ray);
+                if (_hand.IsActive)
+                    SetHoverTarget(null);
+            }
 
             var scroll = mouse.scroll.ReadValue().y;
             if (scroll != 0f)
@@ -390,8 +426,67 @@ namespace BS
 
         void BeginPress(Vector2 screenPoint, Ray ray)
         {
-            _pressOwner = PressOwner.None;
+            _pressOwner = ResolvePointerTarget(screenPoint, ray, out var targetHit);
             _clickTarget = null;
+
+            if (_pressOwner == PressOwner.Grab)
+            {
+                if (!ActionsSystem.canGrab || ActionsSystem.Blocker_RightGrip.Grab)
+                {
+                    _pressOwner = PressOwner.None;
+                    return;
+                }
+                _capture.Capturing = true;
+                _hand.BeginGrab(targetHit, ray);
+            }
+            else if (_pressOwner == PressOwner.Click)
+            {
+                _capture.Capturing = true;
+                _clickTarget = targetHit.collider.gameObject;
+            }
+        }
+
+        void UpdateHover(Vector2 screenPoint, Ray ray)
+        {
+            if (_flying || !_pointerUsable || (_hand != null && _hand.IsActive))
+            {
+                SetHoverTarget(null);
+                return;
+            }
+            var target = ResolvePointerTarget(screenPoint, ray, out var hit);
+            if (_hoverPointer != null)
+                _hoverPointer.position = screenPoint;
+            SetHoverTarget(target == PressOwner.Click ? hit.collider.gameObject : null);
+        }
+
+        void SetHoverTarget(GameObject target)
+        {
+            if (_hoverTarget == target)
+            {
+                // A visual may have been enabled while the pointer stayed on the same collider.
+                var visual = target != null ? target.GetComponentInParent<BSSeat>() : null;
+                if (visual != null) visual.OnPointerEnter(_hoverPointer);
+                return;
+            }
+            if (_hoverPointer == null)
+                _hoverPointer = new PointerEventData(EventSystem.current) { pointerId = PointerInputModule.kMouseLeftId };
+            _hoverPointer.pointerEnter = target;
+            if (_hoverTarget != null)
+            {
+                _hoverTarget.GetComponentInParent<BSSeat>()?.OnPointerExit(_hoverPointer);
+                ExecuteEvents.Execute(_hoverTarget, _hoverPointer, ExecuteEvents.pointerExitHandler);
+            }
+            _hoverTarget = target;
+            if (_hoverTarget != null)
+            {
+                _hoverTarget.GetComponentInParent<BSSeat>()?.OnPointerEnter(_hoverPointer);
+                ExecuteEvents.Execute(_hoverTarget, _hoverPointer, ExecuteEvents.pointerEnterHandler);
+            }
+        }
+
+        PressOwner ResolvePointerTarget(Vector2 screenPoint, Ray ray, out RaycastHit targetHit)
+        {
+            targetHit = default;
 
             var uiDistance = TryGetUIHit(screenPoint, ray, out var d, out _) ? d : float.PositiveInfinity;
             var hasGrab = TryGetGrabTarget(ray, out var grabHit);
@@ -401,27 +496,19 @@ namespace BS
 
             // Nearest wins; UI wins ties.
             if (float.IsPositiveInfinity(uiDistance) && !hasGrab && !hasClick)
-                return;
+                return PressOwner.None;
 
             if (uiDistance <= grabDistance && uiDistance <= clickDistance)
-            {
-                _pressOwner = PressOwner.UI;
-                return;
-            }
+                return PressOwner.UI;
 
             if (grabDistance <= clickDistance)
             {
-                if (!ActionsSystem.canGrab || ActionsSystem.Blocker_RightGrip.Grab)
-                    return;
-                _pressOwner = PressOwner.Grab;
-                _capture.Capturing = true;
-                _hand.BeginGrab(grabHit, ray);
-                return;
+                targetHit = grabHit;
+                return PressOwner.Grab;
             }
 
-            _pressOwner = PressOwner.Click;
-            _capture.Capturing = true;
-            _clickTarget = clickHit.collider.gameObject;
+            targetHit = clickHit;
+            return PressOwner.Click;
         }
 
         void EndPress(Mouse mouse)
@@ -569,7 +656,7 @@ namespace BS
         bool TryGetClickTarget(Ray ray, out RaycastHit hit)
         {
             hit = default;
-            var count = Physics.RaycastNonAlloc(ray, _hits, _reach, k_ClickMask);
+            var count = Physics.RaycastNonAlloc(ray, _hits, _reach, k_ClickMask, QueryTriggerInteraction.Collide);
             System.Array.Sort(_hits, 0, count, RaycastHitDistanceComparer.Instance);
 
             for (var i = 0; i < count; i++)

@@ -9,7 +9,7 @@ namespace BS
     #### Banter Seat
     Make an object a seat: clicking it sits the local player on it, and moving or jumping stands them up.
     The seat is the object's `BSAttachedObject`, set up to attach the player to the object (physics, jointed,
-    seated pose). The player sits at this object's position and faces its forward, so put the seat on a child
+    seated pose). The player sits at this object's position and faces its forward, so place its origin
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
     the only clickable layers. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
     Turn on `useExitPosition` to put the player somewhere else when they get off (beside a bench, outside a car).
@@ -44,7 +44,7 @@ namespace BS
     [RequireComponent(typeof(BSAttachedObject))]
     [DisallowMultipleComponent]
     [WatchComponent]
-    public class BSSeat : BSComponentBase
+    public partial class BSSeat : BSComponentBase
     {
         [Tooltip("Stand the player up when they push the move stick / WASD.")]
         [See(initial = "true")][SerializeField] internal bool unseatOnMove = true;
@@ -260,10 +260,6 @@ namespace BS
 
         void OnDrawGizmosSelected()
         {
-            // Where the player sits, and which way they face.
-            Gizmos.color = new Color(0.3f, 0.8f, 1f);
-            Gizmos.DrawWireSphere(transform.position, 0.1f);
-            Gizmos.DrawLine(transform.position, transform.position + transform.forward * 0.5f);
             if (useExitPosition)
             {
                 // Where they stand after getting off: a feet marker and the way they face.

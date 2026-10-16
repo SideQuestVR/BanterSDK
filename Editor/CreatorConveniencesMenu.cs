@@ -243,6 +243,9 @@ internal static class CreatorConveniencesMenu
         var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
         Undo.RegisterCreatedObjectUndo(instance, $"Create {displayName}");
         Place(instance, command);
+        // The flattened seat's root retains the former cushion-height child offset.
+        if (guid == SeatGuid)
+            instance.transform.position = instance.transform.TransformPoint(prefab.transform.localPosition);
         instance.name = $"BS {displayName}";
         Finish(instance, displayName);
     }
