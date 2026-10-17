@@ -24,6 +24,66 @@ namespace BS.SDKEditor
         static Hand hand;
         static readonly Dictionary<int, Sample> samples = new Dictionary<int, Sample>();
 
+        public static void Show() => enabled = true;
+
+        public static VisualElement Inspector(Editor editor)
+        {
+            var source = (Component)editor.target;
+            var root = new VisualElement();
+            root.style.paddingLeft = root.style.paddingRight = 8;
+            var properties = new Foldout { text = "Available Properties", value = true, viewDataKey = "grab-properties" };
+            properties.Add(new IMGUIContainer(() => DrawFields(editor, false)));
+            properties.Add(BSPointGrabPoseEditor.Controls(source));
+            var preview = new Foldout { text = "Hand Preview", value = false, viewDataKey = "grab-preview" };
+            preview.Add(new UnityEditor.UIElements.PropertyField(editor.serializedObject.FindProperty("showRuntimeVisual"), "Show Runtime Visual"));
+            preview.Add(Controls(source));
+            properties.Add(preview);
+            if (source is BSGrababble)
+            {
+                var input = new Foldout { text = "Advanced Held Input", value = false, viewDataKey = "grab-input" };
+                input.Add(new IMGUIContainer(() => DrawFields(editor, true)));
+                properties.Add(input);
+            }
+            properties.RegisterValueChangedCallback(evt => { if (evt.target == properties && !evt.newValue) BSPointGrabPoseEditor.StopEditing(); });
+            root.Add(properties);
+            return root;
+        }
+
+        static void DrawFields(Editor editor, bool heldInput)
+        {
+            editor.serializedObject.Update();
+            var field = editor.serializedObject.GetIterator();
+            var children = true;
+            while (field.NextVisible(children))
+            {
+                children = false;
+                var input = field.name.StartsWith("gunTrigger") || field.name.StartsWith("block");
+                if (input == heldInput && field.name != "m_Script" && field.name != "customPointPose" && field.name != "showRuntimeVisual")
+                    EditorGUILayout.PropertyField(field, true);
+            }
+            editor.serializedObject.ApplyModifiedProperties();
+        }
+
+        public static bool IsLeft(Component source)
+        {
+            var restriction = new SerializedObject(source).FindProperty("grabHand");
+            return restriction != null && restriction.intValue != (int)BSGrabHand.Either
+                ? restriction.intValue == (int)BSGrabHand.LeftOnly : hand == Hand.Left;
+        }
+
+        public static void HandSelector(Component source)
+        {
+            var restriction = new SerializedObject(source).FindProperty("grabHand");
+            if (restriction != null && restriction.intValue != (int)BSGrabHand.Either)
+            {
+                EditorGUILayout.LabelField("Edit Hand", IsLeft(source) ? "Left (restricted)" : "Right (restricted)");
+                return;
+            }
+            EditorGUI.BeginChangeCheck();
+            hand = (Hand)EditorGUILayout.EnumPopup("Edit Hand", hand);
+            if (EditorGUI.EndChangeCheck()) SceneView.RepaintAll();
+        }
+
         static BSGrabPreview()
         {
             SceneView.duringSceneGui += Draw;
@@ -46,8 +106,11 @@ namespace BS.SDKEditor
                 enabled = EditorGUILayout.Toggle("Editor hand preview", enabled);
                 if (enabled)
                 {
-                    hand = (Hand)EditorGUILayout.EnumPopup("Editor preview hand", hand);
-                    EditorGUILayout.HelpBox("Point has a fixed grip. For Cylinder, Ball and Soft, drag the approach dot in Scene view. Fingers fit the grab collider; your avatar's hand shape can differ.", MessageType.Info);
+                    var custom = BSPointGrabPose.For(source);
+                    if (custom == null || !custom.enabled || new SerializedObject(source).FindProperty("grabType").intValue != (int)BSGrabType.Point)
+                        HandSelector(source);
+                    if (new SerializedObject(source).FindProperty("grabType").intValue != (int)BSGrabType.Point)
+                        EditorGUILayout.HelpBox("Drag the approach handle in Scene view to preview the grip. Fingers fit the grab collider.", MessageType.Info);
                     var body = source.GetComponent<Collider>()?.attachedRigidbody;
                     if (body != null && (body.transform.lossyScale - Vector3.one).sqrMagnitude > .0001f
                         && new SerializedObject(source).FindProperty("grabType").intValue != (int)BSGrabType.Point)
@@ -55,7 +118,11 @@ namespace BS.SDKEditor
                 }
                 if (EditorGUI.EndChangeCheck())
                 {
-                    if (!enabled) Clear();
+                    if (!enabled)
+                    {
+                        BSPointGrabPoseEditor.StopEditing();
+                        Clear();
+                    }
                     else SceneView.RepaintAll();
                 }
             });
@@ -107,9 +174,7 @@ namespace BS.SDKEditor
             var fields = new SerializedObject(component);
             var type = (BSGrabType)fields.FindProperty("grabType").intValue;
             var radius = fields.FindProperty("grabRadius").floatValue;
-            var restriction = fields.FindProperty("grabHand");
-            var left = restriction != null && restriction.intValue != (int)BSGrabHand.Either
-                ? restriction.intValue == (int)BSGrabHand.LeftOnly : hand == Hand.Left;
+            var left = IsLeft(component);
             var t = component.transform;
             var key = component.GetInstanceID();
             if (samples.TryGetValue(key, out var sample) && (sample.collider != source || !sample.solver.IsCurrent))
@@ -141,18 +206,26 @@ namespace BS.SDKEditor
                     palm = moved;
                 }
                 var approach = new Pose(palm - t.rotation * EditorGrabPosePreview.PalmOffset(left), t.rotation);
-                var pose = sample.solver.Evaluate(type, radius, left, approach);
+                var custom = type == BSGrabType.Point ? BSPointGrabPose.For(component) : null;
+                var pose = sample.solver.Evaluate(type, radius, left, approach, custom);
+                if (type == BSGrabType.Point && BSPointGrabPoseEditor.DrawHandles(component, left, radius, pose))
+                    pose = sample.solver.Evaluate(type, radius, left, approach, custom);
                 Handles.Label(pose.position + t.up * .15f, (left ? "Left" : "Right") + " hand · " + type);
                 if (type != BSGrabType.Point)
                     Handles.DrawDottedLine(palm, pose.position + pose.rotation * EditorGrabPosePreview.PalmOffset(left), 4f);
-                if (Event.current.type != EventType.Repaint) return;
-                var held = component.GetComponent<BSHeldEvents>();
-                var triggerFields = held != null ? new SerializedObject(held) : fields;
-                var leftTrigger = triggerFields.FindProperty("blockLeftTrigger");
-                var rightTrigger = triggerFields.FindProperty("blockRightTrigger");
-                var trigger = left ? leftTrigger : rightTrigger;
-                var triggerReady = trigger != null && trigger.boolValue;
-                sample.hologram.DrawEditorPreview(pose, left, source, triggerReady);
+                if (Event.current.type == EventType.Repaint)
+                {
+                    var held = component.GetComponent<BSHeldEvents>();
+                    var triggerFields = held != null ? new SerializedObject(held) : fields;
+                    var leftTrigger = triggerFields.FindProperty("blockLeftTrigger");
+                    var rightTrigger = triggerFields.FindProperty("blockRightTrigger");
+                    var trigger = left ? leftTrigger : rightTrigger;
+                    var triggerReady = trigger != null && trigger.boolValue;
+                    sample.hologram.DrawEditorPreview(pose, left, source, triggerReady, custom != null && custom.enabled ? custom.GetHand(left) : null);
+                }
+                if (custom != null && custom.enabled && BSPointGrabPoseEditor.IsEditing(component))
+                    BSPointGrabPoseEditor.DrawJointHandles(component, left, pose,
+                        sample.hologram.EditorJointHandles(pose, left, source, custom.GetHand(left)));
             }
         }
     }

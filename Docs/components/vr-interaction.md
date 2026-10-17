@@ -61,6 +61,23 @@ use the **Release Grab** node.
 
 ## GrabHandle
 
+### Custom Point poses in Unity
+
+Under **Available Properties**, choose **Point** and enable **Custom Hand Pose** on the BS Grab Handle (or BS Grababble when it creates the handle).
+Choose **Edit Hand**, click **Edit Pose in Scene**, and drag any orange joint ring to bend it directly. All fifteen bend rings are visible immediately; base joints also have cyan rings for sideways spread. Rotations follow the same constrained axes as the actual avatar hand, including mirrored left-hand editing, and support Undo/redo.
+The thumb's cyan ring allows up to 60 degrees in either direction for raising or opening the thumb; other fingers retain their 25-degree spread limit. Avatar Humanoid muscle limits can still restrict the resulting motion.
+Use the wrist Move (W) or Rotate (E) gizmo to position the whole ghost hand without moving the object. **Advanced** retains curl sliders, individual joint/spread values, grip offset and Copy/Paste/Reset. **Hand Preview** groups editor visibility and **Show Runtime Visual**.
+
+For an automatic starting pose, optionally assign **Fit Target**, select **Fit Surface**, and click **Fit Fingers to Target**. Empty target uses the grab object's Rigidbody hierarchy; an assigned target uses that object and its children and does not change grab detection. **Visible Mesh** fits rendered triangles, including current skinned geometry, and ignores lower LODs. **Collider Shape** fits Box/Sphere/Capsule colliders, the cooked hull of convex MeshColliders, and actual triangles of non-convex MeshColliders. Default targets exclude separately bodied children; an explicitly assigned target includes its children. Imported mesh Read/Write may stay disabled. Position the ghost hand outside the surface first, then fit and refine. Fitting saves a snapshot; fingers stay fixed while held and trigger events still work.
+
+The left hand mirrors the right by default. Enable **Separate Left Pose** under Advanced for an asymmetric grip, then switch **Edit Hand** to edit it.
+Copy/Paste transfers poses between handles. Editing supports Undo and prefab overrides; open a prefab in Prefab Mode to position its hand.
+Grip offsets use metres in the handle's rotated coordinate frame. Existing objects keep their original grab behaviour until custom posing is enabled.
+
+The hover hologram, SDK mouse grab and Flexabody client use the same saved pose and point-grab solver. SDK Play Mode keeps the custom hand visible while holding so you can inspect it; **Show Runtime Visual** still controls the hologram.
+The real avatar's fingers adopt the pose while held and return to controller/tracking input on release. Avatar proportions and Humanoid muscle limits can change fingertip contact; test important grips with the intended avatars.
+Custom pose settings are serialized Unity authoring data, not JavaScript or Visual Scripting properties. A separately authored BS Grab Handle owns its settings when BS Grababble is also present.
+
 A grab point: says how a collider is held. It uses the collider on its own object, so add the collider first and put it on the Grabbable layer. If the collider belongs to a Rigidbody (on the object or a parent), grabbing moves that body; without one, grabbing holds on to the world, like a climbing handhold.
 
 | Property | Type | Default | Description |

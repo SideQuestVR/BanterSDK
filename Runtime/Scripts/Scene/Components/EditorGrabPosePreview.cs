@@ -77,7 +77,7 @@ namespace BS
             }
         }
 
-        public Pose Evaluate(BSGrabType type, float radius, bool left, Pose approach)
+        public Pose Evaluate(BSGrabType type, float radius, bool left, Pose approach, BSPointGrabPose custom = null)
         {
             foreach (var pair in transforms)
             {
@@ -93,6 +93,8 @@ namespace BS
             }
             handle.GrabType = (GrabType)type;
             handle._grabRadius = radius;
+            handle.UseCustomPointPose = false;
+            custom?.Apply(handle);
             var settings = new SerializedObject(hand);
             settings.FindProperty("_handId").intValue = (int)(left ? HandID.Left : HandID.Right);
             settings.ApplyModifiedPropertiesWithoutUndo();

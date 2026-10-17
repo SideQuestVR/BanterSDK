@@ -19,6 +19,11 @@ namespace BS
         readonly Transform[] tips = new Transform[5];
         readonly Quaternion[] rest = new Quaternion[15];
         readonly float[] signs = new float[15];
+        readonly Vector3[] spreadAxes = new Vector3[5];
+        readonly float[] fittedAngles = new float[15];
+        readonly Vector3[] customHinges = new Vector3[15];
+        bool authoringFit, anatomicalCurl;
+        Func<Vector3, float, bool> authoringSurface;
         readonly Matrix4x4 sourceToCanonical, meshToCanonical;
         readonly Mesh mesh;
 #if UNITY_EDITOR
@@ -72,16 +77,63 @@ namespace BS
             meshToCanonical = sourceToCanonical * renderer.transform.localToWorldMatrix;
             for (var i = 0; i < joints.Length; i++)
                 signs[i] = Vector3.Dot(Vector3.Cross(joints[i].right, joints[i].up), frame * Vector3.left) >= 0f ? 1f : -1f;
+            // Match Flexabody's geometric avatar driver, including the thumb's opposition across the palm.
+            var palmNormal = Vector3.Cross(joints[3].position - wrist.position, joints[9].position - joints[0].position).normalized;
+            var thumbTarget = (joints[0].position + joints[3].position) * .5f;
+            for (var finger = 0; finger < 5; finger++)
+                for (var joint = 0; joint < 3; joint++)
+                {
+                    var index = finger * 3 + joint;
+                    var bone = joints[index];
+                    var parentPosition = joint == 0 ? wrist.position : joints[index - 1].position;
+                    var direction = joint < 2 ? joints[index + 1].position - bone.position : bone.position - parentPosition;
+                    var curlDirection = -palmNormal;
+                    if (finger == 4)
+                    {
+                        var targetDirection = Vector3.ProjectOnPlane(thumbTarget - bone.position, direction);
+                        if (targetDirection.sqrMagnitude > 1e-10f)
+                        {
+                            var intoPalm = Vector3.ProjectOnPlane(-palmNormal, direction);
+                            if (intoPalm.sqrMagnitude < 1e-10f) intoPalm = targetDirection;
+                            curlDirection = Vector3.Slerp(intoPalm.normalized, targetDirection.normalized, .8f);
+                        }
+                    }
+                    customHinges[index] = (Quaternion.Inverse(bone.rotation) * Vector3.Cross(direction, curlDirection)).normalized;
+                }
+            for (var finger = 0; finger < 5; finger++)
+            {
+                var joint = joints[finger * 3];
+                var direction = joints[finger * 3 + 1].position - joint.position;
+                // Thumb spread needs a separate axis from its opposition curl.
+                var reference = finger == 4 ? joint.rotation * customHinges[12] : joints[0].position - joints[9].position;
+                spreadAxes[finger] = Quaternion.Inverse(joint.rotation) * Vector3.Cross(direction, reference).normalized;
+            }
             mesh = new Mesh { name = "Fitted grip hand", hideFlags = HideFlags.HideAndDontSave };
             mesh.MarkDynamic();
         }
 
-        internal Mesh Fit(Pose wristPose, bool left, Collider collider, bool triggerReady)
+        internal Mesh Fit(Pose wristPose, bool left, Collider collider, bool triggerReady, BSPointHandPose customPose = null)
         {
             if (rig == null || renderer == null || mesh == null) return null;
+            anatomicalCurl = customPose != null || authoringFit;
             for (var i = 0; i < joints.Length; i++) joints[i].localRotation = rest[i];
             var toWorld = Matrix4x4.TRS(wristPose.position, wristPose.rotation, new Vector3(left ? -1f : 1f, 1f, 1f)) * sourceToCanonical;
-            if (collider != null)
+            if (customPose != null)
+            {
+                for (var finger = 0; finger < 5; finger++)
+                {
+                    var values = customPose.GetFinger(finger == 4 ? 0 : finger + 1);
+                    for (var joint = 0; joint < 3; joint++)
+                    {
+                        var index = finger * 3 + joint;
+                        SetCurl(index, values[joint] * 170f);
+                        if (joint == 0)
+                            joints[index].localRotation = rest[index] * Quaternion.AngleAxis(values.w * 50f, spreadAxes[finger])
+                                * Quaternion.AngleAxis(values.x * 170f, customHinges[index]);
+                    }
+                }
+            }
+            else if (collider != null || authoringSurface != null)
                 for (var finger = 0; finger < Fingers.Length; finger++)
                     for (var joint = 0; joint < 3; joint++)
                     {
@@ -128,8 +180,65 @@ namespace BS
             }
         }
 
-        void SetCurl(int index, float angle) => joints[index].localRotation = rest[index]
-            * Quaternion.AngleAxis(signs[index] * angle, Vector3.right);
+        void SetCurl(int index, float angle)
+        {
+            fittedAngles[index] = angle;
+            joints[index].localRotation = rest[index] * Quaternion.AngleAxis(anatomicalCurl ? angle : signs[index] * angle,
+                anatomicalCurl ? customHinges[index] : Vector3.right);
+        }
+
+        internal Mesh FitForAuthoring(Pose wrist, bool left, Collider collider, Func<Vector3, float, bool> surface = null)
+        {
+            authoringFit = true;
+            authoringSurface = surface;
+            try { return Fit(wrist, left, collider, false); }
+            finally { authoringFit = false; authoringSurface = null; }
+        }
+
+        internal BSPointHandPose Capture()
+        {
+            var result = new BSPointHandPose();
+            for (var finger = 0; finger < 5; finger++)
+                result.SetFinger(finger == 4 ? 0 : finger + 1, new Vector4(fittedAngles[finger * 3],
+                    fittedAngles[finger * 3 + 1], fittedAngles[finger * 3 + 2], 0f) / 170f);
+            return result;
+        }
+
+#if UNITY_EDITOR
+        readonly BSGripHologram.JointHandle[] editorJoints = new BSGripHologram.JointHandle[15];
+
+        internal BSGripHologram.JointHandle[] JointHandles(Pose wrist, bool left)
+        {
+            if (mesh == null) return null;
+            var matrix = Matrix4x4.TRS(wrist.position, wrist.rotation, new Vector3(left ? -1f : 1f, 1f, 1f)) * sourceToCanonical;
+            for (var finger = 0; finger < 5; finger++)
+                for (var joint = 0; joint < 3; joint++)
+                {
+                    var index = finger * 3 + joint;
+                    var bone = joints[index];
+                    var output = (finger == 4 ? 0 : finger + 1) * 3 + joint;
+                    // Rotation axes are axial vectors: reflection reverses their handedness.
+                    var sign = left ? -1f : 1f;
+                    editorJoints[output] = new BSGripHologram.JointHandle
+                    {
+                        position = matrix.MultiplyPoint3x4(bone.position),
+                        curlAxis = sign * matrix.MultiplyVector(bone.rotation * customHinges[index]).normalized,
+                        spreadAxis = sign * matrix.MultiplyVector(bone.parent.rotation * rest[index] * spreadAxes[finger]).normalized
+                    };
+                }
+            return editorJoints;
+        }
+
+        internal Vector3[] FingerTips(Pose wrist, bool left)
+        {
+            if (mesh == null) return null;
+            var matrix = Matrix4x4.TRS(wrist.position, wrist.rotation, new Vector3(left ? -1f : 1f, 1f, 1f)) * sourceToCanonical;
+            var points = new Vector3[5];
+            for (var finger = 0; finger < 5; finger++)
+                points[finger == 4 ? 0 : finger + 1] = matrix.MultiplyPoint3x4(tips[finger].position);
+            return points;
+        }
+#endif
 
         bool Touches(int finger, int firstJoint, Collider collider, Matrix4x4 toWorld)
         {
@@ -142,6 +251,11 @@ namespace BS
                 for (var sample = 1; sample <= 3; sample++)
                 {
                     var point = toWorld.MultiplyPoint3x4(Vector3.Lerp(from, to, sample / 3f));
+                    if (authoringSurface != null)
+                    {
+                        if (authoringSurface(point, FingerRadius)) return true;
+                        continue;
+                    }
                     // shortcut: Concave colliders use bounds; add triangle sampling if precise concave hints are needed.
                     var closest = nativeClosestPoint ? collider.ClosestPoint(point) : collider.bounds.ClosestPoint(point);
                     if ((point - closest).sqrMagnitude <= FingerRadius * FingerRadius) return true;

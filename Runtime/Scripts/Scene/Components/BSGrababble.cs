@@ -23,6 +23,9 @@ namespace BS
 
         public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
 
+        [SerializeField] internal BSPointGrabPose customPointPose = new BSPointGrabPose();
+        public BSPointGrabPose CustomPointPose => customPointPose;
+
         [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
         [See(initial = "0.5")][SerializeField] internal float gunTriggerSensitivity = 0.5f;
 
@@ -128,6 +131,7 @@ namespace BS
                 {
                     banterGrabHandleAdded = true;
                     banterGrabHandle = gameObject.AddComponent<BSGrabHandle>();
+                    banterGrabHandle.customPointPose = customPointPose;
                 }
             }
             if (!banterWorldObject)

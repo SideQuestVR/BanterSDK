@@ -46,6 +46,16 @@ namespace BS
 
         public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
 
+        [SerializeField] internal BSPointGrabPose customPointPose = new BSPointGrabPose();
+        public BSPointGrabPose CustomPointPose => customPointPose;
+
+        public void ApplyCustomPointPose()
+        {
+            if (grabHandle != null) customPointPose?.Apply(grabHandle);
+        }
+
+        void OnValidate() => ApplyCustomPointPose();
+
         internal override void DestroyStuff()
         {
             if (worldObjectAdded && grabHandle && grabHandle.WorldObj)
@@ -78,6 +88,7 @@ namespace BS
             grabHandle.Col = GetComponent<Collider>();
             grabHandle.GrabType = (GrabType)GrabType;
             grabHandle._grabRadius = GrabRadius;
+            ApplyCustomPointPose();
             Rigidbody rb = grabHandle.Col ? grabHandle.Col.attachedRigidbody : null;
             if (rb)
             {
