@@ -71,7 +71,7 @@ namespace BS
             };
             photoSphere.LoadCallback += photoSphereCallback;
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String PanoId { get { return panoId; } set { panoId = value; UpdateCallback(new List<PropertyName> { PropertyName.panoId }); } }
 
         BSScene _scene;
@@ -178,6 +178,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

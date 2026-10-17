@@ -55,7 +55,7 @@ Clicking a seat sits the local player on it, and moving or jumping stands them u
 |----------|------|---------|-------------|
 | `unseatOnMove` | boolean | true | Stand up when the player pushes the move stick (WASD on desktop) |
 | `unseatOnJump` | boolean | true | Stand up when the player jumps |
-| `useExitPosition` | boolean | false | Teleport the player to `exitPosition` when they get off, however they get off |
+| `useExitPosition` | boolean | false | Teleport the player to `exitPosition` when they get off, however they get off. Off: they are lifted 1 m above the seat, speed cleared |
 | `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). They face the way the seat faces |
 
 <div class="docs-tabs">

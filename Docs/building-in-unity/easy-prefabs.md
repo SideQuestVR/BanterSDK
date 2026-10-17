@@ -24,7 +24,7 @@ Clicking the seat sits the local player on it. Moving (the move stick or WASD) o
 
 `BSSeat` sets up the `BSAttachedObject` beside it as a seat: Physics + AvatarAttachTo, jointed, `isSeat`, and never auto-attached. It also listens for clicks on the colliders it has when it starts (so add colliders before the seat when building one from a script) and adds a kinematic Rigidbody if there is none. Without one, the client would add a dynamic Rigidbody and the chair would fall.
 
-Turn on **Use Exit Position** to put the player somewhere else when they get off, however they get off (standing up, moving or jumping): **Exit Position** is relative to the seat, so it moves with it, and the player faces the way the seat faces. Selecting the seat draws it as an orange circle with a line for the facing.
+Turn on **Use Exit Position** to put the player somewhere else when they get off, however they get off (standing up, moving or jumping): **Exit Position** is relative to the seat, so it moves with it, and the player faces the way the seat faces. Selecting the seat draws it as an orange circle with a line for the facing. With it off, the player is lifted 1 m above the seat with their speed cleared and drops back down, so getting off never flings them.
 
 The prefab is one GameObject: `BSSeat`, `BSAttachedObject`, `BSObjectId` and a trigger BoxCollider. Its origin is the sitting point, facing local **+Z**; place it at the top of your furniture's cushion. The preset starts 0.48 m above its placement point. Its trigger box is on the **UI layer**: only the UI and Menu layers can be clicked, in the app and in Play mode. It has no solid collider or furniture mesh; keep physical collision on your actual furniture.
 

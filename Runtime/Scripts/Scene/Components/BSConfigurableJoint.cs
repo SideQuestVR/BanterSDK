@@ -127,7 +127,7 @@ namespace BS
         // Slerp Drive (JointDrive as Vector3: positionSpring, positionDamper, maximumForce)
         [Tooltip("The slerp drive for rotation. Vector3(positionSpring, positionDamper, maximumForce).")]
         [See(initial = "0,0,3.402823E+38")][SerializeField] internal JointDrive slerpDrive = new JointDrive { positionSpring = 0f, positionDamper = 0f, maximumForce = float.MaxValue };
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public UnityEngine.Vector3 TargetPosition { get { return targetPosition; } set { targetPosition = value; } }
         public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
         public UnityEngine.ConfigurableJointMotion XMotion { get { return xMotion; } set { xMotion = value; } }
@@ -1115,6 +1115,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

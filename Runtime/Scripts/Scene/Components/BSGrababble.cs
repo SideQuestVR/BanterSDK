@@ -210,7 +210,7 @@ namespace BS
                 banterHeldEvents.BlockRightTrigger = blockRightTrigger;
             }
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public BSGrabType GrabType { get { return grabType; } set { grabType = value; UpdateCallback(new List<PropertyName> { PropertyName.grabType }); } }
         public System.Single GrabRadius { get { return grabRadius; } set { grabRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.grabRadius }); } }
         public System.Single GunTriggerSensitivity { get { return gunTriggerSensitivity; } set { gunTriggerSensitivity = value; UpdateCallback(new List<PropertyName> { PropertyName.gunTriggerSensitivity }); } }
@@ -625,6 +625,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

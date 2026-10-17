@@ -289,7 +289,7 @@ namespace BS
         {
             return _rigidbody;
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public UnityEngine.Vector3 Velocity { get { return velocity; } set { velocity = value; UpdateCallback(new List<PropertyName> { PropertyName.velocity }); } }
         public UnityEngine.Vector3 AngularVelocity { get { return angularVelocity; } set { angularVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.angularVelocity }); } }
         public System.Single Mass { get { return mass; } set { mass = value; UpdateCallback(new List<PropertyName> { PropertyName.mass }); } }
@@ -878,6 +878,6 @@ namespace BS
                 }
             }
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

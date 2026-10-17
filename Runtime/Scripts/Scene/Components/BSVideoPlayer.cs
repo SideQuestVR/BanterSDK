@@ -330,7 +330,7 @@ namespace BS
         {
 
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Single Time { get { return time; } set { time = value; UpdateCallback(new List<PropertyName> { PropertyName.time }); } }
         public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
         public System.Single Volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
@@ -722,6 +722,6 @@ namespace BS
                 }
             }
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

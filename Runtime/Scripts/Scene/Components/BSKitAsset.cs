@@ -176,7 +176,7 @@ namespace BS
             valuesApplied = true;
             SetupKitAsset();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String Path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
 
         BSScene _scene;
@@ -283,6 +283,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

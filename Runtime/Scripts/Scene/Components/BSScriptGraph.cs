@@ -95,7 +95,7 @@ namespace BS
         {
 
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Int32 MachineCount { get { return machineCount; } set { machineCount = value; UpdateCallback(new List<PropertyName> { PropertyName.machineCount }); } }
         public System.String GraphTitles { get { return graphTitles; } set { graphTitles = value; UpdateCallback(new List<PropertyName> { PropertyName.graphTitles }); } }
 
@@ -256,6 +256,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

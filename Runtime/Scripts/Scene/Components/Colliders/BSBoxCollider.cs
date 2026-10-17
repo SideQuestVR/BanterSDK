@@ -13,7 +13,7 @@ namespace BS
         [See(initial = "false")][SerializeField] internal bool isTrigger = false;
         [See(initial = "0,0,0")][SerializeField] internal Vector3 center = Vector3.zero;
         [See(initial = "1,1,1")][SerializeField] internal Vector3 size = Vector3.one;
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
         public UnityEngine.Vector3 Center { get { return center; } set { center = value; } }
         public UnityEngine.Vector3 Size { get { return size; } set { size = value; } }
@@ -178,6 +178,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

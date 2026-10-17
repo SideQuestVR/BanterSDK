@@ -93,7 +93,7 @@ namespace BS
             }
             SetLoadedIfNot();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Int32 RenderTextureSize { get { return renderTextureSize; } set { renderTextureSize = value; UpdateCallback(new List<PropertyName> { PropertyName.renderTextureSize }); } }
         public System.Int32 CameraClear { get { return cameraClear; } set { cameraClear = value; UpdateCallback(new List<PropertyName> { PropertyName.cameraClear }); } }
         public System.String BackgroundColor { get { return backgroundColor; } set { backgroundColor = value; UpdateCallback(new List<PropertyName> { PropertyName.backgroundColor }); } }
@@ -268,6 +268,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

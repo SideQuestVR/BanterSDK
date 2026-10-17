@@ -114,7 +114,7 @@ namespace BS
         {
             _ = SetupPortal();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
         public System.String Instance { get { return instance; } set { instance = value; UpdateCallback(new List<PropertyName> { PropertyName.instance }); } }
 
@@ -243,6 +243,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

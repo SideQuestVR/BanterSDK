@@ -28,7 +28,7 @@ namespace BS
     {
         [See(initial = "false")][SerializeField] internal bool convex = false;
         [See(initial = "false")][SerializeField] internal bool isTrigger = false;
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean Convex { get { return convex; } set { convex = value; } }
         public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
         public MeshCollider _componentType;
@@ -180,6 +180,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

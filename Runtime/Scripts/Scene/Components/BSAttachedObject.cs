@@ -200,7 +200,7 @@ namespace BS
                 attachment.unseatOnJump = unseatOnJump;
             }
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String Uid { get { return uid; } set { uid = value; UpdateCallback(new List<PropertyName> { PropertyName.uid }); } }
         public UnityEngine.Vector3 AttachmentPosition { get { return attachmentPosition; } set { attachmentPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentPosition }); } }
         public UnityEngine.Quaternion AttachmentRotation { get { return attachmentRotation; } set { attachmentRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.attachmentRotation }); } }
@@ -595,6 +595,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

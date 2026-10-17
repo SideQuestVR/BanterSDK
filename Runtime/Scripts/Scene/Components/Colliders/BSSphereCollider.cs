@@ -28,7 +28,7 @@ namespace BS
     {
         [See(initial = "false")][SerializeField] internal bool isTrigger = false;
         [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
         public System.Single Radius { get { return radius; } set { radius = value; } }
         public SphereCollider _componentType;
@@ -171,6 +171,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

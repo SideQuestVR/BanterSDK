@@ -1202,7 +1202,7 @@ namespace BS
         {
 
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
         public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
         public System.Boolean MeshInput { get { return meshInput; } set { meshInput = value; UpdateCallback(new List<PropertyName> { PropertyName.meshInput }); } }
@@ -1543,6 +1543,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

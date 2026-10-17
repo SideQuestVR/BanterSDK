@@ -139,7 +139,7 @@ namespace BS
             RefreshPortalPreview();
         }
 #endif
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean StopVelocity { get { return stopVelocity; } set { stopVelocity = value; UpdateCallback(new List<PropertyName> { PropertyName.stopVelocity }); } }
         public System.Single Cooldown { get { return cooldown; } set { cooldown = value; UpdateCallback(new List<PropertyName> { PropertyName.cooldown }); } }
 
@@ -268,6 +268,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

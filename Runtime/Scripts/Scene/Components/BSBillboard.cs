@@ -87,7 +87,7 @@ namespace BS
             lookAt.enableZAxis = enableZAxis;
             lookAt.isBillboard = true;
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Single Smoothing { get { return smoothing; } set { smoothing = value; UpdateCallback(new List<PropertyName> { PropertyName.smoothing }); } }
         public System.Boolean EnableXAxis { get { return enableXAxis; } set { enableXAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableXAxis }); } }
         public System.Boolean EnableYAxis { get { return enableYAxis; } set { enableYAxis = value; UpdateCallback(new List<PropertyName> { PropertyName.enableYAxis }); } }
@@ -260,6 +260,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

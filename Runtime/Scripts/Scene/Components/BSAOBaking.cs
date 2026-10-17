@@ -183,7 +183,7 @@ namespace BS
                 _merger.ClearGeneratedMesh();
             }
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Int32 SubdivisionLevel { get { return subdivisionLevel; } set { subdivisionLevel = value; UpdateCallback(new List<PropertyName> { PropertyName.subdivisionLevel }); } }
         public System.Int32 SampleCount { get { return sampleCount; } set { sampleCount = value; UpdateCallback(new List<PropertyName> { PropertyName.sampleCount }); } }
         public System.Single AoIntensity { get { return aoIntensity; } set { aoIntensity = value; UpdateCallback(new List<PropertyName> { PropertyName.aoIntensity }); } }
@@ -497,6 +497,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

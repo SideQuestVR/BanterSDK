@@ -428,7 +428,7 @@ namespace BS
         {
             _ = SetupBundle(changedProperties);
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String WindowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
         public System.String OsxUrl { get { return osxUrl; } set { osxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.osxUrl }); } }
         public System.String LinuxUrl { get { return linuxUrl; } set { linuxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.linuxUrl }); } }
@@ -689,6 +689,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

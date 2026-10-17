@@ -30,7 +30,7 @@ namespace BS
 
         [Tooltip("The type of shadows to cast (0 = None, 1 = Hard, 2 = Soft).")]
         [See(initial = "0")][SerializeField] internal LightShadows shadows = 0;
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public UnityEngine.LightType Type { get { return type; } set { type = value; } }
         public UnityEngine.Vector4 Color { get { return color; } set { color = value; } }
         public System.Single Intensity { get { return intensity; } set { intensity = value; } }
@@ -283,6 +283,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }
