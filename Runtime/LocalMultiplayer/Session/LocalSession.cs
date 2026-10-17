@@ -621,7 +621,7 @@ namespace BS.LocalMultiplayer
                 case RelayCloseKind.Refused:
                     return $"Nothing answered at localhost:{port}: is the main editor in Play?";
                 case RelayCloseKind.Rejected:
-                    return $"localhost:{port} refused the relay connection (HTTP {httpStatus}): Ora is older than 0.1.0, or local multiplayer is off in the main editor.";
+                    return $"localhost:{port} refused the relay connection (HTTP {httpStatus}): Ora is older than 0.1.1, or local multiplayer is off in the main editor.";
             }
             switch (code)
             {

@@ -95,7 +95,7 @@ If a player can't connect, the overlay and the window say why:
 |---|---|
 | nothing answered at localhost:42068 … is the main editor in Play? | Press Play in the main editor. A player waits 30 seconds, then loads the page on its own. |
 | localhost:42068 is the hub of another project | Another Unity project is in Play. Stop Play there. |
-| localhost:42068 has no local multiplayer relay | Local multiplayer is off in the main editor, or Ora there is older than 0.1.0. |
+| localhost:42068 has no local multiplayer relay | Local multiplayer is off in the main editor, or Ora there is older than 0.1.1 (0.1.0 never started its web server or relay). |
 
 ## Playing without local multiplayer
 

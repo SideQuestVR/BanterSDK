@@ -23,8 +23,9 @@ namespace BS.LocalMultiplayer.Editor
         internal const string MppmWindowMenu = "Window/Multiplayer/Multiplayer Play Mode";
         internal const string OraName = "com.sidequest.ora";
 
-        /// <summary>The first Ora whose Electron app has the relay (the BS_ORA_RELAY version define).</summary>
-        internal const string OraMinimumVersion = "0.1.0";
+        /// <summary>The first Ora whose Electron app has the relay (the BS_ORA_RELAY version define). 0.1.0 had the
+        /// relay but its DLL shipped without --webserver, so the relay never started (fixed in 0.1.1).</summary>
+        internal const string OraMinimumVersion = "0.1.1";
 
         internal const string FlexaBodyName = "com.sidequest.flexabody";
 

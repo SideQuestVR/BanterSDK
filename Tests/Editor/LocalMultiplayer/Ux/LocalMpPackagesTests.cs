@@ -16,7 +16,7 @@ namespace BS.LocalMultiplayer.Tests
             Assert.AreEqual("2.0.2", LocalMpPackages.MppmPinnedVersion);
             Assert.AreEqual("Window/Multiplayer/Multiplayer Play Mode", LocalMpPackages.MppmWindowMenu);
             Assert.AreEqual("com.sidequest.ora", LocalMpPackages.OraName);
-            Assert.AreEqual("0.1.0", LocalMpPackages.OraMinimumVersion);
+            Assert.AreEqual("0.1.1", LocalMpPackages.OraMinimumVersion);
         }
 
         [TestCase("2.0.2", 2, 0, 2)]

@@ -112,8 +112,8 @@ namespace BS.LocalMultiplayer.Objects
                     _hasOriginalKinematic = true;
                     _originalKinematic = boundBody.isKinematic;
                 }
-                // Recaptured on every enable, as production does: a non-owner re-enabled while its body is
-                // network-kinematic records "authored kinematic" (the held-object recapture quirk).
+                // Recaptured on every enable, as production does. HeldSyncSuspender, the one caller that re-enables
+                // a non-owner whose body is network-kinematic, shows it the authored flag first.
                 authoredKinematic = boundBody.isKinematic;
             }
             ApplyRemote(MachineClock.NowMs);

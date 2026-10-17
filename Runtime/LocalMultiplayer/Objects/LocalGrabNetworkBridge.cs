@@ -10,10 +10,10 @@
 //     would grab the same object again on the next physics step; and it lets go only while the hand still holds that
 //     object, where production releases whatever the hand holds;
 //   - the hand anchor is the local rig's right hand (what the orb avatar shows to the others), else the mouse hand;
-//   - a desktop click can be shorter than the acquire's round trip plus the settle frames, which VR grabs never are:
+//   - a desktop click can be shorter than the acquire's round trip plus the settle frames:
 //     the grip is attached only if the grab is still current after the settle, and a grab that ended before its
-//     acquire landed, or during the settle, is dropped at once (commit + unlock, keeping authority). Production would
-//     attach an object already let go, or leave it owned and locked for good.
+//     acquire landed, or during the settle, is dropped at once (commit + unlock, keeping authority). Production
+//     does the same since 2026-10-17 (it used to leave a grab released mid-acquire owned and locked for good).
 using System;
 using System.Threading;
 using System.Threading.Tasks;

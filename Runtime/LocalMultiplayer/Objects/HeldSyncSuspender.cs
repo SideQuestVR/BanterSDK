@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/HeldSyncSuspender.cs" sha256="330d60746b3c50844b2de8f19ff4076811e15d2c2b9416302a054b96b417882a" mode="port" />
+// <mirror source="Assets/Systems/Networking/HeldSyncSuspender.cs" sha256="ff3b099345d29e89f855370405c8e544b52e03b87f4ff6b6f026fdc6e04217b3" mode="port" />
 // HeldSyncSuspender line for line, with PacketPartyHeldObject / PacketPartySynchronizedTransform replaced by
 // LocalHeldObject / LocalSyncedTransform.
 using System;
@@ -16,6 +16,11 @@ namespace BS.LocalMultiplayer.Objects
     /// Driven off the networked attachment state, so it fires the same on the owner (which then stops
     /// publishing the world pose) and on non-owners (which stop applying it). Re-enables on detach so the
     /// free object's transform sync resumes. Added alongside HeldObject by SyncedObjectsModule.
+    ///
+    /// The re-enable must not let the sync-transform learn the wrong "authored" kinematic flag: its OnEnable
+    /// re-reads it from the body every time, and on a player watching someone else hold the object the body
+    /// is network-kinematic right then. Without the fix below, that player's later grab took ownership of a
+    /// body that stayed kinematic: the object wouldn't move, stuck where the previous holder let it go.
     /// </summary>
     [DisallowMultipleComponent]
     [AddComponentMenu("")]
@@ -24,10 +29,16 @@ namespace BS.LocalMultiplayer.Objects
         [NonSerialized] bool _live;
         private LocalHeldObject _held;
         private LocalSyncedTransform _sync;
+        private Rigidbody _dynamicBody;
 
-        internal void Configure()
+        /// <summary>
+        /// <paramref name="dynamicBody"/>: the authored-dynamic Rigidbody the sync-transform binds (Rigidbody
+        /// binding), whose kinematic flag it toggles for ownership; null when it binds the Transform.
+        /// </summary>
+        internal void Configure(Rigidbody dynamicBody)
         {
             _live = true;
+            _dynamicBody = dynamicBody;
         }
 
         private void Awake()
@@ -50,8 +61,19 @@ namespace BS.LocalMultiplayer.Objects
 
         private void OnAttachmentChanged(bool attached)
         {
-            if (!_live) return;
-            if (_sync != null) _sync.enabled = !attached;
+            if (!_live || _sync == null) return;
+            if (attached || _sync.enabled || _dynamicBody == null)
+            {
+                _sync.enabled = !attached;
+                return;
+            }
+            // LocalSyncedTransform.OnEnable records the body's current isKinematic as authored. Show it the
+            // authored (dynamic) value, then put back what the body is now; for a non-owner the
+            // sync-transform keeps it kinematic anyway.
+            bool current = _dynamicBody.isKinematic;
+            _dynamicBody.isKinematic = false;
+            _sync.enabled = true;
+            _dynamicBody.isKinematic = current;
         }
 
         internal void Teardown()
