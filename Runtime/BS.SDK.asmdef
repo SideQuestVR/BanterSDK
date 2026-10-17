@@ -2,6 +2,7 @@
     "name": "BS.SDK",
     "rootNamespace": "BS.SDK",
     "references": [
+        "GUID:15fc0a57446b3144c949da3e2b9737a9",
         "GUID:5189d4f0178db074da4a316e98d9b3d3",
         "GUID:ba171b3dd2a51234ab864770f99741a5",
         "GUID:75469ad4d38634e559750d17036d5f7c",

@@ -9,7 +9,7 @@ namespace BS
     #### Banter Teleporter
     Teleport the local player when they walk into this object's trigger collider. They land on the
     destination transform, facing its Y rotation. Needs a collider with `isTrigger` set on the same object.
-    The destination is set in the editor; it isn't visible to scripts.
+    Set a local landing position and exit facing, or override them with a destination transform.
 
     **Properties**
     - `stopVelocity` - Stop the player's movement when they arrive.
@@ -27,10 +27,31 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSTeleporter : BSComponentBase
+    public partial class BSTeleporter : BSComponentBase
     {
         [Tooltip("Where the player lands: this transform's position, facing its Y rotation.")]
         [SerializeField] internal Transform destination;
+
+        [SerializeField] internal bool useDestinationPosition;
+        [SerializeField] internal Vector3 destinationPosition = new Vector3(0f, 0f, 5f);
+        [SerializeField] internal float destinationYaw;
+        [SerializeField] internal bool portalPreviewEnabled;
+        [SerializeField] internal bool showRuntimeVisual = true;
+        [SerializeField] internal bool realtimeWhenNearby;
+        [SerializeField] internal int portalResolution = 256;
+        [SerializeField] internal float realtimeDistance = 8f;
+        [SerializeField] internal float realtimeRefreshRate;
+
+        public Transform Destination { get => destination; set { destination = value; RefreshPortalPreview(); } }
+        public bool UseDestinationPosition { get => useDestinationPosition; set { useDestinationPosition = value; RefreshPortalPreview(); } }
+        public Vector3 DestinationPosition { get => destinationPosition; set { destinationPosition = value; useDestinationPosition = true; RefreshPortalPreview(); } }
+        public float DestinationYaw { get => destinationYaw; set { destinationYaw = value; useDestinationPosition = true; RefreshPortalPreview(); } }
+        public bool ShowRuntimeVisual { get => showRuntimeVisual; set { showRuntimeVisual = value; ApplyRuntimePortalVisibility(); RefreshPortalPreview(); } }
+        public bool RealtimeWhenNearby { get => realtimeWhenNearby; set { realtimeWhenNearby = value; RefreshPortalPreview(); } }
+        public bool HasDestination => destination != null || useDestinationPosition;
+        public Pose DestinationPose => destination != null
+            ? new Pose(destination.position, Quaternion.Euler(0f, destination.eulerAngles.y, 0f))
+            : new Pose(transform.TransformPoint(destinationPosition), Quaternion.Euler(0f, transform.eulerAngles.y + destinationYaw, 0f));
 
         [Tooltip("Stop the player's movement when they arrive.")]
         [See(initial = "true")][SerializeField] internal bool stopVelocity = true;
@@ -50,7 +71,7 @@ namespace BS
             {
                 return;
             }
-            if (destination == null)
+            if (!HasDestination)
             {
                 if (!warnedNoDestination)
                 {
@@ -60,8 +81,9 @@ namespace BS
                 return;
             }
             readyAt = Time.time + Mathf.Max(0f, cooldown);
-            var position = destination.position;
-            var rotation = new Vector3(0f, destination.eulerAngles.y, 0f);
+            var pose = DestinationPose;
+            var position = pose.position;
+            var rotation = pose.rotation.eulerAngles;
             var stop = stopVelocity;
             // Out of the physics callback, as the TeleportTo unit does.
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -72,17 +94,19 @@ namespace BS
 
         internal override void StartStuff()
         {
+            RefreshPortalPreview();
             SetLoadedIfNot();
         }
 
         internal override void UpdateStuff()
         {
-
+            // Cached capture runs in LateUpdate; live capture uses the viewer's current render pose.
         }
 
         internal override void DestroyStuff()
         {
-
+            ReleasePortalPreview();
+            RestoreRuntimePortalVisibility();
         }
 
         internal void UpdateCallback(List<PropertyName> changedProperties)
@@ -100,39 +124,19 @@ namespace BS
                 trigger.size = new Vector3(2f, 3f, 1f);
                 trigger.center = new Vector3(0f, 1.5f, 0f);
             }
-            if (destination == null)
+            useDestinationPosition = true;
+            portalPreviewEnabled = true;
+            if (GetComponent<MeshFilter>() == null)
             {
-                foreach (Transform child in transform)
-                {
-                    if (child.name.StartsWith("Destination", StringComparison.Ordinal))
-                    {
-                        destination = child;
-                        break;
-                    }
-                }
+                var filter = UnityEditor.Undo.AddComponent<MeshFilter>(gameObject);
+                filter.sharedMesh = Resources.Load<Mesh>("CreatorConveniences/Models/TeleporterPortal");
+                var renderer = GetComponent<MeshRenderer>();
+                if (renderer == null) renderer = UnityEditor.Undo.AddComponent<MeshRenderer>(gameObject);
+                renderer.sharedMaterial = Resources.Load<Material>("CreatorConveniences/Materials/TeleporterPortal");
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
             }
-            if (destination == null)
-            {
-                var landing = new GameObject("Destination");
-                UnityEditor.Undo.RegisterCreatedObjectUndo(landing, "Create Teleporter Destination");
-                landing.transform.SetParent(transform, false);
-                landing.transform.localPosition = new Vector3(0f, 0f, 5f);
-                destination = landing.transform;
-            }
-        }
-
-        void OnDrawGizmosSelected()
-        {
-            if (destination == null)
-            {
-                return;
-            }
-            var landing = destination.position;
-            var forward = Quaternion.Euler(0f, destination.eulerAngles.y, 0f) * Vector3.forward;
-            Gizmos.color = new Color(1f, 0.6f, 0.2f);
-            Gizmos.DrawLine(transform.position, landing);
-            Gizmos.DrawWireSphere(landing, 0.25f);
-            Gizmos.DrawLine(landing, landing + forward * 0.6f);
+            RefreshPortalPreview();
         }
 #endif
         // BANTER COMPILED CODE 

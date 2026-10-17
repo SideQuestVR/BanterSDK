@@ -6,6 +6,7 @@
         "UnityEditor.TestRunner",
         "BS.SDKEditor",
         "BS.SDK",
+        "GUID:af6e7370d62c866409111f9afdb8c47a",
         "Unity.InputSystem",
         "SideQuest.Ora",
         "Unity.VisualScripting.Core",
@@ -25,6 +26,12 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.sidequest.flexabody",
+            "expression": "0.0.1",
+            "define": "BANTER_FLEX"
+        }
+    ],
     "noEngineReferences": false
 }

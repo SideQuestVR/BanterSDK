@@ -96,17 +96,7 @@ namespace BS
             if (_camera == null)
                 return;
 
-            var handle = hit.collider.GetComponent<GrabHandle>();
-            var grabType = handle ? handle.GrabType : GrabType.Soft; // a bare collider gets a Soft handle
-
-            // Fingers (+Z) along the ray. Every type but Point then turns the palm onto the surface,
-            // so the grab starts where the object is instead of snapping it round. Point handles keep
-            // the view alignment: that pose lines the handle up with the hand, like holding a gun.
-            var rotation = Quaternion.LookRotation(ray.direction, _camera.up);
-            if (grabType != GrabType.Point)
-                rotation = Quaternion.FromToRotation(rotation * Vector3.left, -hit.normal) * rotation;
-
-            var grabPoint = hit.point + hit.normal * 0.01f;
+            GetGrabApproach(hit, ray, out var grabPoint, out var rotation);
             _localGrabPoint = _camera.InverseTransformPoint(grabPoint);
             _holdDistance = Mathf.Clamp(_localGrabPoint.magnitude, _minHoldDistance, _maxHoldDistance);
             _localRotation = Quaternion.Inverse(_camera.rotation) * rotation;
@@ -115,6 +105,46 @@ namespace BS
             _gripHeld = true;
             _gripLatch = true;
             _placePending = true;
+        }
+
+        internal void GetGrabApproach(RaycastHit hit, Ray ray, out Vector3 grabPoint, out Quaternion rotation)
+        {
+            var handle = hit.collider.GetComponent<GrabHandle>();
+            var grabType = handle ? handle.GrabType : GrabType.Soft; // a bare collider gets a Soft handle
+
+            // Fingers (+Z) along the ray. Every type but Point then turns the palm onto the surface,
+            // so the grab starts where the object is instead of snapping it round. Point handles keep
+            // the view alignment: that pose lines the handle up with the hand, like holding a gun.
+            rotation = Quaternion.LookRotation(ray.direction, _camera.up);
+            if (grabType != GrabType.Point)
+                rotation = Quaternion.FromToRotation(rotation * Vector3.left, -hit.normal) * rotation;
+
+            grabPoint = hit.point + hit.normal * 0.01f;
+        }
+
+        internal void UpdateGripHologram(BSGripHologram hologram, RaycastHit hit, Ray ray, float deltaTime)
+        {
+            var handle = hit.collider.GetComponent<GrabHandle>();
+            if (handle == null)
+            {
+                hologram.Update(null, null, Vector3.zero, deltaTime);
+                return;
+            }
+            GetGrabApproach(hit, ray, out var grabPoint, out var rotation);
+            var previousPosition = _rb.position;
+            var previousRotation = _rb.rotation;
+            try
+            {
+                // The solver reads the owned, collider-free mouse hand; restore it before physics resumes.
+                _rb.position = grabPoint - rotation * k_RightPalm;
+                _rb.rotation = rotation;
+                hologram.Update(handle, _grabHand.PhysicsHand, _grabHand.GrabPos, deltaTime);
+            }
+            finally
+            {
+                _rb.position = previousPosition;
+                _rb.rotation = previousRotation;
+            }
         }
 
         /// <summary>Let go. The grab releases on the next physics step.</summary>

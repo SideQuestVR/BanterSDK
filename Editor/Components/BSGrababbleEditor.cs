@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 using BS;
@@ -25,6 +26,8 @@ namespace BS.SDKEditor
             Editor editor = Editor.CreateEditor(script);
             // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
             VisualElement myInspector = new VisualElement();
+            myInspector.Add(new PropertyField(serializedObject.FindProperty("showRuntimeVisual"), "Show Runtime Visual"));
+            myInspector.Add(BSGrabPreview.Controls(script));
 
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);

@@ -90,6 +90,7 @@ namespace BS
         GameObject _clickTarget;
         GameObject _hoverTarget;
         PointerEventData _hoverPointer;
+        readonly BSGripHologram _gripHologram = new BSGripHologram();
 
         bool _seated;
         Transform _seat;
@@ -186,7 +187,8 @@ namespace BS
 
         void OnDestroy()
         {
-            SetHoverTarget(null);
+            ClearHover();
+            _gripHologram.Dispose();
             if (Instance == this)
                 Instance = null;
             SceneManager.sceneLoaded -= OnSceneLoaded;
@@ -201,7 +203,7 @@ namespace BS
 
         void OnDisable()
         {
-            SetHoverTarget(null);
+            ClearHover();
         }
 
 #if UNITY_EDITOR
@@ -231,7 +233,7 @@ namespace BS
             var keyboard = Keyboard.current;
             if (mouse == null || keyboard == null)
             {
-                SetHoverTarget(null);
+                ClearHover();
                 return;
             }
 
@@ -290,7 +292,7 @@ namespace BS
 
         void BeginFly(Mouse mouse)
         {
-            SetHoverTarget(null);
+            ClearHover();
             _flying = true;
             _cursorBeforeFly = mouse.position.ReadValue();
             Cursor.lockState = CursorLockMode.Locked;
@@ -376,7 +378,7 @@ namespace BS
                 return;
             }
 
-            SetHoverTarget(null);
+            ClearHover();
 
             var eventSystem = EventSystem.current;
             if (eventSystem == null)
@@ -404,14 +406,14 @@ namespace BS
             if (_hand.IsActive)
                 _hand.UpdateAim(ray);
 
-            UpdateHover(screenPoint, ray);
-
             if (mouse.leftButton.wasPressedThisFrame)
             {
                 BeginPress(screenPoint, ray);
                 if (_hand.IsActive)
-                    SetHoverTarget(null);
+                    ClearHover();
             }
+
+            UpdateHover(screenPoint, ray);
 
             var scroll = mouse.scroll.ReadValue().y;
             if (scroll != 0f)
@@ -450,13 +452,25 @@ namespace BS
         {
             if (_flying || !_pointerUsable || (_hand != null && _hand.IsActive))
             {
-                SetHoverTarget(null);
+                ClearHover();
                 return;
             }
             var target = ResolvePointerTarget(screenPoint, ray, out var hit);
             if (_hoverPointer != null)
                 _hoverPointer.position = screenPoint;
             SetHoverTarget(target == PressOwner.Click ? hit.collider.gameObject : null);
+            if (!ActionsSystem.canGrab || ActionsSystem.Blocker_RightGrip.Grab)
+                _gripHologram.Clear();
+            else if (target == PressOwner.Grab && _hand != null)
+                _hand.UpdateGripHologram(_gripHologram, hit, ray, Time.unscaledDeltaTime);
+            else
+                _gripHologram.Update(null, null, Vector3.zero, Time.unscaledDeltaTime);
+        }
+
+        void ClearHover()
+        {
+            SetHoverTarget(null);
+            _gripHologram.Clear();
         }
 
         void SetHoverTarget(GameObject target)

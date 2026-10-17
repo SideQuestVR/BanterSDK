@@ -100,8 +100,11 @@ namespace SideQuest.FlexaBody
 
             if (WorldObj)
             {
-                pose.position = transform.localPosition + transform.localRotation * ((physHand.HandId == HandID.Right ? 1f : -1f) * _grabRadius * Vector3.right);
-                pose.rotation = Quaternion.Inverse(transform.localRotation);
+                Transform body = WorldObj.RB.transform;
+                Vector3 handlePos = body.InverseTransformPoint(transform.position);
+                Quaternion handleRot = Quaternion.Inverse(body.rotation) * transform.rotation;
+                pose.position = handlePos + handleRot * ((physHand.HandId == HandID.Right ? 1f : -1f) * _grabRadius * Vector3.right);
+                pose.rotation = Quaternion.Inverse(handleRot);
             }
             else
             {

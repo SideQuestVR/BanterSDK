@@ -35,6 +35,20 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void RuntimeVisualToggle_PreservesHoverAndRestoresWithoutPointerMovement()
+        {
+            Assert.That(visual.ShowRuntimeVisual, Is.True);
+            visual.OnPointerEnter(left);
+            visual.ShowRuntimeVisual = false;
+            Assert.That(visual.IsVisible, Is.False);
+            Assert.That(visual.IsHovered, Is.True);
+            typeof(BSSeat).GetMethod("Update", PrivateInstance).Invoke(visual, null);
+            Assert.That(typeof(BSSeat).GetField("markerProperties", PrivateInstance).GetValue(visual), Is.Null);
+            visual.ShowRuntimeVisual = true;
+            Assert.That(visual.IsVisible, Is.True);
+        }
+
+        [Test]
         public void BothHands_DuplicateEnterAndSingleExit_KeepOtherHandHovered()
         {
             Assert.That(visual.IsVisible, Is.False);
@@ -113,6 +127,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void EditorPreview_RendersSharedMaterialOnlyToItsCamera_WithoutAddingSceneObjects()
         {
+            visual.ShowRuntimeVisual = false;
             visual.gameObject.layer = 5;
             var cameraObject = new GameObject("Seat preview camera");
             SceneManager.MoveGameObjectToScene(cameraObject, scene);
@@ -256,6 +271,7 @@ namespace BS.SDKEditor.Tests
             Assert.That(prefab.GetComponent<Renderer>(), Is.Null);
             Assert.That(prefab.GetComponent<Rigidbody>(), Is.Null);
             Assert.That(prefab.GetComponent<BSSeat>(), Is.Not.Null);
+            Assert.That(prefab.GetComponent<BSSeat>().ShowRuntimeVisual, Is.True, "Existing prefabs default to visible without serialized migration.");
             Assert.That(prefab.GetComponent<BSAttachedObject>(), Is.Not.Null);
             Assert.That(new SerializedObject(prefab.GetComponent<BSObjectId>()).FindProperty("Id").stringValue, Is.EqualTo("-25810"));
         }

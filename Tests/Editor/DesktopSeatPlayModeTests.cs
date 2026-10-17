@@ -5,10 +5,12 @@ using System.IO;
 using System.Reflection;
 using BS;
 using NUnit.Framework;
+using SideQuest.FlexaBody;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.LowLevel;
+using UnityEngine.Rendering;
 using UnityEngine.TestTools;
 
 namespace BS.SDKEditor.Tests
@@ -21,9 +23,12 @@ namespace BS.SDKEditor.Tests
         Mouse mouse;
         Keyboard keyboard;
         BSDesktopController controller;
-        GameObject seatObject, linkObject;
+        GameObject seatObject, linkObject, gripObject;
         RenderTexture target;
-        InputSettings originalInputSettings, testInputSettings;
+        InputSettings originalInputSettings;
+        InputSettings.EditorInputBehaviorInPlayMode originalEditorInputBehavior;
+        InputSettings.BackgroundBehavior originalBackgroundBehavior;
+        bool originalRunInBackground;
 
         [UnityTest]
         public IEnumerator DesktopInput_HoversAnimatesClicksSitsAndJumpsOut()
@@ -31,12 +36,13 @@ namespace BS.SDKEditor.Tests
             UnityEditor.SessionState.SetBool(SuppressBootstrapKey, true);
             yield return new EnterPlayMode();
             UnityEditor.SessionState.SetBool(SuppressBootstrapKey, false);
+            originalRunInBackground = Application.runInBackground;
             Application.runInBackground = true;
             originalInputSettings = InputSystem.settings;
-            testInputSettings = Object.Instantiate(originalInputSettings);
-            testInputSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
-            testInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
-            InputSystem.settings = testInputSettings;
+            originalEditorInputBehavior = originalInputSettings.editorInputBehaviorInPlayMode;
+            originalBackgroundBehavior = originalInputSettings.backgroundBehavior;
+            originalInputSettings.editorInputBehaviorInPlayMode = InputSettings.EditorInputBehaviorInPlayMode.AllDeviceInputAlwaysGoesToGameView;
+            originalInputSettings.backgroundBehavior = InputSettings.BackgroundBehavior.IgnoreFocus;
             foreach (var device in InputSystem.devices)
                 if ((device is Mouse || device is Keyboard) && device.enabled)
                 {
@@ -87,7 +93,7 @@ namespace BS.SDKEditor.Tests
             Assert.That(settledPress, Is.EqualTo(1f).Within(.001f));
             Assert.That(settledPress, Is.GreaterThanOrEqualTo(entryPress));
             Assert.That(material.GetFloat("_Hover"), Is.EqualTo(sharedHover), "Each seat animates through its property block, not the shared material.");
-            SaveCameraFrame("sdk-seat-hover.png");
+            yield return CaptureCameraFrame(camera, "sdk-seat-hover.png");
             InputSystem.QueueStateEvent(mouse, new MouseState { position = away });
             yield return null;
             yield return null;
@@ -97,6 +103,14 @@ namespace BS.SDKEditor.Tests
             yield return null;
             yield return null;
             Assert.That(seat.IsVisible, Is.True);
+            seat.ShowRuntimeVisual = false;
+            yield return null;
+            Assert.That(seat.IsVisible, Is.False);
+            Assert.That(seat.IsHovered, Is.True, "Disabling the visual preserves the real clickable target.");
+            seat.ShowRuntimeVisual = true;
+            yield return null;
+            Assert.That(seat.IsVisible, Is.True, "Re-enabling needs no pointer movement.");
+            seat.ShowRuntimeVisual = false;
             InputSystem.QueueStateEvent(mouse, new MouseState { position = center }.WithButton(MouseButton.Left));
             yield return null;
             yield return null;
@@ -119,6 +133,74 @@ namespace BS.SDKEditor.Tests
             Assert.That((bool)typeof(BSSeat).GetField("seated", PrivateInstance).GetValue(seat), Is.False);
             Assert.That(Vector3.Distance(controller.transform.position, seat.transform.position + seat.transform.forward * .75f), Is.LessThan(.001f));
             Debug.Log("SDK_SEAT_PLAY_PASS: actual Update mouse hover/leave/re-enter, per-seat hover animation, click-release sit, seated camera/facing, Space stand.");
+
+            seatObject.SetActive(false);
+            gripObject = new GameObject("SDK Play test grabbable");
+            gripObject.transform.SetPositionAndRotation(camera.transform.position + camera.transform.forward, camera.transform.rotation);
+            gripObject.AddComponent<BoxCollider>().size = Vector3.one * .18f;
+            var gripBody = gripObject.AddComponent<Rigidbody>();
+            gripBody.useGravity = false;
+            gripObject.AddComponent<BSGrababble>();
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = away });
+            yield return new WaitForSecondsRealtime(.1f);
+            var handle = gripObject.GetComponent<GrabHandle>();
+            Assert.That(handle, Is.Not.Null, "The authoring convenience creates the real native grab handle through Start.");
+            Assert.That(handle.Col, Is.SameAs(gripObject.GetComponent<BoxCollider>()));
+            Assert.That(handle.RB, Is.SameAs(gripBody));
+            var hologram = (BSGripHologram)typeof(BSDesktopController).GetField("_gripHologram", PrivateInstance).GetValue(controller);
+            var gripMaterial = BSGripHologram.SharedMaterial;
+            Assert.That(gripMaterial, Is.Not.Null);
+            var sharedOpacity = gripMaterial.GetFloat("_Opacity");
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(hologram.Target, Is.SameAs(handle), "Real mouse hover selects the grabbable under the SDK cursor.");
+            Assert.That(hologram.IsVisible, Is.True);
+            Assert.That(hologram.Opacity, Is.EqualTo(1f).Within(.001f));
+            Assert.That(gripMaterial.GetFloat("_Opacity"), Is.EqualTo(sharedOpacity), "Grip fade uses its property block.");
+            var wrist = (Pose)typeof(BSGripHologram).GetField("wrist", PrivateInstance).GetValue(hologram);
+            var gripMesh = (Mesh)typeof(BSGripHologram).GetField("mesh", PrivateInstance).GetValue(hologram);
+            var viewport = camera.WorldToViewportPoint(wrist.position + wrist.rotation * gripMesh.bounds.center);
+            Debug.Log("SDK_GRIP_RENDER: wrist=" + wrist.position + " rotation=" + wrist.rotation.eulerAngles
+                + " mesh=" + gripMesh.name + " bounds=" + gripMesh.bounds + " viewport=" + viewport
+                + " camera=" + camera.name + " id=" + camera.GetInstanceID() + " enabled=" + camera.enabled
+                + " mask=" + camera.cullingMask + " sceneMask=" + UnityEditor.SceneManagement.EditorSceneManager.GetSceneCullingMask(camera.gameObject.scene)
+                + " queue=" + gripMaterial.renderQueue + " shaderSupported=" + gripMaterial.shader.isSupported
+                + " shaderErrors=" + UnityEditor.ShaderUtil.ShaderHasError(gripMaterial.shader)
+                + " prop=" + gripBody.position + " opacity=" + hologram.Opacity);
+            Assert.That(viewport.z, Is.GreaterThan(camera.nearClipPlane));
+            Assert.That(viewport.x, Is.InRange(0f, 1f));
+            Assert.That(viewport.y, Is.InRange(0f, 1f));
+            yield return CaptureCameraFrame(camera, "sdk-grip-hover.png");
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = away });
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(hologram.Target, Is.Null);
+            Assert.That(hologram.Opacity, Is.Zero);
+            Assert.That(hologram.IsVisible, Is.False);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(hologram.Target, Is.SameAs(handle));
+            var grabSettings = gripObject.GetComponent<BSGrababble>();
+            grabSettings.ShowRuntimeVisual = false;
+            yield return null;
+            Assert.That(hologram.IsVisible, Is.False);
+            grabSettings.ShowRuntimeVisual = true;
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(hologram.Target, Is.SameAs(handle), "A stationary pointer sees the re-enabled hint.");
+            grabSettings.ShowRuntimeVisual = false;
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center }.WithButton(MouseButton.Left));
+            yield return new WaitForSecondsRealtime(.1f);
+            var nativeHand = controller.MouseHand.GetComponent<GrabHand>();
+            Assert.That(controller.MouseHand.IsHolding, Is.True, "Queued mouse-down drives the real FixedUpdate grab scan and joint.");
+            Assert.That(nativeHand.HeldHandle, Is.SameAs(handle));
+            Assert.That(nativeHand.GetComponent<ConfigurableJoint>().connectedBody, Is.SameAs(gripBody));
+            Assert.That(hologram.Target, Is.Null);
+            Assert.That(hologram.IsVisible, Is.False, "The hint clears as soon as the hand starts grabbing.");
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
+            yield return new WaitForSecondsRealtime(.1f);
+            Assert.That(controller.MouseHand.IsHolding, Is.False);
+            Assert.That(nativeHand.HeldHandle, Is.Null);
+            Assert.That(nativeHand.GetComponent<ConfigurableJoint>(), Is.Null);
+            Debug.Log("SDK_GRIP_PLAY_PASS: actual Update hover/fade/re-enter, camera-rendered grip hint, mouse-down native grab/joint with hint cleared, mouse-up release.");
         }
 
         [UnityTearDown]
@@ -127,6 +209,7 @@ namespace BS.SDKEditor.Tests
             UnityEditor.SessionState.SetBool(SuppressBootstrapKey, false);
             if (controller != null) Object.Destroy(controller.gameObject);
             if (seatObject != null) Object.Destroy(seatObject);
+            if (gripObject != null) Object.Destroy(gripObject);
             if (linkObject != null) Object.Destroy(linkObject);
             if (EventSystem.current != null) Object.Destroy(EventSystem.current.gameObject);
             if (mouse != null && mouse.added) InputSystem.RemoveDevice(mouse);
@@ -134,8 +217,12 @@ namespace BS.SDKEditor.Tests
             foreach (var device in pausedDevices)
                 if (device.added) InputSystem.EnableDevice(device);
             pausedDevices.Clear();
-            if (originalInputSettings != null) InputSystem.settings = originalInputSettings;
-            if (testInputSettings != null) Object.Destroy(testInputSettings);
+            if (originalInputSettings != null)
+            {
+                originalInputSettings.editorInputBehaviorInPlayMode = originalEditorInputBehavior;
+                originalInputSettings.backgroundBehavior = originalBackgroundBehavior;
+            }
+            Application.runInBackground = originalRunInBackground;
             yield return null;
             if (target != null) { target.Release(); Object.Destroy(target); }
             if (Application.isPlaying) yield return new ExitPlayMode();
@@ -169,6 +256,24 @@ namespace BS.SDKEditor.Tests
                 + " usable=" + typeof(BSDesktopController).GetField("_pointerUsable", PrivateInstance).GetValue(controller)
                 + " flying=" + typeof(BSDesktopController).GetField("_flying", PrivateInstance).GetValue(controller)
                 + " handActive=" + controller.MouseHand.IsActive;
+        }
+
+        IEnumerator CaptureCameraFrame(Camera camera, string name)
+        {
+            var rendered = false;
+            System.Action<ScriptableRenderContext, Camera> finished = (context, renderedCamera) =>
+            {
+                if (renderedCamera == camera) rendered = true;
+            };
+            RenderPipelineManager.endCameraRendering += finished;
+            try
+            {
+                var deadline = Time.realtimeSinceStartup + 3f;
+                while (!rendered && Time.realtimeSinceStartup < deadline) yield return null;
+                Assert.That(rendered, Is.True, "The actual SDK camera must finish a new frame before readback.");
+                SaveCameraFrame(name);
+            }
+            finally { RenderPipelineManager.endCameraRendering -= finished; }
         }
 
         void SaveCameraFrame(string name)

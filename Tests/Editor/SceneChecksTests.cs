@@ -310,6 +310,7 @@ namespace BS.SDKEditor.Tests
             teleporter.AddComponent<BoxCollider>().isTrigger = true;
             var component = teleporter.AddComponent<BSTeleporter>();
             component.destination = null;
+            component.useDestinationPosition = false;
 
             Assert.IsTrue(Run(new TeleporterCheck()).Any(issue => issue.Title.Contains("no destination")));
         }
@@ -331,6 +332,45 @@ namespace BS.SDKEditor.Tests
 
             landing.localPosition = new Vector3(0f, 0f, 5f);
             Assert.IsEmpty(Run(new TeleporterCheck()));
+        }
+
+        [Test]
+        public void Teleporter_DirectLandingPosition_UsesWorldPoseForTriggerChecks()
+        {
+            var teleporter = Create("teleporter");
+            teleporter.transform.SetPositionAndRotation(new Vector3(4f, 0f, -3f), Quaternion.Euler(0f, 45f, 0f));
+            teleporter.transform.localScale = new Vector3(2f, 1f, 2f);
+            var trigger = teleporter.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.size = new Vector3(2f, 3f, 1f);
+            trigger.center = new Vector3(0f, 1.5f, 0f);
+            var component = teleporter.AddComponent<BSTeleporter>();
+            component.destination = null;
+            component.useDestinationPosition = true;
+            component.destinationPosition = new Vector3(0f, 1f, 0f);
+
+            Assert.IsTrue(Run(new TeleporterCheck()).Any(issue => issue.Title.Contains("inside their own trigger")));
+
+            component.destinationPosition = new Vector3(0f, 0f, 5f);
+            Assert.IsEmpty(Run(new TeleporterCheck()));
+        }
+
+        [Test]
+        public void Teleporter_TransformDestination_TakesPrecedenceOverDirectPosition()
+        {
+            var teleporter = Create("teleporter");
+            teleporter.AddComponent<BoxCollider>().isTrigger = true;
+            var component = teleporter.AddComponent<BSTeleporter>();
+            component.useDestinationPosition = true;
+            component.destinationPosition = Vector3.zero;
+            component.destination = Create("landing", teleporter.transform).transform;
+            component.destination.localPosition = Vector3.forward * 5f;
+
+            Assert.IsEmpty(Run(new TeleporterCheck()));
+
+            component.destinationPosition = Vector3.forward * 5f;
+            component.destination.localPosition = Vector3.zero;
+            Assert.IsTrue(Run(new TeleporterCheck()).Any(issue => issue.Title.Contains("inside their own trigger")));
         }
 
         // ---- scene contents ----

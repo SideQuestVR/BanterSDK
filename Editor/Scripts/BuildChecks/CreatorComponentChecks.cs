@@ -352,13 +352,12 @@ namespace BS.SDKEditor.BuildChecks
             var landsInside = new List<BSTeleporter>();
             foreach (var teleporter in context.Components<BSTeleporter>())
             {
-                var destination = new SerializedObject(teleporter).FindProperty("destination").objectReferenceValue as Transform;
                 var trigger = teleporter.GetComponents<Collider>().FirstOrDefault(col => col.isTrigger);
                 if (trigger == null)
                     noTrigger.Add(teleporter);
-                if (destination == null)
+                if (!teleporter.HasDestination)
                     noDestination.Add(teleporter);
-                else if (trigger != null && Contains(trigger, destination.position))
+                else if (trigger != null && Contains(trigger, teleporter.DestinationPose.position))
                     landsInside.Add(teleporter);
             }
 
@@ -373,15 +372,14 @@ namespace BS.SDKEditor.BuildChecks
             {
                 issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
                         $"{noDestination.Count} teleporter(s) have no destination",
-                        "Set Destination to the transform players should land on.")
+                        "Set a landing position in the teleporter Inspector, or assign a Destination transform.")
                     .WithTargets(context.TargetsOf(noDestination)));
             }
             if (landsInside.Count > 0)
             {
                 issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
                         $"{landsInside.Count} teleporter(s) land players inside their own trigger",
-                        "Players arrive back in the trigger, so they are teleported again every time the cooldown ends. Move the " +
-                        "destination outside the trigger.")
+                        "Players arrive inside this teleporter's activation area. Move the landing point outside the trigger.")
                     .WithTargets(context.TargetsOf(landsInside)));
             }
         }

@@ -7,6 +7,11 @@ namespace BS
 {
     public partial class BSSeat : IPointerEnterHandler, IPointerExitHandler
     {
+        [SerializeField, Tooltip("Show the hover marker and seat hint during play. Editor placement previews remain visible.")]
+        internal bool showRuntimeVisual = true;
+
+        public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
+
         readonly HashSet<int> pointers = new HashSet<int>();
         static Mesh markerMesh;
         static Material markerMaterial;
@@ -16,7 +21,7 @@ namespace BS
         float hoverPress;
 
         public bool IsHovered => pointers.Count > 0;
-        public bool IsVisible => isActiveAndEnabled && IsHovered && !seated;
+        public bool IsVisible => showRuntimeVisual && isActiveAndEnabled && IsHovered && !seated;
 
         void OnDisable()
         {

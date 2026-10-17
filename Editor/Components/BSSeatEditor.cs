@@ -29,6 +29,8 @@ namespace BS.SDKEditor
             var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
             myInspector.styleSheets.Add(_mainWindowStyleSheet);
 
+            myInspector.Add(new UnityEditor.UIElements.PropertyField(serializedObject.FindProperty("showRuntimeVisual"), "Show Runtime Visual"));
+
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);

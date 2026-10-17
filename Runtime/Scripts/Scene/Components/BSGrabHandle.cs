@@ -41,6 +41,11 @@ namespace BS
         [Tooltip("Restrict which hand can grab this handle. Not networked — editor/local only.")]
         [SerializeField] internal BSGrabHand grabHand = BSGrabHand.Either;
 
+        [Tooltip("Show the hand hint while a player points at this handle. Editor hand previews remain available.")]
+        [SerializeField] internal bool showRuntimeVisual = true;
+
+        public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
+
         internal override void DestroyStuff()
         {
             if (worldObjectAdded && grabHandle && grabHandle.WorldObj)

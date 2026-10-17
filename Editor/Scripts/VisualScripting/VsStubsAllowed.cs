@@ -6,6 +6,11 @@ namespace BS.SDKEditor
     public struct VsStubsAllowed
     {
         public static readonly string[] members = new string[] {
+            "BS.BSTeleporter.Destination",
+            "BS.BSTeleporter.DestinationPosition",
+            "BS.BSTeleporter.DestinationYaw",
+            "BS.BSTeleporter.UseDestinationPosition",
+            "BS.BSTeleporter.RefreshPortalPreview",
             "System.String.Compare",
             "System.String.CompareOrdinal",
             "System.String.CompareTo",

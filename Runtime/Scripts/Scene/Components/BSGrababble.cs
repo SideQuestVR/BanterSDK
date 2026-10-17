@@ -18,6 +18,11 @@ namespace BS
         [Tooltip("Radius of the grab handle, affecting how objects can be grabbed.")]
         [See(initial = "0.01")][SerializeField] internal float grabRadius = 0.01f;
 
+        [Tooltip("Show the hand hint while a player points at this object. Editor hand previews remain available.")]
+        [SerializeField] internal bool showRuntimeVisual = true;
+
+        public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
+
         [Tooltip("Sensitivity for detecting held events (higher values make inputs more sensitive).")]
         [See(initial = "0.5")][SerializeField] internal float gunTriggerSensitivity = 0.5f;
 
