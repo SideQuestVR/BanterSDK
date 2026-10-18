@@ -205,6 +205,7 @@ namespace BS.SDKEditor.Tests
             authored.CustomPointPose.right.position = new Vector3(.02f, .01f, -.015f);
             authored.CustomPointPose.right.rotation = new Vector3(10f, 25f, -15f);
             authored.CustomPointPose.right.index = new Vector4(.1f, .2f, .3f, .2f);
+            authored.CustomPointPose.right.thumb = new Vector4(-60f / 170f, .2f, .2f, 0f);
             authored.ApplyCustomPointPose();
             grabSettings.ShowRuntimeVisual = true;
             gripBody.linearVelocity = Vector3.zero;
@@ -216,6 +217,7 @@ namespace BS.SDKEditor.Tests
             Assert.That(hologram.Target, Is.SameAs(handle));
             var customMesh = ((Mesh)typeof(BSGripHologram).GetField("mesh", PrivateInstance).GetValue(hologram)).vertices;
             Assert.That(handle.GetCustomPointHandPose(HandID.Right).index, Is.EqualTo(authored.CustomPointPose.right.index));
+            Assert.That(handle.GetCustomPointHandPose(HandID.Right).thumb, Is.EqualTo(authored.CustomPointPose.right.thumb));
             InputSystem.QueueStateEvent(mouse, new MouseState { position = center }.WithButton(MouseButton.Left));
             yield return new WaitForSecondsRealtime(.2f);
             Assert.That(nativeHand.HeldHandle, Is.SameAs(handle));

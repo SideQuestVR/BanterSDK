@@ -134,7 +134,7 @@ namespace BS.SDKEditor
                     var value = finger.vector4Value;
                     var limit = selectedFinger == 0 ? 65f : 100f;
                     EditorGUI.BeginChangeCheck();
-                    value.x = EditorGUILayout.Slider("Base Bend (degrees)", value.x * 170f, 0f, limit) / 170f;
+                    value.x = EditorGUILayout.Slider("Base Bend (degrees)", value.x * 170f, BendMinimum(selectedFinger, 0), limit) / 170f;
                     value.y = EditorGUILayout.Slider("Middle Bend (degrees)", value.y * 170f, 0f, limit) / 170f;
                     value.z = EditorGUILayout.Slider("Tip Bend (degrees)", value.z * 170f, 0f, limit) / 170f;
                     var spreadLimit = SpreadLimit(selectedFinger);
@@ -268,7 +268,7 @@ namespace BS.SDKEditor
             var property = hand.FindPropertyRelative(Fingers[finger]);
             var value = property.vector4Value;
             if (spread) value.w = Mathf.Clamp(degrees, -SpreadLimit(finger), SpreadLimit(finger)) / 50f;
-            else value[joint] = Mathf.Clamp(degrees, 0f, finger == 0 ? 65f : 100f) / 170f;
+            else value[joint] = Mathf.Clamp(degrees, BendMinimum(finger, joint), finger == 0 ? 65f : 100f) / 170f;
             property.vector4Value = value;
             Undo.SetCurrentGroupName("Rotate grab finger");
             var changed = fields.ApplyModifiedProperties();
@@ -277,6 +277,7 @@ namespace BS.SDKEditor
         }
 
         static float SpreadLimit(int finger) => finger == 0 ? 60f : 25f;
+        static float BendMinimum(int finger, int joint) => finger == 0 && joint == 0 ? -60f : 0f;
 
         public static bool DrawHandles(Component source, bool left, float radius, Pose wrist)
         {

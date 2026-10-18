@@ -282,6 +282,48 @@ namespace BS.SDKEditor.Tests
             Undo.ClearUndo(handle);
         }
 
+        [TestCase(false, false)] [TestCase(true, false)] [TestCase(true, true)]
+        public void ThumbBaseBend_ExtendsBelowRest_WithMirroringAndUndo(bool left, bool separate)
+        {
+            var handle = New("Extended thumb").AddComponent<BSGrabHandle>();
+            handle.CustomPointPose.enabled = true;
+            handle.CustomPointPose.separateLeft = separate;
+            var before = JsonUtility.ToJson(handle.CustomPointPose);
+            var original = handle.CustomPointPose.GetHand(left).thumb;
+            var editor = typeof(BSGrabHandleEditor).Assembly.GetType("BS.SDKEditor.BSPointGrabPoseEditor", true);
+            var apply = editor.GetMethod("ApplyJointAngle", BindingFlags.Static | BindingFlags.NonPublic);
+            Undo.IncrementCurrentGroup();
+            apply.Invoke(null, new object[] { handle, left, 0, 0, -90f, false });
+            Undo.FlushUndoRecordObjects();
+            var thumb = handle.CustomPointPose.GetHand(left).thumb;
+            Assert.That(thumb.x * 170f, Is.EqualTo(-60f).Within(.001f));
+            Assert.That(new Vector3(thumb.y, thumb.z, thumb.w), Is.EqualTo(new Vector3(original.y, original.z, original.w)));
+            if (separate) Assert.That(handle.CustomPointPose.right.thumb.x, Is.Not.EqualTo(thumb.x));
+            else Assert.That(handle.CustomPointPose.GetHand(!left).thumb.x, Is.EqualTo(thumb.x));
+            Undo.PerformUndo();
+            Assert.That(JsonUtility.ToJson(handle.CustomPointPose), Is.EqualTo(before));
+            Undo.PerformRedo();
+            Assert.That(handle.CustomPointPose.GetHand(left).thumb.x * 170f, Is.EqualTo(-60f).Within(.001f));
+            Undo.ClearUndo(handle);
+        }
+
+        [Test]
+        public void NegativeBaseBend_DoesNotExtendOtherFingerOrThumbTipLimits()
+        {
+            var handle = New("Unchanged bend limits").AddComponent<BSGrabHandle>();
+            handle.CustomPointPose.enabled = true;
+            var editor = typeof(BSGrabHandleEditor).Assembly.GetType("BS.SDKEditor.BSPointGrabPoseEditor", true);
+            var apply = editor.GetMethod("ApplyJointAngle", BindingFlags.Static | BindingFlags.NonPublic);
+            for (var finger = 0; finger < 5; finger++)
+                for (var joint = 0; joint < 3; joint++)
+                {
+                    if (finger == 0 && joint == 0) continue;
+                    apply.Invoke(null, new object[] { handle, false, finger, joint, -30f, false });
+                    Assert.That(handle.CustomPointPose.right.GetFinger(finger)[joint], Is.Zero);
+                }
+            Undo.ClearUndo(handle);
+        }
+
         [Test]
         public void JointHandleQueries_DoNotRebakeFixedPoseForTriggerChanges()
         {
