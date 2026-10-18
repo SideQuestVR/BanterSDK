@@ -250,7 +250,7 @@ namespace BS.LocalMultiplayer
                 return new HubInfo
                 {
                     State = HubState.NoRelay,
-                    Message = $"localhost:{port} has no local multiplayer relay (HTTP {status}): Ora is older than 0.1.0, or local multiplayer is off in the main editor",
+                    Message = $"localhost:{port} has no local multiplayer relay (HTTP {status}): Ora is older than 0.1.1, or local multiplayer is off in the main editor",
                 };
             }
             JObject json = null;

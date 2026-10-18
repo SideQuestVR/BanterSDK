@@ -379,7 +379,7 @@ namespace BS
                 Destroy(_filter);
             }
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public BS.GeometryType GeometryType { get { return geometryType; } set { geometryType = value; UpdateCallback(new List<PropertyName> { PropertyName.geometryType }); } }
         public BS.ParametricGeometryType ParametricType { get { return parametricType; } set { parametricType = value; UpdateCallback(new List<PropertyName> { PropertyName.parametricType }); } }
         public System.Single Width { get { return width; } set { width = value; UpdateCallback(new List<PropertyName> { PropertyName.width }); } }
@@ -1190,6 +1190,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

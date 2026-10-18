@@ -412,7 +412,7 @@ namespace BS
                 Destroy(_renderer);
             }
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String ShaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
         public System.String Texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
         public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
@@ -739,6 +739,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

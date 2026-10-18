@@ -55,7 +55,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Int32 Stacks { get { return stacks; } set { stacks = value; UpdateCallback(new List<PropertyName> { PropertyName.stacks }); } }
         public System.Int32 Slices { get { return slices; } set { slices = value; UpdateCallback(new List<PropertyName> { PropertyName.slices }); } }
 
@@ -184,6 +184,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

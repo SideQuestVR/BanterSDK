@@ -31,7 +31,7 @@ namespace BS
         [See(initial = "false")][SerializeField] internal bool isTrigger = false;
         [See(initial = "0.5")][SerializeField] internal float radius = 0.5f;
         [See(initial = "2")][SerializeField] internal float height = 2;
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean IsTrigger { get { return isTrigger; } set { isTrigger = value; } }
         public System.Single Radius { get { return radius; } set { radius = value; } }
         public System.Single Height { get { return height; } set { height = value; } }
@@ -196,6 +196,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

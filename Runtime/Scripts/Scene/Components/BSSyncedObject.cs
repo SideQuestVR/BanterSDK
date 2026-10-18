@@ -74,7 +74,7 @@ namespace BS
             synced.kinematicIfNotOwned = kinematicIfNotOwned;
             scene.events.OnSyncedObject.Invoke(synced, this);
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean SyncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
         public System.Boolean SyncRotation { get { return syncRotation; } set { syncRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.syncRotation }); } }
         public System.Boolean TakeOwnershipOnCollision { get { return takeOwnershipOnCollision; } set { takeOwnershipOnCollision = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnCollision }); } }
@@ -290,6 +290,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

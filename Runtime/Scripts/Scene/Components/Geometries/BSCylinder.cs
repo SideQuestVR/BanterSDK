@@ -78,7 +78,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Single RadiusTop { get { return radiusTop; } set { radiusTop = value; UpdateCallback(new List<PropertyName> { PropertyName.radiusTop }); } }
         public System.Single RadiusBottom { get { return radiusBottom; } set { radiusBottom = value; UpdateCallback(new List<PropertyName> { PropertyName.radiusBottom }); } }
         public System.Single Height { get { return height; } set { height = value; UpdateCallback(new List<PropertyName> { PropertyName.height }); } }
@@ -339,6 +339,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

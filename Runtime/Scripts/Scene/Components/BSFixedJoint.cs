@@ -38,7 +38,7 @@ namespace BS
         [See(initial = "1")][SerializeField] internal float massScale = 1f;
         [Tooltip("The rigidbody that this joint connects to. Can be null for world-anchored joints. Accepts GameObject name or asset reference.")]
         [See(initial = "", isAssetReference = true)][SerializeField] internal string connectedBody = "";
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public UnityEngine.Vector3 Anchor { get { return anchor; } set { anchor = value; } }
         public UnityEngine.Vector3 ConnectedAnchor { get { return connectedAnchor; } set { connectedAnchor = value; } }
         public System.Boolean AutoConfigureConnectedAnchor { get { return autoConfigureConnectedAnchor; } set { autoConfigureConnectedAnchor = value; } }
@@ -393,6 +393,6 @@ namespace BS
         {
             return componentType;
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

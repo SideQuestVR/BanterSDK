@@ -72,7 +72,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String ShapePoints { get { return shapePoints; } set { shapePoints = value; UpdateCallback(new List<PropertyName> { PropertyName.shapePoints }); } }
         public System.Int32 Segments { get { return segments; } set { segments = value; UpdateCallback(new List<PropertyName> { PropertyName.segments }); } }
         public System.Int32 RadialSegments { get { return radialSegments; } set { radialSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.radialSegments }); } }
@@ -267,6 +267,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

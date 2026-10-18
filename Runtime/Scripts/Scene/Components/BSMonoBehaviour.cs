@@ -43,7 +43,7 @@ namespace BS
         {
 
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Int32 Fps { get { return fps; } set { fps = value; UpdateCallback(new List<PropertyName> { PropertyName.fps }); } }
         public System.String StartFunction { get { return startFunction; } set { startFunction = value; UpdateCallback(new List<PropertyName> { PropertyName.startFunction }); } }
         public System.String UpdateFunction { get { return updateFunction; } set { updateFunction = value; UpdateCallback(new List<PropertyName> { PropertyName.updateFunction }); } }
@@ -216,6 +216,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

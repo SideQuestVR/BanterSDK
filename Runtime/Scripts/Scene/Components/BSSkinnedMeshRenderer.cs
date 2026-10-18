@@ -250,7 +250,7 @@ namespace BS
         }
 
         internal override void DestroyStuff() { }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String BlendShapes { get { return blendShapes; } set { blendShapes = value; UpdateCallback(new List<PropertyName> { PropertyName.blendShapes }); } }
         public System.String Bones { get { return bones; } set { bones = value; UpdateCallback(new List<PropertyName> { PropertyName.bones }); } }
         public System.Int32 RootBoneInstanceId { get { return rootBoneInstanceId; } set { rootBoneInstanceId = value; UpdateCallback(new List<PropertyName> { PropertyName.rootBoneInstanceId }); } }
@@ -500,6 +500,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

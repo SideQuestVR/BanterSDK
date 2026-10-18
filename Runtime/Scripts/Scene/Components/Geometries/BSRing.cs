@@ -69,7 +69,7 @@ namespace BS
         {
             SetupGeometry();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Single InnerRadius { get { return innerRadius; } set { innerRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.innerRadius }); } }
         public System.Single OuterRadius { get { return outerRadius; } set { outerRadius = value; UpdateCallback(new List<PropertyName> { PropertyName.outerRadius }); } }
         public System.Int32 ThetaSegments { get { return thetaSegments; } set { thetaSegments = value; UpdateCallback(new List<PropertyName> { PropertyName.thetaSegments }); } }
@@ -286,6 +286,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

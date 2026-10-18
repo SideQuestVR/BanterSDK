@@ -219,7 +219,7 @@ namespace BS
             }
 #endif
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean EnableTeleport { get { return enableTeleport; } set { enableTeleport = value; UpdateCallback(new List<PropertyName> { PropertyName.enableTeleport }); } }
         public System.Boolean EnableForceGrab { get { return enableForceGrab; } set { enableForceGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.enableForceGrab }); } }
         public System.Boolean EnableSpiderMan { get { return enableSpiderMan; } set { enableSpiderMan = value; UpdateCallback(new List<PropertyName> { PropertyName.enableSpiderMan }); } }
@@ -876,6 +876,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

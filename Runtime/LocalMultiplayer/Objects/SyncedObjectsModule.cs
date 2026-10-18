@@ -313,7 +313,7 @@ namespace BS.LocalMultiplayer.Objects
                     entry.Held = go.AddComponent<LocalHeldObject>();
                     entry.Held.Configure();
                     entry.Suspender = go.AddComponent<HeldSyncSuspender>();
-                    entry.Suspender.Configure();
+                    entry.Suspender.Configure(useRigidbodyBinding ? rb : null);
                 }
 
                 // Safety net for every synced object.
@@ -403,12 +403,6 @@ namespace BS.LocalMultiplayer.Objects
                     $"'{bso.name}' is a kinematic Rigidbody with takeOwnershipOnCollision: walking or flying into it claims it and " +
                     "turns it dynamic, as in the Banter client (SyncedObjectPhysicsHandoff.cs:126-131). Turn takeOwnershipOnCollision " +
                     "off on vehicles and seats.");
-            }
-            if (rb != null && !rb.isKinematic && bso.TakeOwnershipOnGrab)
-            {
-                NoteOnce(diagnostics, "objects.quirk.heldRecapture",
-                    "After you watch another player hold a synced object, it stays kinematic when you later take it over, as in the " +
-                    "Banter client (HeldSyncSuspender.cs:43-46 with PacketPartySynchronizedTransform.cs:588).");
             }
             NoteOnce(diagnostics, "objects.quirk.teleportSlide",
                 "Teleported synced objects slide to their new place on the other players: object frames carry no discontinuity, " +

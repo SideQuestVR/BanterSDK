@@ -45,7 +45,7 @@ namespace BS
         {
             SetLoadedIfNot();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         BSScene _scene;
         public BSScene scene
         {
@@ -129,6 +129,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

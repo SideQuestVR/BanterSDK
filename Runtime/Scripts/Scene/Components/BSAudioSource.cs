@@ -187,7 +187,7 @@ namespace BS
                 Destroy(_source);
             }
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Single Volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
         public System.Single Pitch { get { return pitch; } set { pitch = value; UpdateCallback(new List<PropertyName> { PropertyName.pitch }); } }
         public System.Boolean Mute { get { return mute; } set { mute = value; UpdateCallback(new List<PropertyName> { PropertyName.mute }); } }
@@ -502,6 +502,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

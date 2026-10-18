@@ -107,7 +107,7 @@ namespace BS
         {
             SetupText();
         }
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.String Text { get { return text; } set { text = value; UpdateCallback(new List<PropertyName> { PropertyName.text }); } }
         public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
         public HorizontalAlignment HorizontalAlignment { get { return horizontalAlignment; } set { horizontalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.horizontalAlignment }); } }
@@ -368,6 +368,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }

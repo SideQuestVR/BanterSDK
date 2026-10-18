@@ -13,11 +13,13 @@ namespace BS
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
     the only clickable layers. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
     Turn on `useExitPosition` to put the player somewhere else when they get off (beside a bench, outside a car).
+    Without it they are lifted 1 m straight up from the seat with their velocity cleared, and drop back down, so getting
+    off can't fling them.
 
     **Properties**
     - `unseatOnMove` - Stand the player up when they push the move stick / WASD.
     - `unseatOnJump` - Stand the player up when they jump.
-    - `useExitPosition` - Teleport the player to `exitPosition` when they get off the seat, however they get off.
+    - `useExitPosition` - Teleport the player to `exitPosition` when they get off the seat, however they get off. Off: 1 m above the seat.
     - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). They face the way the seat faces.
 
     **Methods**
@@ -52,7 +54,8 @@ namespace BS
         [Tooltip("Stand the player up when they jump (Space in the SDK's Play Mode).")]
         [See(initial = "true")][SerializeField] internal bool unseatOnJump = true;
 
-        [Tooltip("Teleport the player to Exit Position when they get off the seat (standing up, moving or jumping).")]
+        [Tooltip("Teleport the player to Exit Position when they get off the seat (standing up, moving or jumping). " +
+                 "Off: they are lifted 1 m above the seat instead, so getting off can't fling them.")]
         [See(initial = "false")][SerializeField] internal bool useExitPosition = false;
 
         [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). They face the way the seat faces.")]
@@ -178,6 +181,19 @@ namespace BS
             }
         }
 
+        /// <summary>
+        /// Without an exit position the player is lifted this far straight up from the seat when they get off, velocity
+        /// cleared, and drops back down. Letting them go where the seat joint left them could fling them: the
+        /// released joint's stored energy throws the player's physics body.
+        /// </summary>
+        internal const float DefaultExitHeight = 1f;
+
+        /// <summary>
+        /// The exit teleport is skipped when the player is already this far from the seat a frame after getting off:
+        /// they were moved off it by something else (a portal, a respawn, a page's teleport), which it must not undo.
+        /// </summary>
+        internal const float ExitSkipDistance = 3f;
+
         void OnDetached(string uid)
         {
             if (!seated || !IsLocalUser(uid))
@@ -185,9 +201,12 @@ namespace BS
                 return;
             }
             seated = false;
-            if (useExitPosition && isActiveAndEnabled)
+            if (isActiveAndEnabled)
             {
-                StartCoroutine(TeleportToExit(transform.TransformPoint(exitPosition), transform.eulerAngles.y));
+                var exit = useExitPosition
+                    ? transform.TransformPoint(exitPosition)
+                    : transform.position + Vector3.up * DefaultExitHeight;
+                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y));
             }
         }
 
@@ -195,6 +214,11 @@ namespace BS
         System.Collections.IEnumerator TeleportToExit(Vector3 position, float yaw)
         {
             yield return null;
+            var head = Camera.main;
+            if (head != null && Vector3.Distance(head.transform.position, transform.position) > ExitSkipDistance)
+            {
+                yield break;
+            }
             BSScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, yaw, 0f), true, false);
         }
 
@@ -272,7 +296,7 @@ namespace BS
             }
         }
 #endif
-        // BANTER COMPILED CODE 
+        // BS COMPILED CODE 
         public System.Boolean UnseatOnMove { get { return unseatOnMove; } set { unseatOnMove = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnMove }); } }
         public System.Boolean UnseatOnJump { get { return unseatOnJump; } set { unseatOnJump = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnJump }); } }
         public System.Boolean UseExitPosition { get { return useExitPosition; } set { useExitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.useExitPosition }); } }
@@ -467,6 +491,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BANTER COMPILED CODE 
+        // END BS COMPILED CODE 
     }
 }
