@@ -173,6 +173,22 @@ namespace BS
                 scene.state = SceneState.SCENE_READY;
                 scene.events.OnSceneReady.Invoke();
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "Banter Scene Loaded.");
+                // Names the components still loading if THIS load has not finished 25 s after its SCENE_READY. Tied
+                // to the load's completion source: started after the wait below (as it used to be), its own load was
+                // always done by then, and it fired instead during the NEXT world's load (loaded reset, state NONE),
+                // reporting that world as failed seconds after joining.
+                var load = scene.loadUrlTaskCompletionSource;
+                _ = TaskRunner.Run(async () =>
+                {
+                    await Task.Delay(25000);
+                    // The delay outlives play mode; a scene torn down meanwhile did not fail to load.
+                    if (shuttingDown) return;
+                    UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+                    {
+                        if (shuttingDown || !ReferenceEquals(scene.loadUrlTaskCompletionSource, load)) return;
+                        scene.LogMissing();
+                    }, $"{nameof(BSLink)}.{nameof(ParseCommand)}.SCENE_READY LogMissing"));
+                }, $"{nameof(BSLink)}.{nameof(ParseCommand)}.SCENE_READY Delay");
                 await new WaitForSeconds(2);
                 await new WaitUntil(() =>
                 {
@@ -181,16 +197,6 @@ namespace BS
                 });
                 LogLine.Do(LogLine.banterColor, LogTag.Banter, "After Banter Scene Loaded.");
                 OnUnitySceneLoaded();
-                _ = TaskRunner.Run(async () =>
-                {
-                    await Task.Delay(25000);
-                    // The delay outlives play mode; a scene torn down meanwhile did not fail to load.
-                    if (shuttingDown) return;
-                    if (scene.state != SceneState.UNITY_READY)
-                    {
-                        scene.LogMissing();
-                    }
-                }, $"{nameof(BSLink)}.{nameof(ParseCommand)}.SCENE_READY Delay");
             }
             else if (msg.StartsWith(APICommands.INJECT_JS_CALLBACK))
             {
