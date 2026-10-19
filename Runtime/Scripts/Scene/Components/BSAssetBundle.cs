@@ -250,6 +250,41 @@ namespace BS
 
         // Unity AssetBundle files begin with an ASCII signature: "UnityFS" (current), also
         // "UnityWeb"/"UnityRaw"/"UnityArchive". A Basis .bee never starts with "Unity".
+        /// <summary>
+        /// Removes every component on <paramref name="target"/>'s GameObject that [RequireComponent]s it, and in
+        /// turn whatever requires those, so <paramref name="target"/> itself can then be destroyed. Without this
+        /// a world's EventSystem survives whenever an input module other than StandaloneInputModule rides along
+        /// (InputSystemUIInputModule, XR modules: every BaseInputModule requires EventSystem), and Unity logs
+        /// "Can't remove EventSystem because ... depends on it". Immediate, because Unity checks dependencies
+        /// when Destroy is called, not when the deferred destroy lands.
+        /// </summary>
+        private static void RemoveDependents(Component target) => RemoveDependents(target, new HashSet<Component> { target });
+
+        // visiting: components already on the removal path, so a RequireComponent cycle can't recurse forever.
+        private static void RemoveDependents(Component target, HashSet<Component> visiting)
+        {
+            foreach (var component in target.GetComponents<Component>())
+            {
+                if (component == null || visiting.Contains(component) || !Requires(component.GetType(), target.GetType()))
+                    continue;
+                visiting.Add(component);
+                RemoveDependents(component, visiting);
+                DestroyImmediate(component);
+            }
+        }
+
+        private static bool Requires(Type dependent, Type required)
+        {
+            foreach (RequireComponent attribute in dependent.GetCustomAttributes(typeof(RequireComponent), true))
+            {
+                if ((attribute.m_Type0 != null && attribute.m_Type0.IsAssignableFrom(required)) ||
+                    (attribute.m_Type1 != null && attribute.m_Type1.IsAssignableFrom(required)) ||
+                    (attribute.m_Type2 != null && attribute.m_Type2.IsAssignableFrom(required)))
+                    return true;
+            }
+            return false;
+        }
+
         private static bool LooksLikeUnityBundle(byte[] head)
         {
             return head.Length >= 5
@@ -301,6 +336,7 @@ namespace BS
                         var eventSystem = transform.gameObject.GetComponent<EventSystem>();
                         if (eventSystem != null)
                         {
+                            RemoveDependents(eventSystem);
                             Destroy(eventSystem);
                         }
                         var starterUpper = transform.gameObject.GetComponent<BSStarterUpper>();
