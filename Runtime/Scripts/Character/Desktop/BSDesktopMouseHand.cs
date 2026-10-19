@@ -147,6 +147,14 @@ namespace BS
             }
         }
 
+        internal void UpdateHeldGripHologram(BSGripHologram hologram, float deltaTime)
+        {
+            var handle = _grabHand.HeldHandle;
+            if (_grabHand.IsGrabbing && handle != null && handle.GetCustomPointHandPose(HandID.Right) != null)
+                hologram.Update(handle, _grabHand.PhysicsHand, _grabHand.GrabPos, deltaTime);
+            else hologram.Clear();
+        }
+
         /// <summary>Let go. The grab releases on the next physics step.</summary>
         public void EndGrab()
         {

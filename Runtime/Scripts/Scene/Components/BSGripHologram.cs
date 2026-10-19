@@ -14,6 +14,9 @@ namespace BS
         Vector3 fittedPosition, fittedBounds, fittedCenter, fittedScale;
         Quaternion fittedRotation;
         bool fittedLeft, fittedTrigger;
+        int fittedCustomHash;
+        bool fittedCustom;
+        readonly BSPointHandPose resolvedPose = new BSPointHandPose();
         double lastFit;
         MaterialPropertyBlock properties;
         Pose wrist;
@@ -47,20 +50,25 @@ namespace BS
             }
         }
 
-        internal Mesh Fit(Pose pose, bool isLeft, Collider collider, bool triggerReady)
+        internal Mesh Fit(Pose pose, bool isLeft, Collider collider, bool triggerReady, BSPointHandPose customPose = null)
         {
             var position = collider.transform.InverseTransformPoint(pose.position);
             var rotation = Quaternion.Inverse(collider.transform.rotation) * pose.rotation;
             var bounds = collider.bounds.size;
             var center = collider.transform.InverseTransformPoint(collider.bounds.center);
             var scale = collider.transform.lossyScale;
-            var changed = mesh == null || fittedCollider != collider || fittedLeft != isLeft || fittedTrigger != triggerReady;
+            var changed = mesh == null || fittedCollider != collider || fittedLeft != isLeft
+                || customPose == null && fittedTrigger != triggerReady;
+            var customHash = customPose != null ? customPose.FingerHash() : 0;
+            changed |= fittedCustom != (customPose != null) || customHash != fittedCustomHash;
             var moved = (position - fittedPosition).sqrMagnitude > .000004f || Quaternion.Angle(rotation, fittedRotation) > 2f
                 || (bounds - fittedBounds).sqrMagnitude > .000001f || (center - fittedCenter).sqrMagnitude > .000001f || scale != fittedScale;
-            if (changed || moved && Time.realtimeSinceStartupAsDouble - lastFit >= .05)
+            if (changed || customPose == null && moved && Time.realtimeSinceStartupAsDouble - lastFit >= .05)
             {
                 if (fitter == null) fitter = new GripHandPose();
-                mesh = fitter.Fit(pose, isLeft, collider, triggerReady);
+                mesh = fitter.Fit(pose, isLeft, collider, triggerReady, customPose);
+                fittedCustom = customPose != null;
+                fittedCustomHash = customHash;
                 fittedCollider = collider;
                 fittedPosition = position;
                 fittedRotation = rotation;
@@ -103,7 +111,18 @@ namespace BS
                 wrist = GetWristPose(candidate, hand, grabPoint);
                 left = hand.HandId == HandID.Left;
                 var held = candidate.GetComponent<BSHeldEvents>();
-                Fit(wrist, left, candidate.Col, held != null && (left ? held.blockLeftTrigger : held.blockRightTrigger));
+                var nativePose = candidate.GetCustomPointHandPose(hand.HandId);
+                BSPointHandPose custom = null;
+                if (nativePose != null)
+                {
+                    resolvedPose.thumb = nativePose.thumb;
+                    resolvedPose.index = nativePose.index;
+                    resolvedPose.middle = nativePose.mid;
+                    resolvedPose.ring = nativePose.ring;
+                    resolvedPose.little = nativePose.pinky;
+                    custom = resolvedPose;
+                }
+                Fit(wrist, left, candidate.Col, held != null && (left ? held.blockLeftTrigger : held.blockRightTrigger), custom);
             }
             target = candidate;
             opacity = Mathf.MoveTowards(opacity, candidate != null ? 1f : 0f, Mathf.Max(0f, deltaTime) * 8f);
@@ -156,14 +175,37 @@ namespace BS
             Matrix4x4.TRS(pose.position, pose.rotation, new Vector3(left ? -1f : 1f, 1f, 1f));
 
 #if UNITY_EDITOR
-        public void DrawEditorPreview(Pose pose, bool left, Collider collider, bool triggerReady = false)
+        public struct JointHandle
         {
-            var mesh = Fit(pose, left, collider, triggerReady);
+            public Vector3 position, curlAxis, spreadAxis;
+        }
+
+        public JointHandle[] EditorJointHandles(Pose wrist, bool left, Collider collider, BSPointHandPose custom)
+        {
+            Fit(wrist, left, collider, false, custom);
+            return fitter?.JointHandles(wrist, left);
+        }
+
+        public Vector3[] EditorFingerTips(Pose wrist, bool left) => fitter?.FingerTips(wrist, left);
+
+        public void DrawEditorPreview(Pose pose, bool left, Collider collider, bool triggerReady = false, BSPointHandPose customPose = null)
+        {
+            var mesh = Fit(pose, left, collider, triggerReady, customPose);
             if (mesh == null || SharedMaterial == null || SharedDepthMaterial == null) return;
             SharedDepthMaterial.SetPass(0);
             Graphics.DrawMeshNow(mesh, Matrix(pose, left));
             SharedMaterial.SetPass(0);
             Graphics.DrawMeshNow(mesh, Matrix(pose, left));
+        }
+
+        public static BSPointHandPose FitAuthoringPose(Pose wrist, bool left, Collider collider,
+            System.Func<Vector3, float, bool> surface = null)
+        {
+            using (var pose = new GripHandPose())
+            {
+                pose.FitForAuthoring(wrist, left, collider, surface);
+                return pose.Capture();
+            }
         }
 #endif
     }

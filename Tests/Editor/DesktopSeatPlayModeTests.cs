@@ -200,6 +200,36 @@ namespace BS.SDKEditor.Tests
             Assert.That(controller.MouseHand.IsHolding, Is.False);
             Assert.That(nativeHand.HeldHandle, Is.Null);
             Assert.That(nativeHand.GetComponent<ConfigurableJoint>(), Is.Null);
+            var authored = gripObject.GetComponent<BSGrabHandle>();
+            authored.CustomPointPose.enabled = true;
+            authored.CustomPointPose.right.position = new Vector3(.02f, .01f, -.015f);
+            authored.CustomPointPose.right.rotation = new Vector3(10f, 25f, -15f);
+            authored.CustomPointPose.right.index = new Vector4(.1f, .2f, .3f, .2f);
+            authored.CustomPointPose.right.thumb = new Vector4(-60f / 170f, .2f, .2f, 0f);
+            authored.ApplyCustomPointPose();
+            grabSettings.ShowRuntimeVisual = true;
+            gripBody.linearVelocity = Vector3.zero;
+            gripBody.angularVelocity = Vector3.zero;
+            gripBody.position = camera.transform.position + camera.transform.forward * 2f;
+            gripBody.rotation = Quaternion.identity;
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(hologram.Target, Is.SameAs(handle));
+            var customMesh = ((Mesh)typeof(BSGripHologram).GetField("mesh", PrivateInstance).GetValue(hologram)).vertices;
+            Assert.That(handle.GetCustomPointHandPose(HandID.Right).index, Is.EqualTo(authored.CustomPointPose.right.index));
+            Assert.That(handle.GetCustomPointHandPose(HandID.Right).thumb, Is.EqualTo(authored.CustomPointPose.right.thumb));
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center }.WithButton(MouseButton.Left));
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(nativeHand.HeldHandle, Is.SameAs(handle));
+            Assert.That(hologram.IsVisible, Is.True, "SDK displays the fixed custom hand while actually holding.");
+            CollectionAssert.AreEqual(customMesh, ((Mesh)typeof(BSGripHologram).GetField("mesh", PrivateInstance).GetValue(hologram)).vertices);
+            var expectedJoint = handle.GetGrabPose(nativeHand.PhysicsHand, nativeHand.GrabPos);
+            Assert.That(Vector3.Distance(nativeHand.GetComponent<ConfigurableJoint>().connectedAnchor, expectedJoint.position), Is.LessThan(.0001f));
+            yield return CaptureCameraFrame(camera, "sdk-custom-point-held.png");
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = away });
+            yield return new WaitForSecondsRealtime(.2f);
+            Assert.That(nativeHand.HeldHandle, Is.Null);
+            Assert.That(hologram.IsVisible, Is.False);
             Debug.Log("SDK_GRIP_PLAY_PASS: actual Update hover/fade/re-enter, camera-rendered grip hint, mouse-down native grab/joint with hint cleared, mouse-up release.");
         }
 

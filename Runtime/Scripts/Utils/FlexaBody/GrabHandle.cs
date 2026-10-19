@@ -1,6 +1,6 @@
 // SDK port of FlexaBody's GrabHandle, compiled when the FlexaBody package is not available.
 // The grab pose maths is the client's, unchanged, so a handle grabs the same way in the SDK
-// desktop controller as it does in Banter. (FlexaBody's hand-pose fields are not ported.)
+// desktop controller as it does in Banter.
 
 #if !BANTER_FLEX
 
@@ -16,6 +16,34 @@ namespace SideQuest.FlexaBody
         public Collider Col;
         public GrabType GrabType;
         public float _grabRadius = 0.01f;
+
+        public bool UseCustomPointPose;
+        public Pose RightPointOffset = Pose.identity;
+        public Pose LeftPointOffset = Pose.identity;
+        public HandPose RightPointHandPose;
+        public HandPose LeftPointHandPose;
+
+        public HandPose GetCustomPointHandPose(HandID side)
+        {
+            if (!UseCustomPointPose || GrabType != GrabType.Point || !isActiveAndEnabled ||
+                (side != HandID.Left && side != HandID.Right)) return null;
+            HandPose pose = side == HandID.Left ? LeftPointHandPose : RightPointHandPose;
+            Pose offset = side == HandID.Left ? LeftPointOffset : RightPointOffset;
+            Quaternion rotation = offset.rotation;
+            if (pose == null || !Finite(pose.thumb) || !Finite(pose.index) || !Finite(pose.mid) ||
+                !Finite(pose.ring) || !Finite(pose.pinky) || !Finite(offset.position) ||
+                !Finite(new Vector4(rotation.x, rotation.y, rotation.z, rotation.w)) ||
+                Quaternion.Dot(rotation, rotation) < 0.000001f) return null;
+            return pose;
+        }
+
+        static bool Finite(Vector4 value)
+        {
+            return !float.IsNaN(value.x) && !float.IsInfinity(value.x) &&
+                !float.IsNaN(value.y) && !float.IsInfinity(value.y) &&
+                !float.IsNaN(value.z) && !float.IsInfinity(value.z) &&
+                !float.IsNaN(value.w) && !float.IsInfinity(value.w);
+        }
 
         public HandleFunction[] _handleFunctions;
 
@@ -97,19 +125,37 @@ namespace SideQuest.FlexaBody
         Pose GetGrabPose_Point(PhysicsHand physHand)
         {
             Pose pose = new Pose();
+            bool custom = GetCustomPointHandPose(physHand.HandId) != null;
+            Pose offset = physHand.HandId == HandID.Left ? LeftPointOffset : RightPointOffset;
 
-            if (WorldObj)
+            if (WorldObj && WorldObj.RB)
             {
+                // The joint's connected anchor/rotation are in the RIGIDBODY's local space, so take the handle's
+                // pose relative to the rigidbody — not transform.localPosition/localRotation, which are relative
+                // to the handle's parent and only coincide when the handle is a direct child of the rigidbody.
+                // A handle ON the rigidbody (e.g. a ball) was anchored at its position in the scene, so it hung
+                // a random distance from the hand depending on where it lay when grabbed.
                 Transform body = WorldObj.RB.transform;
                 Vector3 handlePos = body.InverseTransformPoint(transform.position);
                 Quaternion handleRot = Quaternion.Inverse(body.rotation) * transform.rotation;
                 pose.position = handlePos + handleRot * ((physHand.HandId == HandID.Right ? 1f : -1f) * _grabRadius * Vector3.right);
                 pose.rotation = Quaternion.Inverse(handleRot);
+                if (custom)
+                {
+                    pose.position = body.InverseTransformPoint(transform.position + transform.rotation *
+                        ((physHand.HandId == HandID.Right ? 1f : -1f) * _grabRadius * Vector3.right + offset.position));
+                    pose.rotation = Quaternion.Inverse(handleRot * offset.rotation.normalized);
+                }
             }
             else
             {
                 pose.position = transform.position + transform.rotation * ((physHand.HandId == HandID.Right ? 1f : -1f) * _grabRadius * Vector3.right);
                 pose.rotation = Quaternion.identity;
+                if (custom)
+                {
+                    pose.position += transform.rotation * offset.position;
+                    pose.rotation = Quaternion.Inverse(offset.rotation.normalized);
+                }
             }
 
 

@@ -450,9 +450,15 @@ namespace BS
 
         void UpdateHover(Vector2 screenPoint, Ray ray)
         {
-            if (_flying || !_pointerUsable || (_hand != null && _hand.IsActive))
+            if (_flying || !_pointerUsable)
             {
                 ClearHover();
+                return;
+            }
+            if (_hand != null && _hand.IsActive)
+            {
+                SetHoverTarget(null);
+                _hand.UpdateHeldGripHologram(_gripHologram, Time.unscaledDeltaTime);
                 return;
             }
             var target = ResolvePointerTarget(screenPoint, ray, out var hit);
