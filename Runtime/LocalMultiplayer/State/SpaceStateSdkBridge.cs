@@ -1,13 +1,15 @@
-// <mirror source="Assets/Systems/Networking/State/SpaceStateSdkBridge.cs" sha256="193a4ac8d7fd942c604bebb16b53b07d2d770ef81778f467a08be60b02e18f32" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/SpaceStateSdkBridge.cs" sha256="e1257e1338ba2f3c0d477bfd8b3445c0333abcefa1ab94537c3a8eb73bd51e67" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class SpaceStateModule ticks; the service is
 // handed in instead of polled from SpaceStateService.Instance; BSScene.Instance() -> BSScene.Current (never builds a
-// scene during teardown); the GetSpaceStateValue delegate is put back on unhook when it is still ours.
+// scene during teardown); the GetSpaceStateValue delegate is put back on unhook when it is still ours; the scene-load replay waits for the next
+// Tick instead of a coroutine.
 using System;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace BS.LocalMultiplayer.State
 {
@@ -37,6 +39,16 @@ namespace BS.LocalMultiplayer.State
         private readonly Action<SpaceStateChange> _onChanged;
         private readonly Action _pushFull;
         private readonly Action<string, string, string> _onWriteFailed;
+        private readonly UnityAction<Scene, LoadSceneMode> _onUnitySceneLoaded;
+
+        // Bumped each time every key is sent to Visual Scripting, so a replay that another full send
+        // has already covered is dropped.
+        private int _visualScriptingPushes;
+
+        // A scene-load replay waiting for the frame after the load (production's coroutine).
+        private bool _replayPending;
+        private int _replayLoadFrame;
+        private int _replayPushesAtLoad;
 
         public SpaceStateSdkBridge(SpaceStateService service)
         {
@@ -49,18 +61,23 @@ namespace BS.LocalMultiplayer.State
             _onChanged = OnChanged;
             _pushFull = PushFull;
             _onWriteFailed = OnWriteFailed;
+            _onUnitySceneLoaded = OnUnitySceneLoaded;
             HookService(service);
+            SceneManager.sceneLoaded += _onUnitySceneLoaded;
         }
 
         /// <summary>Production's Update: re-hooks the scene whenever the SDK swaps it.</summary>
         public void Tick()
         {
             EnsureSceneHooked();
+            ReplayToVisualScripting();
         }
 
         /// <summary>Production's OnDestroy.</summary>
         public void Dispose()
         {
+            SceneManager.sceneLoaded -= _onUnitySceneLoaded;
+            _replayPending = false;
             UnhookScene();
             UnhookService();
         }
@@ -204,6 +221,39 @@ namespace BS.LocalMultiplayer.State
         private void OnSpaceUnload() => _service?.ClearAll();
 
         /// <summary>
+        /// A world's graphs only start listening when its scene loads, and the room snapshot often
+        /// arrives first: the room is joined at SCENE_READY, a 3 s page debounce that a world bundle
+        /// still downloading outlasts. The snapshot's events then reached no graph and nothing sent
+        /// them again, so state set live (a poster's URL) was missing after a rejoin, or not,
+        /// depending on which won. Send the state to Visual Scripting again once the scene's graphs
+        /// exist; the page already has it. With no snapshot yet, the snapshot itself reaches them.
+        /// </summary>
+        private void OnUnitySceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            // Leaving a world loads Void (BSAssetBundle) before the next page clears the old room's
+            // state: replaying then would hand the departing room's keys to the graphs that survive.
+            if (scene.name == TransitionSceneName) return;
+            if (_service == null || !_service.HasSnapshot) return;
+            _replayPending = true;
+            _replayLoadFrame = Time.frameCount;
+            _replayPushesAtLoad = _visualScriptingPushes;
+            _replaySceneName = scene.name;
+        }
+
+        private const string TransitionSceneName = "Void";
+        private string _replaySceneName;
+
+        private void ReplayToVisualScripting()
+        {
+            // After the scene's Start, so a graph whose On Start sets defaults can't overwrite the state.
+            if (!_replayPending || Time.frameCount <= _replayLoadFrame) return;
+            _replayPending = false;
+            if (_service == null || !_service.HasSnapshot || _replayPushesAtLoad != _visualScriptingPushes) return;
+            int keys = TriggerVisualScriptingForAll();
+            Debug.Log($"[LocalMP][SpaceState] Replayed {keys} key(s) to Visual Scripting after scene '{_replaySceneName}' loaded.");
+        }
+
+        /// <summary>
         /// Send the entire state as one message.
         ///
         /// This is also the ONLY way a delete or a public/protected reclassification reaches the
@@ -237,22 +287,7 @@ namespace BS.LocalMultiplayer.State
             var root = new JObject { ["protected"] = protectedObj, ["public"] = publicObj };
             _scene.link.OnFullSpaceState(root.ToString(Formatting.None));
 
-            // Visual Scripting has no full-state message, only per-key events -- so without this a
-            // graph joining a populated room (or reconnecting) sees nothing at all until some key
-            // happens to change. The previous bridge fired these on every snapshot; keep that.
-            foreach (var entry in _service.Entries())
-            {
-                bool entryIsPublic = _service.IsKeyPublic(entry.Key);
-                string rendered = SdkWireCodec.Render(entry.Value);
-                TriggerVisualScripting(entry.Key, rendered, entryIsPublic);
-                EventBus.Trigger("OnSpaceStateValueChanged", new CustomEventArgs(entry.Key, new object[]
-                {
-                    rendered,
-                    entry.Value == null ? string.Empty : entry.Value.ToString(Formatting.None),
-                    entryIsPublic,
-                    false
-                }));
-            }
+            TriggerVisualScriptingForAll();
 
             // Same snapshot, real JSON values, for the typed mirror.
             var jsonPublic = new JObject();
@@ -268,6 +303,40 @@ namespace BS.LocalMultiplayer.State
                 ["public"] = jsonPublic,
                 ["protected"] = jsonProtected
             }));
+        }
+
+        /// <summary>
+        /// Visual Scripting has no full-state message, only per-key events -- so without this a
+        /// graph joining a populated room (or reconnecting) sees nothing at all until some key
+        /// happens to change. The previous bridge fired these on every snapshot; keep that.
+        /// </summary>
+        private int TriggerVisualScriptingForAll()
+        {
+            _visualScriptingPushes++;
+            int keys = 0;
+            foreach (var entry in _service.Entries())
+            {
+                keys++;
+                // A world graph that throws must not cost every key after it (EventBus rethrows).
+                try
+                {
+                    bool entryIsPublic = _service.IsKeyPublic(entry.Key);
+                    string rendered = SdkWireCodec.Render(entry.Value);
+                    TriggerVisualScripting(entry.Key, rendered, entryIsPublic);
+                    EventBus.Trigger("OnSpaceStateValueChanged", new CustomEventArgs(entry.Key, new object[]
+                    {
+                        rendered,
+                        entry.Value == null ? string.Empty : entry.Value.ToString(Formatting.None),
+                        entryIsPublic,
+                        false
+                    }));
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                }
+            }
+            return keys;
         }
 
         /// <summary>

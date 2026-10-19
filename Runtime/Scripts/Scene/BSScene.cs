@@ -64,6 +64,20 @@ namespace BS
         public const string SettingsLocked = "SettingsLocked";
         public const string PhysicsSettingsLocked = "PhysicsSettingsLocked";
     }
+    /// <summary>
+    /// How <see cref="BSScene.Cancel"/> fails a load: the join was refused, the page failed, or the player
+    /// cancelled. The loading screen and the log have already said so, so it isn't an error to report again.
+    /// </summary>
+    public sealed class SceneLoadFailedException : Exception
+    {
+        public bool IsUserCancel { get; }
+
+        public SceneLoadFailedException(string reason, bool isUserCancel)
+            : base((isUserCancel ? "Cancelled: " : "Load failed: ") + reason)
+        {
+            IsUserCancel = isUserCancel;
+        }
+    }
     [RenamedFrom("Banter.SDK.BanterScene")]
     public class BSScene
     {
@@ -2668,7 +2682,7 @@ namespace BS
             loaded = true;
             loading = false;
             externalLoadFailed = true;
-            loadUrlTaskCompletionSource?.TrySetException(new Exception((isUserCancel ? "Cancelled: " : "Load failed: ") + message));
+            loadUrlTaskCompletionSource?.TrySetException(new SceneLoadFailedException(message, isUserCancel));
             loadUrlTaskCompletionSource?.TrySetCanceled();
             state = SceneState.LOAD_FAILED;
             loadingManager?.SetLoadProgress(isUserCancel ? "Loading Cancelled" : "Loading failed", 0, message, true);
@@ -2737,7 +2751,31 @@ namespace BS
         }
         public Task LoadUrl(string url, bool isLoadingOpen = false)
         {
-            return LoadUrlInternal(url, url, isLoadingOpen, isFallback: false);
+            return ObserveLoadFailure(LoadUrlInternal(url, url, isLoadingOpen, isFallback: false), url);
+        }
+
+        /// <summary>
+        /// Callers start a load and drop the task (<c>_ = scene.LoadUrl(url)</c>), so a failed load used to surface
+        /// much later, from the finalizer, as a TaskScheduler.UnobservedTaskException error: a refused join or a
+        /// cancelled load reported as a bug, with no URL. Read the failure here instead. A load that
+        /// <see cref="Cancel"/> failed was already reported on the loading screen; anything else is a real error,
+        /// logged straight away with the URL. Callers that await the task still get the exception.
+        /// </summary>
+        internal static Task ObserveLoadFailure(Task load, string url)
+        {
+            load.ContinueWith(t => ReportLoadFailure(t.Exception, url), CancellationToken.None,
+                TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
+            return load;
+        }
+
+        static void ReportLoadFailure(AggregateException failure, string url)
+        {
+            foreach (var e in failure.Flatten().InnerExceptions)
+            {
+                if (!(e is SceneLoadFailedException))
+                    Debug.LogError($"[LOADING] Loading {url} failed: {e}");
+            }
         }
 
         /// <summary>
@@ -2762,7 +2800,7 @@ namespace BS
             {
                 events.OnMissingWorldFallback.Invoke(originalUrl);
             }, $"{nameof(BSScene)}.{nameof(LoadMissingWorldFallback)}.OnMissingWorldFallback"));
-            return LoadUrlInternal(originalUrl, pageUrl, isLoadingOpen: true, isFallback: true);
+            return ObserveLoadFailure(LoadUrlInternal(originalUrl, pageUrl, isLoadingOpen: true, isFallback: true), originalUrl);
         }
 
         /// <param name="displayUrl">What this load is, to everyone outside: CurrentUrl, home checks, the cage, OnUnitySceneLoad.</param>
