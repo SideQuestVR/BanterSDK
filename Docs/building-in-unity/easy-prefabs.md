@@ -117,6 +117,7 @@ Each object is one SDK component, set up for the usual case:
 | Portal | `BSPortal`, a doorway to another space; see [Portal](#portal-bsportal). |
 | GLTF Model | `BSGLTF` with Add Colliders on. Set its `url`; the model loads in Play mode, facing +Z. |
 | Synced Object | A 0.3 m cube with a Rigidbody and `BSSyncedObject`, so every player sees it move. |
+| Spawner Object | A 0.4 m stick on the Grabbable layer with a kinematic Rigidbody, `BSWorldObject`, `BSSyncedObject`, `BSGrababble` (a Cylinder grip along its length) and `BSSpawnerObject`. Grabbing it puts a synced copy of the stick in your hand while the stick stays put; see [SpawnerObject](../components/special.md#spawnerobject). |
 | UI Panel | `BSUIPanel`: 512 × 512 pixels at 100 pixels per metre, so 5.12 m square, read from −Z. |
 | Billboard | A quad with `BSBillboard`, which turns it to face the player. |
 | Collider Events | A 2 m trigger box standing on the object, with `BSColliderEvents` reporting enter and exit to the page and Visual Scripting. |

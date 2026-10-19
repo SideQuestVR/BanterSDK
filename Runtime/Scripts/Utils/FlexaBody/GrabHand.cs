@@ -40,6 +40,9 @@ namespace SideQuest.FlexaBody
 
         public bool IsGrabbing => _handData != null && _handData.Grabbing;
 
+        /// <summary>The collider this hand grabbed, while it holds something.</summary>
+        public Collider HeldCollider => _handData != null && _handData.Grabbing ? _handData.HeldCollider : null;
+
         /// <summary>Collider the next scan should take when it is inside the grab sphere.</summary>
         public Collider PreferredCollider { get; set; }
 
@@ -100,6 +103,25 @@ namespace SideQuest.FlexaBody
                 return;
 
             ScanGrab(true);
+        }
+
+        /// <summary>
+        /// Let go of what this hand holds and grab <paramref name="target"/> instead, with the grip still closed: a
+        /// normal release (Released fires) then a normal grab (Grabbed fires). The old joint goes at once, so the
+        /// hand is never jointed to both. Safe from a <see cref="Grabbed"/> handler, which StartGrab raises last.
+        /// False (nothing changes) when the hand holds nothing or there is no target.
+        /// </summary>
+        public bool TransferGrab(Collider target)
+        {
+            if (_handData == null || !_handData.Grabbing || target == null)
+                return false;
+
+            var oldJoint = _handData.GrabJoint;
+            ReleaseGrab();
+            if (oldJoint)
+                DestroyImmediate(oldJoint);
+            StartGrab(target);
+            return true;
         }
 
         void UpdateGripTime()

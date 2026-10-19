@@ -85,7 +85,15 @@ namespace BS
             _grabHand.PlayerStart(_data);
             // Same order as the client (GrabNetworkBridge): the held events have already fired
             // inside the grab by the time these run.
-            _grabHand.Grabbed += (go, point) => _scene?.Grab(go, point, HandSide.RIGHT);
+            _grabHand.Grabbed += (go, point) =>
+            {
+                _scene?.Grab(go, point, HandSide.RIGHT);
+                // A spawner hands over a copy. Local multiplayer makes a synced one (LocalGrabNetworkBridge); on its
+                // own, SDK Play makes one only this player sees.
+                var spawner = go != null ? go.GetComponentInParent<BSSpawnerObject>() : null;
+                if (spawner != null && !BSSpawnerObject.NetworkMakesCopies)
+                    spawner.SpawnLocalCopy(_grabHand);
+            };
             _grabHand.Released += go => _scene?.Release(go, HandSide.RIGHT);
             ParkAtCamera();
         }

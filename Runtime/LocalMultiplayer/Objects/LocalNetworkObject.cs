@@ -1,8 +1,9 @@
 // <mirror source="Packages/com.sidequest.packetparty/Runtime/Components/PacketPartyNetworkObject.cs" sha256="c517a5d95049d4be81af13b146bef39a40ad331138eed3af254f67602cd27877" mode="port" />
 // PacketPartyNetworkObject in its scene-declare mode, line for line where it applies: identity and ownership read
 // from the binder's mirror (:56-100), the binder callbacks (:268-385), the ownership requests (:217-257) and the
-// durable pose (:389-437). PacketPartyClient becomes LocalObjectBinder. Not ported: BindTo / spawned binding, unlocked
-// cleanup, RPCs and the authored durable-pose source (synced objects always have exactly one root transform).
+// durable pose (:389-437), and the spawned binding with BindTo (:182-204) for spawner copies. PacketPartyClient becomes
+// LocalObjectBinder. Not ported: unlocked cleanup, RPCs and the authored durable-pose source (synced objects always have
+// exactly one root transform).
 // Deliberate differences (plan parity ledger): a kept ObjectId is declared again on the first join after each space
 // load, since locally the scene outlives the page, and on the first join of each new room session (Leave → Join, a
 // refused resume), which production only starts with a reloaded space; a declare that dies with its session is retried
@@ -136,6 +137,35 @@ namespace BS.LocalMultiplayer.Objects
             _live = true;
         }
 
+        /// <summary>
+        /// Configure an object that waits for a record created elsewhere (a spawner's copy): it never declares, and
+        /// <see cref="BindTo"/> gives it its id. Call before the component activates.
+        /// </summary>
+        internal void ConfigureSpawnedBinding(LocalObjectBinder binder, string objectTypeKey = "object")
+        {
+            if (binder == null) throw new ArgumentNullException(nameof(binder));
+            if (IsBound || _declareInFlight) throw new InvalidOperationException("network_object_already_active");
+            _binder = binder;
+            typeKey = string.IsNullOrWhiteSpace(objectTypeKey) ? "object" : objectTypeKey.Trim();
+            declareSceneObject = false;
+            sceneObjectId = string.Empty;
+            _live = true;
+        }
+
+        /// <summary>Bind to an existing record (spawned objects / SpawnHandler results).</summary>
+        public void BindTo(string objectId)
+        {
+            if (string.IsNullOrEmpty(objectId)) throw new ArgumentException("objectId required", nameof(objectId));
+            if (!_live || _binder == null) return;
+            ObjectId = objectId;
+            _everBound = true;
+            _declaredForSceneLoad = _binder.SceneLoadSerial;
+            _binder.BindObjectId(this, objectId);
+            var record = Record;
+            if (record != null) OnRecordChanged(record);
+            TransformIdentityChanged?.Invoke();
+        }
+
         internal void AttachSyncTransform(LocalSyncedTransform syncTransform)
         {
             _syncTransform = syncTransform;
@@ -201,7 +231,9 @@ namespace BS.LocalMultiplayer.Objects
         {
             if (!_live) return;
             _binder = binder;
-            if (ObjectId != null && _declaredForSceneLoad == binder.SceneLoadSerial)
+            // A spawned object keeps its id (production's bound spawned objects re-bind after a reconnect; one whose record
+            // is gone is cleaned up by whoever spawned it).
+            if (ObjectId != null && (_declaredForSceneLoad == binder.SceneLoadSerial || !declareSceneObject))
             {
                 // Re-bind within the same room session; rebroadcast current state. A resumed session lands here.
                 binder.BindObjectId(this, ObjectId);

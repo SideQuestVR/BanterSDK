@@ -337,6 +337,61 @@ namespace BS.SDKEditor.BuildChecks
         }
     }
 
+    /// <summary>Spawner objects are grabbed like anything else, and only their copy as a whole is synced.</summary>
+    sealed class SpawnerObjectCheck : BuildCheck
+    {
+        const int GrabbableLayer = 20;
+
+        public override string Id => "bs.spawner-object";
+        public override string Title => "Spawner objects";
+        public override string Description => "Every spawner object can be grabbed, keeps at least one copy, and has no synced objects or other spawners inside it.";
+        public override int Order => 345;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var spawners = context.Components<BSSpawnerObject>().ToList();
+            var ungrabbable = spawners.Where(spawner => !spawner.GetComponentsInChildren<Collider>(true)
+                .Any(collider => collider.gameObject.layer == GrabbableLayer)).ToList();
+            var noCopies = spawners.Where(spawner => new SerializedObject(spawner).FindProperty("maxSpawned").intValue < 1).ToList();
+            var nestedSynced = spawners.Where(spawner => spawner.GetComponentsInChildren<BSSyncedObject>(true)
+                .Any(synced => synced.gameObject != spawner.gameObject)).ToList();
+            var nestedSpawners = spawners.Where(spawner => spawner.GetComponentsInChildren<BSSpawnerObject>(true)
+                .Any(inner => inner != spawner)).ToList();
+
+            if (ungrabbable.Count > 0)
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{ungrabbable.Count} spawner object(s) can't be grabbed",
+                        "Hands only grab colliders on layer 20 (Grabbable), and a spawner only spawns when it is grabbed. " +
+                        "Give each one a collider on that layer.")
+                    .WithTargets(context.TargetsOf(ungrabbable)));
+            }
+            if (noCopies.Count > 0)
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{noCopies.Count} spawner object(s) have Max Spawned below 1",
+                        "At least one copy is always allowed; set Max Spawned to how many copies can exist at once.")
+                    .WithTargets(context.TargetsOf(noCopies)));
+            }
+            if (nestedSynced.Count > 0)
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{nestedSynced.Count} spawner object(s) have a Synced Object on a child",
+                        "Each copy is synced as one object, so a Synced Object on a child is removed from the copies. " +
+                        "Put it on the spawner itself to choose how copies sync.")
+                    .WithTargets(context.TargetsOf(nestedSynced)));
+            }
+            if (nestedSpawners.Count > 0)
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{nestedSpawners.Count} spawner object(s) have another spawner inside them",
+                        "Grabbing hands over the outer spawner's copy, and a copy never spawns, so the inner spawner does " +
+                        "nothing in it. Keep spawners apart.")
+                    .WithTargets(context.TargetsOf(nestedSpawners)));
+            }
+        }
+    }
+
     /// <summary>Teleporters need a trigger to walk into and somewhere else to land.</summary>
     sealed class TeleporterCheck : BuildCheck
     {

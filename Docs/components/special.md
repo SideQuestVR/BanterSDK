@@ -60,6 +60,33 @@ const mine = await sync.DoIOwn();   // true if this player owns the object now
 
 In SDK Play Mode on its own, `DoIOwn()` always resolves `false`; with [local multiplayer](../multiplayer/local-testing.md) it answers as the app does.
 
+## SpawnerObject
+
+A dispenser. The object stays where you put it, and grabbing it puts a copy of the whole object in your hand: the same mesh, children and components, thrown with physics and shared with every player in the space, including players who arrive later. Use it for cups, balls, markers, anything players should be able to take as many of as they like.
+
+- The spawner itself is not networked. With `forceKinematic` on (the default) its Rigidbody is made kinematic, so it stays where you put it. Turn it off to leave the Rigidbody as you set it, for a spawner that falls or can be knocked over; each player then simulates their own spawner, so it can end up in different places for different players. Copies always appear where the grabbing player's spawner is, and are synced from there.
+- Each copy is a [SyncedObject](#syncedobject) with its own object id, never the spawner's. If the spawner has a SyncedObject of its own, its settings decide how the copies sync; otherwise the copies get the defaults. Grabbing a copy always makes you its owner.
+- A copy is removed when the player who owns it leaves.
+- With `maxSpawned` copies out, spawning another removes the oldest one nobody is holding. If every copy is being held, grabbing the spawner just holds it. Two players spawning at the same moment can briefly go one over.
+- The copy is in your hand at once; the other players see it a moment later, once the server has given it its id.
+- Spawning needs a multiplayer room. On its own, SDK Play makes copies only you can see; with [Local Multiplayer](../multiplayer/local-testing.md) running they are shared like in the app.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `maxSpawned` | number | 10 | How many copies of this spawner can exist at once |
+| `forceKinematic` | boolean | true | Make the spawner's Rigidbody kinematic so it stays put; off leaves the Rigidbody as you set it |
+
+The spawner needs a collider on the Grabbable layer (20), like anything else a hand picks up; the Builder's checklist warns when it has none. **GameObject > BS > Objects > Spawner Object** makes a ready-to-use one: a 0.4 m stick with a kinematic Rigidbody, `BSWorldObject`, `BSSyncedObject`, `BSGrababble` (held along its length) and `BSSpawnerObject`. Swap the stick's mesh and collider for your own object. A SyncedObject on a child of the spawner is removed from the copies, because each copy is synced as one object.
+
+```js
+const cup = new BS.GameObject({ name: "Cup" });
+await cup.SetNetworkId("cup-spawner");   // the same on every player
+await cup.SetLayer(20);                  // Grabbable
+await cup.AddComponent(new BS.BoxCollider({ size: new BS.Vector3(0.1, 0.12, 0.1) }));
+await cup.AddComponent(new BS.Rigidbody({ isKinematic: true }));
+await cup.AddComponent(new BS.SpawnerObject({ maxSpawned: 10 }));
+```
+
 ## WorldObject
 
 Marks a physics object the players' hands can hold: while a hand grabs it, the hand stops colliding with the object's colliders, so it doesn't knock the object out of its own grip. Put it on the object with the Rigidbody. You rarely need it yourself: [Grababble](vr-interaction.md#grababble) adds one, and a [GrabHandle](vr-interaction.md#grabhandle) on a Rigidbody adds one if there isn't one.

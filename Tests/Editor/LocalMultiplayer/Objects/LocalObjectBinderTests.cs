@@ -154,6 +154,62 @@ namespace BS.LocalMultiplayer.Tests
         }
 
         [Test]
+        public async Task CreateSpawned_CarriesMetadataAndTheInitialTransform()
+        {
+            JoinWith(Me);
+            _session.Reply = (type, body) => Task.FromResult(new JObject
+            {
+                ["type"] = ObjectMessages.Result,
+                ["ok"] = true,
+                ["revision"] = 1,
+                ["object"] = Record("obj_1", Me, 0, 1)
+            });
+            await _binder.CreateObjectAsync(SpawnerCopyRules.TypeKey, SyncedObjectOrigin.Spawned,
+                ownerDisconnectPolicy: SyncedObjectDisconnectPolicy.Destroy, locked: true,
+                metadata: new Dictionary<string, JToken> { ["spawner"] = "spawner-a", ["n"] = "spawn-pending:x" },
+                initialTransform: new SyncedObjectTransformState { Position = new[] { 1f, 2f, 3f }, Rotation = new[] { 0f, 0f, 0f, 1f } });
+            var request = _session.Requests[0].Body;
+            Assert.AreEqual("spawned", (string)request["origin"]);
+            Assert.IsNull(request["objectId"], "the relay mints a spawned object's id");
+            Assert.AreEqual("destroy", (string)request["ownerDisconnectPolicy"]);
+            Assert.AreEqual(true, (bool)request["locked"]);
+            Assert.AreEqual("spawner-a", (string)request["metadata"]["spawner"]);
+            Assert.AreEqual("spawn-pending:x", (string)request["metadata"]["n"]);
+            Assert.AreEqual(2f, (float)request["state"]["transform"]["position"][1]);
+            Assert.AreEqual(1f, (float)request["state"]["transform"]["rotation"][3]);
+        }
+
+        [Test]
+        public void AnUnboundRecord_GoesToTheSpawnHandler_WhichBindsIt()
+        {
+            JoinWith(Me);
+            var go = new GameObject("copy");
+            try
+            {
+                go.SetActive(false);
+                var networkObject = go.AddComponent<LocalNetworkObject>();
+                networkObject.ConfigureSpawnedBinding(_binder, SpawnerCopyRules.TypeKey);
+                go.SetActive(true);
+                SyncedObjectRecord seen = null;
+                _binder.SpawnHandler = record => { seen = record; return go; };
+
+                var created = Record("obj_1", Other, 0, 2);
+                created["typeKey"] = SpawnerCopyRules.TypeKey;
+                created["origin"] = "spawned";
+                _session.Deliver(ObjectMessages.Created, new JObject { ["revision"] = 2, ["object"] = created });
+
+                Assert.AreEqual("obj_1", seen?.ObjectId);
+                Assert.AreEqual("obj_1", networkObject.ObjectId, "the binder binds what the handler returned");
+                Assert.IsTrue(_binder.TryGetBound("obj_1", out var bound) && bound == networkObject);
+                Assert.AreEqual(0, CountRequests(ObjectMessages.Create), "a spawned binding never declares");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
         public async Task Acquire_And_CommitState_UseTheProtocolFields()
         {
             JoinWith(Me, Record("a", Me, 4, 1));

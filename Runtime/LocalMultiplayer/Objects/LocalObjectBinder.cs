@@ -76,6 +76,14 @@ namespace BS.LocalMultiplayer.Objects
         public event Action<string> RecordRemoved;
         /// <summary>The mirror was replaced (snapshot) or cleared (the session ended).</summary>
         public event Action MirrorReset;
+        /// <summary>A join snapshot replaced the mirror (production: PacketPartyClient.OnObjectSnapshot).</summary>
+        public event Action<ObjectSnapshotEvent> ObjectSnapshot;
+
+        /// <summary>
+        /// Called for a record no component here is bound to (PacketPartyObjectBinder.SpawnHandler): return a GameObject
+        /// whose <see cref="LocalNetworkObject"/> should bind to it, or null. Spawner copies use it.
+        /// </summary>
+        public Func<SyncedObjectRecord, GameObject> SpawnHandler { get; set; }
         /// <summary>
         /// The connection dropped or the session ended: publishers and remote views start over (production's
         /// Transforms.ResetForReconnect / Reset).
@@ -206,6 +214,8 @@ namespace BS.LocalMultiplayer.Objects
             RecordDeclared = null;
             RecordRemoved = null;
             MirrorReset = null;
+            ObjectSnapshot = null;
+            SpawnHandler = null;
             Disconnected = null;
         }
 
@@ -392,6 +402,8 @@ namespace BS.LocalMultiplayer.Objects
             }
             _objectsRevision = snapshot.Revision;
             RaiseMirrorReset();
+            try { ObjectSnapshot?.Invoke(snapshot); }
+            catch (Exception ex) { Debug.LogException(ex); }
             if (snapshot.Objects == null) return;
             foreach (var record in snapshot.Objects)
             {
@@ -456,8 +468,30 @@ namespace BS.LocalMultiplayer.Objects
             if (_bound.TryGetValue(record.ObjectId, out var networkObject) && networkObject != null)
             {
                 networkObject.OnRecordChanged(record);
+                return;
             }
-            // No SpawnHandler: a record nobody here binds is ignored, as in Greenfield (ObjectIdDiagnostics reports it).
+            // PacketPartyObjectBinder.DispatchRecord: a record nobody here binds goes to the spawn handler (spawner copies);
+            // anything it doesn't take is ignored, as in Greenfield (ObjectIdDiagnostics reports it).
+            var handler = SpawnHandler;
+            if (handler == null) return;
+            GameObject spawned;
+            try
+            {
+                spawned = handler(record);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+                return;
+            }
+            if (spawned == null) return;
+            var component = spawned.GetComponentInChildren<LocalNetworkObject>(true);
+            if (component == null)
+            {
+                Debug.LogWarning($"[LocalMP][SyncedObjects] SpawnHandler result for {record.ObjectId} has no LocalNetworkObject; ignoring");
+                return;
+            }
+            component.BindTo(record.ObjectId);
         }
 
         void RaiseRecordDeclared(SyncedObjectRecord record)
@@ -592,7 +626,9 @@ namespace BS.LocalMultiplayer.Objects
 
         /// <summary>
         /// Create a synced object. Scene objects use <paramref name="sceneObjectId"/> as a stable id and creates are
-        /// idempotent (declare the scene on every join): the first declarer owns it at generation 0.
+        /// idempotent (declare the scene on every join): the first declarer owns it at generation 0. Spawned objects get
+        /// an id from the relay. <paramref name="metadata"/> and <paramref name="initialTransform"/> ride the record from
+        /// the start, so the created broadcast and later snapshots carry them.
         /// </summary>
         public async Task<SyncedObjectRecord> CreateObjectAsync(
             string typeKey,
@@ -600,7 +636,9 @@ namespace BS.LocalMultiplayer.Objects
             string sceneObjectId = null,
             SyncedObjectDisconnectPolicy? ownerDisconnectPolicy = null,
             bool locked = false,
-            CancellationToken cancellation = default)
+            CancellationToken cancellation = default,
+            IReadOnlyDictionary<string, JToken> metadata = null,
+            SyncedObjectTransformState initialTransform = null)
         {
             var payload = new JObject
             {
@@ -612,6 +650,13 @@ namespace BS.LocalMultiplayer.Objects
                 (origin == SyncedObjectOrigin.Scene ? SyncedObjectDisconnectPolicy.Transfer : SyncedObjectDisconnectPolicy.Destroy);
             payload["ownerDisconnectPolicy"] = disconnectPolicy == SyncedObjectDisconnectPolicy.Transfer ? "transfer" : "destroy";
             if (locked) payload["locked"] = true;
+            if (metadata != null)
+            {
+                var meta = new JObject();
+                foreach (var entry in metadata) meta[entry.Key] = entry.Value;
+                payload["metadata"] = meta;
+            }
+            if (initialTransform != null) payload["state"] = new JObject { ["transform"] = JObject.FromObject(initialTransform) };
             var result = await RequestObjectAsync(ObjectMessages.Create, payload, cancellation);
             return result.Object;
         }

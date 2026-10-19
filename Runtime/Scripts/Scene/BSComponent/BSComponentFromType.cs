@@ -161,6 +161,8 @@ namespace BS
                     return gameObject.AddComponent<BSSpawn>();
                 case ComponentType.Teleporter:
                     return gameObject.AddComponent<BSTeleporter>();
+                case ComponentType.SpawnerObject:
+                    return gameObject.AddComponent<BSSpawnerObject>();
                 default:
                     return null;
             }

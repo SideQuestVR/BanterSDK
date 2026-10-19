@@ -4,7 +4,8 @@
 // before any scene object starts (BSSyncedObject announces itself from its own Start); the transform host always
 // exists, so the deferred-host retry is gone; the Rate-LOD preset has no local meaning (the relay delivers at full
 // rate); and an already-started object (late install) is replayed with Refresh(). It also owns the binder, the
-// transform runtime and the desktop grab bridge, which Greenfield's NetworkService creates.
+// transform runtime, the desktop grab bridge and the spawner-copy service (LocalSpawnerObjects), which Greenfield's
+// NetworkService and SyncedObjectSystem create.
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -44,6 +45,7 @@ namespace BS.LocalMultiplayer.Objects
         LocalObjectBinder _binder;
         LocalTransformRuntime _runtime;
         LocalGrabNetworkBridge _grabBridge;
+        LocalSpawnerObjects _spawns;
         BSScene _scene;
         BSSceneEvents _events;
         DataBridge _data;
@@ -94,8 +96,10 @@ namespace BS.LocalMultiplayer.Objects
             // own Start reaches us.
             HookScene(host.Scene != null ? host.Scene : BSScene.Current);
 
+            _spawns = gameObject.AddComponent<LocalSpawnerObjects>();
+            _spawns.Configure(this, _binder);
             _grabBridge = gameObject.AddComponent<LocalGrabNetworkBridge>();
-            _grabBridge.Configure(host);
+            _grabBridge.Configure(host, _spawns);
 
             host.Provide(this);
             host.Provide(_binder);
@@ -118,6 +122,12 @@ namespace BS.LocalMultiplayer.Objects
                 DestroyComponent(_grabBridge);
             }
             _grabBridge = null;
+            if (_spawns != null)
+            {
+                _spawns.Teardown();
+                DestroyComponent(_spawns);
+            }
+            _spawns = null;
             for (int i = _setUp.Count - 1; i >= 0; i--) TearDown(_setUp[i]);
             _setUp.Clear();
             _runtime?.Dispose();
@@ -192,6 +202,7 @@ namespace BS.LocalMultiplayer.Objects
         void OnSpaceLoad()
         {
             if (_binder != null) _binder.NotifySceneLoad();
+            if (_spawns != null) _spawns.ClearAll();
         }
 
         // Late install: an object that already ran Start announced itself before we listened. Ask it again (Refresh =
@@ -212,6 +223,9 @@ namespace BS.LocalMultiplayer.Objects
         void OnSyncedObject(BSSynced synced, BSSyncedObject bso)
         {
             if (!_installed || bso == null) return;
+            // A spawner is never networked itself; its Synced Object only says how its copies sync (and the copies
+            // arrive with their networking already added by LocalSpawnerObjects).
+            if (bso.TryGetComponent(out BSSpawnerObject _)) return;
             if (bso.TryGetComponent(out LocalNetworkObject _)) return; // already set up
             if (!_pending.Add(bso)) return;                             // already queued
             if (isActiveAndEnabled) StartCoroutine(SetupNextFrame(bso));
@@ -237,6 +251,7 @@ namespace BS.LocalMultiplayer.Objects
         {
             var go = bso.gameObject;
             if (go.TryGetComponent(out LocalNetworkObject _)) return;
+            if (go.TryGetComponent(out BSSpawnerObject _)) return; // added since it announced
 
             if (!go.TryGetComponent(out BSObjectId objectId) || string.IsNullOrEmpty(objectId.Id))
             {
@@ -250,9 +265,49 @@ namespace BS.LocalMultiplayer.Objects
                 if (_setUp[i].GameObject == null) _setUp.RemoveAt(i);
             }
 
+            var entry = new SetUpObject { GameObject = go };
+
+            // Configure BEFORE the components' OnEnable runs, so the scene-declare uses our stable id
+            // (not the GameObject name) and the transform is configured before it starts: add while
+            // inactive, configure, reactivate. (Deferred a frame above, so this isn't during Start.)
+            bool wasActive = go.activeSelf;
+            go.SetActive(false);
+            try
+            {
+                AddNetworkComponents(entry, bso,
+                    netObj => netObj.ConfigureSceneDeclare(_binder, TypeKey, objectId.Id, SyncedObjectDisconnectPolicy.Transfer));
+            }
+            finally
+            {
+                _setUp.Add(entry);
+                go.SetActive(wasActive);
+            }
+            Debug.Log($"[LocalMP][SyncedObjects] Bound '{go.name}' → id={objectId.Id} (rigidbody={entry.Body != null}, " +
+                      $"syncRotation={bso.SyncRotation}, collisionOwnership={bso.TakeOwnershipOnCollision}).");
+            NoteQuirks(bso, entry.Body);
+        }
+
+        /// <summary>
+        /// A spawner's copy (<see cref="LocalSpawnerObjects"/>): the same pieces as a scene object, with a spawned binding
+        /// instead of a scene declare. <paramref name="go"/> must be inactive. Not kept for uninstall: copies are destroyed
+        /// whole.
+        /// </summary>
+        internal LocalNetworkObject SetUpSpawnedCopy(GameObject go, string typeKey, Action fellOut)
+        {
+            var entry = new SetUpObject { GameObject = go };
+            AddNetworkComponents(entry, go.GetComponent<BSSyncedObject>(),
+                netObj => netObj.ConfigureSpawnedBinding(_binder, typeKey), fellOut);
+            return entry.NetworkObject;
+        }
+
+        // SyncedObjectSystem.AddNetworkComponents: the pieces every synced object gets, added while it is inactive.
+        void AddNetworkComponents(SetUpObject entry, BSSyncedObject bso, Action<LocalNetworkObject> configureIdentity,
+            Action fellOut = null)
+        {
+            var go = entry.GameObject;
             go.TryGetComponent(out Rigidbody rb);
             bool hasRigidbody = rb != null;
-            var entry = new SetUpObject { GameObject = go, Body = rb };
+            entry.Body = rb;
 
             // Smooth rendering between physics steps: a synced Rigidbody is stepped in FixedUpdate but
             // drawn at frame rate, so without interpolation it looks jittery when held (owner, driven by
@@ -265,69 +320,53 @@ namespace BS.LocalMultiplayer.Objects
                     rb.interpolation = RigidbodyInterpolation.Interpolate;
             }
 
-            // Configure BEFORE the components' OnEnable runs, so the scene-declare uses our stable id
-            // (not the GameObject name) and the transform is configured before it starts: add while
-            // inactive, configure, reactivate. (Deferred a frame above, so this isn't during Start.)
-            bool wasActive = go.activeSelf;
-            go.SetActive(false);
-            try
+            var netObj = go.AddComponent<LocalNetworkObject>();
+            configureIdentity(netObj);
+            entry.NetworkObject = netObj;
+
+            // Kinematic bodies are driven by script (MovePosition / transform — e.g. a piloted seat/vehicle),
+            // not the physics solver. Rigidbody binding assumes a physics-simulated body and does not publish
+            // their movement, so a kinematic owner's motion never reaches remotes. Bind such objects by
+            // Transform (reads transform.position — which MovePosition updates — and derives velocity). Keep
+            // Rigidbody binding for dynamic physics objects, where it also gives non-owners kinematicIfNotOwned
+            // for free (Banter parity).
+            bool useRigidbodyBinding = hasRigidbody && !rb.isKinematic;
+
+            var syncTransform = go.AddComponent<LocalSyncedTransform>();
+            syncTransform.ConfigureAutomatic(
+                _runtime,
+                sourceHz: SourceHz,
+                rotation: bso.SyncRotation,
+                velocity: hasRigidbody,
+                binding: useRigidbodyBinding ? TransformPoseBinding.Rigidbody : TransformPoseBinding.Transform);
+            entry.SyncTransform = syncTransform;
+
+            // Physics handoff: velocity preservation on ownership transfer + optimistic take-ownership
+            // on collision (fixes the brick-wall / stops-dead effect). Added for physics objects and any
+            // object that opts into collision ownership.
+            if (hasRigidbody || bso.TakeOwnershipOnCollision)
             {
-                var netObj = go.AddComponent<LocalNetworkObject>();
-                netObj.ConfigureSceneDeclare(_binder, TypeKey, objectId.Id, SyncedObjectDisconnectPolicy.Transfer);
-                entry.NetworkObject = netObj;
-
-                // Kinematic bodies are driven by script (MovePosition / transform — e.g. a piloted seat/vehicle),
-                // not the physics solver. Rigidbody binding assumes a physics-simulated body and does not publish
-                // their movement, so a kinematic owner's motion never reaches remotes. Bind such objects by
-                // Transform (reads transform.position — which MovePosition updates — and derives velocity). Keep
-                // Rigidbody binding for dynamic physics objects, where it also gives non-owners kinematicIfNotOwned
-                // for free (Banter parity).
-                bool useRigidbodyBinding = hasRigidbody && !rb.isKinematic;
-
-                var syncTransform = go.AddComponent<LocalSyncedTransform>();
-                syncTransform.ConfigureAutomatic(
-                    _runtime,
-                    sourceHz: SourceHz,
-                    rotation: bso.SyncRotation,
-                    velocity: hasRigidbody,
-                    binding: useRigidbodyBinding ? TransformPoseBinding.Rigidbody : TransformPoseBinding.Transform);
-                entry.SyncTransform = syncTransform;
-
-                // Physics handoff: velocity preservation on ownership transfer + optimistic take-ownership
-                // on collision (fixes the brick-wall / stops-dead effect). Added for physics objects and any
-                // object that opts into collision ownership.
-                if (hasRigidbody || bso.TakeOwnershipOnCollision)
-                {
-                    entry.Handoff = go.AddComponent<SyncedObjectPhysicsHandoff>();
-                    entry.Handoff.Configure(OwnershipCollisionTags, bso.TakeOwnershipOnCollision, OwnershipProximityMargin);
-                }
-
-                // Grab ownership: LocalGrabbable lets LocalGrabNetworkBridge atomically acquire+lock the
-                // object when the desktop hand grabs it. LocalHeldObject then replicates the held pose
-                // relative to the grabber's hand, and HeldSyncSuspender disables the LocalSyncedTransform while
-                // held so HeldObject drives (lag-free, tracks the visible hand). Only for objects that opt in.
-                if (bso.TakeOwnershipOnGrab)
-                {
-                    entry.Grabbable = go.AddComponent<LocalGrabbable>();
-                    entry.Grabbable.Configure();
-                    entry.Held = go.AddComponent<LocalHeldObject>();
-                    entry.Held.Configure();
-                    entry.Suspender = go.AddComponent<HeldSyncSuspender>();
-                    entry.Suspender.Configure(useRigidbodyBinding ? rb : null);
-                }
-
-                // Safety net for every synced object.
-                entry.SafetyNet = go.AddComponent<SyncedObjectSafetyNet>();
-                entry.SafetyNet.Configure(FallThreshold);
+                entry.Handoff = go.AddComponent<SyncedObjectPhysicsHandoff>();
+                entry.Handoff.Configure(OwnershipCollisionTags, bso.TakeOwnershipOnCollision, OwnershipProximityMargin);
             }
-            finally
+
+            // Grab ownership: LocalGrabbable lets LocalGrabNetworkBridge atomically acquire+lock the
+            // object when the desktop hand grabs it. LocalHeldObject then replicates the held pose
+            // relative to the grabber's hand, and HeldSyncSuspender disables the LocalSyncedTransform while
+            // held so HeldObject drives (lag-free, tracks the visible hand). Only for objects that opt in.
+            if (bso.TakeOwnershipOnGrab)
             {
-                _setUp.Add(entry);
-                go.SetActive(wasActive);
+                entry.Grabbable = go.AddComponent<LocalGrabbable>();
+                entry.Grabbable.Configure();
+                entry.Held = go.AddComponent<LocalHeldObject>();
+                entry.Held.Configure();
+                entry.Suspender = go.AddComponent<HeldSyncSuspender>();
+                entry.Suspender.Configure(useRigidbodyBinding ? rb : null);
             }
-            Debug.Log($"[LocalMP][SyncedObjects] Bound '{go.name}' → id={objectId.Id} (rigidbody={hasRigidbody}, " +
-                      $"syncRotation={bso.SyncRotation}, collisionOwnership={bso.TakeOwnershipOnCollision}).");
-            NoteQuirks(bso, rb);
+
+            // Safety net for every synced object.
+            entry.SafetyNet = go.AddComponent<SyncedObjectSafetyNet>();
+            entry.SafetyNet.Configure(FallThreshold, fellOut);
         }
 
         // Explicit TakeOwnership() from the SDK / visual scripting (and seats, AttachmentsSystem.cs:310-313).

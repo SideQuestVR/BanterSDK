@@ -44,10 +44,12 @@ namespace BS.LocalMultiplayer.Objects
 
         // The held network object, so a release targets the right one and non-synced grabs are ignored.
         private LocalNetworkObject _rightHeld;
+        private LocalSpawnerObjects _spawns;
 
-        internal void Configure(ILocalHost host)
+        internal void Configure(ILocalHost host, LocalSpawnerObjects spawns = null)
         {
             _host = host;
+            _spawns = spawns;
             _live = true;
         }
 
@@ -90,6 +92,7 @@ namespace BS.LocalMultiplayer.Objects
         {
             Unsubscribe();
             _rightHeld = null;
+            _spawns = null;
             _live = false;
         }
 
@@ -102,6 +105,15 @@ namespace BS.LocalMultiplayer.Objects
 
             // BSDesktopMouseHand has already raised the SDK grab event (onGrab) for this grab.
 
+            // A spawner hands over a synced copy of itself (which comes back through here as an ordinary grab). When no
+            // copy can be made, the hand just holds the spawner, which is never networked.
+            var spawner = grabbed.GetComponentInParent<BSSpawnerObject>();
+            if (spawner != null)
+            {
+                if (_spawns != null) _spawns.SpawnFromGrab(spawner, _right);
+                return;
+            }
+
             var netObj = grabbed.GetComponentInParent<LocalNetworkObject>();
             if (netObj == null) return;                               // not a synced object → local grab only
             if (!netObj.TryGetComponent(out LocalGrabbable grabbable)) return; // not opted into grab ownership
@@ -112,6 +124,13 @@ namespace BS.LocalMultiplayer.Objects
 
             try
             {
+                // A spawner's copy is in the hand before the relay has given it an id: wait for that, then grab it as
+                // usual (we created it owned and locked, so the acquire below just confirms). A failed create has let go.
+                var spawns = _spawns;
+                if (!netObj.IsBound && spawns != null && spawns.IsPendingSpawn(netObj) &&
+                    !await spawns.WaitForBindAsync(netObj))
+                    return;
+
                 bool owned = await grabbable.TryGrabAsync(destroyed);
                 if (!_live) return;
                 if (!owned)

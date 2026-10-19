@@ -101,6 +101,10 @@ There is no event when ownership changes.
 
 !> Turn `takeOwnershipOnCollision` off on kinematic objects such as vehicles and moving platforms. Walking into one claims it and turns its Rigidbody dynamic, so it starts to fall and be pushed around.
 
+### Spawned copies
+
+A [Spawner Object](../components/special.md#spawnerobject) hands out synced copies of itself. They behave like any synced object above, with three differences: each copy's id comes from the server, so you don't set one; a copy is removed when its owner leaves rather than passed on; and the number of copies per spawner is capped (`maxSpawned`). Grabbing the spawner puts the copy in your hand at once; the other players see it after one round trip to the server.
+
 ### Attachments and seats
 
 A [BS Attached Object](../components/vr-interaction.md#attachedobject) attached to your avatar with **Auto Sync** on is shown on your avatar to the other players, and players sitting on a [seat](../building-in-unity/easy-prefabs.md#seat-bsseat) are shown seated. Each player attaches their own copy of the object, so it must be in the scene with a stable [BSObjectId](#bsobjectid), and it shouldn't also be a synced object.
@@ -123,6 +127,7 @@ It does two jobs:
 | Placed more than once from a prefab | The first copy keeps the prefab's ID; every further copy in the scene gets a new random ID, saved the same way. |
 | **Generate** pressed | A random ID, saved with the scene and kept as a prefab override. |
 | Created by a script (`new BS.GameObject`, `scene.Instantiate`) | A number each player's copy picks for itself, so it's different on every player. Set `networkId` to give it one. |
+| A copy from a [Spawner Object](../components/special.md#spawnerobject) | The id the server gives the copy, the same on every player; its children with a BSObjectId get that id plus `/1`, `/2` and so on. Until the server answers, the grabbing player's copy has a temporary id of its own. |
 
 In the published world an ID never changes: whatever was saved is what every player loads, and two objects saved with the same ID keep it.
 

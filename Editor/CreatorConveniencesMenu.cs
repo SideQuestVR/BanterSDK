@@ -200,6 +200,30 @@ internal static class CreatorConveniencesMenu
         Finish(go, "Synced Object");
     }
 
+    [MenuItem(Root + "Objects/Spawner Object", false, 39)]
+    private static void CreateSpawnerObject(MenuCommand command)
+    {
+        // A dispenser stick: grabbing it puts a synced copy of the whole stick in the hand while it stays put. Everything
+        // is on the one object, so every copy is the same grabbable synced stick: BSGrababble holds it along its length,
+        // and its BSSyncedObject says how the copies sync (the spawner itself never is).
+        var go = Primitive(PrimitiveType.Cube, "BS Spawner Object", null, Vector3.zero, new Vector3(0.04f, 0.4f, 0.04f));
+        go.layer = GrabbableLayer;
+        Place(go, command);
+        var body = Add<Rigidbody>(go);
+        body.mass = 0.3f;
+        body.isKinematic = true;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        Add<BSWorldObject>(go);
+        Add<BSSyncedObject>(go);
+        Set(Add<BSGrababble>(go), so =>
+        {
+            so.FindProperty("grabType").intValue = (int)BSGrabType.Cylinder;
+            so.FindProperty("grabRadius").floatValue = 0.02f;
+        });
+        Add<BSSpawnerObject>(go);
+        Finish(go, "Spawner Object");
+    }
+
     [MenuItem(Root + "Objects/UI Panel", false, 38)]
     private static void CreateUIPanel(MenuCommand command) => CreateComponentObject<BSUIPanel>("UI Panel", command);
 

@@ -287,5 +287,7 @@ namespace BS
         cooldown,
         exitPosition,
         useExitPosition,
+        maxSpawned,
+        forceKinematic,
     }
 }
