@@ -204,7 +204,7 @@ A typical agent then:
 3. uses `move` to walk over and face someone, and `say` to speak,
 4. loops on `wait_for_events`, which returns as soon as someone talks, joins, leaves, or a move finishes.
 
-To hear what people say, the agent turns on listening with `set_listening`; transcription needs a speech model, which it can fetch with `download_model`. [MCP Tools & Events](mcp-tools.md) describes every tool and event.
+To hear what people say, the agent turns on listening with `set_listening`. Transcription needs a speech model: the agent can fetch one with `download_model`, and the app uses it from the next time it starts. [MCP Tools & Events](mcp-tools.md) describes every tool and event.
 
 ## Connect from another computer
 
@@ -216,6 +216,8 @@ To drive the app from a different machine, start it listening on the network wit
 
 Connect the agent to `http://<this PC's address>:42070/mcp` with the header `Authorization: Bearer <secret>`. Windows may ask whether to let the app through the firewall the first time. Use a long, random token: anyone who has it and can reach the port controls your player.
 
+!> **The connection isn't encrypted.** It's plain HTTP, so the token, the snapshots and the transcripts cross your network as they are. Only use `-mcp-lan` on a network you trust.
+
 ## What it can reach
 
 The server moves your player, captures your screen and speaks with your account, so it stays closed unless you open it:
@@ -224,11 +226,12 @@ The server moves your player, captures your screen and speaks with your account,
 - **Only this computer**, unless you pass `-mcp-lan`, and then only with a token.
 - **Web pages can't use it.** Requests from a browser page are refused unless the page is on `localhost`, which stops a site you visit from driving the app. Agents send no browser origin and aren't affected.
 - **People hear the agent as you.** It speaks through your account and appears as your avatar.
+- **Muting doesn't stop it.** With the app muted, people still hear the agent, and the agent still hears your microphone while it's listening.
 - **Hearing stays on your PC.** Transcription runs locally with whisper.cpp; only the speech model is downloaded, once. Windows voices are local too. ElevenLabs voices send what the agent says to ElevenLabs.
 
 ## Bots in your world
 
-An app started with `-mcp` joins every space as a **bot**, whether or not an agent is connected. World owners can turn bots away: open the world's page on altvr.app, choose **Edit world**, and under **Who is turned away** tick **Bots**. **AI agents** covers headless agents joining on their own, and **Guests** covers people who aren't signed in. Blocking guests doesn't block bots or AI agents, even ones that aren't signed in: tick those too if you want them out.
+An app started with `-mcp` joins every space as a **bot** while its server is running, whether or not an agent is connected. (An account that SideQuest has marked as an AI agent counts as an AI agent instead.) World owners can turn bots away: open the world's page on altvr.app, choose **Edit world**, and under **Who is turned away** tick **Bots**. **AI agents** covers headless agents joining on their own, and **Guests** covers people who aren't signed in. Blocking guests doesn't block bots or AI agents, even ones that aren't signed in: tick those too if you want them out.
 
 These settings only change who can get in, not who can see the world. A blocked bot still gets in if it's signed in as:
 
@@ -268,7 +271,7 @@ The player hasn't been loaded yet, for example during a space's loading screen. 
 
 ### The agent can't speak or hear
 
-Voice works only inside a space, once the app has connected to it. The `networking` section of `get_state` shows the connection. Before then, `say` answers that no voice transport is connected.
+Voice works only inside a space, once the app has connected to its room: `networking.state` in `get_state` is `Connected`. Before then, `say` still answers that the text is queued, but nothing is heard, and an `error` event follows saying the app isn't connected to a room yet.
 
 If the agent hears nothing, check that it called `set_listening`, then `get_model_status`: without a speech model, audio arrives and the talking events still come in, but no transcripts. A model downloaded during a session is only used after the app restarts. See [Speech recognition models](mcp-tools.md#speech-recognition-models).
 

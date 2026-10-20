@@ -19,7 +19,7 @@ Agents read these descriptions from the server themselves, so you rarely need th
 | [`list_voices`](#list_voices) | The voices available, and which one is selected. |
 | [`set_voice`](#set_voice) | Changes the voice for everything said from then on. |
 | [`set_listening`](#set_listening) | Starts or stops hearing and transcribing the people in the space. |
-| [`get_model_status`](#get_model_status) | Which speech recognition models are downloaded and which is in use. |
+| [`get_model_status`](#get_model_status) | Which speech recognition models are downloaded, and whether one is loaded. |
 | [`download_model`](#download_model) | Downloads a speech recognition model in the background. |
 | [`speak_tone`](#speak_tone) | Sends a test tone, to check that people can hear the agent at all. |
 
@@ -73,7 +73,7 @@ Walking, turning, looking up or down and jumping, in one call, because they happ
 | `timeout_s` | Give up after this long. Default 30, at most 120. |
 | `arrive_radius` | How close counts as arriving, in metres. Default 0.5, from 0.1 to 5. |
 
-Give at least one of them. `look_at` wins over `yaw`, which wins over `turn_degrees`; `pitch` wins over `pitch_degrees`.
+Give at least one of them. `look_at` wins over `yaw`, which wins over `turn_degrees`. `pitch` wins over `pitch_degrees`, and either one replaces the up-or-down aim that `look_at` would set.
 
 Walking on its own steers towards the destination. Give a facing as well and the player keeps that facing and sidesteps there instead, which is how an agent keeps watching someone while it moves.
 
@@ -111,21 +111,25 @@ No arguments. Everyone in the space, the agent's own player included:
 | Field | Meaning |
 |---|---|
 | `name` | Display name. |
-| `user_id` | Their SideQuest account id. |
+| `user_id` | `sq:<account number>` for someone signed in, `guest:<id>` for a guest. |
 | `peer_id` | Their id in the space's room, used in events. |
 | `is_local` | `true` for the agent's own player. |
-| `talking` | Whether they're talking right now. |
-| `position` | Where their avatar is, when it has appeared. |
+| `talking` | Whether they're talking right now. Always `false` for the agent's own player. |
+| `position` | Where their avatar is, or their voice until the avatar appears. For the agent's own player, where its head (the camera) is. |
 
 Walk towards someone with `move` and `to`, or face them with `look_at`.
 
 ## Speaking
 
-Speaking and hearing work only inside a space, once the app has connected to its room. People hear the agent as your avatar's voice. While the agent speaks, its voice replaces your microphone; the microphone comes back when it finishes.
+Speaking and hearing work only inside a space, once the app has connected to its room: `networking.state` in `get_state` is `Connected`. People hear the agent as your avatar's voice.
+
+The agent's voice replaces your microphone while it plays, sentence by sentence, so your microphone can be heard in the short gaps between sentences. Muting yourself in the app doesn't silence the agent.
 
 ### say
 
-Speaks text aloud and returns as soon as it's queued, with an `utterance_id`. A `say_started` event marks the start and `say_finished` the end.
+Speaks text aloud and returns as soon as it's queued, with an `utterance_id`. A `say_started` event marks the start and `say_finished` the end. Text longer than 2000 characters is cut short.
+
+If the app isn't connected to a room yet, `say` still answers that the text is queued, but nothing is heard: an `error` event with the same `utterance_id` follows instead of `say_started`.
 
 | Argument | Default | What it does |
 |---|---|---|
@@ -152,7 +156,9 @@ No arguments. Every voice available, each with `name`, `engine`, `culture`, `gen
 | Windows | Clear | The voices installed in Windows |
 | Built-in, named `robot` | Like a 1980s speech chip, hard to make out | Nothing; always there |
 
-When no Windows voices can be used, the answer says why in `system_voices_unavailable`.
+When no Windows voices can be used, the answer says why in `system_voices_unavailable`. With ElevenLabs, the default is the first voice on your ElevenLabs account.
+
+If an ElevenLabs or Windows voice fails while speaking, the agent carries on in the built-in voice and an `error` event says so. It keeps the built-in voice until `set_voice` picks another.
 
 ### set_voice
 
@@ -172,6 +178,8 @@ Sends a short tone as the agent's voice, to check that people in the space can h
 | `duration_ms` | 600 | 50 to 5000 |
 | `volume` | 0.4 | 0 to 1 |
 
+Keep tones to 2 seconds or less: the voice buffer holds about 2 seconds, so a longer tone loses its beginning. A tone sends `say_started` but no `say_finished`.
+
 ## Hearing
 
 ### set_listening
@@ -180,13 +188,13 @@ Sends a short tone as the agent's voice, to check that people in the space can h
 |---|---|
 | `listening` | Required. `true` to start listening, `false` to stop. |
 
-While listening, each person's voice is heard separately, so two people talking at once give two transcripts. The person using the app is heard too, from the microphone, as speaker `local` named `You`. Each utterance is transcribed when the speaker pauses, or after 15 seconds of talking without a pause, and arrives as a `speech_transcript` event.
+While listening, each person's voice is heard separately, so two people talking at once give two transcripts. The person using the app is heard too, from the microphone, as speaker `local` named `You`, even while muted in the app. Each utterance is transcribed when the speaker pauses, or after 15 seconds of talking without a pause, and arrives as a `speech_transcript` event. If transcription falls behind, at most 3 utterances wait; older ones are dropped with an `error` event.
 
 Transcription needs a speech recognition model. Without one, listening still works and the talking events still arrive, but there are no transcripts; the answer says so.
 
 ### get_model_status
 
-No arguments. Lists the speech recognition models, which are downloaded, which is in use, and the listening state.
+No arguments. Lists the speech recognition models and which are downloaded. `active` is the best one downloaded, which isn't necessarily loaded: `ready` and `engine` under `listening` say what's actually loaded.
 
 ### download_model
 
@@ -194,21 +202,20 @@ No arguments. Lists the speech recognition models, which are downloaded, which i
 |---|---|
 | `model` | Required. One of the models below. |
 
-Returns straight away and downloads in the background; `model_progress` events report progress.
+Returns straight away and downloads in the background; `model_progress` events report progress, and a failed download sends an `error` event with `source` `model_download`.
 
-!> **Restart the app after the first download.** The model is loaded when the app starts, so one downloaded during a session isn't used until the next one. Until then `set_listening` works but no transcripts arrive. `get_model_status` lists the model as downloaded; the `ready` field under `listening` says whether it's actually loaded.
+!> **Restart the app after the first download.** The model is loaded when the app starts, so one downloaded during a session isn't used until the next one. Until then `set_listening` works but no transcripts arrive.
 
 ### Speech recognition models
 
-Transcription runs on your PC with [whisper.cpp](https://github.com/ggml-org/whisper.cpp). The models are downloaded from Hugging Face once, into `%USERPROFILE%\AppData\LocalLow\SideQuest\AltspaceVR\greenfield-mcp\models`. Each time the app starts, the most accurate model downloaded is loaded, once the app first connects to a space.
+Transcription runs on your PC with [whisper.cpp](https://github.com/ggml-org/whisper.cpp). The models are downloaded from Hugging Face once, into `%USERPROFILE%\AppData\LocalLow\SideQuest\AltspaceVR\greenfield-mcp\models`. Each time the app starts, it loads the most accurate model downloaded. The app transcribes in English only, whichever model it uses.
 
 | Model | Size | Notes |
 |---|---|---|
-| `tiny.en` | 74 MB | English. Fastest; a good default. |
-| `base.en` | 141 MB | English. More accurate, a little slower. |
-| `small.en` | 465 MB | English. Most accurate, slowest. |
-| `tiny` | 74 MB | Many languages. |
-| `base` | 141 MB | Many languages. |
+| `tiny.en` | 74 MB | Fastest, least accurate. |
+| `base.en` | 141 MB | More accurate and still quick on a PC: the usual choice. |
+| `small.en` | 465 MB | Most accurate, slowest. |
+| `tiny`, `base` | 74 MB, 141 MB | Multilingual versions, but the app still transcribes English only, so they add nothing here. |
 
 ## Events
 
@@ -226,18 +233,18 @@ Things the agent may want to react to. Each has a `seq` number that only goes up
 | Type | When | Payload |
 |---|---|---|
 | `speech_transcript` | Someone finished saying something. | `speaker_id`, `speaker_name`, `text`, `seconds` |
-| `user_started_talking` | Someone started talking. | `peer_id`, `name`, `user_id` |
+| `user_started_talking` | Someone else in the space started talking (not the person using the app). Sent whether or not the agent is listening. | `peer_id`, `name`, `user_id` |
 | `user_stopped_talking` | They've been quiet for 0.6 seconds. | `peer_id`, `name`, `user_id` |
 | `user_joined` | Someone came into the space. | `peer_id`, `name`, `user_id` |
 | `user_left` | Someone left. | `peer_id`, `name`, `user_id` |
 | `connection_state` | The connection to the space's room changed. | `state` |
-| `walk_finished` | A `move` ended. | `outcome`, `position`, `yaw` |
+| `walk_finished` | A `move` call ended, including turn-, look- and jump-only calls and calls answered `Busy`. | `outcome`, `position`, `yaw` |
 | `teleported` | A `teleport` happened. | `requested`, `position` |
-| `say_started` | The agent started speaking, or sent a tone. | `utterance_id`, `text`; for a tone `kind`, `frequency_hz`, `duration_ms` |
+| `say_started` | The agent started speaking, or sent a tone (which has no `say_finished`). | `utterance_id`, `text`; for a tone `kind`, `frequency_hz`, `duration_ms` |
 | `say_finished` | It finished, or was stopped. | `utterance_id`, `cancelled`, `spoken_seconds` |
 | `model_progress` | A model download moved on. | `model`, `percent`, `received_mb`, `total_mb`; `done` at the end |
 | `dropped_events` | Events were missed (see below). | `count`, `reason` |
-| `error` | Something went wrong in the background, such as speech that couldn't be sent. | `source`, `message` |
+| `error` | Something went wrong in the background, such as speech that couldn't be sent. | `source` (`speech`, `stt` or `model_download`), `message` |
 
 ### wait_for_events
 
@@ -262,12 +269,12 @@ For writing your own client, or checking the server by hand.
 |---|---|
 | Transport | MCP streamable HTTP, at `/mcp`. |
 | Revisions | `2025-06-18`, `2025-03-26` and `2024-11-05`. A client asking for another is answered with `2025-06-18`. |
-| Session | `initialize` returns an `Mcp-Session-Id` header; send it with every later request. A client that leaves it out is matched to the only open session, if there's exactly one. Sessions end after 2 hours unused, when the app restarts, or with `DELETE /mcp`. An unknown session gets HTTP 404: send `initialize` again. |
+| Session | `initialize` returns an `Mcp-Session-Id` header; send it with every later request. A client that leaves it out is matched to the only open session, if there's exactly one. Sessions last until the app quits or `DELETE /mcp`; one unused for 2 hours is cleared the next time a client sends `initialize`. An unknown session gets HTTP 404: send `initialize` again. |
 | Methods | `initialize`, `notifications/initialized`, `ping`, `tools/list`, `tools/call`, `logging/setLevel`. |
-| Responses | Every POST is answered with a single JSON object; batches (the `2024-11-05` revision) with a JSON array. |
+| Responses | A request is answered with a single JSON object, a batch (the `2024-11-05` revision) with a JSON array, and a notification with an empty `202`. |
 | Event stream | `GET /mcp` with `Accept: text/event-stream` opens a stream that repeats every event as a `notifications/message` notification, with a heartbeat every 15 seconds. It needs no session, so you can watch it with curl. |
 | Health check | `GET /healthz` answers `{"ok":true,"server":"greenfield-mcp","version":"0.1.0"}`. |
-| Authentication | With `-mcp-token`, every request needs `Authorization: Bearer <secret>`; without it the answer is 401. |
+| Authentication | With `-mcp-token`, every request to `/mcp` needs `Authorization: Bearer <secret>`; without it the answer is 401. `/healthz` needs no token. |
 | Origin | Requests with an `Origin` header are accepted only from `localhost`, `127.0.0.1` or `::1`; others get 403. |
 | Limits | 8 connections at once, 8 MB per request body, 5 minutes per tool call. |
 
