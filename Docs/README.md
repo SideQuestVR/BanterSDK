@@ -18,4 +18,5 @@ Build multiplayer VR worlds in Unity, make them interactive with JavaScript or V
 Keep one world per Unity project: every scene in a project shares the one page, `Assets/WebRoot/index.html`.
 
 The sidebar has everything else: setting a world up in Unity, the JavaScript API, multiplayer, every component,
-browsers, Visual Scripting, troubleshooting and the reference tables.
+browsers, Visual Scripting, troubleshooting and the reference tables, and how to let an
+[AI agent drive the Windows app](reference/ai-agents-mcp.md) to explore and test your world.

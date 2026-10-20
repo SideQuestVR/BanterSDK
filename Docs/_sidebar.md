@@ -52,4 +52,6 @@
   - [Legacy APIs](/reference/legacy-apis.md)
   - [Troubleshooting](/reference/troubleshooting.md)
   - [Performance](/reference/performance.md)
+  - [AI Agents (MCP)](/reference/ai-agents-mcp.md)
+  - [MCP Tools & Events](/reference/mcp-tools.md)
   - [Additional Resources](/reference/resources.md)
