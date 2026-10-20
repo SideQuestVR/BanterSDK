@@ -49,7 +49,7 @@ public class BuilderWindow : EditorWindow
     public static UnityEvent OnVisualScript = new UnityEvent();
     public static UnityEvent OnCompileInjection = new UnityEvent();
     public static UnityEvent OnCompileAllComponents = new UnityEvent();
-    private BuildTarget[] buildTargets = new BuildTarget[] { BuildTarget.Android, BuildTarget.StandaloneWindows };
+    private BuildTarget[] buildTargets = new BuildTarget[] { BuildTarget.Android, BuildTarget.StandaloneWindows64 };
     private bool[] buildTargetFlags = new bool[] { true, true };
     BSBuilderBundleMode mode = BSBuilderBundleMode.None;
     Label scenePathLabel;
@@ -1931,7 +1931,7 @@ public class BuilderWindow : EditorWindow
             List<BuildTarget> buildTargets = new List<BuildTarget>
             {
                 BuildTarget.Android,
-                BuildTarget.StandaloneWindows,
+                BuildTarget.StandaloneWindows64,
             };
             // TODO(greenfield): Phase-2 builder rework — replace userId+"42069" with the single greenfield key
             // and drop the SideQuest CDN upload. Signature adapted to upstream Basis (leading Image arg, tuple return);

@@ -32,7 +32,10 @@ namespace BS.SDKEditor.Tests
                 Assert.That(id, Is.EqualTo("BS.BSTeleporter." + property));
                 Assert.That(ValidateVisualScripting.IsDisallowed(id), Is.False);
             }
+#if GREENFIELD_PROJECT
+            // The client-side allowlist lives in Greenfield's visual scripting fork.
             Assert.That(BanterStubsAllowed.IsBlocked(graph), Is.False);
+#endif
         }
 
         [Test]
@@ -46,7 +49,9 @@ namespace BS.SDKEditor.Tests
             var id = invoke.GetAnalyticsIdentifier().Identifier.Split('(')[0].Trim();
             Assert.That(id, Is.EqualTo("BS.BSTeleporter.RefreshPortalPreview"));
             Assert.That(ValidateVisualScripting.IsDisallowed(id), Is.False);
+#if GREENFIELD_PROJECT
             Assert.That(BanterStubsAllowed.IsBlocked(graph), Is.False);
+#endif
         }
     }
 }
