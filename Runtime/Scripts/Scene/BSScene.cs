@@ -3663,6 +3663,43 @@ namespace BS
             }
             SendReply(reqId, platform);
         }
+
+        /// <summary>True when the app runs on Android (Quest). False in the Unity editor, whatever the build target.</summary>
+        public bool IsAndroid() => Application.platform == RuntimePlatform.Android;
+
+        /// <summary>True when the app runs on Windows, the Windows editor included.</summary>
+        public bool IsWindows() => Application.platform == RuntimePlatform.WindowsPlayer || Application.platform == RuntimePlatform.WindowsEditor;
+
+        /// <summary>True when the player is in a headset rather than on a flat screen, as the host app reports it
+        /// (<see cref="BSSceneEvents.IsVR"/>). Main thread only.</summary>
+        public bool IsVR()
+        {
+            try
+            {
+                return events.IsVR?.Invoke() ?? false;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError("[Banter] IsVR failed: " + e);
+                return false;
+            }
+        }
+
+        /// <summary>The GET_DEVICE_INFO reply: "1" or "0" for Android, Windows and VR, in that order.</summary>
+        public static string FormatDeviceInfo(bool android, bool windows, bool vr)
+        {
+            return (android ? "1" : "0") + MessageDelimiters.PRIMARY + (windows ? "1" : "0") + MessageDelimiters.PRIMARY + (vr ? "1" : "0");
+        }
+
+        public void GetDeviceInfo(int reqId)
+        {
+            // Requests are parsed off the main thread, and the default IsVR hook reads XRSettings.
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            {
+                // IsVR catches its own errors, so the page's promise always resolves.
+                SendReply(reqId, FormatDeviceInfo(IsAndroid(), IsWindows(), IsVR()));
+            }, $"{nameof(BSScene)}.{nameof(GetDeviceInfo)}"));
+        }
         #endregion
 
         #region Haptic Feedback

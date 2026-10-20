@@ -303,8 +303,12 @@ console.log(info.videoDetails.title, info.videoDetails.lengthSeconds, info.video
 
 ```js
 // Which device the player is on
-const platform = await scene.GetPlatform(); // e.g. "VR,Unknown,Unknown,Android OS 14 / API-34 (...)"
-const inHeadset = platform.startsWith("VR");
+const onQuest = await scene.IsAndroid();   // true on Quest (Android)
+const onPC = await scene.IsWindows();      // true on Windows, the Windows editor included
+const inHeadset = await scene.IsVR();      // true in a headset, false on a flat screen
+
+// The same as one string, e.g. "VR,Unknown,Unknown,Android OS 14 / API-34 (...)"
+const platform = await scene.GetPlatform();
 
 // Grab the main texture of one of an object's material slots as base64 PNG (null if there is none)
 const b64 = await scene.ObjectTextureToBase64(obj, 0); // materialIndex = 0
@@ -314,6 +318,12 @@ const saved = scene.Serialise();            // every object + components, as a s
 const restored = scene.Deserialise(saved);  // rebuild; returns the created GameObjects in payload order
 scene.Deserialise(saved, parentObject);     // adopts anything whose recorded parent isn't in the payload
 ```
+
+`IsAndroid` and `IsWindows` describe the device the app runs on, so in the Windows editor `IsWindows` is true
+whatever the build target (use a [Platform Filter](../building-in-unity/platform-filter.md) for build-time choices).
+`IsVR` is the app's own device mode, the same one `GetPlatform` reports as `VR` or `2D`. In Play mode it is
+true only when an XR headset is active. In a graph, use the **Is Android**, **Is Windows** and **Is VR** nodes
+(`BS > Utils`).
 
 `GetPlatform` resolves with four comma-separated fields: `VR` in a headset or `2D` on a flat screen,
 two fields that are always `Unknown`, then the operating system as the device reports it. In Play mode

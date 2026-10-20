@@ -114,6 +114,9 @@ public class BSSceneEvents
     #region Callback Functions
     public Func<string> GetUserLanguage = new Func<string>(() => { return ""; });
     public Func<string> GetPlatform = new Func<string>(() => { return ""; });
+    /// <summary>Whether the player is in a headset rather than on a flat screen. The host app sets it to its own
+    /// device mode; without one (SDK Play Mode) it is whether an XR device is active. Called on the main thread.</summary>
+    public Func<bool> IsVR = new Func<bool>(() => UnityEngine.XR.XRSettings.isDeviceActive);
     /// <summary>The app's current baked lighting data as a persistable string, for
     /// the page to store with its saved scene. Empty = nothing baked yet.</summary>
     public Func<string> GetLightingData = new Func<string>(() => { return ""; });

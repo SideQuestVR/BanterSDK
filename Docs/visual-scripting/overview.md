@@ -212,6 +212,9 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | GameObject texture to Base64 | Read an object's texture as base64 |
 | Trigger Global Event | Fire a named global event (pairs with `On Global Event`) |
 | Trigger Visual Scripting Relay | Fire a **Visual Scripting Relay** component's event (`Add Component > BS > Visual Scripting Relay`), passing it a `Value` of the relay's type, so a graph can drive UnityEvents set up in the Inspector |
+| Is Android | True on Quest (Android). False in the Unity editor, whatever the build target |
+| Is Windows | True on Windows, the Windows editor included |
+| Is VR | True when the user is in a headset, false on a flat screen. In Play mode, true only when an XR headset is active |
 | Get Platform | Which platform the user is on, as comma-separated text that starts with `VR` or `2D` and ends with the operating system (empty in Play mode) |
 | Copy Text To Clipboard | Copy a string to the user's clipboard |
 | Deep Link | Launch another Quest app by its `App ID` (digits only, not a URL), optionally passing it a `Message`. Quest only: on Windows and in Play mode nothing happens |

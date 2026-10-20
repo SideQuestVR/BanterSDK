@@ -535,6 +535,10 @@ namespace BS
                 {
                     scene.GetPlatform(id);
                 }
+                else if (msg.StartsWith(APICommands.GET_DEVICE_INFO))
+                {
+                    scene.GetDeviceInfo(id);
+                }
                 else if (msg.StartsWith(APICommands.SEND_HAPTIC_IMPULSE))
                 {
                     scene.SendHapticImpulse(GetMsgData(msg, APICommands.SEND_HAPTIC_IMPULSE), id);

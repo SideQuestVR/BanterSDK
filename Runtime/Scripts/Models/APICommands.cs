@@ -188,6 +188,8 @@ public class APICommands
 
     // Platform detection command
     public const string GET_PLATFORM = "!gp!";
+    // Reply: "1"/"0" for Android, Windows and VR, joined with PRIMARY (BSScene.FormatDeviceInfo)
+    public const string GET_DEVICE_INFO = "!gdi!";
 
     public const string GET_BOUNDS = "!gb!";
 
