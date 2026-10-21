@@ -156,6 +156,15 @@ namespace BS
                 // configured before anything on the object wakes.
                 if (_oraView == null)
                     _oraView = AddWebView(browser);
+#if GREENFIELD_PROJECT
+                // Android, for now: world browsers play their own audio natively (the WebView), as the menu browser does
+                // by default. Unity capture (spatial) runs its fallback on the page's main thread wherever a page's CSP
+                // blocks the capture worklet (YouTube) and stutters on Quest. The mode is fixed when the window is
+                // created, so set before the browser wakes. Streaming viewers keep capture: the sharer's 2D->3D blend
+                // drives their speakers.
+                if (_oraView != null && !IsStreamingBrowser && Application.platform == RuntimePlatform.Android)
+                    _oraView.audioMode = OraAudioMode.Off;
+#endif
                 if (!browser.activeSelf)
                     browser.SetActive(true);
                 if (_oraView != null)
