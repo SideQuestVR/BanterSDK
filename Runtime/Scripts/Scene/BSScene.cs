@@ -2899,7 +2899,11 @@ namespace BS
                         events.OnUnitySceneLoad.Invoke(displayUrl);
                     }, $"{nameof(BSScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
 
-                    await Task.Delay(2500);
+                    // Fixed settle time before opening the cage. A loading presenter does its own hidden,
+                    // frame-time based warm-up after onLoadOutStarted, so for it this only adds waiting.
+                    // The legacy cage keeps the delay unchanged.
+                    if (loadingManager == null || loadingManager.Presenter == null)
+                        await Task.Delay(2500);
                 }
                 catch (Exception e)
                 {

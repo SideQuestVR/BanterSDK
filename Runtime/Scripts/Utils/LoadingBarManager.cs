@@ -27,6 +27,10 @@ namespace BS
         [SerializeField] AnimationClip loadIn;
         [SerializeField] AnimationClip loadOut;
         [SerializeField] Animation loadingSphere;
+        [Tooltip("Optional object carrying the cage's safety BoxCollider/MeshCollider. Empty = the cage mesh " +
+                 "object (loadingProgress), as before. Lets an app drop the cage mesh but keep a safety floor, " +
+                 "switched exactly like the cage colliders: on while loading, off just before unfreeze.")]
+        [SerializeField] GameObject cageColliders;
         [SerializeField] GameObject teleportWall;
         public TMPro.TextMeshPro titleText;
         public TMPro.TextMeshPro cancelText;
@@ -44,6 +48,65 @@ namespace BS
         private float lastLoadingPercent = 0f;
         private string currentUrl = "";
         private LoadingState state = LoadingState.Unloaded;
+
+        // Optional visual presenter (see ILoadingPresenter). Null = the legacy cage, unchanged.
+        ILoadingPresenter presenter;
+        readonly System.Collections.Generic.Dictionary<Renderer, bool> _legacyRendererStates =
+            new System.Collections.Generic.Dictionary<Renderer, bool>();
+
+        /// <summary>The assigned visual presenter, or null when the legacy cage draws the loading screen.</summary>
+        public ILoadingPresenter Presenter => presenter;
+
+        /// <summary>
+        /// Hand the loading visuals to <paramref name="value"/> (null restores the legacy cage). State machine,
+        /// colliders, events and API are unchanged either way; only what is drawn changes. Call it before Start
+        /// (e.g. from the presenter's Awake) so the very first opaque frame is already the presenter's.
+        /// </summary>
+        public void SetPresenter(ILoadingPresenter value)
+        {
+            presenter = value;
+            SetLegacyVisualsHidden(value != null);
+        }
+
+        // Hides the cage and loading-bar renderers (logo, bar, texts, particles) while a presenter draws, and
+        // restores each one's own enabled state when the presenter is removed.
+        void SetLegacyVisualsHidden(bool hidden)
+        {
+            var renderers = new System.Collections.Generic.List<Renderer>();
+            if (loadingProgress != null) renderers.Add(loadingProgress);
+            if (loadingBar != null) renderers.AddRange(loadingBar.GetComponentsInChildren<Renderer>(true));
+            foreach (var r in renderers)
+            {
+                if (r == null) continue;
+                if (hidden)
+                {
+                    if (!_legacyRendererStates.ContainsKey(r)) _legacyRendererStates[r] = r.enabled;
+                    r.enabled = false;
+                }
+                else if (_legacyRendererStates.TryGetValue(r, out var wasEnabled))
+                {
+                    r.enabled = wasEnabled;
+                }
+            }
+            if (!hidden) _legacyRendererStates.Clear();
+        }
+
+        /// <summary>Same real-time safety net for presenter steps as <see cref="WaitForClip"/> gives the clips.</summary>
+        const float k_PresenterTimeout = 8f;
+
+        // Bumped by every presenter-driven LoadIn/LoadOut. A step whose await finishes after a newer step started
+        // (a new load during the reveal) must not write state over the newer one.
+        int _presenterLoadGeneration;
+
+        async Task WaitForPresenter(Task task, string step)
+        {
+            var deadline = Time.unscaledTime + k_PresenterTimeout;
+            await new WaitUntil(() => task.IsCompleted || Time.unscaledTime >= deadline);
+            if (!task.IsCompleted)
+                LogLine.Err($"[LOADING] Presenter {step} did not finish within {k_PresenterTimeout}s; continuing so the load cannot wedge.");
+            else if (task.IsFaulted)
+                LogLine.Err($"[LOADING] Presenter {step} threw: {task.Exception}");
+        }
         void Update()
         {
             if (!spinner)
@@ -61,7 +124,21 @@ namespace BS
         // at runtime anyway; this just shares that instance.
         Material _progressMaterial;
         Material ProgressMaterial =>
-            _progressMaterial != null ? _progressMaterial : _progressMaterial = loadingProgress.material;
+            _progressMaterial != null ? _progressMaterial
+            : loadingProgress != null ? _progressMaterial = loadingProgress.material : null;
+
+        // The cage mesh, its colliders, animation and teleport wall are all optional: an app with its own
+        // presenter may remove them. With them present, everything below behaves exactly as before.
+        void SetCageCollidersEnabled(bool enabled)
+        {
+            var host = cageColliders != null ? cageColliders
+                     : loadingProgress != null ? loadingProgress.gameObject : null;
+            if (host == null) return;
+            var box = host.GetComponent<BoxCollider>();
+            if (box != null) box.enabled = enabled;
+            var mesh = host.GetComponent<MeshCollider>();
+            if (mesh != null) mesh.enabled = enabled;
+        }
 
         void OnDestroy()
         {
@@ -94,27 +171,27 @@ namespace BS
         void ShowOpaqueImmediately()
         {
             MoveToPlayer();
+            presenter?.ShowOpaqueImmediately();
 
             if (loadingBar != null)
             {
                 loadingBar.SetActive(true);
                 loadingBar.GetComponent<RotateLoading>()?.MoveInFront();
             }
-            loadingSphere.transform.parent.GetComponent<RotateLoading>()?.MoveInFront();
+            if (loadingSphere != null) loadingSphere.transform.parent.GetComponent<RotateLoading>()?.MoveInFront();
 
             if (maskTextures != null && maskTextures.Length > 0)
             {
                 var mask = maskTextures[UnityEngine.Random.Range(0, maskTextures.Length - 1)];
-                ProgressMaterial.SetTexture("_DisolveGuide", mask);
-                ProgressMaterial.SetTexture("_ThumbDisolveGuide", mask);
+                ProgressMaterial?.SetTexture("_DisolveGuide", mask);
+                ProgressMaterial?.SetTexture("_ThumbDisolveGuide", mask);
             }
-            ProgressMaterial.SetFloat("_DissolveLoadAmount", 0);
-            ProgressMaterial.SetFloat("_DissolveAmount", 0); // 0 = fully opaque
+            ProgressMaterial?.SetFloat("_DissolveLoadAmount", 0);
+            ProgressMaterial?.SetFloat("_DissolveAmount", 0); // 0 = fully opaque
 
             // Block the player in, as LoadIn would.
-            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = true;
-            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = true;
-            teleportWall.SetActive(true);
+            SetCageCollidersEnabled(true);
+            if (teleportWall != null) teleportWall.SetActive(true);
 
             state = LoadingState.Loaded;
         }
@@ -269,19 +346,20 @@ namespace BS
                 if (File.Exists(filepath))
                 {
                     var tex = await Get.Texture("file://" + filepath);
-                    ProgressMaterial.SetTexture("_Pano", tex);
+                    ProgressMaterial?.SetTexture("_Pano", tex);
                 }
                 else
                 {
-                    ProgressMaterial.SetTexture("_Pano", defaultLoadingImage);
+                    ProgressMaterial?.SetTexture("_Pano", defaultLoadingImage);
                 }
             }
             catch { }
         }
         public void ResetLoadingProgress()
         {
-            loadingBarInner.localScale = new Vector3(0, 1, 1);
-            ProgressMaterial.SetFloat("_DissolveAmount", 0);
+            if (loadingBarInner != null)
+                loadingBarInner.localScale = new Vector3(0, 1, 1);
+            ProgressMaterial?.SetFloat("_DissolveAmount", 0);
         }
         public void SetCanCancel(bool canCancel)
         {
@@ -293,14 +371,19 @@ namespace BS
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
             {
                 SetCanCancel(canCancel);
-                if (spaceImage != null)
+                if (spaceImage != null && presenter != null)
+                {
+                    // The presenter samples the cached texture as-is: MipMaps.Do replaces (and destroys) it.
+                    presenter.SetThumbnail(spaceImage);
+                }
+                else if (spaceImage != null)
                 {
                     spaceImage = MipMaps.Do(spaceImage);
                     spaceImage.wrapMode = TextureWrapMode.Clamp;
-                    ProgressMaterial.SetTexture("_Thumb", spaceImage);
+                    ProgressMaterial?.SetTexture("_Thumb", spaceImage);
                     TweenFactory.Tween("loadingImage", 0, 1, 6f, TweenScaleFunctions.CubicEaseOut, (f) =>
                     {
-                        ProgressMaterial.SetFloat("_DissolveLoadAmount", f.CurrentValue);
+                        ProgressMaterial?.SetFloat("_DissolveLoadAmount", f.CurrentValue);
                     });
                 }
                 else
@@ -325,6 +408,7 @@ namespace BS
                         });
                     }
                     lastLoadingPercent = loadingpercentage;
+                    presenter?.SetProgress(loadingTitle, percentage, detailMessage, canCancel);
                     if (loadingText != null)
                     {
                         loadingText.text = detailMessage ?? "";
@@ -350,31 +434,36 @@ namespace BS
         }
         public void UpdateCancelText(bool force = false, bool wasKicked = false)
         {
-            if (cancelText != null)
+            // Legacy behaviour is unchanged: with no cancel text there was nothing to update. A presenter still
+            // needs the failure state when an app has removed the legacy texts, spinner and failed icon.
+            if (cancelText == null && presenter == null) return;
+            string hint = "";
+            bool failed = false;
+            if (CanCancel)
             {
-                if (CanCancel)
+                if (scene.HasLoadFailed() || force)
                 {
-                    if (scene.HasLoadFailed() || force)
-                    {
-                        spinner.gameObject.SetActive(false);
-                        loadFailed.SetActive(true);
-                        cancelText.text = GetCancelButtonText() + (scene.isFallbackHome ? " to retry" : scene.isHome ? " to go to the fallback lobby" : " to go home");
-                    }
-                    else if (wasKicked)
-                    {
-                        spinner.gameObject.SetActive(false);
-                        loadFailed.SetActive(true);
-                        cancelText.text = "Sending you elsewhere";
-                    }
-                    else
-                    {
-                        spinner.gameObject.SetActive(true);
-                        loadFailed.SetActive(false);
-                        cancelText.text = currentUrl == BSScene.CUSTOM_HOME_SPACE ? "Homespace: " + currentUrl : GetCancelButtonText() + " to cancel";
-                    }
+                    if (spinner != null) spinner.gameObject.SetActive(false);
+                    if (loadFailed != null) loadFailed.SetActive(true);
+                    hint = GetCancelButtonText() + (scene.isFallbackHome ? " to retry" : scene.isHome ? " to go to the fallback lobby" : " to go home");
+                    failed = true;
                 }
-                else cancelText.text = "";
+                else if (wasKicked)
+                {
+                    if (spinner != null) spinner.gameObject.SetActive(false);
+                    if (loadFailed != null) loadFailed.SetActive(true);
+                    hint = "Sending you elsewhere";
+                    failed = true;
+                }
+                else
+                {
+                    if (spinner != null) spinner.gameObject.SetActive(true);
+                    if (loadFailed != null) loadFailed.SetActive(false);
+                    hint = currentUrl == BSScene.CUSTOM_HOME_SPACE ? "Homespace: " + currentUrl : GetCancelButtonText() + " to cancel";
+                }
             }
+            if (cancelText != null) cancelText.text = hint;
+            if (CanCancel) presenter?.SetFailed(failed, hint);
         }
 
         // public void MoveToUser(Vector3 offset = default)
@@ -389,14 +478,19 @@ namespace BS
         public void Preload()
         {
             MoveToPlayer();
+            presenter?.Preload();
+            if (presenter != null) SetLegacyVisualsHidden(true);   // catch renderers created since (TMP sub-meshes)
             ResetLoadingProgress();
-            loadingBar.SetActive(true);
-            loadingBar.GetComponent<RotateLoading>().MoveInFront();
-            loadingSphere.transform.parent.GetComponent<RotateLoading>().MoveInFront();
+            if (loadingBar != null)
+            {
+                loadingBar.SetActive(true);
+                loadingBar.GetComponent<RotateLoading>()?.MoveInFront();
+            }
+            if (loadingSphere != null) loadingSphere.transform.parent.GetComponent<RotateLoading>()?.MoveInFront();
             var mask = maskTextures[UnityEngine.Random.Range(0, maskTextures.Length - 1)];
-            ProgressMaterial.SetTexture("_DisolveGuide", mask);
-            ProgressMaterial.SetTexture("_ThumbDisolveGuide", mask);
-            ProgressMaterial.SetFloat("_DissolveLoadAmount", 0);
+            ProgressMaterial?.SetTexture("_DisolveGuide", mask);
+            ProgressMaterial?.SetTexture("_ThumbDisolveGuide", mask);
+            ProgressMaterial?.SetFloat("_DissolveLoadAmount", 0);
             SetLoadProgress("Loading", 0, scene.LoadingStatus, true);
         }
         /// <summary>
@@ -415,6 +509,7 @@ namespace BS
         /// </summary>
         async Task WaitForClip(bool dissolveIfTimedOut)
         {
+            if (loadingSphere == null) return;
             var deadline = Time.unscaledTime + k_ClipTimeout;
             await new WaitUntil(() => !loadingSphere.isPlaying || Time.unscaledTime >= deadline);
 
@@ -429,7 +524,7 @@ namespace BS
             {
                 // Snap the cage to fully dissolved, otherwise stopping mid-clip would leave the
                 // player looking at an opaque shell around a world that has actually loaded.
-                ProgressMaterial.SetFloat("_DissolveAmount", 1f);
+                ProgressMaterial?.SetFloat("_DissolveAmount", 1f);
             }
         }
 
@@ -442,12 +537,21 @@ namespace BS
             state = LoadingState.Loading;
             SetLoadProgress("Loading", 0, scene.LoadingStatus, true);
             currentUrl = url;
-            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = true;
-            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = true;
-            teleportWall.SetActive(true);
-            loadingSphere.clip = loadIn;
-            loadingSphere.Play();
-            await WaitForClip(dissolveIfTimedOut: false); // cage should stay opaque after LoadIn
+            SetCageCollidersEnabled(true);
+            if (teleportWall != null) teleportWall.SetActive(true);
+            if (loadingSphere != null)
+            {
+                loadingSphere.clip = loadIn;
+                loadingSphere.Play();
+            }
+            if (presenter != null)
+            {
+                int generation = ++_presenterLoadGeneration;
+                await WaitForPresenter(presenter.LoadIn(), nameof(LoadIn));
+                if (generation != _presenterLoadGeneration) return;
+            }
+            else
+                await WaitForClip(dissolveIfTimedOut: false); // cage should stay opaque after LoadIn
             state = LoadingState.Loaded;
         }
 
@@ -464,19 +568,28 @@ namespace BS
             // freshly-dynamic loco-ball settles on the real world floor instead of squishing against
             // the cage floor for the whole ~1.5s dissolve. (Previously disabled 1.5s later in
             // HideCollider, which was the load-out squish source.) The teleport wall still lingers.
-            loadingProgress.gameObject.GetComponent<BoxCollider>().enabled = false;
-            loadingProgress.gameObject.GetComponent<MeshCollider>().enabled = false;
+            SetCageCollidersEnabled(false);
             onLoadOutStarted.Invoke();
-            loadingSphere.clip = loadOut;
-            loadingSphere.Play();
-            loadingBar.SetActive(false);
+            if (loadingSphere != null)
+            {
+                loadingSphere.clip = loadOut;
+                loadingSphere.Play();
+            }
+            if (loadingBar != null) loadingBar.SetActive(false);
             if (loadingText != null)
             {
                 loadingText.text = "";
             }
             lastLoadingPercent = 0f;
             _ = HideCollider();
-            await WaitForClip(dissolveIfTimedOut: true); // cage must end up open, clip or no clip
+            if (presenter != null)
+            {
+                int generation = ++_presenterLoadGeneration;
+                await WaitForPresenter(presenter.LoadOut(), nameof(LoadOut));
+                if (generation != _presenterLoadGeneration) return;
+            }
+            else
+                await WaitForClip(dissolveIfTimedOut: true); // cage must end up open, clip or no clip
             state = LoadingState.Unloaded;
         }
 
@@ -485,7 +598,7 @@ namespace BS
             // Cage floor/geometry colliders are now disabled up-front in LoadOut (before unfreeze) so
             // they can't squish the freshly-dynamic rig; only the teleport wall lingers through the dissolve.
             await new WaitForSeconds(1.5f);
-            teleportWall.SetActive(false);
+            if (teleportWall != null) teleportWall.SetActive(false);
         }
     }
 }
