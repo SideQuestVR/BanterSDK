@@ -289,5 +289,6 @@ namespace BS
         useExitPosition,
         maxSpawned,
         forceKinematic,
+        resetAfterSeconds,
     }
 }
