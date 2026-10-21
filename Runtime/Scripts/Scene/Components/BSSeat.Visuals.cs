@@ -20,7 +20,7 @@ namespace BS
         MaterialPropertyBlock markerProperties;
         float hoverPress;
 
-        public bool IsHovered => pointers.Count > 0;
+        public bool IsHovered => pointers.Count > 0 && IsInInteractionRange;
         public bool IsVisible => showRuntimeVisual && isActiveAndEnabled && IsHovered && !seated;
 
         void OnDisable()
@@ -32,7 +32,11 @@ namespace BS
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (eventData.pointerEnter != null && eventData.pointerEnter.GetComponentInParent<BSSeat>() != this) return;
-            if (!isActiveAndEnabled) return;
+            if (!isActiveAndEnabled || !IsInInteractionRange)
+            {
+                pointers.Remove(eventData.pointerId);
+                return;
+            }
             if (pointers.Count == 0) hoverPress = 0f;
             pointers.Add(eventData.pointerId);
         }

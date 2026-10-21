@@ -22,6 +22,7 @@ namespace BS.SDKEditor.Tests
         object previousModule, state;
         PointerEventData pointer;
         IDictionary states;
+        Camera playerCamera, previousCamera;
 
         [SetUp]
         public void SetUp()
@@ -35,6 +36,10 @@ namespace BS.SDKEditor.Tests
             go.layer = 5;
             go.AddComponent<BoxCollider>().isTrigger = true;
             seat = go.AddComponent<BSSeat>();
+            previousCamera = Camera.main;
+            if (previousCamera != null) previousCamera.enabled = false;
+            playerCamera = new GameObject("Seat test player head").AddComponent<Camera>();
+            playerCamera.tag = "MainCamera";
             var events = Create("Client pointers");
             events.AddComponent<EventSystem>();
             module = events.AddComponent(moduleType);
@@ -53,6 +58,52 @@ namespace BS.SDKEditor.Tests
             if (seat != null) Invoke(seat, "OnDisable");
             if (moduleType != null) moduleType.GetProperty("Active").SetValue(null, previousModule);
             if (scene.IsValid()) EditorSceneManager.ClosePreviewScene(scene);
+            if (seat != null) UnityEngine.Object.DestroyImmediate(seat.gameObject);
+            if (playerCamera != null) UnityEngine.Object.DestroyImmediate(playerCamera.gameObject);
+            if (previousCamera != null) previousCamera.enabled = true;
+        }
+
+        [TestCase(1.99f, true)]
+        [TestCase(2f, true)]
+        [TestCase(2.01f, false)]
+        public void BothLaserFilters_UseSeatRange_RegardlessOfTriggerSize(float distance, bool accepted)
+        {
+            seat.transform.position = Vector3.forward * distance;
+            seat.GetComponent<BoxCollider>().size = Vector3.one * 10f;
+            var col = seat.GetComponent<Collider>();
+            var validate = moduleType.GetMethod("ValidateUILaserHit", BindingFlags.Static | BindingFlags.NonPublic);
+            var curve = moduleType.GetMethod("UILaserHitIsPickable", BindingFlags.Static | BindingFlags.NonPublic);
+            foreach (var hand in new[] { 0, 1 })
+                Assert.That(validate.Invoke(null, new object[] { hand, col }), Is.EqualTo(accepted));
+            Assert.That(curve.Invoke(null, new object[] { col, Vector3.zero }), Is.EqualTo(accepted));
+        }
+
+        [Test]
+        public void PhysicsPointer_RejectsDistantSeat_AndClearsHoverWhenLeavingRange()
+        {
+            SceneManager.MoveGameObjectToScene(seat.gameObject, SceneManager.GetActiveScene());
+            var origin = new Vector3(10000f, 10000f, 0f);
+            playerCamera.transform.position = origin;
+            seat.GetComponent<BoxCollider>().size = Vector3.one * .2f;
+            stateType.GetField("CurrentRay").SetValue(state, new Ray(origin, Vector3.forward));
+            seat.transform.position = origin + Vector3.forward * 2.01f;
+            Cast();
+            Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.Null);
+            seat.transform.position = origin + Vector3.forward * 1.99f;
+            Cast();
+            Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.SameAs(seat.gameObject));
+            Assert.That(seat.IsVisible, Is.True);
+            playerCamera.transform.position = origin + Vector3.back;
+            Cast();
+            Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.Null);
+            Assert.That(seat.IsHovered, Is.False);
+
+            void Cast()
+            {
+                Physics.SyncTransforms();
+                Invoke(module, "PerformRaycast", state);
+                Invoke(module, "ProcessMovement", state);
+            }
         }
 
         [Test]

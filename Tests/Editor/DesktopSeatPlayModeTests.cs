@@ -77,6 +77,19 @@ namespace BS.SDKEditor.Tests
             Assert.That(seat.GetComponent<Rigidbody>().isKinematic, Is.True, "Prefab Start creates the stationary attachment body.");
             Assert.That(seat.GetComponent<BSPlayerEvents>(), Is.Not.Null, "Prefab Start connects the clickable collider.");
             Assert.That(seat.IsVisible, Is.False);
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center }.WithButton(MouseButton.Left));
+            yield return null;
+            yield return null;
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
+            yield return null;
+            yield return null;
+            Assert.That(seat.IsHovered, Is.False, "A seat beyond 2 m is not a pointer target.");
+            Assert.That(controller.IsSeated, Is.False);
+            scene.Click(seatObject, seatObject.transform.position, Vector3.up);
+            Assert.That(controller.IsSeated, Is.False, "The seat's click listener also rejects an out-of-range dispatch.");
+            seatObject.transform.position = new Vector3(0f, .48f, 1.35f);
+            Physics.SyncTransforms();
+            camera.transform.rotation = Quaternion.LookRotation(seat.transform.position + Vector3.up * .12f - camera.transform.position);
             var material = Resources.Load<Material>("CreatorConveniences/Materials/SeatMarker");
             var sharedHover = material.GetFloat("_Hover");
             Debug.Log("SDK_SEAT_BEFORE_HOVER: " + PointerDiagnostics(camera));
@@ -115,6 +128,18 @@ namespace BS.SDKEditor.Tests
             yield return null;
             yield return null;
             Assert.That(controller.IsSeated, Is.False, "A seat activates on release, not mouse-down.");
+            seatObject.transform.position += Vector3.forward * 3f;
+            Physics.SyncTransforms();
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
+            yield return null;
+            yield return null;
+            Assert.That(controller.IsSeated, Is.False, "Moving out of range while pressed cancels the sit.");
+            Assert.That(seat.IsHovered, Is.False);
+            seatObject.transform.position -= Vector3.forward * 3f;
+            Physics.SyncTransforms();
+            InputSystem.QueueStateEvent(mouse, new MouseState { position = center }.WithButton(MouseButton.Left));
+            yield return null;
+            yield return null;
             InputSystem.QueueStateEvent(mouse, new MouseState { position = center });
             yield return null;
             yield return null;
@@ -131,7 +156,10 @@ namespace BS.SDKEditor.Tests
             yield return null;
             Assert.That(controller.IsSeated, Is.False);
             Assert.That((bool)typeof(BSSeat).GetField("seated", PrivateInstance).GetValue(seat), Is.False);
-            Assert.That(Vector3.Distance(controller.transform.position, seat.transform.position + seat.transform.forward * .75f), Is.LessThan(.001f));
+            var expectedExit = seat.UseExitPosition
+                ? seat.transform.TransformPoint(seat.ExitPosition)
+                : seat.transform.position + Vector3.up;
+            Assert.That(Vector3.Distance(controller.transform.position, expectedExit), Is.LessThan(.001f));
             Debug.Log("SDK_SEAT_PLAY_PASS: actual Update mouse hover/leave/re-enter, per-seat hover animation, click-release sit, seated camera/facing, Space stand.");
 
             seatObject.SetActive(false);

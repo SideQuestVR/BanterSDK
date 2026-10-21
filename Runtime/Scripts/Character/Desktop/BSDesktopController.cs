@@ -684,6 +684,9 @@ namespace BS
                 var col = _hits[i].collider;
                 if (IsOwnCollider(col) || IsUIDocumentCollider(col))
                     continue;
+                var seat = col.GetComponentInParent<BSSeat>();
+                if (seat != null && !seat.IsInInteractionRange)
+                    continue;
                 hit = _hits[i];
                 return true;
             }

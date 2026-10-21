@@ -51,6 +51,8 @@ Only spawns that are in the scene while the space loads take part in the arrival
 
 Clicking a seat sits the local player on it, and moving or jumping stands them up; see [Seat](../building-in-unity/easy-prefabs.md#seat-bsseat). The player sits at the seat object's position, facing its forward.
 
+Clicking, the hover marker, the sit hint and the VR targeting ray require the player's head to be within **2 metres** of the sitting position. This uses world distance to the seat's origin; scaling its visual or enlarging its trigger does not extend the range. Moving out of range before releasing the click cancels seating. Editor placement previews remain visible at any distance. Scripted `Sit()` still works from any distance.
+
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
 | `unseatOnMove` | boolean | true | Stand up when the player pushes the move stick (WASD on desktop) |
