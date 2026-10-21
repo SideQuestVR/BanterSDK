@@ -287,7 +287,8 @@ namespace BS.SDKEditor.Tests
             Assert.That(prefab.transform.childCount, Is.Zero);
             Assert.That(prefab.transform.localPosition, Is.EqualTo(new Vector3(0f, .48f, 0f)));
             Assert.That(prefab.layer, Is.EqualTo(5));
-            Assert.That(prefab.GetComponents<Component>().Length, Is.EqualTo(5));
+            Assert.That(prefab.GetComponents<Component>().Length, Is.EqualTo(6));
+            Assert.That(prefab.GetComponent<BSPointerRange>().Distance, Is.EqualTo(2f));
             Assert.That(prefab.GetComponents<Collider>().Length, Is.EqualTo(1));
             Assert.That(prefab.GetComponent<BoxCollider>().isTrigger, Is.True);
             Assert.That(prefab.GetComponent<Renderer>(), Is.Null);

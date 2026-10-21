@@ -462,8 +462,12 @@ namespace BS
                 return;
             }
             var target = ResolvePointerTarget(screenPoint, ray, out var hit);
-            if (_hoverPointer != null)
-                _hoverPointer.position = screenPoint;
+            if (_hoverPointer == null)
+                _hoverPointer = new PointerEventData(EventSystem.current) { pointerId = PointerInputModule.kMouseLeftId };
+            _hoverPointer.position = screenPoint;
+            _hoverPointer.pointerCurrentRaycast = target == PressOwner.Click
+                ? new RaycastResult { gameObject = hit.collider.gameObject, worldPosition = hit.point, worldNormal = hit.normal, distance = hit.distance }
+                : default;
             SetHoverTarget(target == PressOwner.Click ? hit.collider.gameObject : null);
             if (!ActionsSystem.canGrab || ActionsSystem.Blocker_RightGrip.Grab)
                 _gripHologram.Clear();
@@ -630,6 +634,10 @@ namespace BS
                     resultDistance = result.distance;
                 }
 
+                // Screen overlays have no world distance; keep ordinary menu input unrestricted.
+                if (resultDistance > 0f && !BSPointerRange.IsInRange(result.gameObject, ray.GetPoint(resultDistance)))
+                    continue;
+
                 if (resultDistance < distance)
                 {
                     distance = resultDistance;
@@ -684,8 +692,7 @@ namespace BS
                 var col = _hits[i].collider;
                 if (IsOwnCollider(col) || IsUIDocumentCollider(col))
                     continue;
-                var seat = col.GetComponentInParent<BSSeat>();
-                if (seat != null && !seat.IsInInteractionRange)
+                if (!BSPointerRange.IsInRange(col.gameObject, _hits[i].point))
                     continue;
                 hit = _hits[i];
                 return true;

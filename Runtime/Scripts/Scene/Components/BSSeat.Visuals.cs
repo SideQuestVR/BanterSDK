@@ -12,7 +12,7 @@ namespace BS
 
         public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
 
-        readonly HashSet<int> pointers = new HashSet<int>();
+        readonly Dictionary<int, PointerEventData> pointers = new Dictionary<int, PointerEventData>();
         static Mesh markerMesh;
         static Material markerMaterial;
         static readonly int HoverProperty = Shader.PropertyToID("_Hover");
@@ -20,7 +20,15 @@ namespace BS
         MaterialPropertyBlock markerProperties;
         float hoverPress;
 
-        public bool IsHovered => pointers.Count > 0 && IsInInteractionRange;
+        public bool IsHovered
+        {
+            get
+            {
+                foreach (var pointer in pointers.Values)
+                    if (PointerIsInRange(pointer)) return true;
+                return false;
+            }
+        }
         public bool IsVisible => showRuntimeVisual && isActiveAndEnabled && IsHovered && !seated;
 
         void OnDisable()
@@ -32,13 +40,22 @@ namespace BS
         public void OnPointerEnter(PointerEventData eventData)
         {
             if (eventData.pointerEnter != null && eventData.pointerEnter.GetComponentInParent<BSSeat>() != this) return;
-            if (!isActiveAndEnabled || !IsInInteractionRange)
+            if (!isActiveAndEnabled || !PointerIsInRange(eventData))
             {
                 pointers.Remove(eventData.pointerId);
                 return;
             }
             if (pointers.Count == 0) hoverPress = 0f;
-            pointers.Add(eventData.pointerId);
+            pointers[eventData.pointerId] = eventData;
+        }
+
+        bool PointerIsInRange(PointerEventData pointer)
+        {
+            var hit = pointer.pointerCurrentRaycast;
+            var target = hit.gameObject != null ? hit.gameObject : pointer.pointerEnter;
+            if (target == null) target = gameObject;
+            var point = hit.gameObject != null ? hit.worldPosition : target.transform.position;
+            return target.GetComponentInParent<BSSeat>() == this && BSPointerRange.IsInRange(target, point);
         }
 
         public void OnPointerExit(PointerEventData eventData) => pointers.Remove(eventData.pointerId);

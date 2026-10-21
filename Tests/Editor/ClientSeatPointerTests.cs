@@ -1,6 +1,7 @@
 #if GREENFIELD_PROJECT
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using BS;
 using NUnit.Framework;
@@ -107,6 +108,92 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void SeatChildOverride_AgreesWithLaserAndMarker_AndDefaultUsesSurfaceHit()
+        {
+            seat.transform.position = Vector3.forward * 3f;
+            var child = Create("Seat child collider");
+            child.transform.SetParent(seat.transform, false);
+            var range = child.AddComponent<BSPointerRange>();
+            range.Distance = 5f;
+            Move(child);
+            Assert.That(seat.IsVisible, Is.True, "Child override also governs the seat's marker.");
+            range.enabled = false;
+            Move(child);
+            Assert.That(seat.IsVisible, Is.False);
+            seat.GetComponent<BSPointerRange>().enabled = false;
+            seat.transform.position = Vector3.forward * 40f;
+            var hit = new RaycastResult { gameObject = child, distance = 29f, worldPosition = Vector3.forward * 29f };
+            pointer.pointerCurrentRaycast = hit;
+            stateType.GetField("CurrentRaycast").SetValue(state, hit);
+            Invoke(module, "ProcessMovement", state);
+            Assert.That(seat.IsVisible, Is.True, "No override uses the same surface-hit default for marker and pointer.");
+        }
+
+        [Test]
+        public void WorldEventRaycast_UsesTheSameGenericOverrideAndDefault()
+        {
+            var target = seat.gameObject;
+            UnityEngine.Object.DestroyImmediate(seat);
+            var range = target.GetComponent<BSPointerRange>();
+            target.transform.position = Vector3.forward * 3f;
+            moduleType.GetField("_physicsLayers", Instance).SetValue(module, (LayerMask)0);
+            var raycaster = module.gameObject.AddComponent<PointerRangeTestRaycaster>();
+            raycaster.Target = target;
+            raycaster.Point = target.transform.position;
+            if (!RaycasterManager.GetRaycasters().Contains(raycaster)) raycaster.Register();
+            try
+            {
+                Invoke(module, "PerformRaycast", state);
+                Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.Null);
+                range.Distance = 3f;
+                Invoke(module, "PerformRaycast", state);
+                Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.SameAs(target));
+                range.enabled = false;
+                raycaster.Point = Vector3.forward * 31f;
+                Invoke(module, "PerformRaycast", state);
+                Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.Null);
+                raycaster.Point = Vector3.forward * 30f;
+                Invoke(module, "PerformRaycast", state);
+                Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.SameAs(target));
+                raycaster.IncludeWorldPosition = false;
+                stateType.GetField("CurrentRay").SetValue(state, new Ray(Vector3.zero, Vector3.forward));
+                raycaster.Point = Vector3.forward * 31f;
+                Invoke(module, "PerformRaycast", state);
+                Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.Null, "Distance-only raycasts still obey the default.");
+                raycaster.Point = Vector3.forward * 29f;
+                Invoke(module, "PerformRaycast", state);
+                Assert.That(pointer.pointerCurrentRaycast.gameObject, Is.SameAs(target));
+            }
+            finally { raycaster.Unregister(); UnityEngine.Object.DestroyImmediate(raycaster); }
+        }
+
+        [Test]
+        public void OrdinaryUiTarget_UsesInheritedOverride_ThroughBothLaserFilters()
+        {
+            var target = seat.gameObject;
+            UnityEngine.Object.DestroyImmediate(seat);
+            var range = target.GetComponent<BSPointerRange>();
+            target.transform.position = Vector3.forward * 3f;
+            var child = Create("Ordinary child target");
+            child.layer = 5;
+            child.transform.SetParent(target.transform, false);
+            var col = child.AddComponent<BoxCollider>();
+            var validate = moduleType.GetMethod("ValidateUILaserHit", BindingFlags.Static | BindingFlags.NonPublic);
+            var curve = moduleType.GetMethod("UILaserHitIsPickable", BindingFlags.Static | BindingFlags.NonPublic);
+            foreach (var distance in new[] { 2f, 3f, 0f })
+            {
+                range.Distance = distance;
+                var accepted = distance >= 3f;
+                foreach (var hand in new[] { 0, 1 })
+                    Assert.That(validate.Invoke(null, new object[] { hand, col }), Is.EqualTo(accepted));
+                Assert.That(curve.Invoke(null, new object[] { col, col.transform.position }), Is.EqualTo(accepted));
+            }
+            range.enabled = false;
+            Assert.That(curve.Invoke(null, new object[] { col, Vector3.forward * 29f }), Is.True);
+            Assert.That(curve.Invoke(null, new object[] { col, Vector3.forward * 31f }), Is.False);
+        }
+
+        [Test]
         public void StationaryPointer_EnablesSeatThenLeaves_ClearsMarker()
         {
             seat.enabled = false;
@@ -174,6 +261,17 @@ namespace BS.SDKEditor.Tests
 
         static void Invoke(object target, string method, params object[] args) =>
             target.GetType().GetMethod(method, Instance).Invoke(target, args);
+    }
+    public class PointerRangeTestRaycaster : BaseRaycaster
+    {
+        public GameObject Target;
+        public Vector3 Point;
+        public bool IncludeWorldPosition = true;
+        public override Camera eventCamera => Camera.main;
+        public void Register() => base.OnEnable();
+        public void Unregister() => base.OnDisable();
+        public override void Raycast(PointerEventData data, List<RaycastResult> results) =>
+            results.Add(new RaycastResult { gameObject = Target, module = this, distance = Point.magnitude, worldPosition = IncludeWorldPosition ? Point : Vector3.zero });
     }
 }
 #endif

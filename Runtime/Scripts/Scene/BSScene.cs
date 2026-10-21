@@ -378,6 +378,7 @@ namespace BS
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
         {
+            if (!BSPointerRange.IsInRange(obj, point)) return;
             var interaction = obj.GetComponent<BSPlayerEvents>();
             if (interaction != null)
             {

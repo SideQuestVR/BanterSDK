@@ -29,6 +29,7 @@ namespace BS.SDKEditor.Tests
         InputSettings.EditorInputBehaviorInPlayMode originalEditorInputBehavior;
         InputSettings.BackgroundBehavior originalBackgroundBehavior;
         bool originalRunInBackground;
+        int ordinaryClicks;
 
         [UnityTest]
         public IEnumerator DesktopInput_HoversAnimatesClicksSitsAndJumpsOut()
@@ -64,6 +65,27 @@ namespace BS.SDKEditor.Tests
             camera.targetTexture = target;
             camera.clearFlags = CameraClearFlags.SolidColor;
             camera.backgroundColor = Color.black;
+            yield return null;
+            yield return null;
+            var ordinaryTarget = new GameObject("Ordinary UI range dispatch test");
+            ordinaryTarget.transform.SetParent(controller.transform, false);
+            ordinaryTarget.transform.position = camera.transform.position + Vector3.forward * 3f;
+            var ordinaryRange = ordinaryTarget.AddComponent<BSPointerRange>();
+            var ordinaryEvents = ordinaryTarget.AddComponent<BSPlayerEvents>();
+            Assert.That(ordinaryRange, Is.Not.Null);
+            Assert.That(ordinaryEvents, Is.Not.Null);
+            ordinaryEvents.onClick = new UnityEngine.Events.UnityEvent<Vector3, Vector3>();
+            ordinaryClicks = 0;
+            ordinaryEvents.onClick.AddListener(OnOrdinaryClick);
+            scene.Click(ordinaryTarget, ordinaryTarget.transform.position, Vector3.up);
+            Assert.That(ordinaryClicks, Is.Zero, "Shared click dispatch rejects out-of-range objects without a Seat.");
+            ordinaryRange.Distance = 3f;
+            scene.Click(ordinaryTarget, ordinaryTarget.transform.position, Vector3.up);
+            Assert.That(ordinaryClicks, Is.EqualTo(1));
+            ordinaryRange.Distance = 1f;
+            scene.Click(ordinaryTarget, ordinaryTarget.transform.position, Vector3.up);
+            Assert.That(ordinaryClicks, Is.EqualTo(1), "Dispatch rechecks a range that changed after pointer-down.");
+            Object.Destroy(ordinaryTarget);
             seatObject = Object.Instantiate(Resources.Load<GameObject>("CreatorConveniences/Prefabs/Seat"));
             seatObject.transform.SetPositionAndRotation(new Vector3(0f, .48f, 3f), Quaternion.Euler(0f, 25f, 0f));
             var seat = seatObject.GetComponent<BSSeat>();
@@ -333,6 +355,8 @@ namespace BS.SDKEditor.Tests
             }
             finally { RenderPipelineManager.endCameraRendering -= finished; }
         }
+
+        void OnOrdinaryClick(Vector3 point, Vector3 normal) => ordinaryClicks++;
 
         void SaveCameraFrame(string name)
         {

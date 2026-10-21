@@ -169,6 +169,28 @@ namespace BS.SDKEditor.Tests
             Assert.That(seat.IsHovered, Is.False);
         }
 
+        [Test]
+        public void OrdinaryUiObject_UsesSharedRange_WithoutASeat()
+        {
+            var target = NewObject("Ordinary UI object");
+            target.layer = 5;
+            target.transform.position = ray.GetPoint(3f);
+            target.AddComponent<BoxCollider>();
+            var range = target.AddComponent<BS.BSPointerRange>();
+            Physics.SyncTransforms();
+            Assert.That(HasTarget(), Is.False);
+            range.Distance = 3f;
+            Assert.That(HasTarget(), Is.True);
+            range.enabled = false;
+            Assert.That(HasTarget(), Is.True);
+
+            bool HasTarget()
+            {
+                var args = new object[] { ray, default(RaycastHit) };
+                return (bool)typeof(BSDesktopController).GetMethod("TryGetClickTarget", PrivateInstance).Invoke(controller, args);
+            }
+        }
+
         BSSeat Seat(float distance)
         {
             var go = NewObject("Seat trigger");
