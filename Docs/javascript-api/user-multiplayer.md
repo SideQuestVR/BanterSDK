@@ -12,6 +12,7 @@ user.id;        // The player's session id for this visit (one-shots name their 
 user.name;      // Display name
 user.color;     // A colour as hex text: "4488FF" for you, "AAAAAA" for everyone else
 user.isLocal;   // Is this the local player
+user.isSpaceAdmin; // The space's owner, a SideQuest admin, or a community space's moderator
 user.props;     // Their user state, as strings
 user.state;     // The same user state as real JSON values
 ```

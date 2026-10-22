@@ -99,7 +99,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 
 | Node | Purpose |
 |------|---------|
-| On User Joined | A user joined the space. Outputs `User Info` (BSUser) |
+| On User Joined | A user joined the space. Outputs `User Info` (BSUser). Fires for you in every world you load, once the room's join has said whether you're a space admin, so `isSpaceAdmin` is already right |
 | On User Left | A user left the space. Outputs `User Info` (BSUser) |
 | On User State Value Changed | A participant's prop changed. Filter by `Key` (leave empty for all); outputs `Value`, `JSON`, `UserId`, `Is Local`, `Deleted` |
 | On User State Result | The outcome of a write you tagged with a `Request Id`. Outputs `Ok`, `Error`, `Key`, `JSON` |
