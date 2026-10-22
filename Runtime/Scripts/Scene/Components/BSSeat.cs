@@ -68,6 +68,26 @@ namespace BS
 
         public bool IsInInteractionRange => BSPointerRange.IsInRange(gameObject, transform.position);
 
+        /// <summary>
+        /// Set by the client: returns true when someone other than the local player is sitting on the seat.
+        /// The SDK has no seat occupancy of its own (who sits where is networked by the client), so with no
+        /// resolver every seat counts as free. Clicking an occupied seat does nothing (FB-752: clicking a
+        /// seated person sat you in their lap); a page's scripted Sit is not gated.
+        /// </summary>
+        public static Func<BSSeat, bool> OccupiedByOtherResolver { get; set; }
+
+        /// <summary>Whether someone other than the local player is sitting on this seat (see <see cref="OccupiedByOtherResolver"/>).</summary>
+        public bool IsOccupiedByOther
+        {
+            get
+            {
+                var resolver = OccupiedByOtherResolver;
+                if (resolver == null) return false;
+                try { return resolver(this); }
+                catch (Exception ex) { Debug.LogException(ex); return false; }
+            }
+        }
+
         // The local player sits on this seat: set when they attach through it, cleared when they get off.
         bool seated;
         BSAttachedObject hookedTo;
@@ -259,7 +279,8 @@ namespace BS
                 onClick = (point, normal) =>
                 {
                     // BSScene.Click rechecks the actual collider's shared range policy on release.
-                    if (isActiveAndEnabled) _Sit();
+                    // Someone else is on it: the click was most likely aimed at them, not the seat.
+                    if (isActiveAndEnabled && !IsOccupiedByOther) _Sit();
                 };
             }
             foreach (var col in GetComponentsInChildren<Collider>(true))
