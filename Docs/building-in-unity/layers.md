@@ -16,7 +16,7 @@ Builder's checklist flags objects on them, with a button to move them to Default
 | 3 | UserLayer1 | Yours. Solid and walkable, and you can teleport onto it, but the grapple ignores it. |
 | 4 | Water | Unity built-in. For movement it counts like Default. |
 | 5 | UI | Anything players click or point at: world-space UI, buttons, seats, clickable objects. The player's body and hands pass through it. |
-| 6–12 | UserLayer2–8 | Yours. Ground, teleport and grapple all use them, but the player's body and hands pass through. |
+| 6–12 | UserLayer2–8 | Yours. Solid and walkable: ground, teleport and grapple all use them, and the player's body bumps into them. The hands pass through. |
 | 13–19 | UserLayer9–15 | Yours. Teleport, grapple and ground ignore them; the player's body and hands still bump into them. |
 | 20 | Grabbable | Things the player can pick up, and grapple to. `BSGrababble` puts its object here for you. |
 | 21 | Invisible | Hidden from the player's own view (mirrors still show it). Still solid. |
@@ -38,7 +38,7 @@ What works on each layer (✓ = yes):
 | Grapple to it | ✓ | ✓ | | ✓ | | ✓ | | |
 | Grab it | | | | | | ✓ | | |
 | Click or point at it | | | | | | | | ✓ |
-| Body bumps into it | ✓ | ✓ | ✓ | | ✓ | ✓ | ✓ | |
+| Body bumps into it | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | |
 | Hands bump into it | | | | | ✓ | ✓ | ✓ | |
 
 - **Grab** only ever looks at Grabbable, so a grabbable object needs a collider on that layer.
