@@ -248,6 +248,10 @@ namespace BS.SDKEditor
             "UnityEngine.DirectorModule",
             "Cinemachine",          // Cinemachine 2.x
             "Unity.Cinemachine",    // Cinemachine 3.x (com.unity.cinemachine 3); also in AotPreBuilder._allowedNamespaces
+            "Unity.Splines",        // SplineContainer, SplineAnimate; AotPreBuilder allows the UnityEngine.Splines namespace
+            "UnityEngine.TerrainModule",        // Terrain, TerrainData, TerrainLayer
+            "UnityEngine.TerrainPhysicsModule", // TerrainCollider
+            "Unity.RenderPipelines.Core.Runtime", // Volume (post-processing); AotPreBuilder allows only Volume from it
 
             // The SDK: components and custom nodes
             SdkAssemblyName,
@@ -299,6 +303,7 @@ namespace BS.SDKEditor
             typeof(DateTime),
             typeof(TimeSpan),
             typeof(UnityEngine.Random),
+            typeof(UnityEngine.Rendering.SphericalHarmonicsL2), // RenderSettings.ambientProbe, LightProbes.bakedProbes
 
             // UI
             typeof(UnityEngine.UI.CanvasScaler),
