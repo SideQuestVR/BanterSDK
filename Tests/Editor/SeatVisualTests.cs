@@ -15,6 +15,7 @@ namespace BS.SDKEditor.Tests
         Scene scene;
         BSSeat visual;
         PointerEventData left, right;
+        Camera playerCamera, previousCamera;
 
         [SetUp]
         public void SetUp()
@@ -23,6 +24,10 @@ namespace BS.SDKEditor.Tests
             var go = new GameObject("Seat visual test");
             SceneManager.MoveGameObjectToScene(go, scene);
             visual = go.AddComponent<BSSeat>();
+            previousCamera = Camera.main;
+            if (previousCamera != null) previousCamera.enabled = false;
+            playerCamera = new GameObject("Seat test player head").AddComponent<Camera>();
+            playerCamera.tag = "MainCamera";
             left = new PointerEventData(null) { pointerId = 1, pointerEnter = go };
             right = new PointerEventData(null) { pointerId = 2, pointerEnter = go };
         }
@@ -32,6 +37,23 @@ namespace BS.SDKEditor.Tests
         {
             typeof(BSSeat).GetMethod("OnDisable", PrivateInstance).Invoke(visual, null);
             EditorSceneManager.ClosePreviewScene(scene);
+            Object.DestroyImmediate(playerCamera.gameObject);
+            if (previousCamera != null) previousCamera.enabled = true;
+        }
+
+        [TestCase(1.99f, true)]
+        [TestCase(2f, true)]
+        [TestCase(2.01f, false)]
+        public void InteractionRange_UsesWorldSeatAnchor_NotVisualScaleOrTriggerEdge(float distance, bool inRange)
+        {
+            visual.transform.position = Vector3.forward * distance;
+            visual.transform.localScale = Vector3.one * 10f;
+            visual.gameObject.AddComponent<BoxCollider>().isTrigger = true;
+            visual.OnPointerEnter(left);
+            Assert.That(visual.IsInInteractionRange, Is.EqualTo(inRange));
+            Assert.That(visual.IsVisible, Is.EqualTo(inRange));
+            playerCamera.transform.position = Vector3.back * 3f;
+            Assert.That(visual.IsVisible, Is.False, "Leaving range hides a marker even before the next pointer event.");
         }
 
         [Test]
@@ -265,7 +287,8 @@ namespace BS.SDKEditor.Tests
             Assert.That(prefab.transform.childCount, Is.Zero);
             Assert.That(prefab.transform.localPosition, Is.EqualTo(new Vector3(0f, .48f, 0f)));
             Assert.That(prefab.layer, Is.EqualTo(5));
-            Assert.That(prefab.GetComponents<Component>().Length, Is.EqualTo(5));
+            Assert.That(prefab.GetComponents<Component>().Length, Is.EqualTo(6));
+            Assert.That(prefab.GetComponent<BSPointerRange>().Distance, Is.EqualTo(2f));
             Assert.That(prefab.GetComponents<Collider>().Length, Is.EqualTo(1));
             Assert.That(prefab.GetComponent<BoxCollider>().isTrigger, Is.True);
             Assert.That(prefab.GetComponent<Renderer>(), Is.Null);

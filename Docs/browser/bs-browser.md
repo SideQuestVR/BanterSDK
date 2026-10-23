@@ -28,6 +28,7 @@ const browser = await screen.AddComponent(new BS.Browser({
 | `url` | empty / empty | The page to show, as a full address (`https://…`). Changing it loads the new page, and setting the same address again reloads it. A page that fails to load is replaced by an error page. The **GameObject > BS** browser starts on `https://sidequestvr.com`. |
 | `pageWidth`, `pageHeight` | 1280 × 720 / 1024 × 576 | The page's size in pixels, which also sets how big the browser is in the world. Change them any time. |
 | `actions` | empty | [Actions](#actions) to run once, when the browser starts. |
+| `rolloffMode`, `minDistance`, `maxDistance` | Flat, 1, 500 | How the page's sound fades with distance. See [Sound](#sound). |
 | `mipMaps`, `pixelsPerUnit` | | Not used. |
 
 ## Size and placement
@@ -50,9 +51,31 @@ The page is drawn at **1300 pixels per metre**, centred on the object:
 - **Typing** goes to the page whose text field has focus. In SDK Play Mode, type on your keyboard (not while flying).
 - **View-only:** `browser.ToggleInteraction(false)` stops clicks and scrolling from reaching the page; `true` turns them back on.
 - **One window:** popups and new windows (`window.open`, links with `target="_blank"`) are blocked, so keep links in the same page.
-- **Sound** plays from the browser's position, as 3D sound.
+- **Sound** plays from the browser's position, as 3D sound. See [Sound](#sound).
 
 A BS Browser page is an ordinary web page: it doesn't get your space's `window.BS`. To work with your space, it sends and receives [messages](messages.md).
+
+## Sound
+
+The page's sound comes from where the browser hangs. By default it doesn't fade: players hear it at the same volume however far away they are. To make it fade with distance like a real speaker, set `rolloffMode`:
+
+| `rolloffMode` | How the sound fades |
+|---|---|
+| `Flat` (default) | It doesn't. Same volume at any distance. |
+| `Logarithmic` | Like a real sound. Full volume within `minDistance`, then quieter the further away, quickly at first and slowly after. It gets no quieter beyond `maxDistance`. |
+| `Linear` | Evenly, from full volume at `minDistance` to silence at `maxDistance`. |
+
+`minDistance` and `maxDistance` are in metres (default 1 and 500), and the object's scale doesn't change them. For a screen in a room, try `Logarithmic` with a `minDistance` of 2 to 3. All three can change at any time:
+
+```js
+browser.rolloffMode = BS.AudioRolloff.Logarithmic;
+browser.minDistance = 2;    // full volume within 2 m
+browser.maxDistance = 40;
+```
+
+In Visual Scripting they're the BS Browser's **Rolloff Mode**, **Min Distance** and **Max Distance**.
+
+?> On Quest, a world's browsers play their sound through the headset's own web view rather than through the world, so it isn't positioned and these settings have no effect there. They apply on PC.
 
 ## Actions
 

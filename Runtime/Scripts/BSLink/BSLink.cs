@@ -1055,7 +1055,7 @@ namespace BS
 
         public void OnUserJoined(UserData user)
         {
-            Send(APICommands.EVENT + APICommands.USER_JOINED + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + WireText.Encode(user.name) + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color);
+            Send(APICommands.EVENT + APICommands.USER_JOINED + MessageDelimiters.PRIMARY + user.uid + MessageDelimiters.SECONDARY + WireText.Encode(user.name) + MessageDelimiters.SECONDARY + (user.isLocal ? "1" : "0") + MessageDelimiters.SECONDARY + user.id + MessageDelimiters.SECONDARY + user.color + MessageDelimiters.SECONDARY + (user.isSpaceAdmin ? "1" : "0"));
         }
 
         public void OnUserLeft(UserData user)

@@ -2,6 +2,14 @@
 
 Create 2D user interfaces in VR with the UI system: a **UI Panel** is a flat surface in the world, and your script fills it with buttons, labels, sliders and other elements, laid out and styled much like HTML and CSS (it's Unity's UI Toolkit underneath).
 
+## Pointer Range
+
+World pointers retain a **30 m default**. To override reach for any UI-layer object, add **SideQuest → Interaction → Pointer Range** (`BSPointerRange`) and set **Distance** in metres. Put it on a parent to cover its child targets; a nearer enabled override takes precedence. Disable the component to inherit a parent override or the default. Zero disables targeting.
+
+An override measures from the player's head to that component's object origin, independent of visual scale or collider size. Without an override, the default uses the actual surface hit, so large panels remain usable near their edges. Hover, clicked scene events and targeting lasers use this policy in the client and SDK Play Mode. Screen-space menus are unaffected. The raycaster's configured overall reach still caps targeting; increasing an object's range does not extend the raycast itself.
+
+Seats use the same component with a **2 m** preset; change Distance to choose another range. Existing seats gain that preset at runtime. No extra GameObject is needed.
+
 ## UIPanel
 
 The surface the elements are drawn on. Add it to a GameObject, then create elements for it. A panel is `resolution` pixels at 100 pixels per metre (512 × 512 pixels is a 5.12 m square), read from the object's back (−Z). It puts its object on the UI layer, so players can point at it and click.

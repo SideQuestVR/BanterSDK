@@ -378,6 +378,7 @@ namespace BS
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
         {
+            if (!BSPointerRange.IsInRange(obj, point)) return;
             var interaction = obj.GetComponent<BSPlayerEvents>();
             if (interaction != null)
             {
@@ -396,24 +397,43 @@ namespace BS
         #endregion
 
         #region Users
-        public void AddUser(UserData user)
+        public void AddUser(UserData user) => AddUser(user, announceToGraphs: true);
+
+        /// <param name="announceToGraphs">
+        /// False when the caller raises visual scripting's User Joined itself (<see cref="TriggerUserJoined"/>):
+        /// a host that keeps a user across worlds announces it to each world's graphs.
+        /// </param>
+        public void AddUser(UserData user, bool announceToGraphs)
         {
             if (!users.Contains(user))
             {
                 users.Add(user);
             }
             link?.OnUserJoined(user);
+            if (!announceToGraphs) return;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
             {
                 await new WaitUntil(() => state == SceneState.UNITY_READY);
-                EventBus.Trigger("OnUserJoined", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+                TriggerUserJoined(user);
             }, $"{nameof(BSScene)}.{nameof(AddUser)}"));
         }
+
+        /// <summary>
+        /// Raise visual scripting's User Joined for <paramref name="user"/> now, on the main thread, once the
+        /// loaded world's graphs are ready.
+        /// </summary>
+        public void TriggerUserJoined(UserData user)
+        {
+            EventBus.Trigger("OnUserJoined", new BSUser() { name = user.name, id = user.id, uid = user.uid, color = user.color, isLocal = user.isLocal, isSpaceAdmin = user.isSpaceAdmin });
+        }
+
         public void RemoveUser(UserData user)
         {
-            if (users.Contains(user))
+            // A user that was never added (a host still deciding its fields when it was destroyed) never joined,
+            // so it doesn't leave either.
+            if (!users.Remove(user))
             {
-                users.Remove(user);
+                return;
             }
             // Only announce the leave if no other UserData still holds this uid. During a reconnect /
             // avatar replace, the new avatar's UserData is added (same uid) before the old one's
@@ -2898,7 +2918,11 @@ namespace BS
                         events.OnUnitySceneLoad.Invoke(displayUrl);
                     }, $"{nameof(BSScene)}.{nameof(LoadUrl)}.OnUnitySceneLoad"));
 
-                    await Task.Delay(2500);
+                    // Fixed settle time before opening the cage. A loading presenter does its own hidden,
+                    // frame-time based warm-up after onLoadOutStarted, so for it this only adds waiting.
+                    // The legacy cage keeps the delay unchanged.
+                    if (loadingManager == null || loadingManager.Presenter == null)
+                        await Task.Delay(2500);
                 }
                 catch (Exception e)
                 {

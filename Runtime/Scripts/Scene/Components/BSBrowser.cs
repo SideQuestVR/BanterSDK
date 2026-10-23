@@ -64,6 +64,15 @@ namespace BS
 
         [Tooltip("Actions to run as soon as the browser is created, before the page has loaded (start with a delayseconds action to wait for it), as JSON, e.g. {\"actions\":[{\"actionType\":\"click2d\",\"numParam1\":0.5,\"numParam2\":0.5}]}")]
         [See(initial = "")][SerializeField] internal string actions = "";
+
+        [Tooltip("How the page's sound fades with distance. Flat: the same volume at any distance. Logarithmic: like a real sound, quieter the further away from Min Distance, no quieter beyond Max Distance. Linear: evenly, from full volume at Min Distance to silence at Max Distance.")]
+        [See(initial = "0")][SerializeField] internal AudioRolloff rolloffMode = AudioRolloff.Flat;
+
+        [Tooltip("Within this distance, in metres, the page's sound plays at full volume (Logarithmic and Linear).")]
+        [See(initial = "1")][SerializeField] internal float minDistance = 1;
+
+        [Tooltip("The distance, in metres, where the fade ends: silence for Linear; Logarithmic gets no quieter beyond it.")]
+        [See(initial = "500")][SerializeField] internal float maxDistance = 500;
         public UnityEvent<string> OnReceiveBrowserMessage = new UnityEvent<string>();
         /// <summary>
         /// This browser's texture: its first frame, and again whenever a resize replaces it. The same
@@ -81,6 +90,7 @@ namespace BS
 
         GameObject browser;
         OraView _oraView;
+        readonly SpeakerTracker _speakers = new SpeakerTracker();
         Coroutine _actionsCoroutine;
         List<BrowserAction> _pendingActions = new List<BrowserAction>();
 
@@ -156,6 +166,15 @@ namespace BS
                 // configured before anything on the object wakes.
                 if (_oraView == null)
                     _oraView = AddWebView(browser);
+#if GREENFIELD_PROJECT
+                // Android, for now: world browsers play their own audio natively (the WebView), as the menu browser does
+                // by default. Unity capture (spatial) runs its fallback on the page's main thread wherever a page's CSP
+                // blocks the capture worklet (YouTube) and stutters on Quest. The mode is fixed when the window is
+                // created, so set before the browser wakes. Streaming viewers keep capture: the sharer's 2D->3D blend
+                // drives their speakers.
+                if (_oraView != null && !IsStreamingBrowser && Application.platform == RuntimePlatform.Android)
+                    _oraView.audioMode = OraAudioMode.Off;
+#endif
                 if (!browser.activeSelf)
                     browser.SetActive(true);
                 if (_oraView != null)
@@ -181,7 +200,105 @@ namespace BS
                 if (doc)
                     doc.worldSpaceSize = new Vector2(pageWidth, pageHeight);
             }
+
+            if (changedProperties == null || changedProperties.Contains(PropertyName.rolloffMode)
+                || changedProperties.Contains(PropertyName.minDistance) || changedProperties.Contains(PropertyName.maxDistance))
+                ApplyRolloff();
             SetLoadedIfNot();
+        }
+
+        // The page's sound plays through the speakers Ora's audio emitter builds, which come with Ora's own flat fade. Ora
+        // builds them when the view's audio starts and builds new ones whenever it recreates it (an output-rate change,
+        // for one), so each new set gets this browser's fade. There are none where the page plays its own sound
+        // (audioMode Off).
+        void LateUpdate()
+        {
+            if (_speakers.Refresh(_oraView != null ? _oraView.audioEmitter : null))
+                ApplyRolloff();
+        }
+
+        void ApplyRolloff()
+        {
+            foreach (var speaker in _speakers.Speakers)
+                if (speaker != null)
+                    ApplyRolloff(speaker, rolloffMode, minDistance, maxDistance);
+        }
+
+        /// <summary>Sets one speaker's fade. Flat is how Ora sets up its own speakers: a constant custom curve.</summary>
+        internal static void ApplyRolloff(AudioSource speaker, AudioRolloff mode, float min, float max)
+        {
+            // A script can send anything: keep min a real distance and max beyond it.
+            min = float.IsNaN(min) || float.IsInfinity(min) ? 1f : Mathf.Max(0f, min);
+            max = float.IsNaN(max) || float.IsInfinity(max) ? 500f : max;
+            max = Mathf.Max(max, min + 0.01f);
+            switch (mode)
+            {
+                case AudioRolloff.Logarithmic:
+                    speaker.rolloffMode = AudioRolloffMode.Logarithmic;
+                    break;
+                case AudioRolloff.Linear:
+                    speaker.rolloffMode = AudioRolloffMode.Linear;
+                    break;
+                default:
+                    speaker.rolloffMode = AudioRolloffMode.Custom;
+                    speaker.SetCustomCurve(AudioSourceCurveType.CustomRolloff, AnimationCurve.Constant(0f, 1f, 1f));
+                    break;
+            }
+            // Unity keeps minDistance at or below the current maxDistance, so a larger max goes first.
+            if (min > speaker.maxDistance)
+            {
+                speaker.maxDistance = max;
+                speaker.minDistance = min;
+            }
+            else
+            {
+                speaker.minDistance = min;
+                speaker.maxDistance = max;
+            }
+        }
+
+        /// <summary>
+        /// The speakers Ora's audio emitter built for this browser's view. They're its children, each with an
+        /// OraSpeakerFilter pointing back at it, so they're looked for again whenever its children change or one of
+        /// them is gone.
+        /// </summary>
+        internal sealed class SpeakerTracker
+        {
+            OraAudioEmitter _emitter;
+            int _childCount = -1;
+            readonly List<OraSpeakerFilter> _filters = new List<OraSpeakerFilter>();
+            internal readonly List<AudioSource> Speakers = new List<AudioSource>();
+
+            /// <summary>Looks for the speakers again when they may have changed. True when it found any.</summary>
+            internal bool Refresh(OraAudioEmitter emitter)
+            {
+                int childCount = emitter != null ? emitter.transform.childCount : -1;
+                if (emitter == _emitter && childCount == _childCount && !AnyGone())
+                    return false;
+                _emitter = emitter;
+                _childCount = childCount;
+                Speakers.Clear();
+                if (emitter == null)
+                    return false;
+                emitter.GetComponentsInChildren(true, _filters);
+                foreach (var filter in _filters)
+                {
+                    if (filter.emitter != emitter)
+                        continue;
+                    var speaker = filter.GetComponent<AudioSource>();
+                    if (speaker != null)
+                        Speakers.Add(speaker);
+                }
+                return Speakers.Count > 0;
+            }
+
+            bool AnyGone()
+            {
+                foreach (var speaker in Speakers)
+                    if (speaker == null)
+                        return true;
+                return false;
+            }
         }
 
         // UIToolkitInputHandler keeps its view in a private serialized field and doesn't look for one itself.
@@ -321,6 +438,7 @@ namespace BS
                 BSAssetRegistry.Instance.UnregisterAsset(TextureAssetId);
             }
             _oraView = null;
+            _speakers.Refresh(null);
 
             if (_actionsCoroutine != null)
             {
@@ -345,6 +463,9 @@ namespace BS
         public System.Single PageWidth { get { return pageWidth; } set { pageWidth = value; UpdateCallback(new List<PropertyName> { PropertyName.pageWidth }); } }
         public System.Single PageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
         public System.String Actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
+        public BS.AudioRolloff RolloffMode { get { return rolloffMode; } set { rolloffMode = value; UpdateCallback(new List<PropertyName> { PropertyName.rolloffMode }); } }
+        public System.Single MinDistance { get { return minDistance; } set { minDistance = value; UpdateCallback(new List<PropertyName> { PropertyName.minDistance }); } }
+        public System.Single MaxDistance { get { return maxDistance; } set { maxDistance = value; UpdateCallback(new List<PropertyName> { PropertyName.maxDistance }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -367,12 +488,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, PropertyName.rolloffMode, PropertyName.minDistance, PropertyName.maxDistance, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "Browser" + PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions;
+            return "Browser" + PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions + PropertyName.rolloffMode + rolloffMode + PropertyName.minDistance + minDistance + PropertyName.maxDistance + maxDistance;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -504,6 +625,33 @@ namespace BS
                         changedProperties.Add(PropertyName.actions);
                     }
                 }
+                if (values[i] is BSInt)
+                {
+                    var valrolloffMode = (BSInt)values[i];
+                    if (valrolloffMode.n == PropertyName.rolloffMode)
+                    {
+                        rolloffMode = (AudioRolloff)valrolloffMode.x;
+                        changedProperties.Add(PropertyName.rolloffMode);
+                    }
+                }
+                if (values[i] is BSFloat)
+                {
+                    var valminDistance = (BSFloat)values[i];
+                    if (valminDistance.n == PropertyName.minDistance)
+                    {
+                        minDistance = valminDistance.x;
+                        changedProperties.Add(PropertyName.minDistance);
+                    }
+                }
+                if (values[i] is BSFloat)
+                {
+                    var valmaxDistance = (BSFloat)values[i];
+                    if (valmaxDistance.n == PropertyName.maxDistance)
+                    {
+                        maxDistance = valmaxDistance.x;
+                        changedProperties.Add(PropertyName.maxDistance);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -578,6 +726,42 @@ namespace BS
                     name = PropertyName.actions,
                     type = PropertyType.String,
                     value = actions,
+                    componentType = ComponentType.Browser,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.rolloffMode,
+                    type = PropertyType.Int,
+                    value = rolloffMode,
+                    componentType = ComponentType.Browser,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.minDistance,
+                    type = PropertyType.Float,
+                    value = minDistance,
+                    componentType = ComponentType.Browser,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.maxDistance,
+                    type = PropertyType.Float,
+                    value = maxDistance,
                     componentType = ComponentType.Browser,
                     oid = oid,
                     cid = cid

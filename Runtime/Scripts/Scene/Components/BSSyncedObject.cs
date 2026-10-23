@@ -14,6 +14,7 @@ namespace BS
         public bool takeOwnershipOnCollision;
         public bool takeOwnershipOnGrab;
         public bool kinematicIfNotOwned;
+        public float resetAfterSeconds;
     }
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
@@ -35,6 +36,9 @@ namespace BS
         [Tooltip("If enabled, the object becomes kinematic when it is not owned by the local player.")]
         [See(initial = "false")][SerializeField] internal bool kinematicIfNotOwned = false;
 
+        [Tooltip("Seconds a moved object waits, once nobody is holding it or attached to it, before it returns to " +
+                 "where it was placed. 0 = never. -1 = the app's default.")]
+        [See(initial = "-1")][SerializeField] internal float resetAfterSeconds = -1f;
 
         [Method]
         public void _TakeOwnership()
@@ -72,6 +76,7 @@ namespace BS
             synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
             synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
             synced.kinematicIfNotOwned = kinematicIfNotOwned;
+            synced.resetAfterSeconds = resetAfterSeconds;
             scene.events.OnSyncedObject.Invoke(synced, this);
         }
         // BS COMPILED CODE 
@@ -80,6 +85,7 @@ namespace BS
         public System.Boolean TakeOwnershipOnCollision { get { return takeOwnershipOnCollision; } set { takeOwnershipOnCollision = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnCollision }); } }
         public System.Boolean TakeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
         public System.Boolean KinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
+        public System.Single ResetAfterSeconds { get { return resetAfterSeconds; } set { resetAfterSeconds = value; UpdateCallback(new List<PropertyName> { PropertyName.resetAfterSeconds }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -102,12 +108,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, PropertyName.resetAfterSeconds, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "SyncedObject" + PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned;
+            return "SyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned + PropertyName.resetAfterSeconds + resetAfterSeconds;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -217,6 +223,15 @@ namespace BS
                         changedProperties.Add(PropertyName.kinematicIfNotOwned);
                     }
                 }
+                if (values[i] is BSFloat)
+                {
+                    var valresetAfterSeconds = (BSFloat)values[i];
+                    if (valresetAfterSeconds.n == PropertyName.resetAfterSeconds)
+                    {
+                        resetAfterSeconds = valresetAfterSeconds.x;
+                        changedProperties.Add(PropertyName.resetAfterSeconds);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -279,6 +294,18 @@ namespace BS
                     name = PropertyName.kinematicIfNotOwned,
                     type = PropertyType.Bool,
                     value = kinematicIfNotOwned,
+                    componentType = ComponentType.SyncedObject,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.resetAfterSeconds,
+                    type = PropertyType.Float,
+                    value = resetAfterSeconds,
                     componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid

@@ -11,7 +11,9 @@ namespace BS
     The seat is the object's `BSAttachedObject`, set up to attach the player to the object (physics, jointed,
     seated pose). The player sits at this object's position and faces its forward, so place its origin
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
-    the only clickable layers. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
+    the only clickable layers. Its Pointer Range component defaults to 2 m from the player's head to the sitting
+    position, independently of trigger size; it gates clicks, hover marker and targeting ray. Scripted Sit still works
+    from any distance. In the SDK's Play Mode, Space (jump) or WASD stands the desktop player up.
     Turn on `useExitPosition` to put the player somewhere else when they get off (beside a bench, outside a car).
     Without it they are lifted 1 m straight up from the seat with their velocity cleared, and drop back down, so getting
     off can't fling them.
@@ -44,6 +46,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [RequireComponent(typeof(BSAttachedObject))]
+    [RequireComponent(typeof(BSPointerRange))]
     [DisallowMultipleComponent]
     [WatchComponent]
     public partial class BSSeat : BSComponentBase
@@ -62,6 +65,28 @@ namespace BS
         [See(initial = "0,0,0.6")][SerializeField] internal Vector3 exitPosition = new Vector3(0f, 0f, 0.6f);
 
         const string LocalUser = "me";
+
+        public bool IsInInteractionRange => BSPointerRange.IsInRange(gameObject, transform.position);
+
+        /// <summary>
+        /// Set by the client: returns true when someone other than the local player is sitting on the seat.
+        /// The SDK has no seat occupancy of its own (who sits where is networked by the client), so with no
+        /// resolver every seat counts as free. Clicking an occupied seat does nothing (FB-752: clicking a
+        /// seated person sat you in their lap); a page's scripted Sit is not gated.
+        /// </summary>
+        public static Func<BSSeat, bool> OccupiedByOtherResolver { get; set; }
+
+        /// <summary>Whether someone other than the local player is sitting on this seat (see <see cref="OccupiedByOtherResolver"/>).</summary>
+        public bool IsOccupiedByOther
+        {
+            get
+            {
+                var resolver = OccupiedByOtherResolver;
+                if (resolver == null) return false;
+                try { return resolver(this); }
+                catch (Exception ex) { Debug.LogException(ex); return false; }
+            }
+        }
 
         // The local player sits on this seat: set when they attach through it, cleared when they get off.
         bool seated;
@@ -91,6 +116,8 @@ namespace BS
 
         internal override void StartStuff()
         {
+            // RequireComponent covers new seats; old scene bundles may predate the shared range component.
+            if (GetComponent<BSPointerRange>() == null) gameObject.AddComponent<BSPointerRange>();
             ConfigureAttachment();
             EnsureAnchorRigidbody();
             HookClicks();
@@ -249,7 +276,12 @@ namespace BS
         {
             if (onClick == null)
             {
-                onClick = (point, normal) => _Sit();
+                onClick = (point, normal) =>
+                {
+                    // BSScene.Click rechecks the actual collider's shared range policy on release.
+                    // Someone else is on it: the click was most likely aimed at them, not the seat.
+                    if (isActiveAndEnabled && !IsOccupiedByOther) _Sit();
+                };
             }
             foreach (var col in GetComponentsInChildren<Collider>(true))
             {

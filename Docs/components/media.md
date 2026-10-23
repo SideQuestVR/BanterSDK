@@ -108,7 +108,10 @@ const browser = await obj.AddComponent(new BS.Browser({
     url: "https://example.com",
     pageWidth: 1280,        // pixels; drawn at 1300 pixels per metre
     pageHeight: 720,
-    actions: ""             // JSON actions to run when it starts
+    actions: "",            // JSON actions to run when it starts
+    rolloffMode: BS.AudioRolloff.Flat,  // how its sound fades with distance: Flat, Logarithmic or Linear
+    minDistance: 1,         // metres at full volume
+    maxDistance: 500        // metres where the fade ends
 }));
 ```
 
@@ -123,7 +126,7 @@ browser.ToggleInteraction(false);   // stop clicks and scrolling reaching the pa
 browser.RunActions(JSON.stringify({ actions: [{ actionType: "postmessage", strParam1: "hello" }] }));
 ```
 
-`pageWidth` and `pageHeight` can change at any time; a browser created from a script starts at 1024 × 576. `mipMaps` and `pixelsPerUnit` aren't used. See [The BS Browser](../browser/bs-browser.md) for the action types, events and sizes.
+`pageWidth` and `pageHeight` can change at any time; a browser created from a script starts at 1024 × 576. `mipMaps` and `pixelsPerUnit` aren't used. By default the page's sound doesn't fade with distance; `rolloffMode`, `minDistance` and `maxDistance` change that (see [Sound](../browser/bs-browser.md#sound)). See [The BS Browser](../browser/bs-browser.md) for the action types, events and sizes.
 
 ## StreetView
 

@@ -32,7 +32,7 @@ namespace BS.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("url, mipMaps, pixelsPerUnit, pageWidth, pageHeight, actions, ");
+            var seeFields = new Label("url, mipMaps, pixelsPerUnit, pageWidth, pageHeight, actions, rolloffMode, minDistance, maxDistance, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

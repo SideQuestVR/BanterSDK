@@ -249,7 +249,8 @@ namespace BS.SDKEditor.Tests
             // ComponentType and PropertyName ordinals are the JS <-> Unity protocol: append-only.
             Assert.AreEqual(79, (int)ComponentType.SpawnerObject);
             Assert.AreEqual(80, (int)ComponentType.PlatformFilter);
-            Assert.AreEqual((int)PropertyName.forceKinematic + 1, (int)PropertyName.includeOnMobile);
+            // After BSSyncedObject.resetAfterSeconds, which shipped first (SDK 4.0.24).
+            Assert.AreEqual((int)PropertyName.resetAfterSeconds + 1, (int)PropertyName.includeOnMobile);
             Assert.AreEqual((int)PropertyName.includeOnMobile + 3, (int)PropertyName.includeInNonVR);
         }
     }
