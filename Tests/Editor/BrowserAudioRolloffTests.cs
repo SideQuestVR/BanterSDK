@@ -101,7 +101,7 @@ namespace BS.SDKEditor.Tests
         {
             var s = New("s").AddComponent<AudioSource>();
             BSBrowser.ApplyRolloff(s, AudioRolloff.Linear, min, max);
-            Assert.IsTrue(s.minDistance >= 0f && !float.IsInfinity(s.minDistance) && !float.IsNaN(s.minDistance), $"min {s.minDistance}");
+            Assert.IsTrue(s.minDistance > 0f && !float.IsInfinity(s.minDistance) && !float.IsNaN(s.minDistance), $"min {s.minDistance}");
             Assert.IsTrue(s.maxDistance > s.minDistance && !float.IsInfinity(s.maxDistance), $"max {s.maxDistance}");
         }
 
@@ -126,6 +126,24 @@ namespace BS.SDKEditor.Tests
             var tracker = new BSBrowser.SpeakerTracker();
             Assert.IsTrue(tracker.Refresh(emitter));
             CollectionAssert.AreEqual(new[] { mine }, tracker.Speakers);
+        }
+
+        [Test]
+        public void Tracker_LeavesACustomEmittersOwnSourcesAlone()
+        {
+            // Greenfield's streaming browser: a Custom emitter playing through its own AudioSource, with its own fade.
+            var emitter = New("streaming").AddComponent<OraAudioEmitter>();
+            emitter.speakerMode = OraSpeakerMode.Custom;
+            emitter.gameObject.AddComponent<AudioSource>();
+            emitter.gameObject.AddComponent<OraSpeakerFilter>().emitter = emitter;
+            AddSpeaker(emitter);
+
+            var tracker = new BSBrowser.SpeakerTracker();
+            Assert.IsFalse(tracker.Refresh(emitter));
+            Assert.IsEmpty(tracker.Speakers);
+
+            emitter.speakerMode = OraSpeakerMode.Managed;
+            Assert.IsTrue(tracker.Refresh(emitter), "back to Ora's own speakers");
         }
 
         [Test]

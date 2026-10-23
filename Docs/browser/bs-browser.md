@@ -51,7 +51,7 @@ The page is drawn at **1300 pixels per metre**, centred on the object:
 - **Typing** goes to the page whose text field has focus. In SDK Play Mode, type on your keyboard (not while flying).
 - **View-only:** `browser.ToggleInteraction(false)` stops clicks and scrolling from reaching the page; `true` turns them back on.
 - **One window:** popups and new windows (`window.open`, links with `target="_blank"`) are blocked, so keep links in the same page.
-- **Sound** plays from the browser's position, as 3D sound. See [Sound](#sound).
+- **Sound** plays from the browser's position, as 3D sound, on PC. See [Sound](#sound).
 
 A BS Browser page is an ordinary web page: it doesn't get your space's `window.BS`. To work with your space, it sends and receives [messages](messages.md).
 
@@ -61,11 +61,11 @@ The page's sound comes from where the browser hangs. By default it doesn't fade:
 
 | `rolloffMode` | How the sound fades |
 |---|---|
-| `Flat` (default) | It doesn't. Same volume at any distance. |
-| `Logarithmic` | Like a real sound. Full volume within `minDistance`, then quieter the further away, quickly at first and slowly after. It gets no quieter beyond `maxDistance`. |
-| `Linear` | Evenly, from full volume at `minDistance` to silence at `maxDistance`. |
+| `Flat` (0, default) | It doesn't. Same volume at any distance. |
+| `Logarithmic` (1) | Like a real sound. Full volume within `minDistance`, then quieter the further away, quickly at first and slowly after. It gets no quieter beyond `maxDistance`. |
+| `Linear` (2) | Evenly, from full volume at `minDistance` to silence at `maxDistance`. |
 
-`minDistance` and `maxDistance` are in metres (default 1 and 500), and the object's scale doesn't change them. For a screen in a room, try `Logarithmic` with a `minDistance` of 2 to 3. All three can change at any time:
+`minDistance` and `maxDistance` are in metres (default 1 and 500; `minDistance` is at least 0.01), and the object's scale doesn't change them. For a screen in a room, try `Logarithmic` with a `minDistance` of 2 to 3. All three can change at any time:
 
 ```js
 browser.rolloffMode = BS.AudioRolloff.Logarithmic;
@@ -75,7 +75,7 @@ browser.maxDistance = 40;
 
 In Visual Scripting they're the BS Browser's **Rolloff Mode**, **Min Distance** and **Max Distance**.
 
-?> On Quest, a world's browsers play their sound through the headset's own web view rather than through the world, so it isn't positioned and these settings have no effect there. They apply on PC.
+?> On Android headsets such as Quest, a world's browsers play their sound through the headset's own web view rather than through the world, so it isn't positioned and these settings have no effect there. They apply on PC, and in SDK Play Mode. Apps older than this SDK don't have `BS.AudioRolloff`; the numbers in the table work there and are ignored.
 
 ## Actions
 

@@ -227,8 +227,8 @@ namespace BS
         /// <summary>Sets one speaker's fade. Flat is how Ora sets up its own speakers: a constant custom curve.</summary>
         internal static void ApplyRolloff(AudioSource speaker, AudioRolloff mode, float min, float max)
         {
-            // A script can send anything: keep min a real distance and max beyond it.
-            min = float.IsNaN(min) || float.IsInfinity(min) ? 1f : Mathf.Max(0f, min);
+            // A script can send anything: keep min a real distance (Logarithmic is silent everywhere at 0) and max beyond it.
+            min = float.IsNaN(min) || float.IsInfinity(min) ? 1f : Mathf.Max(0.01f, min);
             max = float.IsNaN(max) || float.IsInfinity(max) ? 500f : max;
             max = Mathf.Max(max, min + 0.01f);
             switch (mode)
@@ -272,6 +272,10 @@ namespace BS
             /// <summary>Looks for the speakers again when they may have changed. True when it found any.</summary>
             internal bool Refresh(OraAudioEmitter emitter)
             {
+                // Only the speakers Ora builds itself. A Custom emitter plays through AudioSources someone set up
+                // on purpose (Greenfield's streaming browser has its own fade), and Ora leaves those alone too.
+                if (emitter != null && emitter.speakerMode != OraSpeakerMode.Managed)
+                    emitter = null;
                 int childCount = emitter != null ? emitter.transform.childCount : -1;
                 if (emitter == _emitter && childCount == _childCount && !AnyGone())
                     return false;
