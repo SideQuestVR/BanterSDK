@@ -87,6 +87,14 @@ await cup.AddComponent(new BS.Rigidbody({ isKinematic: true }));
 await cup.AddComponent(new BS.SpawnerObject({ maxSpawned: 10 }));
 ```
 
+## PlatformFilter
+
+Shows an object only on the platforms and in the modes you tick: PC or Android, VR or a flat screen, combined with AND (Android + VR only, for example). The platform half is settled when the space is built; the VR half on the player's device. See [Platform Filter](../building-in-unity/platform-filter.md) for the full rules.
+
+```js
+await obj.AddComponent(new BS.PlatformFilter({ includeOnDesktop: false, includeInNonVR: false })); // Quest headsets only
+```
+
 ## WorldObject
 
 Marks a physics object the players' hands can hold: while a hand grabs it, the hand stops colliding with the object's colliders, so it doesn't knock the object out of its own grip. Put it on the object with the Rigidbody. You rarely need it yourself: [Grababble](vr-interaction.md#grababble) adds one, and a [GrabHandle](vr-interaction.md#grabhandle) on a Rigidbody adds one if there isn't one.

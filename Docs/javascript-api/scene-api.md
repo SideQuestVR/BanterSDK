@@ -320,7 +320,8 @@ scene.Deserialise(saved, parentObject);     // adopts anything whose recorded pa
 ```
 
 `IsAndroid` and `IsWindows` describe the device the app runs on, so in the Windows editor `IsWindows` is true
-whatever the build target (use a [Platform Filter](../building-in-unity/platform-filter.md) for build-time choices).
+whatever the build target. To show or hide objects per platform or VR mode, use a
+[Platform Filter](../building-in-unity/platform-filter.md) rather than checking these yourself.
 `IsVR` is the app's own device mode, the same one `GetPlatform` reports as `VR` or `2D`. In Play mode it is
 true only when an XR headset is active. In a graph, use the **Is Android**, **Is Windows** and **Is VR** nodes
 (`BS > Utils`).

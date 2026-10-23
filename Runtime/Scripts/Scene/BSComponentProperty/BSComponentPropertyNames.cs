@@ -289,5 +289,9 @@ namespace BS
         useExitPosition,
         maxSpawned,
         forceKinematic,
+        includeOnMobile,
+        includeOnDesktop,
+        includeInVR,
+        includeInNonVR,
     }
 }

@@ -22,7 +22,7 @@ Publishing builds your scene, uploads it with your world's page, and puts the wo
 
 A build makes one file, `Assets/WebRoot/asset.world`, which holds your scene twice: once for Quest (Android) and once for Windows. Each device downloads only its own part. Building switches Unity between the two platforms, so it can take a while, the first time especially. The Builder opens your scene to build it and reopens whatever you had open afterwards. If `Assets/WebRoot/index.html` doesn't exist, the build creates the starter page.
 
-[Platform Filter](platform-filter.md) objects are left out of the platform they're filtered from, and objects tagged **EditorOnly** are left out of both.
+[Platform Filter](platform-filter.md) objects are left out of the platform they're filtered from (a filter that also restricts VR or Non-VR ships, and decides on the player's device), and objects tagged **EditorOnly** are left out of both.
 
 ## What gets uploaded
 

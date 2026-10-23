@@ -163,6 +163,8 @@ namespace BS
                     return gameObject.AddComponent<BSTeleporter>();
                 case ComponentType.SpawnerObject:
                     return gameObject.AddComponent<BSSpawnerObject>();
+                case ComponentType.PlatformFilter:
+                    return gameObject.AddComponent<BSPlatformFilter>();
                 default:
                     return null;
             }

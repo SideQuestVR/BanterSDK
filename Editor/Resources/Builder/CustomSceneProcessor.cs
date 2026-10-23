@@ -73,7 +73,8 @@ class CustomSceneProcessor : IProcessSceneWithReport
     // Honors BSPlatformFilter: each platform section of a space bundle is built in its own pass, so
     // this runs once per platform on the build copy and drops trees the creator excluded for it.
     // Exclusion removes the entire subtree — a nested filter cannot re-include a child of an
-    // excluded ancestor. Filters on kept trees are stripped so the marker never ships.
+    // excluded ancestor. A kept tree's filter is stripped when the platform was all it decided; one
+    // that also restricts VR / Non-VR ships, because only the player's device can answer that.
     static void ApplyPlatformFilters(UnityEngine.SceneManagement.Scene scene, BuildReport report)
     {
         // report is null for AssetBundle builds; the pipeline has already switched the active
@@ -90,10 +91,17 @@ class CustomSceneProcessor : IProcessSceneWithReport
         foreach (BSPlatformFilter filter in filters)
         {
             if (filter == null) continue; // tree already destroyed by an ancestor filter
-            if (isMobile ? !filter.includeOnMobile : !filter.includeOnDesktop)
+            if (!BSPlatformFilter.IsPlatformIncluded(isMobile, filter.includeOnMobile, filter.includeOnDesktop))
             {
                 LogLine.Do($"BSPlatformFilter: excluding '{filter.gameObject.name}' from the {(isMobile ? "mobile" : "desktop")} ({target}) build.");
                 GameObject.DestroyImmediate(filter.gameObject);
+            }
+            else if (filter.NeedsRuntimeCheck)
+            {
+                // Filters added before the component had a BSObjectId requirement can lack one, and a component
+                // without one cannot register with the scene (its property sync re-enqueues for ever).
+                if (filter.GetComponent<BSObjectId>() == null) filter.gameObject.AddComponent<BSObjectId>();
+                LogLine.Do($"BSPlatformFilter: keeping the filter on '{filter.gameObject.name}' for its VR / Non-VR check.");
             }
             else
             {
