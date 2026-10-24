@@ -10,7 +10,8 @@
         "Unity.InputSystem",
         "SideQuest.Ora",
         "Unity.VisualScripting.Core",
-        "Unity.VisualScripting.Flow"
+        "Unity.VisualScripting.Flow",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [
         "Editor"

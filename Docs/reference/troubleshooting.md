@@ -123,6 +123,10 @@ The app only has the code for the Unity packages it includes. AI Navigation (Nav
 
 The player brings their own camera, so a scene camera that draws to the screen draws the world a second time over it. Give the camera a Render Texture (for screens and mirrors) or disable it; the checklist's **Cameras and audio listeners** check does that for you. Play mode hides the problem, because it switches off scene cameras tagged MainCamera.
 
+### Lighting changes, or the app crashes, after switching away from Adaptive Probe Volumes
+
+Setting the URP asset's **Light Probe System** back to **Light Probe Groups** doesn't remove an earlier Adaptive Probe Volumes bake, and neither does baking again. URP keeps it in the scene on a hidden `ProbeVolumePerSceneData` object, with its baking set and data files. The app sees that data and lights the world with Adaptive Probe Volumes anyway, and data left over from an older bake can crash older versions of the app. The checklist's **Adaptive Probe Volumes data** check finds it and removes it from the scene; save the scene, then delete the baking set and its data files if nothing else uses them.
+
 ### Players arrive at the world origin
 
 The scene has no active spawn point. Add one with **GameObject > BS > Player > Spawn Point** ([Spawn Point and Spawn Range](../building-in-unity/easy-prefabs.md#spawn-point-and-spawn-range-bsspawn)).
