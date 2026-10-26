@@ -33,7 +33,7 @@ The **left mouse button** acts on the nearest thing under the cursor, up to 30 m
 | Under the cursor | What happens |
 |---|---|
 | A web page or UI panel (BS Browsers, BS UI panels, Unity canvases) | It gets the click, hover and scroll, as on a desktop. |
-| A collider on the **Grabbable** layer (20) | You grab it. |
+| A collider on the **Grabbable** layer (20) | You grab it. (The app also grabs UserLayer8 (12); Play mode doesn't yet.) |
 | A collider on the **UI** (5) or **Menu** (22) layer | It's clicked when you let go of the button over the same object: the page's `click` event and Visual Scripting's **On Click** fire. |
 
 Colliders on other layers can't be clicked, as in the app (see [Layers](../building-in-unity/layers.md)). A solid collider in front of a grabbable object blocks the grab; trigger colliders don't, unless they're on the Grabbable, UI or Menu layer.

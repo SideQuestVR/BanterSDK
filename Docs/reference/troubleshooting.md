@@ -13,7 +13,7 @@ Common problems, what causes them, and how to fix them. Many are caught before y
 
 ### An object can't be grabbed
 
-- **Its collider isn't on the Grabbable layer (20).** Hands only grab colliders on that layer. The checklist moves [grab handles](../components/vr-interaction.md#grabhandle) there for you.
+- **Its collider isn't on the Grabbable layer (20).** Hands only grab colliders on Grabbable or UserLayer8 (12), and in Play mode only on Grabbable. The checklist moves [grab handles](../components/vr-interaction.md#grabhandle) there for you.
 - **A grab handle has no collider of its own.** A `BSGrabHandle` is held through a collider on the same object.
 - **It uses `BSGrababble`, placed in the editor.** `BSGrababble` only sets itself up when a page script sets its properties. Use a preset from **GameObject > BS > Grab** instead ([Grab presets](../building-in-unity/easy-prefabs.md#grab-presets)).
 - **In Play mode, something solid is in front of it**, or a page script called `scene.SetCanGrab(false)`.
