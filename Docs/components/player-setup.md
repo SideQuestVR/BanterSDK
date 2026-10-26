@@ -153,6 +153,7 @@ When it starts, it applies all of its values, so anything you don't set goes bac
 | `enableTeleport` | boolean | true | `EnableTeleport`: players can teleport |
 | `enableForceGrab` | boolean | false | `EnableForceGrab`: players can grab objects from a distance |
 | `enableSpiderMan` | boolean | false | `EnableSpiderMan`: players can use the grapple |
+| `enableBirdFlight` | boolean | true | `EnableBirdFlight`: space permission for controller-driven wing flight. Explicit `false` forbids it; the player's Bird Flight preference must also be on. Missing values allow flight. |
 | `enableHandHold` | boolean | true | `EnableHandHold`: players can hold hands |
 | `enableRadar` | boolean | true | `EnableRadar`: the radar is shown |
 | `enableNametags` | boolean | true | `EnableNametags`: name tags show above players |

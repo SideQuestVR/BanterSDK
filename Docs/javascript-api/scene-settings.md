@@ -30,6 +30,7 @@ window.addEventListener("bs-loaded", async () => {
 |---------|------|---------|--------------|
 | `EnableTeleport` | boolean | true | Players can teleport themselves. Teleports you make (`TeleportTo`, spawns, BS Teleporters) work either way. |
 | `EnableSpiderMan` | boolean | false | Players can use the grapple: fire a rope with the trigger (Q or E on desktop) and reel in with grip. |
+| `EnableBirdFlight` | boolean | true | Space permission for bird flight with tracked controllers. Missing values allow flight; explicitly set `false` to forbid it. The player's **Controls > Bird Flight** preference must also be enabled. Draw both hands forward from beside the shoulders while holding both triggers to deploy wings, then release the triggers and flap or glide. In A-Frame, use `sq-enablebirdflight="false"` or `sq-disablebirdflight` to forbid flight. |
 | `EnableForceGrab` | boolean | false | Players can grab objects from a distance. |
 | `EnableNametags` | boolean | true | The name tags over other players. `false` hides them, whatever each player's own Nametags option says. |
 | `EnableAvatars` | boolean | true | Other players' avatars. `false` shows everyone else as a plain placeholder body, and their avatars aren't downloaded. Your own avatar isn't affected. |
