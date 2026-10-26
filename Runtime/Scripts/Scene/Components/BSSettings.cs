@@ -18,6 +18,7 @@ namespace BS
     - `enableTeleport` - Players can teleport.
     - `enableForceGrab` - Players can grab objects from a distance.
     - `enableSpiderMan` - Players can use the grapple (spider-man) ability.
+    - `enableBirdFlight` - Allow controller-driven wing flight, also gated by each player's preference.
     - `enableHandHold` - Players can hold hands.
     - `enableRadar` - Show the radar.
     - `enableNametags` - Show name tags above players.
@@ -117,6 +118,10 @@ namespace BS
         [Tooltip("Lock the physics settings once applied, so nothing can change them afterwards.")]
         [See(initial = "false")][SerializeField] internal bool isPhysicsSettingsLocked = false;
 
+        [Header("Flight")]
+        [Tooltip("Allow optional bird flight with tracked controllers. Players can disable it in Controls.")]
+        [See(initial = "false")][SerializeField] internal bool enableBirdFlight = false;
+
         bool started;
         // The settings object (it is recreated on every page load) that this component locked, if any.
         // Its own locks don't stop it; locks set by anything else do.
@@ -173,6 +178,7 @@ namespace BS
                 if (Has(PropertyName.enableTeleport)) settings.EnableTeleport = enableTeleport;
                 if (Has(PropertyName.enableForceGrab)) settings.EnableForceGrab = enableForceGrab;
                 if (Has(PropertyName.enableSpiderMan)) settings.EnableSpiderMan = enableSpiderMan;
+                if (Has(PropertyName.enableBirdFlight)) settings.EnableBirdFlight = enableBirdFlight;
                 if (Has(PropertyName.enableHandHold)) settings.EnableHandHold = enableHandHold;
                 if (Has(PropertyName.enableRadar)) settings.EnableRadar = enableRadar;
                 if (Has(PropertyName.enableNametags)) settings.EnableNametags = enableNametags;
@@ -246,6 +252,7 @@ namespace BS
         public System.Boolean PhysicsGorillaMode { get { return physicsGorillaMode; } set { physicsGorillaMode = value; UpdateCallback(new List<PropertyName> { PropertyName.physicsGorillaMode }); } }
         public System.Boolean IsSettingsLocked { get { return isSettingsLocked; } set { isSettingsLocked = value; UpdateCallback(new List<PropertyName> { PropertyName.isSettingsLocked }); } }
         public System.Boolean IsPhysicsSettingsLocked { get { return isPhysicsSettingsLocked; } set { isPhysicsSettingsLocked = value; UpdateCallback(new List<PropertyName> { PropertyName.isPhysicsSettingsLocked }); } }
+        public System.Boolean EnableBirdFlight { get { return enableBirdFlight; } set { enableBirdFlight = value; UpdateCallback(new List<PropertyName> { PropertyName.enableBirdFlight }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -268,12 +275,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.enableTeleport, PropertyName.enableForceGrab, PropertyName.enableSpiderMan, PropertyName.enableHandHold, PropertyName.enableRadar, PropertyName.enableNametags, PropertyName.enablePortals, PropertyName.enableGuests, PropertyName.refreshRate, PropertyName.clippingPlane, PropertyName.physicsMoveSpeed, PropertyName.physicsMoveAcceleration, PropertyName.physicsAirControlSpeed, PropertyName.physicsAirControlAcceleration, PropertyName.physicsDrag, PropertyName.physicsFreeFallAngularDrag, PropertyName.physicsJumpStrength, PropertyName.physicsHandPositionStrength, PropertyName.physicsHandRotationStrength, PropertyName.physicsHandSpringiness, PropertyName.physicsGrappleRange, PropertyName.physicsGrappleReelSpeed, PropertyName.physicsGrappleSpringiness, PropertyName.physicsGorillaMode, PropertyName.isSettingsLocked, PropertyName.isPhysicsSettingsLocked, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.enableTeleport, PropertyName.enableForceGrab, PropertyName.enableSpiderMan, PropertyName.enableHandHold, PropertyName.enableRadar, PropertyName.enableNametags, PropertyName.enablePortals, PropertyName.enableGuests, PropertyName.refreshRate, PropertyName.clippingPlane, PropertyName.physicsMoveSpeed, PropertyName.physicsMoveAcceleration, PropertyName.physicsAirControlSpeed, PropertyName.physicsAirControlAcceleration, PropertyName.physicsDrag, PropertyName.physicsFreeFallAngularDrag, PropertyName.physicsJumpStrength, PropertyName.physicsHandPositionStrength, PropertyName.physicsHandRotationStrength, PropertyName.physicsHandSpringiness, PropertyName.physicsGrappleRange, PropertyName.physicsGrappleReelSpeed, PropertyName.physicsGrappleSpringiness, PropertyName.physicsGorillaMode, PropertyName.isSettingsLocked, PropertyName.isPhysicsSettingsLocked, PropertyName.enableBirdFlight, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "Settings" + PropertyName.enableTeleport + enableTeleport + PropertyName.enableForceGrab + enableForceGrab + PropertyName.enableSpiderMan + enableSpiderMan + PropertyName.enableHandHold + enableHandHold + PropertyName.enableRadar + enableRadar + PropertyName.enableNametags + enableNametags + PropertyName.enablePortals + enablePortals + PropertyName.enableGuests + enableGuests + PropertyName.refreshRate + refreshRate + PropertyName.clippingPlane + clippingPlane + PropertyName.physicsMoveSpeed + physicsMoveSpeed + PropertyName.physicsMoveAcceleration + physicsMoveAcceleration + PropertyName.physicsAirControlSpeed + physicsAirControlSpeed + PropertyName.physicsAirControlAcceleration + physicsAirControlAcceleration + PropertyName.physicsDrag + physicsDrag + PropertyName.physicsFreeFallAngularDrag + physicsFreeFallAngularDrag + PropertyName.physicsJumpStrength + physicsJumpStrength + PropertyName.physicsHandPositionStrength + physicsHandPositionStrength + PropertyName.physicsHandRotationStrength + physicsHandRotationStrength + PropertyName.physicsHandSpringiness + physicsHandSpringiness + PropertyName.physicsGrappleRange + physicsGrappleRange + PropertyName.physicsGrappleReelSpeed + physicsGrappleReelSpeed + PropertyName.physicsGrappleSpringiness + physicsGrappleSpringiness + PropertyName.physicsGorillaMode + physicsGorillaMode + PropertyName.isSettingsLocked + isSettingsLocked + PropertyName.isPhysicsSettingsLocked + isPhysicsSettingsLocked;
+            return "Settings" +  PropertyName.enableTeleport + enableTeleport + PropertyName.enableForceGrab + enableForceGrab + PropertyName.enableSpiderMan + enableSpiderMan + PropertyName.enableHandHold + enableHandHold + PropertyName.enableRadar + enableRadar + PropertyName.enableNametags + enableNametags + PropertyName.enablePortals + enablePortals + PropertyName.enableGuests + enableGuests + PropertyName.refreshRate + refreshRate + PropertyName.clippingPlane + clippingPlane + PropertyName.physicsMoveSpeed + physicsMoveSpeed + PropertyName.physicsMoveAcceleration + physicsMoveAcceleration + PropertyName.physicsAirControlSpeed + physicsAirControlSpeed + PropertyName.physicsAirControlAcceleration + physicsAirControlAcceleration + PropertyName.physicsDrag + physicsDrag + PropertyName.physicsFreeFallAngularDrag + physicsFreeFallAngularDrag + PropertyName.physicsJumpStrength + physicsJumpStrength + PropertyName.physicsHandPositionStrength + physicsHandPositionStrength + PropertyName.physicsHandRotationStrength + physicsHandRotationStrength + PropertyName.physicsHandSpringiness + physicsHandSpringiness + PropertyName.physicsGrappleRange + physicsGrappleRange + PropertyName.physicsGrappleReelSpeed + physicsGrappleReelSpeed + PropertyName.physicsGrappleSpringiness + physicsGrappleSpringiness + PropertyName.physicsGorillaMode + physicsGorillaMode + PropertyName.isSettingsLocked + isSettingsLocked + PropertyName.isPhysicsSettingsLocked + isPhysicsSettingsLocked + PropertyName.enableBirdFlight + enableBirdFlight;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -549,6 +556,15 @@ namespace BS
                     {
                         isPhysicsSettingsLocked = valisPhysicsSettingsLocked.x;
                         changedProperties.Add(PropertyName.isPhysicsSettingsLocked);
+                    }
+                }
+                if (values[i] is BSBool)
+                {
+                    var valenableBirdFlight = (BSBool)values[i];
+                    if (valenableBirdFlight.n == PropertyName.enableBirdFlight)
+                    {
+                        enableBirdFlight = valenableBirdFlight.x;
+                        changedProperties.Add(PropertyName.enableBirdFlight);
                     }
                 }
             }
@@ -865,6 +881,18 @@ namespace BS
                     name = PropertyName.isPhysicsSettingsLocked,
                     type = PropertyType.Bool,
                     value = isPhysicsSettingsLocked,
+                    componentType = ComponentType.Settings,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.enableBirdFlight,
+                    type = PropertyType.Bool,
+                    value = enableBirdFlight,
                     componentType = ComponentType.Settings,
                     oid = oid,
                     cid = cid

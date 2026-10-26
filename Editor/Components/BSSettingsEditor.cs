@@ -32,7 +32,7 @@ namespace BS.SDKEditor
             var title = new Label("PROPERTIES SEEN BY JS");
             title.style.fontSize = 14;
             myInspector.Add(title);
-            var seeFields = new Label("enableTeleport, enableForceGrab, enableSpiderMan, enableHandHold, enableRadar, enableNametags, enablePortals, enableGuests, refreshRate, clippingPlane, physicsMoveSpeed, physicsMoveAcceleration, physicsAirControlSpeed, physicsAirControlAcceleration, physicsDrag, physicsFreeFallAngularDrag, physicsJumpStrength, physicsHandPositionStrength, physicsHandRotationStrength, physicsHandSpringiness, physicsGrappleRange, physicsGrappleReelSpeed, physicsGrappleSpringiness, physicsGorillaMode, isSettingsLocked, isPhysicsSettingsLocked, ");
+            var seeFields = new Label("enableTeleport, enableForceGrab, enableSpiderMan, enableHandHold, enableRadar, enableNametags, enablePortals, enableGuests, refreshRate, clippingPlane, physicsMoveSpeed, physicsMoveAcceleration, physicsAirControlSpeed, physicsAirControlAcceleration, physicsDrag, physicsFreeFallAngularDrag, physicsJumpStrength, physicsHandPositionStrength, physicsHandRotationStrength, physicsHandSpringiness, physicsGrappleRange, physicsGrappleReelSpeed, physicsGrappleSpringiness, physicsGorillaMode, isSettingsLocked, isPhysicsSettingsLocked, enableBirdFlight, ");
             seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
             seeFields.style.flexWrap = Wrap.Wrap;
             seeFields.style.whiteSpace = WhiteSpace.Normal;

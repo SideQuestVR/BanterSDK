@@ -21,6 +21,8 @@ namespace BS
         public bool EnableForceGrab { get { return _EnableForceGrab; } set { _EnableForceGrab = value; scene.events.OnEnableForceGrabChanged.Invoke(value); } }
         private bool _EnableSpiderMan = false;
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
+        private bool _EnableBirdFlight = false;
+        public bool EnableBirdFlight { get { return _EnableBirdFlight; } set { _EnableBirdFlight = value; scene.events.OnEnableBirdFlightChanged.Invoke(value); } }
         // TODO(not wired up in the app yet): let players grab and hold other players' hands (remote players' hands get
         // grabbable colliders, also gated by the player's own Hand Holding comfort option). Remote players have no hand
         // colliders in the client yet.
@@ -186,6 +188,7 @@ namespace BS
             EnableTeleport = true;
             EnableForceGrab = false;
             EnableSpiderMan = false;
+            EnableBirdFlight = false;
             EnableHandHold = true;
             EnableRadar = true;
             EnableNametags = true;
