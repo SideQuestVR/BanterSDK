@@ -1,6 +1,6 @@
 # VR Interaction Components
 
-Grabbing works with colliders on the **Grabbable layer** (20, `BS.L.Grabbable`). Whatever a player grabs, your page gets `grab` and `drop` events on the object (see [GameObject Events](../javascript-api/gameobject-api.md#gameobject-events)). The [grab presets](../building-in-unity/easy-prefabs.md#grab-presets) under **GameObject > BS > Grab** are ready-made grabbable objects.
+Grabbing works with colliders on the **Grabbable layer** (20, `BS.L.Grabbable`), and in the app also on UserLayer8 (12), which players can teleport onto as well (see [Layers](../building-in-unity/layers.md)). Whatever a player grabs, your page gets `grab` and `drop` events on the object (see [GameObject Events](../javascript-api/gameobject-api.md#gameobject-events)). The [grab presets](../building-in-unity/easy-prefabs.md#grab-presets) under **GameObject > BS > Grab** are ready-made grabbable objects.
 
 `grabType` takes a `BS.BSGrabType`:
 
