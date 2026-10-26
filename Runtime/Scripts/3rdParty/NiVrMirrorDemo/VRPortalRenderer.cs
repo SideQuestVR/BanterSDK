@@ -1,7 +1,75 @@
 using UnityEngine;
 using UnityEngine.XR;
+using System.Collections.Generic;
 
+[DefaultExecutionOrder(700)]
 public class VRPortalRenderer : MonoBehaviour {
+    static readonly List<VRPortalRenderer> Active = new List<VRPortalRenderer>();
+    public static IReadOnlyList<VRPortalRenderer> ActiveMirrors => Active;
+    Renderer _surface;
+
+    public bool TryGetJiggleView(bool rightEye, out Matrix4x4 worldToClip, out Vector3 position, out int mask) {
+        worldToClip = Matrix4x4.identity;
+        position = default;
+        mask = cameraViewMask;
+        Camera camera = _srcCamera;
+        if (!camera) return false;
+        // updateEyePos uses the main-camera pose in non-XR, even with a source override.
+        var poseCamera = XRSettings.isDeviceActive ? camera : Camera.main;
+        if (!poseCamera) return false;
+        var eyePosition = poseCamera.transform.position;
+        var eyeRotation = poseCamera.transform.rotation;
+        if (XRSettings.isDeviceActive) {
+            TryGetEye(out eyePosition, out eyeRotation, rightEye ? XRNode.RightEye : XRNode.LeftEye);
+            var parent = camera.transform.parent;
+            if (parent) { eyePosition = parent.TransformPoint(eyePosition); eyeRotation = parent.rotation * eyeRotation; }
+        }
+        return TryGetJiggleView(eyePosition, eyeRotation, camera.nearClipPlane, camera.farClipPlane,
+            out worldToClip, out position, out mask);
+    }
+
+    /// <summary>Conservative surface test used by animation budgets; this does not render the mirror.</summary>
+    public bool SurfaceInView(Plane[] planes, int cullingMask) {
+        return isActiveAndEnabled && _surface && _surface.enabled && _surface.gameObject.activeInHierarchy
+            && (cullingMask & (1 << _surface.gameObject.layer)) != 0
+            && Finite(_surface.bounds.center) && Finite(_surface.bounds.extents)
+            && GeometryUtility.TestPlanesAABB(planes, _surface.bounds);
+    }
+
+    /// <summary>A conservative reflected/portal frustum, without the oblique near-plane cut.</summary>
+    public bool TryGetJiggleView(Vector3 eyePosition, Quaternion eyeRotation, float near, float far,
+        out Matrix4x4 worldToClip, out Vector3 position, out int mask) {
+        worldToClip = Matrix4x4.identity;
+        position = default;
+        mask = cameraViewMask;
+        if (!isActiveAndEnabled || !float.IsFinite(near) || !float.IsFinite(far) || near <= 0f || far <= near
+            || !float.IsFinite(cameraFov) || cameraFov <= 0f || cameraFov >= 180f || !Finite(eyePosition)
+            || !float.IsFinite(eyeRotation.x) || !float.IsFinite(eyeRotation.y)
+            || !float.IsFinite(eyeRotation.z) || !float.IsFinite(eyeRotation.w)) return false;
+        var source = new Coord(transform);
+        var target = !mirrorMode && portalTransform ? new Coord(portalTransform) : source;
+        Vector3 p = source.worldToLocalPos(eyePosition);
+        Vector3 f = source.worldToLocalDir(eyeRotation * Vector3.forward);
+        Vector3 u = source.worldToLocalDir(eyeRotation * Vector3.up);
+        if (mirrorMode) {
+            p = Vector3.Reflect(p, Vector3.up);
+            f = Vector3.Reflect(f, Vector3.up);
+            u = Vector3.Reflect(u, Vector3.up);
+        }
+        position = target.localToWorldPos(p);
+        f = target.localToWorldDir(f);
+        u = target.localToWorldDir(u);
+        if (!Finite(position) || !Finite(f) || !Finite(u) || f.sqrMagnitude < 0.0001f
+            || Vector3.Cross(f, u).sqrMagnitude < 0.0001f) return false;
+        Quaternion rotation = Quaternion.LookRotation(f, u);
+        var view = Matrix4x4.Scale(new Vector3(1f, 1f, -1f)) * Matrix4x4.TRS(position, rotation, Vector3.one).inverse;
+        // Textures are square; before its first target assignment the camera may retain game-view aspect.
+        float aspect = renderCam ? Mathf.Max(1f, renderCam.aspect) : 1f;
+        worldToClip = Matrix4x4.Perspective(cameraFov, aspect, near, far) * view;
+        return true;
+    }
+
+    static bool Finite(Vector3 value) => float.IsFinite(value.x) && float.IsFinite(value.y) && float.IsFinite(value.z);
     [Header("Camera")]
     [SerializeField] private Camera sourceCamOverride = null;
     [SerializeField] private LayerMask cameraViewMask;
@@ -95,6 +163,8 @@ public class VRPortalRenderer : MonoBehaviour {
     }
 
     void OnEnable() {
+        if (!Active.Contains(this)) Active.Add(this);
+        _surface = GetComponent<Renderer>();
         CreateRenderTextures();
 
         renderCamObj = new GameObject("Render Camera");
@@ -126,6 +196,7 @@ public class VRPortalRenderer : MonoBehaviour {
     }
 
     void OnDisable() {
+        Active.Remove(this);
         DestroyRenderTextures();
         if (renderCamObj != null) Destroy(renderCamObj);
         if (eyeDebugObjL != null) Destroy(eyeDebugObjL);
