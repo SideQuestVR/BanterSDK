@@ -119,8 +119,8 @@ namespace BS
         [See(initial = "false")][SerializeField] internal bool isPhysicsSettingsLocked = false;
 
         [Header("Flight")]
-        [Tooltip("Allow optional bird flight with tracked controllers. Players can disable it in Controls.")]
-        [See(initial = "false")][SerializeField] internal bool enableBirdFlight = false;
+        [Tooltip("Allow bird flight with tracked controllers. Allowed by default; disable to forbid it in this space. Players can also disable it in Controls.")]
+        [See(initial = "true")][SerializeField] internal bool enableBirdFlight = true;
 
         bool started;
         // The settings object (it is recreated on every page load) that this component locked, if any.
