@@ -128,6 +128,7 @@ public class BSSceneEvents
     /// <c>{"exists":bool,"value":"string form","json":"json form","isPublic":bool}</c>.
     /// </summary>
     public Func<string, string> GetSpaceStateValue = new Func<string, string>(key => "{\"exists\":false}");
+    public Func<string, string> GetWorldStateValue = new Func<string, string>(key => "{\"exists\":false}");
 
     /// <summary>
     /// Synchronous read of a user prop. Arguments are (userIdOrMe, key); the envelope is

@@ -993,6 +993,8 @@ namespace BS
         /// <summary>Route a page's <c>!sso!</c> request. <paramref name="msg"/> is "sub§base64(JSON)".</summary>
         public void SpaceStateOp(string msg, int reqId) => StateOp(BSStateTarget.Space, APICommands.SPACE_STATE_OP, msg, reqId);
 
+        public void WorldStateOp(string msg, int reqId) => StateOp(BSStateTarget.World, APICommands.WORLD_STATE_OP, msg, reqId);
+
         /// <summary>Route a page's <c>!uso!</c> request. Same encoding.</summary>
         public void UserStateOp(string msg, int reqId) => StateOp(BSStateTarget.User, APICommands.USER_STATE_OP, msg, reqId);
 
@@ -1011,7 +1013,7 @@ namespace BS
             }
             catch (Exception)
             {
-                SendError(reqId, (target == BSStateTarget.Space ? "SPACE_STATE_OP" : "USER_STATE_OP") + ": malformed payload");
+                SendError(reqId, (target == BSStateTarget.World ? "WORLD_STATE_OP" : target == BSStateTarget.Space ? "SPACE_STATE_OP" : "USER_STATE_OP") + ": malformed payload");
                 return;
             }
 
