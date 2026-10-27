@@ -51,6 +51,7 @@ public class APICommands
     public const string SET_USER_PROPS = "!sup!";
     /// <summary>JSON space-state op (request/response). Payload: "sub§base64(UTF-8 JSON)".</summary>
     public const string SPACE_STATE_OP = "!sso!";
+    public const string WORLD_STATE_OP = "!wso!";
     /// <summary>JSON user-state op (request/response). Same encoding as SPACE_STATE_OP.</summary>
     public const string USER_STATE_OP = "!uso!";
     /// <summary>JSON progression op (request/response): fire a world-bound XP hook, read my progression. Same encoding as SPACE_STATE_OP.</summary>
@@ -132,6 +133,8 @@ public class APICommands
     public const string FULL_SPACE_STATE_JSON = "fsj!";
     /// <summary>Incremental JSON space-state change. Payload: base64(UTF-8 JSON).</summary>
     public const string SPACE_STATE_JSON = "spj!";
+    public const string FULL_WORLD_STATE_JSON = "fwj!";
+    public const string WORLD_STATE_JSON = "wpj!";
     /// <summary>Incremental JSON user-state change. Payload: base64(UTF-8 JSON).</summary>
     public const string USER_STATE_JSON = "upj!";
     public const string VOICE_STARTED = "vs!";
