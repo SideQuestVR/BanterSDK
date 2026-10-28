@@ -343,6 +343,10 @@ namespace BS
                     var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
                     scene.events.OnDeepLink.Invoke(parts[0], parts[1]);
                 }
+                else if (msg.StartsWith(APICommands.LOAD_URL))
+                {
+                    scene.GoToUrl(GetMsgData(msg, APICommands.LOAD_URL));
+                }
                 else if (msg.StartsWith(APICommands.ONE_SHOT))
                 {
                     var parts = GetMsgData(msg, APICommands.ONE_SHOT).Split(MessageDelimiters.PRIMARY, 2);

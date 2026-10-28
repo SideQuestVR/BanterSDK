@@ -478,6 +478,26 @@ namespace BS
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnPageOpened.Invoke(msg), $"{nameof(BSScene)}.{nameof(OpenPage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OPEN_PAGE);
         }
+        /// <summary>
+        /// Sends the local player to another space by its URL: JS <c>scene.GoToUrl(url)</c> and the Go To URL node.
+        /// Only absolute http(s) URLs; the server picks the instance, as for a portal. The client ignores it while a
+        /// space is already loading.
+        /// </summary>
+        public void GoToUrl(string url)
+        {
+            url = url?.Trim();
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                Debug.LogWarning($"[BS] GoToUrl needs an http or https URL, got '{url}'.");
+                return;
+            }
+#if UNITY_EDITOR && !GREENFIELD_PROJECT
+            // SDK Play Mode tests the creator's own world, so it never leaves it; only the client follows the URL.
+            Debug.Log($"[BS] In the client, GoToUrl takes the player to {url}. SDK Play Mode stays in your world.");
+#else
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnLoadUrl.Invoke(url), $"{nameof(BSScene)}.{nameof(GoToUrl)}"));
+#endif
+        }
         public void StartTTS(string msg, int reqId)
         {
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStarted.Invoke(msg == "1"), $"{nameof(BSScene)}.{nameof(StartTTS)}"));
