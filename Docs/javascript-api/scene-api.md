@@ -290,8 +290,9 @@ scene.GoToUrl("https://my-other-world.worldspace.host");
 
 `GoToUrl` takes the space's URL, which must be an absolute `http` or `https` URL; anything else is ignored with a
 warning. The server picks the instance, as it does for a [portal](../components/media.md#portal). The call is ignored while a
-space is already loading, and in SDK Play Mode it only logs where it would go. In a graph, use the **Go To URL** node
-(`BS > Space`).
+space is loading, and that includes this space's own load, so call it once the player is in (from a player action, for
+example), not straight away on start-up. In SDK Play Mode it only logs where it would go. In a graph, use the **Go To
+URL** node (`BS > Space`).
 
 ## Deep Links
 

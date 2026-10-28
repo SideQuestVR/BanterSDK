@@ -174,7 +174,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 |------|---------|
 | Get Space URL | Get the current space URL |
 | Get Users | Get the users in the space, as a list of BSUser |
-| Go To URL | Send the local player to another space by its `URL` (http or https only); the server picks the instance. Ignored while a space is loading; in SDK Play Mode it only logs |
+| Go To URL | Send the local player to another space by its `URL` (http or https only); the server picks the instance. Ignored while a space is loading, this one included, so not straight from On Start; in SDK Play Mode it only logs |
 | Load Quest Home | Load a Quest home environment |
 | Send a One Shot Message | Broadcast a one-shot network message |
 | Set World Browser Size | Size the space's own page in pixels (default 1024 × 768), for example 1920 × 1080 to fill a 16:9 screen through `asset_browser_world`. Clamped to 320–3840 × 180–2160; 0 × 0 restores the default, as does loading the next space |

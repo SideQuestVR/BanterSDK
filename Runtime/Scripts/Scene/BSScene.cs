@@ -488,7 +488,9 @@ namespace BS
             url = url?.Trim();
             if (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             {
-                Debug.LogWarning($"[BS] GoToUrl needs an http or https URL, got '{url}'.");
+                // Capped: the URL comes from world content, and Player.log can be uploaded.
+                var shown = url == null ? "" : url.Length > 200 ? url.Substring(0, 200) + "…" : url;
+                Debug.LogWarning($"[BS] GoToUrl needs an http or https URL, got '{shown}'.");
                 return;
             }
 #if UNITY_EDITOR && !GREENFIELD_PROJECT
