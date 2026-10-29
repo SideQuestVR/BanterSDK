@@ -281,6 +281,24 @@ namespace BS
                 throw new Exception(uwr.error);
             }
         }
+        /// <summary>The page's meta image (og:image) for <paramref name="url"/>, or null.</summary>
+        public static async Task<string> PageImage(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return null;
+            if (url.Contains("?"))
+                url = url.Split('?')[0];
+            try
+            {
+                var text = await Text(GetUrl(EnvType.PROD, UrlType.API) + "/v2/urlmetadata?url=" + UnityWebRequest.EscapeURL(url));
+                var meta = JsonUtility.FromJson<MetaData>(text);
+                return meta != null && !string.IsNullOrEmpty(meta.image) ? meta.image : null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         public static async Task<Community> SpaceMeta(string url)
         {
             if (url.Contains("?"))

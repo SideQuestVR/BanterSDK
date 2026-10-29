@@ -254,6 +254,14 @@ namespace BS
             }
         }
         Texture2D loadingTexture;
+        int spaceImageGeneration;
+
+        /// <summary>
+        /// Optional host hook: the image URL to show on the loading screen for a space URL (e.g. the world's
+        /// loading image or thumbnail from the platform API), or null when the host has none. When it returns
+        /// nothing, the page's own meta image (og:image) is used.
+        /// </summary>
+        public static Func<string, Task<string>> SpaceImageResolver;
         public SceneState state = SceneState.NONE;
         public bool isReady
         {
@@ -2777,14 +2785,40 @@ namespace BS
             loadingManager.Preload();
             await loadingManager.LoadIn(url);
         }
+        /// <summary>
+        /// Finds the loading-screen image for <paramref name="url"/>: the host's <see cref="SpaceImageResolver"/>
+        /// first (world loading image / thumbnail), else the page's meta image. Runs alongside the load rather than
+        /// before it; the image is handed to the loading screen with the next progress update whenever it arrives.
+        /// A result that arrives after a newer load started, or after this load finished, is dropped.
+        /// </summary>
         public async Task ShowSpaceImage(string url)
         {
+            int generation = ++spaceImageGeneration;
+            loadingTexture = null;
             try
             {
-                var space = await Get.SpaceMeta(url);
-                if (space != null && !string.IsNullOrEmpty(space.icon))
+                string imageUrl = null;
+                var resolver = SpaceImageResolver;
+                if (resolver != null)
                 {
-                    loadingTexture = await Get.Texture(space.icon + "?size=1280");
+                    try
+                    {
+                        imageUrl = await resolver(url);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.Log("[Banter] Space image resolver failed for " + url + ": " + e.Message);
+                    }
+                }
+                if (string.IsNullOrEmpty(imageUrl))
+                {
+                    imageUrl = await Get.PageImage(url);
+                }
+                if (string.IsNullOrEmpty(imageUrl) || generation != spaceImageGeneration || !loading) return;
+                var texture = await Get.Texture(imageUrl);
+                if (texture != null && generation == spaceImageGeneration && loading)
+                {
+                    loadingTexture = texture;
                 }
             }
             catch (Exception e)
@@ -2852,6 +2886,9 @@ namespace BS
         {
             state = SceneState.NONE;
             loading = true;
+            // Drop any image a previous load's lookup was still fetching.
+            spaceImageGeneration++;
+            loadingTexture = null;
             // `loaded` was never reset by a new load, so a stale true from the previous space could
             // satisfy the WaitUntil gate below before this space registered a single component.
             loaded = false;
@@ -2900,7 +2937,8 @@ namespace BS
                     {
                         // The fallback keeps the original URL as CurrentUrl; asking the API about a
                         // URL we already know is not a world is pointless.
-                        await ShowSpaceImage(displayUrl);
+                        // Not awaited: the image lookup must not delay the load.
+                        _ = ShowSpaceImage(displayUrl);
                     }
                     Debug.Log("Before LoadUrl");
                     // Wait for the page to finish or fail (both set `loaded`), be superseded by a
