@@ -296,5 +296,6 @@ namespace BS
         includeInNonVR,
         rolloffMode,
         enableBirdFlight,
+        viewMode,
     }
 }

@@ -41,6 +41,7 @@ namespace BS.LocalMultiplayer.Attachments
         private readonly Dictionary<string, Pending> _pending = new(StringComparer.Ordinal);
         // Remote pilot state awaiting the peer's avatar / seat object, keyed by roomSessionId.
         private readonly Dictionary<string, PendingPilot> _pendingPilots = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, string> _remotePilotSeats = new(StringComparer.Ordinal);
         private readonly List<string> _retryScratch = new();
 
         // Local pilot broadcast state: while seated we publish our hip's seat-relative offset (debounced)
@@ -67,6 +68,8 @@ namespace BS.LocalMultiplayer.Attachments
         private readonly Action<string, string, string, bool> _onUserStateChanged;
         private readonly Action<IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>>> _onUserStateSnapshot;
         private readonly Action<LocalPeer> _onPeerLeft;
+        private readonly Action<string> _onUserStateRemoved;
+        private readonly Func<BSSeat, bool> _occupiedByOther;
         private bool _started;
 
         public LocalAttachmentBridge(ILocalHost host, LocalAttachmentsSystem attachments, AttachmentDiagnostics diagnostics)
@@ -79,6 +82,8 @@ namespace BS.LocalMultiplayer.Attachments
             _onUserStateChanged = OnUserStateChanged;
             _onUserStateSnapshot = OnUserStateSnapshot;
             _onPeerLeft = OnPeerLeft;
+            _onUserStateRemoved = ClearPilot;
+            _occupiedByOther = IsOccupiedByOther;
         }
 
         /// <summary>The seat this player broadcasts as riding, or null.</summary>
@@ -102,11 +107,13 @@ namespace BS.LocalMultiplayer.Attachments
             _attachments.LocalAttachmentChanged += _onLocalAttachmentChanged;
             _attachments.LocalPilotChanged += _onLocalPilotChanged;
             _client = session;
+            BSSeat.OccupiedByOtherResolver = _occupiedByOther;
             if (_client != null)
             {
                 _client.EngineUserStateChanged += _onUserStateChanged;
                 _client.EngineUserStateSnapshot += _onUserStateSnapshot;
                 _client.PeerLeft += _onPeerLeft;
+                _client.EngineUserStateRemoved += _onUserStateRemoved;
             }
         }
 
@@ -124,7 +131,11 @@ namespace BS.LocalMultiplayer.Attachments
                 _client.EngineUserStateChanged -= _onUserStateChanged;
                 _client.EngineUserStateSnapshot -= _onUserStateSnapshot;
                 _client.PeerLeft -= _onPeerLeft;
+                _client.EngineUserStateRemoved -= _onUserStateRemoved;
             }
+            if (BSSeat.OccupiedByOtherResolver == _occupiedByOther)
+                BSSeat.OccupiedByOtherResolver = null;
+            _remotePilotSeats.Clear();
             _client = null;
             _scene = null;
         }
@@ -215,6 +226,15 @@ namespace BS.LocalMultiplayer.Attachments
         private void OnUserStateSnapshot(IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> users)
         {
             if (users == null) return;
+            _retryScratch.Clear();
+            _retryScratch.AddRange(_remotePilotSeats.Keys);
+            foreach (var roomSessionId in _retryScratch)
+            {
+                if (!users.TryGetValue(roomSessionId, out var state) || state == null
+                    || !state.TryGetValue(PilotKey, out var pilot) || !AttachmentWireCodec.TryParsePilot(pilot, out _))
+                    ClearPilot(roomSessionId);
+            }
+            _retryScratch.Clear();
             foreach (var user in users)
             {
                 if (user.Value == null || IsSelf(user.Key)) continue;
@@ -257,6 +277,7 @@ namespace BS.LocalMultiplayer.Attachments
         private void ReceivePilot(string roomSessionId, string serialized)
         {
             if (!AttachmentWireCodec.TryParsePilot(serialized, out var pp)) { ClearPilot(roomSessionId); return; }
+            _remotePilotSeats[roomSessionId] = pp.SeatObjId;
             _pendingPilots[roomSessionId] = pp;
             if (!_pilotSince.ContainsKey(roomSessionId)) _pilotSince[roomSessionId] = Time.realtimeSinceStartupAsDouble;
             TryApplyPilot(roomSessionId);
@@ -264,6 +285,8 @@ namespace BS.LocalMultiplayer.Attachments
 
         private void ClearPilot(string roomSessionId)
         {
+            if (string.IsNullOrEmpty(roomSessionId)) return;
+            _remotePilotSeats.Remove(roomSessionId);
             _pendingPilots.Remove(roomSessionId);
             ClearPilotDiagnostic(roomSessionId);
             Bones?.SetPilotSeat(roomSessionId, null, Vector3.zero, Quaternion.identity);
@@ -344,6 +367,14 @@ namespace BS.LocalMultiplayer.Attachments
 
         private bool IsSelf(string roomSessionId) => _client != null && roomSessionId == _client.OwnRoomSessionId;
 
+        private bool IsOccupiedByOther(BSSeat seat)
+        {
+            if (seat == null || !seat.TryGetComponent<BSObjectId>(out var id)) return false;
+            foreach (var seatId in _remotePilotSeats.Values)
+                if (string.Equals(seatId, id.Id, StringComparison.Ordinal)) return true;
+            return false;
+        }
+
         // ---------------------------------------------------------------- diagnostics (no behaviour)
 
         // A peer leaving the room we stay in. Whatever was reproduced on their avatar dies with it, as in production;
@@ -351,6 +382,7 @@ namespace BS.LocalMultiplayer.Attachments
         private void OnPeerLeft(LocalPeer peer)
         {
             if (peer == null || string.IsNullOrEmpty(peer.RoomSessionId)) return;
+            ClearPilot(peer.RoomSessionId);
             if (_client == null || _client.State != SessionState.Joined) return;
             _retryScratch.Clear();
             foreach (var kv in _reproducedFrom)

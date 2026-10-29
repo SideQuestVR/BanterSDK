@@ -9,7 +9,7 @@ namespace BS
     #### Banter Seat
     Make an object a seat: clicking it sits the local player on it, and moving or jumping stands them up.
     The seat is the object's `BSAttachedObject`, set up to attach the player to the object (physics, jointed,
-    seated pose). The player sits at this object's position and faces its forward, so place its origin
+    seated pose). In Legacy mode the player sits at this object's position and faces its forward, so place its origin
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
     the only clickable layers. Its Pointer Range component defaults to 2 m from the player's head to the sitting
     position, independently of trigger size; it gates clicks, hover marker and targeting ray. Scripted Sit still works
@@ -22,7 +22,8 @@ namespace BS
     - `unseatOnMove` - Stand the player up when they push the move stick / WASD.
     - `unseatOnJump` - Stand the player up when they jump.
     - `useExitPosition` - Teleport the player to `exitPosition` when they get off the seat, however they get off. Off: 1 m above the seat.
-    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). They face the way the seat faces.
+    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.
+    - `viewMode` - Legacy (0), UprightFollowYaw (1, default), or UprightIndependent (2). All modes align facing on entry and use the authored pelvis/leg pose, captured when sitting. Upright modes preserve viewing direction on exit.
 
     **Methods**
     ```js
@@ -61,7 +62,7 @@ namespace BS
                  "Off: they are lifted 1 m above the seat instead, so getting off can't fling them.")]
         [See(initial = "false")][SerializeField] internal bool useExitPosition = false;
 
-        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). They face the way the seat faces.")]
+        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.")]
         [See(initial = "0,0,0.6")][SerializeField] internal Vector3 exitPosition = new Vector3(0f, 0f, 0.6f);
 
         const string LocalUser = "me";
@@ -89,7 +90,9 @@ namespace BS
         }
 
         // The local player sits on this seat: set when they attach through it, cleared when they get off.
+        static uint localSitGeneration;
         bool seated;
+        SeatViewMode seatedViewMode;
         BSAttachedObject hookedTo;
 
         BSAttachedObject attached;
@@ -131,6 +134,7 @@ namespace BS
 
         internal override void DestroyStuff()
         {
+            ClearLegPreview();
             if (hookedTo != null)
             {
                 hookedTo.Attached -= OnAttached;
@@ -204,7 +208,10 @@ namespace BS
         {
             if (IsLocalUser(uid))
             {
+                localSitGeneration++;
                 seated = true;
+                seatedViewMode = viewMode == SeatViewMode.UprightFollowYaw || viewMode == SeatViewMode.UprightIndependent
+                    ? viewMode : SeatViewMode.Legacy;
             }
         }
 
@@ -233,20 +240,33 @@ namespace BS
                 var exit = useExitPosition
                     ? transform.TransformPoint(exitPosition)
                     : transform.position + Vector3.up * DefaultExitHeight;
-                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y));
+                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y, seatedViewMode != SeatViewMode.Legacy));
             }
         }
 
         // A frame later, once the client has let the player go (the seat joint and the seated loco stack are undone).
-        System.Collections.IEnumerator TeleportToExit(Vector3 position, float yaw)
+        System.Collections.IEnumerator TeleportToExit(Vector3 position, float legacyYaw, bool preserveView)
         {
+            var generation = localSitGeneration;
             yield return null;
+            // A later sit owns the player, even if they stood up again before this exit resumes.
+            if (generation != localSitGeneration) yield break;
             var head = Camera.main;
             if (head != null && Vector3.Distance(head.transform.position, transform.position) > ExitSkipDistance)
             {
                 yield break;
             }
+            var yaw = preserveView && head != null ? ViewHeading(head.transform.rotation) : legacyYaw;
             BSScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, yaw, 0f), true, false);
+        }
+
+        internal static float ViewHeading(Quaternion rotation)
+        {
+            // Match the locomotion head-forward frame even when the physical head looks vertically.
+            var forward = rotation * Vector3.forward;
+            var up = rotation * Vector3.up;
+            forward = Vector3.Slerp(forward, forward.y < 0f ? up : -up, Mathf.Abs(forward.y));
+            return Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
         }
 
         static bool IsLocalUser(string uid)
@@ -329,6 +349,7 @@ namespace BS
         }
 #endif
         // BS COMPILED CODE 
+        public SeatViewMode ViewMode { get { return viewMode; } set { viewMode = value; UpdateCallback(new List<PropertyName> { PropertyName.viewMode }); } }
         public System.Boolean UnseatOnMove { get { return unseatOnMove; } set { unseatOnMove = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnMove }); } }
         public System.Boolean UnseatOnJump { get { return unseatOnJump; } set { unseatOnJump = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnJump }); } }
         public System.Boolean UseExitPosition { get { return useExitPosition; } set { useExitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.useExitPosition }); } }
@@ -355,12 +376,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.unseatOnMove, PropertyName.unseatOnJump, PropertyName.useExitPosition, PropertyName.exitPosition, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.unseatOnMove, PropertyName.unseatOnJump, PropertyName.useExitPosition, PropertyName.exitPosition, PropertyName.viewMode, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "Seat" +  PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump + PropertyName.useExitPosition + useExitPosition + PropertyName.exitPosition + exitPosition;
+            return "Seat" +  PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump + PropertyName.useExitPosition + useExitPosition + PropertyName.exitPosition + exitPosition + PropertyName.viewMode + viewMode;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -426,6 +447,15 @@ namespace BS
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
+                if (values[i] is BSInt)
+                {
+                    var valviewMode = (BSInt)values[i];
+                    if (valviewMode.n == PropertyName.viewMode)
+                    {
+                        viewMode = (SeatViewMode)valviewMode.x;
+                        changedProperties.Add(PropertyName.viewMode);
+                    }
+                }
                 if (values[i] is BSBool)
                 {
                     var valunseatOnMove = (BSBool)values[i];
@@ -512,6 +542,18 @@ namespace BS
                     name = PropertyName.exitPosition,
                     type = PropertyType.Vector3,
                     value = exitPosition,
+                    componentType = ComponentType.Seat,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.viewMode,
+                    type = PropertyType.Int,
+                    value = viewMode,
                     componentType = ComponentType.Seat,
                     oid = oid,
                     cid = cid

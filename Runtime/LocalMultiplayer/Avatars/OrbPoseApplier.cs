@@ -40,6 +40,8 @@ namespace BS.LocalMultiplayer.Avatars
         Transform _pilotSeat;
         Vector3 _pilotLocalPos;
         Quaternion _pilotLocalRot = Quaternion.identity;
+        bool _useSeatPose;
+        SeatPose _seatPose;
 
         // Eased copies of the seat-relative offset. The offset arrives over the debounced user-state lane
         // (~10 Hz, only on meaningful change), so applying it raw makes a rider's IN-SEAT movement — turning,
@@ -80,6 +82,7 @@ namespace BS.LocalMultiplayer.Avatars
         {
             _live = false;
             _pilotSeat = null;
+            _useSeatPose = false;
         }
 
         /// <summary>Glue this orb's hip to <paramref name="seat"/> (a networked seat/vehicle transform) at
@@ -92,6 +95,7 @@ namespace BS.LocalMultiplayer.Avatars
             _pilotLocalRot = hipLocalRot;
             if (changed)
             {
+                CaptureSeatPose();
                 _snapNext = true;                  // land cleanly when starting/stopping piloting
                 _pilotLocalPosEased = hipLocalPos; // seed the eased offset to the new seat (don't lerp from stale)
                 _pilotLocalRotEased = hipLocalRot;
@@ -99,10 +103,24 @@ namespace BS.LocalMultiplayer.Avatars
             }
         }
 
+        void CaptureSeatPose()
+        {
+            // shortcut: the SDK wire has hip/head/hands and a seated bit, but no leg poses. A late join
+            // after live seat settings change must use its current seat settings; it cannot recover the
+            // rider's earlier snapshot. Replace this with streamed legs when the SDK gains the full bone stream.
+            var settings = _pilotSeat != null ? _pilotSeat.GetComponent<BSSeat>() : null;
+            _useSeatPose = settings != null;
+            _seatPose = _useSeatPose ? settings.Pose : SeatPose.Default;
+        }
+
         /// <summary>A frame's pose extension. Only the latest is kept; LateUpdate eases toward it.</summary>
         internal void ReceivePose(int validForMs, bool discontinuity, in PoseExt ext)
         {
             if (_rig == null) return;
+            // The user-state lane may coalesce stand/sit on the same seat. An observed standing pose
+            // still marks a new sit, so pick up the next sit's settings even when the seat id is unchanged.
+            if (_hasPose && !_rootOnly && !_target.Seated && ext.Seated && _pilotSeat != null)
+                CaptureSeatPose();
             _target = ext;
             _rootOnly = false;
             Accept(validForMs, discontinuity);
@@ -173,6 +191,8 @@ namespace BS.LocalMultiplayer.Avatars
             }
 
             _rig.ApplyLimbs(target, blend);
+            if (_useSeatPose && _pilotSeat != null && target.Seated)
+                _rig.ApplySeatPose(_pilotSeat, _seatPose);
 
             // The orb is now posed at its real place (not the rest pose at the origin) — announce once.
             if (!_firstPoseNotified)

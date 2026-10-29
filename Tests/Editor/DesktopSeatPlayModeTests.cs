@@ -167,8 +167,9 @@ namespace BS.SDKEditor.Tests
             yield return null;
             Assert.That(controller.IsSeatedOn(seat.transform), Is.True);
             Assert.That((bool)typeof(BSSeat).GetField("seated", PrivateInstance).GetValue(seat), Is.True);
-            Assert.That(Vector3.Distance(controller.transform.position, seat.transform.position), Is.LessThan(.001f));
-            Assert.That(Vector3.Distance(camera.transform.position, seat.transform.position + Vector3.up * .85f), Is.LessThan(.001f));
+            Assert.That(controller.TryGetSeatedHip(out var seatedHip), Is.True);
+            Assert.That(Vector3.Distance(seatedHip.position, seat.transform.position + seat.transform.rotation * seat.Pose.pelvisPosition), Is.LessThan(.001f));
+            Assert.That(Vector3.Distance(camera.transform.position, seatedHip.position + Vector3.up * .65f), Is.LessThan(.001f));
             Assert.That(Vector3.Angle(camera.transform.forward, seat.transform.forward), Is.LessThan(.01f));
             Assert.That(seat.IsVisible, Is.False);
             InputSystem.QueueStateEvent(keyboard, new KeyboardState(Key.Space));

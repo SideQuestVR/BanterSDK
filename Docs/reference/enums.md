@@ -21,6 +21,7 @@ numbers are Unity's own.
 | [`BS.PhysicsMaterialCombine`](#physicsmaterialcombine) | Physics material friction and bounce |
 | [`BS.ConfigurableJointMotion`](#configurablejointmotion), [`BS.RotationDriveMode`](#rotationdrivemode) | Joints |
 | [`BS.BSGrabType`](#bsgrabtype) | Grab handles |
+| [`BS.SeatViewMode`](#seatviewmode) | Seat view rotation and authored lower-body posing |
 | [`BS.AvatarAttachmentType`](#attachment-enums), [`BS.AvatarBoneName`](#attachment-enums), [`BS.AttachmentType`](#attachment-enums) | Attached objects |
 | [`BS.PlayerTag`](global-functions.md#global-functions) | The tags on the local player (strings) |
 | `BS.LegacyAttachmentPosition` | [Legacy APIs](legacy-apis.md) |
@@ -57,6 +58,18 @@ BS.ForceMode.Impulse        // 1: Instant force (affected by mass)
 BS.ForceMode.VelocityChange // 2: Direct velocity change (ignores mass)
 BS.ForceMode.Acceleration   // 5: Continuous acceleration (ignores mass)
 ```
+
+## SeatViewMode
+
+Set a [Seat](../components/player-setup.md#seat)'s `viewMode` before sitting. New seats default to `UprightFollowYaw`; existing explicit mode choices are preserved. All modes use the authored pose and align facing on entry. Mode and pose changes apply on the next sit.
+
+```js
+BS.SeatViewMode.Legacy             // 0: full seat rotation with the authored sitting pose
+BS.SeatViewMode.UprightFollowYaw   // 1: follow position/yaw, remove seat pitch/roll from the view
+BS.SeatViewMode.UprightIndependent // 2: follow position, ignore seat rotation for the view
+```
+
+All three modes keep the authored pelvis and legs attached to the seat's complete rotation while real head/hand tracking remains free. See [Robot pose authoring and comfort limits](../building-in-unity/easy-prefabs.md#seat-bsseat).
 
 ## HandSide
 
