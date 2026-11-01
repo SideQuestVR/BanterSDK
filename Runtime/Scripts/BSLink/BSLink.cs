@@ -1129,6 +1129,10 @@ namespace BS
         {
             Send(APICommands.EVENT + APICommands.KEY + MessageDelimiters.PRIMARY + (int)key);
         }
+        public void OnKeyRelease(KeyCode key)
+        {
+            Send(APICommands.EVENT + APICommands.KEY_RELEASE + MessageDelimiters.PRIMARY + (int)key);
+        }
 
         public void _OnCollisionEnter(GameObject obj, Collision collision)
         {

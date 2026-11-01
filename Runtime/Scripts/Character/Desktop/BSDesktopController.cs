@@ -80,6 +80,8 @@ namespace BS
         BSDesktopPointerCapture _capture;
         BSDesktopMouseHand _hand;
         HardwareKeyboardInput _keyboardInput;
+        // Keys whose key-press reached the page and whose key-release hasn't yet.
+        readonly HashSet<int> _keysSent = new HashSet<int>();
 
         float _yaw;
         float _pitch;
@@ -204,6 +206,14 @@ namespace BS
         void OnDisable()
         {
             ClearHover();
+            ReleaseAllKeys();
+        }
+
+        // Keys held while the editor loses focus never report their release; release them now.
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+                ReleaseAllKeys();
         }
 
 #if UNITY_EDITOR
@@ -262,6 +272,7 @@ namespace BS
 
             UpdateSeatInput(keyboard);
             UpdateHeldInputs(keyboard);
+            UpdateKeyRelay(keyboard);
         }
 
         void LateUpdate()
@@ -560,6 +571,45 @@ namespace BS
 
             _pressOwner = PressOwner.None;
             _clickTarget = null;
+        }
+
+        // ---------------------------------------------------------------- Keyboard to the page
+
+        // Sends the page key-press / key-release as the app does, so held keys can be tested in Play
+        // mode. Movement keys are sent too: in the app the page gets them while they move the player.
+        void UpdateKeyRelay(Keyboard keyboard)
+        {
+            var link = _scene?.link;
+            if (link == null)
+            {
+                _keysSent.Clear();
+                return;
+            }
+            foreach (var control in keyboard.allKeys)
+            {
+                if (!BSKeyCodeMap.TryMap(control.keyCode, out int keyCode))
+                    continue;
+                bool held = _keysSent.Contains(keyCode);
+                if (control.isPressed && !held && control.wasPressedThisFrame)
+                {
+                    link.OnKeyPress((KeyCode)keyCode);
+                    _keysSent.Add(keyCode);
+                }
+                else if (!control.isPressed && held)
+                {
+                    _keysSent.Remove(keyCode);
+                    link.OnKeyRelease((KeyCode)keyCode);
+                }
+            }
+        }
+
+        void ReleaseAllKeys()
+        {
+            var link = _scene?.link;
+            if (link != null)
+                foreach (int keyCode in _keysSent)
+                    link.OnKeyRelease((KeyCode)keyCode);
+            _keysSent.Clear();
         }
 
         void UpdateHeldInputs(Keyboard keyboard)
