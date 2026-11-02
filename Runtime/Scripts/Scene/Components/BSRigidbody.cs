@@ -356,7 +356,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Rigidbody" + PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
+            return "Rigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -401,6 +401,14 @@ namespace BS
         void MoveRotation(Quaternion rotation)
         {
             _MoveRotation(rotation);
+        }
+        void MovePositionSingleAxis(Int32 axis, float value)
+        {
+            _MovePositionSingleAxis(axis, value);
+        }
+        void SetVelocitySingleAxis(Int32 axis, float value)
+        {
+            _SetVelocitySingleAxis(axis, value);
         }
         void AddForce(float x, float y, float z, ForceMode mode)
         {
@@ -466,6 +474,20 @@ namespace BS
             {
                 var rotation = (Quaternion)parameters[0];
                 MoveRotation(rotation);
+                return null;
+            }
+            else if (methodName == "MovePositionSingleAxis" && parameters.Count == 2 && parameters[0] is Int32 && parameters[1] is float)
+            {
+                var axis = (Int32)parameters[0];
+                var value = (float)parameters[1];
+                MovePositionSingleAxis(axis, value);
+                return null;
+            }
+            else if (methodName == "SetVelocitySingleAxis" && parameters.Count == 2 && parameters[0] is Int32 && parameters[1] is float)
+            {
+                var axis = (Int32)parameters[0];
+                var value = (float)parameters[1];
+                SetVelocitySingleAxis(axis, value);
                 return null;
             }
             else if (methodName == "AddForce" && parameters.Count == 4 && parameters[0] is float && parameters[1] is float && parameters[2] is float && parameters[3] is int)
