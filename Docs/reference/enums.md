@@ -94,7 +94,7 @@ BS.ButtonType.THUMBSTICKCLICK  // 4: pressing the thumbstick down
 
 ## KeyCode
 
-Keyboard keys, for the `key-press` event. The names and numbers are Unity's `KeyCode`:
+Keyboard keys, for the `key-press` and `key-release` events and `scene.IsKeyDown`. The names and numbers are Unity's `KeyCode`:
 
 ```js
 BS.KeyCode.Space    // 32
