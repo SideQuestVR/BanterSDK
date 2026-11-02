@@ -75,6 +75,27 @@ namespace BS
         {
             _rigidbody.MoveRotation(rotation);
         }
+        // Moves along one axis (0 = X, 1 = Y, 2 = Z) from where the body is now, leaving the other two
+        // to physics. A page only ever knows a position a few frames old, so MovePosition would drag the
+        // other axes back to it; this lets a page set, say, ride height while physics drives the rest.
+        [Method]
+        public void _MovePositionSingleAxis(int axis, float value)
+        {
+            if (axis < 0 || axis > 2) return;
+            var position = _rigidbody.position;
+            position[axis] = value;
+            _rigidbody.MovePosition(position);
+        }
+        // Sets velocity along one axis (0 = X, 1 = Y, 2 = Z), keeping the current velocity on the others.
+        // The velocity property replaces all three with the page's (late) copy.
+        [Method]
+        public void _SetVelocitySingleAxis(int axis, float value)
+        {
+            if (axis < 0 || axis > 2) return;
+            var velocity = _rigidbody.linearVelocity;
+            velocity[axis] = value;
+            _rigidbody.linearVelocity = velocity;
+        }
         [Method(overload = "Values")]
         public void _AddForce(float x, float y, float z, ForceMode mode)
         {
