@@ -70,6 +70,46 @@ namespace BS.SDKEditor.Tests
             Assert.That(visual.IsVisible, Is.True);
         }
 
+        [TestCase(false, false)]
+        [TestCase(false, true)]
+        [TestCase(true, false)]
+        [TestCase(true, true)]
+        public void SeatAndLegHologramsAreIndependentAndRequireAnEmptyTarget(bool marker, bool legs)
+        {
+            var resolver = BSSeat.OccupiedByOtherResolver;
+            try
+            {
+                BSSeat.OccupiedByOtherResolver = _ => false;
+                visual.ShowRuntimeVisual = marker;
+                visual.ShowLegHologram = legs;
+                Assert.That(visual.IsVisible || visual.IsLegHologramVisible, Is.False);
+                visual.OnPointerEnter(left);
+                Assert.That(visual.IsVisible, Is.EqualTo(marker));
+                Assert.That(visual.IsLegHologramVisible, Is.EqualTo(legs));
+                BSSeat.OccupiedByOtherResolver = _ => true;
+                Assert.That(visual.IsVisible || visual.IsLegHologramVisible, Is.False);
+                BSSeat.OccupiedByOtherResolver = _ => false;
+                typeof(BSSeat).GetMethod("OnAttached", PrivateInstance).Invoke(visual, new object[] { "me" });
+                Assert.That(visual.IsVisible || visual.IsLegHologramVisible, Is.False);
+            }
+            finally { BSSeat.OccupiedByOtherResolver = resolver; }
+        }
+
+        [Test]
+        public void LeavingSeatTargetDisposesTheOwnedLegPreview()
+        {
+            visual.ShowLegHologram = true;
+            visual.OnPointerEnter(left);
+            var update = typeof(BSSeat).GetMethod("Update", PrivateInstance);
+            update.Invoke(visual, null);
+            var field = typeof(BSSeat).GetField("legPreview", PrivateInstance);
+            Assert.That(field.GetValue(visual), Is.Not.Null);
+            visual.OnPointerExit(left);
+            update.Invoke(visual, null);
+            Assert.That(field.GetValue(visual), Is.Null);
+            Assert.That(visual.IsLegHologramVisible, Is.False);
+        }
+
         [Test]
         public void BothHands_DuplicateEnterAndSingleExit_KeepOtherHandHovered()
         {

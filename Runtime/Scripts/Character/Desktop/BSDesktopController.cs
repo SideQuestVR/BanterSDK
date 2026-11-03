@@ -80,6 +80,8 @@ namespace BS
         BSDesktopPointerCapture _capture;
         BSDesktopMouseHand _hand;
         HardwareKeyboardInput _keyboardInput;
+        // Keys whose key-press reached the page and whose key-release hasn't yet.
+        readonly HashSet<int> _keysSent = new HashSet<int>();
 
         float _yaw;
         float _pitch;
@@ -95,6 +97,11 @@ namespace BS
         bool _seated;
         Transform _seat;
         float _seatYaw;
+        SeatViewMode _seatViewMode;
+        bool _seatUsesPose;
+        SeatPose _seatPose;
+        Quaternion _seatRotation;
+        Vector3 _seatPelvisLocal;
         bool _seatUnseatOnMove;
         bool _seatUnseatOnJump;
         System.Action _onUnseat;
@@ -204,6 +211,14 @@ namespace BS
         void OnDisable()
         {
             ClearHover();
+            ReleaseAllKeys();
+        }
+
+        // Keys held while the editor loses focus never report their release; release them now.
+        void OnApplicationFocus(bool hasFocus)
+        {
+            if (!hasFocus)
+                ReleaseAllKeys();
         }
 
 #if UNITY_EDITOR
@@ -262,15 +277,18 @@ namespace BS
 
             UpdateSeatInput(keyboard);
             UpdateHeldInputs(keyboard);
+            UpdateKeyRelay(keyboard);
         }
 
         void LateUpdate()
         {
             if (_seated)
             {
-                // The seat was destroyed: stand up where it was. Nothing is left to tell.
+                // Authored seats also release their attachment state when their anchor disappears.
                 if (_seat == null)
-                    Unseat(false);
+                    Unseat(_seatUsesPose);
+                else if (_seatUsesPose && !_seat.gameObject.activeInHierarchy)
+                    Unseat(true);
                 else
                     FollowSeat();
             }
@@ -331,7 +349,9 @@ namespace BS
 
         void ApplyLook()
         {
-            transform.rotation = Quaternion.Euler(0f, _yaw, 0f);
+            var yaw = Quaternion.Euler(0f, _yaw, 0f);
+            transform.rotation = HasAuthoredSeatPose && _seatViewMode == SeatViewMode.Legacy && _seat != null
+                ? _seat.rotation * yaw : yaw;
             _head.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
         }
 
@@ -562,6 +582,45 @@ namespace BS
             _clickTarget = null;
         }
 
+        // ---------------------------------------------------------------- Keyboard to the page
+
+        // Sends the page key-press / key-release as the app does, so held keys can be tested in Play
+        // mode. Movement keys are sent too: in the app the page gets them while they move the player.
+        void UpdateKeyRelay(Keyboard keyboard)
+        {
+            var link = _scene?.link;
+            if (link == null)
+            {
+                _keysSent.Clear();
+                return;
+            }
+            foreach (var control in keyboard.allKeys)
+            {
+                if (!BSKeyCodeMap.TryMap(control.keyCode, out int keyCode))
+                    continue;
+                bool held = _keysSent.Contains(keyCode);
+                if (control.isPressed && !held && control.wasPressedThisFrame)
+                {
+                    link.OnKeyPress((KeyCode)keyCode);
+                    _keysSent.Add(keyCode);
+                }
+                else if (!control.isPressed && held)
+                {
+                    _keysSent.Remove(keyCode);
+                    link.OnKeyRelease((KeyCode)keyCode);
+                }
+            }
+        }
+
+        void ReleaseAllKeys()
+        {
+            var link = _scene?.link;
+            if (link != null)
+                foreach (int keyCode in _keysSent)
+                    link.OnKeyRelease((KeyCode)keyCode);
+            _keysSent.Clear();
+        }
+
         void UpdateHeldInputs(Keyboard keyboard)
         {
             var trigger = keyboard[_triggerKey];
@@ -743,15 +802,44 @@ namespace BS
         /// <summary>The seat the player sits on, or null when standing.</summary>
         public Transform SeatAnchor => _seated ? _seat : null;
 
+        /// <summary>The mode and pose captured on entry, unaffected by edits until the next sit.</summary>
+        public SeatViewMode SeatedViewMode => _seated ? _seatViewMode : SeatViewMode.Legacy;
+        public SeatPose SeatedPose => _seatPose;
+        public bool HasAuthoredSeatPose => _seated && _seatUsesPose;
+
+        public bool TryGetSeatedHip(out Pose hip)
+        {
+            if (!HasAuthoredSeatPose || _seat == null)
+            {
+                hip = default;
+                return false;
+            }
+            hip = new Pose(_seat.position + _seat.rotation * _seatPose.pelvisPosition,
+                _seat.rotation * _seatPose.pelvisRotation);
+            return true;
+        }
+
         /// <summary>The mouse hand: the desktop player's right hand, which grabs.</summary>
         public BSDesktopMouseHand MouseHand => _hand;
 
         /// <summary>
-        /// Sits the player on <paramref name="anchor"/> (feet at its position, facing its forward) and
-        /// keeps them there until they stand up. <paramref name="onUnseat"/> runs when they stand up by
+        /// Sits the player on <paramref name="anchor"/> using its BSSeat settings, or Legacy for a generic
+        /// pilot attachment. <paramref name="onUnseat"/> runs when they stand up by
         /// themselves (jump, move, a teleport), not when <see cref="Unseat"/> is asked not to notify.
         /// </summary>
         public void Seat(Transform anchor, bool unseatOnMove, bool unseatOnJump, System.Action onUnseat)
+        {
+            var seat = anchor != null ? anchor.GetComponent<BSSeat>() : null;
+            Seat(anchor, seat != null ? seat.ViewMode : SeatViewMode.Legacy,
+                seat != null ? seat.Pose : SeatPose.Default, unseatOnMove, unseatOnJump, onUnseat, seat != null);
+        }
+
+        public void Seat(Transform anchor, SeatViewMode viewMode, SeatPose pose,
+            bool unseatOnMove, bool unseatOnJump, System.Action onUnseat)
+            => Seat(anchor, viewMode, pose, unseatOnMove, unseatOnJump, onUnseat, true);
+
+        void Seat(Transform anchor, SeatViewMode viewMode, SeatPose pose,
+            bool unseatOnMove, bool unseatOnJump, System.Action onUnseat, bool usePose)
         {
             if (anchor == null)
                 return;
@@ -770,9 +858,23 @@ namespace BS
             _seated = true;
             _seat = anchor;
             _seatYaw = anchor.eulerAngles.y;
-            _yaw = _seatYaw;
+            _seatRotation = anchor.rotation;
+            _seatViewMode = viewMode == SeatViewMode.UprightFollowYaw || viewMode == SeatViewMode.UprightIndependent
+                ? viewMode : SeatViewMode.Legacy;
+            _seatUsesPose = usePose;
+            _seatPose = pose.Validated();
             _pitch = 0f;
-            _head.localPosition = new Vector3(0f, _seatedEyeHeight, 0f);
+            if (!_seatUsesPose)
+            {
+                _yaw = _seatYaw;
+                _head.localPosition = new Vector3(0f, _seatedEyeHeight, 0f);
+            }
+            else
+            {
+                _yaw = _seatViewMode == SeatViewMode.Legacy ? 0f : SeatHeading(anchor.rotation);
+                // Match DesktopHipModel's standing eye-to-hip distance without depending on the multiplayer assembly.
+                _seatPelvisLocal = _head.localPosition - Vector3.up * 0.65f;
+            }
             FollowSeat();
 
             _hand.OnRigTeleported(fromPosition, fromRotation, _head.position, _head.rotation);
@@ -787,8 +889,12 @@ namespace BS
             // State first: the callback detaches the seat, which asks to unseat again.
             var anchor = _seat;
             var callback = _onUnseat;
+            if (_seatUsesPose && _seatViewMode == SeatViewMode.Legacy)
+                _yaw = SeatHeading(_head.rotation);
             _seated = false;
             _seat = null;
+            _seatViewMode = SeatViewMode.Legacy;
+            _seatUsesPose = false;
             _onUnseat = null;
 
             var fromPosition = _head.position;
@@ -813,11 +919,28 @@ namespace BS
         // Carries the player with a moving or turning seat.
         void FollowSeat()
         {
+            if (_seatUsesPose)
+            {
+                if (_seatViewMode == SeatViewMode.UprightFollowYaw)
+                    _yaw += SeatPose.YawDelta(_seatRotation, _seat.rotation);
+                _seatRotation = _seat.rotation;
+                ApplyLook();
+                if (TryGetSeatedHip(out var hip))
+                    transform.position = hip.position - transform.rotation * _seatPelvisLocal;
+                return;
+            }
             var seatYaw = _seat.eulerAngles.y;
             _yaw += Mathf.DeltaAngle(_seatYaw, seatYaw);
             _seatYaw = seatYaw;
             transform.position = _seat.position;
             ApplyLook();
+        }
+
+        static float SeatHeading(Quaternion rotation)
+        {
+            var forward = Vector3.ProjectOnPlane(rotation * Vector3.forward, Vector3.up);
+            if (forward.sqrMagnitude < 1e-6f) forward = Vector3.Cross(rotation * Vector3.right, Vector3.up);
+            return Mathf.Atan2(forward.x, forward.z) * Mathf.Rad2Deg;
         }
 
         // On the floor in front of the seat, ignoring the seat itself.

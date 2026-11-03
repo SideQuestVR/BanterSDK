@@ -10,7 +10,11 @@ namespace BS
         [SerializeField, Tooltip("Show the hover marker and seat hint during play. Editor placement previews remain visible.")]
         internal bool showRuntimeVisual = true;
 
+        [SerializeField, Tooltip("Show the posed Robot pelvis and legs when targeting this empty seat. Editor pose previews remain visible.")]
+        internal bool showLegHologram;
+
         public bool ShowRuntimeVisual { get => showRuntimeVisual; set => showRuntimeVisual = value; }
+        public bool ShowLegHologram { get => showLegHologram; set { showLegHologram = value; if (!value) ClearLegPreview(); } }
 
         readonly Dictionary<int, PointerEventData> pointers = new Dictionary<int, PointerEventData>();
         static Mesh markerMesh;
@@ -19,6 +23,7 @@ namespace BS
         static readonly Matrix4x4 MarkerOffset = Matrix4x4.Translate(Vector3.up * .015f);
         MaterialPropertyBlock markerProperties;
         float hoverPress;
+        SeatPosePreview legPreview;
 
         public bool IsHovered
         {
@@ -29,12 +34,15 @@ namespace BS
                 return false;
             }
         }
-        public bool IsVisible => showRuntimeVisual && isActiveAndEnabled && IsHovered && !seated;
+        bool CanShowHolograms => isActiveAndEnabled && IsHovered && !seated && !IsOccupiedByOther;
+        public bool IsVisible => showRuntimeVisual && CanShowHolograms;
+        public bool IsLegHologramVisible => showLegHologram && CanShowHolograms;
 
         void OnDisable()
         {
             pointers.Clear();
             hoverPress = 0f;
+            ClearLegPreview();
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -74,11 +82,27 @@ namespace BS
 
         void Update()
         {
-            if (!IsVisible) return;
+            var showLegs = IsLegHologramVisible;
+            if (!showLegs) ClearLegPreview();
+            if (!IsVisible && !showLegs) return;
             hoverPress = Mathf.MoveTowards(hoverPress, 1f, Time.unscaledDeltaTime * 4f);
-            if (markerProperties == null) markerProperties = new MaterialPropertyBlock();
-            markerProperties.SetFloat(HoverProperty, hoverPress);
-            DrawMarker(transform, null, markerProperties);
+            if (IsVisible)
+            {
+                if (markerProperties == null) markerProperties = new MaterialPropertyBlock();
+                markerProperties.SetFloat(HoverProperty, hoverPress);
+                DrawMarker(transform, null, markerProperties);
+            }
+            if (showLegs)
+            {
+                if (legPreview == null) legPreview = new SeatPosePreview();
+                legPreview.Draw(transform, Pose, false, null, hoverPress);
+            }
+        }
+
+        void ClearLegPreview()
+        {
+            legPreview?.Dispose();
+            legPreview = null;
         }
 
         static void DrawMarker(Transform anchor, Camera camera, MaterialPropertyBlock properties)

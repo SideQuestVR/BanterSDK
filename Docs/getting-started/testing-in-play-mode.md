@@ -80,7 +80,8 @@ Play mode runs your page, scene and graphs for real, but some things only the ap
 | `TeleportTo`, and `SetCanMove`, `SetCanRotate`, `SetCanGrab`, `SetBlockLeftThumbstick` | Yes, on the desktop player | Yes |
 | Portals | The Console says where it would go | Takes the player there |
 | [Scene settings](../javascript-api/scene-settings.md) | Only the clipping planes | Yes |
-| [Controller events](../javascript-api/scene-settings.md#controller-input-events) (`button-pressed`, `button-released`, `controller-axis-update`, `trigger-axis-update`) and `key-press` | No | Controller events with VR controllers only; `key-press` on desktop |
+| [Controller events](../javascript-api/scene-settings.md#controller-input-events) (`button-pressed`, `button-released`, `controller-axis-update`, `trigger-axis-update`) | No | With VR controllers only |
+| [Keyboard events](../javascript-api/scene-events.md#keyboard-events) (`key-press`, `key-release`, `IsKeyDown`) | Yes, including the keys that move the desktop player | Yes, on desktop |
 | `pose-update` | Only with local multiplayer on | Yes |
 | Other players, space state, user state, one-shots | Only with local multiplayer on: see [Playing without local multiplayer](../multiplayer/local-testing.md#playing-without-local-multiplayer) | Yes: see [Multiplayer](../multiplayer/overview.md) |
 | `AddPlayerForce`, haptics, toasts | No effect | Yes |

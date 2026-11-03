@@ -11,8 +11,8 @@ namespace BS.LocalMultiplayer.Avatars
     /// </summary>
     /// <remarks>
     /// <para>Standing, the hip is 0.65 m below the eye (0.95 m above the feet) and faces the player's way. Seated, it
-    /// is locked to the seat like FlexaMover's jointed torso: 0.2 m up the seat's own up axis, turned with the seat,
-    /// so looking around turns only the head (<see cref="DesktopHipModel.WorldHip"/>).</para>
+    /// is locked to the seat: the captured authored pelvis for BSSeat, or 0.2 m up its own up axis for a generic
+    /// pilot attachment. Looking around turns only the head (<see cref="DesktopHipModel.WorldHip"/>).</para>
     /// <para>The left hand rests in front of the hip. The right hand rests too, except while the mouse hand grabs:
     /// then it is the mouse hand.</para>
     /// <para>The three anchors carry kinematic Rigidbodies, as their production counterparts do, so attachment joints
@@ -218,6 +218,12 @@ namespace BS.LocalMultiplayer.Avatars
                 return;
             }
             bool seated = _controller != null && _controller.IsSeated;
+            if (seated && _controller.TryGetSeatedHip(out var hip))
+            {
+                position = hip.position;
+                rotation = hip.rotation;
+                return;
+            }
             DesktopHipModel.WorldHip(_root, _head != null ? _head.localPosition.y : DesktopHipModel.StandingEyeHeight,
                 seated, seated ? _controller.SeatAnchor : null, out position, out rotation);
         }
@@ -230,6 +236,18 @@ namespace BS.LocalMultiplayer.Avatars
             WorldHip(out var hipPosition, out var hipRotation);
             _torso.SetPositionAndRotation(hipPosition, hipRotation);
 
+            bool authoredSeat = _controller != null && _controller.HasAuthoredSeatPose;
+            if (_leftHand != null)
+            {
+                if (authoredSeat)
+                    _leftHand.SetPositionAndRotation(hipPosition + _root.rotation * PoseExtCodec.LeftHandRest, _root.rotation);
+                else
+                {
+                    _leftHand.localPosition = PoseExtCodec.LeftHandRest;
+                    _leftHand.localRotation = Quaternion.identity;
+                }
+            }
+
             if (_rightHand == null) return;
             var hand = _controller != null ? _controller.MouseHand : null;
             if (hand != null && hand.IsActive)
@@ -239,8 +257,13 @@ namespace BS.LocalMultiplayer.Avatars
             }
             else
             {
-                _rightHand.localPosition = PoseExtCodec.RightHandRest;
-                _rightHand.localRotation = Quaternion.identity;
+                if (authoredSeat)
+                    _rightHand.SetPositionAndRotation(hipPosition + _root.rotation * PoseExtCodec.RightHandRest, _root.rotation);
+                else
+                {
+                    _rightHand.localPosition = PoseExtCodec.RightHandRest;
+                    _rightHand.localRotation = Quaternion.identity;
+                }
             }
         }
 
@@ -290,6 +313,8 @@ namespace BS.LocalMultiplayer.Avatars
             var hips = _orb.Hips;
             if (hips != null) hips.SetPositionAndRotation(pose.HipPosition, pose.HipRotation);
             _orb.ApplyLimbs(pose, 1f);
+            if (_controller.HasAuthoredSeatPose && _controller.SeatAnchor != null)
+                _orb.ApplySeatPose(_controller.SeatAnchor, _controller.SeatedPose);
         }
     }
 }

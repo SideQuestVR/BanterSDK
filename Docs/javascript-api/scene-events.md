@@ -52,13 +52,23 @@ for the same updates with real JSON values.
 ## Keyboard Events
 
 ```js
-// Keyboard key pressed (in the app only)
+// A key went down
 scene.On("key-press", (e) => {
     console.log(e.detail.key); // BS.KeyCode value, e.g. BS.KeyCode.Space
 });
+
+// A key came back up
+scene.On("key-release", (e) => {
+    console.log(e.detail.key);
+});
+
+// Or ask whether a key is held right now, e.g. each frame of a game loop
+if (scene.IsKeyDown(BS.KeyCode.W)) accelerate();
 ```
 
-`key-press` comes from a physical keyboard in the app. It doesn't fire in Play mode.
+These come from a physical keyboard, in the app and in Play mode. `key-press` fires once when a key goes down (holding it doesn't repeat it), and `key-release` once when it comes back up. `IsKeyDown` is true between the two.
+
+Every `key-release` follows a `key-press` for the same key. If the player starts typing into one of the app's own text fields, or the app loses focus, any keys held are released then: your page gets their `key-release` straight away, and nothing typed into the field reaches the page.
 
 ## State Events
 

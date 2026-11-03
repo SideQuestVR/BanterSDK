@@ -105,5 +105,23 @@ namespace BS.SDKEditor.Tests
             Assert.AreEqual("BS.VisualScripting.ReleaseGrab", id);
             Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
         }
+
+        [Test]
+        public void GoToUrl_IsOfferedAndAllowed()
+        {
+            var unitType = FindType("BS.VisualScripting.GoToUrl");
+            Assert.IsNotNull(unitType, "the Go To URL unit isn't loaded");
+            CollectionAssert.Contains(VsNodeGeneration.assemblyAllowList, unitType.Assembly.GetName().Name);
+
+            var unit = (Unity.VisualScripting.IUnit)Activator.CreateInstance(unitType);
+            unit.EnsureDefined();
+            // A URL and nothing else: no instance can be named.
+            CollectionAssert.AreEquivalent(new[] { "URL" }, unit.valueInputs.Select(port => port.key));
+            CollectionAssert.IsEmpty(unit.valueOutputs);
+
+            var id = unit.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
+            Assert.AreEqual("BS.VisualScripting.GoToUrl", id);
+            Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
+        }
     }
 }

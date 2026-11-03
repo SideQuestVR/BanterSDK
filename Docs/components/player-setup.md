@@ -49,7 +49,7 @@ Only spawns that are in the scene while the space loads take part in the arrival
 
 ## Seat
 
-Clicking a seat sits the local player on it, and moving or jumping stands them up; see [Seat](../building-in-unity/easy-prefabs.md#seat-bsseat). The player sits at the seat object's position, facing its forward.
+Clicking a seat sits the local player on it, and moving or jumping stands them up; see [Seat authoring](../building-in-unity/easy-prefabs.md#seat-bsseat) for placement, Robot pose handles, and holograms. All modes face the seat on entry and use its authored pelvis and leg pose. Legacy carries the full seat rotation; the two upright modes keep seat tilt out of the view. New seats default to Upright Follow Yaw.
 
 The seat's shared [Pointer Range](ui-system.md#pointer-range) component defaults to **2 metres**; change its **Distance** to choose the seat's reach. Clicking, the hover marker, the sit hint and the VR targeting ray use this same head-to-seat-origin distance. Scaling its visual or enlarging its trigger does not extend reach. Moving out of range before releasing the click cancels seating. Editor placement previews and scripted `Sit()` remain available at any distance.
 
@@ -58,7 +58,10 @@ The seat's shared [Pointer Range](ui-system.md#pointer-range) component defaults
 | `unseatOnMove` | boolean | true | Stand up when the player pushes the move stick (WASD on desktop) |
 | `unseatOnJump` | boolean | true | Stand up when the player jumps |
 | `useExitPosition` | boolean | false | Teleport the player to `exitPosition` when they get off, however they get off. Off: they are lifted 1 m above the seat, speed cleared |
-| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). They face the way the seat faces |
+| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). Legacy faces the seat; upright modes preserve viewing direction |
+| `viewMode` | SeatViewMode | `BS.SeatViewMode.UprightFollowYaw` | `UprightFollowYaw` follows seat yaw without pitch/roll; `UprightIndependent` ignores all seat rotation for the view. All modes use the authored lower-body pose |
+
+Mode and pose are captured on `Sit()`. Set the mode before sitting; changing it while occupied applies at the next sit. The pose remains attached as the seat moves. Head tracking stays free, artificial VR turning is disabled in upright modes, and desktop look remains available. Pose targets use metres independent of seat/parent scale. Head and feet outside the avatar's natural reach are visually clamped without moving the tracked camera or automatically standing the player up.
 
 <div class="docs-tabs">
 
@@ -67,11 +70,14 @@ const chair = new BS.GameObject({
     name: "Chair",
     layer: BS.L.UI,                                  // only the UI and Menu layers can be clicked
     localPosition: new BS.Vector3(0, 0.45, 2),
-    localEulerAngles: new BS.Vector3(0, 180, 0)      // sit facing the origin
+    localEulerAngles: new BS.Vector3(0, 180, 0)      // the seat's authored forward
 });
 // The collider first: the seat listens for clicks on the colliders it finds when it starts.
 await chair.AddComponent(new BS.BoxCollider({ isTrigger: true, size: new BS.Vector3(0.5, 0.2, 0.5) }));
-const seat = await chair.AddComponent(new BS.Seat({ unseatOnMove: false }));
+const seat = await chair.AddComponent(new BS.Seat({
+    unseatOnMove: false,
+    viewMode: BS.SeatViewMode.UprightFollowYaw
+}));
 
 seat.Sit();     // sit the local player down
 seat.Stand();   // and stand them up again
@@ -81,17 +87,33 @@ seat.Stand();   // and stand them up again
 
 </div>
 
-| Property | Type | Default | What it does |
-|---|---|---|---|
-| `unseatOnMove` | boolean | true | Pushing the move stick (WASD on desktop) stands the player up. With it off, call `Stand()` to let them up. |
-| `unseatOnJump` | boolean | true | Jumping stands the player up. |
-
 | Method | What it does |
 |---|---|
 | `Sit()` | Sits the local player on this seat, as if they'd clicked it. |
 | `Stand()` | Stands the local player up. |
 
 A seat needs a collider to be clicked, on the **UI** or **Menu** layer: on the seat's object or a child, and there when the seat starts, so add it before the seat. The seat also adds a kinematic Rigidbody if it has none, so it stays where you put it. `Sit()` and `Stand()` work without a collider.
+
+### C# and Visual Scripting
+
+Unity-side SDK code uses `BSSeat.ViewMode`, `Pose`, `ShowRuntimeVisual` (the Inspector's **Show Seat Hologram**) and `ShowLegHologram`. A pose is a value: edit a copy and assign it back. For example, given an existing `BSSeat seat`:
+
+```csharp
+seat.ViewMode = BS.SeatViewMode.UprightIndependent;
+BS.SeatPose pose = seat.Pose;
+pose.leftFootPosition += new UnityEngine.Vector3(0f, 0f, 0.05f);
+seat.Pose = pose;
+seat.ShowRuntimeVisual = true;
+seat.ShowLegHologram = true;
+seat._Sit();
+// seat._Stand();
+```
+
+`SeatPose` contains `pelvisPosition` / `pelvisRotation`, `leftFootPosition` / `leftFootRotation`, `rightFootPosition` / `rightFootRotation`, and `leftKneeHint` / `rightKneeHint`. Positions and hints are `Vector3`; rotations are `Quaternion`. Foot positions refer to soles. `BS.SeatPose.Default` and `seat.ResetPose()` restore the standard pose. Invalid or uninitialized pose data falls back to the complete default; valid quaternions are normalized. The detailed pose and hologram toggles are Unity-side authoring/C# settings, not JavaScript wire properties.
+
+In Visual Scripting, use the member setter for **BSSeat.ViewMode** with a `BS.SeatViewMode` value before invoking the seat's **Sit** member (`BSSeat._Sit`). **Stand** uses `BSSeat._Stand`. The supported **ShowRuntimeVisual** and **ShowLegHologram** setters control the two previews independently. Author the detailed pose in the seat Inspector; it is not a graph-driven pose editor. Validate the graph with the SDK's normal allow-list checks.
+
+Keep occupied-seat mode/pose edits out of local multiplayer comparisons: SDK late joins or recreated preview avatars can use the current settings rather than the occupant's earlier snapshot. See the [authoring notes and validation limits](../building-in-unity/easy-prefabs.md#seat-bsseat). Real headset comfort and real two-client behavior have **not yet been validated**.
 
 ## Teleporter
 

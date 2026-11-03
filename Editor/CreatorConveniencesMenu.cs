@@ -264,14 +264,29 @@ internal static class CreatorConveniencesMenu
 
         var parent = command.context as GameObject;
         var scene = parent ? parent.scene : SceneManager.GetActiveScene();
-        var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
-        Undo.RegisterCreatedObjectUndo(instance, $"Create {displayName}");
-        Place(instance, command);
-        // The flattened seat's root retains the former cushion-height child offset.
-        if (guid == SeatGuid)
-            instance.transform.position = instance.transform.TransformPoint(prefab.transform.localPosition);
-        instance.name = $"BS {displayName}";
-        Finish(instance, displayName);
+        Undo.IncrementCurrentGroup();
+        var group = Undo.GetCurrentGroup();
+        try
+        {
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, scene);
+            Undo.RegisterCreatedObjectUndo(instance, $"Create {displayName}");
+            Place(instance, command);
+            // Reparenting records its world pose before Place resets the local pose. Record the complete
+            // placed state so Redo also restores axes that the cushion offset itself does not change.
+            Undo.RegisterCompleteObjectUndo(new Object[] { instance, instance.transform }, $"Place {displayName}");
+            // The flattened seat's root retains the former cushion-height child offset.
+            if (guid == SeatGuid)
+                instance.transform.position = instance.transform.TransformPoint(prefab.transform.localPosition);
+            instance.name = $"BS {displayName}";
+            PrefabUtility.RecordPrefabInstancePropertyModifications(instance.transform);
+            PrefabUtility.RecordPrefabInstancePropertyModifications(instance);
+            Finish(instance, displayName);
+        }
+        finally
+        {
+            // Placement focuses the hierarchy and changes selection, which can open another Undo group.
+            Undo.CollapseUndoOperations(group);
+        }
     }
 
     private static void CreateComponentObject<T>(string displayName, MenuCommand command, Action<SerializedObject> setup = null)

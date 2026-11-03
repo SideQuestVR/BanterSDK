@@ -128,6 +128,16 @@ MonoBehaviour:
   unseatOnJump: 1
   useExitPosition: 0
   exitPosition: {x: 0, y: 0, z: 0.6}
+  viewMode: 1
+  pose:
+    pelvisPosition: {x: 0, y: 0.04, z: 0}
+    pelvisRotation: {x: 0, y: 0, z: 0, w: 1}
+    leftFootPosition: {x: -0.14, y: -0.6, z: 0.475}
+    leftFootRotation: {x: 0, y: 0, z: 0, w: 1}
+    rightFootPosition: {x: 0.14, y: -0.6, z: 0.475}
+    rightFootRotation: {x: 0, y: 0, z: 0, w: 1}
+    leftKneeHint: {x: -0.14, y: 0.15, z: 0.45}
+    rightKneeHint: {x: 0.14, y: 0.15, z: 0.45}
 --- !u!65 &1521927146910027099
 BoxCollider:
   m_ObjectHideFlags: 0

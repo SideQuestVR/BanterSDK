@@ -160,6 +160,32 @@ namespace BS.LocalMultiplayer.Avatars
             }
         }
 
+        internal void ApplySeatPose(Transform seat, SeatPose pose)
+        {
+            // The orb has no foot mesh; its standing toe offset supplies its existing sole depth.
+            float soleDepth = StandingLeg[2].y - StandingLeg[3].y;
+            float upperLength = Vector3.Distance(StandingLeg[0], StandingLeg[1]);
+            float lowerLength = Vector3.Distance(StandingLeg[1], StandingLeg[2]);
+            for (int side = 0; side < 2; side++)
+            {
+                var names = side == 0 ? LeftLeg : RightLeg;
+                var upper = _bones[(int)names[0]];
+                var knee = _bones[(int)names[1]];
+                var ankle = _bones[(int)names[2]];
+                var toes = _bones[(int)names[3]];
+                Vector3 upperPosition = Hips.TransformPoint(side == 0 ? StandingLeg[0] : Mirror(StandingLeg[0]));
+                Vector3 sole = seat.position + seat.rotation * (side == 0 ? pose.leftFootPosition : pose.rightFootPosition);
+                Quaternion footRotation = seat.rotation * (side == 0 ? pose.leftFootRotation : pose.rightFootRotation);
+                Vector3 hint = seat.position + seat.rotation * (side == 0 ? pose.leftKneeHint : pose.rightKneeHint);
+                SeatPose.SolveLeg(upperPosition, hint, sole + footRotation * Vector3.up * soleDepth,
+                    upperLength, lowerLength, out var kneePosition, out var anklePosition);
+                upper.SetPositionAndRotation(upperPosition, Look(kneePosition - upperPosition));
+                knee.SetPositionAndRotation(kneePosition, Look(anklePosition - kneePosition));
+                ankle.SetPositionAndRotation(anklePosition, footRotation);
+                toes.SetPositionAndRotation(anklePosition + footRotation * (StandingLeg[3] - StandingLeg[2]), footRotation);
+            }
+        }
+
         static Vector3 Mirror(Vector3 left) => new Vector3(-left.x, left.y, left.z);
 
         static void MoveToward(Transform bone, Vector3 localPosition, float blend)

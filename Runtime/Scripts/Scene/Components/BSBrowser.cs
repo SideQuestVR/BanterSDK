@@ -172,7 +172,8 @@ namespace BS
                 // blocks the capture worklet (YouTube) and stutters on Quest. The mode is fixed when the window is
                 // created, so set before the browser wakes. Streaming viewers keep capture: the sharer's 2D->3D blend
                 // drives their speakers.
-                if (_oraView != null && !IsStreamingBrowser && Application.platform == RuntimePlatform.Android)
+                // TEMP-ANDROID-AUDIO-TEST: override disabled to observe Ora's capture path on Quest. Revert before commit.
+                if (false && _oraView != null && !IsStreamingBrowser && Application.platform == RuntimePlatform.Android)
                     _oraView.audioMode = OraAudioMode.Off;
 #endif
                 if (!browser.activeSelf)

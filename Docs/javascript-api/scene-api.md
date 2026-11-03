@@ -281,6 +281,19 @@ player: an object another player holds stays in their hand (to make them let go,
 for example from a [one-shot](scene-events.md#one-shot-events)). In SDK Play Mode the desktop player only grabs with the
 right hand, so `BS.HandSide.LEFT` lets go of nothing there.
 
+## Going to Another Space
+
+```js
+// Send the local player to another space
+scene.GoToUrl("https://my-other-world.worldspace.host");
+```
+
+`GoToUrl` takes the space's URL, which must be an absolute `http` or `https` URL; anything else is ignored with a
+warning. The server picks the instance, as it does for a [portal](../components/media.md#portal). The call is ignored while a
+space is loading, and that includes this space's own load, so call it once the player is in (from a player action, for
+example), not straight away on start-up. In SDK Play Mode it only logs where it would go. In a graph, use the **Go To
+URL** node (`BS > Space`).
+
 ## Deep Links
 
 ```js
