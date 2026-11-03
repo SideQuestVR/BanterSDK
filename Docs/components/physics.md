@@ -60,6 +60,10 @@ rb.AddExplosionForce(100, new BS.Vector3(0, 0, 0), 10, 1, BS.ForceMode.Impulse);
 rb.MovePosition(new BS.Vector3(0, 5, 0));
 rb.MoveRotation(new BS.Quaternion(0, 0, 0, 1));
 
+// One axis only (0 = X, 1 = Y, 2 = Z), keeping the body's current values on the others
+rb.MovePositionSingleAxis(1, 0.5);   // e.g. hold a ride height while physics moves it across the ground
+rb.SetVelocitySingleAxis(1, 0);      // e.g. stop it falling
+
 // Sleep state
 rb.Sleep();
 rb.WakeUp();
@@ -70,6 +74,8 @@ rb.ResetInertiaTensor();
 ```
 
 Each method returns a Promise that resolves once Unity has run it.
+
+Positions and velocities reach your page a few frames late, so a `MovePosition` or `velocity` built from them drags the body back on the axes you didn't mean to change. When you only want to set one axis, use `MovePositionSingleAxis` or `SetVelocitySingleAxis`: Unity applies them to the body's current state when they arrive.
 
 **Properties:** set any property from the table to change it:
 

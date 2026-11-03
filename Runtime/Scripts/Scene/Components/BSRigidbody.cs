@@ -75,6 +75,27 @@ namespace BS
         {
             _rigidbody.MoveRotation(rotation);
         }
+        // Moves along one axis (0 = X, 1 = Y, 2 = Z) from where the body is now, leaving the other two
+        // to physics. A page only ever knows a position a few frames old, so MovePosition would drag the
+        // other axes back to it; this lets a page set, say, ride height while physics drives the rest.
+        [Method]
+        public void _MovePositionSingleAxis(int axis, float value)
+        {
+            if (axis < 0 || axis > 2) return;
+            var position = _rigidbody.position;
+            position[axis] = value;
+            _rigidbody.MovePosition(position);
+        }
+        // Sets velocity along one axis (0 = X, 1 = Y, 2 = Z), keeping the current velocity on the others.
+        // The velocity property replaces all three with the page's (late) copy.
+        [Method]
+        public void _SetVelocitySingleAxis(int axis, float value)
+        {
+            if (axis < 0 || axis > 2) return;
+            var velocity = _rigidbody.linearVelocity;
+            velocity[axis] = value;
+            _rigidbody.linearVelocity = velocity;
+        }
         [Method(overload = "Values")]
         public void _AddForce(float x, float y, float z, ForceMode mode)
         {
@@ -335,7 +356,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Rigidbody" + PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
+            return "Rigidbody" +  PropertyName.velocity + velocity + PropertyName.angularVelocity + angularVelocity + PropertyName.mass + mass + PropertyName.drag + drag + PropertyName.angularDrag + angularDrag + PropertyName.isKinematic + isKinematic + PropertyName.useGravity + useGravity + PropertyName.centerOfMass + centerOfMass + PropertyName.collisionDetectionMode + collisionDetectionMode + PropertyName.freezePositionX + freezePositionX + PropertyName.freezePositionY + freezePositionY + PropertyName.freezePositionZ + freezePositionZ + PropertyName.freezeRotationX + freezeRotationX + PropertyName.freezeRotationY + freezeRotationY + PropertyName.freezeRotationZ + freezeRotationZ;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -380,6 +401,14 @@ namespace BS
         void MoveRotation(Quaternion rotation)
         {
             _MoveRotation(rotation);
+        }
+        void MovePositionSingleAxis(Int32 axis, float value)
+        {
+            _MovePositionSingleAxis(axis, value);
+        }
+        void SetVelocitySingleAxis(Int32 axis, float value)
+        {
+            _SetVelocitySingleAxis(axis, value);
         }
         void AddForce(float x, float y, float z, ForceMode mode)
         {
@@ -445,6 +474,20 @@ namespace BS
             {
                 var rotation = (Quaternion)parameters[0];
                 MoveRotation(rotation);
+                return null;
+            }
+            else if (methodName == "MovePositionSingleAxis" && parameters.Count == 2 && parameters[0] is Int32 && parameters[1] is float)
+            {
+                var axis = (Int32)parameters[0];
+                var value = (float)parameters[1];
+                MovePositionSingleAxis(axis, value);
+                return null;
+            }
+            else if (methodName == "SetVelocitySingleAxis" && parameters.Count == 2 && parameters[0] is Int32 && parameters[1] is float)
+            {
+                var axis = (Int32)parameters[0];
+                var value = (float)parameters[1];
+                SetVelocitySingleAxis(axis, value);
                 return null;
             }
             else if (methodName == "AddForce" && parameters.Count == 4 && parameters[0] is float && parameters[1] is float && parameters[2] is float && parameters[3] is int)
