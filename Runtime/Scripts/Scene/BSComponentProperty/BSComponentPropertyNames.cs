@@ -297,5 +297,9 @@ namespace BS
         rolloffMode,
         enableBirdFlight,
         viewMode,
+        slot,
+        label,
+        isToggle,
+        isOn,
     }
 }

@@ -73,6 +73,7 @@ For an automatic starting pose, optionally assign **Fit Target**, select **Fit S
 
 The left hand mirrors the right by default. Enable **Separate Left Pose** under Advanced for an asymmetric grip, then switch **Edit Hand** to edit it.
 Copy/Paste transfers poses between handles. Editing supports Undo and prefab overrides; open a prefab in Prefab Mode to position its hand.
+**Save Preset…** writes the left and right poses to a `.handpose.json` file, and **Load Preset…** replaces both on another handle, with Undo. The file keeps the hand in the same place when the new handle has a different Grab Radius. Check the grip after loading, because the new object's shape may differ. Files that are damaged, incomplete, the wrong kind or from a newer SDK are refused without changing the pose. Click **Folder…** to choose a preset folder for this project; **Folder Preset** then lists its hand presets, and selecting one loads it.
 Grip offsets use metres in the handle's rotated coordinate frame. Existing objects keep their original grab behaviour until custom posing is enabled.
 
 The hover hologram, SDK mouse grab and Flexabody client use the same saved pose and point-grab solver. SDK Play Mode keeps the custom hand visible while holding so you can inspect it; **Show Runtime Visual** still controls the hologram.
