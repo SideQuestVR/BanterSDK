@@ -885,7 +885,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "QuestHome" + PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
+            return "QuestHome" +  PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
         }
 
         internal override void Init(List<object> constructorProperties = null)

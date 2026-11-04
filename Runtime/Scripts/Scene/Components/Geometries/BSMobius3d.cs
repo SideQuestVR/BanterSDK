@@ -85,7 +85,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Mobius3d" + PropertyName.stacks + stacks + PropertyName.slices + slices;
+            return "Mobius3d" +  PropertyName.stacks + stacks + PropertyName.slices + slices;
         }
 
         internal override void Init(List<object> constructorProperties = null)

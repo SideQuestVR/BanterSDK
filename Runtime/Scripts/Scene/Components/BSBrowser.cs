@@ -498,7 +498,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Browser" + PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions + PropertyName.rolloffMode + rolloffMode + PropertyName.minDistance + minDistance + PropertyName.maxDistance + maxDistance;
+            return "Browser" +  PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions + PropertyName.rolloffMode + rolloffMode + PropertyName.minDistance + minDistance + PropertyName.maxDistance + maxDistance;
         }
 
         internal override void Init(List<object> constructorProperties = null)

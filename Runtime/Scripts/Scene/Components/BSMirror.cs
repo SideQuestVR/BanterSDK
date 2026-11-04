@@ -124,7 +124,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Mirror" + PropertyName.renderTextureSize + renderTextureSize + PropertyName.cameraClear + cameraClear + PropertyName.backgroundColor + backgroundColor;
+            return "Mirror" +  PropertyName.renderTextureSize + renderTextureSize + PropertyName.cameraClear + cameraClear + PropertyName.backgroundColor + backgroundColor;
         }
 
         internal override void Init(List<object> constructorProperties = null)

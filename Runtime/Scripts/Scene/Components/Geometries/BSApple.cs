@@ -85,7 +85,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Apple" + PropertyName.stacks + stacks + PropertyName.slices + slices;
+            return "Apple" +  PropertyName.stacks + stacks + PropertyName.slices + slices;
         }
 
         internal override void Init(List<object> constructorProperties = null)
