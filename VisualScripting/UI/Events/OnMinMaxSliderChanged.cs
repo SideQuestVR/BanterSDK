@@ -146,8 +146,8 @@ namespace BS.VisualScripting
                     var parts = strValue.Split(',');
                     if (parts.Length >= 2)
                     {
-                        float.TryParse(parts[0].Trim(), out min);
-                        float.TryParse(parts[1].Trim(), out max);
+                        NumberFormat.TryParse(parts[0].Trim(), out min);
+                        NumberFormat.TryParse(parts[1].Trim(), out max);
                     }
                 }
 

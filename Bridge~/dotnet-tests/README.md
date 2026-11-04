@@ -1,0 +1,5 @@
+# Bridge 2 core: tests outside Unity
+
+- **C# suite:** from `Packages/com.sidequest.creator-sdk`, run `dotnet run -c Release --project Bridge~/dotnet-tests`. It compiles the real `Runtime/Scripts/Bridge/Core/*.cs` at C# 9 (the asmdef's level) and runs the golden vectors (`Bridge~/vectors`), simulations, review regressions and a fuzz pass (`BRIDGE_FUZZ_N`, default 100000; `BRIDGE_FUZZ_SEED` to replay). Needs the .NET 8 SDK (net8.0; checked with 8.0.420).
+- **Cross-language:** `node Bridge~/dotnet-tests/interop.mjs [injection.js]` builds this suite and the TS bridge into a temp folder (with the injection package's own TypeScript: run `yarn install` in `Packages/com.sidequest.injection/Injection~` first). It then runs the real TS `PageSession`, and the built `Runtime/Resources/injection.js` with the session prelude, against the C# `BridgeView` (`--peer`). Needs Node 18+ (checked with 22).
+- **Other suites:** the TS side is `node src/bridge/test/run-unit.mjs` in `Injection~` (rebuild `injection.js` there with webpack after TS changes); the Unity side is the EditMode `Tests/Editor/Bridge`. Unity ignores this folder (`Bridge~`), and `bin/`/`obj/` are git-ignored.

@@ -115,7 +115,15 @@ namespace BS
                 oraView = viewGo.AddComponent<OraView>();
                 oraView.customInjectedJavascript = Resources.Load<TextAsset>("injection");
                 oraView.injectShims = true;
+                // Bridge 2 (M1): on the session lane, the same bundle with a one-line prelude. Before Awake registers.
+                BS.Bridge.BridgeMode.ApplyTo(oraView);
                 viewGo.SetActive(true);
+            }
+            else
+            {
+                // A view that came with the prefab (Greenfield's Creator SDK prefab): this Awake (order -1001) runs
+                // before the view's, which reads the injection when it registers its window.
+                BS.Bridge.BridgeMode.ApplyTo(oraView);
             }
 
             oraView.openBrowser = openBrowser;
@@ -154,7 +162,11 @@ namespace BS
                 yield return new WaitForSeconds(2);
             }
             // Ora's web server serves Assets/WebRoot on this port (see BeforeEditorPlay).
-            scene.link.pipe.view.LoadUrl("http://localhost:" + port);
+            var pageUrl = "http://localhost:" + port;
+            // Recorded as BSScene.LoadUrl records a space's URL, which this load doesn't go through: relative
+            // glTF URLs resolve on it.
+            scene.CurrentUrl = pageUrl;
+            scene.link.pipe.view.LoadUrl(pageUrl);
         }
 
         // Teleports are handled by BSDesktopController, which owns the local user.

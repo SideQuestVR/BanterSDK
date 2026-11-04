@@ -109,7 +109,11 @@ namespace BS
         /// <returns>Formatted panel ID string</returns>
         public string GetFormattedPanelId()
         {
-            return $"panel_{oid}_{cid}";
+            // oid/cid are set by Init, from Start. A panel initialised before that (Process UXML Tree on an inactive
+            // GameObject) uses the ids Init will assign rather than registering as panel_0_0.
+            var objectId = oid != 0 ? oid : BSScene.UnityId(gameObject);
+            var componentId = cid != 0 ? cid : BSScene.UnityId(this);
+            return $"panel_{objectId}_{componentId}";
         }
 
         /// <summary>
@@ -161,6 +165,13 @@ namespace BS
         /// <returns>True if initialization was successful</returns>
         public bool InitializePanel(UIDocument document = null)
         {
+            // Not only Start's initialisation (EnsureInitialized): Process UXML Tree can initialise a panel before
+            // its Start, and ValidateForUIOperation refuses a panel without an id.
+            if (internalPanelId == -1)
+            {
+                internalPanelId = nextPanelId++;
+            }
+
             try
             {
                 if (document != null && document.panelSettings != null)
@@ -222,9 +233,13 @@ namespace BS
                 // per element instead of one per style property. Absent is fine; loading nothing
                 // must never break a panel, which is why this is a lookup and not a reference.
                 var panelClasses = Resources.Load<StyleSheet>("UI/PanelClasses");
-                if (panelClasses != null)
+                // A creator's UIDocument can be disabled, or on an inactive GameObject: it has no root until
+                // it is enabled, so the root-dependent steps wait for it (LateUpdate below).
+                var root = uiDocument.rootVisualElement;
+                waitingForDocumentRoot = root == null;
+                if (panelClasses != null && root != null)
                 {
-                    uiDocument.rootVisualElement.styleSheets.Add(panelClasses);
+                    root.styleSheets.Add(panelClasses);
                 }
 
                 // Configure panel settings
@@ -258,8 +273,9 @@ namespace BS
 
                 LogVerbose($"Successfully initialized panel with ID: {registrationId}");
 
-                // Auto-register UXML elements if the UIDocument has a visual tree asset
-                if (uiDocument.visualTreeAsset != null && uiDocument.rootVisualElement != null)
+                // Auto-register UXML elements if the UIDocument has a visual tree asset. For a disabled document the
+                // bridge keeps the request and LateUpdate has it registered once the document is enabled.
+                if (uiDocument.visualTreeAsset != null)
                 {
                     LogVerbose($"Auto-registering UXML elements from visual tree asset");
                     var elementMap = uiElementBridge.ProcessUXMLTree(uiDocument, "uxml");
@@ -294,6 +310,29 @@ namespace BS
         public bool InitializeWithExistingDocument(UIDocument document)
         {
             return InitializePanel(document);
+        }
+
+        // InitializePanel ran while the UIDocument had no root: finish its root-dependent steps (class sheet,
+        // UXML registration, haptic/sound handlers) once the document is enabled.
+        private bool waitingForDocumentRoot;
+
+        private void LateUpdate()
+        {
+            if (waitingForDocumentRoot && uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                waitingForDocumentRoot = false;
+                var root = uiDocument.rootVisualElement;
+                var panelClasses = Resources.Load<StyleSheet>("UI/PanelClasses");
+                if (panelClasses != null)
+                    root.styleSheets.Add(panelClasses);
+                if (enableHaptics || enableSounds)
+                    RegisterUIEventHandlers(root);
+            }
+
+            // UXML asked for while its document was disabled (InitializePanel's "uxml" pass, then Process UXML
+            // Tree's own prefix), registered in that order once the document has a root.
+            if (uiElementBridge != null && uiElementBridge.HasPendingUXML)
+                uiElementBridge.ProcessPendingUXML();
         }
 
         /// <summary>
@@ -987,13 +1026,26 @@ namespace BS
         /// <returns>True if initialization is successful or already initialized</returns>
         private bool EnsureInitialized()
         {
+            if (internalPanelId == -1)
+            {
+                internalPanelId = nextPanelId++;
+            }
             if (uiDocument == null || uiElementBridge == null)
             {
-                if (internalPanelId == -1)
-                {
-                    internalPanelId = nextPanelId++;
-                }
                 return InitializePanel();
+            }
+
+            // Initialised before Start (Process UXML Tree): make sure the bridge is registered under the id the
+            // UI nodes and the page address it by, without removing another panel's registration.
+            var registrationId = GetFormattedPanelId();
+            if (uiElementBridge.panelId != registrationId)
+            {
+                if (!string.IsNullOrEmpty(uiElementBridge.panelId) &&
+                    UIElementBridge.GetPanelInstance(uiElementBridge.panelId) == uiElementBridge)
+                {
+                    UIElementBridge.UnregisterPanelInstance(uiElementBridge.panelId);
+                }
+                UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge, this);
             }
             return true;
         }

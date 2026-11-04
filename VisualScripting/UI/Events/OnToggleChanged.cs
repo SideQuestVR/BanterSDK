@@ -122,7 +122,7 @@ namespace BS.VisualScripting
                 LogVerbose("No specific target, checking if boolean change event");
                 // Only trigger if it's a boolean change event
                 var result = data.arguments != null && data.arguments.Length >= 1 &&
-                       (data.arguments[0] is bool || (data.arguments[0] is string strVal && (strVal == "1" || strVal == "0" || strVal.ToLower() == "true" || strVal.ToLower() == "false")));
+                       (data.arguments[0] is bool || (data.arguments[0] is string strVal && (strVal == "1" || strVal == "0" || strVal.ToLowerInvariant() == "true" || strVal.ToLowerInvariant() == "false")));
                 LogVerbose($"ShouldTrigger result (any toggle): {result}");
                 return result;
             }
@@ -130,7 +130,7 @@ namespace BS.VisualScripting
             // Otherwise, only trigger for the specific element
             var matches = eventElementId == resolvedTarget2;
             var hasValidArgs = data.arguments != null && data.arguments.Length >= 1 &&
-                   (data.arguments[0] is bool || (data.arguments[0] is string strVal2 && (strVal2 == "1" || strVal2 == "0" || strVal2.ToLower() == "true" || strVal2.ToLower() == "false")));
+                   (data.arguments[0] is bool || (data.arguments[0] is string strVal2 && (strVal2 == "1" || strVal2 == "0" || strVal2.ToLowerInvariant() == "true" || strVal2.ToLowerInvariant() == "false")));
 
             LogVerbose($"Element match: {matches}, Valid args: {hasValidArgs}");
             LogVerbose($"ShouldTrigger result (specific element): {matches && hasValidArgs}");
@@ -155,7 +155,7 @@ namespace BS.VisualScripting
                 }
                 else if (data.arguments[0] is string strValue)
                 {
-                    value = strValue == "1" || strValue.ToLower() == "true";
+                    value = strValue == "1" || strValue.ToLowerInvariant() == "true";
                 }
 
                 flow.SetValue(isOn, value);

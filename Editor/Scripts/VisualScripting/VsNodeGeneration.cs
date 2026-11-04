@@ -507,6 +507,9 @@ namespace BS.SDKEditor
             typeof(BS.BSAttachment),
 
             typeof(BS.Score),
+            // Shared-clock phase for synced loops (SyncedClock.Phase01); worlds already use it, and it is on the
+            // client allow-list. Its other members (NowSeconds, ServerOffsetSeconds) are not, so graphs can't use them.
+            typeof(BS.SyncedClock),
 #if BANTER_PICAVOXEL
             typeof(PicaVoxel.VoxelEditEventArgs),
             typeof(PicaVoxel.VoxelDetectorEventArgs),

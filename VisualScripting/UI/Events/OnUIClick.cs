@@ -138,8 +138,8 @@ namespace BS.VisualScripting
 
             var parts = value.Split(',');
             if (parts.Length >= 2 &&
-                float.TryParse(parts[0].Trim(), out var x) &&
-                float.TryParse(parts[1].Trim(), out var y))
+                NumberFormat.TryParse(parts[0].Trim(), out var x) &&
+                NumberFormat.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;

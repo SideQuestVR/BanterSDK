@@ -8,6 +8,8 @@ using System.Runtime.CompilerServices;
 
 // Edit-mode tests set components' internal (serialized) fields directly.
 [assembly: InternalsVisibleTo("BS.SDKEditor.Tests")]
+// Bridge 2 session-lane tests drive BSLink/BSPipe's internal bridge seams.
+[assembly: InternalsVisibleTo("BS.Bridge.Core.Tests")]
 
 // The in-editor local multiplayer host (Runtime/LocalMultiplayer, Editor/LocalMultiplayer) and its tests
 // drive the same internals the Greenfield client's bridges use.

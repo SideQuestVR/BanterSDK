@@ -78,7 +78,7 @@ namespace BS.VisualScripting
                     }
 
                     // Set border width
-                    SendStyleCommand(panelId, elemId, "border-width", $"{width}px");
+                    SendStyleCommand(panelId, elemId, "border-width", $"{NumberFormat.Format(width)}px");
 
                     // Set border color
                     var colorHex = $"#{ColorUtility.ToHtmlStringRGBA(color)}";
@@ -87,14 +87,14 @@ namespace BS.VisualScripting
                     // Set border radius (general or individual corners)
                     if (radius > 0)
                     {
-                        SendStyleCommand(panelId, elemId, "border-radius", $"{radius}px");
+                        SendStyleCommand(panelId, elemId, "border-radius", $"{NumberFormat.Format(radius)}px");
                     }
                     else
                     {
-                        SendStyleCommand(panelId, elemId, "border-top-left-radius", $"{topLeftRadius}px");
-                        SendStyleCommand(panelId, elemId, "border-top-right-radius", $"{topRightRadius}px");
-                        SendStyleCommand(panelId, elemId, "border-bottom-left-radius", $"{bottomLeftRadius}px");
-                        SendStyleCommand(panelId, elemId, "border-bottom-right-radius", $"{bottomRightRadius}px");
+                        SendStyleCommand(panelId, elemId, "border-top-left-radius", $"{NumberFormat.Format(topLeftRadius)}px");
+                        SendStyleCommand(panelId, elemId, "border-top-right-radius", $"{NumberFormat.Format(topRightRadius)}px");
+                        SendStyleCommand(panelId, elemId, "border-bottom-left-radius", $"{NumberFormat.Format(bottomLeftRadius)}px");
+                        SendStyleCommand(panelId, elemId, "border-bottom-right-radius", $"{NumberFormat.Format(bottomRightRadius)}px");
                     }
                 }
                 catch (System.Exception e)

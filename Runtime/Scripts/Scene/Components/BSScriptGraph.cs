@@ -77,7 +77,16 @@ namespace BS
 
         internal override void StartStuff()
         {
-            RefreshMachinesInternal();
+            // Nothing to load: reported once the machines are summarised, and even if that throws, so it can't hold the
+            // space's load gate (it never reported, and held it for good).
+            try
+            {
+                RefreshMachinesInternal();
+            }
+            finally
+            {
+                SetLoadedIfNot();
+            }
         }
 
         internal override void DestroyStuff()

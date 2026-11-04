@@ -192,7 +192,14 @@ namespace BS
 
             if ((changedProperties?.Contains(PropertyName.url) ?? true) && !string.IsNullOrEmpty(url))
             {
-                _oraView?.LoadUrl(url);
+                // The url comes from world content: a local file would let a page read the app's files (the session
+                // token among them) back with a runscript action. Ora refuses these too; this keeps them off the wire.
+                // What is checked is what is loaded: the url as URL parsing reads it, a host name sent as http://.
+                var load = UrlToLoad(url);
+                if (load != null)
+                    _oraView?.LoadUrl(load);
+                else if (NormalizeUrl(url).Length > 0)
+                    Debug.LogWarning($"[BS] Browser url refused (only web pages may be loaded): '{ShownUrl(url)}'");
             }
 
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
@@ -461,6 +468,71 @@ namespace BS
         {
             SetupBrowser(changedProperties);
         }
+        /// <summary>
+        /// The url as browsers read it. URL parsing (WHATWG, and Chromium's) ignores leading and trailing C0 controls
+        /// and spaces, and tabs and line breaks anywhere: "\u0001file:..." and "fi\tle:..." are file URLs.
+        /// </summary>
+        internal static string NormalizeUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return "";
+            var sb = new System.Text.StringBuilder(url.Length);
+            foreach (var c in url)
+                if (c != '\t' && c != '\n' && c != '\r') sb.Append(c);
+            int start = 0, end = sb.Length;
+            while (start < end && sb[start] <= ' ') start++;
+            while (end > start && sb[end - 1] <= ' ') end--;
+            return sb.ToString(start, end - start);
+        }
+
+        /// <summary>
+        /// What a world browser loads for <paramref name="url"/>, or null when it may not load it. Web pages only: an
+        /// http/https url, about:blank, or a host name without a scheme ("www.youtube.com/...", "localhost:8080/x"),
+        /// which is sent as http:// so no host has to guess what it is. Anything else is refused: file:, javascript:,
+        /// data:, intent: and the rest. The url is read as URL parsing reads it (<see cref="NormalizeUrl"/>). Ora's
+        /// hosts enforce the same underneath (Electron viewUrlToLoad, Android OraUrlPolicy and LoadUrl).
+        /// </summary>
+        internal static string UrlToLoad(string url)
+        {
+            var u = NormalizeUrl(url);
+            if (u.Length == 0) return null;
+            if (string.Equals(u, "about:blank", StringComparison.OrdinalIgnoreCase)) return u;
+            var scheme = Scheme(u);
+            if (scheme == null) return "http://" + u;
+            // Sent with the scheme in lower case ("HTTPS://x" as "https://x"): what every host compares against.
+            return scheme.Equals("http", StringComparison.OrdinalIgnoreCase) || scheme.Equals("https", StringComparison.OrdinalIgnoreCase)
+                ? scheme.ToLowerInvariant() + u.Substring(scheme.Length)
+                : null;
+        }
+
+        static readonly System.Text.RegularExpressions.Regex SchemePrefix = new System.Text.RegularExpressions.Regex(@"^([A-Za-z][A-Za-z0-9+.\-]*):");
+        static readonly System.Text.RegularExpressions.Regex HostName = new System.Text.RegularExpressions.Regex(@"^[A-Za-z0-9.\-]+$");
+        static readonly System.Text.RegularExpressions.Regex PortThenPath = new System.Text.RegularExpressions.Regex(@"^[0-9]+([/?#]|$)");
+
+        /// <summary>
+        /// The url's scheme, or null without one. A host name with a port ("localhost:8080/x", "www.example.com:443/x")
+        /// parses as a scheme too: it is a host when the part before the ':' looks like one (a dot, or localhost) and only
+        /// digits follow it, up to the end or a / ? #. "javascript:0;..." and "file:0/..." are schemes. Same rule as Ora's
+        /// Windows host (app-protocol.ts hasScheme).
+        /// </summary>
+        static string Scheme(string url)
+        {
+            var m = SchemePrefix.Match(url);
+            if (!m.Success) return null;
+            var name = m.Groups[1].Value;
+            var hostLike = HostName.IsMatch(name) && (name.IndexOf('.') >= 0 || name.Equals("localhost", StringComparison.OrdinalIgnoreCase));
+            return hostLike && PortThenPath.IsMatch(url.Substring(m.Length)) ? null : name;
+        }
+
+        /// <summary>A refused url as logged: capped, because Player.log can be uploaded, and on one line.</summary>
+        internal static string ShownUrl(string url)
+        {
+            var chars = (url ?? "").ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+                if (chars[i] < ' ' || chars[i] == '\u007f') chars[i] = '?';
+            var shown = new string(chars);
+            return shown.Length > 120 ? shown.Substring(0, 120) + "..." : shown;
+        }
+
         // BS COMPILED CODE 
         public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
         public System.Int32 MipMaps { get { return mipMaps; } set { mipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.mipMaps }); } }

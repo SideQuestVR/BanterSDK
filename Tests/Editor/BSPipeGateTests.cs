@@ -12,8 +12,9 @@ namespace BS.SDKEditor.Tests
     /// BSPipe ignores what the space view sends until a page has started loading. The view starts on about:blank, Ora
     /// injects the SDK there without ever reporting a LoadStarted for it, and that document's requests used to reach
     /// BSScene before its settings existed ("Error updating object" for a seat's SitPoint at every Play).
-    /// The pipe here has no link, so the load-started listener throws at link.scene: after it has decided about the
-    /// gate and before BSScene.OnLoad (which needs Play mode) could run. That also pins the order.
+    /// The pipe's link here has no scene, so the load-started listener throws at link.scene: after it has decided about
+    /// the gate and before BSScene.OnLoad (which needs Play mode) could run. That also pins the order. The link itself
+    /// exists, as it always does in real use (BSLink.ConnectPipe makes the pipe): the message gate reads link.bridge.
     /// </summary>
     public class BSPipeGateTests
     {
@@ -25,11 +26,12 @@ namespace BS.SDKEditor.Tests
         [SetUp]
         public void SetUp()
         {
-            // Inactive, so OraView.Awake never runs and no browser window is created.
+            // Inactive, so OraView.Awake never runs and no browser window is created (nor BSLink's Start).
             _viewObject = new GameObject("BSPipeGateTests view");
             _viewObject.SetActive(false);
             _view = _viewObject.AddComponent<OraView>();
-            _pipe = new BSPipe(null, _view, null);
+            // A link on the legacy lane (no bridge) and without a scene.
+            _pipe = new BSPipe(_viewObject.AddComponent<BSLink>(), _view, null);
             _received.Clear();
             _pipe.Start(() => { }, _received.Add);
         }
@@ -61,7 +63,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void ADomReadyBeforeTheFirstPageLoad_IsIgnored()
         {
-            // Handling it would touch link.scene, and there is no link here.
+            // Handling it would touch link.scene, and the link here has no scene.
             Assert.DoesNotThrow(() => _view.domReady.Invoke("about:blank"));
         }
 

@@ -143,13 +143,20 @@ namespace BS.VisualScripting
                 {
                     result = args.arguments[0]?.ToString() ?? "";
                 }
-                EventBus.Unregister(new EventHook(eventName), callback);
             };
 
             EventBus.Register<CustomEventArgs>(new EventHook(eventName), callback);
 
             var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}";
-            UIElementBridge.HandleMessage(message);
+            try
+            {
+                // The bridge answers inline; when it doesn't (element gone, unknown style) the handler must not stay.
+                UIElementBridge.HandleMessage(message);
+            }
+            finally
+            {
+                EventBus.Unregister(new EventHook(eventName), callback);
+            }
 
             return result;
         }
@@ -161,7 +168,7 @@ namespace BS.VisualScripting
             // Remove common units
             value = value.Replace("px", "").Replace("%", "").Replace("em", "").Replace("rem", "").Trim();
 
-            if (float.TryParse(value, out float result))
+            if (NumberFormat.TryParse(value, out float result))
                 return result;
 
             return 0f;
@@ -171,7 +178,7 @@ namespace BS.VisualScripting
         {
             if (string.IsNullOrEmpty(value)) return null;
 
-            value = value.Trim().ToLower();
+            value = value.Trim().ToLowerInvariant();
 
             if (value.EndsWith("px")) return LengthUnit.Pixel;
             if (value.EndsWith("%")) return LengthUnit.Percent;

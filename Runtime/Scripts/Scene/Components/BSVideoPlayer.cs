@@ -709,7 +709,8 @@ namespace BS
             scene.SetFromUnityProperties(updates, callback);
         }
 
-        void Tick(object sender, EventArgs e) { SyncProperties(); UpdateStuff(); }
+        // OnDestroy never runs for an object that was never active (Init can run on one), so drop the handler here.
+        void Tick(object sender, EventArgs e) { if (!this) { scene.Tick -= Tick; return; } SyncProperties(); UpdateStuff(); }
 
         internal override void WatchProperties(PropertyName[] properties)
         {

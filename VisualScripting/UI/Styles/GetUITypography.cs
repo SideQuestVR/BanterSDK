@@ -135,13 +135,20 @@ namespace BS.VisualScripting
                 {
                     result = args.arguments[0]?.ToString() ?? "";
                 }
-                EventBus.Unregister(new EventHook(eventName), callback);
             };
 
             EventBus.Register<CustomEventArgs>(new EventHook(eventName), callback);
 
             var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}";
-            UIElementBridge.HandleMessage(message);
+            try
+            {
+                // The bridge answers inline; when it doesn't (element gone, unknown style) the handler must not stay.
+                UIElementBridge.HandleMessage(message);
+            }
+            finally
+            {
+                EventBus.Unregister(new EventHook(eventName), callback);
+            }
 
             return result;
         }
@@ -150,7 +157,7 @@ namespace BS.VisualScripting
         {
             if (string.IsNullOrEmpty(value)) return 0f;
             value = value.Replace("px", "").Replace("%", "").Replace("em", "").Replace("rem", "").Trim();
-            if (float.TryParse(value, out float result))
+            if (NumberFormat.TryParse(value, out float result))
                 return result;
             return 0f;
         }
@@ -158,18 +165,18 @@ namespace BS.VisualScripting
         private UIFontStyle ParseFontStyle(string value)
         {
             if (string.IsNullOrEmpty(value)) return UIFontStyle.Normal;
-            return value.ToLower().Contains("italic") ? UIFontStyle.Italic : UIFontStyle.Normal;
+            return value.ToLowerInvariant().Contains("italic") ? UIFontStyle.Italic : UIFontStyle.Normal;
         }
 
         private UIFontWeight ParseFontWeight(string value)
         {
             if (string.IsNullOrEmpty(value)) return UIFontWeight.Normal;
-            return value.ToLower().Contains("bold") ? UIFontWeight.Bold : UIFontWeight.Normal;
+            return value.ToLowerInvariant().Contains("bold") ? UIFontWeight.Bold : UIFontWeight.Normal;
         }
 
         private UITextAlign ParseTextAlign(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "center" => UITextAlign.Center,
                 "right" => UITextAlign.Right,
@@ -188,7 +195,7 @@ namespace BS.VisualScripting
 
         private UIWhiteSpace ParseWhiteSpace(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "nowrap" => UIWhiteSpace.NoWrap,
                 "pre" => UIWhiteSpace.Pre,

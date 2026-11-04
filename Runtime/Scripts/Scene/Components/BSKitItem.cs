@@ -82,13 +82,41 @@ namespace BS
             {
                 if (!scene.bundlesLoaded)
                 {
-                    await new WaitUntil(() => scene.bundlesLoaded);
+                    // Bounded: this item gone, the load it started in replaced by another or failed (bundlesLoaded is the
+                    // new load's, and may stay false after a cancelled one), or the backstop, which doesn't run out while
+                    // an asset bundle is still pending (those bound themselves). No load captured (Play start, before the
+                    // first): no identity to compare.
+                    var load = scene.loadUrlTaskCompletionSource;
+                    var deadline = Time.realtimeSinceStartup + KitPathWait.LimitSeconds;
+                    await new WaitUntil(() => this == null || scene.bundlesLoaded
+                        || (load != null && !ReferenceEquals(scene.loadUrlTaskCompletionSource, load))
+                        || scene.HasLoadFailed()
+                        || (Time.realtimeSinceStartup > deadline && !scene.AnyCriticalPending()));
+                    if (this == null) return;
+                }
+                if (KitBundle == null && scene.settings == null)
+                {
+                    // The space's settings went while this waited (Play stopping).
+                    SetLoadedIfNot(false, "Kititem not found at path: " + path);
+                    return;
                 }
                 if (KitBundle == null)
                 {
-                    if (scene.settings.KitPaths.ContainsKey(path))
+                    if (!scene.settings.KitPaths.ContainsKey(path))
                     {
-                        KitBundle = scene.settings.KitPaths[path].assetBundle;
+                        // scene.bundlesLoaded is only recomputed by the space's load poll, and a kit bundle placed in the
+                        // world registers its prefabs only once its own Start has loaded it, which can come after this
+                        // item's Start: wait while a kit bundle may still register the path, then look once more.
+                        var settings = scene.settings;
+                        // The page's creations still queued may include the kit bundle itself.
+                        var wait = new KitPathWait(() => settings.KitPaths.ContainsKey(path), BSAssetBundle.AnyKitStillLoading,
+                            () => scene.pendingCreates.Count > 0, scene.HasLoadFailed, Time.realtimeSinceStartup);
+                        await new WaitUntil(() => this == null || wait.Done(Time.realtimeSinceStartup));
+                        if (this == null) return;
+                    }
+                    if (scene.settings != null && scene.settings.KitPaths.TryGetValue(path, out var kit))
+                    {
+                        KitBundle = kit.assetBundle;
                     }
                     else
                     {
@@ -104,12 +132,16 @@ namespace BS
             try
             {
                 GameObject asset = KitBundle.LoadAsset<GameObject>(loadPath);
+                // Judged on the asset, before any copy exists, so every instance inherits it (BSUnityEventGuard); a
+                // prefab that fails throws, refusing the item. A reloaded asset is a new object and is judged again.
+                BSUnityEventGuard.SanitizePrefab(asset, loadPath);
                 if (resetTransform)
                 {
                     asset.transform.localPosition = Vector3.zero;
                     asset.transform.localRotation = Quaternion.identity;
                 }
                 item = Instantiate(asset, transform, false);
+                BSUnityEventGuard.SanitizeInstance(item, loadPath); // what only a live copy shows (legacy Animation states)
                 scene.kitItems.Add(item);
 
                 foreach (Transform transform in item.GetComponentsInChildren<Transform>(true))

@@ -27,7 +27,8 @@ namespace BS
 
         internal override void StartStuff()
         {
-
+            // Nothing to load. It never reported loaded, so every one held its space's load gate for good.
+            SetLoadedIfNot();
         }
 
         internal override void DestroyStuff()

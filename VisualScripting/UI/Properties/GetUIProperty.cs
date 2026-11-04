@@ -35,10 +35,6 @@ namespace BS.VisualScripting
         [DoNotSerialize]
         public ValueOutput propertyValue;
 
-        // Store callback for cleanup
-        private System.Action<CustomEventArgs> _currentCallback;
-        private string _currentEventName;
-
         protected override void Definition()
         {
             inputTrigger = ControlInput("", (flow) =>
@@ -61,71 +57,48 @@ namespace BS.VisualScripting
                 // Set element ID output for chaining
                 flow.SetValue(elementIdOutput, elemId);
 
-                var graphReference = flow.stack.ToReference();
+                flow.SetValue(propertyValue, null); // kept when the bridge doesn't answer (e.g. the element is gone)
+
+                // Convert enum to property name
+                var propNameStr = GetPropertyName(propName);
+
+                var hook = new EventHook($"UIProperty_{elemId}_{propNameStr}");
+                System.Action<CustomEventArgs> onValue = args =>
+                {
+                    if (args.arguments != null && args.arguments.Length > 0)
+                    {
+                        flow.SetValue(propertyValue, args.arguments[0]);
+#if BANTER_UI_DEBUG
+                        Debug.Log($"[GetUIProperty] Received property value: '{args.arguments[0]}' for {hook.name}");
+#endif
+                    }
+                };
 
                 try
                 {
-                    // Clean up any existing callback
-                    CleanupCallback();
-
-                    // Auto-resolve panel from element ID
                     var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
                     if (panelId == null)
                     {
                         Debug.LogError($"[GetUIProperty] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(propertyValue, null);
                         return outputTrigger;
                     }
 
-                    // Convert enum to property name
-                    var propNameStr = GetPropertyName(propName);
-
-                    // Set up callback to receive the value
-                    _currentEventName = $"UIProperty_{elemId}_{propNameStr}";
-                    _currentCallback = (CustomEventArgs args) =>
-                    {
-                        if (!graphReference.isValid)
-                        {
-                            CleanupCallback();
-                            return;
-                        }
-
-                        var callbackFlow = Flow.New(graphReference);
-
-                        if (args.arguments != null && args.arguments.Length > 0)
-                        {
-                            callbackFlow.SetValue(propertyValue, args.arguments[0]);
-#if BANTER_UI_DEBUG
-                            Debug.Log($"[GetUIProperty] Received property value: {args.arguments[0]} for {_currentEventName}");
-#endif
-                        }
-                        else
-                        {
-                            callbackFlow.SetValue(propertyValue, null);
-                        }
-
-                        // Clean up callback after use
-                        CleanupCallback();
-                    };
-
-                    // Register for the callback event
-                    EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
+                    // The bridge answers inline, inside HandleMessage, so `flow` is still the caller's flow when
+                    // onValue runs and the value lands on this node's output (a new Flow would never be read).
+                    EventBus.Register<CustomEventArgs>(hook, onValue);
 
                     // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propNameStr}";
-
-                    // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-#if BANTER_UI_DEBUG
-                    Debug.Log($"[GetUIProperty] Requested property '{propNameStr}' for element {elemId}, waiting for callback on {_currentEventName}");
-#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIProperty] Failed to get UI property: {e.Message}");
-                    flow.SetValue(propertyValue, null);
-                    CleanupCallback();
+                }
+                finally
+                {
+                    // Always unregistered (a no-op if never registered): a leftover handler would hold this flow.
+                    EventBus.Unregister(hook, onValue);
                 }
 
                 return outputTrigger;
@@ -137,16 +110,6 @@ namespace BS.VisualScripting
             propertyName = ValueInput("Property", UIPropertyNameVS.Text);
             elementIdOutput = ValueOutput<string>("Element ID");
             propertyValue = ValueOutput<object>("Value");
-        }
-
-        private void CleanupCallback()
-        {
-            if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))
-            {
-                EventBus.Unregister(new EventHook(_currentEventName), _currentCallback);
-                _currentCallback = null;
-                _currentEventName = null;
-            }
         }
 
         private string GetPropertyName(UIPropertyNameVS propName)

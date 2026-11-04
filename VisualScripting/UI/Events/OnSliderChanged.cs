@@ -104,14 +104,14 @@ namespace BS.VisualScripting
                 // Only trigger if it's a float/numeric change event
                 return data.arguments != null && data.arguments.Length >= 1 &&
                        (data.arguments[0] is float ||
-                        (data.arguments[0] is string strVal && float.TryParse(strVal, out _)));
+                        (data.arguments[0] is string strVal && NumberFormat.TryParse(strVal, out _)));
             }
 
             // Otherwise, only trigger for the specific element with float values
             return eventElementId == resolvedTarget2 &&
                    data.arguments != null && data.arguments.Length >= 1 &&
                    (data.arguments[0] is float ||
-                    (data.arguments[0] is string strVal2 && float.TryParse(strVal2, out _)));
+                    (data.arguments[0] is string strVal2 && NumberFormat.TryParse(strVal2, out _)));
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
@@ -129,13 +129,13 @@ namespace BS.VisualScripting
                 // Parse new value
                 if (data.arguments[0] is float floatVal)
                     newValue = floatVal;
-                else if (data.arguments[0] is string strVal && float.TryParse(strVal, out var parsed))
+                else if (data.arguments[0] is string strVal && NumberFormat.TryParse(strVal, out var parsed))
                     newValue = parsed;
 
                 // Parse old value (for delta calculation)
                 if (data.arguments[1] is float oldFloatVal)
                     oldValue = oldFloatVal;
-                else if (data.arguments[1] is string oldStrVal && float.TryParse(oldStrVal, out var oldParsed))
+                else if (data.arguments[1] is string oldStrVal && NumberFormat.TryParse(oldStrVal, out var oldParsed))
                     oldValue = oldParsed;
 
                 flow.SetValue(value, newValue);
@@ -148,7 +148,7 @@ namespace BS.VisualScripting
 
                 if (data.arguments[0] is float floatVal)
                     newValue = floatVal;
-                else if (data.arguments[0] is string strVal && float.TryParse(strVal, out var parsed))
+                else if (data.arguments[0] is string strVal && NumberFormat.TryParse(strVal, out var parsed))
                     newValue = parsed;
 
                 flow.SetValue(value, newValue);

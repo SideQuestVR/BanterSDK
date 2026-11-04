@@ -267,7 +267,10 @@ namespace BS
         {
             get
             {
-                return state == SceneState.DOM_READY || state == SceneState.SCENE_READY || state == SceneState.UNITY_READY || state == SceneState.SCENE_START;
+                // NOTHING_20S is only the "still loading" warning: the page is alive and may still be creating objects,
+                // and dropping its requests then (issue 21) is what failed it at 4:20.
+                return state == SceneState.DOM_READY || state == SceneState.SCENE_READY || state == SceneState.UNITY_READY || state == SceneState.SCENE_START
+                    || state == SceneState.NOTHING_20S;
             }
         }
         public string CurrentUrl;
@@ -1047,12 +1050,12 @@ namespace BS
 
             // Reply shape matches ScriptGraph's so the page's existing "<command>§<payload>" strip
             // works unchanged.
-            var request = new BSStateRequest(reply =>
+            var request = new BSStateRequest(global::BS.Bridge.BridgeContext.Bind<string>(reply =>
             {
                 var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply ?? "{}"));
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY
                           + command + MessageDelimiters.SECONDARY + replyB64);
-            })
+            }))
             {
                 Target = target,
                 Op = sub,
@@ -1080,12 +1083,12 @@ namespace BS
                 SendError(reqId, "PROGRESSION_OP: malformed payload");
                 return;
             }
-            var request = new BSHostRequest(APICommands.PROGRESSION_OP, reply =>
+            var request = new BSHostRequest(APICommands.PROGRESSION_OP, global::BS.Bridge.BridgeContext.Bind<string>(reply =>
             {
                 var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply ?? "{}"));
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY
                           + APICommands.PROGRESSION_OP + MessageDelimiters.SECONDARY + replyB64);
-            })
+            }))
             {
                 Op = sub,
                 Json = body
@@ -1123,12 +1126,12 @@ namespace BS
                 SendError(reqId, "HOST_EXT_OP: malformed payload");
                 return;
             }
-            var request = new BSHostRequest(command, reply =>
+            var request = new BSHostRequest(command, global::BS.Bridge.BridgeContext.Bind<string>(reply =>
             {
                 var replyB64 = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(reply ?? "{}"));
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY
                           + APICommands.HOST_EXT_OP + MessageDelimiters.SECONDARY + replyB64);
-            })
+            }))
             {
                 Op = sub,
                 Json = body
@@ -1356,14 +1359,132 @@ namespace BS
             FlushObjectToChanges(oid, cid, type);
         }
 
+        /// <summary>
+        /// The load is still waiting 25 s after its SCENE_READY: one error naming what it waits for, with why (it used to
+        /// log one line per component, loaded or not, and named none of them). Main thread.
+        /// </summary>
         public void LogMissing()
         {
             if (loaded) return;
-            Debug.LogError("Failed to load after 25 seconds.");
-            foreach (var x in banterComponents.ToArray())
+            var waiting = banterComponents.Values.Where(c => !c.loaded).ToList();
+            // Every critical one (the gate waits for those however long they take), then the first few others.
+            var named = waiting.Where(c => BSLoadGate.IsCritical(c.type))
+                .Concat(waiting.Where(c => !BSLoadGate.IsCritical(c.type)).Take(BSLoadGate.NamedInLog))
+                .Select(Diagnose).ToList();
+            Debug.LogError(BSLoadGate.MissingReport(BSLink.DescribeUrlForLog(CurrentUrl), state, banterComponents.Count, waiting.Count, named, pendingCreates.Count));
+        }
+
+        // The bounded wait, reset with each load: see BSLoadGate and ReleaseStalledComponents.
+        readonly BSLoadGate loadGate = new BSLoadGate();
+
+        /// <summary>
+        /// The page's object and component creations queued on the main thread and not run yet. A component registers
+        /// only when its creation runs, and the loading scheduler spreads thousands of them over frames, so until then
+        /// the gate can't see them: SetLoaded counts the space as loading while any is queued.
+        /// </summary>
+        internal readonly UnityMainThreadTaskScheduler.PendingCounter pendingCreates = new UnityMainThreadTaskScheduler.PendingCounter();
+
+        // Creations queued and run, ever (they run in queue order), and the watermark: how many had been queued at the
+        // gate's first check of this page. Only those must have run before the gate opens, so a page that keeps creating
+        // objects can't hold it shut for good. -1 until that first check.
+        long creationsQueued, creationsRun, creationsMark = -1;
+
+        /// <summary>
+        /// Queues one of the page's object or component creations on the main thread, counted by pendingCreates and the
+        /// watermark. <paramref name="create"/> must be synchronous: an async one counts as run at its first await.
+        /// </summary>
+        internal void EnqueueCreation(Action create, UnityMainThreadTaskScheduler scheduler = null)
+        {
+            Interlocked.Increment(ref creationsQueued);
+            (scheduler ?? UnityMainThreadTaskScheduler.Default).EnqueueCounted(() =>
             {
-                Debug.Log("Is loaded? : " + x.Value.cid + " : " + x.Value.banterObject.oid + " :  " + x.Value.banterObject.name + " : " + x.Value.type + " : " + x.Value.loaded + " : " + x.Value.progress);
+                try
+                {
+                    create();
+                }
+                finally
+                {
+                    Interlocked.Increment(ref creationsRun);
+                }
+            }, pendingCreates);
+        }
+
+        /// <summary>
+        /// Whether every creation queued before the gate's first check of this page (the watermark, taken now if it
+        /// hasn't been) has run. Main thread, once the page is ready.
+        /// </summary>
+        internal bool CreationsUpToMarkRun()
+        {
+            Interlocked.CompareExchange(ref creationsMark, Interlocked.Read(ref creationsQueued), -1);
+            return Interlocked.Read(ref creationsRun) >= Interlocked.Read(ref creationsMark);
+        }
+
+        void ForgetCreationsMark()
+        {
+            Interlocked.Exchange(ref creationsMark, -1);
+        }
+
+        /// <summary>
+        /// The bounded wait, polled by BSLink with the gate after SCENE_READY. A component other than an asset bundle
+        /// that neither loads nor reports progress for <see cref="BSLoadGate.StalledSeconds"/> while no bundle is pending
+        /// (for most types, which report none: not loaded within 20 s) stops holding the load, and is logged once, by name. Here rather than in SetLoaded, which BSPipe and BSLink.LoadUrl call
+        /// too; and not through SetLoadedIfNot(false), whose failure would cancel the whole load. Main thread.
+        /// </summary>
+        internal void ReleaseStalledComponents(float now)
+        {
+            if (loaded || HasLoadFailed()) return;
+            if (state != SceneState.SCENE_READY && state != SceneState.UNITY_READY)
+            {
+                loadGate.ResetClocks();
+                return;
             }
+            if (!loadGate.Due(now)) return;
+            var pending = new List<BSLoadGate.Pending>();
+            foreach (var c in banterComponents.Values)
+            {
+                if (!c.loaded) pending.Add(new BSLoadGate.Pending(c.cid, c.type, c.progress));
+            }
+            var release = loadGate.Tick(pending, now, creationsQueued: !CreationsUpToMarkRun());
+            if (release.Count == 0) return;
+            var released = new List<BSLoadGate.Diagnosis>(release.Count);
+            foreach (var cid in release)
+            {
+                if (!banterComponents.TryGetValue(cid, out var c) || c.loaded) continue;
+                released.Add(Diagnose(c));
+                c.loaded = true; // the gate's record only: the component carries on, and may still load
+            }
+            if (released.Count > 0)
+            {
+                Debug.LogWarning(BSLoadGate.ReleaseReport(BSLink.DescribeUrlForLog(CurrentUrl), released));
+            }
+        }
+
+        /// <summary>
+        /// Whether <paramref name="record"/>'s component failing now fails the load (BSLoadGate.FailureCancelsLoad): the
+        /// load still waits for it, and it is this load's. Main thread.
+        /// </summary>
+        internal bool FailureCancelsCurrentLoad(int cid, BSComponent record)
+        {
+            var recordStillRegistered = ReferenceEquals(GetBanterComponent(cid), record);
+            return BSLoadGate.FailureCancelsLoad(loaded, loadGate.WasReleased(cid),
+                BSLoadGate.IsOfCurrentLoad(state, recordStillRegistered));
+        }
+
+        /// <summary>Whether an asset bundle registered for this load is still loading. Main thread.</summary>
+        internal bool AnyCriticalPending()
+        {
+            foreach (var c in banterComponents.Values)
+            {
+                if (!c.loaded && BSLoadGate.IsCritical(c.type)) return true;
+            }
+            return false;
+        }
+
+        static BSLoadGate.Diagnosis Diagnose(BSComponent c)
+        {
+            var obj = c.banterObject;
+            return BSLoadGate.Diagnose(c.cid, obj?.oid ?? 0, c.type, obj != null ? c.Object() : null,
+                obj?.unityAndBanterObject.gameObject, c.progress);
         }
         public bool HasLoadFailed()
         {
@@ -1482,18 +1603,21 @@ namespace BS
             {
                 sceneReadySince = Time.realtimeSinceStartup;
             }
-            bundlesLoaded = ready && allAssetBundlesLoaded;
+            // Creations still queued haven't registered their components yet, a kit bundle among them. Only those queued
+            // before the first check of this ready page count (CreationsUpToMarkRun).
+            var nothingQueued = ready && CreationsUpToMarkRun();
+            bundlesLoaded = ready && allAssetBundlesLoaded && nothingQueued;
             if (!ready)
             {
                 loaded = false;
             }
             else if (totalCount > 0)
             {
-                loaded = loadedCount == totalCount;
+                loaded = loadedCount == totalCount && nothingQueued;
             }
             else
             {
-                loaded = Time.realtimeSinceStartup - sceneReadySince >= EmptySceneGraceSeconds;
+                loaded = Time.realtimeSinceStartup - sceneReadySince >= EmptySceneGraceSeconds && nothingQueued;
             }
             PushLoadProgress(loadedCount, totalCount, combinedPercentage);
         }
@@ -1517,7 +1641,15 @@ namespace BS
                         banterComp.loaded = true;
                         if (!success)
                         {
-                            Cancel(message, false);
+                            // Fails the load only while the load is still waiting for this component (BSLoadGate).
+                            if (FailureCancelsCurrentLoad(cid, banterComp))
+                            {
+                                Cancel(message, false);
+                            }
+                            else
+                            {
+                                Debug.LogWarning($"[LOADING] {comp.GetType().Name} {cid} failed after the load stopped waiting for it: {BSLoadGate.Printable(message)}");
+                            }
                         }
                         // SetLoaded();
                     }
@@ -1526,7 +1658,8 @@ namespace BS
                         // This is caught in the AddBanterComponent method instead. 
                         // Debug.LogError("BSComponent is null: " + UnityId(go) + " : " + cid + " : " + comp.name);
                     }
-                    link.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
+                    // No link without BSStarterUpper: a standalone QuestHomeLoader, say.
+                    link?.Send(APICommands.EVENT + APICommands.LOADED + MessageDelimiters.PRIMARY + cid);
                 });
                 comp.progress.AddListener((progress) =>
                 {
@@ -1538,7 +1671,7 @@ namespace BS
                     {
                         banterComp.progress = progress;
                     }
-                    link.Send(APICommands.EVENT + APICommands.PROGRESS + MessageDelimiters.PRIMARY + cid + MessageDelimiters.SECONDARY + NumberFormat.Format(progress));
+                    link?.Send(APICommands.EVENT + APICommands.PROGRESS + MessageDelimiters.PRIMARY + cid + MessageDelimiters.SECONDARY + NumberFormat.Format(progress));
                 });
             }
         }
@@ -1587,8 +1720,11 @@ namespace BS
                     gameObject.id?.mainThreadComponentMap.TryGetValue(int.Parse(componentId), out unityComp);
                     if (unityComp == null)
                     {
-                        Debug.LogError("[Banter] Unity component not found: " + msg);
+                        // Gone since the page sent this (pages keep setting an AudioSource's volume after destroying
+                        // it): nothing to update. It used to carry on into a null component and a second error.
+                        Debug.LogWarning("[Banter] Unity component not found: " + msg);
                         SendError(reqId, "UPDATE_COMPONENT: Component not found: " + msg);
+                        continue;
                     }
                     var banterComp = GetBanterComponent(int.Parse(componentId));
                     var objs = SetComponentProperties(2, parts, banterComp, msg);
@@ -1646,52 +1782,69 @@ namespace BS
                 SendError(reqId, $"CALL_METHOD: called method {methodName} with an unset instance ID, it probably hasn't been created yet");
                 return;
             }
-            var banterComponent = GetBanterComponent(int.Parse(msgParts[0]));
-
-            var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries);
-            var paramList = new List<object>();
-            foreach (var param in parameters)
+            var banterComponent = GetBanterComponent(oid);
+            if (banterComponent == null)
             {
-                var paramParts = param.Split(MessageDelimiters.TERTIARY, 2);
-                if (paramParts.Length < 1)
+                // Removed since the page sent this.
+                SendError(reqId, $"CALL_METHOD: {methodName}: Component not found: {oid}");
+                return;
+            }
+
+            var paramList = new List<object>();
+            // This method is async void: a throw while parsing the arguments (an int sent as 1.5) reached nobody,
+            // and the page's await never settled.
+            try
+            {
+                var parameters = msgParts[2].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries);
+                foreach (var param in parameters)
                 {
-                    Debug.LogError("[Banter] Call Method message is malformed: " + msg);
-                    SendError(reqId, "CALL_METHOD: Message is malformed: " + msg);
-                    return;
+                    var paramParts = param.Split(MessageDelimiters.TERTIARY, 2);
+                    if (paramParts.Length < 1)
+                    {
+                        Debug.LogError("[Banter] Call Method message is malformed: " + msg);
+                        SendError(reqId, "CALL_METHOD: Message is malformed: " + msg);
+                        return;
+                    }
+                    var paramType = (PropertyType)int.Parse(paramParts[0]);
+                    switch (paramType)
+                    {
+                        case PropertyType.String:
+                            // The JS side wrote it with encodeWireText (generated components).
+                            paramList.Add(WireText.Decode(paramParts[1]));
+                            break;
+                        case PropertyType.Bool:
+                            paramList.Add(paramParts[1] == "1");
+                            break;
+                        case PropertyType.Float:
+                            paramList.Add(NumberFormat.Parse(paramParts[1]));
+                            break;
+                        case PropertyType.Int:
+                            paramList.Add(int.Parse(paramParts[1]));
+                            break;
+                        case PropertyType.Vector2:
+                            var vec2Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 2);
+                            paramList.Add(new Vector2(NumberFormat.Parse(vec2Parts[0]), NumberFormat.Parse(vec2Parts[1])));
+                            break;
+                        case PropertyType.Vector3:
+                            var vec3Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 3);
+                            paramList.Add(new Vector3(NumberFormat.Parse(vec3Parts[0]), NumberFormat.Parse(vec3Parts[1]), NumberFormat.Parse(vec3Parts[2])));
+                            break;
+                        case PropertyType.Vector4:
+                            var vec4Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
+                            paramList.Add(new Vector4(NumberFormat.Parse(vec4Parts[0]), NumberFormat.Parse(vec4Parts[1]), NumberFormat.Parse(vec4Parts[2]), NumberFormat.Parse(vec4Parts[3])));
+                            break;
+                        case PropertyType.Quaternion:
+                            var quatParts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
+                            paramList.Add(new Quaternion(NumberFormat.Parse(quatParts[0]), NumberFormat.Parse(quatParts[1]), NumberFormat.Parse(quatParts[2]), NumberFormat.Parse(quatParts[3])));
+                            break;
+                    }
                 }
-                var paramType = (PropertyType)int.Parse(paramParts[0]);
-                switch (paramType)
-                {
-                    case PropertyType.String:
-                        // The JS side wrote it with encodeWireText (generated components).
-                        paramList.Add(WireText.Decode(paramParts[1]));
-                        break;
-                    case PropertyType.Bool:
-                        paramList.Add(paramParts[1] == "1");
-                        break;
-                    case PropertyType.Float:
-                        paramList.Add(NumberFormat.Parse(paramParts[1]));
-                        break;
-                    case PropertyType.Int:
-                        paramList.Add(int.Parse(paramParts[1]));
-                        break;
-                    case PropertyType.Vector2:
-                        var vec2Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 2);
-                        paramList.Add(new Vector2(NumberFormat.Parse(vec2Parts[0]), NumberFormat.Parse(vec2Parts[1])));
-                        break;
-                    case PropertyType.Vector3:
-                        var vec3Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 3);
-                        paramList.Add(new Vector3(NumberFormat.Parse(vec3Parts[0]), NumberFormat.Parse(vec3Parts[1]), NumberFormat.Parse(vec3Parts[2])));
-                        break;
-                    case PropertyType.Vector4:
-                        var vec4Parts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
-                        paramList.Add(new Vector4(NumberFormat.Parse(vec4Parts[0]), NumberFormat.Parse(vec4Parts[1]), NumberFormat.Parse(vec4Parts[2]), NumberFormat.Parse(vec4Parts[3])));
-                        break;
-                    case PropertyType.Quaternion:
-                        var quatParts = paramParts[1].Split(MessageDelimiters.TERTIARY, 4);
-                        paramList.Add(new Quaternion(NumberFormat.Parse(quatParts[0]), NumberFormat.Parse(quatParts[1]), NumberFormat.Parse(quatParts[2]), NumberFormat.Parse(quatParts[3])));
-                        break;
-                }
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[Banter] CallMethod {methodName}: bad arguments: {e.Message}: {msg}");
+                SendError(reqId, $"CALL_METHOD: {methodName}: bad arguments: {e.Message}");
+                return;
             }
 
             // Every call answers its request, or the page's await on a void method never settles:
@@ -1842,10 +1995,7 @@ namespace BS
             }
         }
 
-        void SendError(int reqId, string msg)
-        {
-            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.REQUEST_ERROR + MessageDelimiters.PRIMARY + msg);
-        }
+        void SendError(int reqId, string msg) => link.ReplyError(reqId, msg);
 
         /// <summary>
         /// Resolve the page's request <paramref name="reqId"/> with <paramref name="payload"/>.
@@ -2200,7 +2350,8 @@ namespace BS
             }
             var linkId = parts[1];
             var componentType = (ComponentType)int.Parse(parts[2]);
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            // Counted, and kept synchronous, like AddJsObject's: the component registers only when this runs.
+            EnqueueCreation(TaskRunner.Track(() =>
              {
                  // Every early return below MUST reply. The JS side awaits this request id, and a
                  // path that returns without an ack or an error leaves that promise unsettled
@@ -2256,7 +2407,7 @@ namespace BS
                 var propParts = parts[i].Split(MessageDelimiters.SECONDARY);
                 if (propParts.Length < 3)
                 {
-                    Debug.LogError("[Banter] wtf: " + banterComp.type + ": " + msg);
+                    Debug.LogError("[Banter] wtf: " + banterComp?.type + ": " + msg);
                     continue;
                 }
                 var name = (PropertyName)int.Parse(propParts[0]);
@@ -2269,17 +2420,17 @@ namespace BS
                             // The JS side wrote it with encodeWireText (generated components).
                             var valString = WireText.Decode(propParts[2]);
                             updates.Add(new BSString() { n = name, x = valString });
-                            banterComp.UpdateProperty(name, valString);
+                            banterComp?.UpdateProperty(name, valString);
                             break;
                         case PropertyType.Bool:
                             var valBool = propParts[2] == "1";
                             updates.Add(new BSBool() { n = name, x = valBool });
-                            banterComp.UpdateProperty(name, valBool);
+                            banterComp?.UpdateProperty(name, valBool);
                             break;
                         case PropertyType.Float:
                             var valFloat = NumberFormat.Parse(propParts[2]);
                             updates.Add(new BSFloat() { n = name, x = valFloat });
-                            banterComp.UpdateProperty(name, valFloat);
+                            banterComp?.UpdateProperty(name, valFloat);
                             break;
                         case PropertyType.Int:
                             if (propParts[2].Equals("null"))
@@ -2288,13 +2439,13 @@ namespace BS
                             }
                             var valInt = int.Parse(propParts[2]);
                             updates.Add(new BSInt() { n = name, x = valInt });
-                            banterComp.UpdateProperty(name, valInt);
+                            banterComp?.UpdateProperty(name, valInt);
                             break;
                         case PropertyType.Vector2:
                             var valVector2X = NumberFormat.Parse(propParts[2]);
                             var valVector2Y = NumberFormat.Parse(propParts[3]);
                             updates.Add(new BSVector2() { n = name, x = valVector2X, y = valVector2Y });
-                            banterComp.UpdateProperty(name, new Vector2(valVector2X, valVector2Y));
+                            banterComp?.UpdateProperty(name, new Vector2(valVector2X, valVector2Y));
                             break;
                         case PropertyType.Vector3:
                         case PropertyType.SoftJointLimit:
@@ -2302,7 +2453,7 @@ namespace BS
                             var valVector3Y = NumberFormat.Parse(propParts[3]);
                             var valVector3Z = NumberFormat.Parse(propParts[4]);
                             updates.Add(new BSVector3() { n = name, x = valVector3X, y = valVector3Y, z = valVector3Z });
-                            banterComp.UpdateProperty(name, new Vector3(valVector3X, valVector3Y, valVector3Z));
+                            banterComp?.UpdateProperty(name, new Vector3(valVector3X, valVector3Y, valVector3Z));
                             break;
                         case PropertyType.Vector4:
                         case PropertyType.Quaternion:
@@ -2312,7 +2463,7 @@ namespace BS
                             var valVector4Z = NumberFormat.Parse(propParts[4]);
                             var valVector4W = NumberFormat.Parse(propParts[5]);
                             updates.Add(new BSVector4() { n = name, x = valVector4X, y = valVector4Y, z = valVector4Z, w = valVector4W });
-                            banterComp.UpdateProperty(name, new Vector4(valVector4X, valVector4Y, valVector4Z, valVector4W));
+                            banterComp?.UpdateProperty(name, new Vector4(valVector4X, valVector4Y, valVector4Z, valVector4W));
                             break;
                         case PropertyType.Vector5:
                         case PropertyType.JointLimits:
@@ -2322,7 +2473,7 @@ namespace BS
                             var valVector5W = NumberFormat.Parse(propParts[5]);
                             var valVector5V = NumberFormat.Parse(propParts[6]);
                             updates.Add(new BSVector5() { n = name, x = valVector5X, y = valVector5Y, z = valVector5Z, w = valVector5W, v = valVector5V });
-                            banterComp.UpdateProperty(name, new Vector5(valVector5X, valVector5Y, valVector5Z, valVector5W, valVector5V));
+                            banterComp?.UpdateProperty(name, new Vector5(valVector5X, valVector5Y, valVector5Z, valVector5W, valVector5V));
                             break;
                     }
 
@@ -2552,90 +2703,112 @@ namespace BS
                 SendError(reqId, "SET_TRANSFORM: Message is malformed: " + msg);
                 return;
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(async () =>
+            // Not async: nothing in here is awaited, and as an async lambda a throw skipped TaskRunner's catch and the reply.
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
             {
-                var obj = GetGameObject(int.Parse(parts[0]));
-                var updateParts = parts[1].Split(MessageDelimiters.PRIMARY);
-                foreach (var part in updateParts)
+                if (!int.TryParse(parts[0], out var oid))
                 {
-                    var transformUpdate = part.Split(MessageDelimiters.SECONDARY);
-                    if (int.TryParse(transformUpdate[0], out int transformType))
+                    SendError(reqId, "SET_TRANSFORM: Bad object id: " + parts[0]);
+                    return;
+                }
+                var obj = GetGameObject(oid);
+                if (obj == null)
+                {
+                    // Removed on this side: pages keep moving objects they have just destroyed.
+                    SendError(reqId, "SET_TRANSFORM: Object not found: " + oid);
+                    return;
+                }
+                var updateParts = parts[1].Split(MessageDelimiters.PRIMARY);
+                try
+                {
+                    foreach (var part in updateParts)
                     {
-                        var type = (PropertyName)transformType;
-                        switch (type)
+                        var transformUpdate = part.Split(MessageDelimiters.SECONDARY);
+                        if (int.TryParse(transformUpdate[0], out int transformType))
                         {
-                            case PropertyName.position:
-                                if (transformUpdate.Length < 4)
-                                {
+                            var type = (PropertyName)transformType;
+                            switch (type)
+                            {
+                                case PropertyName.position:
+                                    if (transformUpdate.Length < 4)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate Position message is malformed: " + part + " _ " + transformUpdate.Length);
-                                    SendError(reqId, "TRANSORM_UPDATE position: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate Position message is malformed: " + part + " _ " + transformUpdate.Length);
+                                        SendError(reqId, "TRANSORM_UPDATE position: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.position = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                     break;
-                                }
-                                obj.transform.position = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
-                                break;
-                            case PropertyName.localPosition:
-                                if (transformUpdate.Length < 4)
-                                {
+                                case PropertyName.localPosition:
+                                    if (transformUpdate.Length < 4)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate LocalPosition message is malformed: " + part);
-                                    SendError(reqId, "TRANSORM_UPDATE localPosition: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate LocalPosition message is malformed: " + part);
+                                        SendError(reqId, "TRANSORM_UPDATE localPosition: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.localPosition = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                     break;
-                                }
-                                obj.transform.localPosition = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
-                                break;
-                            case PropertyName.eulerAngles:
-                                if (transformUpdate.Length < 4)
-                                {
+                                case PropertyName.eulerAngles:
+                                    if (transformUpdate.Length < 4)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate EulerAngles message is malformed: " + msg);
-                                    SendError(reqId, "TRANSORM_UPDATE eulerAngles: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate EulerAngles message is malformed: " + msg);
+                                        SendError(reqId, "TRANSORM_UPDATE eulerAngles: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.eulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                     break;
-                                }
-                                obj.transform.eulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
-                                break;
-                            case PropertyName.localEulerAngles:
-                                if (transformUpdate.Length < 4)
-                                {
+                                case PropertyName.localEulerAngles:
+                                    if (transformUpdate.Length < 4)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate LocalEulerAngles message is malformed: " + msg);
-                                    SendError(reqId, "TRANSORM_UPDATE localEulerAngles: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate LocalEulerAngles message is malformed: " + msg);
+                                        SendError(reqId, "TRANSORM_UPDATE localEulerAngles: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.localEulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                     break;
-                                }
-                                obj.transform.localEulerAngles = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
-                                break;
-                            case PropertyName.rotation:
-                                if (transformUpdate.Length < 5)
-                                {
+                                case PropertyName.rotation:
+                                    if (transformUpdate.Length < 5)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate Rotation message is malformed: " + msg);
-                                    SendError(reqId, "TRANSORM_UPDATE rotation: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate Rotation message is malformed: " + msg);
+                                        SendError(reqId, "TRANSORM_UPDATE rotation: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.rotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
                                     break;
-                                }
-                                obj.transform.rotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
-                                break;
-                            case PropertyName.localRotation:
-                                if (transformUpdate.Length < 5)
-                                {
+                                case PropertyName.localRotation:
+                                    if (transformUpdate.Length < 5)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
-                                    SendError(reqId, "TRANSORM_UPDATE localRotation: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
+                                        SendError(reqId, "TRANSORM_UPDATE localRotation: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.localRotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
                                     break;
-                                }
-                                obj.transform.localRotation = new Quaternion(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]), NumberFormat.Parse(transformUpdate[4]));
-                                break;
-                            case PropertyName.localScale:
-                                if (transformUpdate.Length < 4)
-                                {
+                                case PropertyName.localScale:
+                                    if (transformUpdate.Length < 4)
+                                    {
 
-                                    Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
-                                    SendError(reqId, "TRANSORM_UPDATE localScale: Message is malformed: " + msg);
+                                        Debug.LogError("[Banter] transformUpdate LocalRotation message is malformed: " + msg);
+                                        SendError(reqId, "TRANSORM_UPDATE localScale: Message is malformed: " + msg);
+                                        break;
+                                    }
+                                    obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
                                     break;
-                                }
-                                obj.transform.localScale = new Vector3(NumberFormat.Parse(transformUpdate[1]), NumberFormat.Parse(transformUpdate[2]), NumberFormat.Parse(transformUpdate[3]));
-                                break;
+                            }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    // A bad number, or the object destroyed by something the update set off.
+                    Debug.LogWarning("[Banter] SetJsTransform failed for " + oid + ": " + e.Message);
+                    SendError(reqId, "SET_TRANSFORM: " + e.Message);
+                    return;
                 }
                 link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY);
             }, $"{nameof(BSScene)}.{nameof(SetJsTransform)}"));
@@ -2649,7 +2822,9 @@ namespace BS
                 SendError(reqId, "ADD_OBJECT: Message is malformed: " + msg);
                 return;
             }
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
+            // Counted: the load gate treats a queued creation as still loading (pendingCreates). Kept synchronous; an
+            // async lambda would count as run at its first await.
+            EnqueueCreation(TaskRunner.Track(() =>
             {
                 if (settings == null)
                 {
@@ -2722,16 +2897,30 @@ namespace BS
         }
         public void Cancel(string message, bool isUserCancel = false)
         {
+            CancelFor(loadUrlTaskCompletionSource, message, isUserCancel);
+        }
+
+        /// <summary><see cref="Cancel"/>, asked while <paramref name="owningLoad"/> was the load in progress.</summary>
+        internal void CancelFor(TaskCompletionSource<bool> owningLoad, string message, bool isUserCancel)
+        {
             if (!UnityGame.OnMainThread)
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
-                    Cancel(message, isUserCancel);
+                    CancelFor(owningLoad, message, isUserCancel);
                 }, $"{nameof(BSScene)}.{nameof(Cancel)}"));
+                return;
+            }
+            if (!ReferenceEquals(loadUrlTaskCompletionSource, owningLoad))
+            {
+                // Asked for a load that a newer one has replaced since (queued from another thread meanwhile): that load
+                // is over, and failing the newer one for it would be wrong.
+                LogLine.Do("[LOADING] Ignored a cancel meant for a load a newer one replaced: " + BSLoadGate.Printable(message));
                 return;
             }
             loaded = true;
             loading = false;
+            UnityMainThreadTaskScheduler.Default.SetLoading(false); // the failure screen needs no 25 ms passes
             externalLoadFailed = true;
             loadUrlTaskCompletionSource?.TrySetException(new SceneLoadFailedException(message, isUserCancel));
             loadUrlTaskCompletionSource?.TrySetCanceled();
@@ -2758,6 +2947,10 @@ namespace BS
                 state = SceneState.NONE;
                 objects.Clear();
                 banterComponents.Clear();
+                // With the records: until now a failure from the last load's components is judged by them (and is not
+                // this load's, while the state is NONE).
+                loadGate.Reset();
+                ForgetCreationsMark();
                 ResetSceneAbilitySettings();
                 ResetLoadingProgress();
                 bundlesLoaded = false;
@@ -2886,6 +3079,9 @@ namespace BS
         {
             state = SceneState.NONE;
             loading = true;
+            // The cage hides long frames: the scheduler spends up to 25 ms a frame on the world's queued creation.
+            // Ended by StopLoadingMode, once this load stops waiting (before the cage opens), or by Cancel.
+            UnityMainThreadTaskScheduler.Default.SetLoading(true);
             // Drop any image a previous load's lookup was still fetching.
             spaceImageGeneration++;
             loadingTexture = null;
@@ -2994,7 +3190,7 @@ namespace BS
                 {
                     // Only the newest load owns the cage; an older one finishing late must not open
                     // it over the top of a load that is still running.
-                    var supersededByNewerLoad = !ReferenceEquals(loadUrlTaskCompletionSource, tcs);
+                    var supersededByNewerLoad = StopLoadingMode(tcs);
 
                     // Matching the original behaviour on the two paths that deliberately left the
                     // cage up: a failed load keeps the failure screen (LoadOut self-guards on
@@ -3034,6 +3230,21 @@ namespace BS
             await tcs.Task;
         }
 
+        /// <summary>
+        /// A load has stopped waiting (loaded, failed, cancelled or left): ends the scheduler's loading mode unless a newer
+        /// load, which owns it now, has replaced this one. Before the cage opens, so the reveal doesn't get 25 ms passes.
+        /// Returns whether a newer load has replaced <paramref name="owningLoad"/>.
+        /// </summary>
+        internal bool StopLoadingMode(TaskCompletionSource<bool> owningLoad)
+        {
+            var supersededByNewerLoad = !ReferenceEquals(loadUrlTaskCompletionSource, owningLoad);
+            if (!supersededByNewerLoad)
+            {
+                UnityMainThreadTaskScheduler.Default.SetLoading(false);
+            }
+            return supersededByNewerLoad;
+        }
+
         /// <summary>Safety cap on how long <see cref="CanOpenLoadingCage"/> may hold the cage. The gate
         /// holder can raise it (e.g. networking, whose join + retries can outlast the default).</summary>
         public float LoadingCageGateTimeoutSeconds = 20f;
@@ -3067,6 +3278,7 @@ namespace BS
         internal void RestartEmptySceneGrace()
         {
             sceneReadySince = -1f;
+            ForgetCreationsMark(); // and the creation watermark: taken at the new page's first check
         }
 
         public async Task OnLoad(string instanceId)
@@ -3176,51 +3388,72 @@ namespace BS
                 SendError(reqId, "WATCH_PROPERTIES: Message is malformed: " + msg);
                 return;
             }
-            var banterComponent = GetBanterComponent(int.Parse(msgParts[0]));
+            if (!int.TryParse(msgParts[0], out var cid))
+            {
+                // "undefined": the page asked before the component was linked.
+                SendError(reqId, "WATCH_PROPERTIES: Bad component id: " + msgParts[0]);
+                return;
+            }
+            var banterComponent = GetBanterComponent(cid);
             if (banterComponent == null)
             {
                 SendError(reqId, "WATCH_PROPERTIES: Component not found: " + msgParts[0]);
                 return;
             }
-            var properties = msgParts[1].Split(MessageDelimiters.SECONDARY);
-            var props = new PropertyName[properties.Length];
-            for (int i = 0; i < properties.Length; i++)
+            var props = new List<PropertyName>();
+            foreach (var p in msgParts[1].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries))
             {
-                props[i] = (PropertyName)int.Parse(properties[i]);
+                if (int.TryParse(p, out var name)) props.Add((PropertyName)name);
             }
-            await banterComponent.WatchProperties(props);
+            await banterComponent.WatchProperties(props.ToArray());
             // The page awaits this request; without an answer that await never settles.
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.WATCH_PROPERTIES);
         }
         public async Task QueryComponents(string msg, int reqId)
         {
-            List<string> changes = new List<string>();
-            foreach (var comp in msg.Split(MessageDelimiters.PRIMARY))
+            // Called fire-and-forget: whatever escaped went unobserved and the page's await never settled. Every
+            // path answers exactly once.
+            try
             {
-                var comParts = comp.Split(MessageDelimiters.SECONDARY);
-                if (comParts.Length < 2)
+                List<string> changes = new List<string>();
+                foreach (var comp in msg.Split(MessageDelimiters.PRIMARY))
                 {
-                    Debug.LogError("[Banter] Query Components message is malformed: " + msg);
-                    SendError(reqId, "QUERY_COMPONENT: Message is malformed: " + msg);
-                    continue;
-                }
-                var banterComponent = GetBanterComponent(int.Parse(comParts[0]));
-                await banterComponent.GetProperties();
-                var properties = comParts[1].Split(MessageDelimiters.TERTIARY);
-                foreach (var prop in properties)
-                {
-                    banterComponent.componentProperties.TryGetValue((PropertyName)int.Parse(prop), out var property);
-                    if (property != null)
+                    var comParts = comp.Split(MessageDelimiters.SECONDARY);
+                    if (comParts.Length < 2 || !int.TryParse(comParts[0], out var cid)) // "undefined": not linked yet
                     {
-                        string change = Serialise(property, banterComponent);
-                        if (change != null)
+                        Debug.LogWarning("[Banter] Query Components message is malformed: " + msg);
+                        SendError(reqId, "QUERY_COMPONENT: Message is malformed: " + msg);
+                        return;
+                    }
+                    var banterComponent = GetBanterComponent(cid);
+                    if (banterComponent == null)
+                    {
+                        SendError(reqId, "QUERY_COMPONENT: Component not found: " + cid);
+                        return;
+                    }
+                    await banterComponent.GetProperties();
+                    foreach (var prop in comParts[1].Split(MessageDelimiters.TERTIARY, StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        if (!int.TryParse(prop, out var name)) continue;
+                        // Null once the component is disposed (during the await above): the catch answers.
+                        banterComponent.componentProperties.TryGetValue((PropertyName)name, out var property);
+                        if (property != null)
                         {
-                            changes.Add(change);
+                            string change = Serialise(property, banterComponent);
+                            if (change != null)
+                            {
+                                changes.Add(change);
+                            }
                         }
                     }
                 }
+                link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.UPDATE + string.Join(MessageDelimiters.TERTIARY, changes.ToArray()));
             }
-            link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.UPDATE + string.Join(MessageDelimiters.TERTIARY, changes.ToArray()));
+            catch (Exception e)
+            {
+                Debug.LogWarning("[Banter] Query Components failed: " + e.Message + ": " + msg);
+                SendError(reqId, "QUERY_COMPONENT: " + e.Message);
+            }
         }
         #endregion
 
@@ -3358,9 +3591,34 @@ namespace BS
         public void FixedUpdate()
         {
             _tickBuffer = new List<BSComponentPropertyUpdate>();
-            Tick?.Invoke(null, null);
-            EnqueuePropertyUpdates(_tickBuffer);
-            _tickBuffer = null;
+            try
+            {
+                var tick = Tick;
+                if (tick != null)
+                {
+                    // One component per handler, each on its own. A throw used to skip every later handler and leave
+                    // _tickBuffer set, which silently dropped every Unity->JS update until the next tick (issue 6).
+                    foreach (EventHandler handler in tick.GetInvocationList())
+                    {
+                        try
+                        {
+                            handler(null, null);
+                        }
+                        catch (Exception e)
+                        {
+                            // Dropped and logged once, not 50+ times a second.
+                            Tick -= handler;
+                            var owner = handler.Target is UnityEngine.Object o ? (o ? o.name : "a destroyed object") : "?";
+                            Debug.LogError($"[Banter] Stopped ticking {handler.Method.DeclaringType?.Name} on '{owner}': {e}");
+                        }
+                    }
+                }
+                EnqueuePropertyUpdates(_tickBuffer);
+            }
+            finally
+            {
+                _tickBuffer = null;
+            }
             // if(Time.frameCount % 60 == 0) {
             //     LogLine.Do("_changes: " + _changes.Count() + ", _propertyUpdateQueue: " + _propertyUpdateQueue.Count() + ", banterComponents: " + banterComponents.Count() + ", objects: " + objects.Count());
             // }

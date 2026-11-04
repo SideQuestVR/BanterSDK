@@ -111,7 +111,7 @@ namespace BS.VisualScripting
                     }
 
                     // Set font size
-                    SendStyleCommand(panelId, elemId, "font-size", $"{fontSizeVal}px");
+                    SendStyleCommand(panelId, elemId, "font-size", $"{NumberFormat.Format(fontSizeVal)}px");
 
                     // Set font style
                     string styleValue = fontStyleVal switch
@@ -152,7 +152,7 @@ namespace BS.VisualScripting
 
                     // Set letter spacing
                     if (letterSpacingVal != 0)
-                        SendStyleCommand(panelId, elemId, "letter-spacing", $"{letterSpacingVal}px");
+                        SendStyleCommand(panelId, elemId, "letter-spacing", $"{NumberFormat.Format(letterSpacingVal)}px");
 
                     // Set white space
                     string whiteSpaceValue = whiteSpaceVal switch

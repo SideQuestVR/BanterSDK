@@ -26,9 +26,14 @@ namespace BS.VisualScripting
         {
             idOrName = ValueInput("id, uid, or name", string.Empty);
 
-            userPosition = ValueOutput("Position", (f) => GetUserDataTransform(f).position);
-            userRotation = ValueOutput("Rotation", (f) => GetUserDataTransform(f).rotation);
+            // Zero/identity for a user who isn't there (yet), as Get Local User State does.
+            userPosition = ValueOutput("Position", (f) => { var t = GetUserDataTransform(f); return t != null ? t.position : Vector3.zero; });
+            userRotation = ValueOutput("Rotation", (f) => { var t = GetUserDataTransform(f); return t != null ? t.rotation : Quaternion.identity; });
         }
+
+        // Names already reported, so a node pulled every frame logs a missing user once, not 72 times a second.
+        [DoNotSerialize]
+        readonly System.Collections.Generic.HashSet<string> reportedMissing = new System.Collections.Generic.HashSet<string>();
 
         private Transform GetUserDataTransform(Flow f)
         {
@@ -37,9 +42,11 @@ namespace BS.VisualScripting
 
             if (data == null)
             {
-                LogLine.Err("User not found: " + value);
+                if (reportedMissing.Add(value ?? "")) LogLine.Err("User not found: " + value);
+                return null;
             }
-            return (data != null) ? data.Head.transform : null;
+            reportedMissing.Remove(value ?? "");
+            return data.Head; // null until the user's body exists
         }
     }
 
@@ -60,13 +67,13 @@ namespace BS.VisualScripting
             userPosition = ValueOutput("Position", (f) =>
             {
                 var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
-                return (data != null) ? data.Head.transform.position : Vector3.zero;
+                return data != null && data.Head != null ? data.Head.position : Vector3.zero;
             });
 
             userRotation = ValueOutput("Rotation", (f) =>
             {
                 var data = BSScene.Instance().users.FirstOrDefault(user => user.isLocal);
-                return (data != null) ? data.Head.transform.rotation : Quaternion.identity;
+                return data != null && data.Head != null ? data.Head.rotation : Quaternion.identity;
             });
         }
     }

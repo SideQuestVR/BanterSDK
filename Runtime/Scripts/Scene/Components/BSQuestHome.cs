@@ -208,6 +208,21 @@ namespace BS
             loadingProgress = progress;
             percentage = progress; // Update base class percentage
             LogLine.Do(message);
+            // To the space's load gate, which stops waiting for a component that neither loads nor reports progress
+            // for 20 s (BSLoadGate), and to the page's "progress" event.
+            this.progress?.Invoke(progress);
+        }
+
+        float forwardedProgress = -1f;
+
+        // Only when it has moved: each call is also a message to the page.
+        private void ForwardDownloadProgress(float value)
+        {
+            if (Mathf.Abs(value - forwardedProgress) < 0.005f) return;
+            forwardedProgress = value;
+            loadingProgress = value;
+            percentage = value;
+            progress?.Invoke(value);
         }
 
         /// <summary>
@@ -238,6 +253,9 @@ namespace BS
                         while (!operation.isDone)
                         {
                             float progress = request.downloadProgress;
+                            // The download is the 0.08-0.30 stretch of loadingProgress (LoadQuestHome); minutes for a big APK.
+                            // Estimated from the bytes when the response has no length (Get.DownloadProgress).
+                            ForwardDownloadProgress(0.08f + 0.22f * Get.DownloadProgress(request));
                             // Log progress every 10%
                             if (progress > 0 && (int)(progress * 10) % 2 == 0)
                             {

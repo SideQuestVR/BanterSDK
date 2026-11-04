@@ -245,18 +245,11 @@ namespace BS
         }
 
         /// <summary>
-        /// Mirrors BanterStubsAllowed.IsBlocked's per-element policy for standalone unit types:
-        /// the VS assemblies and the Banter/PicaVoxel node packs are allowed wholesale.
+        /// The shared policy for standalone unit types (the trusted node packs, or a listed id).
+        /// Type-configured units (Expose, CreateStruct, Literal) are judged by their target type
+        /// when the batch is checked with the strict install gate.
         /// </summary>
-        static bool IsAllowedUnitType(Type type)
-        {
-            var fullName = type.FullName ?? "";
-            return fullName.StartsWith("Unity.VisualScripting.")
-                || fullName.StartsWith("BS.VisualScripting.")
-                || fullName.StartsWith("Banter.VisualScripting.")
-                || fullName.StartsWith("PicaVoxel.VisualScripting.")
-                || BanterStubsAllowed.IsAllowedIdentifier(fullName);
-        }
+        static bool IsAllowedUnitType(Type type) => BanterStubsAllowed.IsAllowedUnitTypeName(type.FullName);
 
         static void EnsureDefinedQuietly(IUnit unit)
         {

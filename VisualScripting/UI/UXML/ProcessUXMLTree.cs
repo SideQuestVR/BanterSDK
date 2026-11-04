@@ -78,6 +78,14 @@ namespace BS.VisualScripting
                         {
                             bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                             elementMap = bridge.ProcessUXMLTree(documentToUse, prefix);
+                            if (documentToUse.rootVisualElement == null)
+                            {
+                                // Disabled document: the bridge kept the request, prefix and all, and the panel
+                                // registers the elements once the document is enabled (BSUIPanel.LateUpdate).
+                                flow.SetValue(elementCount, 0);
+                                flow.SetValue(elementSummary, "Deferred: the UIDocument is disabled; its elements register when it is enabled");
+                                return outputTrigger;
+                            }
                             LogVerbose($"Processed UIDocument with {elementMap.Count} elements");
                         }
                         else

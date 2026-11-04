@@ -94,7 +94,7 @@ namespace BS.VisualScripting
                     }
 
                     // Set initial value if provided
-                    var valueMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{intFieldElementId}{MessageDelimiters.SECONDARY}text{MessageDelimiters.SECONDARY}{value}";
+                    var valueMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{intFieldElementId}{MessageDelimiters.SECONDARY}text{MessageDelimiters.SECONDARY}{value.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
                     UIElementBridge.HandleMessage(valueMessage);
 
                     flow.SetValue(intFieldId, intFieldElementId);

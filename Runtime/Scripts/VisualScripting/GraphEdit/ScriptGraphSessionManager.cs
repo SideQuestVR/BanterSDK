@@ -284,9 +284,12 @@ namespace BS
             GameObject host = null;
             if (!string.IsNullOrEmpty(body?.target?.bid))
             {
-                host = BSScene.Instance().GetObjectByBid(body.target.bid).gameObject;
+                var scene = BSScene.Instance();
+                host = scene != null ? scene.GetObjectByBid(body.target.bid).gameObject : null;
             }
-            if (host == null) throw new ArgumentException("Object not found");
+            // Only the world's own objects (S1), like every other subcommand: the page must not add machines to the
+            // client's objects.
+            if (host == null || !BSWorldScope.Contains(host)) throw new ArgumentException("Object not found");
 
             var machine = host.AddComponent<ScriptMachine>();
             machine.nest.SwitchToEmbed(FlowGraph.WithStartUpdate());

@@ -109,13 +109,20 @@ namespace BS.VisualScripting
                 {
                     result = args.arguments[0]?.ToString() ?? "";
                 }
-                EventBus.Unregister(new EventHook(eventName), callback);
             };
 
             EventBus.Register<CustomEventArgs>(new EventHook(eventName), callback);
 
             var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}";
-            UIElementBridge.HandleMessage(message);
+            try
+            {
+                // The bridge answers inline; when it doesn't (element gone, unknown style) the handler must not stay.
+                UIElementBridge.HandleMessage(message);
+            }
+            finally
+            {
+                EventBus.Unregister(new EventHook(eventName), callback);
+            }
 
             return result;
         }
@@ -131,14 +138,14 @@ namespace BS.VisualScripting
         private float ParseFloat(string value)
         {
             if (string.IsNullOrEmpty(value)) return 1f;
-            if (float.TryParse(value, out float result))
+            if (NumberFormat.TryParse(value, out float result))
                 return result;
             return 1f;
         }
 
         private UIDisplay ParseDisplay(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "none" => UIDisplay.None,
                 _ => UIDisplay.Flex
@@ -147,7 +154,7 @@ namespace BS.VisualScripting
 
         private UIVisibility ParseVisibility(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "hidden" => UIVisibility.Hidden,
                 _ => UIVisibility.Visible

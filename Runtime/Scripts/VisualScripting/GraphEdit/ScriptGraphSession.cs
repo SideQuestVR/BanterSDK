@@ -25,6 +25,8 @@ namespace BS
         // The asset-shaped serialization captured at open; revert baseline.
         string baseJson;
         UnityObject[] baseRefs;
+        // True when baseJson came from a page (an envelope), so Revert screens it like any other page JSON.
+        bool baseFromPage;
 
         // "unitId:port" -> descriptor that could not resolve; survives re-save as kind "missing".
         public readonly Dictionary<string, ObjectRefDescriptor> unresolvedPortRefs =
@@ -62,8 +64,16 @@ namespace BS
             var refs = ObjectRefResolver.Resolve(envelope.objectRefDescriptors, warnings);
             var session = new ScriptGraphSession { sessionId = sessionId, target = envelope.meta?.target };
             session.staging = DeserializeAsset(sessionId, envelope.uvsJson, refs);
+            // The same strict gate as an install (S1): a staged graph is never run, but it is page-made, and nothing
+            // later re-checks what a session was opened with.
+            if (IsBlockedDeep(session.staging.graph))
+            {
+                session.DisposeStaging();
+                throw new InvalidOperationException("Graph contains blocked elements and was not loaded");
+            }
             session.baseJson = envelope.uvsJson;
             session.baseRefs = refs;
+            session.baseFromPage = true;
             session.baseGraphRef = envelope.meta?.baseGraphRef ?? HashRef(envelope.uvsJson);
             if (envelope.unresolvedPortRefs != null)
             {
@@ -110,7 +120,7 @@ namespace BS
             catch
             {
                 DisposeStaging();
-                staging = DeserializeAsset(sessionId, snapshot.json, snapshot.objectReferences);
+                staging = DeserializeAsset(sessionId, snapshot.json, snapshot.objectReferences, screen: false);
                 unresolvedPortRefs.Clear();
                 foreach (var pair in refsSnapshot)
                 {
@@ -123,8 +133,10 @@ namespace BS
 
         public void Revert()
         {
+            // Built before the old staging goes, so a failure leaves the session as it was.
+            var reverted = DeserializeAsset(sessionId, baseJson, baseRefs, screen: baseFromPage);
             DisposeStaging();
-            staging = DeserializeAsset(sessionId, baseJson, baseRefs);
+            staging = reverted;
             unresolvedPortRefs.Clear();
             rev++;
         }
@@ -253,6 +265,20 @@ namespace BS
             return machine != null && authored.TryGetValue(machine, out var record) ? record.hash : null;
         }
 
+        /// <summary>
+        /// The graph this machine was authored with, when a runtime swap has replaced it: its macro, or its embedded graph.
+        /// The world's own content, so the assets it references stay nameable after an override (ObjectRefs' WorldAssets).
+        /// </summary>
+        internal static bool TryGetAuthored(ScriptMachine machine, out ScriptGraphAsset macro, out FlowGraph embed)
+        {
+            macro = null;
+            embed = null;
+            if (machine == null || !authored.TryGetValue(machine, out var record)) return false;
+            macro = record.macro;
+            embed = record.embed;
+            return true;
+        }
+
         /// <summary>True while a runtime swap has replaced this machine's authored graph.</summary>
         public static bool IsOverridden(ScriptMachine machine)
         {
@@ -326,24 +352,18 @@ namespace BS
         /// IsBlocked for the graph AND every graph nested inside it.
         /// </summary>
         /// <remarks>
-        /// IsBlocked only walks the top level, so a blocked member inside an embedded subgraph or a
+        /// <para>IsBlocked only walks the top level, so a blocked member inside an embedded subgraph or a
         /// state passed the install check and ran as soon as the parent's flow reached it. Envelopes
         /// come from a world file, so this is the gate that matters. Depth-capped against a macro
-        /// that nests itself.
+        /// that nests itself.</para>
+        /// <para>Strict since S1 (notes/creator-sdk-issues-report-2026-11-03.md): member nodes are judged by the explicit
+        /// list whatever their namespace, type-configured units by their type, an id-less unit fails closed, and nesting
+        /// past the depth cap is refused instead of passing unchecked. Graph assets the graph's data points at (a Set
+        /// Script Graph default, a macro in a graph variable) are judged the same way. Graphs authored into bundles keep
+        /// the legacy rule for the report-only week; see BanterStubsAllowed.EnforceStrictForBundles.</para>
         /// </remarks>
-        public static bool IsBlockedDeep(IGraph graph, int depth = 0)
-        {
-            if (graph == null || depth > 16) return false;
-            if (graph is Graph concrete && BanterStubsAllowed.IsBlocked(concrete)) return true;
-            foreach (var element in graph.elements)
-            {
-                if (element is IGraphParentElement parent && IsBlockedDeep(parent.childGraph, depth + 1))
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
+        public static bool IsBlockedDeep(IGraph graph, int depth = 0) =>
+            BanterStubsAllowed.IsBlockedStrictDeep(graph, depth);
 
         public void Dispose()
         {
@@ -382,13 +402,36 @@ namespace BS
             return asset;
         }
 
-        static ScriptGraphAsset DeserializeAsset(string sessionId, string json, UnityObject[] refs)
+        /// <param name="screen">False only for this session's own snapshots (op-batch rollback, revert), which were
+        /// screened on the way in or come from the machine's authored graph; a failed rollback would break the session.</param>
+        static ScriptGraphAsset DeserializeAsset(string sessionId, string json, UnityObject[] refs, bool screen = true)
         {
             var asset = ScriptableObject.CreateInstance<ScriptGraphAsset>();
             asset.name = $"ScriptGraphStaging_{sessionId}";
+            // DontSave also marks it runtime-made: ObjectRefResolver never hands one out, so no page-built reference
+            // can point a live machine or subgraph at a staging asset (S1).
             asset.hideFlags = HideFlags.DontSave;
             object boxed = asset;
-            new SerializationData(json, refs ?? Array.Empty<UnityObject>()).DeserializeInto(ref boxed, true);
+            var data = new SerializationData(json, refs ?? Array.Empty<UnityObject>());
+            try
+            {
+                // FullSerializer constructs whatever a "$type" names before any element check can run, so JSON that
+                // reached us from a page (an envelope, a world-file override, an op-built graph on Apply) is screened
+                // by the serializer itself (S1).
+                if (screen)
+                {
+                    BanterStubsAllowed.DeserializeIntoScreened(data, ref boxed, true);
+                }
+                else
+                {
+                    data.DeserializeInto(ref boxed, true);
+                }
+            }
+            catch
+            {
+                DestroyAsset(asset);
+                throw;
+            }
             return asset;
         }
 

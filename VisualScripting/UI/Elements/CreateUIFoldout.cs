@@ -103,7 +103,7 @@ namespace BS.VisualScripting
                     }
 
                     // Set collapsed state
-                    var collapsedMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{foldoutElementId}{MessageDelimiters.SECONDARY}value{MessageDelimiters.SECONDARY}{(!collapsed).ToString().ToLower()}";
+                    var collapsedMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{foldoutElementId}{MessageDelimiters.SECONDARY}value{MessageDelimiters.SECONDARY}{(!collapsed).ToString().ToLowerInvariant()}";
                     UIElementBridge.HandleMessage(collapsedMessage);
 
                     flow.SetValue(foldoutId, foldoutElementId);

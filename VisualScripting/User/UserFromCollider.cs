@@ -38,6 +38,8 @@ namespace BS.VisualScripting
             userInfo = ValueOutput<BSUser>("User Info", flow =>
             {
                 var user = Find(flow);
+                // Null for a collider that isn't a player ("Is User" says which). Not an empty user: uid "" means the
+                // local player to the user-state nodes, so a cube would read the local player's values.
                 return user == null ? null : new BSUser()
                 {
                     name = user.name,

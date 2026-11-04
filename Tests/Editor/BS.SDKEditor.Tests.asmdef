@@ -6,12 +6,15 @@
         "UnityEditor.TestRunner",
         "BS.SDKEditor",
         "BS.SDK",
+        "BasisBundleManagement",
+        "Banter.VisualScripting",
         "GUID:af6e7370d62c866409111f9afdb8c47a",
         "Unity.InputSystem",
         "SideQuest.Ora",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow",
-        "Unity.RenderPipelines.Core.Runtime"
+        "Unity.RenderPipelines.Core.Runtime",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [
         "Editor"
