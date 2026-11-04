@@ -1037,25 +1037,6 @@
    "8000"
   ]
  },
- "legacyBatch": [
-  {
-   "marker": "¶§|",
-   "messages": [
-    "!sst!",
-    "!i!:1¶!gp!¶",
-    ""
-   ],
-   "packed": "¶§|5:!sst!11:!i!:1¶!gp!¶0:"
-  },
-  {
-   "marker": "‽",
-   "messages": [
-    "!e!bm!¶‽12:x",
-    "😀"
-   ],
-   "packed": "‽12:!e!bm!¶‽12:x2:😀"
-  }
- ],
  "sequences": [
   {
    "name": "three texts, one frame",

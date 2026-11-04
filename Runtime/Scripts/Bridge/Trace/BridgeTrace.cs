@@ -49,7 +49,7 @@ namespace BS
     /// <item>Inbound, first statement of the <c>view.browserMessage.AddListener((reqId, command, data) =&gt; { ... })</c>
     /// lambda in <c>BSPipe.Start</c> (before the start-up-page filter, so ignored messages are traced too):
     /// <c>BS.BridgeTrace.Inbound(data, "pipe");</c></item>
-    /// <item>Outbound, first statement of <c>BSPipe.Send(string msg)</c> (after BatchUpdater has packed the frame):
+    /// <item>Outbound, first statement of <c>BSPipe.Send(string msg)</c> (after the bridge has encoded the frame):
     /// <c>BS.BridgeTrace.Outbound(msg, "pipe");</c></item>
     /// </list>
     /// Bridge 2 transports call the byte[] overloads with their own lane name ("ring", "port", "carrier"). Enable with

@@ -12,9 +12,8 @@ namespace BS.SDKEditor.Tests
     /// BSPipe ignores what the space view sends until a page has started loading. The view starts on about:blank, Ora
     /// injects the SDK there without ever reporting a LoadStarted for it, and that document's requests used to reach
     /// BSScene before its settings existed ("Error updating object" for a seat's SitPoint at every Play).
-    /// The pipe's link here has no scene, so the load-started listener throws at link.scene: after it has decided about
-    /// the gate and before BSScene.OnLoad (which needs Play mode) could run. That also pins the order. The link itself
-    /// exists, as it always does in real use (BSLink.ConnectPipe makes the pipe): the message gate reads link.bridge.
+    /// The pipe's link here has no bridge and no scene, so the load-started listener throws at link.bridge: after it has
+    /// decided about the gate and before BSScene.OnLoad (which needs Play mode) could run. That also pins the order.
     /// </summary>
     public class BSPipeGateTests
     {
@@ -30,7 +29,7 @@ namespace BS.SDKEditor.Tests
             _viewObject = new GameObject("BSPipeGateTests view");
             _viewObject.SetActive(false);
             _view = _viewObject.AddComponent<OraView>();
-            // A link on the legacy lane (no bridge) and without a scene.
+            // A link with no bridge and no scene (BSLink.ConnectPipe would make its own pipe).
             _pipe = new BSPipe(_viewObject.AddComponent<BSLink>(), _view, null);
             _received.Clear();
             _pipe.Start(() => { }, _received.Add);
@@ -44,7 +43,7 @@ namespace BS.SDKEditor.Tests
 
         void LoadStarted(string url)
         {
-            Assert.Throws<System.NullReferenceException>(() => _view.loadStarted.Invoke(url), "the listener reaches link.scene");
+            Assert.Throws<System.NullReferenceException>(() => _view.loadStarted.Invoke(url), "the listener reaches link.bridge");
         }
 
         void Message() => _view.browserMessage.Invoke("0", "default-message", APICommands.SCENE_START);

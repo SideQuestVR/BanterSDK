@@ -25,7 +25,7 @@ static class SimTests
     {
         Console.WriteLine("session simulations");
 
-        T.Run("handshake: WELCOME at Flush; legacy encoding until the page acknowledges the epoch, frames after", () =>
+        T.Run("handshake: WELCOME at Flush; frames follow it at once, before the page acknowledges the epoch", () =>
         {
             var rig = new Rig();
             var page = new TestPage("p1");
@@ -36,9 +36,8 @@ static class SimTests
             rig.View.Send("!e!before-ack");
             rig.View.Flush();
             var down = rig.Sink.Take();
-            T.Eq(2, down.Count, "legacy batch + WELCOME");
-            T.True(down[0].StartsWith("‽", StringComparison.Ordinal), "unacked: legacy batch");
-            T.True(BridgeCarrier.IsCarrier(down[1]));
+            T.Eq(2, down.Count, "WELCOME + one text frame");
+            T.True(down.All(BridgeCarrier.IsCarrier), "nothing but frames");
             foreach (var d in down) page.Receive(d);
             T.Eq("open", page.State);
             T.Eq(s.Epoch, page.Epoch);
@@ -49,7 +48,6 @@ static class SimTests
             rig.View.Send("!e!after-ack");
             rig.Back(page);
             T.Seq(new[] { "!e!before-ack", "!e!after-ack" }, page.Got);
-            T.Eq(1L, rig.View.Stats.LegacyBatchesOut);
         });
 
         T.Run("Windows order: LoadStarted -> OnLoad -> HELLO is released at once", () =>
@@ -233,82 +231,148 @@ static class SimTests
             T.Eq(0L, rig.View.Stats.ProtocolResets);
         });
 
-        T.Run("a page that ignores the window is reset; RESET makes it re-send exactly the unconsumed strings", () =>
+        T.Run("a page that ignores the window is reset; RESET makes it send exactly the unconsumed strings again", () =>
         {
             var rig = new Rig(new BridgeViewOptions { RecvWindow = 2048 });
             rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
             var p = new TestPage("greedy"); p.Hello(); rig.Pump(p);
+            uint epoch = p.Epoch;
             p.HonorWindow = false;
             p.Link.FragmentSize = 600;
             var texts = Enumerable.Range(0, 20).Select(i => "g" + i + new string('y', 200)).ToList();
             foreach (var t in texts) p.Send(t);
-            rig.Pump(p);
-            T.Eq(1L, rig.View.Stats.ProtocolResets);
-            T.Eq("legacy", p.State);
-            T.Eq(BridgeSessionState.Legacy, rig.View.Current.State);
-            T.Seq(texts, rig.Disp.Texts(), "every string once, in order, across frames and the legacy re-send");
+            rig.Pump(p, 200);
+            T.True(rig.View.Stats.ProtocolResets >= 1);
+            T.Eq(rig.View.Stats.ProtocolResets, rig.View.Stats.Reopens, "every reset was followed by a HELLO");
+            T.Eq("open", p.State);
+            T.Eq(epoch, p.Epoch, "the same document, the same epoch");
+            T.Eq(1L, rig.View.Stats.Sessions);
+            T.Seq(texts, rig.Disp.Texts(epoch), "every string once, in order, in its session");
         });
 
-        T.Run("lost HELLO: the page falls back to strings, Unity runs them without a session, in order", () =>
+        T.Run("RESET keeps the document: its reply in flight, its ledger and what was queued reach it after the new WELCOME", () =>
+        {
+            var rig = new Rig();
+            rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
+            var p = new TestPage("keep"); p.Hello(); rig.Pump(p);
+            var s = rig.View.Current;
+            Action reply = null;
+            rig.Disp.OnText = (ss, t) =>
+            {
+                var ec = ExecutionContext.Capture();
+                reply = () => ExecutionContext.Run(ec, _ => rig.View.Send("!i!:7¶answer"), null);
+                return true;
+            };
+            p.Send("!i!:7¶!slow¶"); rig.Pump(p);
+            T.Eq(1, s.OutstandingLegacyRequests);
+            // A protocol error: a seq gap.
+            rig.View.Receive(BridgeCarrier.EncodeText(new FrameHeader(FrameKind.Data, FrameFlags.Complete, p.Epoch, p.Link.NextSeq + 5, p.Link.AckSeq, 0), BridgeCarrier.PackEntries(new[] { "x" })));
+            rig.View.Drain();
+            T.Eq(BridgeSessionState.Resetting, s.State);
+            rig.View.Send("!e!queued");
+            reply();
+            rig.View.Flush();
+            var down = rig.Sink.Take();
+            T.Eq(1, down.Count, "the RESET, and nothing behind it");
+            BridgeCarrier.TryDecode(down[0], out var f);
+            T.Eq(FrameKind.Reset, f.Header.Kind);
+            p.Receive(down[0]);
+            T.Eq("hello", p.State);
+            rig.Pump(p);
+            T.Eq("open", p.State);
+            T.Eq(BridgeSessionState.Open, s.State);
+            T.True(rig.View.Current == s, "the same session");
+            T.Seq(new[] { "!e!queued", "!i!:7¶answer" }, p.Got);
+            T.Eq(0, s.OutstandingLegacyRequests);
+            T.Eq(0L, rig.View.Stats.LateReplies);
+        });
+
+        T.Run("a page that lost its place says HELLO with what it took: the rest of Unity's frames go again, same epoch", () =>
+        {
+            var rig = new Rig();
+            rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
+            var p = new TestPage("lost-place"); p.Hello(); rig.Pump(p);
+            uint epoch = p.Epoch;
+            rig.View.Send("first"); rig.Back(p);
+            uint took = p.Link.AckSeq;
+            p.Send("mine"); rig.Pump(p);
+            rig.View.Send("second"); rig.View.Flush(); // posted, but the page breaks on it
+            var lost = rig.Sink.Take();
+            T.Eq(1, lost.Count);
+            rig.View.Send("third");
+            p.Got.Clear();
+            p.Reopen(new List<OutEntry> { new OutEntry("unsent") }, took);
+            rig.Pump(p);
+            T.Eq(epoch, p.Epoch);
+            T.Eq(1L, rig.View.Stats.Reopens);
+            T.Seq(new[] { "second", "third" }, p.Got, "from the first frame it did not take");
+            T.Seq(new[] { "mine", "unsent" }, rig.Disp.Texts(epoch));
+        });
+
+        T.Run("lost HELLO: the page says it again and its queue runs in its session, in order", () =>
         {
             var rig = new Rig();
             rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
             var p = new TestPage("lost");
             p.Hello();
-            var hello = p.TakeOut(); // lost
+            p.TakeOut(); // lost
             p.Send("a"); p.Send("b");
-            p.FallBack(BridgeReason.Timeout);
+            p.HelloAgain();
             p.Send("c");
             rig.Pump(p);
-            T.Seq(new[] { "a", "b", "c" }, rig.Disp.Texts(0));
-            T.Eq(null, rig.View.Current);
+            T.Eq("open", p.State);
+            T.Seq(new[] { "a", "b", "c" }, rig.Disp.Texts(p.Epoch));
+            T.Eq(1L, rig.View.Stats.Sessions);
         });
 
-        T.Run("lost-then-late HELLO: Unity opens, the page declines (LATE_WELCOME), its strings run once in its context", () =>
+        T.Run("a retry crossing WELCOME: same epoch, one session, the page's strings run once", () =>
         {
             var rig = new Rig();
             rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
-            var p = new TestPage("late");
+            var p = new TestPage("crossed");
             p.Hello();
-            var hello = p.TakeOut();
             p.Send("a");
-            p.FallBack(BridgeReason.Timeout);
-            p.Flush();
-            var fallback = p.TakeOut();
-            foreach (var s in hello) rig.View.Receive(s);   // the HELLO turns up after all
-            foreach (var s in fallback) rig.View.Receive(s);
-            rig.View.Drain();
-            rig.Back(p);    // WELCOME reaches a page that already gave up
-            rig.Deliver(p); // its LEGACY(LATE_WELCOME)
-            var s1 = rig.View.Current;
-            T.Eq(BridgeSessionState.Legacy, s1.State);
-            p.Send("!i!:2¶!gp!¶");
-            rig.Disp.AutoReply = true;
+            p.HelloAgain();
+            rig.Deliver(p);   // both HELLOs, before anything was flushed
+            T.Eq(1L, rig.View.Stats.Sessions);
+            T.Eq(2L, rig.View.Stats.Hellos);
+            rig.Back(p);      // WELCOME twice: the answer to the retry, and the link's own
+            T.Eq("open", p.State);
             rig.Pump(p);
-            T.Seq(new[] { "a", "!i!:2¶!gp!¶" }, rig.Disp.Texts());
-            T.Seq(new[] { "!i!:2¶ok" }, p.Got);
+            T.Seq(new[] { "a" }, rig.Disp.Texts(p.Epoch));
+            T.Eq(BridgeSessionState.Open, rig.View.Current.State);
         });
 
-        T.Run("refusals: about:, iframes, kill switch, closed tokens; duplicate HELLO keeps the epoch", () =>
+        T.Run("a session closed before the page acknowledged still says CLOSE: a page already open parks, and is not left talking to nobody", () =>
+        {
+            var rig = new Rig();
+            rig.View.NotifyLoadStarted("https://w.example/1"); rig.View.NotifyOnLoad();
+            var p = new TestPage("unacked"); p.Hello();
+            rig.Deliver(p); rig.Back(p);
+            T.Eq("open", p.State);
+            T.Eq(BridgeSessionState.AwaitingAck, rig.View.Current.State);
+            rig.View.NotifyLoadStarted("https://w.example/2");
+            foreach (var d in rig.Sink.Take()) p.Receive(d);
+            T.Eq("parked", p.State);
+        });
+
+        T.Run("refusals: about:, iframes, closed tokens; a retried HELLO keeps the epoch", () =>
         {
             var rig = new Rig();
             var a = new TestPage("about", "about:blank"); a.Hello(); rig.Pump(a);
-            T.Eq("legacy", a.State); T.Eq(null, rig.View.Current);
-            var k = new Rig(new BridgeViewOptions { SessionsEnabled = false });
-            var kp = new TestPage("kill"); kp.Hello(); k.Pump(kp);
-            T.Eq("legacy", kp.State); T.Eq(null, k.View.Current);
+            T.Eq("closed", a.State); T.Eq(null, rig.View.Current);
             rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
             var d = new TestPage("dup"); d.Hello();
-            var helloAgain = new List<string>(d.Out);
-            rig.Pump(d);
+            rig.Deliver(d);
             uint epoch = rig.View.Current.Epoch;
-            foreach (var s in helloAgain) rig.View.Receive(s);
-            rig.View.Drain();
+            d.HelloAgain();
+            rig.Deliver(d);
             T.Eq(epoch, rig.View.Current.Epoch);
+            rig.Pump(d);
             T.Eq(1L, rig.View.Stats.Sessions, "no second session for the same token");
             rig.View.NotifyLoadStarted("https://w.example/next"); // replaces the document that claimed the first load
             var again = new TestPage("dup"); again.Hello(); rig.Pump(again);
-            T.Eq("legacy", again.State, "a closed document's token is refused");
+            T.Eq("closed", again.State, "a closed document's token is refused");
             T.Eq(null, rig.View.Current);
         });
 
@@ -356,19 +420,37 @@ static class SimTests
             T.Seq(new[] { "framed-1", "raw-O.sendMessage", "framed-2" }, rig.Disp.Texts());
         });
 
-        T.Run("the frozen 4.0.25 page (legacy batches, no HELLO) still works end to end", () =>
+        T.Run("no session: a page's raw strings still run, and Unity has nobody to send to", () =>
         {
             var rig = new Rig();
             rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
-            rig.View.Receive(BridgeLegacyBatch.Pack(BridgeLegacyBatch.PageMarker, new[] { "!sst!", "!i!:1¶!gp!¶" }));
-            rig.View.Receive("!sr!");
+            rig.View.Receive("!sst!");
+            rig.View.Receive("!i!:1¶!gp!¶");
             rig.View.Drain();
-            T.Seq(new[] { "!sst!", "!i!:1¶!gp!¶", "!sr!" }, rig.Disp.Texts(0));
+            T.Seq(new[] { "!sst!", "!i!:1¶!gp!¶" }, rig.Disp.Texts(0));
             rig.View.Send("!i!:1¶x"); rig.View.Send("!e!y");
             rig.View.Flush();
-            var down = rig.Sink.Take();
-            T.Eq(1, down.Count);
-            T.Eq(BridgeLegacyBatch.Pack(BridgeLegacyBatch.UnityMarker, new[] { "!i!:1¶x", "!e!y" }), down[0]);
+            T.Eq(0, rig.Sink.Take().Count, "nothing leaves without a session");
+            T.Eq(1L, rig.View.Stats.DuplicateReplies);
+            T.Eq(1L, rig.View.Stats.DroppedNoSession);
+            T.True(!rig.View.HasOutbound);
+        });
+
+        T.Run("a message no page could reassemble never resets the session: a reply fails, an event is dropped", () =>
+        {
+            var rig = new Rig();
+            rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
+            var p = new TestPage("huge"); p.Hello(); rig.Pump(p);
+            var huge = new string('h', BridgeView.MaxTextChars + 1);
+            rig.Disp.OnText = (s, t) => { rig.View.Send("!i!:2¶" + huge); return true; };
+            p.Send("!i!:2¶!tex!¶"); rig.Pump(p);
+            rig.View.Send(huge);
+            rig.View.Send("!e!after");
+            rig.Pump(p);
+            T.Seq(new[] { "!i!:2¶!ree!¶bridge: reply too large", "!e!after" }, p.Got);
+            T.Eq(2L, rig.View.Stats.OutboundDropped);
+            T.Eq(0L, rig.View.Stats.ProtocolResets);
+            T.Eq(BridgeSessionState.Open, rig.View.Current.State);
         });
     }
 }

@@ -96,8 +96,8 @@ sealed class FakeDispatcher : IBridgeDispatcher
 
 /// <summary>
 /// A scripted page that speaks the protocol with the C# codecs (the real page is TS, simulated in its own suite).
-/// It follows the page rules: HELLO at epoch 0, adopt WELCOME's epoch, ack it, frames within the window, LEGACY on
-/// fallback, re-send unconsumed strings on CLOSE/RESET, drop frames of other epochs.
+/// It follows the page rules: HELLO at epoch 0, adopt WELCOME's epoch, ack it, frames within the window, park on CLOSE,
+/// HELLO again with the unconsumed work on RESET, drop frames of other epochs.
 /// </summary>
 sealed class TestPage
 {
@@ -111,10 +111,10 @@ sealed class TestPage
     public readonly List<string> Out = new List<string>();
     public readonly List<string> Got = new List<string>();
     public readonly List<(uint reqId, byte status)> Replies = new List<(uint, byte)>();
-    readonly List<string> legacyQueue = new List<string>();
     public int Stale;
     public bool HonorWindow = true;
     bool mustAck;
+    string hello;
 
     public TestPage(string token, string href = "https://world.example/space") { Token = token; Href = href; }
 
@@ -124,15 +124,33 @@ sealed class TestPage
         Link.EnqueueOp(BridgeOps.Encode(BridgeOp.Hello, h.Encode()));
         var frames = new List<OutFrame>();
         Link.TakeFrames(frames);
-        foreach (var f in frames) Out.Add(f.ToCarrier());
-        State = (features & BridgeFeature.OptOut) != 0 ? "legacy" : "hello";
+        foreach (var f in frames) Out.Add(hello = f.ToCarrier());
+        State = "hello";
     }
+
+    /// <summary>The page rule when WELCOME does not come: the same HELLO again.</summary>
+    public void HelloAgain() => Out.Add(hello);
 
     public void Send(string text)
     {
-        if (State == "legacy") legacyQueue.Add(text);
-        else if (State == "parked") Parked.Add(text);
+        if (State == "parked") Parked.Add(text);
         else Link.EnqueueText(text);
+    }
+
+    /// <summary>The page rule after a RESET, or when it can't follow Unity: the same token, a new link, the rest goes again.</summary>
+    public void Reopen(List<OutEntry> rest, uint ack = 0)
+    {
+        int fragmentSize = Link.FragmentSize;
+        Link = new BridgeLink { FragmentSize = fragmentSize };
+        Epoch = 0;
+        Link.AckSeq = ack;  // the HELLO frame's ack: what we took of Unity's frames
+        Hello();
+        Link.AckSeq = 0;
+        foreach (var e in rest)
+        {
+            if (e.IsText) Link.EnqueueText(e.Text);
+            else Link.EnqueueOp(e.Op);
+        }
     }
 
     /// <summary>The page rule after a navigation CLOSE: still alive, so ask again as "&lt;token&gt;~n" with the parked strings.</summary>
@@ -162,20 +180,8 @@ sealed class TestPage
         Out.Add(BridgeCarrier.EncodeBinary(new FrameHeader(FrameKind.Data, FrameFlags.Complete, epoch, seq, Link.AckSeq, 0), body));
     }
 
-    public void FallBack(byte reason)
-    {
-        if (State == "hello") Notice(0, BridgeOp.Legacy, reason);
-        State = "legacy";
-        foreach (var e in Link.TakeUnconsumed(Link.NextSeq - 1)) if (e.IsText) legacyQueue.Add(e.Text);
-    }
-
     public void Flush()
     {
-        if (State == "legacy")
-        {
-            if (legacyQueue.Count > 0) { Out.Add(BridgeLegacyBatch.Pack(BridgeLegacyBatch.PageMarker, legacyQueue)); legacyQueue.Clear(); }
-            return;
-        }
         if (State != "open") return;
         if (!HonorWindow) Link.SendWindow = int.MaxValue;
         var frames = new List<OutFrame>();
@@ -189,13 +195,7 @@ sealed class TestPage
     {
         if (!BridgeCarrier.IsCarrier(s))
         {
-            if (s.StartsWith(BridgeLegacyBatch.UnityMarker, StringComparison.Ordinal))
-            {
-                var l = new List<string>();
-                BridgeLegacyBatch.Unpack(s, 1, l);
-                Got.AddRange(l);
-            }
-            else Got.Add(s);
+            Got.Add(s);
             return;
         }
         if (BridgeCarrier.TryDecode(s, out var f) != BridgeError.None) throw new Exception("Unity sent a bad carrier");
@@ -209,8 +209,7 @@ sealed class TestPage
             var p = f.Payload.Slice(ops[0].Offset, ops[0].Length);
             if (h.Epoch == 0)
             {
-                if (ops[0].Opcode == BridgeOp.Bye) State = "legacy";
-                else if (ops[0].Opcode == BridgeOp.Welcome && WelcomePayload.TryDecode(p)?.Mode == WelcomePayload.ModeLegacy) State = "legacy";
+                if (ops[0].Opcode == BridgeOp.Bye) State = "closed";
                 return;
             }
             if (ops[0].Opcode != BridgeOp.Welcome) return;
@@ -218,32 +217,19 @@ sealed class TestPage
             Epoch = w.Epoch; Link.Epoch = w.Epoch; Link.SendWindow = (int)w.RecvWindow;
             State = "open"; mustAck = true;
         }
-        else if (State == "legacy")
-        {
-            // A WELCOME that lost the race with our fallback: decline it.
-            if (h.Kind == FrameKind.Data && h.Seq == 1 && h.Epoch != 0 && !f.IsText)
-            {
-                var ops = new List<RawOp>();
-                BridgeOps.Decode(f.Payload, ops);
-                if (ops.Count > 0 && ops[0].Opcode == BridgeOp.Welcome) { Link.AckSeq = 1; Notice(h.Epoch, BridgeOp.Legacy, BridgeReason.LateWelcome); }
-            }
-            Stale++;
-            return;
-        }
-        if (State == "parked" || h.Epoch != Epoch) { Stale++; return; }
+        if (State != "open" || h.Epoch != Epoch) { Stale++; return; }
         if (h.Kind == FrameKind.Close || h.Kind == FrameKind.Reset)
         {
             // Before the ack: the header ack of a CLOSE/RESET is its consumed seq.
             BridgeFrame.TryDecodeClose(f.Payload, out var c);
             var rest = Link.TakeUnconsumed(c.ConsumedSeq);
-            if (h.Kind == FrameKind.Close && (c.Reason == BridgeReason.Navigated || c.Reason == BridgeReason.Superseded))
+            if (h.Kind == FrameKind.Close)
             {
-                State = "parked"; // a navigation is replacing this document: hold, never replay into the next world
+                State = "parked"; // this document is being replaced: hold, never replay into the next world
                 foreach (var e in rest) if (e.IsText) Parked.Add(e.Text);
                 return;
             }
-            State = "legacy";
-            foreach (var e in rest) if (e.IsText) legacyQueue.Add(e.Text);
+            Reopen(rest);
             return;
         }
         if (!Link.OnAck(h.Ack)) throw new Exception("Unity acked the future");

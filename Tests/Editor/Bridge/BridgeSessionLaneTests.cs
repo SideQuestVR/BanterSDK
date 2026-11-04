@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Serialization;
@@ -13,7 +12,7 @@ using UnityEngine;
 namespace BS.Bridge.Tests
 {
     /// <summary>
-    /// BSLink and BSPipe on the Bridge 2 session lane, through a fake Ora view: an inactive OraView (no Awake, so no
+    /// BSLink and BSPipe on a Bridge 2 session, through a fake Ora view: an inactive OraView (no Awake, so no
     /// window) whose browserMessage event the test raises, and BSPipe.SendOverride catching what would go to the page.
     /// The pump is driven by hand (BSLink.BridgeDrain / BridgeFlush) instead of the PlayerLoop.
     /// Navigation goes through the bridge's LoadStarted/OnLoad notifications rather than view.loadStarted, whose
@@ -26,9 +25,8 @@ namespace BS.Bridge.Tests
         OraView view;
         readonly ConcurrentQueue<string> toPage = new ConcurrentQueue<string>();
 
-        void Setup(BridgeLaneMode mode)
+        void Setup()
         {
-            BridgeMode.SetForTests(mode);
             go = new GameObject("BridgeSessionLaneTests");
             go.SetActive(false); // no Awake/Start: no Ora window, no scheduler
             view = go.AddComponent<OraView>();
@@ -88,9 +86,8 @@ namespace BS.Bridge.Tests
         public void TearDown()
         {
             if (link != null && link.bridge != null) BridgePump.Unregister(link);
-            // Inactive objects get no OnDestroy: stop the legacy lane's BatchUpdater timer by hand.
+            // Inactive objects get no OnDestroy.
             if (link != null) typeof(BSLink).GetMethod("ShutDown", BindingFlags.Instance | BindingFlags.NonPublic)?.Invoke(link, null);
-            BridgeMode.SetForTests(null);
             if (go != null) UnityEngine.Object.DestroyImmediate(go);
             while (toPage.TryDequeue(out _)) { }
             // Drop what this test left queued (its link is gone), then give the other tests theirs back.
@@ -184,8 +181,8 @@ namespace BS.Bridge.Tests
         [Test]
         public void SessionLane_Handshake_Request_Reply_Navigation_LateReplyDropped()
         {
-            Setup(BridgeLaneMode.Session);
-            Assert.NotNull(link.bridge, "session lane on");
+            Setup();
+            Assert.NotNull(link.bridge, "the link has its bridge");
             Assert.True(BridgePump.Installed, "pump in the PlayerLoop");
             link.bridge.NotifyLoadStarted("https://world.example/a");
             link.bridge.NotifyOnLoad();
@@ -226,66 +223,20 @@ namespace BS.Bridge.Tests
         }
 
         [Test]
-        public void SessionLane_CreateWindowInjection_CarriesThePrelude()
+        public void TheSpaceView_GetsItsLinkProfile_OnBothOfTheStartersPaths()
         {
-            // OraManager.RegisterView sends view.customInjectedJavascript.text in CreateWindow. Greenfield's space view
-            // comes with the Creator SDK prefab (injection.js assigned), which BSStarterUpper must wrap as well.
-            BridgeMode.SetForTests(BridgeLaneMode.Session);
-            var viewGo = new GameObject("BridgePreludeTest");
-            viewGo.SetActive(false);
-            try
-            {
-                var prefabView = viewGo.AddComponent<OraView>();
-                var bundle = new TextAsset("var BS;");
-                prefabView.customInjectedJavascript = bundle;
-                BridgeMode.ApplyTo(prefabView);
-                Assert.AreEqual(BridgeMode.PagePrelude + "var BS;", prefabView.customInjectedJavascript.text);
-                BridgeMode.ApplyTo(prefabView); // idempotent
-                Assert.AreEqual(BridgeMode.PagePrelude + "var BS;", prefabView.customInjectedJavascript.text);
-
-                BridgeMode.SetForTests(BridgeLaneMode.Legacy);
-                prefabView.customInjectedJavascript = bundle;
-                BridgeMode.ApplyTo(prefabView);
-                Assert.AreSame(bundle, prefabView.customInjectedJavascript, "legacy lane: the same asset, today's bytes");
-
-                // Both of BSStarterUpper's paths (a view it builds, a view that came with the prefab) apply it.
-                var starter = System.IO.File.ReadAllText("Packages/com.sidequest.creator-sdk/Runtime/Scripts/BSStarterUpper.cs");
-                Assert.AreEqual(2, System.Text.RegularExpressions.Regex.Matches(starter, @"BridgeMode\.ApplyTo\(oraView\)").Count);
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(viewGo);
-            }
+            // Before the view's Awake, which opens its channel: a view BSStarterUpper builds, and one that came with the
+            // prefab (Greenfield's Creator SDK prefab).
+            var starter = System.IO.File.ReadAllText("Packages/com.sidequest.creator-sdk/Runtime/Scripts/BSStarterUpper.cs");
+            Assert.AreEqual(2, System.Text.RegularExpressions.Regex.Matches(starter, @"oraView\.linkProfile = OraChannelProfile\.SdkView;").Count);
         }
 
         [Test]
-        public void LegacyLane_IsTodaysWire_BatchUpdaterAndWireFrame()
+        public void InTheEditor_LoadStartedDoesNotTrail()
         {
-            Setup(BridgeLaneMode.Legacy);
-            Assert.IsNull(link.bridge, "no bridge on the legacy lane");
-            Assert.False(BridgePump.Installed, "no pump");
-            link.Send("!e!one");
-            link.Send(Reply(5, "x"));       // not asked: TakeReply drops it, as today
-            link.Send("!e!two‽3:abc");
-            // BatchUpdater's 11 ms timer packs whatever was queued: each frame must be exactly WireFrame.Pack of its
-            // messages, and together they carry exactly what was sent (minus the unasked reply).
-            var got = new List<string>();
-            var sw = Stopwatch.StartNew();
-            while (sw.ElapsedMilliseconds < 2000 && got.Count < 2)
-            {
-                while (toPage.TryDequeue(out var frame))
-                {
-                    StringAssert.StartsWith(MessageDelimiters.BATCH, frame);
-                    var parts = new List<string>();
-                    Assert.True(WireFrame.Unpack(frame, MessageDelimiters.BATCH.Length, parts));
-                    Assert.AreEqual(WireFrame.Pack(MessageDelimiters.BATCH, parts, ref scratch), frame);
-                    got.AddRange(parts);
-                }
-                System.Threading.Thread.Sleep(5);
-            }
-            CollectionAssert.AreEqual(new[] { "!e!one", "!e!two‽3:abc" }, got);
+            // Only an Android player delivers a page's messages ahead of its LoadStarted.
+            Setup();
+            Assert.False(link.bridge.Options.LoadStartedMayTrail);
         }
-
-        char[] scratch;
     }
 }

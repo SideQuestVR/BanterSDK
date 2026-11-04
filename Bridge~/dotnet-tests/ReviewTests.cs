@@ -101,15 +101,16 @@ static class ReviewTests
             rig.View.Receive(BridgeCarrier.EncodeText(h, BridgeCarrier.PackEntries(new[] { "x" })));
             rig.View.Drain();
             T.Eq(1L, rig.View.Stats.ProtocolResets);
-            T.Eq(BridgeSessionState.Legacy, rig.View.Current.State);
+            T.Eq(BridgeSessionState.Resetting, rig.View.Current.State);
         });
 
         T.Run("[P3] RESET for a message that failed: header ack = consumed seq; the message is re-sent and runs once", () =>
         {
-            var o = new BridgeViewOptions { ReassemblyBudget = new BridgeReassembler.Budget(140 * 1024) };
+            var o = new BridgeViewOptions { ReassemblyBudget = new BridgeReassembler.Budget(1024 * 1024) };
             var (rig, page) = Open("tokB", o);
             page.Send("before"); rig.Pump(page);
             string big = new string('y', 150 * 1024);
+            o.ReassemblyBudget.Used = 1024 * 1024 - 140 * 1024; // another view's message, being reassembled
             page.Send(big); page.Send("after");
             page.Flush();
             foreach (var u in page.TakeOut()) rig.View.Receive(u);
@@ -124,32 +125,37 @@ static class ReviewTests
                 }
                 page.Receive(d);
             }
+            o.ReassemblyBudget.Used -= 1024 * 1024 - 140 * 1024; // and it finished
             rig.Pump(page);
             T.Seq(new[] { "before", big, "after" }, rig.Disp.Texts(), "once each, in order");
             T.Eq(0L, o.ReassemblyBudget.Used);
         });
 
-        T.Run("[P4] a page that stops acknowledging: over the cap with nothing acknowledged for OutboundStallMs, the session goes to strings", () =>
+        T.Run("[P4] a page that stops acknowledging: past the cap its events are dropped, its replies still queue, and it catches up", () =>
         {
             var o = new BridgeViewOptions { MaxOutboundBytes = 512 * 1024 };
             var (rig, page) = Open("tokQ", o);
+            rig.Disp.OnText = (s, t) => true;
+            page.Send("!i!:9¶!slow¶"); rig.Pump(page);
             long maxQueued = 0;
-            int resetAt = -1;
             for (int f = 0; f < 600; f++)
             {
                 rig.Now += 16; // one 60 Hz frame
                 for (int i = 0; i < 200; i++) rig.View.Send("!e!transform¶" + f + "¶" + i + "¶0.1234,0.5678,0.9012,0.1,0.2,0.3,1");
                 rig.View.Flush();
                 rig.Sink.Take(); // never acknowledged
-                if (rig.View.Current.State == BridgeSessionState.Open) maxQueued = Math.Max(maxQueued, rig.View.Current.Link.QueuedCost);
-                else if (resetAt < 0) resetAt = f;
+                maxQueued = Math.Max(maxQueued, rig.View.Current.Link.QueuedCost);
             }
-            T.Eq(1L, rig.View.Stats.OutboundOverflows);
-            T.Eq(BridgeSessionState.Legacy, rig.View.Current.State);
-            // The first frame went at 16 ms; nothing came back after it.
-            T.True(Math.Abs(16 * (resetAt + 1) - 16 - o.OutboundStallMs) <= 32, "reset once nothing was acknowledged for OutboundStallMs: frame " + resetAt);
-            T.True(maxQueued <= 200L * 70 * 2 * (o.OutboundStallMs / 16 + 2), "at most the stall window's traffic queued: " + maxQueued);
-            T.True(rig.View.LegacyBacklogCount < 200 * 600, "the legacy lane drains it (no flow control, like today)");
+            T.True(rig.View.Stats.OutboundDropped > 0);
+            T.True(maxQueued <= o.MaxOutboundBytes + 200 * 2 * 70, "the queue stays at the cap: " + maxQueued);
+            T.Eq(0L, rig.View.Stats.ProtocolResets);
+            T.Eq(BridgeSessionState.Open, rig.View.Current.State);
+            T.Eq(1, rig.Logs.Count(l => l.Contains("dropping its events")), "said once");
+            long dropped = rig.View.Stats.OutboundDropped;
+            rig.View.Send("!i!:9¶answer"); // over the cap, and still queued
+            rig.View.Flush();
+            T.Eq(dropped, rig.View.Stats.OutboundDropped);
+            T.True(rig.View.Current.Link.HasOutbound);
         });
 
         T.Run("[P5] the drain budget counts ingest too; stale frames are refused from the header", () =>
@@ -231,7 +237,7 @@ static class ReviewTests
             T.Seq(new[] { "held-1" }, a.Parked, "the page keeps it (parked), never replayed into B");
         });
 
-        T.Run("[P9] a farewell mid-message abandons it without a RESET and frees the budget", () =>
+        T.Run("[P9] BYE mid-message abandons it without a RESET and frees the budget", () =>
         {
             var budget = new BridgeReassembler.Budget(32 * 1024 * 1024);
             var o = new BridgeViewOptions { ReassemblyBudget = budget, RecvWindow = 70000 };
@@ -242,19 +248,19 @@ static class ReviewTests
             rig.View.Drain();
             T.True(budget.Used > 0);
             rig.Sink.Take();
-            page.Notice(page.Epoch, BridgeOp.Legacy, BridgeReason.Protocol);
+            page.Bye();
             rig.Deliver(page);
             T.Eq(0L, rig.View.Stats.ProtocolResets);
-            T.Eq(BridgeSessionState.Legacy, rig.View.Current.State);
+            T.Eq(null, rig.View.Current);
             T.Eq(0L, budget.Used);
         });
 
-        T.Run("[P10] the legacy backlog is per document: a paused reply for X never reaches Y", () =>
+        T.Run("[P10] what is queued is per document: a paused reply for X never reaches Y", () =>
         {
             var rig = new Rig();
             rig.Disp.AutoReply = true;
             rig.View.NotifyLoadStarted("https://world.example/space"); rig.View.NotifyOnLoad();
-            var x = new TestPage("tokOX"); x.Hello(BridgeFeature.TextForm | BridgeFeature.OptOut); rig.Pump(x);
+            var x = new TestPage("tokOX"); x.Hello(); rig.Pump(x);
             rig.View.Pause();
             x.Send("!i!:3¶GET"); rig.Pump(x);
             rig.View.NotifyLoadStarted("https://world.example/two"); rig.View.NotifyOnLoad();
@@ -289,7 +295,7 @@ static class ReviewTests
             var y = new TestPage("tokNY", "https://other.example/world"); y.Hello(); rig.Pump(y);
             T.Eq(2u, y.Epoch);
             x.Revive(); rig.Pump(x);
-            T.Eq("legacy", x.State, "refused: a newer document owns the view");
+            T.Eq("closed", x.State, "refused: a newer document owns the view");
             T.Eq(2u, rig.View.Current.Epoch);
             T.Seq(new[] { "!u!A" }, rig.Disp.Texts());
             // Case 2 (N3): a navigation slower than the park grace + the hold (or one that never commits): the revival

@@ -8,14 +8,17 @@ using UnityEngine.PlayerLoop;
 namespace BS.Bridge
 {
     /// <summary>
-    /// The session lane's main-thread pump (plan §1): EarlyUpdate.BridgeDrain decodes and dispatches what the pages
+    /// The bridge's main-thread pump (plan §1): EarlyUpdate.BridgeDrain decodes and dispatches what the pages
     /// sent, within a time budget, then runs the timers; PostLateUpdate.BridgeFlush sends what Unity queued this frame.
-    /// Inserted into the PlayerLoop only while a session-lane BSLink exists (never on the legacy lane), idempotently,
-    /// and removed when the last one goes or a new play session starts.
+    /// BridgeEarlyFlush sends it once before that: under XR the main thread waits out most of the frame inside
+    /// PostLateUpdate, so a reply left for the last flush misses the time the page could have used.
+    /// Inserted into the PlayerLoop only while a BSLink exists, idempotently, and removed when the last one goes or a new
+    /// play session starts.
     /// </summary>
     internal static class BridgePump
     {
         struct BridgeDrain { }
+        struct BridgeEarlyFlush { }
         struct BridgeFlush { }
 
         static readonly List<BSLink> links = new List<BSLink>();
@@ -81,9 +84,10 @@ namespace BS.Bridge
             var loop = PlayerLoop.GetCurrentPlayerLoop();
             bool a = Insert(ref loop, typeof(EarlyUpdate), new PlayerLoopSystem { type = typeof(BridgeDrain), updateDelegate = Drain }, true);
             bool b = Insert(ref loop, typeof(PostLateUpdate), new PlayerLoopSystem { type = typeof(BridgeFlush), updateDelegate = Flush }, false);
-            if (!a || !b)
+            bool c = Insert(ref loop, typeof(PostLateUpdate), new PlayerLoopSystem { type = typeof(BridgeEarlyFlush), updateDelegate = Flush }, true);
+            if (!a || !b || !c)
             {
-                Debug.LogError("[Bridge] Could not find EarlyUpdate/PostLateUpdate in the PlayerLoop; the session lane will not run.");
+                Debug.LogError("[Bridge] Could not find EarlyUpdate/PostLateUpdate in the PlayerLoop; the bridge will not run.");
                 return;
             }
             PlayerLoop.SetPlayerLoop(loop);
@@ -93,7 +97,8 @@ namespace BS.Bridge
         static void Uninstall()
         {
             var loop = PlayerLoop.GetCurrentPlayerLoop();
-            bool changed = Remove(ref loop, typeof(BridgeDrain)) | Remove(ref loop, typeof(BridgeFlush));
+            bool changed = Remove(ref loop, typeof(BridgeDrain)) | Remove(ref loop, typeof(BridgeEarlyFlush))
+                | Remove(ref loop, typeof(BridgeFlush));
             if (changed) PlayerLoop.SetPlayerLoop(loop);
             installed = false;
         }

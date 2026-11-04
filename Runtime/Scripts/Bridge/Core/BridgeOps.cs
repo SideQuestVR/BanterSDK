@@ -182,7 +182,8 @@ namespace BS.Bridge
         public uint MaxFramePayload = BridgeWire.MaxFramePayload;
         public uint FragmentSize = BridgeWire.FragmentSize;
 
-        public const byte ModeLegacy = 0, ModeV2 = 1;
+        /// <summary>Mode 0 (legacy strings) is retired: the only mode is the session.</summary>
+        public const byte ModeV2 = 1;
         public const byte LaneCarrier = 0, LaneNative = 1;
 
         public byte[] Encode()
@@ -207,7 +208,7 @@ namespace BS.Bridge
         }
     }
 
-    /// <summary>BYE and LEGACY: u8 reason · str docToken (empty from Unity).</summary>
+    /// <summary>BYE: u8 reason · str docToken (empty from Unity).</summary>
     internal struct FarewellPayload
     {
         public byte Reason;

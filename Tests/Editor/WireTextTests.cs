@@ -1,14 +1,12 @@
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 using NUnit.Framework;
 
 namespace BS.SDKEditor.Tests
 {
     /// <summary>
-    /// WireText and WireFrame keep text that holds the bus delimiters (¶ § | ‽ ¤) intact across the
-    /// JS-Unity string bus. The JS mirrors (Injection~/src/game/wire-text.ts, wire-frame.ts) follow
-    /// the same rules; these cases are the contract both sides keep.
+    /// WireText keeps text that holds the bus delimiters (¶ § | ‽ ¤) intact across the JS-Unity
+    /// string bus. The JS mirror (Injection~/src/game/wire-text.ts) follows the same rules; these
+    /// cases are the contract both sides keep.
     /// </summary>
     public class WireTextTests
     {
@@ -123,87 +121,6 @@ namespace BS.SDKEditor.Tests
             Assert.AreEqual("", WireText.Encode(null));
         }
 
-        // ---- WireFrame ---------------------------------------------------------------------
-
-        static string Pack(string marker, List<string> messages)
-        {
-            char[] buffer = null;
-            return WireFrame.Pack(marker, messages, ref buffer);
-        }
-
-        [Test]
-        public void PackReusesAndGrowsTheBuffer()
-        {
-            var buffer = new char[4];
-            var frame = WireFrame.Pack("‽", new List<string> { "0123456789" }, ref buffer);
-            Assert.AreEqual("‽10:0123456789", frame);
-            Assert.GreaterOrEqual(buffer.Length, frame.Length);
-
-            var grown = buffer;
-            Assert.AreEqual("‽1:a", WireFrame.Pack("‽", new List<string> { "a" }, ref buffer));
-            Assert.AreSame(grown, buffer, "a big enough buffer is reused");
-        }
-
-        [Test]
-        public void FrameRoundTripsMessagesHoldingDelimiters()
-        {
-            var messages = new List<string> { "!e!bm!¶12§x‽!e!bogus", "", "¶§|", "😀", AllDelimiters, "12:34" };
-            foreach (var marker in new[] { MessageDelimiters.BATCH, MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY })
-            {
-                var frame = Pack(marker, messages);
-                var read = new List<string>();
-                Assert.IsTrue(WireFrame.Unpack(frame, marker.Length, read), frame);
-                CollectionAssert.AreEqual(messages, read);
-            }
-        }
-
-        [Test]
-        public void FrameMatchesTheDocumentedLayout()
-        {
-            Assert.AreEqual("‽2:ab0:10:0123456789", Pack("‽", new List<string> { "ab", "", "0123456789" }));
-        }
-
-        [Test]
-        public void RandomFramesRoundTrip()
-        {
-            var random = new System.Random(1234);
-            const string alphabet = "ab:019¶§|‽¤\"\\\n😀";
-            for (int round = 0; round < 200; round++)
-            {
-                var messages = new List<string>();
-                int count = random.Next(0, 20);
-                for (int i = 0; i < count; i++)
-                {
-                    var builder = new StringBuilder();
-                    int length = random.Next(0, 40);
-                    for (int j = 0; j < length; j++) builder.Append(alphabet[random.Next(alphabet.Length)]);
-                    messages.Add(builder.ToString());
-                }
-                var read = new List<string>();
-                Assert.IsTrue(WireFrame.Unpack(Pack("‽", messages), 1, read));
-                CollectionAssert.AreEqual(messages, read);
-            }
-        }
-
-        [Test]
-        public void MalformedFramesAreRejectedWithoutThrowing()
-        {
-            var read = new List<string>();
-            Assert.IsFalse(WireFrame.Unpack("‽5:ab", 1, read), "length past the end");
-            Assert.IsFalse(WireFrame.Unpack("‽ab", 1, read), "no length");
-            Assert.IsFalse(WireFrame.Unpack("‽3ab", 1, read), "no colon");
-            Assert.IsFalse(WireFrame.Unpack("‽2", 1, read), "length at the end");
-            Assert.IsFalse(WireFrame.Unpack("‽9999999999:x", 1, read), "too many digits");
-
-            read.Clear();
-            Assert.IsFalse(WireFrame.Unpack("‽2:ok3:no", 1, read));
-            CollectionAssert.AreEqual(new[] { "ok" }, read, "messages before the error are kept");
-
-            read.Clear();
-            Assert.IsTrue(WireFrame.Unpack("‽", 1, read), "an empty batch");
-            Assert.IsEmpty(read);
-        }
-
         // ---- Cost ---------------------------------------------------------------------------
 
         [Test]
@@ -219,21 +136,9 @@ namespace BS.SDKEditor.Tests
             var encodeSlow = Time(iterations / 10, () => WireText.Encode(AllDelimiters));
             var decodeSlow = Time(iterations / 10, () => WireText.Decode("\"a\\u00b6b\\u00a7c\\u007cd\\u203de\\u00a4f\""));
 
-            var messages = new List<string>();
-            for (int i = 0; i < 200; i++) messages.Add("!e!tu!¶" + (10000 + i) + "§0|" + (i * 1.2345f).ToString("F4") + "|2.3456|3.4567");
-            char[] buffer = null;
-            var packed = Pack("‽", messages);
-            var read = new List<string>(256);
-            var joinToday = Time(20000, () => "‽" + string.Join("‽", messages));
-            var packPlan = Time(20000, () => WireFrame.Pack("‽", messages, ref buffer));
-            var joined = "‽" + string.Join("‽", messages);
-            var splitToday = Time(20000, () => { joined.Substring(1).Split(MessageDelimiters.BATCH); return null; });
-            var unpackPlan = Time(20000, () => { read.Clear(); WireFrame.Unpack(packed, 1, read); return null; });
-
             UnityEngine.Debug.Log(
                 $"[WireTextTests] ns/op: Decode plain {decode:F1}, Encode plain {encode:F1}, EscapeDelimiters UI json ({uiEventJson.Length} ch) {escape:F1}, " +
-                $"Encode with delimiters {encodeSlow:F1}, Decode encoded {decodeSlow:F1}; 200-message batch: join {joinToday:F0} vs pack {packPlan:F0}, " +
-                $"split {splitToday:F0} vs unpack {unpackPlan:F0}");
+                $"Encode with delimiters {encodeSlow:F1}, Decode encoded {decodeSlow:F1}");
         }
 
         static double Time(int iterations, System.Func<string> action)

@@ -238,22 +238,6 @@ static class VectorTests
             }
         });
 
-        T.Run("frozen legacy batch matches the vectors (and WireFrame's format)", () =>
-        {
-            foreach (var x in V.GetProperty("legacyBatch").EnumerateArray())
-            {
-                var marker = x.GetProperty("marker").GetString();
-                var msgs = x.GetProperty("messages").EnumerateArray().Select(z => z.GetString()).ToList();
-                var packed = x.GetProperty("packed").GetString();
-                T.Eq(packed, BridgeLegacyBatch.Pack(marker, msgs));
-                var got = new List<string>();
-                T.True(BridgeLegacyBatch.Unpack(packed, marker.Length, got));
-                T.Seq(msgs, got);
-            }
-            T.Eq(BridgeLegacyBatch.PageMarker, "\u00B6\u00A7|");
-            T.Eq(BridgeLegacyBatch.UnityMarker, "\u203D");
-        });
-
         T.Run("carrier marker is unambiguous against APICommands/UICommands/MessageDelimiters (C# sources)", () =>
         {
             var consts = new List<string>();
@@ -262,7 +246,7 @@ static class VectorTests
                 foreach (Match m in re.Matches(File.ReadAllText(Path.Combine(Models, file))))
                     consts.Add(Regex.Unescape(m.Groups[1].Value));
             T.True(consts.Count > 200, "found only " + consts.Count + " constants");
-            consts.AddRange(new[] { BridgeLegacyBatch.PageMarker, BridgeLegacyBatch.UnityMarker, "\"", "PanelSettings 0" });
+            consts.AddRange(new[] { "\u00B6\u00A7|", "\u203D", "\"", "PanelSettings 0" });
             foreach (var c in consts)
             {
                 T.True(c.Length == 0 || c[0] != BridgeCarrier.Mark, "constant starts with U+0002: " + c);

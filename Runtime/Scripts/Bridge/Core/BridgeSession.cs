@@ -7,12 +7,12 @@ namespace BS.Bridge
 {
     internal enum BridgeSessionState
     {
-        /// <summary>WELCOME sent; Unity keeps legacy encoding until a page frame acknowledges the epoch.</summary>
+        /// <summary>WELCOME queued; frames flow behind it until a page frame acknowledges the epoch.</summary>
         AwaitingAck,
-        /// <summary>Both directions on frames.</summary>
+        /// <summary>The page has acknowledged the epoch.</summary>
         Open,
-        /// <summary>The document is known (opt-out, fallback, reset) but speaks legacy strings.</summary>
-        Legacy,
+        /// <summary>RESET sent: nothing goes to the page, and none of its frames count, until it says HELLO again.</summary>
+        Resetting,
         /// <summary>The document is gone (navigated, superseded, BYE). Nothing for it is dispatched or sent.</summary>
         Closed,
     }
@@ -27,10 +27,10 @@ namespace BS.Bridge
         public readonly uint Epoch;
         public readonly string DocToken;
         public readonly string Href;
-        public readonly BridgeLink Link;
+        /// <summary>Replaced when the document starts its session over: the epoch and everything else here stay.</summary>
+        public BridgeLink Link;
         public BridgeSessionState State;
         public bool HandshakeComplete;
-        public bool OptOut;
         public byte CloseReason;
 
         /// <summary>The LoadStarted generation this document claimed; 0 while it waits for its LoadStarted.</summary>
@@ -42,8 +42,6 @@ namespace BS.Bridge
         /// <summary>The hold timed out but its release would run this document's work in a newer load's world.</summary>
         public bool HoldExpired;
         public long LastHeardMs;
-        /// <summary>When the page last acknowledged more of our frames, or had none of ours left to acknowledge.</summary>
-        public long AckProgressMs;
         /// <summary>Held payload in bytes (text 2 per UTF-16 unit).</summary>
         public long HeldBytes;
         /// <summary>The framed part of HeldBytes (capped on its own account, so raw strings can't starve it).</summary>
@@ -52,6 +50,7 @@ namespace BS.Bridge
         /// <summary>First fragment seq of the first framed message held (0 = none): held work is not consumed work.</summary>
         public uint FirstHeldFramedSeq;
         public bool HoldOverflowLogged;
+        public bool OutboundDropLogged;
 
         /// <summary>Legacy request ids ("!i!:&lt;id&gt;¶") dispatched for this document and not answered yet.</summary>
         internal readonly HashSet<int> LegacyLedger = new HashSet<int>();
@@ -112,7 +111,7 @@ namespace BS.Bridge
 
         /// <summary>
         /// For queues that keep bare delegates (they don't carry the ExecutionContext): the action runs in the epoch
-        /// current when it was queued. No epoch set (the legacy lane, or no op being handled) = the action itself.
+        /// current when it was queued. No epoch set (no op being handled) = the action itself.
         /// </summary>
         public static Action Bind(Action action)
         {
@@ -187,8 +186,8 @@ namespace BS.Bridge
     internal interface IBridgeDispatcher
     {
         /// <summary>
-        /// A legacy command string: a LEGACY_TEXT op, an unmarked string, or one entry of a legacy batch.
-        /// session is null for pages without a session (kill switch, frozen injection.js, start-up page).
+        /// A command string: a LEGACY_TEXT op, or an unmarked string from a page script (O.sendMessage).
+        /// session is null for a page that has no session (it never said HELLO).
         /// </summary>
         void DispatchText(BridgeSession session, string text);
 

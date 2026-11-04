@@ -5,12 +5,9 @@ namespace BS.Bridge
 {
     internal sealed class BridgeViewOptions
     {
-        /// <summary>Kill switch: false answers every HELLO with WELCOME(mode=legacy) and opens no session.</summary>
-        public bool SessionsEnabled = true;
         /// <summary>
         /// Android's compat channel can deliver a page's first messages ahead of its LoadStarted. Then a HELLO only
         /// claims an unclaimed LoadStarted whose URL matches its href (same host); otherwise it waits for the next one.
-        /// M4 (Ora's document-start signal) replaces this heuristic; Android stays on the legacy lane until then.
         /// </summary>
         public bool LoadStartedMayTrail;
         /// <summary>A hold that never sees its LoadStarted + OnLoad is released after this long (and counted).</summary>
@@ -23,7 +20,7 @@ namespace BS.Bridge
         /// <summary>
         /// The hold's cap, in bytes, each item counting its payload plus a fixed per-item overhead. Unmarked strings (no
         /// credits) past it, counting everything held, are dropped and counted. Framed messages are also checked on their own account (the credit window normally keeps them far
-        /// below it): one that would pass it RESETs the session, which re-sends it as strings.
+        /// below it): one that would pass it RESETs the session, and the page sends it again when it has started over.
         /// </summary>
         public long MaxHeldBytes = 4L * 1024 * 1024;
         /// <summary>The page's send credit (WELCOME.recvWindow).</summary>
@@ -32,7 +29,7 @@ namespace BS.Bridge
         /// <summary>Out-of-order frames kept per session. 0: Ora's carrier is FIFO, so a gap is a protocol error.</summary>
         public int ReorderFrames = 0;
         /// <summary>
-        /// Per Flush call (session lane): payload bytes (text 2 per unit; headers not counted, so whole fragments fit)
+        /// Per Flush call: payload bytes (text 2 per unit; headers not counted, so whole fragments fit)
         /// and frame count. The page's credit window is the flow control: a page that acknowledges promptly can take up
         /// to its whole window each frame (seven full 64K-char text frames, as each frame's header counts against the
         /// window), so this defaults to the window and only caps it.
@@ -46,20 +43,12 @@ namespace BS.Bridge
         public double FlushBudgetMs = 2.0;
         /// <summary>The budget's clock, in Stopwatch ticks (tests swap in a fake).</summary>
         public Func<long> FlushClock = System.Diagnostics.Stopwatch.GetTimestamp;
-        /// <summary>Per Flush call on the legacy lane: chars in the one "‽" batch.</summary>
-        public int LegacyBatchMaxChars = 256 * 1024;
         /// <summary>
-        /// Queued for a document beyond this many bytes while it has acknowledged nothing new for OutboundStallMs
-        /// (frozen, hidden, hostile): the session is reset to the legacy lane, which has no flow control, like today.
-        /// A page that keeps acknowledging may have more queued (one large reply drains over several frames).
+        /// Queued for a document beyond this (frozen, hidden, hostile), new events are dropped and counted. Replies still
+        /// queue: an await must settle. Twice the largest message a page reassembles (BridgeWire.MaxMessage), so one large
+        /// reply draining over several frames never reaches it.
         /// </summary>
-        public long MaxOutboundBytes = 8L * 1024 * 1024;
-        public int OutboundStallMs = 5000;
-        /// <summary>
-        /// Queued for a document beyond this, acknowledging or not: reset. Twice the largest message a page reassembles
-        /// (BridgeWire.MaxMessage), so no single reply the session lane can deliver reaches it.
-        /// </summary>
-        public long MaxOutboundHardBytes = 2L * BridgeWire.MaxMessage;
+        public long MaxOutboundBytes = 2L * BridgeWire.MaxMessage;
         public uint Families;
         public uint Caps;
         public BridgeReassembler.Budget ReassemblyBudget;
@@ -68,18 +57,18 @@ namespace BS.Bridge
 
     internal sealed class BridgeStats
     {
-        public long StringsIn, CarriersIn, LegacyBatchesIn, FramesOut, LegacyBatchesOut, TextsDispatched, OpsDispatched;
+        public long StringsIn, CarriersIn, FramesOut, TextsDispatched, OpsDispatched;
         public long BadCarriers, StaleFrames, HostOnlyFromPage, ProtocolResets, Duplicates;
-        public long LateReplies, DuplicateReplies, ReusedRequestIds, DroppedForClosedDocument, DroppedOps;
+        public long LateReplies, DuplicateReplies, ReusedRequestIds, DroppedForClosedDocument, DroppedOps, DroppedNoSession;
         public long HeldItems, HoldTimeouts, HoldDiscarded, HoldOverflowDropped, HandlerErrors, Hellos, Refusals, Sessions;
-        public long LegacyMalformedBatches, OutboundOverflows, Revivals, FlushBudgetStops;
+        public long OutboundDropped, Revivals, Reopens, FlushBudgetStops;
     }
 
     /// <summary>
     /// The Unity end of the bridge for one Ora view. Owns document attribution (token + epoch, LoadStarted/OnLoad
-    /// claims), the per-document hold, the inbound FIFO (carrier frames, legacy batches and raw strings in arrival
-    /// order) and the single outbound queue that replaces BatchUpdater: any thread may Send; the main thread Flushes
-    /// once per frame (PostLateUpdate), within per-call bounds.
+    /// claims), the per-document hold, the inbound FIFO (carrier frames and raw strings in arrival order) and the single
+    /// outbound queue: any thread may Send; the main thread Flushes each frame (PostLateUpdate), within per-call bounds.
+    /// Everything for a page travels in its session: with no session there is nobody to send to.
     /// Threading: Receive and Send are thread-safe; everything else is main-thread only.
     /// </summary>
     internal sealed class BridgeView
@@ -95,13 +84,10 @@ namespace BS.Bridge
         readonly object outLock = new object();
         List<OutMsg> outbox = new List<OutMsg>();
         List<OutMsg> outSwap = new List<OutMsg>();
-        /// <summary>Strings for the legacy lane, each with the document it is for (0 = whichever page is there).</summary>
-        readonly Queue<(string text, uint epoch)> legacyBacklog = new Queue<(string, uint)>();
 
         readonly Queue<(BridgeSession session, BridgeItem item)> ready = new Queue<(BridgeSession, BridgeItem)>();
         readonly List<BridgeMessage> scratchMessages = new List<BridgeMessage>();
         readonly List<RawOp> scratchOps = new List<RawOp>();
-        readonly List<string> scratchTexts = new List<string>();
         /// <summary>Scratch list slots kept between uses (more are released after a huge batch).</summary>
         internal const int ScratchKeep = 4096;
         readonly List<OutFrame> scratchFrames = new List<OutFrame>();
@@ -137,7 +123,6 @@ namespace BS.Bridge
         public int InboundCount { get { lock (inLock) return inbound.Count; } }
         public int ReadyCount => ready.Count;
         public int LoadGeneration => loadGen;
-        public int LegacyBacklogCount => legacyBacklog.Count;
 
         // =========================================================================================== inbound
 
@@ -180,23 +165,8 @@ namespace BS.Bridge
         void Ingest(string msg)
         {
             Stats.StringsIn++;
-            if (BridgeCarrier.IsCarrier(msg)) { IngestCarrier(msg); return; }
-            if (msg.StartsWith(BridgeLegacyBatch.PageMarker, StringComparison.Ordinal))
-            {
-                Stats.LegacyBatchesIn++;
-                scratchTexts.Clear();
-                if (!BridgeLegacyBatch.Unpack(msg, BridgeLegacyBatch.PageMarker.Length, scratchTexts))
-                {
-                    Stats.LegacyMalformedBatches++;
-                    Log("Dropped the rest of a malformed message batch: " + (msg.Length > 200 ? msg.Substring(0, 200) : msg));
-                }
-                foreach (var t in scratchTexts) RouteUnmarked(t);
-                scratchTexts.Clear();
-                // A huge batch must not leave its slots pinned for the life of the view.
-                if (scratchTexts.Capacity > ScratchKeep) scratchTexts.Capacity = ScratchKeep;
-                return;
-            }
-            RouteUnmarked(msg);
+            if (BridgeCarrier.IsCarrier(msg)) IngestCarrier(msg);
+            else RouteUnmarked(msg);
         }
 
         /// <summary>
@@ -218,7 +188,7 @@ namespace BS.Bridge
             if (!BridgeCarrier.TryPeekHeader(msg, out var peek, out _)) { Stats.BadCarriers++; return; }
             if (FrameKind.IsHostOnly(peek.Kind)) { Stats.HostOnlyFromPage++; return; }
             var s = current;
-            if (peek.Epoch != 0 && (s == null || s.Epoch != peek.Epoch || s.State == BridgeSessionState.Closed || s.State == BridgeSessionState.Legacy))
+            if (peek.Epoch != 0 && (s == null || s.Epoch != peek.Epoch || s.State == BridgeSessionState.Closed || s.State == BridgeSessionState.Resetting))
             {
                 Stats.StaleFrames++;
                 return;
@@ -229,7 +199,6 @@ namespace BS.Bridge
             if (h.Epoch == 0) { IngestSessionless(f); return; }
             long now = clockMs();
             s.LastHeardMs = now;
-            if (h.Ack > s.Link.LastAckReceived) s.AckProgressMs = now;
             if (!s.Link.OnAck(h.Ack)) { ResetSession(s, BridgeReason.Protocol, "ack beyond the last frame sent"); return; }
             if (!s.HandshakeComplete && h.Ack >= 1)
             {
@@ -254,17 +223,12 @@ namespace BS.Bridge
             var h = f.Header;
             var link = s.Link;
             int cost = BridgeLink.FrameCost(h);
-            // A farewell: the page is giving up (perhaps mid-message, perhaps credit-blocked).
-            bool farewell = IsFarewell(f);
-            // Host-enforced window: the page may never have more unacknowledged than we granted (one frame may always
-            // go, and so may a farewell).
-            if (!farewell && link.UnackedBytes > 0 && (long)link.UnackedBytes + cost > link.RecvWindow)
+            // Host-enforced window: the page may never have more unacknowledged than we granted (one frame may always go).
+            if (link.UnackedBytes > 0 && (long)link.UnackedBytes + cost > link.RecvWindow)
             {
                 ResetSession(s, BridgeReason.Protocol, "credit window exceeded");
                 return;
             }
-            // A farewell abandons a partial message.
-            if (farewell && link.Reassembler.Busy) link.Reassembler.Reset();
             link.AckFrozen = s.Held && s.HeldBytes >= Options.HoldAckLimit;
             scratchMessages.Clear();
             int dupBefore = link.Duplicates;
@@ -286,7 +250,7 @@ namespace BS.Bridge
                     if (s.State == BridgeSessionState.Closed) break;
                     if (!item.IsText && item.Opcode < BridgeOp.LegacyText && item.Opcode != BridgeOp.Bye)
                     {
-                        SessionOp(s, item, h);
+                        SessionOp(s, item);
                         continue;
                     }
                     if (!s.Held) { ready.Enqueue((s, item)); continue; }
@@ -303,27 +267,12 @@ namespace BS.Bridge
             scratchMessages.Clear();
             if (overflowFrom != 0)
             {
-                // Not held, not run: the RESET reports it unconsumed, so the page re-sends it (and what follows) as
-                // strings, which queue behind what is held, under the cap for unframed strings.
+                // Not held, not run: the RESET reports it unconsumed, so the page sends it (and what follows) again when
+                // it has started over. It queues behind what is held, and the hold's timeout bounds the wait.
                 ResetSession(s, BridgeReason.Overflow, "held frames over " + Options.MaxHeldBytes + " bytes", overflowFrom - 1);
                 return;
             }
             if (e != BridgeError.None && s.State != BridgeSessionState.Closed) ResetSession(s, BridgeReason.Protocol, BridgeErrors.Name(e));
-        }
-
-        /// <summary>
-        /// LEGACY/BYE alone in a small complete frame: a page's farewell (protocolError, declining a late WELCOME). A
-        /// frame that carries anything else, or more than a control payload, is not one and gets no credit exemption.
-        /// </summary>
-        bool IsFarewell(CarrierFrame f)
-        {
-            var h = f.Header;
-            if (f.IsText || (h.Flags & FrameFlags.Complete) != FrameFlags.Complete || h.Length > BridgeWire.MaxControlPayload) return false;
-            scratchOps.Clear();
-            if (BridgeOps.Decode(f.Payload, scratchOps) != BridgeError.None || scratchOps.Count == 0) return false;
-            foreach (var op in scratchOps)
-                if (op.Opcode != BridgeOp.Legacy && op.Opcode != BridgeOp.Bye) return false;
-            return true;
         }
 
         /// <summary>The held framed bytes if message m were held too.</summary>
@@ -343,7 +292,7 @@ namespace BS.Bridge
         static long HeldCost(in BridgeItem item) => item.Cost + HeldItemOverhead;
 
         /// <summary>Session-plane ops run at ingest; BYE stays in order (it would otherwise drop the ops before it).</summary>
-        void SessionOp(BridgeSession s, BridgeItem item, FrameHeader h)
+        void SessionOp(BridgeSession s, BridgeItem item)
         {
             switch ((int)item.Opcode)
             {
@@ -353,9 +302,6 @@ namespace BS.Bridge
                     if (n >= 0) s.Link.EnqueueOp(BridgeOps.Encode(BridgeOp.Pong, BridgeOps.EncodeU32((uint)n)));
                     return;
                 }
-                case BridgeOp.Legacy:
-                    ToLegacy(s, h.Ack);
-                    return;
                 default:
                     return; // PONG, and HELLO/WELCOME/HOLDING out of place
             }
@@ -376,14 +322,12 @@ namespace BS.Bridge
                     case BridgeOp.Hello:
                         // A page's HELLO is always its first DATA frame.
                         if (f.Header.Seq != 1) { Refuse(BridgeReason.Protocol); break; }
-                        OnHello(HelloPayload.TryDecode(p));
+                        OnHello(HelloPayload.TryDecode(p), f.Header.Ack);
                         break;
-                    case BridgeOp.Legacy:
                     case BridgeOp.Bye:
                         if (FarewellPayload.TryDecode(p, out var fw) && current != null && current.DocToken == fw.DocToken && current.IsLive)
                         {
-                            if (op.Opcode == BridgeOp.Legacy) ToLegacy(current, 0);
-                            else if (current.Held) CloseSession(current, BridgeReason.PageHide, false);
+                            if (current.Held) CloseSession(current, BridgeReason.PageHide, false);
                             // In order: what the page sent before its BYE still runs.
                             else ready.Enqueue((current, new BridgeItem(BridgeOp.Bye, Array.Empty<byte>(), 0, 0)));
                         }
@@ -394,23 +338,20 @@ namespace BS.Bridge
 
         // ======================================================================================= handshake
 
-        void OnHello(HelloPayload hello)
+        /// <param name="ack">The HELLO frame's ack: the last of our frames a document starting over consumed.</param>
+        void OnHello(HelloPayload hello, uint ack)
         {
             Stats.Hellos++;
             if (hello == null) { Refuse(BridgeReason.Protocol); return; }
             if (hello.ProtoMajor != BridgeWire.ProtoMajor) { Refuse(BridgeReason.Version); return; }
-            if (!Options.SessionsEnabled)
-            {
-                Stats.Refusals++;
-                PostSessionless(BridgeOp.Welcome, new WelcomePayload { Epoch = 0, Mode = WelcomePayload.ModeLegacy }.Encode());
-                return;
-            }
             if (hello.Href.StartsWith("about:", StringComparison.OrdinalIgnoreCase)) { Refuse(BridgeReason.AboutDocument); return; }
             if (!hello.IsTop) { Refuse(BridgeReason.NotTop); return; }
             if (current != null && current.IsLive && current.DocToken == hello.DocToken)
             {
-                // The same document again (a duplicate HELLO): same epoch, same answer.
-                if (!current.OptOut && current.State == BridgeSessionState.AwaitingAck) PostWelcomeDirect(current);
+                // The same document again. Before it acknowledged the epoch this is a retry crossing our WELCOME: same
+                // answer. After that (Ora is FIFO: no retry can follow its acknowledgement) it is starting over.
+                if (current.State == BridgeSessionState.AwaitingAck) PostWelcomeDirect(current);
+                else Reopen(current, hello, ack);
                 return;
             }
             if (closedTokenSet.Contains(hello.DocToken)) { Refuse(BridgeReason.Closed); return; }
@@ -420,28 +361,51 @@ namespace BS.Bridge
             if (revival && current != null && current.IsLive) { Refuse(BridgeReason.Superseded); return; }
 
             if (current != null && current.IsLive) CloseSession(current, BridgeReason.Superseded, true);
-            var link = new BridgeLink(Options.FragmentSize, Options.RecvWindow,
-                (int)Math.Max(4096, Math.Min(hello.RecvWindow, (uint)BridgeWire.MaxWindow)), Options.ReassemblyBudget, Options.ReorderFrames);
-            var s = new BridgeSession(++epochCounter, hello.DocToken, hello.Href, link);
-            link.LastSeqReceived = 1;
-            link.ConsumedSeq = 1;
-            link.AckSeq = 1;
-            link.LastCompleteSeq = 1;
+            var s = new BridgeSession(++epochCounter, hello.DocToken, hello.Href, NewLink(hello));
             s.LastHeardMs = clockMs();
-            s.AckProgressMs = s.LastHeardMs;
             Stats.Sessions++;
             s.Revival = revival;
             if (revival) { Stats.Revivals++; Wait(s); }
             else Claim(s);
             current = s;
-            if ((hello.Features & BridgeFeature.OptOut) != 0)
-            {
-                s.OptOut = true;
-                s.State = BridgeSessionState.Legacy;
-                return;
-            }
             s.State = BridgeSessionState.AwaitingAck;
-            link.EnqueueOp(BridgeOps.Encode(BridgeOp.Welcome, WelcomeFor(s).Encode()));
+            s.Link.EnqueueOp(BridgeOps.Encode(BridgeOp.Welcome, WelcomeFor(s).Encode()));
+        }
+
+        /// <summary>A link whose page side has said HELLO: that frame was its seq 1.</summary>
+        BridgeLink NewLink(HelloPayload hello)
+        {
+            var link = new BridgeLink(Options.FragmentSize, Options.RecvWindow,
+                (int)Math.Max(4096, Math.Min(hello.RecvWindow, (uint)BridgeWire.MaxWindow)), Options.ReassemblyBudget, Options.ReorderFrames);
+            link.LastSeqReceived = 1;
+            link.ConsumedSeq = 1;
+            link.AckSeq = 1;
+            link.LastCompleteSeq = 1;
+            return link;
+        }
+
+        /// <summary>
+        /// A live document starts its session over, after a RESET or because it lost its place. It keeps its epoch, so
+        /// replies in flight, its ledgers and its hold stand; only the link is new. Ora is FIFO, so its old frames have all
+        /// arrived before this HELLO, and ours follow WELCOME. What it did not consume goes first, then what was waiting.
+        /// </summary>
+        void Reopen(BridgeSession s, HelloPayload hello, uint ack)
+        {
+            // After a RESET everything already posted reached the page ahead of it, and the page consumed it there.
+            var rest = s.Link.TakeUnconsumed(s.State == BridgeSessionState.Resetting ? s.Link.NextSeq - 1 : ack);
+            s.Link.Reassembler.Reset();
+            s.Link = NewLink(hello);
+            s.Link.Epoch = s.Epoch;
+            s.HandshakeComplete = false;
+            s.State = BridgeSessionState.AwaitingAck;
+            s.Link.EnqueueOp(BridgeOps.Encode(BridgeOp.Welcome, WelcomeFor(s).Encode()));
+            foreach (var e in rest)
+            {
+                if (e.IsText) s.Link.EnqueueText(e.Text);
+                else s.Link.EnqueueOp(e.Op);
+            }
+            Stats.Reopens++;
+            Log($"[Bridge] Document epoch {s.Epoch} started its session over ({rest.Count} queued for it).");
         }
 
         bool IsRevivalOf(string token)
@@ -569,8 +533,7 @@ namespace BS.Bridge
             long cost = HeldCost(item);
             if (!framed && s.HeldBytes + cost > Options.MaxHeldBytes)
             {
-                // Unmarked strings have no credits to slow them: past the cap they are dropped, as BSLink's legacy
-                // hold rejects past 4096.
+                // Unmarked strings have no credits to slow them: past the cap they are dropped.
                 Stats.HoldOverflowDropped++;
                 if (!s.HoldOverflowLogged)
                 {
@@ -610,7 +573,9 @@ namespace BS.Bridge
         void CloseSession(BridgeSession s, byte reason, bool notify)
         {
             if (s.State == BridgeSessionState.Closed) return;
-            bool wasFramed = s.State == BridgeSessionState.Open;
+            // Awaiting its acknowledgement the page may already be open; after a RESET it is saying HELLO, and a refusal
+            // will tell it. (A page still in hello ignores a CLOSE.)
+            bool told = notify && s.State != BridgeSessionState.Resetting;
             uint consumed = ReportedConsumed(s);
             s.State = BridgeSessionState.Closed;
             s.CloseReason = reason;
@@ -625,19 +590,19 @@ namespace BS.Bridge
             s.Link.Reassembler.Reset();
             s.Link.TakeUnconsumed(uint.MaxValue);
             RememberClosed(s.DocToken);
-            if (notify && wasFramed)
-                PostClose(s, FrameKind.Close, consumed, BridgeFrame.EncodeClose(reason, consumed, string.Empty));
+            if (told) PostClose(s, FrameKind.Close, consumed, BridgeFrame.EncodeClose(reason, consumed, string.Empty));
             if (current == s) current = null;
         }
 
         void ResetSession(BridgeSession s, byte reason, string why) => ResetSession(s, reason, why, s.Link.LastCompleteSeq);
 
         /// <summary>
-        /// The page broke the protocol (or outran us) but the document lives on: RESET tells it the last of its frames
-        /// we consumed so it re-sends the rest as strings; our unsent backlog moves to the legacy lane.
+        /// The page broke the protocol (or outran us) but the document lives on: RESET tells it the last of its frames we
+        /// consumed, and it says HELLO again and sends the rest (Reopen). Nothing goes to it until then: what is queued
+        /// waits on the link, and everything we posted before the RESET reaches it first.
         /// A hold keeps everything in it, framed and unframed, in arrival order (the page does not re-send raw strings,
-        /// so dropping only the framed part would let them overtake it): held framed work counts as consumed, and the
-        /// page's re-sent strings queue behind it until the hold is released.
+        /// so dropping only the framed part would let them overtake it): held framed work counts as consumed, and what
+        /// the page sends again queues behind it until the hold is released.
         /// </summary>
         void ResetSession(BridgeSession s, byte reason, string why, uint consumed)
         {
@@ -645,26 +610,8 @@ namespace BS.Bridge
             Log($"[Bridge] Reset document epoch {s.Epoch}: {why}");
             s.FirstHeldFramedSeq = 0;
             PostClose(s, FrameKind.Reset, consumed, BridgeFrame.EncodeClose(reason, consumed, why));
-            // Everything we posted before the RESET reaches the page first and is consumed there; only the unsent
-            // backlog moves to strings.
-            ToLegacy(s, s.Link.NextSeq - 1);
-        }
-
-        /// <summary>
-        /// Switch a live document to strings. consumedByPage: the last of our DATA seqs the page took; our frames after
-        /// it never reached its parser, so their strings go again on the legacy lane, ahead of anything newer.
-        /// </summary>
-        void ToLegacy(BridgeSession s, uint consumedByPage)
-        {
-            if (!s.IsLive || s.State == BridgeSessionState.Legacy) return;
-            s.State = BridgeSessionState.Legacy;
+            s.State = BridgeSessionState.Resetting;
             s.Link.Reassembler.Reset();
-            var rest = s.Link.TakeUnconsumed(consumedByPage);
-            if (rest.Count == 0) return;
-            var older = legacyBacklog.ToArray();
-            legacyBacklog.Clear();
-            foreach (var e in rest) if (e.IsText) legacyBacklog.Enqueue((e.Text, s.Epoch)); else Stats.DroppedOps++;
-            foreach (var t in older) legacyBacklog.Enqueue(t);
         }
 
         void RememberClosed(string token)
@@ -724,6 +671,9 @@ namespace BS.Bridge
         /// <summary>The page's request id that nothing waits on (scene.ts SendWithoutReply).</summary>
         public const int NoReplyRequestId = 10000;
 
+        /// <summary>The longest string one message can carry: its entry, at 2 bytes a unit, within BridgeWire.MaxMessage.</summary>
+        public const int MaxTextChars = BridgeWire.MaxMessage / 2 - 16;
+
         /// <summary>
         /// The id of "!i!:&lt;id&gt;¶…" (a request when requireDelimiter, which the page always sends) or "!i!:&lt;id&gt;"
         /// (a reply, possibly bare). 0 when the text is not one.
@@ -746,7 +696,7 @@ namespace BS.Bridge
         // ======================================================================================= outbound
 
         /// <summary>
-        /// Queue one legacy string for the page. Any thread. A reply ("!i!:&lt;id&gt;") is addressed to the document
+        /// Queue one command string for the page. Any thread. A reply ("!i!:&lt;id&gt;") is addressed to the document
         /// whose op is being handled (BridgeContext), so it is dropped if that document has gone, and sent once.
         /// </summary>
         public void Send(string text)
@@ -776,14 +726,14 @@ namespace BS.Bridge
             get
             {
                 lock (outLock) if (outbox.Count > 0) return true;
-                return legacyBacklog.Count > 0 || (current != null && current.IsLive && current.Link.HasOutbound);
+                return current != null && current.IsLive && current.Link.HasOutbound;
             }
         }
 
         /// <summary>
         /// Main thread, PostLateUpdate: routes queued messages in order, then sends what the page's credit allows, at most
-        /// FlushMaxBytes of payload / FlushMaxFrames frames, or one legacy batch of at most LegacyBatchMaxChars. What
-        /// doesn't fit waits for the next call, so a burst spreads over frames instead of building giant ones.
+        /// FlushMaxBytes of payload / FlushMaxFrames frames. What doesn't fit waits for the next call, so a burst spreads
+        /// over frames instead of building giant ones.
         /// </summary>
         public int Flush()
         {
@@ -796,7 +746,6 @@ namespace BS.Bridge
             }
             var s = current;
             bool live = s != null && s.IsLive;
-            bool open = live && s.State == BridgeSessionState.Open;
             foreach (var m in batch)
             {
                 if (m.Epoch != 0 && (!live || s.Epoch != m.Epoch))
@@ -804,9 +753,9 @@ namespace BS.Bridge
                     Stats.LateReplies++;
                     continue;
                 }
-                // A legacy reply is sent once, to a request this document asked: a reply produced outside any context
-                // (epoch 0) is checked against the current document's ledger too.
-                if (m.LegacyReplyId > 0 && live && !s.LegacyLedger.Remove(m.LegacyReplyId))
+                // A reply is sent once, to a request this document asked: a reply produced outside any context (epoch 0)
+                // is checked against the current document's ledger too.
+                if (m.LegacyReplyId > 0 && (!live || !s.LegacyLedger.Remove(m.LegacyReplyId)))
                 {
                     Stats.DuplicateReplies++;
                     continue;
@@ -816,23 +765,34 @@ namespace BS.Bridge
                     Stats.DuplicateReplies++;
                     continue;
                 }
-                if (m.Text != null)
+                // No document, no session: an event has nobody to go to (a page that has yet to say HELLO has not asked).
+                if (!live) { Stats.DroppedNoSession++; continue; }
+                if (m.Text != null && m.Text.Length > MaxTextChars)
                 {
-                    if (open) s.Link.EnqueueText(m.Text);
-                    else legacyBacklog.Enqueue((m.Text, live ? s.Epoch : 0));
+                    // The page could not reassemble it, and a RESET would only send it again: a reply fails instead.
+                    Stats.OutboundDropped++;
+                    Log($"[Bridge] A {m.Text.Length}-char message for document epoch {s.Epoch} is too large for a page: dropped.");
+                    if (m.LegacyReplyId > 0) s.Link.EnqueueText("!i!:" + m.LegacyReplyId + "¶!ree!¶bridge: reply too large");
+                    continue;
                 }
-                else if (open) s.Link.EnqueueOp(m.Op);
-                else Stats.DroppedOps++; // typed ops have no legacy form
+                if (m.LegacyReplyId == 0 && m.TypedReplyId == 0 && s.Link.QueuedCost > Options.MaxOutboundBytes)
+                {
+                    Stats.OutboundDropped++;
+                    if (!s.OutboundDropLogged)
+                    {
+                        s.OutboundDropLogged = true;
+                        Log($"[Bridge] Document epoch {s.Epoch} has {s.Link.QueuedCost} bytes queued (over {Options.MaxOutboundBytes}): dropping its events until it catches up.");
+                    }
+                    continue;
+                }
+                if (m.Text != null) s.Link.EnqueueText(m.Text);
+                else s.Link.EnqueueOp(m.Op);
             }
             batch.Clear();
-            if (open) CheckOutbound(s);
             if (paused) return 0;
 
             int posted = 0;
-            if (legacyBacklog.Count > 0) posted += FlushLegacy();
-            // Older strings still waiting on the legacy lane go first: frames wait until the backlog is out.
-            s = current;
-            if (legacyBacklog.Count == 0 && s != null && (s.State == BridgeSessionState.Open || s.State == BridgeSessionState.AwaitingAck))
+            if (s != null && (s.State == BridgeSessionState.Open || s.State == BridgeSessionState.AwaitingAck))
             {
                 // One frame at a time, so the caps apply to what is actually encoded and posted: payload, frame count
                 // and main-thread time. A frame is only taken (given its seq) when it is about to go.
@@ -862,55 +822,6 @@ namespace BS.Bridge
             return posted;
         }
 
-        /// <summary>
-        /// Outbound backpressure for an open document: what is queued for it may exceed MaxOutboundBytes while it keeps
-        /// acknowledging (a large reply drains over several frames), but not for OutboundStallMs without progress, and
-        /// never past MaxOutboundHardBytes. Either way the session goes to the legacy lane (no flow control, like today).
-        /// </summary>
-        void CheckOutbound(BridgeSession s)
-        {
-            var link = s.Link;
-            long now = clockMs();
-            if (link.InflightBytes == 0) s.AckProgressMs = now; // nothing of ours to acknowledge: not stalled
-            long queued = link.QueuedCost;
-            if (queued <= Options.MaxOutboundBytes) return;
-            long stalledMs = now - s.AckProgressMs;
-            bool stalled = !paused && stalledMs >= Options.OutboundStallMs;
-            if (!stalled && queued <= Options.MaxOutboundHardBytes) return;
-            Stats.OutboundOverflows++;
-            ResetSession(s, BridgeReason.Overflow, stalled
-                ? $"outbound queue over {Options.MaxOutboundBytes} bytes and nothing acknowledged for {stalledMs} ms"
-                : $"outbound queue over {Options.MaxOutboundHardBytes} bytes");
-        }
-
-        int FlushLegacy()
-        {
-            var texts = scratchTexts;
-            texts.Clear();
-            int chars = 0;
-            var s = current;
-            while (legacyBacklog.Count > 0)
-            {
-                var next = legacyBacklog.Peek();
-                // For a document that has gone since (a reply, or its unsent backlog): nobody to give it to.
-                if (next.epoch != 0 && (s == null || !s.IsLive || s.Epoch != next.epoch))
-                {
-                    legacyBacklog.Dequeue();
-                    Stats.LateReplies++;
-                    continue;
-                }
-                int size = BridgeCarrier.EntrySize(next.text);
-                if (texts.Count > 0 && chars + size > Options.LegacyBatchMaxChars) break;
-                texts.Add(legacyBacklog.Dequeue().text);
-                chars += size;
-            }
-            if (texts.Count == 0) return 0;
-            Post(BridgeLegacyBatch.Pack(BridgeLegacyBatch.UnityMarker, texts));
-            Stats.LegacyBatchesOut++;
-            texts.Clear();
-            return 1;
-        }
-
         /// <summary>The application paused (OnApplicationPause / Editor pause): tell an open page, hold frames.</summary>
         public void Pause()
         {
@@ -925,7 +836,6 @@ namespace BS.Bridge
             if (!paused) return;
             paused = false;
             var s = current;
-            if (s != null) s.AckProgressMs = clockMs(); // a pause is not a stall
             if (s != null && s.State == BridgeSessionState.Open) PostControl(s, FrameKind.Resume, Array.Empty<byte>());
         }
 

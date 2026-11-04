@@ -1,6 +1,6 @@
 // Cross-language checks against the real C# BridgeView, driven through this suite's --peer mode (Peer.cs):
 //   1. interop: the real TS PageSession (compiled from Injection~/src/bridge) <-> BridgeView;
-//   2. e2e: the BUILT injection.js, with the session prelude, in the M0 page shim <-> BridgeView.
+//   2. e2e: the BUILT injection.js, in the M0 page shim <-> BridgeView.
 // usage: node interop.mjs [path/to/injection.js]        (default: Runtime/Resources/injection.js)
 // Builds what it needs into a temp folder: this suite (dotnet build) and the TS bridge (the injection package's tsc).
 import assert from 'node:assert/strict';
@@ -67,13 +67,15 @@ async function interop() {
     const B = createRequire(import.meta.url)(join(tmp, 'ts', 'Injection~', 'src', 'bridge', 'index.js'));
     const { cmd, ran, quit } = startPeer();
     class Host {
-        constructor() { this.out = []; this.tasks = []; this.t = 0; }
+        constructor() { this.out = []; this.tasks = []; this.t = 0; this.timers = new Map(); this.nextTimer = 1; }
         post(d) { this.out.push(d); }
         now() { return this.t; }
         schedule(fn) { this.tasks.push(fn); }
-        setTimer() { return 0; }
-        clearTimer() {}
+        setTimer(fn) { const id = this.nextTimer++; this.timers.set(id, fn); return id; }
+        clearTimer(id) { this.timers.delete(id); }
         run() { while (this.tasks.length) this.tasks.shift()(); }
+        /** Runs the timers now armed, as if their time had come. */
+        fire() { const due = [...this.timers.values()]; this.timers.clear(); for (const fn of due) fn(); }
     }
     async function pump(host, page, rounds = 40) {
         for (let i = 0; i < rounds; i++) {
@@ -150,6 +152,52 @@ async function interop() {
         assert.equal(p2.epoch, 2);
         assert.deepEqual(got2, ['!i!:7¶ok-2']);
     });
+
+    // A lost HELLO: nothing else carries the page's ops, so it says HELLO again.
+    await cmd('L', 'https://w.example/c');
+    await cmd('N');
+    ran.length = 0;
+    const got3 = [];
+    const { host: h3, page: p3 } = makePage('tok-3', 'https://w.example/c', got3);
+    p3.sendText('!sst!');
+    p3.sendText('!i!:1¶!gp!¶');
+    h3.run();
+    h3.out.length = 0; // lost
+    h3.fire();
+    await pump(h3, p3);
+    check('lost HELLO: said again, opens, the queue runs in the session, in order, and the request is answered', () => {
+        assert.equal(p3.state, 'open');
+        assert.equal(p3.stats.helloRetries, 1);
+        assert.deepEqual(ran.map((r) => r.text), ['!sst!', '!i!:1¶!gp!¶']);
+        assert.ok(ran.every((r) => r.epoch === p3.epoch));
+        assert.deepEqual(got3, ['!i!:1¶ok-' + p3.epoch]);
+    });
+
+    // A RESET: a frame with a seq gap. The TS page says HELLO again; the C# view keeps the document.
+    ran.length = 0;
+    got3.length = 0;
+    const epoch3 = p3.epoch;
+    h3.t = 1e6; // the session has lasted: HELLO goes at once
+    p3.sendText('!i!:2¶!slow¶');
+    await pump(h3, p3);
+    await cmd('R', B.encodeTextCarrier({ kind: B.Kind.DATA, flags: B.COMPLETE, epoch: epoch3, seq: 999, ack: 0, length: 0 }, B.packEntries(['x'])));
+    await cmd('S', '!e!queued-while-resetting');
+    for (const d of await cmd('D')) p3.receive(d);
+    const resetState = p3.state;
+    p3.sendText('!after-reset!');
+    await pump(h3, p3);
+    await cmd('F'); // the request's handler finishes now, in its document's context
+    for (const d of await cmd('D')) p3.receive(d);
+    h3.run();
+    check('RESET: the same epoch again, nothing lost or repeated, the reply in flight still arrives', () => {
+        assert.equal(resetState, 'hello');
+        assert.equal(p3.state, 'open');
+        assert.equal(p3.epoch, epoch3);
+        assert.equal(p3.stats.reopens, 1);
+        assert.deepEqual(ran.map((r) => r.text), ['!i!:2¶!slow¶', '!after-reset!']);
+        assert.ok(ran.every((r) => r.epoch === epoch3));
+        assert.deepEqual(got3, ['!e!queued-while-resetting', '!i!:2¶ok-' + epoch3]);
+    });
     await quit();
 }
 
@@ -163,9 +211,8 @@ async function e2eBundle() {
     let rnd = 7;
     context.crypto = { getRandomValues: (b) => { for (let i = 0; i < b.length; i++) { rnd = (rnd * 1103515245 + 12345) >>> 0; b[i] = rnd >>> 24; } return b; }, randomUUID: () => '00000000-0000-4000-8000-000000000001' };
     context.setTimeout = (fn, ms) => { timeouts.push({ fn, ms: ms || 0 }); return timeouts.length; };
-    context.setInterval = () => { throw new Error('the session lane must not start an interval timer'); };
+    context.setInterval = () => { throw new Error('the bridge must not start an interval timer'); };
     context.O = { sendMessage: (type, data) => { assert.equal(type, 'custom-message'); sent.push(String(data)); }, messages: { On: (n, fn) => oraListeners.push(fn) } };
-    context.__BS_BRIDGE_CONFIG = { mode: 'session' };
     context.location.href = 'https://world.example/space';
     vm.runInContext(readFileSync(bundlePath, 'utf8'), context, { filename: 'injection.js' });
     const BS = context.BS;
@@ -189,7 +236,7 @@ async function e2eBundle() {
     scene.SetCanMove(false);
     await pump();
     const p = await Promise.race([platform, new Promise((r) => setTimeout(() => r('TIMEOUT'), 2000))]);
-    check('built bundle (session prelude) <-> C# view: handshake, 3 ops in epoch 1, GetPlatform answered in a frame', () => {
+    check('built bundle <-> C# view: handshake, 3 ops in epoch 1, GetPlatform answered in a frame', () => {
         assert.equal(context.__bsBridge.session.state, 'open');
         assert.equal(context.__bsBridge.session.epoch, 1);
         assert.deepEqual(ran.map((r) => r.text.replace(/!i!:\d+/, '!i!:N')), ['!sst!', '!i!:N¶!gp!¶', '!i!:N¶!scm!¶0']);

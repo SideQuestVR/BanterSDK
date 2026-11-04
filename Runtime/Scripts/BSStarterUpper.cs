@@ -115,15 +115,15 @@ namespace BS
                 oraView = viewGo.AddComponent<OraView>();
                 oraView.customInjectedJavascript = Resources.Load<TextAsset>("injection");
                 oraView.injectShims = true;
-                // Bridge 2 (M1): on the session lane, the same bundle with a one-line prelude. Before Awake registers.
-                BS.Bridge.BridgeMode.ApplyTo(oraView);
+                // The space view's link profile (the large rings). Before Awake, which opens its channel.
+                oraView.linkProfile = OraChannelProfile.SdkView;
                 viewGo.SetActive(true);
             }
             else
             {
                 // A view that came with the prefab (Greenfield's Creator SDK prefab): this Awake (order -1001) runs
-                // before the view's, which reads the injection when it registers its window.
-                BS.Bridge.BridgeMode.ApplyTo(oraView);
+                // before the view's, which opens its channel when it registers its window.
+                oraView.linkProfile = OraChannelProfile.SdkView;
             }
 
             oraView.openBrowser = openBrowser;

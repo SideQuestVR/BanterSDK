@@ -86,9 +86,9 @@ public class BSPipe
             BridgeTrace.Inbound(data, "pipe");
             if (!pageLoadStarted)
             {
-                // Session lane: frames carry their document's epoch, and the bridge never opens a session for an
-                // about: document, so they need no start-up gate (a page's HELLO may precede its LoadStarted).
-                if (link.bridge != null && BS.Bridge.BridgeCarrier.IsCarrier(data))
+                // Frames carry their document's epoch, and the bridge never opens a session for an about: document, so
+                // they need no start-up gate (a page's HELLO may precede its LoadStarted).
+                if (BS.Bridge.BridgeCarrier.IsCarrier(data))
                 {
                     msgCallback(data);
                     return;
@@ -114,13 +114,11 @@ public class BSPipe
                 if (ignoredBeforeLoad > 0)
                     LogLine.Do("Ignored " + ignoredBeforeLoad + " message(s) from the space view's start-up page.");
             }
-            // Session lane: the replaced document's session closes here (its held ops and owed replies die with it).
-            link.bridge?.NotifyLoadStarted(url);
-            // Requests held for (and answers owed to) the document this one replaces have nobody to go to.
-            link.OnPageLoadStarted();
+            // The replaced document's session closes here (its held ops and owed replies die with it).
+            link.bridge.NotifyLoadStarted(url);
             _ = link.scene.OnLoad(Guid.NewGuid().ToString());
             // OnLoad has queued its reset: the new document's held ops may now run behind it.
-            link.bridge?.NotifyOnLoad();
+            link.bridge.NotifyOnLoad();
             link.scene.SetLoaded();
         });
         view.loadFailed.AddListener((data) =>

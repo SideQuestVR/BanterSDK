@@ -61,7 +61,7 @@ static class OutboxTests
             }
         });
 
-        T.Run("burst splitting on the session lane: bounded frames per flush, order kept", () =>
+        T.Run("burst splitting: bounded frames per flush, order kept", () =>
         {
             var rig = new Rig(new BridgeViewOptions { FlushMaxBytes = 100_000, FlushMaxFrames = 3 });
             var p = OpenPage(rig, "burst");
@@ -92,40 +92,19 @@ static class OutboxTests
             T.Seq(msgs, p.Got);
         });
 
-        T.Run("burst splitting on the legacy lane: one bounded batch per flush, order kept", () =>
+        T.Run("before the page acknowledges the epoch, everything queued follows WELCOME in order", () =>
         {
-            var rig = new Rig(new BridgeViewOptions { LegacyBatchMaxChars = 10_000 });
-            var msgs = Enumerable.Range(0, 3000).Select(i => "!e!x¶" + i).ToList();
-            msgs.Insert(1500, new string('Z', 25_000)); // one message bigger than the limit still goes, alone
-            foreach (var m in msgs) rig.View.Send(m);
-            var got = new List<string>();
-            int flushes = 0;
-            while (rig.View.HasOutbound && flushes < 1000)
-            {
-                rig.View.Flush(); flushes++;
-                var down = rig.Sink.Take();
-                T.Eq(1, down.Count);
-                var part = new List<string>();
-                T.True(BridgeLegacyBatch.Unpack(down[0], 1, part));
-                T.True(down[0].Length <= 10_001 || part.Count == 1, "batch over the limit: " + down[0].Length);
-                got.AddRange(part);
-            }
-            T.True(flushes > 3);
-            T.Seq(msgs, got);
-        });
-
-        T.Run("legacy backlog spilling over a flush is sent before newer frames", () =>
-        {
-            var rig = new Rig(new BridgeViewOptions { LegacyBatchMaxChars = 50 });
+            var rig = new Rig();
             rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
-            var p = new TestPage("spill"); p.Hello();
+            var p = new TestPage("early"); p.Hello();
             rig.Deliver(p);
             var early = Enumerable.Range(0, 10).Select(i => "early-" + i + new string('e', 20)).ToList();
-            foreach (var m in early) rig.View.Send(m); // AwaitingAck: legacy lane, spills over several flushes
+            foreach (var m in early) rig.View.Send(m); // AwaitingAck
             rig.Back(p);
-            p.Flush(); rig.Deliver(p); // epoch acknowledged: framed from now on
+            T.Eq("open", p.State);
+            p.Flush(); rig.Deliver(p); // epoch acknowledged
             rig.View.Send("framed-1");
-            for (int i = 0; i < 30; i++) rig.Back(p);
+            rig.Back(p);
             T.Seq(early.Concat(new[] { "framed-1" }), p.Got);
         });
     }

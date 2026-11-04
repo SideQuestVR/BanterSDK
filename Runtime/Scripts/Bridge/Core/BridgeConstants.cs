@@ -68,7 +68,7 @@ namespace BS.Bridge
         public const int Bye = 0x03;
         public const int Ping = 0x04;
         public const int Pong = 0x05;
-        public const int Legacy = 0x06;
+        // 0x06 is retired (LEGACY, the switch to strings): never reuse it.
         public const int Holding = 0x07;
         public const int LegacyText = 0x0F;
         public const int Reply = 0x30;
@@ -91,29 +91,27 @@ namespace BS.Bridge
         public const byte Malformed = 12;
     }
 
+    /// <summary>3, 10 and 12 are retired (DISABLED, OPT_OUT, LATE_WELCOME: the legacy lane's): never reuse them.</summary>
     internal static class BridgeReason
     {
         public const byte None = 0;
         public const byte PageHide = 1;
         public const byte Timeout = 2;
-        public const byte Disabled = 3;
         public const byte AboutDocument = 4;
         public const byte NotTop = 5;
         public const byte Protocol = 6;
         public const byte Navigated = 7;
         public const byte Superseded = 8;
         public const byte Version = 9;
-        public const byte OptOut = 10;
         public const byte Closed = 11;
-        public const byte LateWelcome = 12;
-        /// <summary>Unity's queue for a page that stopped acknowledging grew past its cap.</summary>
+        /// <summary>A held document's frames grew past the hold's cap.</summary>
         public const byte Overflow = 13;
     }
 
+    /// <summary>Bit 2 is retired (OPT_OUT, the per-world legacy opt-out): never reuse it.</summary>
     internal static class BridgeFeature
     {
         public const uint TextForm = 1;
-        public const uint OptOut = 2;
     }
 
     internal enum BridgeError

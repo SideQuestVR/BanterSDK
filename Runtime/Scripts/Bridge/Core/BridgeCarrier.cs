@@ -22,9 +22,9 @@ namespace BS.Bridge
     /// <summary>
     /// ORAB frames inside today's Ora custom-message/default-message strings (no Ora change for M1):
     /// <c>"\u0002B" + base64(frame)</c>, or <c>"\u0002T" + base64(24-byte header) + body</c> where the body is
-    /// <c>&lt;len&gt;:&lt;text&gt;</c> entries, each a LEGACY_TEXT op carried raw. No legacy producer starts a string
-    /// with U+0002 (proved against APICommands/UICommands/MessageDelimiters by both test suites). A string that starts
-    /// with U+0002 is never legacy. Check it ordinally, before any culture-sensitive StartsWith: those ignore U+0002.
+    /// <c>&lt;len&gt;:&lt;text&gt;</c> entries, each a LEGACY_TEXT op carried raw. No command string starts with U+0002
+    /// (proved against APICommands/UICommands/MessageDelimiters by both test suites), so a string that starts with it is
+    /// always a carrier. Check it ordinally, before any culture-sensitive StartsWith: those ignore U+0002.
     /// Mirror of carrier.ts.
     /// </summary>
     internal static class BridgeCarrier
@@ -389,57 +389,6 @@ namespace BS.Bridge
                 c.Offset += m;
                 if (c.Offset == digits + 1 + t.Length) { c.Entry++; c.Offset = 0; }
             }
-        }
-    }
-
-    /// <summary>
-    /// The frozen 4.0.25 batch format: marker, then &lt;len&gt;:&lt;message&gt; per message (page "¶§|", Unity "‽").
-    /// Kept for LEGACY mode only (kill switch, opt-out, fallback) and deleted at M7; byte-identical to WireFrame.cs.
-    /// </summary>
-    internal static class BridgeLegacyBatch
-    {
-        public const string PageMarker = "¶§|";
-        public const string UnityMarker = "‽";
-        const int MaxLengthDigits = 9;
-
-        struct PackState { public string Marker; public IReadOnlyList<string> Messages; public int Start; public int Count; }
-
-        static readonly SpanAction<char, PackState> writePack = (span, st) =>
-        {
-            st.Marker.AsSpan().CopyTo(span);
-            int pos = st.Marker.Length;
-            for (int i = st.Start; i < st.Start + st.Count; i++) pos = BridgeCarrier.WriteEntry(span, pos, st.Messages[i] ?? string.Empty);
-        };
-
-        public static string Pack(string marker, IReadOnlyList<string> messages, int start, int count)
-        {
-            int total = marker.Length;
-            for (int i = start; i < start + count; i++) total += BridgeCarrier.EntrySize(messages[i] ?? string.Empty);
-            return string.Create(total, new PackState { Marker = marker, Messages = messages, Start = start, Count = count }, writePack);
-        }
-
-        public static string Pack(string marker, IReadOnlyList<string> messages) => Pack(marker, messages, 0, messages.Count);
-
-        /// <summary>Same leniency as WireFrame.Unpack (leading zeros accepted).</summary>
-        public static bool Unpack(string frame, int start, List<string> into)
-        {
-            int position = start, end = frame.Length;
-            while (position < end)
-            {
-                int length = 0, digits = 0;
-                while (position < end && frame[position] >= '0' && frame[position] <= '9')
-                {
-                    if (++digits > MaxLengthDigits) return false;
-                    length = length * 10 + (frame[position] - '0');
-                    position++;
-                }
-                if (digits == 0 || position >= end || frame[position] != ':') return false;
-                position++;
-                if (length > end - position) return false;
-                into.Add(frame.Substring(position, length));
-                position += length;
-            }
-            return true;
         }
     }
 }

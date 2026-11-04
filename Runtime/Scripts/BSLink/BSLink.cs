@@ -24,9 +24,7 @@ namespace BS
         public BSScene scene;
         public event EventHandler Connected;
         float timeoutDisplay = 0;
-        BatchUpdater batchUpdater;
-        // Bridge 2 session lane (BridgeMode.Session only). Null on the legacy lane, which keeps BatchUpdater and today's
-        // wire byte for byte.
+        // The page's session: everything between it and Unity. Null only until ConnectPipe.
         internal BridgeView bridge;
 
         Dictionary<string, string> androidStats = new Dictionary<string, string>();
@@ -41,7 +39,6 @@ namespace BS
         void ShutDown()
         {
             shuttingDown = true;
-            batchUpdater?.Dispose();
             if (bridge != null)
             {
                 BridgePump.Unregister(this);
@@ -174,12 +171,11 @@ namespace BS
             }
             else if (msg.StartsWith(APICommands.SCENE_START))
             {
-                // A document's Scene sends SCENE_START before any request, so anything still held came before it,
-                // and anything still unanswered was asked by the previous document.
-                ClearPendingRequests("the page's Scene started");
-                ForgetUnansweredRequests();
-                lastSceneStartTicks = System.Diagnostics.Stopwatch.GetTimestamp();
-                newPageAnnounced = true;
+                if (droppedWhileLoading > 0)
+                {
+                    LogLine.Do(LogLine.banterColor, LogTag.Banter, "Dropped " + droppedWhileLoading + " request(s) from the previous page.");
+                    droppedWhileLoading = 0;
+                }
                 scene.state = SceneState.SCENE_START;
                 scene.RestartEmptySceneGrace();
             }
@@ -257,183 +253,21 @@ namespace BS
             {
                 if (scene.state == SceneState.NONE)
                 {
-                    // A page has started loading and its Scene has not said SCENE_START since (that would make it
-                    // ready). Elsewhere the new document's SCENE_START always comes first, so this is the previous
-                    // document, which keeps running until the new one commits: no answer, as one could settle the
-                    // new page's request with the same id. On Android the compat channel can deliver the new page's
-                    // first messages, its SCENE_START included, ahead of its LoadStarted, whose reset then dropped
-                    // everything else it sent until domReady (issue 21): hold those until the scene is ready.
-                    if (HoldRequestsWhileLoading)
-                    {
-                        if (QueueUntilReady(msg, id, full)) return;
-                        Reject(id, CommandOf(msg) + ": too many requests before the scene was ready");
-                    }
-                    else
-                    {
-                        droppedWhileLoading++;
-                    }
+                    // A page is being loaded and its Scene has not said SCENE_START, which every document's Scene sends
+                    // before any request, and which its session holds until its LoadStarted and OnLoad have run (BridgeView).
+                    // So this is the previous document, which keeps running until the new one commits: nobody to answer.
+                    droppedWhileLoading++;
                     return;
                 }
                 // Failed or cancelled: say so, rather than leave the page's await hanging.
-                Reject(id, CommandOf(msg) + ": scene not ready (" + scene.state + ")");
+                ReplyError(id, CommandOf(msg) + ": scene not ready (" + scene.state + ")");
                 return;
             }
-            ReleasePendingRequests();
             DispatchRequest(msg, id, full);
         }
 
-        // ------------------------------------------------------------------------------------------------------------
-        // Requests held while the page loads (issue 21), and the one way to reject a request (issues 8 and 21).
-
-        /// <summary>
-        /// Whether requests that arrive between a page's LoadStarted and its scene being ready are held rather than
-        /// dropped. Only Android delivers a page's own requests in that window (see ParseRequest).
-        /// </summary>
-        internal static bool HoldRequestsWhileLoading =
-#if UNITY_ANDROID && !UNITY_EDITOR
-            true;
-#else
-            false;
-#endif
-        const int MaxPendingRequests = 4096;
-
-        // Held requests may go to the scene only once this document has announced itself with SCENE_START: after
-        // LoadStarted, or (Android) just before it, when its first messages overtook it. Otherwise they are the
-        // replaced page's, still arriving after LoadStarted.
-        const double AnnouncedBeforeLoadStartedSeconds = 5;
-        long lastSceneStartTicks = long.MinValue;
-        bool newPageAnnounced;
-
-        /// <summary>A new page started loading in the view (BSPipe's LoadStarted).</summary>
-        internal void OnPageLoadStarted()
-        {
-            ClearPendingRequests("a new page started loading");
-            var sinceSceneStart = lastSceneStartTicks == long.MinValue ? double.MaxValue
-                : (System.Diagnostics.Stopwatch.GetTimestamp() - lastSceneStartTicks) / (double)System.Diagnostics.Stopwatch.Frequency;
-            newPageAnnounced = HoldRequestsWhileLoading && sinceSceneStart < AnnouncedBeforeLoadStartedSeconds;
-            // Elsewhere LoadStarted is the document boundary (the new page's SCENE_START always follows it). On Android
-            // the new page may already have requests in flight, so there the boundary is its SCENE_START.
-            if (!HoldRequestsWhileLoading) ForgetUnansweredRequests();
-        }
-
-        /// <summary>
-        /// Sends held requests once the scene is ready, if this document announced itself (see above); otherwise drops
-        /// them unanswered as the replaced page's. While the load has failed or been cancelled, rejects them.
-        /// </summary>
-        void ReleasePendingRequests()
-        {
-            if (PendingRequestCount == 0) return;
-            if (scene.isReady)
-            {
-                if (newPageAnnounced) DrainPendingRequests();
-                else ClearPendingRequests("they came from the replaced page");
-            }
-            else if (scene.state != SceneState.NONE)
-            {
-                if (!newPageAnnounced)
-                {
-                    ClearPendingRequests("the load failed");
-                    return;
-                }
-                while (true)
-                {
-                    (string msg, int id, string full) next;
-                    lock (pendingRequests)
-                    {
-                        if (pendingRequests.Count == 0) return;
-                        next = pendingRequests.Dequeue();
-                    }
-                    Reject(next.id, CommandOf(next.msg) + ": scene not ready (" + scene.state + ")");
-                }
-            }
-        }
-
-        // ------------------------------------------------------------------------------------------------------------
-        // Requests asked and not yet answered. A reply ("!i!:<id>") for an id that isn't here is not sent: it is a
-        // second answer to one request, or a late answer to a request of a document that has gone (ids restart at 1 in
-        // every page). One residue remains: a late answer whose id the new page has already reused. Bridge 2's
-        // document epochs close that.
-        readonly HashSet<int> unanswered = new HashSet<int>();
-        static readonly string ReplyPrefix = APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID;
-
-        /// <summary>Records that request <paramref name="id"/> expects one answer.</summary>
-        internal void ExpectReply(int id)
-        {
-            if (id == NoReplyRequestId) return;
-            lock (unanswered) unanswered.Add(id);
-        }
-
-        void ForgetUnansweredRequests()
-        {
-            lock (unanswered) unanswered.Clear();
-        }
-
-        /// <summary>False when <paramref name="msg"/> is a reply nobody is waiting for any more.</summary>
-        bool TakeReply(string msg)
-        {
-            if (!msg.StartsWith(ReplyPrefix, StringComparison.Ordinal)) return true;
-            int id = 0, i = ReplyPrefix.Length;
-            for (; i < msg.Length && msg[i] >= '0' && msg[i] <= '9'; i++)
-            {
-                if (id > 100_000_000) return true; // not one of ours: leave it alone
-                id = id * 10 + (msg[i] - '0');
-            }
-            if (i == ReplyPrefix.Length) return true;
-            lock (unanswered) return unanswered.Remove(id);
-        }
-
-        /// <summary>Rejects a request that was never dispatched (scene not ready, queue full).</summary>
-        void Reject(int id, string reason)
-        {
-            ExpectReply(id);
-            ReplyError(id, reason);
-        }
-        readonly Queue<(string msg, int id, string full)> pendingRequests = new Queue<(string msg, int id, string full)>();
+        // The previous document's requests that arrived while the next one loads: reported when its Scene starts.
         int droppedWhileLoading;
-
-        bool QueueUntilReady(string msg, int id, string full)
-        {
-            lock (pendingRequests)
-            {
-                if (pendingRequests.Count >= MaxPendingRequests) return false;
-                pendingRequests.Enqueue((msg, id, full));
-                return true;
-            }
-        }
-
-        void DrainPendingRequests()
-        {
-            while (true)
-            {
-                (string msg, int id, string full) next;
-                lock (pendingRequests)
-                {
-                    if (pendingRequests.Count == 0) return;
-                    next = pendingRequests.Dequeue();
-                }
-                DispatchRequest(next.msg, next.id, next.full);
-            }
-        }
-
-        /// <summary>
-        /// Forgets requests held for a document that has gone: called on LoadStarted and on a Scene's SCENE_START.
-        /// They are never replayed into the next page, and never answered (the ids are the old page's).
-        /// </summary>
-        internal void ClearPendingRequests(string why)
-        {
-            int held;
-            lock (pendingRequests)
-            {
-                held = pendingRequests.Count;
-                pendingRequests.Clear();
-            }
-            int dropped = droppedWhileLoading + held;
-            droppedWhileLoading = 0;
-            if (dropped > 0)
-                LogLine.Do(LogLine.banterColor, LogTag.Banter, "Dropped " + dropped + " request(s) from the previous page (" + why + ").");
-        }
-
-        internal int PendingRequestCount { get { lock (pendingRequests) return pendingRequests.Count; } }
 
         static string CommandOf(string msg)
         {
@@ -471,7 +305,6 @@ namespace BS
 
         void DispatchRequest(string msg, int id, string full)
         {
-            ExpectReply(id);
             try
             {
                 if (msg.StartsWith(APICommands.OBJECT_ADDED))
@@ -911,9 +744,6 @@ namespace BS
         }
         void Update()
         {
-            // Held requests go as soon as the scene is ready (domReady may come with no request behind it), or are
-            // rejected once the load has failed.
-            ReleasePendingRequests();
             if (scene.state == SceneState.NOTHING_20S && Time.frameCount % 10 == 0)
             {
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😬", 0, $"No objects loaded yet, {Mathf.Round(260f - (Time.time - timeoutDisplay))} seconds left...", true);
@@ -989,9 +819,6 @@ namespace BS
             }
         }
 
-        // The marker that starts a batch from the page (batch-updater.ts).
-        static readonly int BatchMarkerLength = (MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY).Length;
-
         public void SetupPipe(OraView view, OraManager manager)
         {
             // #if UNITY_ANDROID && !UNITY_EDITOR
@@ -1010,74 +837,39 @@ namespace BS
             ConnectPipe(view, manager);
         }
 
-        /// <summary>The pipe and its lane, for the scene already set (SetupPipe; EditMode tests give their own).</summary>
+        /// <summary>The pipe and its bridge, for the scene already set (SetupPipe; EditMode tests give their own).</summary>
         internal void ConnectPipe(OraView view, OraManager manager)
         {
             pipe = new BSPipe(this, view, manager);
-            if (BridgeMode.Session) StartBridge();
-            else batchUpdater = new BatchUpdater(pipe);
+            StartBridge();
             pipe.Start(() =>
             {
                 Connected?.Invoke(this, EventArgs.Empty);
             }, msg =>
             {
-                if (bridge != null)
-                {
-                    // Session lane: carrier frames, legacy batches and raw strings enter one FIFO. They run here, as
-                    // Ora delivers them (the legacy lane's timing), within this frame's bridge budget; whatever is left
-                    // runs at the next EarlyUpdate (BridgePump).
-                    bridge.Receive(msg);
-                    DrainWithinFrameBudget();
-                    return;
-                }
-                if (msg.StartsWith(MessageDelimiters.PRIMARY + MessageDelimiters.SECONDARY + MessageDelimiters.TERTIARY))
-                {
-                    // Length-prefixed (WireFrame), so a ¶§| inside a message can't split the batch.
-                    var parts = new List<string>();
-                    if (!WireFrame.Unpack(msg, BatchMarkerLength, parts))
-                    {
-                        Debug.LogError($"[Banter] Dropped the rest of a malformed message batch: {(msg.Length > 200 ? msg.Substring(0, 200) : msg)}");
-                    }
-                    foreach (var part in parts)
-                    {
-                        try
-                        {
-                            HandleMessage(part);
-                        }
-                        catch (Exception ex)
-                        {
-                            //todo: may result in large log messages, in future possibly have toggle flags
-                            Debug.LogError($"Exception handling a message in a batch, message: {part}");
-                            Debug.LogException(ex);
-                        }
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        HandleMessage(msg);
-                    }
-                    catch (Exception ex)
-                    {
-                        //todo: may result in large log messages, in future possibly have toggle flags
-                        Debug.LogError($"Exception handling a message in a batch, message: {msg}");
-                        Debug.LogException(ex);
-                    }
-                }
+                // Carrier frames and raw strings enter one FIFO. They run here, as Ora delivers them, within this frame's
+                // bridge budget; whatever is left runs at the next EarlyUpdate (BridgePump).
+                bridge.Receive(msg);
+                DrainWithinFrameBudget();
             });
         }
 
         // ------------------------------------------------------------------------------------------------------------
-        // Bridge 2 session lane (M1). Only when BridgeMode.Session: the legacy lane above never reaches any of this.
+        // Bridge 2 sessions.
+
+        /// <summary>Only Android delivers a page's own messages ahead of its LoadStarted.</summary>
+        internal const bool LoadStartedMayTrail =
+#if UNITY_ANDROID && !UNITY_EDITOR
+            true;
+#else
+            false;
+#endif
 
         void StartBridge()
         {
             var options = new BridgeViewOptions
             {
-                // Android is held on the legacy lane in M1 (BridgeMode), so here LoadStarted always precedes a page's
-                // own messages.
-                LoadStartedMayTrail = false,
+                LoadStartedMayTrail = LoadStartedMayTrail,
                 // One cap for fragments being reassembled across every view.
                 ReassemblyBudget = BridgeReassemblyBudget,
                 Log = m => LogLine.Do(LogLine.banterColor, LogTag.Banter, m),
@@ -1087,7 +879,6 @@ namespace BS
             foreach (var queued in messages) bridge.Send(queued);
             messages.Clear();
             BridgePump.Register(this);
-            LogLine.Do(LogLine.banterColor, LogTag.Banter, "[Bridge] Session lane on (" + BridgeMode.Source + ").");
         }
 
         static readonly long bridgeStartTicks = System.Diagnostics.Stopwatch.GetTimestamp();
@@ -1188,42 +979,22 @@ namespace BS
             }
             var message = $"{APICommands.RESPONSE_ID}{id}{MessageDelimiters.PRIMARY}{data}";
             messageHandlers[id] = callback;
-            // Session lane: the same single queue as everything else, so it can't overtake queued replies.
-            if (bridge != null) bridge.Send(message);
-            else pipe.Send(message);
+            // The same single queue as everything else, so it can't overtake queued replies.
+            Send(message);
         }
 
+        // What was sent before the pipe existed; StartBridge sends it first, in order.
         List<string> messages = new List<string>();
         public void Send(string msg)
         {
-            if (bridge != null)
-            {
-                // Session lane: the bridge's per-document ledger sends each reply once and only to the document that
-                // asked (BridgeContext, which queued work carries too). A reply made outside any document's context
-                // still goes through TakeReply first, as on the legacy lane.
-                if (BridgeContext.CurrentEpoch == 0 && !TakeReply(msg)) return;
-                bridge.Send(msg);
-                return;
-            }
-            if (!TakeReply(msg)) return;
-            // #if !GREENFIELD_PROJECT
-            if (batchUpdater == null)
+            if (bridge == null)
             {
                 messages.Add(msg);
                 return;
             }
-            else if (messages.Count > 0)
-            {
-                foreach (var message in messages)
-                {
-                    batchUpdater.Send(message);
-                }
-                messages.Clear();
-            }
-            // #else
-            batchUpdater.Send(msg);
-            // #endif
-
+            // The bridge's per-document ledger sends each reply once and only to the document that asked (BridgeContext,
+            // which queued work carries too).
+            bridge.Send(msg);
         }
 
         /// <summary>
