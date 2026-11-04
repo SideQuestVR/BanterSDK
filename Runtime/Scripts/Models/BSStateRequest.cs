@@ -6,12 +6,13 @@ namespace BS
     /// <summary>Which state store a <see cref="BSStateRequest"/> targets.</summary>
     public enum BSStateTarget
     {
-        Space,
-        User
+        Space = 0,
+        User = 1,
+        World = 2
     }
 
     /// <summary>
-    /// One space/user state operation on its way from a page or a Visual Scripting unit to whatever
+    /// One space/world/user state operation on its way from a page or a Visual Scripting unit to whatever
     /// backend the host app provides. The SDK knows nothing about that backend: it raises this on
     /// <c>BSSceneEvents.OnStateRequest</c> and waits for <see cref="Respond"/>.
     ///
@@ -32,7 +33,7 @@ namespace BS
         /// <summary>The decoded compact JSON body: value, expected, amount, scope and friends.</summary>
         public string Json;
 
-        /// <summary>Space: protected scope. User: the prop is moderator-writable.</summary>
+        /// <summary>Space/World: protected scope. User: the prop is moderator-writable.</summary>
         public bool IsProtected;
 
         /// <summary>User target only. Null/empty means the local user.</summary>

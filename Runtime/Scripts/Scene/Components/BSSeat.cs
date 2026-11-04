@@ -349,11 +349,11 @@ namespace BS
         }
 #endif
         // BS COMPILED CODE 
-        public SeatViewMode ViewMode { get { return viewMode; } set { viewMode = value; UpdateCallback(new List<PropertyName> { PropertyName.viewMode }); } }
         public System.Boolean UnseatOnMove { get { return unseatOnMove; } set { unseatOnMove = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnMove }); } }
         public System.Boolean UnseatOnJump { get { return unseatOnJump; } set { unseatOnJump = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnJump }); } }
         public System.Boolean UseExitPosition { get { return useExitPosition; } set { useExitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.useExitPosition }); } }
         public UnityEngine.Vector3 ExitPosition { get { return exitPosition; } set { exitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.exitPosition }); } }
+        public BS.SeatViewMode ViewMode { get { return viewMode; } set { viewMode = value; UpdateCallback(new List<PropertyName> { PropertyName.viewMode }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -447,15 +447,6 @@ namespace BS
             List<PropertyName> changedProperties = new List<PropertyName>();
             for (int i = 0; i < values.Count; i++)
             {
-                if (values[i] is BSInt)
-                {
-                    var valviewMode = (BSInt)values[i];
-                    if (valviewMode.n == PropertyName.viewMode)
-                    {
-                        viewMode = (SeatViewMode)valviewMode.x;
-                        changedProperties.Add(PropertyName.viewMode);
-                    }
-                }
                 if (values[i] is BSBool)
                 {
                     var valunseatOnMove = (BSBool)values[i];
@@ -490,6 +481,15 @@ namespace BS
                     {
                         exitPosition = new Vector3(valexitPosition.x, valexitPosition.y, valexitPosition.z);
                         changedProperties.Add(PropertyName.exitPosition);
+                    }
+                }
+                if (values[i] is BSInt)
+                {
+                    var valviewMode = (BSInt)values[i];
+                    if (valviewMode.n == PropertyName.viewMode)
+                    {
+                        viewMode = (SeatViewMode)valviewMode.x;
+                        changedProperties.Add(PropertyName.viewMode);
                     }
                 }
             }

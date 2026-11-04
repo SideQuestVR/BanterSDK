@@ -90,7 +90,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Shape" + PropertyName.shapePoints + shapePoints + PropertyName.segments + segments;
+            return "Shape" +  PropertyName.shapePoints + shapePoints + PropertyName.segments + segments;
         }
 
         internal override void Init(List<object> constructorProperties = null)

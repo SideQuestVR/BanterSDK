@@ -100,7 +100,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Torus" + PropertyName.radius + radius + PropertyName.tube + tube + PropertyName.radialSegments + radialSegments + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc;
+            return "Torus" +  PropertyName.radius + radius + PropertyName.tube + tube + PropertyName.radialSegments + radialSegments + PropertyName.tubularSegments + tubularSegments + PropertyName.arc + arc;
         }
 
         internal override void Init(List<object> constructorProperties = null)

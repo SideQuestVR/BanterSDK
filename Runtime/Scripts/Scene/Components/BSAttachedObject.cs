@@ -241,7 +241,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "AttachedObject" + PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
+            return "AttachedObject" +  PropertyName.uid + uid + PropertyName.attachmentPosition + attachmentPosition + PropertyName.attachmentRotation + attachmentRotation + PropertyName.attachmentType + attachmentType + PropertyName.avatarAttachmentType + avatarAttachmentType + PropertyName.avatarAttachmentPoint + avatarAttachmentPoint + PropertyName.attachmentPoint + attachmentPoint + PropertyName.autoSync + autoSync + PropertyName.jointAvatar + jointAvatar + PropertyName.autoAttach + autoAttach + PropertyName.isSeat + isSeat + PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump;
         }
 
         internal override void Init(List<object> constructorProperties = null)

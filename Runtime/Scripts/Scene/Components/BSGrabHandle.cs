@@ -138,7 +138,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "GrabHandle" + PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
+            return "GrabHandle" +  PropertyName.grabType + grabType + PropertyName.grabRadius + grabRadius;
         }
 
         internal override void Init(List<object> constructorProperties = null)

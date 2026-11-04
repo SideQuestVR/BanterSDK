@@ -137,7 +137,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "PhysicsMaterial" + PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction + PropertyName.bounciness + bounciness + PropertyName.frictionCombine + frictionCombine + PropertyName.bounceCombine + bounceCombine;
+            return "PhysicsMaterial" +  PropertyName.dynamicFriction + dynamicFriction + PropertyName.staticFriction + staticFriction + PropertyName.bounciness + bounciness + PropertyName.frictionCombine + frictionCombine + PropertyName.bounceCombine + bounceCombine;
         }
 
         internal override void Init(List<object> constructorProperties = null)

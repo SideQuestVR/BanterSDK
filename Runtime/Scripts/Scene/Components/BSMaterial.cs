@@ -451,7 +451,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Material" + PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps + PropertyName.cacheBust + cacheBust + PropertyName.normalMap + normalMap + PropertyName.roughnessMap + roughnessMap + PropertyName.aoMap + aoMap + PropertyName.textureScale + textureScale + PropertyName.normalStrength + normalStrength;
+            return "Material" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps + PropertyName.cacheBust + cacheBust + PropertyName.normalMap + normalMap + PropertyName.roughnessMap + roughnessMap + PropertyName.aoMap + aoMap + PropertyName.textureScale + textureScale + PropertyName.normalStrength + normalStrength;
         }
 
         internal override void Init(List<object> constructorProperties = null)

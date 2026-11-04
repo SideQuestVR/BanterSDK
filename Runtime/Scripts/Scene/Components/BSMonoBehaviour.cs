@@ -75,7 +75,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "MonoBehaviour" + PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
+            return "MonoBehaviour" +  PropertyName.fps + fps + PropertyName.startFunction + startFunction + PropertyName.updateFunction + updateFunction + PropertyName.destroyFunction + destroyFunction;
         }
 
         internal override void Init(List<object> constructorProperties = null)
