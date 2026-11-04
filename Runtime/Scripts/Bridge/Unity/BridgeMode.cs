@@ -124,12 +124,13 @@ namespace BS.Bridge
         }
 
         /// <summary>
-        /// Gives the space view the injection for the current lane. Call before the view's Awake (it reads the
-        /// injection when it registers its window). Idempotent.
+        /// Gives the space view its link profile (the large rings) and the injection for the current lane. Call before
+        /// the view's Awake (it opens its channel and reads the injection when it registers its window). Idempotent.
         /// </summary>
         public static void ApplyTo(OraView view)
         {
             if (view == null) return;
+            view.linkProfile = OraChannelProfile.SdkView;
             view.customInjectedJavascript = InjectionAsset(view.customInjectedJavascript);
         }
 

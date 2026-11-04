@@ -77,6 +77,8 @@ public class BSPipe
     public void Start(Action connectedCallback, Action<string> msgCallback)
     {
         manager?.browserConnected.AddListener(() => connectedCallback());
+        // A load in progress fails rather than waits for a browser that isn't coming.
+        manager?.browserFailed.AddListener(reason => { if (link.scene != null && link.scene.loading) link.scene.Cancel(reason); });
         if (manager != null && manager.connected)
             connectedCallback();
         view.browserMessage.AddListener((reqId, command, data) =>

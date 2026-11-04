@@ -378,7 +378,8 @@
     {"id": 290, "name": "includeInVR"},
     {"id": 291, "name": "includeInNonVR"},
     {"id": 292, "name": "rolloffMode"},
-    {"id": 293, "name": "enableBirdFlight"}
+    {"id": 293, "name": "enableBirdFlight"},
+    {"id": 294, "name": "viewMode"}
   ],
   "tags": [
     {"index": 0, "name": "UserTag1"},
@@ -632,7 +633,8 @@
     {"name": "CREATE_ASSET", "code": "!cra!"},
     {"name": "DESTROY_ASSET", "code": "!dra!"},
     {"name": "QUERY_ASSET", "code": "!qa!"},
-    {"name": "SET_ASSET_PROPERTY", "code": "!sap!"}
+    {"name": "SET_ASSET_PROPERTY", "code": "!sap!"},
+    {"name": "KEY_RELEASE", "code": "kr!"}
   ],
   "uiCommands": [
     {"name": "CREATE_UI_ELEMENT", "code": "!cui!"},
@@ -1725,6 +1727,19 @@
         {"name": "Verticalscrolling", "value": "verticalScrolling"},
         {"name": "Visible", "value": "visible"}
       ]
+    },
+    {
+      "name": "SeatViewMode",
+      "cs": "BS.SeatViewMode",
+      "ts": "seat-view-mode",
+      "tsMode": "generated",
+      "kind": "int",
+      "underlying": "Int32",
+      "members": [
+        {"name": "Legacy", "value": 0},
+        {"name": "UprightFollowYaw", "value": 1},
+        {"name": "UprightIndependent", "value": 2}
+      ]
     }
   ],
   "components": [
@@ -2596,7 +2611,23 @@
           ]
         },
         {"name": "_ResetCenterOfMass", "returns": "System.Void", "params": []},
-        {"name": "_ResetInertiaTensor", "returns": "System.Void", "params": []}
+        {"name": "_ResetInertiaTensor", "returns": "System.Void", "params": []},
+        {
+          "name": "_MovePositionSingleAxis",
+          "returns": "System.Void",
+          "params": [
+            ["axis", "System.Int32"],
+            ["value", "System.Single"]
+          ]
+        },
+        {
+          "name": "_SetVelocitySingleAxis",
+          "returns": "System.Void",
+          "params": [
+            ["axis", "System.Int32"],
+            ["value", "System.Single"]
+          ]
+        }
       ],
       "tsConstructor": ["mass: number | any = 1", "drag: number = 0", "angularDrag: number = 0.05", "isKinematic: boolean = false", "useGravity: boolean = true", "centerOfMass: Vector3 = new Vector3(0,0,0)", "collisionDetectionMode: CollisionDetectionMode = 0", "freezePositionX: boolean = false", "freezePositionY: boolean = false", "freezePositionZ: boolean = false", "freezeRotationX: boolean = false", "freezeRotationY: boolean = false", "freezeRotationZ: boolean = false", "velocity: Vector3 = new Vector3(0,0,0)", "angularVelocity: Vector3 = new Vector3(0,0,0)"]
     },
@@ -3026,13 +3057,14 @@
         {"name": "unseatOnMove", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 249, "initial": "true"},
         {"name": "unseatOnJump", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 248, "initial": "true"},
         {"name": "useExitPosition", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 284, "initial": "false"},
-        {"name": "exitPosition", "attr": "See", "type": "UnityEngine.Vector3", "wire": "Vector3", "propId": 283, "initial": "0,0,0.6"}
+        {"name": "exitPosition", "attr": "See", "type": "UnityEngine.Vector3", "wire": "Vector3", "propId": 283, "initial": "0,0,0.6"},
+        {"name": "viewMode", "attr": "See", "type": "BS.SeatViewMode", "wire": "Int", "propId": 294, "initial": "1"}
       ],
       "methods": [
         {"name": "_Sit", "returns": "System.Void", "params": []},
         {"name": "_Stand", "returns": "System.Void", "params": []}
       ],
-      "tsConstructor": ["unseatOnMove: boolean | any = true", "unseatOnJump: boolean = true", "useExitPosition: boolean = false", "exitPosition: Vector3 = new Vector3(0,0,0.6)"]
+      "tsConstructor": ["unseatOnMove: boolean | any = true", "unseatOnJump: boolean = true", "useExitPosition: boolean = false", "exitPosition: Vector3 = new Vector3(0,0,0.6)", "viewMode: SeatViewMode = SeatViewMode.UprightFollowYaw"]
     },
     {
       "name": "Settings",

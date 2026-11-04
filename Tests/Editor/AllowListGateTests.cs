@@ -160,6 +160,27 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void ArrayAndObjectLiterals_AreJudgedByWhatTheyHold()
+        {
+            // Both shapes are in a live world's graphs (urpfire, 2026-11-04): char[] separators for String.Split, and
+            // an empty Object slot. Refusing them blocked 10 of its graphs once bundle graphs went strict.
+            Assert.IsFalse(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(char[]), new[] { '|' })), log: false), "char[]");
+            Assert.IsFalse(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(UnityObject), null)), log: false), "an empty Object slot");
+            Assert.IsFalse(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(Vector3[]), new[] { Vector3.one })), log: false), "Vector3[]");
+            Assert.IsTrue(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(IntPtr[]), null)), log: false), "IntPtr[]");
+            Assert.IsTrue(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(Member[]), null)), log: false), "an array of an unlisted type");
+            Assert.IsTrue(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(char[,]), null)), log: false), "a multi-dimensional array");
+            Assert.IsTrue(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(BS.DontDestroyOnLoad), null)), log: false), "a self-persisting host component");
+        }
+
+        [Test]
+        public void ARefusedLiteral_NamesItsType()
+        {
+            LogAssert.Expect(LogType.Error, new Regex(@"^Element not allowed: Literal of System\.IntPtr\[\]$"));
+            Assert.IsTrue(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(IntPtr[]), null))));
+        }
+
+        [Test]
         public void TypeLiteral_IsJudgedByTheTypeItNames()
         {
             Assert.IsFalse(BanterStubsAllowed.IsBlockedStrict(GraphWith(new Literal(typeof(Type), typeof(Transform))), log: false));

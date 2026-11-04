@@ -189,7 +189,15 @@ namespace BS.Utilities.Async
         /// creation should finish as soon as possible. Cleared by <see cref="Cancel"/> and whenever
         /// <see cref="Coroutine"/> starts, so it can't outlive a play session; a domain reload builds a new scheduler.
         /// </summary>
-        internal void SetLoading(bool value) => loading = value;
+        internal void SetLoading(bool value) => SetLoadingFlag(value);
+
+        // Every change of the loading mode goes through here: Ora's browser link follows it (a larger per-frame drain
+        // budget while the loading screen hides long frames), so it can never stay on after the scheduler's ends.
+        private void SetLoadingFlag(bool value)
+        {
+            loading = value;
+            SideQuest.Ora.OraManager.LinkLoadingBoost = value;
+        }
 
         /// <summary>
         /// Counts items queued with <see cref="EnqueueCounted"/> that haven't run yet, so a caller can tell work that
@@ -244,7 +252,7 @@ namespace BS.Utilities.Async
             Cancelling = false;
             IsRunning = true;
             // A new session: nothing from the last one's load carries over.
-            loading = false;
+            SetLoadingFlag(false);
             escalatedTicks = 0;
             yield return null; // yield immediately
 
@@ -410,7 +418,7 @@ namespace BS.Utilities.Async
 
             if (!IsRunning) throw new InvalidOperationException("The scheduler is not running");
             Cancelling = true;
-            loading = false;
+            SetLoadingFlag(false);
             escalatedTicks = 0;
 #if UNITY_EDITOR
             IsRunning = false;

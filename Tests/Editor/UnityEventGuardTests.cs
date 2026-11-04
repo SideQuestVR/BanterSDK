@@ -1003,8 +1003,10 @@ namespace BS.SDKEditor.Tests
                 { "SetText", new[] { "Greenfield.Menu.Explore.ExploreSectionView", "Greenfield.Menu.FeedSection", "Greenfield.Menu.ProfileSection",
                     "Greenfield.Recording.UI.MediaPreview", "Greenfield.Recording.UI.RecordingsGallerySection", "TMPro.TMP_InputField",
                     "TMPro.TMP_Text", "UnityEngine.UI.InputField" } },
+                // SocialEffectsPresenter.Play (main, 2026-11-04 merge) takes 4 parameters, so no AnimationEvent can call it
+                // (events take at most one), and world bundles can't add the host component. Reviewed by Atlas: keep the sink.
                 { "Play", new[] { "BS.BSAudioSource", "Greenfield.Emoji.EmojiReactionService", "Greenfield.HandCamera.CameraSoundEffects",
-                    "SideQuest.FlexaBody.BirdFlightSound", "Whisper.Utils.PlayAudioAndDestroy" } },
+                    "Greenfield.Social.SocialEffectsPresenter", "SideQuest.FlexaBody.BirdFlightSound", "Whisper.Utils.PlayAudioAndDestroy" } },
                 { "SetDirty", new[] { "UnityEngine.UI.AspectRatioFitter", "UnityEngine.UI.ContentSizeFitter", "UnityEngine.UI.LayoutElement",
                     "UnityEngine.UI.LayoutGroup", "UnityEngine.UI.ScrollRect" } },
                 { "AddCullingLayer", new[] { "BS.BSMirror" } },

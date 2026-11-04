@@ -106,7 +106,6 @@ public class APICommands
     public const string BUTTON_RELEASED = "br!";
     public const string TRANSFORM_UPDATED = "tu!";
     public const string KEY = "k!";
-    public const string KEY_RELEASE = "kr!";
     public const string ONE_SHOT_RECIEVED = "on!";
     public const string COLLISION_ENTER = "ce!";
     public const string COLLISION_EXIT = "cx!";
@@ -222,4 +221,5 @@ public class APICommands
     public const string DESTROY_ASSET = "!dra!";
     public const string QUERY_ASSET = "!qa!";
     public const string SET_ASSET_PROPERTY = "!sap!";
+    public const string KEY_RELEASE = "kr!";
 }

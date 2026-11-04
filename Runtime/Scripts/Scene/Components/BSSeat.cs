@@ -65,6 +65,11 @@ namespace BS
         [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.")]
         [See(initial = "0,0,0.6")][SerializeField] internal Vector3 exitPosition = new Vector3(0f, 0f, 0.6f);
 
+        // Upright seats (BSSeat.Pose.cs holds the pose). Declared here, last: the Bridge 2 lock lists [See] fields in
+        // declaration order with new ones at the end, and a field in another partial file reflects first.
+        [Tooltip("All modes use the authored pose and face the seat on entry. Legacy follows full seat rotation; upright modes keep seat tilt out of the view.")]
+        [See(initial = "1")][SerializeField] internal SeatViewMode viewMode = SeatViewMode.UprightFollowYaw;
+
         const string LocalUser = "me";
 
         public bool IsInInteractionRange => BSPointerRange.IsInRange(gameObject, transform.position);
