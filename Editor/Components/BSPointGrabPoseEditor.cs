@@ -108,6 +108,14 @@ namespace BS.SDKEditor
                         Fit(source, left, hand, mode.boolValue);
                     }
 
+                // File dialogs would break this IMGUI layout pass, so they open after it.
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Save Preset…")) EditorApplication.delayCall += () => BSPosePresetFile.Save(source);
+                    if (GUILayout.Button("Load Preset…")) EditorApplication.delayCall += () => BSPosePresetFile.Load(source);
+                }
+                BSPosePresetFile.DrawFolderPresets(BSPosePresetFile.HandKind, path => BSPosePresetFile.Load(source, path));
+
                 advanced = EditorGUILayout.Foldout(advanced, "Advanced", true);
                 if (advanced)
                 {
@@ -278,6 +286,14 @@ namespace BS.SDKEditor
 
         static float SpreadLimit(int finger) => finger == 0 ? 60f : 25f;
         static float BendMinimum(int finger, int joint) => finger == 0 && joint == 0 ? -60f : 0f;
+
+        internal static Vector4 ClampFinger(int finger, Vector4 value)
+        {
+            var limit = (finger == 0 ? 65f : 100f) / 170f;
+            var spread = SpreadLimit(finger) / 50f;
+            return new Vector4(Mathf.Clamp(value.x, BendMinimum(finger, 0) / 170f, limit), Mathf.Clamp(value.y, 0f, limit),
+                Mathf.Clamp(value.z, 0f, limit), Mathf.Clamp(value.w, -spread, spread));
+        }
 
         public static bool DrawHandles(Component source, bool left, float radius, Pose wrist)
         {
