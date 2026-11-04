@@ -58,8 +58,8 @@ The seat's shared [Pointer Range](ui-system.md#pointer-range) component defaults
 | `unseatOnMove` | boolean | true | Stand up when the player pushes the move stick (WASD on desktop) |
 | `unseatOnJump` | boolean | true | Stand up when the player jumps |
 | `useExitPosition` | boolean | false | Teleport the player to `exitPosition` when they get off, however they get off. Off: they are lifted 1 m above the seat, speed cleared |
-| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). Legacy faces the seat; upright modes preserve viewing direction |
-| `viewMode` | SeatViewMode | `BS.SeatViewMode.UprightFollowYaw` | `UprightFollowYaw` follows seat yaw without pitch/roll; `UprightIndependent` ignores all seat rotation for the view. All modes use the authored lower-body pose |
+| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). `FollowSeat` faces the seat; upright modes preserve viewing direction |
+| `viewMode` | SeatViewMode | `BS.SeatViewMode.UprightFollowYaw` | `FollowSeat` (old name `Legacy`) follows full seat rotation; `UprightFollowYaw` follows seat yaw without pitch/roll; `UprightIndependent` ignores all seat rotation for the view. Upright modes stand on world up, or against gravity when the player has Comfort > Gravity Tilting on. All modes use the authored lower-body pose |
 
 Mode and pose are captured on `Sit()`. Set the mode before sitting; changing it while occupied applies at the next sit. The pose remains attached as the seat moves. Head tracking stays free, artificial VR turning is disabled in upright modes, and desktop look remains available. Pose targets use metres independent of seat/parent scale. Head and feet outside the avatar's natural reach are visually clamped without moving the tracked camera or automatically standing the player up.
 

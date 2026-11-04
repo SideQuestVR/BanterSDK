@@ -64,7 +64,7 @@ BS.ForceMode.Acceleration   // 5: Continuous acceleration (ignores mass)
 Set a [Seat](../components/player-setup.md#seat)'s `viewMode` before sitting. New seats default to `UprightFollowYaw`; existing explicit mode choices are preserved. All modes use the authored pose and align facing on entry. Mode and pose changes apply on the next sit.
 
 ```js
-BS.SeatViewMode.Legacy             // 0: full seat rotation with the authored sitting pose
+BS.SeatViewMode.FollowSeat         // 0: full seat rotation with the authored sitting pose (old name: Legacy, still accepted)
 BS.SeatViewMode.UprightFollowYaw   // 1: follow position/yaw, remove seat pitch/roll from the view
 BS.SeatViewMode.UprightIndependent // 2: follow position, ignore seat rotation for the view
 ```

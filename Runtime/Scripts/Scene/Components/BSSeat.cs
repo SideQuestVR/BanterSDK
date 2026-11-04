@@ -9,7 +9,7 @@ namespace BS
     #### Banter Seat
     Make an object a seat: clicking it sits the local player on it, and moving or jumping stands them up.
     The seat is the object's `BSAttachedObject`, set up to attach the player to the object (physics, jointed,
-    seated pose). In Legacy mode the player sits at this object's position and faces its forward, so place its origin
+    seated pose). In Follow Seat mode the player sits at this object's position and faces its forward, so place its origin
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
     the only clickable layers. Its Pointer Range component defaults to 2 m from the player's head to the sitting
     position, independently of trigger size; it gates clicks, hover marker and targeting ray. Scripted Sit still works
@@ -22,8 +22,8 @@ namespace BS
     - `unseatOnMove` - Stand the player up when they push the move stick / WASD.
     - `unseatOnJump` - Stand the player up when they jump.
     - `useExitPosition` - Teleport the player to `exitPosition` when they get off the seat, however they get off. Off: 1 m above the seat.
-    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.
-    - `viewMode` - Legacy (0), UprightFollowYaw (1, default), or UprightIndependent (2). All modes align facing on entry and use the authored pelvis/leg pose, captured when sitting. Upright modes preserve viewing direction on exit.
+    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). Follow Seat faces the seat direction; upright modes preserve the viewing direction.
+    - `viewMode` - FollowSeat (0), UprightFollowYaw (1, default), or UprightIndependent (2). All modes align facing on entry and use the authored pelvis/leg pose, captured when sitting. Upright modes preserve viewing direction on exit.
 
     **Methods**
     ```js
@@ -62,7 +62,7 @@ namespace BS
                  "Off: they are lifted 1 m above the seat instead, so getting off can't fling them.")]
         [See(initial = "false")][SerializeField] internal bool useExitPosition = false;
 
-        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.")]
+        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). Follow Seat faces the seat direction; upright modes preserve the viewing direction.")]
         [See(initial = "0,0,0.6")][SerializeField] internal Vector3 exitPosition = new Vector3(0f, 0f, 0.6f);
 
         const string LocalUser = "me";
@@ -88,6 +88,15 @@ namespace BS
                 catch (Exception ex) { Debug.LogException(ex); return false; }
             }
         }
+
+        /// <summary>
+        /// Set by the client: the up the player stands on when they get off a seat. World up unless Comfort's Gravity
+        /// Tilting stands them against the world's gravity. The SDK itself has no such setting.
+        /// </summary>
+        public static Vector3 ViewUp { get; set; } = Vector3.up;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetViewUp() => ViewUp = Vector3.up;
 
         // The local player sits on this seat: set when they attach through it, cleared when they get off.
         static uint localSitGeneration;
@@ -211,7 +220,7 @@ namespace BS
                 localSitGeneration++;
                 seated = true;
                 seatedViewMode = viewMode == SeatViewMode.UprightFollowYaw || viewMode == SeatViewMode.UprightIndependent
-                    ? viewMode : SeatViewMode.Legacy;
+                    ? viewMode : SeatViewMode.FollowSeat;
             }
         }
 
@@ -239,8 +248,8 @@ namespace BS
             {
                 var exit = useExitPosition
                     ? transform.TransformPoint(exitPosition)
-                    : transform.position + Vector3.up * DefaultExitHeight;
-                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y, seatedViewMode != SeatViewMode.Legacy));
+                    : transform.position + ViewUp * DefaultExitHeight;
+                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y, seatedViewMode != SeatViewMode.FollowSeat));
             }
         }
 
@@ -256,8 +265,22 @@ namespace BS
             {
                 yield break;
             }
-            var yaw = preserveView && head != null ? ViewHeading(head.transform.rotation) : legacyYaw;
-            BSScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, yaw, 0f), true, false);
+            var keepView = preserveView && head != null;
+            var yaw = keepView ? ViewHeading(head.transform.rotation) : legacyYaw;
+            var rotation = ViewUp == Vector3.up ? new Vector3(0f, yaw, 0f)
+                : TiltedExitRotation(keepView ? head.transform.rotation : transform.rotation, ViewUp).eulerAngles;
+            BSScene.Instance().events.OnTeleport.Invoke(position, rotation, true, false);
+        }
+
+        // ViewHeading's frame on a tilted up: the same facing, standing on that up.
+        internal static Quaternion TiltedExitRotation(Quaternion rotation, Vector3 up)
+        {
+            var forward = rotation * Vector3.forward;
+            var roof = rotation * Vector3.up;
+            var along = Vector3.Dot(forward, up);
+            forward = Vector3.ProjectOnPlane(Vector3.Slerp(forward, along < 0f ? roof : -roof, Mathf.Abs(along)), up);
+            if (forward.sqrMagnitude < 1e-6f) forward = Vector3.Cross(rotation * Vector3.right, up);
+            return Quaternion.LookRotation(forward.normalized, up);
         }
 
         internal static float ViewHeading(Quaternion rotation)
