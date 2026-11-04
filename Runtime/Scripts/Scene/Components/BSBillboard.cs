@@ -119,7 +119,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Billboard" + PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
+            return "Billboard" +  PropertyName.smoothing + smoothing + PropertyName.enableXAxis + enableXAxis + PropertyName.enableYAxis + enableYAxis + PropertyName.enableZAxis + enableZAxis;
         }
 
         internal override void Init(List<object> constructorProperties = null)

@@ -134,7 +134,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "ScriptGraph" + PropertyName.machineCount + machineCount + PropertyName.graphTitles + graphTitles;
+            return "ScriptGraph" +  PropertyName.machineCount + machineCount + PropertyName.graphTitles + graphTitles;
         }
 
         internal override void Init(List<object> constructorProperties = null)

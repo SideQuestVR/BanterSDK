@@ -1293,7 +1293,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "UIPanel" + PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.meshInput + meshInput + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
+            return "UIPanel" +  PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.meshInput + meshInput + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
         }
 
         internal override void Init(List<object> constructorProperties = null)

@@ -96,7 +96,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Plane" + PropertyName.width + width + PropertyName.height + height + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments;
+            return "Plane" +  PropertyName.width + width + PropertyName.height + height + PropertyName.widthSegments + widthSegments + PropertyName.heightSegments + heightSegments;
         }
 
         internal override void Init(List<object> constructorProperties = null)

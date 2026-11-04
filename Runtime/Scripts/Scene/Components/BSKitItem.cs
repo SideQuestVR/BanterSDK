@@ -240,7 +240,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "KitItem" + PropertyName.path + path + PropertyName.resetTransform + resetTransform;
+            return "KitItem" +  PropertyName.path + path + PropertyName.resetTransform + resetTransform;
         }
 
         internal override void Init(List<object> constructorProperties = null)

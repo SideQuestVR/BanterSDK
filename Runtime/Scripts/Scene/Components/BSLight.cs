@@ -75,7 +75,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "Light" + PropertyName.type + type + PropertyName.color + color + PropertyName.intensity + intensity + PropertyName.range + range + PropertyName.spotAngle + spotAngle + PropertyName.innerSpotAngle + innerSpotAngle + PropertyName.shadows + shadows;
+            return "Light" +  PropertyName.type + type + PropertyName.color + color + PropertyName.intensity + intensity + PropertyName.range + range + PropertyName.spotAngle + spotAngle + PropertyName.innerSpotAngle + innerSpotAngle + PropertyName.shadows + shadows;
         }
 
         internal override void Init(List<object> constructorProperties = null)

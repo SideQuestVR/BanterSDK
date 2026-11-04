@@ -127,7 +127,7 @@ namespace BS
                 gameObject.SetActive(true);
             }
         }
-        // BS COMPILED CODE
+        // BS COMPILED CODE 
         public System.Boolean IncludeOnMobile { get { return includeOnMobile; } set { includeOnMobile = value; UpdateCallback(new List<PropertyName> { PropertyName.includeOnMobile }); } }
         public System.Boolean IncludeOnDesktop { get { return includeOnDesktop; } set { includeOnDesktop = value; UpdateCallback(new List<PropertyName> { PropertyName.includeOnDesktop }); } }
         public System.Boolean IncludeInVR { get { return includeInVR; } set { includeInVR = value; UpdateCallback(new List<PropertyName> { PropertyName.includeInVR }); } }
@@ -159,7 +159,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "PlatformFilter" + PropertyName.includeOnMobile + includeOnMobile + PropertyName.includeOnDesktop + includeOnDesktop + PropertyName.includeInVR + includeInVR + PropertyName.includeInNonVR + includeInNonVR;
+            return "PlatformFilter" +  PropertyName.includeOnMobile + includeOnMobile + PropertyName.includeOnDesktop + includeOnDesktop + PropertyName.includeInVR + includeInVR + PropertyName.includeInNonVR + includeInNonVR;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -192,6 +192,7 @@ namespace BS
 
             DestroyStuff();
         }
+
         internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -299,6 +300,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BS COMPILED CODE
+        // END BS COMPILED CODE 
     }
 }

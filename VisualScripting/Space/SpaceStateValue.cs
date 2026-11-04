@@ -33,7 +33,7 @@ namespace BS.VisualScripting
             var scene = BSScene.Instance();
             if (scene == null) return;
 
-            string hook = target == BSStateTarget.Space ? "OnSpaceStateResult" : "OnUserStateResult";
+            string hook = target == BSStateTarget.World ? "OnWorldStateResult" : target == BSStateTarget.Space ? "OnSpaceStateResult" : "OnUserStateResult";
             var request = new BSStateRequest(reply =>
             {
                 // Correlated results only: an empty Request Id means the author does not care, so

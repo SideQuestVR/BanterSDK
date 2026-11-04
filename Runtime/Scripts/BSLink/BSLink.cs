@@ -536,6 +536,10 @@ namespace BS
                 {
                     scene.PersistFile(GetMsgData(msg, APICommands.PERSIST_FILE), id);
                 }
+                else if (msg.StartsWith(APICommands.WORLD_STATE_OP))
+                {
+                    scene.WorldStateOp(GetMsgData(msg, APICommands.WORLD_STATE_OP), id);
+                }
                 else if (msg.StartsWith(APICommands.SPACE_STATE_OP))
                 {
                     scene.SpaceStateOp(GetMsgData(msg, APICommands.SPACE_STATE_OP), id);
@@ -1413,6 +1417,16 @@ namespace BS
         public void OnSpaceStateJson(string base64)
         {
             Send(APICommands.EVENT + APICommands.SPACE_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnFullWorldStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.FULL_WORLD_STATE_JSON + MessageDelimiters.PRIMARY + base64);
+        }
+
+        public void OnWorldStateJson(string base64)
+        {
+            Send(APICommands.EVENT + APICommands.WORLD_STATE_JSON + MessageDelimiters.PRIMARY + base64);
         }
 
         public void OnUserStateJson(string base64)

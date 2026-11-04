@@ -208,7 +208,7 @@ namespace BS
             if (body != null)
                 body.isKinematic = true;
         }
-        // BS COMPILED CODE
+        // BS COMPILED CODE 
         public System.Int32 MaxSpawned { get { return maxSpawned; } set { maxSpawned = value; UpdateCallback(new List<PropertyName> { PropertyName.maxSpawned }); } }
         public System.Boolean ForceKinematic { get { return forceKinematic; } set { forceKinematic = value; UpdateCallback(new List<PropertyName> { PropertyName.forceKinematic }); } }
 
@@ -238,7 +238,7 @@ namespace BS
         }
         internal override string GetSignature()
         {
-            return "SpawnerObject" + PropertyName.maxSpawned + maxSpawned + PropertyName.forceKinematic + forceKinematic;
+            return "SpawnerObject" +  PropertyName.maxSpawned + maxSpawned + PropertyName.forceKinematic + forceKinematic;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -271,6 +271,7 @@ namespace BS
 
             DestroyStuff();
         }
+
         internal override object CallMethod(string methodName, List<object> parameters)
         {
             return null;
@@ -336,6 +337,6 @@ namespace BS
         internal override void WatchProperties(PropertyName[] properties)
         {
         }
-        // END BS COMPILED CODE
+        // END BS COMPILED CODE 
     }
 }
