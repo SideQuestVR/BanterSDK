@@ -12,9 +12,7 @@ namespace BS.SDKEditor
     {
         enum Target { Pelvis, LeftFoot, RightFoot, LeftKnee, RightKnee }
         static readonly string[] TargetLabels = { "Pelvis", "Left sole", "Right sole", "Left knee", "Right knee" };
-        static readonly int ControlHint = "BSSeatPoseControl".GetHashCode();
         static readonly int ExitControlHint = "BSSeatExitControl".GetHashCode();
-        readonly int[] controlIds = new int[5];
         static BSSeatEditor editing;
         bool previousToolsHidden, showPreview = true, showNumbers;
         Target poseTarget;
@@ -122,10 +120,17 @@ namespace BS.SDKEditor
                     EditorGUILayout.HelpBox("Open the prefab in Prefab Mode to pose it in the Scene view.", MessageType.Info);
                 if (editing == this)
                 {
-                    EditorGUILayout.HelpBox("Drag a pelvis, sole or knee point directly in the Scene view. Knees bend within the leg's reach while feet stay in place. Press E to rotate the selected pelvis or sole.", MessageType.Info);
+                    EditorGUILayout.HelpBox("Click a pelvis, sole or knee point, then use the Move (W) gizmo. Press E to rotate the selected pelvis or sole. Knees bend within the leg's reach while feet stay in place.", MessageType.Info);
                 }
                 var pose = seat.Pose;
                 if (GUILayout.Button("Reset Seated Pose")) WritePose(serializedObject.FindProperty("pose"), SeatPose.Default);
+                // File dialogs would break this IMGUI layout pass, so they open after it.
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Save Preset…")) EditorApplication.delayCall += () => BSPosePresetFile.Save(seat);
+                    if (GUILayout.Button("Load Preset…")) EditorApplication.delayCall += () => BSPosePresetFile.Load(seat);
+                }
+                BSPosePresetFile.DrawFolderPresets(BSPosePresetFile.SeatKind, path => BSPosePresetFile.Load(seat, path));
                 showNumbers = EditorGUILayout.Foldout(showNumbers, "Pose Values", true);
                 if (showNumbers)
                 {
@@ -144,7 +149,7 @@ namespace BS.SDKEditor
             if (serializedObject.ApplyModifiedProperties()) SceneView.RepaintAll();
         }
 
-        static void WritePose(SerializedProperty property, SeatPose pose)
+        internal static void WritePose(SerializedProperty property, SeatPose pose)
         {
             property.FindPropertyRelative("pelvisPosition").vector3Value = pose.pelvisPosition;
             property.FindPropertyRelative("pelvisRotation").quaternionValue = pose.pelvisRotation;
@@ -164,15 +169,19 @@ namespace BS.SDKEditor
             if (editing != this) return;
             var anchor = seat.transform;
             var pose = seat.Pose;
-            DrawPoseControls(anchor, pose);
-            if (Tools.current != Tool.Rotate || (int)poseTarget > (int)Target.RightFoot
-                || (Event.current.alt && GUIUtility.hotControl == 0)) return;
-            pose = seat.Pose;
-            var position = LocalPosition(pose, poseTarget);
-            var rotation = poseTarget == Target.Pelvis ? pose.pelvisRotation : poseTarget == Target.LeftFoot ? pose.leftFootRotation : pose.rightFootRotation;
-            var worldPosition = anchor.position + anchor.rotation * position;
+            if (!DrawPoseControls(anchor, pose, out var local) || (Event.current.alt && GUIUtility.hotControl == 0)) return;
+            var rotates = (int)poseTarget <= (int)Target.RightFoot;
+            var rotation = poseTarget == Target.Pelvis ? pose.pelvisRotation : poseTarget == Target.LeftFoot ? pose.leftFootRotation
+                : poseTarget == Target.RightFoot ? pose.rightFootRotation : Quaternion.identity;
+            var worldPosition = anchor.position + anchor.rotation * local;
             var worldRotation = anchor.rotation * rotation;
             EditorGUI.BeginChangeCheck();
+            if (Tools.current != Tool.Rotate || !rotates)
+            {
+                var moved = Handles.PositionHandle(worldPosition, Tools.pivotRotation == PivotRotation.Local ? worldRotation : Quaternion.identity);
+                if (EditorGUI.EndChangeCheck()) MoveControl(poseTarget, moved);
+                return;
+            }
             worldRotation = Handles.RotationHandle(worldRotation, worldPosition);
             if (!EditorGUI.EndChangeCheck()) return;
             rotation = Quaternion.Inverse(anchor.rotation) * worldRotation;
@@ -252,10 +261,11 @@ namespace BS.SDKEditor
             SceneView.RepaintAll();
         }
 
-        void DrawPoseControls(Transform anchor, SeatPose pose)
+        // Points only select; the standard gizmos move and rotate the selected one. Returns its seat-local position.
+        bool DrawPoseControls(Transform anchor, SeatPose pose, out Vector3 selected)
         {
-            for (var i = 0; i < controlIds.Length; i++)
-                controlIds[i] = GUIUtility.GetControlID(ControlHint + i, FocusType.Passive);
+            selected = default;
+            var found = false;
             if (preview == null) preview = new SeatPosePreview();
             var hasKnees = preview.TryGetKneePositions(pose, out var leftKnee, out var rightKnee);
             var camera = SceneView.currentDrawingSceneView != null ? SceneView.currentDrawingSceneView.camera : Camera.current;
@@ -272,25 +282,24 @@ namespace BS.SDKEditor
                     : point == Target.LeftFoot || point == Target.LeftKnee ? new Color(.3f, .7f, 1f) : new Color(1f, .65f, .2f);
                 using (new Handles.DrawingScope(color))
                 {
-                    var id = controlIds[i];
-                    var wasDragging = GUIUtility.hotControl == id;
-                    // FreeMoveHandle itself accepts Alt clicks; keep camera gestures out while allowing an existing drag to release.
-                    if (Event.current.alt && !wasDragging)
+                    // The selected point's gizmo owns clicks there, and Alt stays with the camera.
+                    if (point == poseTarget || (Event.current.alt && GUIUtility.hotControl == 0))
                     {
                         if (Event.current.type == EventType.Repaint)
-                            Handles.SphereHandleCap(id, position, Quaternion.identity, size * .065f, EventType.Repaint);
+                            Handles.SphereHandleCap(0, position, Quaternion.identity, size * .065f, EventType.Repaint);
                     }
-                    else
-                    {
-                        var moved = Handles.FreeMoveHandle(id, position, size * .065f, Vector3.zero, Handles.SphereHandleCap);
-                        if (!wasDragging && GUIUtility.hotControl == id) SelectTarget(point);
-                        if (moved != position) MoveControl(point, moved);
-                    }
+                    else if (Handles.Button(position, Quaternion.identity, size * .065f, size * .085f, Handles.SphereHandleCap))
+                        SelectTarget(point);
                 }
                 if (point == poseTarget)
+                {
+                    selected = local;
+                    found = true;
                     using (new Handles.DrawingScope(Color.white)) Handles.DrawWireDisc(position, facing, size * .075f);
+                }
                 Handles.Label(position + labelOffset * (size * .1f), TargetLabels[i], EditorStyles.whiteMiniLabel);
             }
+            return found;
         }
 
         void DrawPreview(ScriptableRenderContext context, Camera camera)
