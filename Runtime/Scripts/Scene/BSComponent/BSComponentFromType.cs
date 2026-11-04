@@ -165,6 +165,8 @@ namespace BS
                     return gameObject.AddComponent<BSSpawnerObject>();
                 case ComponentType.PlatformFilter:
                     return gameObject.AddComponent<BSPlatformFilter>();
+                case ComponentType.WorldOption:
+                    return gameObject.AddComponent<BSWorldOption>();
                 default:
                     return null;
             }

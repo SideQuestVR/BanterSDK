@@ -1072,6 +1072,11 @@ namespace BS
             Send(APICommands.EVENT + APICommands.CLICKED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(normal.z));
         }
 
+        public void OnWorldOption(GameObject obj, bool isOn)
+        {
+            Send(APICommands.EVENT + APICommands.WORLD_OPTION_PRESSED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + (isOn ? "1" : "0"));
+        }
+
         public void OnGrab(GameObject obj, Vector3 point, HandSide side)
         {
             Send(APICommands.EVENT + APICommands.GRABBED + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(point.z) + MessageDelimiters.SECONDARY + (int)side);
