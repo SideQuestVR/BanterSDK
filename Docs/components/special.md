@@ -95,6 +95,24 @@ Shows an object only on the platforms and in the modes you tick: PC or Android, 
 await obj.AddComponent(new BS.PlatformFilter({ includeOnDesktop: false, includeInNonVR: false })); // Quest headsets only
 ```
 
+## WorldOption
+
+Adds a button for your world to the player's radial menu. Add it with **Add Component > BS > World Option** (one per GameObject). There are two slots, and the button is there while the component is enabled. If two options want the same slot, the last one enabled shows. Set up the button in the Inspector: **Slot**, **Label** (up to 32 characters of plain text), **Icon**, and **Is Toggle** for a button that stays on or off.
+
+To react to a press with no graph or script, wire up **On Press** in the Inspector, under **Available Properties**. It passes the toggle's state after the press.
+
+In a script graph, **On World Option** (`Events > BS > Space`) fires on a press, and **Set World Option** (`BS > Space`) sets the toggle state.
+
+A press happens only for the player who pressed it; send a one-shot or a synced property to share the result. Players can hide world buttons in Customize, so don't make one the only way to do something.
+
+From a page script, add `BS.WorldOption` and listen for `world-option` on its GameObject. Read the state from the event: a press doesn't update the component's `isOn` on the page. A page script can't set the icon, so its buttons use the default world icon.
+
+```js
+const obj = new BS.GameObject("LightsOption");
+await obj.AddComponent(new BS.WorldOption({ slot: 1, label: "Lights", isToggle: true }));
+obj.On("world-option", (e) => console.log("Lights on:", e.detail.isOn));
+```
+
 ## WorldObject
 
 Marks a physics object the players' hands can hold: while a hand grabs it, the hand stops colliding with the object's colliders, so it doesn't knock the object out of its own grip. Put it on the object with the Rigidbody. You rarely need it yourself: [Grababble](vr-interaction.md#grababble) adds one, and a [GrabHandle](vr-interaction.md#grabhandle) on a Rigidbody adds one if there isn't one.
