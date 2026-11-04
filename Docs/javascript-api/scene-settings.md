@@ -115,7 +115,7 @@ await scene.SetCanMove(false);   // pass true to allow it again
 | Method | With `false`, players can't | In SDK Play Mode |
 |---|---|---|
 | `SetCanMove` | Move with the stick (WASD on desktop) | Yes |
-| `SetCanRotate` | Turn with the stick, or with the mouse on desktop | Yes |
+| `SetCanRotate` | Turn with the stick, or with the mouse on desktop. Desktop players can still look up to 80° either side, as a VR player can turn their head | Yes |
 | `SetCanCrouch` | Crouch with the stick (Ctrl or Shift on desktop) | No |
 | `SetCanTeleport` | Teleport | No |
 | `SetCanGrapple` | Use the grapple | No |

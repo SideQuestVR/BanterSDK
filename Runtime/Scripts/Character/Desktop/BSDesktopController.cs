@@ -85,6 +85,10 @@ namespace BS
 
         float _yaw;
         float _pitch;
+        // Rotation locked: how far the head may look either side of where it faced (as the client's)
+        const float LockedYawLimit = 80f;
+        bool _rotationLocked;
+        float _lockedYaw;
         bool _flying;
         Vector2 _cursorBeforeFly;
 
@@ -339,10 +343,22 @@ namespace BS
 
         void Look(Vector2 delta)
         {
-            // The client's desktop mouselook is gated the same way.
+            // With rotation locked the head can still look around, as it can in VR, but only so far
+            // either side of where it faced when the lock came on (the client's desktop mouselook does
+            // the same).
             if (!ActionsSystem.canRotate)
-                return;
+            {
+                if (!_rotationLocked)
+                {
+                    _rotationLocked = true;
+                    _lockedYaw = _yaw;
+                }
+            }
+            else
+                _rotationLocked = false;
             _yaw += delta.x * _lookSensitivity;
+            if (_rotationLocked)
+                _yaw = _lockedYaw + Mathf.Clamp(Mathf.DeltaAngle(_lockedYaw, _yaw), -LockedYawLimit, LockedYawLimit);
             _pitch = Mathf.Clamp(_pitch - delta.y * _lookSensitivity, -89f, 89f);
             ApplyLook();
         }
@@ -781,7 +797,7 @@ namespace BS
             var fromRotation = _head.rotation;
 
             transform.position = position;
-            _yaw = rotation.y;
+            _yaw = _lockedYaw = rotation.y; // a locked head looks around from the new facing
             ApplyLook();
 
             _hand.OnRigTeleported(fromPosition, fromRotation, _head.position, _head.rotation);

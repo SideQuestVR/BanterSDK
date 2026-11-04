@@ -109,6 +109,7 @@ public class APICommands
     public const string KEY = "k!";
     public const string KEY_RELEASE = "kr!";
     public const string ONE_SHOT_RECIEVED = "on!";
+    public const string WORLD_OPTION_PRESSED = "wop!";
     public const string COLLISION_ENTER = "ce!";
     public const string COLLISION_EXIT = "cx!";
     public const string COLLISION_STAY = "cs!";

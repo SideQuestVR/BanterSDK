@@ -90,6 +90,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 | Node | Purpose |
 |------|---------|
 | On One Shot | A one-shot network message arrived. Outputs `Data` |
+| On World Option | The local player pressed the **BS World Option** on this object (a button on their radial menu). The object input defaults to this object; outputs `Is On`, the state after the press. See [WorldOption](../components/special.md#worldoption) |
 | On Space State Properties Changed | A space state property changed. Filter by `Property Name` (leave empty for all); outputs `New Value` and whether it is a public property |
 | On Space State Value Changed | As above, plus the JSON value and a `Deleted` flag. Filter by `Path` (leave empty for all); outputs `Value`, `JSON`, `Is Public Property?`, `Deleted` |
 | On Space State Result | The outcome of a write you tagged with a `Request Id`. Outputs `Ok`, `Error`, `Path`, `JSON` |
@@ -173,6 +174,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Node | Purpose |
 |------|---------|
 | Get Space URL | Get the current space URL |
+| Set World Option | Set the toggle state of a **BS World Option**. The object input defaults to this object |
 | Get Users | Get the users in the space, as a list of BSUser |
 | Go To URL | Send the local player to another space by its `URL` (http or https only); the server picks the instance. Ignored while a space is loading, this one included, so not straight from On Start; in SDK Play Mode it only logs |
 | Load Quest Home | Load a Quest home environment |
