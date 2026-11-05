@@ -198,6 +198,47 @@ async function interop() {
         assert.ok(ran.every((r) => r.epoch === epoch3));
         assert.deepEqual(got3, ['!e!queued-while-resetting', '!i!:2¶ok-' + epoch3]);
     });
+
+    // A page that loses its place while Unity resets it: each has given up on the other, and frames are on their way.
+    got3.length = 0;
+    h3.t = 2e6;
+    p3.sendText('!i!:3¶!slow¶');
+    await pump(h3, p3);
+    await cmd('F');
+    await cmd('S', '!e!crossed');
+    const onTheirWay = await cmd('D');
+    assert.ok(onTheirWay.length >= 1);
+    const gap = () => B.encodeTextCarrier({ kind: B.Kind.DATA, flags: B.COMPLETE, epoch: epoch3, seq: 999, ack: 0, length: 0 }, B.packEntries(['x']));
+    p3.receive(gap());                        // the page breaks first: HELLO, not yet read
+    const crossingState = p3.state;
+    await cmd('R', gap());                    // and Unity resets it
+    const reset = await cmd('D');
+    for (const d of onTheirWay) p3.receive(d);  // dropped: the page is saying HELLO
+    for (const d of reset) p3.receive(d);
+    const droppedMeanwhile = got3.length;
+    await pump(h3, p3);
+    check('a HELLO crossing a RESET: the reply and event the page dropped go again, once, in order', () => {
+        assert.equal(crossingState, 'hello');
+        assert.equal(droppedMeanwhile, 0);
+        assert.equal(p3.state, 'open');
+        assert.equal(p3.epoch, epoch3);
+        assert.deepEqual(got3, ['!i!:3¶ok-' + epoch3, '!e!crossed']);
+    });
+
+    // A revival that waits behind a load that never finishes: closed for good, not held for ever.
+    for (const d of await cmd('L', 'https://w.example/never-commits')) p3.receive(d);
+    await cmd('N');
+    h3.fire(); // the park grace: p3 asks again
+    await pump(h3, p3);
+    const revivedState = p3.state;
+    await cmd('T', 60000);
+    await cmd('D'); // the hold times out and, a revival with a load pending, it stays held
+    await cmd('T', 60000);
+    for (const d of await cmd('D')) p3.receive(d);
+    check('a revival held behind a load that never finishes is closed for good, and told', () => {
+        assert.equal(revivedState, 'open');
+        assert.equal(p3.state, 'closed');
+    });
     await quit();
 }
 

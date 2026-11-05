@@ -61,8 +61,8 @@ public class BSPipe
     // for 3 s, a SCENE_READY for a page that is not a space. It now skips about: and only uses a Scene the page makes; this
     // gate stays as the guard. Until a page has started loading, nothing the view sends is about a space. On
     // Windows a real page's LoadStarted always comes first (OraView.LoadUrl waits for the window, and the listeners come
-    // with it). Ora's Android compat channel can deliver a page's first messages ahead of its LoadStarted; OnLoad's state
-    // reset already discarded those before this gate existed.
+    // with it). On Android UnityConnect pushes LOAD_STARTED before it evaluates the injection, so the SDK's own messages
+    // follow it; the page's own scripts are not ordered against it, and their raw strings wait here like any others.
     bool pageLoadStarted;
     bool loggedIgnoring;
     int ignoredBeforeLoad;

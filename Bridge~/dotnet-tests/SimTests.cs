@@ -309,6 +309,67 @@ static class SimTests
             T.Seq(new[] { "mine", "unsent" }, rig.Disp.Texts(epoch));
         });
 
+        T.Run("a page's HELLO crossing our RESET: what it dropped while saying HELLO goes again, a reply included", () =>
+        {
+            var rig = new Rig();
+            rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
+            var p = new TestPage("crossing"); p.Hello(); rig.Pump(p);
+            var s = rig.View.Current;
+            Action reply = null;
+            rig.Disp.OnText = (ss, t) =>
+            {
+                var ec = ExecutionContext.Capture();
+                reply = () => ExecutionContext.Run(ec, _ => rig.View.Send("!i!:7¶answer"), null);
+                return true;
+            };
+            p.Send("!i!:7¶!slow¶"); rig.Pump(p);
+            rig.View.Send("!e!took"); rig.Back(p);
+            T.Seq(new[] { "!e!took" }, p.Got);
+            uint took = p.Link.AckSeq;
+            // The reply and an event are posted, and are on their way, when the page loses its place.
+            reply();
+            rig.View.Send("!e!dropped");
+            rig.View.Flush();
+            var inFlight = rig.Sink.Take();
+            T.True(inFlight.Count >= 1);
+            p.Reopen(new List<OutEntry>(), took);
+            var hello = p.TakeOut();
+            // Unity resets the page too, before it has read that HELLO.
+            rig.View.Receive(BridgeCarrier.EncodeText(new FrameHeader(FrameKind.Data, FrameFlags.Complete, s.Epoch, 999, took, 0), BridgeCarrier.PackEntries(new[] { "x" })));
+            rig.View.Drain();
+            T.Eq(BridgeSessionState.Resetting, s.State);
+            // The page, saying HELLO, drops all of it: frames as stale, and the RESET.
+            foreach (var d in inFlight) p.Receive(d);
+            foreach (var d in rig.Sink.Take()) p.Receive(d);
+            T.Eq("hello", p.State);
+            T.Seq(new[] { "!e!took" }, p.Got, "nothing arrived");
+            foreach (var d in hello) rig.View.Receive(d);
+            rig.View.Drain();
+            rig.Pump(p);
+            T.Eq("open", p.State);
+            T.Eq(1L, rig.View.Stats.Reopens);
+            T.Seq(new[] { "!e!took", "!i!:7¶answer", "!e!dropped" }, p.Got, "once each, in order");
+            T.Eq(0, s.OutstandingLegacyRequests);
+        });
+
+        T.Run("a RESET in the ordinary order: what the page took is not sent twice", () =>
+        {
+            var rig = new Rig();
+            rig.View.NotifyLoadStarted("https://w.example/"); rig.View.NotifyOnLoad();
+            var p = new TestPage("no-repeat"); p.Hello(); rig.Pump(p);
+            var s = rig.View.Current;
+            rig.View.Send("!e!one"); rig.View.Flush();
+            var posted = rig.Sink.Take();  // not acknowledged yet
+            rig.View.Receive(BridgeCarrier.EncodeText(new FrameHeader(FrameKind.Data, FrameFlags.Complete, s.Epoch, 999, 0, 0), BridgeCarrier.PackEntries(new[] { "x" })));
+            rig.View.Drain();
+            rig.View.Send("!e!two");
+            rig.View.Flush();
+            foreach (var d in posted) p.Receive(d);
+            foreach (var d in rig.Sink.Take()) p.Receive(d); // the RESET: p takes it after "!e!one"
+            rig.Pump(p);
+            T.Seq(new[] { "!e!one", "!e!two" }, p.Got);
+        });
+
         T.Run("lost HELLO: the page says it again and its queue runs in its session, in order", () =>
         {
             var rig = new Rig();

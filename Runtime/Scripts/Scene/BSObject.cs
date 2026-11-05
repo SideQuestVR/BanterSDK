@@ -27,7 +27,8 @@ namespace BS
         }
         public void AddComponent(int id, BSComponent component)
         {
-            banterComponents.TryAdd(id, component);
+            // The property worker can get here while the main thread is destroying this object.
+            banterComponents?.TryAdd(id, component);
         }
         public void RemoveComponent(int id)
         {

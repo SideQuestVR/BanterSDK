@@ -53,9 +53,6 @@ namespace BS.SDKEditor.Tests
         {
             guardWas = BSUnityEventGuard.DisabledForTests;
             BSUnityEventGuard.DisabledForTests = true;
-            // The experiments load bundles Unity may refuse with an error log: that is a result to record, not a test
-            // failure. Scoped to this test (reset in TearDown); each test asserts its own controls explicitly.
-            LogAssert.ignoreFailingMessages = true;
         }
 
         [TearDown]
@@ -74,7 +71,6 @@ namespace BS.SDKEditor.Tests
             }
             loaded.Clear();
             BSUnityEventGuard.DisabledForTests = guardWas;
-            LogAssert.ignoreFailingMessages = false;
             if (AssetDatabase.IsValidFolder(TempFolder) && !AssetDatabase.DeleteAsset(TempFolder))
                 Debug.LogError("[BundleProbe] could not delete " + TempFolder);
             if (Directory.Exists(OutputDir)) Directory.Delete(OutputDir, true);
@@ -89,6 +85,10 @@ namespace BS.SDKEditor.Tests
         /// </summary>
         static Dictionary<string, byte[]> BuildSources()
         {
+            // The experiments load bundles Unity may refuse with an error log: that is a result to record, not a test
+            // failure; each test asserts its own controls explicitly. Set here, in the test's body: [SetUp] runs in a
+            // LogScope of its own, so the flag set there never reached the test.
+            LogAssert.ignoreFailingMessages = true;
             if (AssetDatabase.IsValidFolder(TempFolder)) AssetDatabase.DeleteAsset(TempFolder);
             AssetDatabase.CreateFolder("Assets", TempFolderName);
             var builds = new List<AssetBundleBuild>();

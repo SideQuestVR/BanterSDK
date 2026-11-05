@@ -68,7 +68,7 @@ namespace BS
         // Upright seats (BSSeat.Pose.cs holds the pose). Declared here, last: the Bridge 2 lock lists [See] fields in
         // declaration order with new ones at the end, and a field in another partial file reflects first.
         [Tooltip("All modes use the authored pose and face the seat on entry. Legacy follows full seat rotation; upright modes keep seat tilt out of the view.")]
-        [See(initial = "1")][SerializeField] internal SeatViewMode viewMode = SeatViewMode.UprightFollowYaw;
+        [See(initial = "SeatViewMode.UprightFollowYaw")][SerializeField] internal SeatViewMode viewMode = SeatViewMode.UprightFollowYaw;
 
         const string LocalUser = "me";
 

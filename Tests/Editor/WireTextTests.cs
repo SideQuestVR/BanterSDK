@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using NUnit.Framework;
 
@@ -31,14 +32,24 @@ namespace BS.SDKEditor.Tests
             "null",
         };
 
-        [Test]
-        public void EncodeThenDecodeGivesTheSameText([ValueSource(nameof(RoundTripCases))] string text)
+        // A lone surrogate in a test's name is not valid XML, and the results file is: that case gets an ASCII name.
+        static IEnumerable<TestCaseData> RoundTrips()
+        {
+            foreach (var text in RoundTripCases)
+            {
+                var data = new TestCaseData(text);
+                yield return text.Contains("\ud800") ? data.SetName("{m}(lone surrogate)") : data;
+            }
+        }
+
+        [TestCaseSource(nameof(RoundTrips))]
+        public void EncodeThenDecodeGivesTheSameText(string text)
         {
             Assert.AreEqual(text, WireText.Decode(WireText.Encode(text)));
         }
 
-        [Test]
-        public void EncodedTextHoldsNoDelimiter([ValueSource(nameof(RoundTripCases))] string text)
+        [TestCaseSource(nameof(RoundTrips))]
+        public void EncodedTextHoldsNoDelimiter(string text)
         {
             Assert.IsFalse(WireText.HasDelimiter(WireText.Encode(text)), WireText.Encode(text));
         }

@@ -6,12 +6,19 @@ namespace BS.Bridge
     internal sealed class BridgeViewOptions
     {
         /// <summary>
-        /// Android's compat channel can deliver a page's first messages ahead of its LoadStarted. Then a HELLO only
-        /// claims an unclaimed LoadStarted whose URL matches its href (same host); otherwise it waits for the next one.
+        /// A page's HELLO may arrive before its LoadStarted: it then only claims an unclaimed LoadStarted whose URL matches
+        /// its href (same host), and otherwise waits for the next one. Set on Android, for Ora's compat channel, which could
+        /// deliver a page's first messages first. That channel has gone, and UnityConnect pushes LOAD_STARTED before it
+        /// evaluates the injection, so this may no longer be needed: taking it out waits for a device check.
         /// </summary>
         public bool LoadStartedMayTrail;
         /// <summary>A hold that never sees its LoadStarted + OnLoad is released after this long (and counted).</summary>
         public int HoldTimeoutMs = 5000;
+        /// <summary>
+        /// A revival can't be released while a newer load is pending (see Release). Held this long it is closed for good,
+        /// which fails what it asked: no document is held for ever, whatever order a host delivers things in.
+        /// </summary>
+        public int RevivalHoldLimitMs = 30000;
         /// <summary>
         /// Held bytes past which acks stop. 0 (the default): a held document's frames are never acknowledged, so the
         /// page's credit window bounds the hold, and an ack never covers work a CLOSE reports unconsumed.
@@ -49,6 +56,19 @@ namespace BS.Bridge
         /// reply draining over several frames never reaches it.
         /// </summary>
         public long MaxOutboundBytes = 2L * BridgeWire.MaxMessage;
+        /// <summary>
+        /// Queued for a document beyond this, a legacy reply loses its answer and goes as a small !ree! error: the await
+        /// still settles, and a burst larger than the page can take costs it those answers, not its session. Room for two
+        /// of the largest replies on top of a full queue of events.
+        /// </summary>
+        public long MaxOutboundHardBytes = 4L * BridgeWire.MaxMessage;
+        /// <summary>
+        /// Replies past MaxOutboundHardBytes since the page last acknowledged anything: more than this and the session
+        /// closes, which frees the queue. A page that is reading acknowledges many times a second, and a frozen one asks
+        /// nothing, so only a page that keeps asking without acknowledging gets here. What that page was still waiting
+        /// for is lost with the queue.
+        /// </summary>
+        public int MaxRepliesPastCap = 65536;
         public uint Families;
         public uint Caps;
         public BridgeReassembler.Budget ReassemblyBudget;
@@ -61,7 +81,7 @@ namespace BS.Bridge
         public long BadCarriers, StaleFrames, HostOnlyFromPage, ProtocolResets, Duplicates;
         public long LateReplies, DuplicateReplies, ReusedRequestIds, DroppedForClosedDocument, DroppedOps, DroppedNoSession;
         public long HeldItems, HoldTimeouts, HoldDiscarded, HoldOverflowDropped, HandlerErrors, Hellos, Refusals, Sessions;
-        public long OutboundDropped, Revivals, Reopens, FlushBudgetStops;
+        public long OutboundDropped, OutboundCloses, Revivals, RevivalsGivenUp, Reopens, FlushBudgetStops;
     }
 
     /// <summary>
@@ -388,11 +408,12 @@ namespace BS.Bridge
         /// A live document starts its session over, after a RESET or because it lost its place. It keeps its epoch, so
         /// replies in flight, its ledgers and its hold stand; only the link is new. Ora is FIFO, so its old frames have all
         /// arrived before this HELLO, and ours follow WELCOME. What it did not consume goes first, then what was waiting.
+        /// ack is the page's word for what it took, after a RESET too: a page already saying HELLO when our RESET crossed it
+        /// dropped everything in between, which only it can know.
         /// </summary>
         void Reopen(BridgeSession s, HelloPayload hello, uint ack)
         {
-            // After a RESET everything already posted reached the page ahead of it, and the page consumed it there.
-            var rest = s.Link.TakeUnconsumed(s.State == BridgeSessionState.Resetting ? s.Link.NextSeq - 1 : ack);
+            var rest = s.Link.TakeUnconsumed(ack);
             s.Link.Reassembler.Reset();
             s.Link = NewLink(hello);
             s.Link.Epoch = s.Epoch;
@@ -443,8 +464,8 @@ namespace BS.Bridge
 
         /// <summary>
         /// Which LoadStarted belongs to a new document. An unclaimed LoadStarted (one that came after the previous
-        /// document's) is this document's, except on lanes where messages can overtake LoadStarted: there it must
-        /// also match the href's host, or the document waits for the next LoadStarted.
+        /// document's) is this document's, except with LoadStartedMayTrail: there it must also match the href's host, or
+        /// the document waits for the next LoadStarted.
         /// </summary>
         void Claim(BridgeSession s)
         {
@@ -481,7 +502,7 @@ namespace BS.Bridge
             if (s == null || !s.IsLive) return;
             if (s.ClaimedLoad == 0 && !s.Revival)
             {
-                // The document said HELLO first (Android): this is its LoadStarted.
+                // The document said HELLO first (LoadStartedMayTrail): this is its LoadStarted.
                 s.ClaimedLoad = loadGen;
                 lastClaimedLoad = loadGen;
                 return;
@@ -511,7 +532,8 @@ namespace BS.Bridge
                 {
                     // A revival never takes a load: the one pending belongs to the navigation that replaced this
                     // document, which may just be slow. Releasing would run this document's work in that world, so it
-                    // stays held until the newer document supersedes it, a LoadStarted closes it, or it says BYE.
+                    // stays held until the newer document supersedes it, a LoadStarted closes it, it says BYE, or
+                    // RevivalHoldLimitMs runs out (Tick).
                     s.HoldExpired = true;
                     Log($"[Bridge] Revived document epoch {s.Epoch} stays held after {Options.HoldTimeoutMs} ms: a newer load is pending ({s.Hold.Count} held).");
                     return;
@@ -549,12 +571,23 @@ namespace BS.Bridge
             Stats.HeldItems++;
         }
 
-        /// <summary>Timers (main thread, once per frame): the hold timeout.</summary>
+        /// <summary>Timers (main thread, once per frame): the hold timeouts.</summary>
         public void Tick()
         {
             var s = current;
-            if (s == null || !s.IsLive || !s.Held || s.HoldExpired) return;
-            if (clockMs() - s.HeldSinceMs >= Options.HoldTimeoutMs) Release(s, true);
+            if (s == null || !s.IsLive || !s.Held) return;
+            long heldMs = clockMs() - s.HeldSinceMs;
+            if (!s.HoldExpired)
+            {
+                if (heldMs >= Options.HoldTimeoutMs) Release(s, true);
+            }
+            else if (heldMs >= Options.RevivalHoldLimitMs)
+            {
+                // Neither run nor kept: Reason.Timeout tells the page not to ask again, so what it is waiting for fails.
+                Stats.RevivalsGivenUp++;
+                Log($"[Bridge] Gave up on revived document epoch {s.Epoch} after {heldMs} ms held ({s.Hold.Count} held): the load it waits behind never finished.");
+                CloseSession(s, BridgeReason.Timeout, true);
+            }
         }
 
         /// <summary>The last of the page's DATA seqs whose content will run: held work is not consumed.</summary>
@@ -746,6 +779,11 @@ namespace BS.Bridge
             }
             var s = current;
             bool live = s != null && s.IsLive;
+            if (live && s.Link.LastAckReceived != s.AckAtCap)
+            {
+                s.AckAtCap = s.Link.LastAckReceived;
+                s.RepliesPastCap = 0;
+            }
             foreach (var m in batch)
             {
                 if (m.Epoch != 0 && (!live || s.Epoch != m.Epoch))
@@ -775,6 +813,21 @@ namespace BS.Bridge
                     if (m.LegacyReplyId > 0) s.Link.EnqueueText("!i!:" + m.LegacyReplyId + "¶!ree!¶bridge: reply too large");
                     continue;
                 }
+                if ((m.LegacyReplyId > 0 || m.TypedReplyId > 0) && s.Link.QueuedCost > Options.MaxOutboundHardBytes)
+                {
+                    s.RepliesPastCap++;
+                    if (!s.ReplyFailLogged)
+                    {
+                        s.ReplyFailLogged = true;
+                        Log($"[Bridge] Document epoch {s.Epoch} has {s.Link.QueuedCost} bytes queued (over {Options.MaxOutboundHardBytes}): failing its replies until it catches up.");
+                    }
+                    if (m.LegacyReplyId > 0)
+                    {
+                        Stats.OutboundDropped++;
+                        s.Link.EnqueueText("!i!:" + m.LegacyReplyId + "¶!ree!¶bridge: too many replies queued");
+                        continue;
+                    }
+                }
                 if (m.LegacyReplyId == 0 && m.TypedReplyId == 0 && s.Link.QueuedCost > Options.MaxOutboundBytes)
                 {
                     Stats.OutboundDropped++;
@@ -789,6 +842,13 @@ namespace BS.Bridge
                 else s.Link.EnqueueOp(m.Op);
             }
             batch.Clear();
+            if (live && s.RepliesPastCap > Options.MaxRepliesPastCap)
+            {
+                // Closed, not reset: a RESET would keep the queue, and raw strings would go on adding replies to it.
+                Stats.OutboundCloses++;
+                Log($"[Bridge] Closed document epoch {s.Epoch}: {s.RepliesPastCap} replies past {Options.MaxOutboundHardBytes} queued bytes and nothing acknowledged.");
+                CloseSession(s, BridgeReason.Overflow, true);
+            }
             if (paused) return 0;
 
             int posted = 0;

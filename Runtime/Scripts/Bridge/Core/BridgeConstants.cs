@@ -96,6 +96,7 @@ namespace BS.Bridge
     {
         public const byte None = 0;
         public const byte PageHide = 1;
+        /// <summary>In a CLOSE: a revival was held past its limit, and the page must not ask again.</summary>
         public const byte Timeout = 2;
         public const byte AboutDocument = 4;
         public const byte NotTop = 5;
@@ -104,7 +105,7 @@ namespace BS.Bridge
         public const byte Superseded = 8;
         public const byte Version = 9;
         public const byte Closed = 11;
-        /// <summary>A held document's frames grew past the hold's cap.</summary>
+        /// <summary>A held document's frames, or what is queued for a document, grew past its cap.</summary>
         public const byte Overflow = 13;
     }
 

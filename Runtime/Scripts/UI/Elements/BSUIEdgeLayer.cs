@@ -74,6 +74,11 @@ namespace BS.UI.Elements
         void ParseEdges(string json)
         {
             _edges.Clear();
+            if (!PageJson.IsSafe(json))
+            {
+                Debug.LogWarning("[BSUIEdgeLayer] The edges are nested too deep to parse.");
+                return;
+            }
             try
             {
                 // JsonUtility cannot parse a bare array; wrap it. It handles \uXXXX escapes,

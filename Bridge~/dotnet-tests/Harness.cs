@@ -225,11 +225,12 @@ sealed class TestPage
             var rest = Link.TakeUnconsumed(c.ConsumedSeq);
             if (h.Kind == FrameKind.Close)
             {
+                if (c.Reason == BridgeReason.Timeout) { State = "closed"; return; } // told not to ask again
                 State = "parked"; // this document is being replaced: hold, never replay into the next world
                 foreach (var e in rest) if (e.IsText) Parked.Add(e.Text);
                 return;
             }
-            Reopen(rest);
+            Reopen(rest, Link.AckSeq);
             return;
         }
         if (!Link.OnAck(h.Ack)) throw new Exception("Unity acked the future");

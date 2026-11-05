@@ -6,7 +6,7 @@ using BS.Bridge;
 /// <summary>
 /// --peer: the real BridgeView driven over stdin/stdout by the real TS PageSession (interop.mjs).
 /// In:  "R <json string>" page message · "L <json url>" LoadStarted · "N" OnLoad · "S <json string>" Unity sends ·
-///      "D" drain+tick+flush · "Q" quit.
+///      "D" drain+tick+flush · "T <ms>" the clock moves on · "Q" quit.
 /// Out: "O <json string>" message to the page · "X <epoch> <json string>" a string Unity dispatched · "." end of step.
 /// Requests ("!i!:&lt;id&gt;¶…") are answered "!i!:&lt;id&gt;¶ok-&lt;epoch&gt;" unless the command is "!slow", whose
 /// answer is sent by the next "F" (finish) line, from the captured context (the way an await would).
@@ -45,6 +45,7 @@ static class Peer
                 case 'N': rig.View.NotifyOnLoad(); break;
                 case 'S': rig.View.Send(JsonSerializer.Deserialize<string>(arg)); break;
                 case 'F': slow?.Invoke(); slow = null; break;
+                case 'T': rig.Now += long.Parse(arg); break;
                 case 'Q': stdout.Flush(); return 0;
                 case 'D':
                     rig.View.Drain();

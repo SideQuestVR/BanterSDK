@@ -39,7 +39,7 @@ namespace BS.Bridge
         public bool Revival;
         public bool Held;
         public long HeldSinceMs;
-        /// <summary>The hold timed out but its release would run this document's work in a newer load's world.</summary>
+        /// <summary>The hold timed out but its release would run this document's work in a newer load's world: closed at RevivalHoldLimitMs.</summary>
         public bool HoldExpired;
         public long LastHeardMs;
         /// <summary>Held payload in bytes (text 2 per UTF-16 unit).</summary>
@@ -51,6 +51,10 @@ namespace BS.Bridge
         public uint FirstHeldFramedSeq;
         public bool HoldOverflowLogged;
         public bool OutboundDropLogged;
+        public bool ReplyFailLogged;
+        /// <summary>Replies past MaxOutboundHardBytes since AckAtCap changed: what tells a reading page from one that isn't.</summary>
+        public int RepliesPastCap;
+        public uint AckAtCap;
 
         /// <summary>Legacy request ids ("!i!:&lt;id&gt;¶") dispatched for this document and not answered yet.</summary>
         internal readonly HashSet<int> LegacyLedger = new HashSet<int>();

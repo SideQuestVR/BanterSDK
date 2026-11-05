@@ -857,7 +857,10 @@ namespace BS
         // ------------------------------------------------------------------------------------------------------------
         // Bridge 2 sessions.
 
-        /// <summary>Only Android delivers a page's own messages ahead of its LoadStarted.</summary>
+        /// <summary>
+        /// On Android, for Ora's compat channel, which could deliver a page's first messages ahead of its LoadStarted. That
+        /// channel has gone, so this may no longer be needed: taking it out waits for a device check.
+        /// </summary>
         internal const bool LoadStartedMayTrail =
 #if UNITY_ANDROID && !UNITY_EDITOR
             true;

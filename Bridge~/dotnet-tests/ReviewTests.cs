@@ -158,6 +158,109 @@ static class ReviewTests
             T.True(rig.View.Current.Link.HasOutbound);
         });
 
+        T.Run("a burst of replies past the hard cap fails those answers, each await settles once, and the session stays", () =>
+        {
+            var o = new BridgeViewOptions { MaxOutboundBytes = 64 * 1024, MaxOutboundHardBytes = 512 * 1024 };
+            var (rig, page) = Open("tokBurst", o);
+            var body = new string('r', 16000);
+            rig.Disp.OnText = (s, t) => { rig.View.Send("!i!:" + BridgeView.LegacyRequestId(t, true) + "¶" + body); return true; };
+            var burst = rig.View.Current;
+            const int asked = 100;
+            page.Got.Clear();
+            for (int i = 1; i <= asked; i++) page.Send("!i!:" + i + "¶GET");
+            rig.Pump(page, 400);
+            T.True(rig.View.Current == burst, "the same session");
+            T.Eq(BridgeSessionState.Open, burst.State);
+            T.Eq(0L, rig.View.Stats.OutboundCloses);
+            var replies = page.Got.Where(g => g.StartsWith("!i!:")).ToList();
+            T.Eq(asked, replies.Count, "every await settles");
+            T.Eq(asked, replies.Select(r => r.Substring(0, r.IndexOf('¶'))).Distinct().Count(), "once each");
+            int failed = replies.Count(r => r.Contains("¶!ree!¶"));
+            T.True(failed > 0 && failed < asked, "failed " + failed);
+        });
+
+        T.Run("a page past the hard cap that goes on acknowledging is not closed, however much it asks", () =>
+        {
+            var o = new BridgeViewOptions { MaxOutboundBytes = 64 * 1024, MaxOutboundHardBytes = 128 * 1024, MaxRepliesPastCap = 8, FlushMaxBytes = 32 * 1024 };
+            var (rig, page) = Open("tokReading", o);
+            var body = new string('r', 16000);
+            rig.Disp.OnText = (s, t) => { rig.View.Send("!i!:" + BridgeView.LegacyRequestId(t, true) + "¶" + body); return true; };
+            var reading = rig.View.Current;
+            int asked = 0;
+            for (int round = 0; round < 60; round++)
+            {
+                for (int i = 0; i < 5; i++) page.Send("!i!:" + (++asked) + "¶GET");
+                rig.Pump(page, 1);
+            }
+            // Only a reply past the cap is dropped here, so this says it went past the cap and past the limit.
+            T.True(rig.View.Stats.OutboundDropped > o.MaxRepliesPastCap, "failed " + rig.View.Stats.OutboundDropped);
+            T.True(rig.View.Current == reading, "the same session");
+            T.Eq(0L, rig.View.Stats.OutboundCloses);
+        });
+
+        T.Run("a frozen page past the hard cap is left alone: it asks nothing, so the queue stops growing", () =>
+        {
+            var o = new BridgeViewOptions { MaxOutboundBytes = 64 * 1024, MaxOutboundHardBytes = 128 * 1024, MaxRepliesPastCap = 8 };
+            var (rig, page) = Open("tokFrozen", o);
+            var body = new string('r', 16000);
+            rig.Disp.OnText = (s, t) => { rig.View.Send("!i!:" + BridgeView.LegacyRequestId(t, true) + "¶" + body); return true; };
+            var frozen = rig.View.Current;
+            for (int i = 1; i <= 8; i++) page.Send("!i!:" + i + "¶GET");
+            page.Flush();
+            foreach (var u in page.TakeOut()) rig.View.Receive(u);
+            rig.View.Drain();
+            rig.View.Flush();
+            long queued = frozen.Link.QueuedCost;
+            for (int i = 0; i < 100; i++) { rig.View.Flush(); rig.Sink.Take(); }
+            T.True(rig.View.Current == frozen, "the same session");
+            T.True(frozen.Link.QueuedCost <= queued, "no growth");
+            T.Eq(0L, rig.View.Stats.OutboundCloses);
+        });
+
+        T.Run("a page that keeps asking and never acknowledges is closed past the cap on replies, framed or raw, and the queue is freed", () =>
+        {
+            foreach (var raw in new[] { false, true })
+            {
+                var o = new BridgeViewOptions { MaxOutboundBytes = 64 * 1024, MaxOutboundHardBytes = 512 * 1024, MaxRepliesPastCap = 64 };
+                var (rig, page) = Open("tokFlood" + raw, o);
+                page.HonorWindow = false;
+                var body = new string('r', 4000);
+                rig.Disp.OnText = (s, t) => { rig.View.Send("!i!:" + BridgeView.LegacyRequestId(t, true) + "¶" + body); return true; };
+                var flooded = rig.View.Current;
+                long maxQueued = 0;
+                int asked = 0;
+                string close = null;
+                while (rig.View.Current == flooded && asked < 5000)
+                {
+                    string request = "!i!:" + (asked++ % 9999 + 1) + "¶GET";
+                    if (raw) rig.View.Receive(request);
+                    else { page.Send(request); page.Flush(); foreach (var u in page.TakeOut()) rig.View.Receive(u); }
+                    rig.View.Drain();
+                    rig.View.Flush();
+                    foreach (var d in rig.Sink.Take()) // read by nobody: nothing is ever acknowledged
+                        if (BridgeCarrier.TryDecode(d, out var f) == BridgeError.None && f.Header.Kind == FrameKind.Close) close = d;
+                    maxQueued = Math.Max(maxQueued, flooded.Link.QueuedCost);
+                }
+                T.Eq(null, rig.View.Current);
+                T.Eq(BridgeSessionState.Closed, flooded.State);
+                T.Eq(BridgeReason.Overflow, flooded.CloseReason);
+                T.Eq(1L, rig.View.Stats.OutboundCloses);
+                T.True(maxQueued <= o.MaxOutboundHardBytes + 2 * 4100 * 2 + (o.MaxRepliesPastCap + 2) * 256, "queued " + maxQueued);
+                T.Eq(0L, flooded.Link.QueuedCost, "the queue is freed");
+                T.True(close != null, "the page is told");
+                // More of the same now reaches nobody, and nothing queues.
+                rig.View.Receive("!i!:1¶GET");
+                rig.View.Drain();
+                rig.View.Flush();
+                T.True(!rig.View.HasOutbound);
+                // A page that was only frozen comes back: it parks, and revives like any closed document.
+                page.Receive(close);
+                T.Eq("parked", page.State);
+                page.Revive(); rig.Pump(page);
+                T.Eq("open", page.State);
+            }
+        });
+
         T.Run("[P5] the drain budget counts ingest too; stale frames are refused from the header", () =>
         {
             var rig = new Rig();
@@ -311,7 +414,7 @@ static class ReviewTests
             var rs = rig2.View.Current;
             T.True(rs.Held && rs.ClaimedLoad == 0, "it does not take the load that closed it");
             rig2.Now += 5000; rig2.View.Tick(); rig2.Pump(z);
-            rig2.Now += 60000; rig2.View.Tick(); rig2.Pump(z);
+            rig2.Now += 20000; rig2.View.Tick(); rig2.Pump(z);
             T.Eq(0, rig2.Disp.Ran.Count, "nothing ran in the pending load's world");
             T.True(rs.Held && rs.ClaimedLoad == 0 && rs.HoldExpired, rs.ToString());
             var w = new TestPage("tokZW", "https://other.example/slow"); w.Hello(); rig2.Deliver(w);
@@ -339,6 +442,53 @@ static class ReviewTests
             var n = new TestPage("tokVN", "https://other.example/next"); n.Hello(); rig3.Pump(n);
             T.True(!rig3.View.Current.Held && rig3.View.Current.ClaimedLoad == rig3.View.LoadGeneration, rig3.View.Current.ToString());
             T.Eq(0, rig3.Disp.Ran.Count);
+        });
+
+        T.Run("a revival is never held for ever: at the limit it is closed for good, and the pending load stays free", () =>
+        {
+            var (rig, z) = Open("tokFor");
+            rig.View.NotifyLoadStarted("https://other.example/never-commits");
+            rig.View.NotifyOnLoad();
+            z.Send("!u!late"); rig.Pump(z);
+            T.Eq("parked", z.State);
+            z.Revive(); rig.Pump(z);
+            var rs = rig.View.Current;
+            rig.Now += 5000; rig.View.Tick();
+            T.True(rs.Held && rs.HoldExpired);
+            rig.Now += rig.View.Options.RevivalHoldLimitMs - 5000 - 1; rig.View.Tick();
+            T.Eq(BridgeSessionState.Open, rs.State, "not yet");
+            rig.Now += 1; rig.View.Tick();
+            T.Eq(BridgeSessionState.Closed, rs.State);
+            T.Eq(BridgeReason.Timeout, rs.CloseReason);
+            T.Eq(1L, rig.View.Stats.RevivalsGivenUp);
+            T.Eq(null, rig.View.Current);
+            T.Eq(0, rig.Disp.Ran.Count, "nothing of it ran in that load's world");
+            rig.Pump(z);
+            T.Eq("closed", z.State, "told not to ask again");
+            var w = new TestPage("tokForW", "https://other.example/never-commits"); w.Hello(); rig.Pump(w);
+            T.True(!rig.View.Current.Held && rig.View.Current.ClaimedLoad == rig.View.LoadGeneration, "a late document still gets its load: " + rig.View.Current);
+        });
+
+        T.Run("HELLO ahead of its LoadStarted, claiming another load of the same host: closed by its own LoadStarted, and not held for good", () =>
+        {
+            var rig = new Rig(new BridgeViewOptions { LoadStartedMayTrail = true });
+            rig.View.NotifyLoadStarted("https://world.example/a"); // nobody claims this one
+            rig.View.NotifyOnLoad();
+            var b = new TestPage("tokWrong", "https://world.example/b");
+            b.Hello(); rig.Pump(b);
+            T.Eq(rig.View.LoadGeneration, rig.View.Current.ClaimedLoad, "it claimed the wrong load");
+            b.Send("!sst!"); rig.Pump(b);
+            rig.View.NotifyLoadStarted("https://world.example/b"); // its own
+            rig.View.NotifyOnLoad();
+            rig.Pump(b);
+            T.Eq("parked", b.State);
+            b.Revive(); rig.Pump(b);
+            var rs = rig.View.Current;
+            for (int ms = 0; ms <= rig.View.Options.RevivalHoldLimitMs; ms += 100) { rig.Now += 100; rig.View.Tick(); }
+            T.Eq(null, rig.View.Current);
+            T.Eq(BridgeSessionState.Closed, rs.State);
+            rig.Pump(b);
+            T.Eq("closed", b.State);
         });
 
         T.Run("pagehide BYE out of band: what came before it still runs, then the document closes", () =>

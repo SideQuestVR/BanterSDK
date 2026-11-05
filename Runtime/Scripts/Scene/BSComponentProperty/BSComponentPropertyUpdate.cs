@@ -14,5 +14,6 @@ namespace BS
         public int cid;
         public string objName;
         public Action callback;
+        internal int retries;
     }
 }

@@ -17,6 +17,7 @@ static class Program
         OutboxTests.Run();
         ReviewTests.Run();
         RereviewTests.Run();
+        DrainQueueTests.Run();
         FuzzTests.Run(n, seed);
         Console.WriteLine($"\n{T.Passed} passed, {T.Failed} failed");
         foreach (var f in T.Failures) Console.WriteLine("  FAILED: " + f);

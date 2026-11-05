@@ -205,6 +205,11 @@ namespace BS
                 {
                     return null;
                 }
+                if (!PageJson.IsSafe(parametricPoints))
+                {
+                    Debug.LogWarning("[BSGeometry] parametricPoints are nested too deep to parse.");
+                    return null;
+                }
                 try
                 {
                     var pointsData = JsonUtility.FromJson<ParametricPoints>(parametricPoints);

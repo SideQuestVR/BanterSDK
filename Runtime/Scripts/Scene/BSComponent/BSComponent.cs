@@ -104,8 +104,8 @@ namespace BS
                 }
                 component.SyncProperties(true, () => done = true);
             });
-            // The callback comes with the last property update; a property that failed to apply, or was re-queued
-            // because its component went away, never calls it. Answer with what there is rather than never.
+            // The callback comes with the last property update; one that failed to apply never calls it, and one re-queued
+            // because its component went away only calls it when dropped. Answer with what there is rather than wait.
             var deadline = Time.realtimeSinceStartup + 5f;
             await new WaitUntil(() => done || Time.realtimeSinceStartup > deadline);
             if (!done) Debug.LogWarning("[Banter] GetProperties gave up waiting for component " + cid);

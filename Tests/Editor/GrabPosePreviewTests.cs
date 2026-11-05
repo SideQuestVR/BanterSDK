@@ -122,8 +122,7 @@ namespace BS.SDKEditor.Tests
                         var seedPalm = location + root.transform.right * .6f;
                         var pose = preview.Evaluate(BSGrabType.Soft, 0, false,
                             new Pose(seedPalm - rotation * EditorGrabPosePreview.PalmOffset(false), rotation));
-                        // The surface solver leaves body scale in its anchor; Unity scales joint anchors too.
-                        Assert.That(Vector3.Distance(Palm(pose, false), location + root.transform.right * .144f), Is.LessThan(.001f));
+                        Assert.That(Vector3.Distance(Palm(pose, false), location + root.transform.right * .12f), Is.LessThan(.001f));
                     }
                 }
             }

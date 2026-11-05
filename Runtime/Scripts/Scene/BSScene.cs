@@ -278,90 +278,26 @@ namespace BS
         public Guid InstanceID { get; private set; }
 
         public string LoadingStatus = "Please wait, loading live space...";
-        int pendingQLocked = 0;
-        int activeTaskLocked = 0;
-
-        //only to be accessed in main thread!
-        private Task activeTask = null;
-        private List<BSComponentPropertyUpdate> _pendingQueue;// = new List<BSComponentPropertyUpdate>();
+        // Unity -> JS property updates: applied off the main thread, by one worker at a time.
+        readonly BS.Bridge.DrainQueue<BSComponentPropertyUpdate> propertyUpdates;
 
         public void EnqueueChange(string change)
         {
             link.Send(APICommands.UPDATE + change);
         }
-        private void StartQ(bool onlyIfNull = false)
-        {
-            SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref activeTaskLocked, 1, 0) == 0));
-            try
-            {
-                if (activeTask != null && onlyIfNull)
-                {
-                    return;
-                }
-                activeTask = BS.TaskRunner.Run(() =>
-                {
-                    SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref pendingQLocked, 1, 0) == 0));
-                    var q = _pendingQueue;
-                    _pendingQueue = null;
-                    if (Interlocked.Exchange(ref pendingQLocked, 0) != 1)
-                    {
-                        Debug.LogWarning("unlock failed on pendingQLocked in activeTask!");
-                    }
-                    if (q != null)
-                    {
-                        DoPropertyUpdateQueue(q);
-                    }
-                    if (_pendingQueue != null)
-                    {
-                        StartQ(false);
-                    }
-                    else
-                    {
-                        SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref activeTaskLocked, 1, 0) == 0));
-                        activeTask = null;
-                        if (Interlocked.Exchange(ref activeTaskLocked, 0) != 1)
-                        {
-                            Debug.LogWarning("unlock failed on activeTaskLocked in activeTask!");
-                        }
-                    }
-                }, $"{nameof(BSScene)}.{nameof(StartQ)}");
-            }
-            finally
-            {
-                if (Interlocked.Exchange(ref activeTaskLocked, 0) != 1)
-                {
-                    Debug.LogWarning("unlock failed on activeTaskLocked in startQ finally!");
-                }
-            }
-        }
-
         private void EnqueuePropertyUpdates(List<BSComponentPropertyUpdate> updates)
         {
             if (updates.Count > 0)
             {
-                SpinWait.SpinUntil(() => (Interlocked.CompareExchange(ref pendingQLocked, 1, 0) == 0));
-                try
-                {
-                    if (_pendingQueue == null)
-                    {
-                        _pendingQueue = new List<BSComponentPropertyUpdate>();
-                    }
-                    _pendingQueue.AddRange(updates);
-                }
-                finally
-                {
-                    if (Interlocked.Exchange(ref pendingQLocked, 0) != 1)
-                    {
-                        Debug.LogWarning("unlock failed on pendingQLocked in EnqueuePropertyUpdates!");
-                    }
-                }
-                StartQ(true);
+                propertyUpdates.Add(updates);
             }
         }
 
         public BSScene()
         {
             InstanceID = Guid.NewGuid();
+            propertyUpdates = new BS.Bridge.DrainQueue<BSComponentPropertyUpdate>(DoPropertyUpdateQueue,
+                drain => BS.TaskRunner.Run(drain, $"{nameof(BSScene)}.{nameof(EnqueuePropertyUpdates)}"), Debug.LogException);
             users = new List<UserData>();
             events = new BSSceneEvents();
             _instance = this;
@@ -3492,9 +3428,14 @@ namespace BS
         }
 
 
+        // One retry a frame, so a few seconds. An object that hasn't turned up by then has been destroyed, and its updates
+        // would otherwise go round for as long as the world stays open.
+        const int MaxPropertyUpdateRetries = 300;
+
         private void DoPropertyUpdateQueue(List<BSComponentPropertyUpdate> toProcess)
         {
             List<BSComponentPropertyUpdate> toReenqueue = null;
+            int dropped = 0;
             for (int i = 0; i < toProcess.Count; i++)
             {
                 var property = toProcess[i];
@@ -3507,25 +3448,33 @@ namespace BS
                 {
                     component.SetProperty(property.name, property.type, property.value, property.callback);
                 }
+                else if (property.retries >= MaxPropertyUpdateRetries)
+                {
+                    dropped++;
+                    property.callback?.Invoke();
+                }
                 else
                 {
                     // This is here because in some odd situation maybe unity initialises components in a weird order. I have never had this happen, but if a component
-                    // tries to set properties before the object exists then this could hit. This will re-queue the property to be set later. This will likely result 
-                    // in a memory leak, so for now im removing it and instead logging here.
+                    // tries to set properties before the object exists then this could hit. This will re-queue the property to be set later, up to MaxPropertyUpdateRetries.
                     // LogLine.Do(Color.red, LogTag.Banter, "Component not found for property: " + property.name + " (" + property.type + ") on " + property.componentType + " for component " + property.cid + " on object " + property.oid);
                     if (toReenqueue == null)
                     {
                         toReenqueue = new List<BSComponentPropertyUpdate>();
                     }
+                    property.retries++;
                     toReenqueue.Add(property);
                     //ReEnque(property);
                 }
+            }
+            if (dropped > 0)
+            {
+                Debug.LogWarning($"[Banter] Dropped {dropped} property updates: their objects no longer exist");
             }
             if (toReenqueue?.Count > 0)
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
-                     Debug.LogWarning($"Having to reenqueue {toReenqueue.Count}");
                      EnqueuePropertyUpdates(toReenqueue);
                  }, $"{nameof(BSScene)}.{nameof(DoPropertyUpdateQueue)}"));
             }

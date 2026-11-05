@@ -82,7 +82,8 @@
     {"id": 77, "name": "Spawn"},
     {"id": 78, "name": "Teleporter"},
     {"id": 79, "name": "SpawnerObject"},
-    {"id": 80, "name": "PlatformFilter"}
+    {"id": 80, "name": "PlatformFilter"},
+    {"id": 81, "name": "WorldOption"}
   ],
   "propertyNames": [
     {"id": 0, "name": "hasUnity"},
@@ -379,7 +380,11 @@
     {"id": 291, "name": "includeInNonVR"},
     {"id": 292, "name": "rolloffMode"},
     {"id": 293, "name": "enableBirdFlight"},
-    {"id": 294, "name": "viewMode"}
+    {"id": 294, "name": "viewMode"},
+    {"id": 295, "name": "slot"},
+    {"id": 296, "name": "label"},
+    {"id": 297, "name": "isToggle"},
+    {"id": 298, "name": "isOn"}
   ],
   "tags": [
     {"index": 0, "name": "UserTag1"},
@@ -634,7 +639,11 @@
     {"name": "DESTROY_ASSET", "code": "!dra!"},
     {"name": "QUERY_ASSET", "code": "!qa!"},
     {"name": "SET_ASSET_PROPERTY", "code": "!sap!"},
-    {"name": "KEY_RELEASE", "code": "kr!"}
+    {"name": "KEY_RELEASE", "code": "kr!"},
+    {"name": "WORLD_STATE_OP", "code": "!wso!"},
+    {"name": "WORLD_OPTION_PRESSED", "code": "wop!"},
+    {"name": "FULL_WORLD_STATE_JSON", "code": "fwj!"},
+    {"name": "WORLD_STATE_JSON", "code": "wpj!"}
   ],
   "uiCommands": [
     {"name": "CREATE_UI_ELEMENT", "code": "!cui!"},
@@ -3058,7 +3067,7 @@
         {"name": "unseatOnJump", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 248, "initial": "true"},
         {"name": "useExitPosition", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 284, "initial": "false"},
         {"name": "exitPosition", "attr": "See", "type": "UnityEngine.Vector3", "wire": "Vector3", "propId": 283, "initial": "0,0,0.6"},
-        {"name": "viewMode", "attr": "See", "type": "BS.SeatViewMode", "wire": "Int", "propId": 294, "initial": "1"}
+        {"name": "viewMode", "attr": "See", "type": "BS.SeatViewMode", "wire": "Int", "propId": 294, "initial": "SeatViewMode.UprightFollowYaw"}
       ],
       "methods": [
         {"name": "_Sit", "returns": "System.Void", "params": []},
@@ -3148,6 +3157,19 @@
       ],
       "methods": [],
       "tsConstructor": ["includeOnMobile: boolean | any = true", "includeOnDesktop: boolean = true", "includeInVR: boolean = true", "includeInNonVR: boolean = true"]
+    },
+    {
+      "name": "WorldOption",
+      "cs": "BS.BSWorldOption",
+      "base": "BS.BSComponentBase",
+      "fields": [
+        {"name": "slot", "attr": "See", "type": "System.Int32", "wire": "Int", "propId": 295, "initial": "1"},
+        {"name": "label", "attr": "See", "type": "System.String", "wire": "String", "propId": 296},
+        {"name": "isToggle", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 297, "initial": "false"},
+        {"name": "isOn", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 298, "initial": "false"}
+      ],
+      "methods": [],
+      "tsConstructor": ["slot: number | any = 1", "label: String = new String()", "isToggle: boolean = false", "isOn: boolean = false"]
     }
   ],
   "jsAliases": [
