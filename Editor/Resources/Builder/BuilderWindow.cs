@@ -235,6 +235,9 @@ public class BuilderWindow : EditorWindow
         SceneView.duringSceneGui += OnSceneGUI;
         // Here as well as in ShowMainWindow: a window restored with the layout keeps whatever title it was saved with.
         titleContent = new GUIContent("Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
+        // A window that survives a domain reload still holds its old tree, and this builds a new one.
+        rootVisualElement.Clear();
+        rootVisualElement.styleSheets.Clear();
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
@@ -276,7 +279,7 @@ public class BuilderWindow : EditorWindow
         }
         else
         {
-            loginManager.GetCode();
+            loginManager.OnWindowFocused();
         }
         loginManager.OnLoginCompleted += () =>
         {
