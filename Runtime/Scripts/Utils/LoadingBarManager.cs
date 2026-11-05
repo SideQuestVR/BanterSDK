@@ -421,17 +421,8 @@ namespace BS
             }, $"{nameof(LoadingBarManager)}.{nameof(SetLoadProgress)}"));
         }
 
-        public string GetCancelButtonText()
-        {
-#if UNITY_STANDALONE_OSX
-            return "Press X";
-#elif UNITY_ANDROID
-            //TODO: windows VR butons?  Pico VR buttons?
-            return "Press both sticks";
-#else
-            return "Press both sticks or F6";
-#endif
-        }
+        public string GetCancelButtonText() => "Open the menu and press Go Home";
+
         public void UpdateCancelText(bool force = false, bool wasKicked = false)
         {
             // Legacy behaviour is unchanged: with no cancel text there was nothing to update. A presenter still
@@ -445,7 +436,7 @@ namespace BS
                 {
                     if (spinner != null) spinner.gameObject.SetActive(false);
                     if (loadFailed != null) loadFailed.SetActive(true);
-                    hint = GetCancelButtonText() + (scene.isFallbackHome ? " to retry" : scene.isHome ? " to go to the fallback lobby" : " to go home");
+                    hint = GetCancelButtonText() + (scene.isFallbackHome || scene.isHome ? " to retry" : "");
                     failed = true;
                 }
                 else if (wasKicked)

@@ -1,10 +1,9 @@
 namespace BS
 {
     /// <summary>
-    /// A check to run before JsonUtility parses text that a page or another client wrote. JsonUtility's parser recurses:
-    /// nesting deep enough overflows the native stack, which no catch can stop (in the Editor at depth 100,000; on IL2CPP
-    /// probably a crash of the process). Everything the SDK reads from a page nests a handful of levels at most.
-    /// Same rule as Ora's OraPageJson.IsSafe, without its size limit: geometry can be large, and size is not the danger here.
+    /// A check to run before JsonUtility parses text that a page or another client wrote: it limits how deep the text nests.
+    /// Everything the SDK reads from a page nests a handful of levels at most.
+    /// Same rule as Ora's OraPageJson.IsSafe, without its size limit: geometry can be large.
     /// </summary>
     public static class PageJson
     {

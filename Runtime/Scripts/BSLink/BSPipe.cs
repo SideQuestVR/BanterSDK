@@ -79,6 +79,8 @@ public class BSPipe
         manager?.browserConnected.AddListener(() => connectedCallback());
         // A load in progress fails rather than waits for a browser that isn't coming.
         manager?.browserFailed.AddListener(reason => { if (link.scene != null && link.scene.loading) link.scene.Cancel(reason); });
+        // So does one for this view's window. Another view's failing, a menu or a BS Browser, is no reason to fail the world.
+        view.windowFailed.AddListener(reason => { if (link.scene != null && link.scene.loading) link.scene.Cancel(reason); });
         if (manager != null && manager.connected)
             connectedCallback();
         view.browserMessage.AddListener((reqId, command, data) =>
