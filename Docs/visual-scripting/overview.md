@@ -41,7 +41,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 |------|---------|
 | On Click | A user clicked the object's collider, which must be on the UI or Menu layer. The object input defaults to this object; outputs the click `Point` and `Normal` |
 
-**Held events** (`Events > BS > HeldEvents`) — fire while a player holds the object. They need a **BS Held Events** component on the object, which makes it grabbable and reports the input (see [HeldEvents](../components/vr-interaction.md#heldevents)); like anything grabbable, its collider goes on the Grabbable layer. The object input defaults to this object; every held event outputs `Is Left`, which reports which hand.
+**Held events** (`Events > BS > HeldEvents`) — fire while a player holds the object. On Grab and On Release fire for anything a player grabs. The others need a **BS Held Events** component on the object, which makes it grabbable and reports the input (see [HeldEvents](../components/vr-interaction.md#heldevents)); like anything grabbable, its collider goes on the Grabbable layer. The object input defaults to this object; every held event outputs `Is Left`, which reports which hand.
 
 | Node | Purpose |
 |------|---------|

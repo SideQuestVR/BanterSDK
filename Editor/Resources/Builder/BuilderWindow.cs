@@ -1114,8 +1114,8 @@ public class BuilderWindow : EditorWindow
             BeginUploadProgress(3);
             // One platform-agnostic combined bundle (encrypted Basis .bee content) hosted as asset.world.
             // Every platform loads this single file and ranged-GETs its own section; the runtime falls back
-            // to legacy per-platform windows.banter / android.banter for spaces that predate it. Missing
-            // file is skipped.
+            // to legacy per-platform windows.banter / android.banter for spaces that predate it. A missing
+            // file fails the upload (see UploadWorldFile).
             yield return UploadWorldFile("asset.world", UploadAssetType.WorldAsset, UploadAssetTypePlatform.Any, NextUploadStep("Uploading asset.world"));
             yield return UploadWorldFile("index.html", UploadAssetType.Index, UploadAssetTypePlatform.Any, NextUploadStep("Uploading index.html"));
             var script = WorldScriptFile();
@@ -1240,7 +1240,17 @@ public class BuilderWindow : EditorWindow
         }
         else
         {
-            status.AddStatus("File not found, skipping: " + file);
+            // A world can have no script, but without asset.world or index.html nothing reached the world, and the
+            // run must not end in "Upload complete".
+            if (name == "asset.world" || name == "index.html")
+            {
+                uploadHadFailure = true;
+                status.AddStatus("FAILED: required file not found: " + file);
+            }
+            else
+            {
+                status.AddStatus("File not found, skipping: " + file);
+            }
             yield break;
         }
         var data = File.ReadAllBytes(file);

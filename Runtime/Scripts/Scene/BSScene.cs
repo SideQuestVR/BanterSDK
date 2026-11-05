@@ -318,11 +318,34 @@ namespace BS
         #region Player Events
         public void Release(GameObject obj, HandSide side = HandSide.LEFT)
         {
+            RaiseHeldEvent(obj, "OnRelease", side, events => events.onRelease);
             link.OnRelease(obj, side);
         }
         public void Grab(GameObject obj, Vector3 point, HandSide side = HandSide.LEFT)
         {
+            RaiseHeldEvent(obj, "OnGrab", side, events => events.onGrab);
             link.OnGrab(obj, point, side);
+        }
+
+        /// <summary>
+        /// Visual Scripting On Grab / On Release and BSPlayerEvents for an object grabbed without BS Held Events, with the
+        /// arguments ControllerHeldEvents uses. BS Held Events raises these itself, so an object under one is left alone
+        /// and nothing fires twice.
+        /// </summary>
+        internal static void RaiseHeldEvent(GameObject obj, string hook, HandSide side, Func<BSPlayerEvents, UnityEvent<HandSide>> pick)
+        {
+            if (!obj || obj.GetComponentInParent<ControllerHeldEvents>() != null) return;
+            try
+            {
+                var events = obj.GetComponent<BSPlayerEvents>();
+                if (events) pick(events)?.Invoke(side);
+                EventBus.Trigger(hook, new CustomEventArgs(UnityId(obj).ToString(), new object[] { side }));
+            }
+            catch (Exception e)
+            {
+                // A world's graph must not stop the page's grab event or the grab's network ownership.
+                Debug.LogException(e, obj);
+            }
         }
         public void Click(GameObject obj, Vector3 point, Vector3 normal)
         {
