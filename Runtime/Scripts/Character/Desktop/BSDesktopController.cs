@@ -366,7 +366,7 @@ namespace BS
         void ApplyLook()
         {
             var yaw = Quaternion.Euler(0f, _yaw, 0f);
-            transform.rotation = HasAuthoredSeatPose && _seatViewMode == SeatViewMode.Legacy && _seat != null
+            transform.rotation = HasAuthoredSeatPose && _seatViewMode == SeatViewMode.FollowSeat && _seat != null
                 ? _seat.rotation * yaw : yaw;
             _head.localRotation = Quaternion.Euler(_pitch, 0f, 0f);
         }
@@ -819,7 +819,7 @@ namespace BS
         public Transform SeatAnchor => _seated ? _seat : null;
 
         /// <summary>The mode and pose captured on entry, unaffected by edits until the next sit.</summary>
-        public SeatViewMode SeatedViewMode => _seated ? _seatViewMode : SeatViewMode.Legacy;
+        public SeatViewMode SeatedViewMode => _seated ? _seatViewMode : SeatViewMode.FollowSeat;
         public SeatPose SeatedPose => _seatPose;
         public bool HasAuthoredSeatPose => _seated && _seatUsesPose;
 
@@ -846,7 +846,7 @@ namespace BS
         public void Seat(Transform anchor, bool unseatOnMove, bool unseatOnJump, System.Action onUnseat)
         {
             var seat = anchor != null ? anchor.GetComponent<BSSeat>() : null;
-            Seat(anchor, seat != null ? seat.ViewMode : SeatViewMode.Legacy,
+            Seat(anchor, seat != null ? seat.ViewMode : SeatViewMode.FollowSeat,
                 seat != null ? seat.Pose : SeatPose.Default, unseatOnMove, unseatOnJump, onUnseat, seat != null);
         }
 
@@ -876,7 +876,7 @@ namespace BS
             _seatYaw = anchor.eulerAngles.y;
             _seatRotation = anchor.rotation;
             _seatViewMode = viewMode == SeatViewMode.UprightFollowYaw || viewMode == SeatViewMode.UprightIndependent
-                ? viewMode : SeatViewMode.Legacy;
+                ? viewMode : SeatViewMode.FollowSeat;
             _seatUsesPose = usePose;
             _seatPose = pose.Validated();
             _pitch = 0f;
@@ -887,7 +887,7 @@ namespace BS
             }
             else
             {
-                _yaw = _seatViewMode == SeatViewMode.Legacy ? 0f : SeatHeading(anchor.rotation);
+                _yaw = _seatViewMode == SeatViewMode.FollowSeat ? 0f : SeatHeading(anchor.rotation);
                 // Match DesktopHipModel's standing eye-to-hip distance without depending on the multiplayer assembly.
                 _seatPelvisLocal = _head.localPosition - Vector3.up * 0.65f;
             }
@@ -905,11 +905,11 @@ namespace BS
             // State first: the callback detaches the seat, which asks to unseat again.
             var anchor = _seat;
             var callback = _onUnseat;
-            if (_seatUsesPose && _seatViewMode == SeatViewMode.Legacy)
+            if (_seatUsesPose && _seatViewMode == SeatViewMode.FollowSeat)
                 _yaw = SeatHeading(_head.rotation);
             _seated = false;
             _seat = null;
-            _seatViewMode = SeatViewMode.Legacy;
+            _seatViewMode = SeatViewMode.FollowSeat;
             _seatUsesPose = false;
             _onUnseat = null;
 

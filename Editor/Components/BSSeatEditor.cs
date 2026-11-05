@@ -14,7 +14,7 @@ namespace BS.SDKEditor
         static readonly string[] TargetLabels = { "Pelvis", "Left sole", "Right sole", "Left knee", "Right knee" };
         static readonly int ExitControlHint = "BSSeatExitControl".GetHashCode();
         static BSSeatEditor editing;
-        bool previousToolsHidden, showPreview = true, showNumbers;
+        bool previousToolsHidden, showPreview = true;
         Target poseTarget;
         SeatPosePreview preview;
 
@@ -64,15 +64,36 @@ namespace BS.SDKEditor
             return root;
         }
 
+        // Not a plain enum field: that would also list the obsolete Legacy alias of Follow Seat. Index = enum value.
+        static readonly GUIContent[] ViewModes =
+        {
+            new GUIContent("Follow Seat"), new GUIContent("Upright Follow Yaw"), new GUIContent("Upright Independent")
+        };
+
+        void DrawViewMode()
+        {
+            var mode = serializedObject.FindProperty("viewMode");
+            var rect = EditorGUILayout.GetControlRect();
+            var label = new GUIContent("View Rotation", mode.tooltip);
+            using (new EditorGUI.PropertyScope(rect, label, mode))
+            {
+                EditorGUI.BeginChangeCheck();
+                var value = EditorGUI.Popup(rect, label, mode.intValue, ViewModes);
+                if (EditorGUI.EndChangeCheck()) mode.intValue = value;
+            }
+        }
+
         void DrawInspector()
         {
             if (target == null) return;
             var seat = (BSSeat)target;
             serializedObject.Update();
-            EditorGUILayout.PropertyField(serializedObject.FindProperty("viewMode"), new GUIContent("View Rotation"));
-            EditorGUILayout.HelpBox(seat.ViewMode == SeatViewMode.Legacy
-                ? "Legacy uses this pelvis and leg pose and carries the view with the seat's full rotation."
+            DrawViewMode();
+            EditorGUILayout.HelpBox(seat.ViewMode == SeatViewMode.FollowSeat
+                ? "Follow Seat uses this pelvis and leg pose and carries the view with the seat's full rotation."
                 : "Seat tilt affects the pelvis and legs. The tracked head and hands remain free; unreachable feet keep natural leg lengths.", MessageType.Info);
+            if (seat.ViewMode != SeatViewMode.UprightIndependent)
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("viewSmoothing"), new GUIContent("View Smoothing"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("unseatOnMove"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("unseatOnJump"));
             EditorGUILayout.PropertyField(serializedObject.FindProperty("useExitPosition"));
@@ -122,7 +143,6 @@ namespace BS.SDKEditor
                 {
                     EditorGUILayout.HelpBox("Click a pelvis, sole or knee point, then use the Move (W) gizmo. Press E to rotate the selected pelvis or sole. Knees bend within the leg's reach while feet stay in place.", MessageType.Info);
                 }
-                var pose = seat.Pose;
                 if (GUILayout.Button("Reset Seated Pose")) WritePose(serializedObject.FindProperty("pose"), SeatPose.Default);
                 // File dialogs would break this IMGUI layout pass, so they open after it.
                 using (new EditorGUILayout.HorizontalScope())
@@ -131,20 +151,6 @@ namespace BS.SDKEditor
                     if (GUILayout.Button("Load Preset…")) EditorApplication.delayCall += () => BSPosePresetFile.Load(seat);
                 }
                 BSPosePresetFile.DrawFolderPresets(BSPosePresetFile.SeatKind, path => BSPosePresetFile.Load(seat, path));
-                showNumbers = EditorGUILayout.Foldout(showNumbers, "Pose Values", true);
-                if (showNumbers)
-                {
-                    EditorGUI.BeginChangeCheck();
-                    pose.pelvisPosition = EditorGUILayout.Vector3Field("Pelvis Position", pose.pelvisPosition);
-                    pose.pelvisRotation = Quaternion.Euler(EditorGUILayout.Vector3Field("Pelvis Rotation", pose.pelvisRotation.eulerAngles));
-                    pose.leftFootPosition = EditorGUILayout.Vector3Field("Left Sole Position", pose.leftFootPosition);
-                    pose.leftFootRotation = Quaternion.Euler(EditorGUILayout.Vector3Field("Left Sole Rotation", pose.leftFootRotation.eulerAngles));
-                    pose.rightFootPosition = EditorGUILayout.Vector3Field("Right Sole Position", pose.rightFootPosition);
-                    pose.rightFootRotation = Quaternion.Euler(EditorGUILayout.Vector3Field("Right Sole Rotation", pose.rightFootRotation.eulerAngles));
-                    pose.leftKneeHint = EditorGUILayout.Vector3Field("Left Knee Hint", pose.leftKneeHint);
-                    pose.rightKneeHint = EditorGUILayout.Vector3Field("Right Knee Hint", pose.rightKneeHint);
-                    if (EditorGUI.EndChangeCheck()) WritePose(serializedObject.FindProperty("pose"), pose.Validated());
-                }
             }
             if (serializedObject.ApplyModifiedProperties()) SceneView.RepaintAll();
         }
