@@ -17,7 +17,7 @@ namespace BS.SDKEditor.Tests
             return node;
         }
 
-        // ------------------------------------------------------------------ S1: case variants of judged names
+        // ------------------------------------------------------------------ Case variants of judged names
 
         [Test]
         public void CaseVariantsOfAJudgedGroupAreRefusedWhereTheDataIsLive()

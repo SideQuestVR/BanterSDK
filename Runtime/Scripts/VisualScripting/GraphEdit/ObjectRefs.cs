@@ -142,7 +142,7 @@ namespace BS
             ResolveSingle(descriptor, out failed, IsAssetKind(descriptor) && Application.isPlaying ? WorldAssets.Collect() : null);
 
         /// <param name="world">
-        /// What asset kinds may resolve to (S1 N8): the world's own assets. Null means unrestricted, which only edit mode
+        /// What asset kinds may resolve to: the world's own assets. Null means unrestricted, which only edit mode
         /// uses: there is no page and no world there, and the script-graph sync window sees the open project.
         /// </param>
         internal static UnityObject ResolveSingle(ObjectRefDescriptor descriptor, out bool failed, WorldAssets world)
@@ -185,13 +185,13 @@ namespace BS
                         // loaded, nothing is loaded on demand here.
                         foreach (var candidate in Resources.FindObjectsOfTypeAll(assetType))
                         {
-                            // Never something made at runtime (S1). Every session's staging graph is one, under a
+                            // Never something made at runtime. Every session's staging graph is one, under a
                             // predictable name: resolving it let a page point a live Subgraph or Set Script Graph at
                             // a graph it then edited in place, past the install check. Applied graphs and the
                             // client's own runtime objects carry the same flags.
                             if (IsRuntimeMade(candidate)) continue;
                             if (candidate.name != descriptor.name) continue;
-                            // Scene objects found this way must still be the world's own (S1).
+                            // Scene objects found this way must still be the world's own.
                             if (candidate is GameObject candidateObject)
                             {
                                 if (BSWorldScope.Contains(candidateObject)) return candidate;
@@ -202,9 +202,7 @@ namespace BS
                                 if (BSWorldScope.Contains(candidateComponent)) return candidate;
                                 continue;
                             }
-                            // Any other loaded object only if it is the world's own (S1 N8): before, a page could name
-                            // the client's clips, ScriptableObjects and macros, which neither the gate nor the
-                            // UnityEvent guard has judged.
+                            // Any other loaded object only if it is the world's own.
                             if (world == null || world.Contains(candidate)) return candidate;
                         }
                         // Not referenced by the world's content yet, but shipped in one of its kit bundles.
@@ -252,7 +250,7 @@ namespace BS
     }
 
     /// <summary>
-    /// The non-scene objects a page's graph may name (S1 N8): the world's own assets, as far as the runtime can tell.
+    /// The non-scene objects a page's graph may name: the world's own assets, as far as the runtime can tell.
     /// </summary>
     /// <remarks>
     /// <para>Unity cannot say which bundle a loaded object came from, and a streamed scene bundle cannot list its assets,
@@ -319,7 +317,7 @@ namespace BS
                     if (!string.Equals(System.IO.Path.GetFileNameWithoutExtension(path), name, StringComparison.OrdinalIgnoreCase)) continue;
                     var asset = bundle.LoadAsset(path, type);
                     if (asset == null || asset.name != name) continue;
-                    // Loaded straight from the bundle, so never judged by the world's load (S1 R3-2): judged now, or refused.
+                    // Loaded straight from the bundle, so never judged by the world's load: judged now, or refused.
                     return BSUnityEventGuard.JudgeKitAsset(asset, path) ? asset : null;
                 }
             }

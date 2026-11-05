@@ -4,9 +4,7 @@ namespace BS
 {
     /// <summary>
     /// Which scene objects belong to the current world, as opposed to the client around it (player rig, menus, platform
-    /// services). Page-driven tools that resolve objects by name, path or id must stay inside this scope; before it, the
-    /// page's script-graph bridge could bind graphs to any ScriptMachine or GameObject Unity could find
-    /// (S1 in notes/creator-sdk-issues-report-2026-11-03.md).
+    /// services). Page-driven tools that resolve objects by name, path or id must stay inside this scope.
     /// </summary>
     /// <remarks>
     /// The world is everything under the scene settings' world root (itself DontDestroyOnLoad), plus any regular loaded

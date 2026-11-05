@@ -64,7 +64,7 @@ namespace BS
             var refs = ObjectRefResolver.Resolve(envelope.objectRefDescriptors, warnings);
             var session = new ScriptGraphSession { sessionId = sessionId, target = envelope.meta?.target };
             session.staging = DeserializeAsset(sessionId, envelope.uvsJson, refs);
-            // The same strict gate as an install (S1): a staged graph is never run, but it is page-made, and nothing
+            // The same strict gate as an install: a staged graph is never run, but it is page-made, and nothing
             // later re-checks what a session was opened with.
             if (IsBlockedDeep(session.staging.graph))
             {
@@ -356,11 +356,10 @@ namespace BS
         /// state passed the install check and ran as soon as the parent's flow reached it. Envelopes
         /// come from a world file, so this is the gate that matters. Depth-capped against a macro
         /// that nests itself.</para>
-        /// <para>Strict since S1 (notes/creator-sdk-issues-report-2026-11-03.md): member nodes are judged by the explicit
+        /// <para>Strict: member nodes are judged by the explicit
         /// list whatever their namespace, type-configured units by their type, an id-less unit fails closed, and nesting
         /// past the depth cap is refused instead of passing unchecked. Graph assets the graph's data points at (a Set
-        /// Script Graph default, a macro in a graph variable) are judged the same way. Graphs authored into bundles keep
-        /// the legacy rule for the report-only week; see BanterStubsAllowed.EnforceStrictForBundles.</para>
+        /// Script Graph default, a macro in a graph variable) are judged the same way.</para>
         /// </remarks>
         public static bool IsBlockedDeep(IGraph graph, int depth = 0) =>
             BanterStubsAllowed.IsBlockedStrictDeep(graph, depth);
@@ -409,7 +408,7 @@ namespace BS
             var asset = ScriptableObject.CreateInstance<ScriptGraphAsset>();
             asset.name = $"ScriptGraphStaging_{sessionId}";
             // DontSave also marks it runtime-made: ObjectRefResolver never hands one out, so no page-built reference
-            // can point a live machine or subgraph at a staging asset (S1).
+            // can point a live machine or subgraph at a staging asset.
             asset.hideFlags = HideFlags.DontSave;
             object boxed = asset;
             var data = new SerializationData(json, refs ?? Array.Empty<UnityObject>());
@@ -417,7 +416,7 @@ namespace BS
             {
                 // FullSerializer constructs whatever a "$type" names before any element check can run, so JSON that
                 // reached us from a page (an envelope, a world-file override, an op-built graph on Apply) is screened
-                // by the serializer itself (S1).
+                // by the serializer itself.
                 if (screen)
                 {
                     BanterStubsAllowed.DeserializeIntoScreened(data, ref boxed, true);

@@ -13,10 +13,8 @@ using UnityObject = UnityEngine.Object;
 namespace BS.SDKEditor.Tests
 {
     /// <summary>
-    /// S1 in notes/creator-sdk-issues-report-2026-11-03.md: the allow-list trusted every member of every type in the
-    /// Visual Scripting namespaces, including VS's own reflection helpers. The strict rule judges member nodes by the
-    /// explicit list; the runtime install path (the page's script-graph bridge) enforces it now, and bundle-authored
-    /// graphs only report it until BanterStubsAllowed.EnforceStrictForBundles flips.
+    /// The strict allow-list rule: member nodes are judged by the explicit list, on graphs installed at runtime and on
+    /// graphs authored into bundles.
     /// </summary>
     public class AllowListGateTests
     {
@@ -358,7 +356,7 @@ namespace BS.SDKEditor.Tests
             }
         }
 
-        // ---- "Invoke by name, from data" (S1 re-review) --------------------------------------------------------------
+        // ---- "Invoke by name, from data" --------------------------------------------------------------
 
         /// <summary>
         /// A UI event whose persistent call names a static method by string. UnityEvent.Invoke resolves and runs it by
@@ -417,7 +415,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void UnityEventWithPersistentCalls_IsRefusedForBundleGraphsUnderEitherRule([Values(false, true)] bool enforce)
         {
-            // Not report-only: no legitimate graph carries a call-by-name in its own data (S1 round 3).
+            // Not report-only: no legitimate graph carries a call-by-name in its own data.
             BanterStubsAllowed.EnforceStrictForBundles = enforce;
             LogAssert.Expect(LogType.Error, new Regex("Element not allowed"));
             Assert.IsTrue(BanterStubsAllowed.IsBlocked(EventGadgetGraph(UnscreenedEvent(EventWithPersistentCall))));
@@ -482,7 +480,7 @@ namespace BS.SDKEditor.Tests
             Assert.Throws<InvalidOperationException>(() => BanterStubsAllowed.FormulaMember(new UnityEngine.Events.UnityEvent(), "Invoke"));
         }
 
-        // ---- World activation (S1 round 3): machines of a loading world wait for the client's judgement -------------------
+        // ---- World activation: machines of a loading world wait for the client's judgement -------------------
 
         sealed class FakeMachine : WorldActivation.IDeferred
         {
@@ -601,7 +599,7 @@ namespace BS.SDKEditor.Tests
             Assert.IsFalse(BanterStubsAllowed.IsBlockedStrict(GraphWith(byType), log: false));
         }
 
-        // ---- Host types as graph data (S1 N4-3c): refused under both rules, mirroring BSUnityEventGuard --------------------
+        // ---- Host types as graph data: refused under both rules, mirroring BSUnityEventGuard --------------------
 
         static object GuardField(string name) =>
             typeof(BSUnityEventGuard).GetField(name, System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)
@@ -685,7 +683,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void HideFlagsSetters_AreRefusedUnderBothRules([Values(false, true)] bool enforce)
         {
-            // S1 N5-1: DontSave keeps an object alive past the world's unload. 0 of 454 live worlds write hideFlags.
+            // DontSave keeps an object alive past the world's unload. 0 of 454 live worlds write hideFlags.
             BanterStubsAllowed.EnforceStrictForBundles = enforce;
             LogAssert.Expect(LogType.Error, new Regex("Element not allowed"));
             Assert.IsTrue(BanterStubsAllowed.IsBlocked(GraphWith(new SetMember(new Member(typeof(GameObject), nameof(GameObject.hideFlags))))));
@@ -699,7 +697,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void HostTypeExposeAndCreateStruct_AreRefusedUnderBothRules([Values(false, true)] bool enforce)
         {
-            // S1 N5-6. The live targets (2026-11-04 scan of the 4 worlds using these units) stay allowed.
+            // The live targets (2026-11-04 scan of the 4 worlds using these units) stay allowed.
             BanterStubsAllowed.EnforceStrictForBundles = enforce;
             LogAssert.ignoreFailingMessages = true;
             try
@@ -761,7 +759,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void HostTypeArguments_AreFoundInsideArraysAndCollections()
         {
-            // S1 N5-5: InvokeMember judges Type[] / collection arguments too (new GameObject(name, params Type[])).
+            // InvokeMember judges Type[] / collection arguments too (new GameObject(name, params Type[])).
             Assert.AreEqual(typeof(BS.DontDestroyOnLoad),
                 BanterStubsAllowed.HostTypeArgument(new[] { typeof(Rigidbody), typeof(BS.DontDestroyOnLoad) }, typeof(Type[])));
             Assert.AreEqual(typeof(System.IO.File),
@@ -775,7 +773,7 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void AssetRefs_ResolveOnlyToTheWorldsOwnAssets()
         {
-            // S1 N8: in play mode an asset-kind ref resolves only to what the world's content references (here: a machine
+            // In play mode an asset-kind ref resolves only to what the world's content references (here: a machine
             // graph whose Subgraph uses a macro, whose Set Script Graph default names another asset).
             var worldMacro = ScriptableObject.CreateInstance<ScriptGraphAsset>();
             var nested = ScriptableObject.CreateInstance<ScriptGraphAsset>();
@@ -842,7 +840,7 @@ namespace BS.SDKEditor.Tests
             }
         }
 
-        // ---- FullSerializer: parser hang, nesting caps, deserialization backstop (S1 round 9) -------------------------
+        // ---- FullSerializer: parser hang, nesting caps, deserialization backstop -------------------------
 
         /// <summary>Runs on a worker so a regression to the old endless loop fails the test instead of hanging the run.</summary>
         static bool ParseFailsWithin(string json, int milliseconds = 5000)

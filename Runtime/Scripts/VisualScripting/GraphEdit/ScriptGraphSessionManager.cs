@@ -287,7 +287,7 @@ namespace BS
                 var scene = BSScene.Instance();
                 host = scene != null ? scene.GetObjectByBid(body.target.bid).gameObject : null;
             }
-            // Only the world's own objects (S1), like every other subcommand: the page must not add machines to the
+            // Only the world's own objects, like every other subcommand: the page must not add machines to the
             // client's objects.
             if (host == null || !BSWorldScope.Contains(host)) throw new ArgumentException("Object not found");
 

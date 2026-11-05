@@ -69,7 +69,7 @@ namespace BS
 
         public static List<ScriptMachine> AllMachines()
         {
-            // Only the world's own machines: the page's script-graph bridge must not reach the client's (S1).
+            // Only the world's own machines: the page's script-graph bridge must not reach the client's.
             return FindObjects.All<ScriptMachine>(FindObjectsInactive.Include)
                 .Where(m => BSWorldScope.Contains(m.gameObject))
                 .OrderBy(m => HierarchyPath(m.transform), System.StringComparer.Ordinal)
