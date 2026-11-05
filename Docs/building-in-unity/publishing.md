@@ -47,7 +47,7 @@ If an upload fails, the log shows a `FAILED UPLOADING` line and the world keeps 
 
 ## Your world's address
 
-Each world has its own address, `https://<address>.worldspace.host`, shown under the Builder's **World** dropdown. To change it, open the world's page on altvr.app and choose **Edit world**: the **Address** is under **Hosting** (at least 4 characters: lower-case letters, numbers and dashes). Changing it moves the world to the new address.
+Each world has its own address, `https://<address>.worldspace.host`, shown under the Builder's **World** dropdown. To change it, open the world's page on altvr.app and choose **Edit world**: the **Address** is under **Hosting** (at least 4 characters: lower-case letters, numbers and dashes). Changing it moves the world to the new address. If your scene has a [VerifyHost](../components/special.md#verifyhost), update its **Url**, and **World Url** if that points here too, and upload a new build straight away: both are saved in the build, so until then every visitor fails the check.
 
 ## Visiting your world
 

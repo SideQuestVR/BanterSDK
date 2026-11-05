@@ -250,6 +250,9 @@ internal static class CreatorConveniencesMenu
         Finish(go, "Collider Events");
     }
 
+    [MenuItem(Root + "Objects/Verify Host", false, 42)]
+    private static void CreateVerifyHost(MenuCommand command) => CreateComponentObject<BSVerifyHost>("Verify Host", command);
+
     // ------------------------------------------------------------------ Helpers
 
     private static void CreatePrefab(string guid, string displayName, MenuCommand command)

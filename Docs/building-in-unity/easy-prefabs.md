@@ -4,7 +4,7 @@ Ready-made objects for common space features, under `GameObject > BS` (also the 
 
 - **Player**: Spawn Point, Spawn Range, Seat, Teleporter, Scene Settings.
 - **Grab**: one preset per grab type (Point, Point as a gun, Cylinder, Ball, Soft) and a climbable handhold.
-- **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Billboard, Collider Events.
+- **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Billboard, Collider Events, Verify Host.
 
 New objects land where Unity's own `GameObject` menu puts them: under the object you right-clicked, otherwise at the Scene view's centre (or the world origin, if **Preferences > Scene View > Create Objects at Origin** is on).
 
@@ -143,6 +143,7 @@ Each object is one SDK component, set up for the usual case:
 | UI Panel | `BSUIPanel`: 512 × 512 pixels at 100 pixels per metre, so 5.12 m square, read from −Z. |
 | Billboard | A quad with `BSBillboard`, which turns it to face the player. |
 | Collider Events | A 2 m trigger box standing on the object, with `BSColliderEvents` reporting enter and exit to the page and Visual Scripting. |
+| Verify Host | `BSVerifyHost` on an empty object, checking the world is running from its own address. Set its **Url** and choose what happens at any other address; see [VerifyHost](../components/special.md#verifyhost). |
 
 ### Browser (`BSBrowser`)
 

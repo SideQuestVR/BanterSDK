@@ -123,5 +123,24 @@ namespace BS.SDKEditor.Tests
             Assert.AreEqual("BS.VisualScripting.GoToUrl", id);
             Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
         }
+
+        [Test]
+        public void VerifyHost_IsOfferedAndAllowed()
+        {
+            var unitType = FindType("BS.VisualScripting.VerifyHost");
+            Assert.IsNotNull(unitType, "the Verify Host unit isn't loaded");
+            CollectionAssert.Contains(VsNodeGeneration.assemblyAllowList, unitType.Assembly.GetName().Name);
+
+            var unit = (Unity.VisualScripting.IUnit)Activator.CreateInstance(unitType);
+            unit.EnsureDefined();
+            CollectionAssert.AreEquivalent(new[] { "URL", "Match", "Outcome", "Teleport Position", "World URL", "Error Message" },
+                unit.valueInputs.Select(port => port.key));
+            CollectionAssert.AreEquivalent(new[] { "Verified", "Wrong Host" }, unit.controlOutputs.Select(port => port.key));
+            CollectionAssert.IsEmpty(unit.valueOutputs);
+
+            var id = unit.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
+            Assert.AreEqual("BS.VisualScripting.VerifyHost", id);
+            Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
+        }
     }
 }

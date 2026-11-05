@@ -131,6 +131,10 @@ Setting the URP asset's **Light Probe System** back to **Light Probe Groups** do
 
 The scene has no active spawn point. Add one with **GameObject > BS > Player > Spawn Point** ([Spawn Point and Spawn Range](../building-in-unity/easy-prefabs.md#spawn-point-and-spawn-range-bsspawn)).
 
+### Players are teleported or sent away as soon as they arrive
+
+A [VerifyHost](../components/special.md#verifyhost) found the world somewhere its **Url** doesn't allow. Check that **Url** matches the address under the Builder's **World** dropdown, and that your last build is newer than your last address change. The log has a `[BS] Verify Host:` line naming the host it found.
+
 ### A teleporter keeps teleporting the player
 
 Its destination is inside its own trigger, so the player lands back in it and is teleported again whenever the cooldown ends. Move the destination outside the trigger.
