@@ -443,8 +443,21 @@ namespace BS
             LookAtMirror = LookAtMirror + 0.001f;
             events.OnLookedAtMirror.Invoke(LookAtMirror);
         }
+        static readonly HashSet<string> warnedUnsupported = new HashSet<string>();
+
+        /// <summary>Refuses a request nothing in this client answers, warning once per command. True if it did.</summary>
+        bool RejectUnsupported(string command, int reqId)
+        {
+            if (!data.UnsupportedRequests.Contains(command)) return false;
+            if (warnedUnsupported.Add(command))
+                Debug.LogWarning($"[BS] A world called {command}, which this client doesn't support. The call is refused.");
+            link.ReplyError(reqId, "unsupported: not available in this client");
+            return true;
+        }
+
         public void OpenPage(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.OPEN_PAGE, reqId)) return;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnPageOpened.Invoke(msg), $"{nameof(BSScene)}.{nameof(OpenPage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.OPEN_PAGE);
         }
@@ -472,16 +485,19 @@ namespace BS
         }
         public void StartTTS(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.START_TTS, reqId)) return;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStarted.Invoke(msg == "1"), $"{nameof(BSScene)}.{nameof(StartTTS)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.START_TTS);
         }
         public void StopTTS(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.STOP_TTS, reqId)) return;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnTTsStoped.Invoke(msg), $"{nameof(BSScene)}.{nameof(StopTTS)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.STOP_TTS);
         }
         public void AiImage(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.AI_IMAGE, reqId)) return;
             try
             {
                 var parts = msg.Split(MessageDelimiters.PRIMARY);
@@ -608,6 +624,7 @@ namespace BS
         }
         public void AiModel(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.AI_MODEL, reqId)) return;
             try
             {
                 var parts = msg.Split(MessageDelimiters.PRIMARY);
@@ -627,6 +644,7 @@ namespace BS
         }
         public void Base64ToCDN(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.BASE_64_TO_CDN, reqId)) return;
             var parts = msg.Split(MessageDelimiters.PRIMARY);
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]), $"{nameof(BSScene)}.{nameof(Base64ToCDN)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
@@ -677,6 +695,7 @@ namespace BS
         }
         public void SelectFile(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.SELECT_FILE, reqId)) return;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnSelectFile.Invoke((SelectFileType)int.Parse(msg)), $"{nameof(BSScene)}.{nameof(SelectFile)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SELECT_FILE);
         }
@@ -2285,6 +2304,7 @@ namespace BS
         }
         public void SendBrowserMessage(string msg, int reqId)
         {
+            if (RejectUnsupported(APICommands.SEND_MENU_BROWSER_MESSAGE, reqId)) return;
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnMenuBrowserMessage.Invoke(msg), $"{nameof(BSScene)}.{nameof(SendBrowserMessage)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.SEND_MENU_BROWSER_MESSAGE);
         }

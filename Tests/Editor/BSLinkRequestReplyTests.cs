@@ -52,6 +52,20 @@ namespace BS.SDKEditor.Tests
         static string ErrorPrefix(int id) =>
             APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + id + MessageDelimiters.PRIMARY + APICommands.REQUEST_ERROR + MessageDelimiters.PRIMARY;
 
+        [TestCase(APICommands.SELECT_FILE, "0")]
+        [TestCase(APICommands.BASE_64_TO_CDN, "a\u00b6b")]
+        public void ARequestWithNothingBehindIt_IsRefusedNotAcknowledged(string command, string data)
+        {
+            _link.scene.data = new DataBridge();
+            _link.scene.state = SceneState.SCENE_START;
+
+            Handle(Request(9, command, data));
+
+            Assert.AreEqual(1, _sent.Count);
+            StringAssert.StartsWith(ErrorPrefix(9), _sent[0]);
+            StringAssert.Contains("unsupported", _sent[0]);
+        }
+
         [Test]
         public void AfterALoadFailure_ARequestIsRejected()
         {
