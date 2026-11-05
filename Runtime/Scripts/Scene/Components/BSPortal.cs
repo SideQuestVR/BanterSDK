@@ -55,46 +55,43 @@ namespace BS
             {
                 Destroy(portal);
             }
-            portal = Instantiate(Resources.Load<GameObject>("Prefabs/BSPortal"), transform);
+            var mine = portal = Instantiate(Resources.Load<GameObject>("Prefabs/BSPortal"), transform);
             portal.name = "BSPortal";
             var rend = portal.transform.Find("PortalMesh").GetComponent<MeshRenderer>();
+            var title = portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>();
+            title.text = ""; // The prefab's placeholder text must not show while the metadata loads.
             portal.GetComponentInChildren<Portal>().url = url;
             var space = await Get.SpaceMeta(url);
-            var defaultTex = defaultPortalLandscapes[UnityEngine.Random.Range(0, defaultPortalLandscapes.Length - 1)];
+            var defaultTex = defaultPortalLandscapes[UnityEngine.Random.Range(0, defaultPortalLandscapes.Length)];
             SetLoadedIfNot();
-            if (space != null)
-            {
-                try
-                {
-                    if (!string.IsNullOrEmpty(space.icon))
-                    {
+            // A newer run replaced this portal while the metadata loaded, or the component went away.
+            if (portal != mine) return;
+            // An unknown space can come back as an empty object rather than nothing.
+            title.text = string.IsNullOrEmpty(space?.name) ? "Unknown Space" : space.name;
 #if UNITY_ANDROID
-                        await SetTexture(space.icon + "?size=512", rend);
+            const int imageSize = 512;
 #else
-                        await SetTexture(space.icon + "?size=1024", rend);
+            const int imageSize = 1024;
 #endif
-                    }
-                    else
-                    {
-#if UNITY_ANDROID
-                        await SetTexture(defaultTex + "?size=512", rend);
-#else
-                        await SetTexture(defaultTex + "?size=1024", rend);
-#endif
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.Log(e);
-                    await SetTexture(defaultTex, rend);
-                }
-                portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>().text = space.name;
-            }
-            else
+            try
             {
-                portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>().text = "Unknown Space";
-                await SetTexture(defaultTex, rend);
+                await SetTexture(Sized(string.IsNullOrEmpty(space?.icon) ? defaultTex : space.icon, imageSize), rend);
             }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+                try { await SetTexture(defaultTex, rend); }
+                catch (Exception fallback) { Debug.Log(fallback); }
+            }
+        }
+
+        /// <summary>The url with the SideQuest CDN's resize parameter. Only that CDN understands it, so other hosts get the url as it is.</summary>
+        internal static string Sized(string url, int size)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return url;
+            if (!uri.Host.Equals("cdn.sidequestvr.com", StringComparison.OrdinalIgnoreCase)) return url;
+            if (uri.Query.IndexOf("size=", StringComparison.OrdinalIgnoreCase) >= 0) return url;
+            return url + (string.IsNullOrEmpty(uri.Query) ? "?size=" : "&size=") + size;
         }
 
 
