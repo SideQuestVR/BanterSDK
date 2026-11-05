@@ -29,8 +29,7 @@ namespace BS.SDKEditor
 
         /// <summary>
         /// Every element of <paramref name="graph"/> and of every graph nested in it: embedded subgraphs,
-        /// state units, states and transitions. The client only checks a machine's top-level graph, so a
-        /// node inside a nest that isn't checked here runs as soon as the parent's flow reaches it.
+        /// state units, states and transitions.
         /// </summary>
         private static List<string> GetElementsDeep(IGraph graph, GraphReference reference, int depth = 0)
         {
@@ -77,14 +76,19 @@ namespace BS.SDKEditor
             }
             else
             {
+                string id;
                 try
                 {
-                    output.Add(e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim());
+                    id = e.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
                 }
                 catch (Exception ex)
                 {
-                    Debug.Log($"Could not add element {e?.guid} {reference?.graph?.title} because of {ex}");
+                    // Not knowing what a node is must not pass as knowing it's fine.
+                    throw new InvalidOperationException($"Could not identify {e?.GetType().FullName} in '{reference?.graph?.title}': {ex.Message}", ex);
                 }
+                // Connections and transitions are unnamed and run nothing. Anything else unnamed is unknown.
+                if (id != null) output.Add(id);
+                else if (!(e is IUnitConnection || e is IStateTransition)) output.Add($"<unidentified {e.GetType().FullName}>");
             }
 
             // And whatever it nests: an embedded subgraph or state graph, a state's or transition's graph.
@@ -127,28 +131,25 @@ namespace BS.SDKEditor
             return output;
         }
 
-        private static List<string> GetElementsFromScriptMachine(ScriptMachine scriptMachine)
+        private static IEnumerable<IGraphElement> ElementsOf(IGraph graph) =>
+            (IEnumerable<IGraphElement>)graph?.elements ?? Enumerable.Empty<IGraphElement>();
+
+        internal static List<string> GetElementsFromScriptMachine(ScriptMachine scriptMachine)
         {
             var output = new List<string>();
             if (scriptMachine == null || (scriptMachine.graph?.elements.Count() == 0 && scriptMachine.nest?.embed?.elements.Count == 0))
             {
                 return output;
             }
-            try
+            // A machine that can't be read throws: the caller must not take it for a clean one.
+            var reference = scriptMachine.GetReference().AsReference();
+            foreach (var e in ElementsOf(scriptMachine.graph))
             {
-                var reference = scriptMachine.GetReference().AsReference();
-                foreach (var e in scriptMachine.graph?.elements)
-                {
-                    output = output.Concat(GrabElements(e, reference)).ToList();
-                }
-                foreach (var e in scriptMachine.nest?.embed?.elements)
-                {
-                    output = output.Concat(GrabElements(e, reference)).ToList();
-                }
+                output = output.Concat(GrabElements(e, reference)).ToList();
             }
-            catch (Exception ex)
+            foreach (var e in ElementsOf(scriptMachine.nest?.embed))
             {
-                Debug.Log($"Could not add scriptMachine {scriptMachine?.GetType()}{scriptMachine?.GetEntityId()} {scriptMachine?.name} because of {ex} ");
+                output = output.Concat(GrabElements(e, reference)).ToList();
             }
             return output;
         }
