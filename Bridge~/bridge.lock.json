@@ -1745,7 +1745,11 @@
       "kind": "int",
       "underlying": "Int32",
       "members": [
-        {"name": "Legacy", "value": 0},
+        {
+          "name": "Legacy",
+          "value": 0,
+          "aliases": ["FollowSeat"]
+        },
         {"name": "UprightFollowYaw", "value": 1},
         {"name": "UprightIndependent", "value": 2}
       ]
