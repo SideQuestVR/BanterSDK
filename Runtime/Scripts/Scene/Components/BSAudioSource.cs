@@ -76,6 +76,7 @@ namespace BS
             else
             {
                 // Original URL-based audio loading
+                if (PageUrl.Refuse(url, nameof(BSAudioSource))) return;
                 audio = await Get.Audio(url);
             }
 

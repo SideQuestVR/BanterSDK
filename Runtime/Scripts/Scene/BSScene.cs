@@ -2999,6 +2999,7 @@ namespace BS
                 if (string.IsNullOrEmpty(imageUrl))
                 {
                     imageUrl = await Get.PageImage(url);
+                    if (!BSAssetKey.IsWebAddress(imageUrl)) imageUrl = null; // the page's meta is the page's: the same rule as its textures
                 }
                 if (string.IsNullOrEmpty(imageUrl) || generation != spaceImageGeneration || !loading) return;
                 var texture = await Get.Texture(imageUrl);

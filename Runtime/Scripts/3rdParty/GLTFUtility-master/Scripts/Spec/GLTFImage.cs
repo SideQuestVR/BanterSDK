@@ -95,7 +95,8 @@ namespace Siccity.GLTFUtility {
 					for (int i = 0; i < images.Count; i++) {
 						string fullUri = directoryRoot + images[i].uri;
 						if (!string.IsNullOrEmpty(images[i].uri)) {
-							if (File.Exists(fullUri)) {
+							// Importing from bytes has no folder to read from, so it uses embedded images only.
+							if (directoryRoot != null && File.Exists(fullUri)) {
 								// If the file is found at fullUri, read it
 								byte[] bytes = File.ReadAllBytes(fullUri);
 								Result[i] = new ImportResult(bytes, fullUri);

@@ -473,6 +473,10 @@ namespace BS
 #if UNITY_EDITOR || UNITY_INCLUDE_TESTS
             if (DownloadOverride != null) return await DownloadOverride(url, cancellation);
 #endif
+            if (PageUrl.Refuse(url, nameof(BSAssetBundle)))
+            {
+                throw new InvalidOperationException(BSAssetKey.WebAddressesOnly);
+            }
             if (isScene && !string.IsNullOrEmpty(url))
             {
                 byte[] head = await Get.PeekHeader(url, 8);

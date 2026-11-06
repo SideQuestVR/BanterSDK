@@ -1666,6 +1666,7 @@ namespace BS.UI.Bridge
         {
             try
             {
+                if (PageUrl.Refuse(url, nameof(UIElementBridge))) return null;
                 LogVerbose($"Downloading texture from: {url}");
                 var texture = await Get.Texture(url);
                 return texture;

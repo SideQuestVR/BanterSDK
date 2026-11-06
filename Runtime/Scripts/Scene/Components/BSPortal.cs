@@ -42,6 +42,7 @@ namespace BS
 
         public static async Task SetTexture(string texture, MeshRenderer rend)
         {
+            if (PageUrl.Refuse(texture, nameof(BSPortal))) return;
             var tex = await Get.Texture(texture);
             if (tex != null && rend != null)
             {

@@ -937,7 +937,7 @@ namespace BS
         }
 
         static async System.Threading.Tasks.Task<AudioClip> LoadSound(string url) =>
-            await Get.Audio(url);
+            PageUrl.Refuse(url, nameof(BSUIPanel)) ? null : await Get.Audio(url);
 
         internal override void DestroyStuff()
         {

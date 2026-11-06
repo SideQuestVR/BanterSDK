@@ -180,8 +180,9 @@ namespace BS
             {
                 var wasPlaying = _source.isPlaying;
                 _source.Stop();
-                _source.url = url;
-                if (!string.IsNullOrEmpty(url))
+                var address = PageUrl.Refuse(url, nameof(BSVideoPlayer)) ? "" : url;
+                _source.url = address;
+                if (!string.IsNullOrEmpty(address))
                 {
                     // Plays when playOnAwake asks for it, or carries on when a video was already
                     // playing (a screen switched to another video). Otherwise it is only prepared, so

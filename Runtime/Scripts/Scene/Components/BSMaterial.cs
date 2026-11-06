@@ -391,7 +391,7 @@ namespace BS
         /// <summary>
         /// Resolves a texture reference and assigns it to one slot of <paramref name="material"/>.
         /// Accepted forms, checked in this order: empty (leave the shader default), an
-        /// <c>asset_</c> registry id, a registered <see cref="IBSTextureSource"/> scheme, a web address.
+        /// <c>asset_</c> registry id, a registered <see cref="IBSTextureSource"/> scheme, a web address (see <see cref="PageUrl"/>).
         /// False when the reference gave nothing to show. A source's full-size file is only waited for, and only then
         /// counts, with <paramref name="waitForTexture"/> and no preview showing.
         /// </summary>
@@ -438,7 +438,7 @@ namespace BS
                 }
 
                 // Original URL-based texture loading
-                if (!Uri.IsWellFormedUriString(reference, UriKind.Absolute))
+                if (!Uri.IsWellFormedUriString(reference, UriKind.Absolute) || PageUrl.Refuse(reference, nameof(BSMaterial)))
                 {
                     return false;
                 }
