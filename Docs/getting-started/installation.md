@@ -2,6 +2,8 @@
 
 Requires Unity **6000.3.21f1**, the version the app itself is built with, with the Android and Windows build support modules. Use exactly this version: worlds built with another Unity version may not load in the app.
 
+On an older 6000.3 release the Package Manager stops at SDK 4.0.17, the last version that Unity can install, and doesn't say why, so newer components and menu items are missing. Unity 6000.4 and later can install the SDK, but aren't supported.
+
 In short: import the installer package, press **Fix All** in the Setup panel that opens, then import the **Basics** sample to explore a working world.
 
 ?> **New to Unity?** Install [Unity Hub](https://unity.com/download), add Unity 6000.3.21f1 with the **Android Build Support** and **Windows Build Support** modules, and create a new project from the **Universal 3D** template. The Setup panel takes care of the rest.
@@ -39,7 +41,7 @@ The SDK and some of the packages it depends on (Ora, the Basis packages and Boun
 
 Then either:
 
-- **From the registry:** add `"com.sidequest.creator-sdk": "4.0.17"` (or a later version) to `"dependencies"`; or
+- **From the registry:** add `"com.sidequest.creator-sdk": "4.0.25"` (or a later version) to `"dependencies"`; or
 - **As an embedded package:** place the `com.sidequest.creator-sdk` folder directly in your project's `Packages/` folder. Unity picks it up as an embedded package on the next refresh, and fetches its dependencies from the registry.
 
 ## First Run: the Setup Panel
@@ -58,7 +60,7 @@ The panel has buttons for the Builder and this documentation (which opens in a b
 | Space page (WebRoot) | Required | `Assets/WebRoot/index.html`, which Play mode serves and the Builder uploads. |
 | One scene per project | Recommended | Every scene in a project shares the one page, `Assets/WebRoot/index.html`, so a world built from one scene is published with the scripts and snippets placed for the others, and they run in it. Keep one world per project. **Show scenes** selects the project's scenes, so you can move the others to projects of their own or delete them. |
 | TextMesh Pro essentials | Required | The fonts BS Text draws with, so Unity's TMP importer doesn't interrupt Play mode. |
-| Universal Render Pipeline | Required | Forward on Quest and Forward+ on Windows, as the client renders. |
+| Universal Render Pipeline | Required | Forward on Quest; Forward (suggested) or Forward+ on Windows. The app renders a world with the one it was built with. |
 | Graphics APIs | Required | Auto Graphics API on Android (Vulkan, OpenGL ES 3) and the client's Direct3D 11, Direct3D 12 and Vulkan on Windows, so spaces carry the shaders the client runs. |
 | Linear color space | Required | As the client renders; baked lighting depends on it. |
 | Visual Scripting nodes | Required | Puts BS components and the SDK's nodes in the fuzzy finder. |

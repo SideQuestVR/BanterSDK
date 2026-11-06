@@ -44,16 +44,23 @@ When the Builder opens on a scene, on **Re-check**, before every build and befor
 | Check | What it looks for |
 |---|---|
 | Project setup | Everything the Setup panel marks Required is done. Missing build support blocks the build; anything else is a warning, with a button to open Setup. |
+| Shader stripping | URP's **Strip Unused Variants** is on, or every shader variant is compiled (see [Build times](../reference/performance.md#build-times)). The fix turns it on. |
 | One scene per project | The project has no other scenes. Every scene shares the one page, `Assets/WebRoot/index.html`, so the snippets and page scripts for other scenes would be published with this world. |
 | Visual Scripting node support | Graphs only use nodes the app can run: every graph asset in the project, every graph on a prefab, and every graph in this scene, including subgraphs and state graphs inside them. Blocks the build. |
 | Convex mesh colliders | No large static floor or wall has **Convex** ticked. |
+| Mesh colliders on moving bodies | A mesh collider on a body physics moves, a Rigidbody or BS Rigidbody, has **Convex** ticked; otherwise it doesn't collide. The fix ticks it. |
+| Terrains | Every Terrain has its Terrain Data, an enabled Terrain Collider using that same data, and no tree types with a missing prefab. The fix adds or corrects the collider. |
 | Tags, Layers | Objects only use Unity's built-in tags and layers and the SDK's (see [Tags](tags.md) and [Layers](layers.md)). The fix renames old `__BA_` tags or moves objects to Untagged / Default. |
 | Missing scripts, Visual Scripting graphs | No component's script is missing, and every Script Machine and State Machine has its graph. |
 | Cameras and audio listeners | No scene camera draws to the screen and there's no Audio Listener: the player brings both. |
 | Materials | No empty material slots (a particle system's trail material counts while trails are on), broken shaders, or shaders made for the Built-in pipeline, Unity's own or custom ones such as surface shaders (they render pink in URP). |
+| VR shaders | Hand-written shaders pass the eye through and read screen textures per eye; see [Custom shaders in VR](../components/rendering.md#custom-shaders-in-vr). |
+| Reflection probes | Realtime reflection probes are pointed out, as they don't update on Quest, and the URP assets keep **Probe Blending** and **Box Projection** when the scene's probes need them. The fix turns those on. |
 | Adaptive Probe Volumes data | Baked Adaptive Probe Volumes data is only in the scene when the project lights with Adaptive Probe Volumes, and it is complete. The app lights any scene that carries it with Adaptive Probe Volumes, so data an earlier bake left behind after the project went back to Light Probe Groups is an error; the fix removes it. See [Troubleshooting](../reference/troubleshooting.md#lighting-changes-or-the-app-crashes-after-switching-away-from-adaptive-probe-volumes). |
 | Scene size | About 1,000,000 triangles and 1,024 MB of textures at most: a comfortable budget for a whole space on Quest. |
 | Android textures, Audio | Textures at most 2048 px and compressed on Android; audio clips over 10 seconds not kept uncompressed in memory. |
+| Particle velocity curves | Particle systems that use Velocity over Lifetime use one curve mode for X, Y and Z. Mixed modes fill the log in the app, which costs frame time on Quest. |
+| Animation clips | Animation components only hold Legacy clips, the only kind they play, and graphs that call `AnimationClip.SampleAnimation` are pointed out: outside the editor it only samples a Legacy clip or an object with an Animator. |
 | Object IDs | No two objects in the scene share a BSObjectId: players match synced objects, seats and attachments by it (see [Multiplayer](../multiplayer/overview.md#bsobjectid)). The fix gives each copy after the first a new ID. |
 | Seats, Grab handles, Scene settings, Spawn points, Teleporters | The [Easy Prefabs](easy-prefabs.md) components are set up correctly: seats have a clickable collider on the UI or Menu layer, grab handles are on the Grabbable layer with their own collider, there's at most one Scene Settings component, there's an active spawn point, and teleporters have a trigger and a destination outside it. |
 | Seat and vehicle attachments | Every Attached Object that puts the player on an object (**Avatar Attach To**) has **Attachment Type** Physics and **Joint Avatar** ticked; otherwise attaching seats no one. The fix sets both. |

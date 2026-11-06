@@ -1,4 +1,4 @@
-Shader "Banter/Teleporter Portal"
+Shader "BS/Teleporter Portal"
 {
     Properties
     {

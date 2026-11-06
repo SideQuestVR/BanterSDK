@@ -254,6 +254,33 @@ namespace BS.SDKEditor
             return everything.Distinct().Where(IsDisallowed).ToList();
         }
 
+        static readonly HashSet<string> OperatorMethods = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "op_Addition", "op_Subtraction", "op_Multiply", "op_Division", "op_Modulus",
+            "op_ExclusiveOr", "op_BitwiseAnd", "op_BitwiseOr", "op_LeftShift", "op_RightShift",
+            "op_Equality", "op_Inequality", "op_GreaterThan", "op_LessThan", "op_GreaterThanOrEqual", "op_LessThanOrEqual",
+            "op_UnaryNegation", "op_UnaryPlus", "op_LogicalNot", "op_OnesComplement",
+        };
+
+        static HashSet<string> listedTypes;
+
+        /// <summary>The list holds no arithmetic or comparison operators: any type with a listed member has them.</summary>
+        internal static bool IsListedOperator(string id)
+        {
+            var dot = id?.LastIndexOf(".op_", StringComparison.Ordinal) ?? -1;
+            if (dot <= 0 || !OperatorMethods.Contains(id.Substring(dot + 1))) return false;
+            if (listedTypes == null)
+            {
+                listedTypes = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var member in VsStubsAllowed.members)
+                {
+                    var end = member.EndsWith("..ctor", StringComparison.Ordinal) ? member.Length - "..ctor".Length : member.LastIndexOf('.');
+                    if (end > 0) listedTypes.Add(member.Substring(0, end));
+                }
+            }
+            return listedTypes.Contains(id.Substring(0, dot));
+        }
+
         internal static bool IsDisallowed(string id)
         {
             bool isVs = id?.StartsWith("Unity.VisualScripting.") ?? false;
@@ -261,7 +288,7 @@ namespace BS.SDKEditor
             bool isPicaVoxelVs = id?.StartsWith("PicaVoxel.VisualScripting.") ?? false;
 
             // Mirrors the client's BanterStubsAllowed.IsBlocked: nothing outside these is allowed.
-            return !(id == null || isVs || isBanterVs || isPicaVoxelVs || VsStubsAllowed.members.Contains(id));
+            return !(id == null || isVs || isBanterVs || isPicaVoxelVs || VsStubsAllowed.members.Contains(id) || IsListedOperator(id));
         }
     }
 }

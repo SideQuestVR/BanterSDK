@@ -59,8 +59,9 @@ namespace BS.SDKEditor
 
             // A MeshCollider on a moving body must be convex. includeInactive: true matters, because
             // a collider on a deactivated object would otherwise not see its own Rigidbody and would
-            // be reported as a false positive.
+            // be reported as a false positive. A BS Rigidbody adds its Rigidbody when the space loads.
             if (mc.GetComponentInParent<Rigidbody>(true) != null) return false;
+            if (mc.GetComponentInParent<BSRigidbody>(true) != null) return false;
 
             Vector3 size = WorldSize(mc);
             return size.x >= LargeColliderSize || size.z >= LargeColliderSize;

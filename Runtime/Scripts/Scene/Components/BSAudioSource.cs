@@ -12,7 +12,7 @@ namespace BS
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
-    public class BSAudioSource : BSComponentBase
+    public partial class BSAudioSource : BSComponentBase
     {
         [Tooltip("The volume of the audio source (0.0 to 1.0).")]
         [See(initial = "1")][SerializeField] internal float volume = 1.0f;
@@ -139,6 +139,7 @@ namespace BS
             {
                 _source = gameObject.AddComponent<AudioSource>();
             }
+            RouteToApp(_source, scene?.settings);
             if (changedProperties?.Contains(PropertyName.spatialBlend) ?? false)
             {
                 _source.spatialBlend = spatialBlend;
@@ -180,6 +181,15 @@ namespace BS
             SetLoadedIfNot();
         }
 
+        /// <summary>
+        /// Under the player's volume sliders, as a world bundle's own sources are. Asked on every change: the first may come
+        /// before the page's first load has made the settings, and a source that's already routed stays as it is.
+        /// </summary>
+        internal static void RouteToApp(AudioSource source, BSSceneSettings settings)
+        {
+            BSAssetBundle.RouteToApp(source, settings?.AudioGroupSelector?.Invoke(source) ?? settings?.SpaceAudioGroup);
+        }
+
         internal override void DestroyStuff()
         {
             if (_source != null)
@@ -187,321 +197,5 @@ namespace BS
                 Destroy(_source);
             }
         }
-        // BS COMPILED CODE 
-        public System.Single Volume { get { return volume; } set { volume = value; UpdateCallback(new List<PropertyName> { PropertyName.volume }); } }
-        public System.Single Pitch { get { return pitch; } set { pitch = value; UpdateCallback(new List<PropertyName> { PropertyName.pitch }); } }
-        public System.Boolean Mute { get { return mute; } set { mute = value; UpdateCallback(new List<PropertyName> { PropertyName.mute }); } }
-        public System.Boolean Loop { get { return loop; } set { loop = value; UpdateCallback(new List<PropertyName> { PropertyName.loop }); } }
-        public System.Boolean BypassEffects { get { return bypassEffects; } set { bypassEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassEffects }); } }
-        public System.Boolean BypassListenerEffects { get { return bypassListenerEffects; } set { bypassListenerEffects = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassListenerEffects }); } }
-        public System.Boolean BypassReverbZones { get { return bypassReverbZones; } set { bypassReverbZones = value; UpdateCallback(new List<PropertyName> { PropertyName.bypassReverbZones }); } }
-        public System.Boolean PlayOnAwake { get { return playOnAwake; } set { playOnAwake = value; UpdateCallback(new List<PropertyName> { PropertyName.playOnAwake }); } }
-        public System.Single SpatialBlend { get { return spatialBlend; } set { spatialBlend = value; UpdateCallback(new List<PropertyName> { PropertyName.spatialBlend }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.volume, PropertyName.pitch, PropertyName.mute, PropertyName.loop, PropertyName.bypassEffects, PropertyName.bypassListenerEffects, PropertyName.bypassReverbZones, PropertyName.playOnAwake, PropertyName.spatialBlend, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "AudioSource" +  PropertyName.volume + volume + PropertyName.pitch + pitch + PropertyName.mute + mute + PropertyName.loop + loop + PropertyName.bypassEffects + bypassEffects + PropertyName.bypassListenerEffects + bypassListenerEffects + PropertyName.bypassReverbZones + bypassReverbZones + PropertyName.playOnAwake + playOnAwake + PropertyName.spatialBlend + spatialBlend;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.AudioSource);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        void PlayOneShot(Int32 index)
-        {
-            _PlayOneShot(index);
-        }
-        Task PlayOneShotFromUrl(String url)
-        {
-            return _PlayOneShotFromUrl(url);
-        }
-        void Play()
-        {
-            _Play();
-        }
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-
-            if (methodName == "PlayOneShot" && parameters.Count == 1 && parameters[0] is Int32)
-            {
-                var index = (Int32)parameters[0];
-                PlayOneShot(index);
-                return null;
-            }
-            else if (methodName == "PlayOneShotFromUrl" && parameters.Count == 1 && parameters[0] is String)
-            {
-                var url = (String)parameters[0];
-                return PlayOneShotFromUrl(url);
-            }
-            else if (methodName == "Play" && parameters.Count == 0)
-            {
-                Play();
-                return null;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSFloat)
-                {
-                    var valvolume = (BSFloat)values[i];
-                    if (valvolume.n == PropertyName.volume)
-                    {
-                        volume = valvolume.x;
-                        changedProperties.Add(PropertyName.volume);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valpitch = (BSFloat)values[i];
-                    if (valpitch.n == PropertyName.pitch)
-                    {
-                        pitch = valpitch.x;
-                        changedProperties.Add(PropertyName.pitch);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valmute = (BSBool)values[i];
-                    if (valmute.n == PropertyName.mute)
-                    {
-                        mute = valmute.x;
-                        changedProperties.Add(PropertyName.mute);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valloop = (BSBool)values[i];
-                    if (valloop.n == PropertyName.loop)
-                    {
-                        loop = valloop.x;
-                        changedProperties.Add(PropertyName.loop);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valbypassEffects = (BSBool)values[i];
-                    if (valbypassEffects.n == PropertyName.bypassEffects)
-                    {
-                        bypassEffects = valbypassEffects.x;
-                        changedProperties.Add(PropertyName.bypassEffects);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valbypassListenerEffects = (BSBool)values[i];
-                    if (valbypassListenerEffects.n == PropertyName.bypassListenerEffects)
-                    {
-                        bypassListenerEffects = valbypassListenerEffects.x;
-                        changedProperties.Add(PropertyName.bypassListenerEffects);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valbypassReverbZones = (BSBool)values[i];
-                    if (valbypassReverbZones.n == PropertyName.bypassReverbZones)
-                    {
-                        bypassReverbZones = valbypassReverbZones.x;
-                        changedProperties.Add(PropertyName.bypassReverbZones);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valplayOnAwake = (BSBool)values[i];
-                    if (valplayOnAwake.n == PropertyName.playOnAwake)
-                    {
-                        playOnAwake = valplayOnAwake.x;
-                        changedProperties.Add(PropertyName.playOnAwake);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valspatialBlend = (BSFloat)values[i];
-                    if (valspatialBlend.n == PropertyName.spatialBlend)
-                    {
-                        spatialBlend = valspatialBlend.x;
-                        changedProperties.Add(PropertyName.spatialBlend);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.volume,
-                    type = PropertyType.Float,
-                    value = volume,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.pitch,
-                    type = PropertyType.Float,
-                    value = pitch,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.mute,
-                    type = PropertyType.Bool,
-                    value = mute,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.loop,
-                    type = PropertyType.Bool,
-                    value = loop,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.bypassEffects,
-                    type = PropertyType.Bool,
-                    value = bypassEffects,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.bypassListenerEffects,
-                    type = PropertyType.Bool,
-                    value = bypassListenerEffects,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.bypassReverbZones,
-                    type = PropertyType.Bool,
-                    value = bypassReverbZones,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.playOnAwake,
-                    type = PropertyType.Bool,
-                    value = playOnAwake,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.spatialBlend,
-                    type = PropertyType.Float,
-                    value = spatialBlend,
-                    componentType = ComponentType.AudioSource,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

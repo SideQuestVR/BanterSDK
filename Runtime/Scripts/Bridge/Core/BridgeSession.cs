@@ -60,6 +60,10 @@ namespace BS.Bridge
         internal readonly HashSet<int> LegacyLedger = new HashSet<int>();
         /// <summary>Typed request ids (M3) begun and not answered yet.</summary>
         internal readonly HashSet<uint> TypedLedger = new HashSet<uint>();
+        /// <summary>CALL ops admitted and not run yet, in the hold or the ready queue.</summary>
+        public int CallsQueued;
+        /// <summary>CALL ops refused for the queue limit since the last one ran.</summary>
+        public int CallsOverflowed;
 
         public BridgeSession(uint epoch, string docToken, string href, BridgeLink link)
         {

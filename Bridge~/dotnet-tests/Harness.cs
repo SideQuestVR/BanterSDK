@@ -111,6 +111,8 @@ sealed class TestPage
     public readonly List<string> Out = new List<string>();
     public readonly List<string> Got = new List<string>();
     public readonly List<(uint reqId, byte status)> Replies = new List<(uint, byte)>();
+    public readonly Dictionary<uint, byte[]> ReplyBodies = new Dictionary<uint, byte[]>();
+    public uint Families, Caps;
     public int Stale;
     public bool HonorWindow = true;
     bool mustAck;
@@ -215,6 +217,7 @@ sealed class TestPage
             if (ops[0].Opcode != BridgeOp.Welcome) return;
             var w = WelcomePayload.TryDecode(p);
             Epoch = w.Epoch; Link.Epoch = w.Epoch; Link.SendWindow = (int)w.RecvWindow;
+            Families = w.Families; Caps = w.Caps;
             State = "open"; mustAck = true;
         }
         if (State != "open" || h.Epoch != Epoch) { Stale++; return; }
@@ -245,7 +248,11 @@ sealed class TestPage
                     foreach (var it in m.Items)
                     {
                         if (it.IsText) Got.Add(it.Text);
-                        else if (it.Opcode == BridgeOp.Reply && ReplyPayload.TryDecode(it.Payload, out var id, out var st, out _)) Replies.Add((id, st));
+                        else if (it.Opcode == BridgeOp.Reply && ReplyPayload.TryDecode(it.Payload, out var id, out var st, out var body))
+                        {
+                            Replies.Add((id, st));
+                            ReplyBodies[id] = body.ToArray();
+                        }
                     }
                 return;
             }

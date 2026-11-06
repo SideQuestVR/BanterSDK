@@ -455,6 +455,13 @@ namespace BS
             return true;
         }
 
+        /// <summary>BS.Assets. Queued like the rest of a document's work, so a new page's request lands behind OnLoad.</summary>
+        internal void AssetDatabaseRequest(string msg, int reqId)
+        {
+            if (RejectUnsupported(APICommands.ASSET_DATABASE, reqId)) return;
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => BSAssetRequests.Handle(link, msg, reqId), $"{nameof(BSScene)}.{nameof(AssetDatabaseRequest)}"));
+        }
+
         public void OpenPage(string msg, int reqId)
         {
             if (RejectUnsupported(APICommands.OPEN_PAGE, reqId)) return;
@@ -507,7 +514,7 @@ namespace BS
                     SendError(reqId, "AIIMAGE: Message is malformed: " + msg);
                     return;
                 }
-                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiImage.Invoke(parts[0], (AiImageRatio)int.Parse(parts[1])), $"{nameof(BSScene)}.{nameof(AiImage)}"));
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnAiImage.Invoke(WireText.Decode(parts[0]), (AiImageRatio)int.Parse(parts[1])), $"{nameof(BSScene)}.{nameof(AiImage)}"));
             }
             catch (Exception e)
             {
@@ -646,7 +653,7 @@ namespace BS
         {
             if (RejectUnsupported(APICommands.BASE_64_TO_CDN, reqId)) return;
             var parts = msg.Split(MessageDelimiters.PRIMARY);
-            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnBase64ToCDN.Invoke(parts[0], parts[1]), $"{nameof(BSScene)}.{nameof(Base64ToCDN)}"));
+            UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => events.OnBase64ToCDN.Invoke(WireText.Decode(parts[0]), parts[1]), $"{nameof(BSScene)}.{nameof(Base64ToCDN)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.BASE_64_TO_CDN);
         }
         public string GameObjectTextureToBase64(GameObject obj, int materialIndex)
@@ -972,13 +979,16 @@ namespace BS
                     var parts = prop.Split(MessageDelimiters.TERTIARY);
                     if (parts.Length == 2)
                     {
+                        // The page wrote both with encodeWireText (scene.ts SetProp).
+                        var key = WireText.Decode(parts[0]);
+                        var value = WireText.Decode(parts[1]);
                         if (propType == APICommands.SET_PROTECTED_SPACE_PROPS)
                         {
-                            events.OnProtectedSpaceStateChanged.Invoke(parts[0], parts[1]);
+                            events.OnProtectedSpaceStateChanged.Invoke(key, value);
                         }
                         else
                         {
-                            events.OnPublicSpaceStateChanged.Invoke(parts[0], parts[1]);
+                            events.OnPublicSpaceStateChanged.Invoke(key, value);
                         }
                         // spaceState.items.Add(new SpaceStateItem(){key = parts[0], value = parts[1]});
                         // SaveSpaceState();
@@ -2942,6 +2952,8 @@ namespace BS
                 BSGLTF.ClearCache();
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                 {
+                    // Right before OnSceneReset, in one step, so that what the reset sets is what stays.
+                    Bridge.BridgeCallHost.Current?.RestoreGlobals();
                     events.OnSceneReset.Invoke();
                 }, $"{nameof(BSScene)}.{nameof(ResetScene)}"));
                 // This seems to be a bug in 2022, hard crash without this line.
@@ -3272,7 +3284,8 @@ namespace BS
              {
                  if (settings != null)
                  {
-                     _ = settings.Reset();
+                     // Its assets stop being found now, and are released once Reset has left its scene and unloaded its bundles.
+                     BSAssetRegistry.WorldChanging(settings.Reset());
                      settings.Destroy();
                  }
                  settings = new BSSceneSettings(instanceId);
@@ -3691,9 +3704,9 @@ namespace BS
                                  break;
                              case SettingsMap.SpawnPoint:
                                  var spawnParts = setting[1].Split(MessageDelimiters.TERTIARY);
-                                 settings.SpawnPoint = new Vector4(NumberFormat.Parse(spawnParts[1]),
+                                 settings.SetPageSpawnPoint(new Vector4(NumberFormat.Parse(spawnParts[1]),
                                      NumberFormat.Parse(spawnParts[2]), NumberFormat.Parse(spawnParts[3]),
-                                     NumberFormat.Parse(spawnParts[4]));
+                                     NumberFormat.Parse(spawnParts[4])));
                                  break;
                              case SettingsMap.SettingsLocked:
                                  settings.IsSettingsLocked = setting[1] == "1";

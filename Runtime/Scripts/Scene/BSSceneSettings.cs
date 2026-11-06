@@ -54,6 +54,25 @@ namespace BS
         public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
 
         /// <summary>
+        /// Whether something chose this space's spawn point: the page's settings, or the first BS Spawn arrival the client
+        /// recorded. The origin with no rotation reads as not chosen, which puts a player in the same place, and leaves a
+        /// later scripted teleport free to set the spawn point.
+        /// </summary>
+        public bool HasSpawnPoint => _SpawnPoint != Vector4.zero && _SpawnPoint != UnsetPageSpawnPoint;
+
+        /// <summary>
+        /// What a page sends when it never set a spawn point: SetSettings sends every field, and scene.ts starts SpawnPoint
+        /// as new Vector4(), whose w defaults to 1. Every uploaded page sends this, so it can't change.
+        /// </summary>
+        public static readonly Vector4 UnsetPageSpawnPoint = new Vector4(0, 0, 0, 1);
+
+        /// <summary>A spawn point from the page's settings. Re-sending defaults doesn't wipe one already recorded.</summary>
+        internal void SetPageSpawnPoint(Vector4 spawn)
+        {
+            if (spawn != UnsetPageSpawnPoint && spawn != Vector4.zero) SpawnPoint = spawn;
+        }
+
+        /// <summary>
         /// The physics settings every space starts from. They are the Greenfield client's own FlexaBody tuning, so a
         /// space that never sets them (or a SetSettings that resends them untouched) changes nothing. scene.ts
         /// SceneSettings and the BS Settings component repeat these values and must stay equal; Greenfield's

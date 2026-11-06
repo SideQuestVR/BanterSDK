@@ -78,6 +78,9 @@ namespace BS.LocalMultiplayer.Objects
                 transform.SetPositionAndRotation(_spawnPosition, _spawnRotation);
             }
 
+            // Back where it was placed: a Kinematic If Not Owned body rests there again.
+            if (TryGetComponent(out SyncedObjectRestHold restHold) && restHold.enabled) restHold.Rest();
+
             Debug.Log($"[LocalMP][SyncedObjects] Safety net: '{name}' fell below Y={_fallThreshold} — respawned to {_spawnPosition}.");
         }
 

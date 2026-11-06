@@ -84,7 +84,7 @@ Its buttons:
 - **Desktop only:** every player uses the mouse and keyboard, and grabs with the mouse. Only the player's body counts for walking into synced objects; in the app their head, hands and feet do too.
 - **No voice**, and no network delay: everything runs on one computer.
 - **Roles come from the settings**, not from SideQuest: the world owner and moderators are the slots you pick.
-- **The app's own behaviours are kept on purpose**, so what works here works there: one-shots never come back to their sender, `syncPosition` and `kinematicIfNotOwned` are ignored, and so on. The overlay notes each one the first time it happens.
+- **The app's own behaviours are kept on purpose**, so what works here works there: one-shots never come back to their sender, `syncPosition` is ignored, and so on. The overlay notes each one the first time it happens.
 - **Changing a script during Play stops local multiplayer.** Stop Play and press it again.
 - **Projects with the FlexaBody package** aren't supported.
 - **Each player is a whole editor plus its own browser**, so four players need a capable computer.
@@ -105,10 +105,11 @@ With local multiplayer off, or Multiplayer Play Mode not installed and **Mode** 
 |---|---|
 | Players | Only you, with a random name, `id`, `uid` and colour. |
 | One-shots | Go nowhere. |
-| `SetPublicSpaceProps`, `SetProtectedSpaceProps` | The page gets no `space-state-changed`. Visual Scripting's On Space State Properties Changed still fires. |
-| JSON space and user state (`SpaceStateSet`, `UserStateSet`…) | Reject with the code `app_unavailable`. |
+| `SetPublicSpaceProps`, `SetProtectedSpaceProps` | Kept in memory until Play stops. `space-state-changed` and Visual Scripting's On Space State Properties Changed both fire, and only when a value changes. |
+| JSON space state (`SpaceStateSet`…) | Kept in memory until Play stops. A room's size limits aren't applied, and nothing refuses a protected write. |
+| JSON user state (`UserStateSet`…) | Rejects with the code `app_unavailable`. |
 | `SetUserProps` | Updates you, and `user-state-changed` fires. |
 | Synced objects | Physics runs as authored; nothing is shared. `TakeOwnership()` does nothing, and Do I Own is `false`. |
 | Attachments | Only attachments to the head, and seats. |
 
-To get working space state and user state while playing on your own, set **Mode** to **On**: the main editor then joins a room by itself.
+To get a room's rules and working user state while playing on your own, set **Mode** to **On**: the main editor then joins a room by itself.

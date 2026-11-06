@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/UserStateSdkBridge.cs" sha256="a67ac51109ab63ca3b4175d8d564934f607379193c4330f5bd904a504823dfb5" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/UserStateSdkBridge.cs" sha256="4add273eeb8804423beddfb510b15271445a0cb0b23fecaa0edd673f6bccf972" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class UserStateModule ticks; the service is handed
 // in instead of polled from UserStateService.Instance; BSScene.Instance() -> BSScene.Current; the LINQ user lookups are
 // plain loops with the same first-match semantics (the replay drain runs every frame while anything is pending); the
@@ -304,15 +304,9 @@ namespace BS.LocalMultiplayer.State
                         // Writes are owner-only by construction: there is no user-id input, because a
                         // parameter that can only ever hold one legal value is a trap.
                         //
-                        // Validate BEFORE answering. These are queued for the next flush, so we cannot
-                        // report the server's verdict here -- but answering ok to a key the codec will
-                        // refuse would make the page's promise resolve on a write that never happens.
-                        if (!_service.TrySetOwnProp(key, body["value"], scope, out string setError))
-                        {
-                            request.Respond(Envelope(false, setError));
-                            return;
-                        }
-                        request.Respond(Envelope(true, null));
+                        // "set" replaces, as SpaceStateSet does; "merge" keeps the server's object merge.
+                        // Answered with the server's verdict, so a refused write rejects the page's promise.
+                        RespondWhenWritten(request, _service.SetOwnPropAsync(key, body["value"], scope, replace: request.Op == "set"));
                         return;
                     }
                 case "delete":
@@ -330,6 +324,14 @@ namespace BS.LocalMultiplayer.State
                     request.Respond(Envelope(false, StateErrors.UnknownMessageType));
                     return;
             }
+        }
+
+        private static async void RespondWhenWritten(BSStateRequest request, System.Threading.Tasks.Task<string> write)
+        {
+            string error;
+            try { error = await write; }
+            catch (Exception) { error = StateErrors.InternalError; }
+            request.Respond(Envelope(error == null, error));
         }
 
         /// <summary>

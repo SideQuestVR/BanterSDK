@@ -9,3 +9,14 @@ These scene methods predate the current component APIs and still work, so older 
 | `LegacyUnlockPlayer()` | Restores player movement. Prefer `SetCanMove(true)`. |
 | `LegacySetRefreshRate(rate)` | Sets the headset refresh rate (Quest only). Prefer `SceneSettings.RefreshRate`. |
 | `LegacySetVideoUrl(object, url)` | Plays a URL from the start on the first Unity `VideoPlayer` on the object or its children. The object must already be linked (`await object.Async()`). Prefer the `VideoPlayer` component. |
+
+## Unsupported calls
+
+These scene methods are left over from older spaces. They have nothing behind them, in the app or in Play mode, so they never do anything. The Unity log warns the first time a world calls each one.
+
+| Method | What your script sees |
+|--------|-----------------------|
+| `AiImage`, `AiModel`, `Base64ToCDN`, `SelectFile` | The Promise rejects with a message containing `unsupported`. |
+| `OpenPage`, `StartTTS`, `StopTTS`, `SendBrowserMessage` | The Promise resolves, so a page that doesn't wait for an answer carries on, and the page's console warns `… is not supported in this client.` |
+
+The Visual Scripting nodes **Menu Browser Open URL**, **Select file (GLB/JPG/PNG)** and **Base64 To CDN** do nothing either.

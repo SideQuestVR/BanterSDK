@@ -643,7 +643,8 @@
     {"name": "WORLD_STATE_OP", "code": "!wso!"},
     {"name": "WORLD_OPTION_PRESSED", "code": "wop!"},
     {"name": "FULL_WORLD_STATE_JSON", "code": "fwj!"},
-    {"name": "WORLD_STATE_JSON", "code": "wpj!"}
+    {"name": "WORLD_STATE_JSON", "code": "wpj!"},
+    {"name": "ASSET_DATABASE", "code": "!adb!"}
   ],
   "uiCommands": [
     {"name": "CREATE_UI_ELEMENT", "code": "!cui!"},

@@ -54,30 +54,32 @@ namespace BS.VisualScripting
             if (!_eventRegistered)
             {
                 LogVerbose("Not yet registered, checking auto-register setting");
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-                LogVerbose($"Auto Register = {shouldAutoRegister}");
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    LogVerbose($"Element ID = '{targetId}', Element Name = '{targetName}'");
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+                    LogVerbose($"Auto Register = {shouldAutoRegister}");
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-                    LogVerbose($"Resolved target = '{resolvedTarget}'");
+                    if (shouldAutoRegister)
+                    {
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        LogVerbose($"Element ID = '{targetId}', Element Name = '{targetName}'");
 
-                    if (!string.IsNullOrEmpty(resolvedTarget))
-                    {
-                        LogVerbose($"Calling TryRegisterChangeEventWithRetry for '{resolvedTarget}'");
-                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnToggleChanged");
-                        _eventRegistered = true;
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                        LogVerbose($"Resolved target = '{resolvedTarget}'");
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            LogVerbose($"Calling TryRegisterChangeEventWithRetry for '{resolvedTarget}'");
+                            UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnToggleChanged");
+                            _eventRegistered = true;
+                        }
+                        else
+                        {
+                            Debug.LogWarning("[OnToggleChanged] Resolved target is null or empty - cannot auto-register");
+                        }
                     }
-                    else
-                    {
-                        Debug.LogWarning("[OnToggleChanged] Resolved target is null or empty - cannot auto-register");
-                    }
-                }
+                });
             }
             else
             {

@@ -53,3 +53,18 @@ bellAudio.Play();
 ```
 
 When the object already has an Audio Source (it holds the clip), a BS Audio Source added in the Inspector keeps that Audio Source's settings and reads them back into its properties. `playOnAwake` takes effect the next time the object is enabled.
+
+## Volume and mixers
+
+When a world loads in the app, every Audio Source in its scene, on inactive objects too, is routed through the app's own mixer, so each player's volume settings apply to it:
+
+| Audio Source | Follows |
+|--------------|---------|
+| On an object with `music` in its name, in any capitals (`LobbyMusic`), or directly under one | **Master Volume** and **Music Volume** |
+| Any other | **Master Volume** and **Gameplay Volume** |
+
+A mixer of your own keeps working: its groups, effects and snapshots still apply, and its output goes on into the app's mixer. A mixer has one output, so it follows one of the rows above, chosen by the first Audio Source that uses it. An Audio Source on it that belongs to the other row plays straight through the app's mixer instead: it follows its own slider, but your mixer's groups and effects don't apply to it. To keep your effects on both, put music and sound effects on separate mixers. An Audio Source on a mixer group with `music` in its name counts as music too. If a mixer can't be joined to the app's, its Audio Sources play straight through the app's mixer instead.
+
+A BS Video Player with **Route Audio Through Audio Source** on follows the same rule. An Audio Source that a script adds after the world has loaded isn't routed, so players' volume settings don't change it.
+
+Play mode doesn't show any of this: it plays your scene as you built it, mixer included. To hear what players hear, [visit your world](../building-in-unity/publishing.md#visiting-your-world) in the app.

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.SceneManagement;
 using UnityEngine;
 using BS;
 
@@ -48,6 +49,11 @@ class CustomSceneProcessor : IProcessSceneWithReport
         if (isBuildingSceneBee)
         {
             ApplyPlatformFilters(scene, report);
+        }
+        // Last: what a platform's filters dropped isn't in its bundle.
+        if (isBuildingSceneBee)
+        {
+            AssetManifestStamp.Apply(scene);
         }
 #endif
     }
@@ -110,4 +116,54 @@ class CustomSceneProcessor : IProcessSceneWithReport
         }
     }
 #endif
+}
+
+/// <summary>
+/// Removes a build marker an interrupted build left in a scene. The Builder adds it, Basis saves the scene with it for the
+/// build, and the Builder takes it out again afterwards, so Unity quitting in between leaves it in the file. Nothing is
+/// saved here: the creator chooses that.
+/// </summary>
+[InitializeOnLoad]
+static class SceneBundleMarkerCleanup
+{
+    static SceneBundleMarkerCleanup()
+    {
+        if (AssetDatabase.IsAssetImportWorkerProcess())
+            return;
+        EditorSceneManager.sceneOpened += (scene, mode) => Clean(scene);
+        // The scene Unity restores when it starts isn't announced by sceneOpened.
+        EditorApplication.delayCall += () =>
+        {
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+                Clean(UnityEngine.SceneManagement.SceneManager.GetSceneAt(i));
+        };
+    }
+
+    internal static void Clean(UnityEngine.SceneManagement.Scene scene)
+    {
+        if (BuilderWindow.SceneBundleBuildInProgress || BuildPipeline.isBuildingPlayer || EditorApplication.isPlayingOrWillChangePlaymode)
+            return;
+        int removed = RemoveMarkers(scene);
+        if (removed == 0)
+            return;
+        EditorSceneManager.MarkSceneDirty(scene);
+        Debug.LogWarning($"[Creator SDK] Removed {removed} leftover build marker(s) ({CustomSceneProcessor.SceneBeeBuildMarkerName}) " +
+                         $"from {scene.path}, left by a build that was interrupted. Save the scene to keep the change.");
+    }
+
+    internal static int RemoveMarkers(UnityEngine.SceneManagement.Scene scene)
+    {
+        // An additive scene can be open without being loaded.
+        if (!scene.IsValid() || !scene.isLoaded)
+            return 0;
+        int removed = 0;
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root.name != CustomSceneProcessor.SceneBeeBuildMarkerName)
+                continue;
+            GameObject.DestroyImmediate(root);
+            removed++;
+        }
+        return removed;
+    }
 }

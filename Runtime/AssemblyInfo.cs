@@ -6,8 +6,12 @@ using System.Runtime.CompilerServices;
 // Main banter project is just using the generic assembly? TODO
 // [assembly: InternalsVisibleTo("Assembly-CSharp")]
 
+// The Builder writes the asset manifest the runtime reads.
+[assembly: InternalsVisibleTo("BS.SDKEditor")]
 // Edit-mode tests set components' internal (serialized) fields directly.
 [assembly: InternalsVisibleTo("BS.SDKEditor.Tests")]
+// The typed page API reads which scene is the current world's.
+[assembly: InternalsVisibleTo("BS.BridgeApi")]
 // Bridge 2 session-lane tests drive BSLink/BSPipe's internal bridge seams.
 [assembly: InternalsVisibleTo("BS.Bridge.Core.Tests")]
 

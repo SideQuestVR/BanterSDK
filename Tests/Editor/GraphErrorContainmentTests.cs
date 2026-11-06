@@ -109,6 +109,22 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void AFailureAwayFromAnEvent_IsContainedAndNamed()
+        {
+            Flow used = null;
+            LogAssert.Expect(LogType.Error, new Regex(@"ContainmentProbe \(Campfire\).*threw InvalidOperationException: read failed"));
+
+            Assert.DoesNotThrow(() => GraphErrorThrottle.RunFlow(reference, thrower, flow =>
+            {
+                used = flow;
+                throw new InvalidOperationException("read failed");
+            }));
+
+            Assert.Throws<ObjectDisposedException>(() => used.Dispose(), "the flow should already be back in its pool");
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
         public void TheNextListenerOfAHook_StillRuns()
         {
             var hook = new EventHook("ContainmentProbeHook");

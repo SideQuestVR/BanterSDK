@@ -41,7 +41,7 @@ All of them come from `Assets/WebRoot`, and a file that isn't there is skipped (
 - load the file from a full `https://` address on a server of your own; or
 - upload it on altvr.app: open your world's page, choose **Edit world**, then **Assets**, and **Upload files**. Files there are served from your world's address by name: `.css`, `.js`, `.json`, `.html`, `.png`, `.jpg`, `.jpeg`, `.webp`, `.ico`, `.mp3`, `.ogg` and `.wav`, up to 50 MB each. Names are made lower-case and there are no folders, so refer to them as `style.css`, not `css/style.css`.
 
-**Size limits:** the built `asset.world` can be up to 300 MB, and `index.html` and the script file up to 10 MB each.
+**Size limits:** the built `asset.world` can be up to 1 GiB, and `index.html` and the script file up to 10 MB each.
 
 If an upload fails, the log shows a `FAILED UPLOADING` line and the world keeps its previous copy of that file: a file is only swapped in once the new one has arrived.
 

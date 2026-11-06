@@ -5,8 +5,11 @@ using SideQuest.FlexaBody;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.InputSystem.UI;
 using UnityEngine.SceneManagement;
+using CustomEventArgs = Unity.VisualScripting.CustomEventArgs;
+using EventBus = Unity.VisualScripting.EventBus;
 using HardwareKeyboardInput = SideQuest.Ora.HardwareKeyboardInput;
 using PanelRaycaster = UnityEngine.UIElements.PanelRaycaster;
 using UIDocument = UnityEngine.UIElements.UIDocument;
@@ -82,6 +85,7 @@ namespace BS
         HardwareKeyboardInput _keyboardInput;
         // Keys whose key-press reached the page and whose key-release hasn't yet.
         readonly HashSet<int> _keysSent = new HashSet<int>();
+        Vector2 _lastStick;
 
         float _yaw;
         float _pitch;
@@ -476,6 +480,7 @@ namespace BS
                 }
                 _capture.Capturing = true;
                 _hand.BeginGrab(targetHit, ray);
+                EmitButton(ButtonType.GRIP, true);
             }
             else if (_pressOwner == PressOwner.Click)
             {
@@ -577,6 +582,7 @@ namespace BS
             {
                 case PressOwner.Grab:
                     _hand.EndGrab();
+                    EmitButton(ButtonType.GRIP, false);
                     break;
 
                 case PressOwner.Click:
@@ -656,6 +662,45 @@ namespace BS
                 secondary.isPressed, secondary.wasPressedThisFrame,
                 thumbClick.isPressed, thumbClick.wasPressedThisFrame,
                 stick);
+
+            EmitButtonKey(trigger, ButtonType.TRIGGER);
+            EmitButtonKey(primary, ButtonType.PRIMARY);
+            EmitButtonKey(secondary, ButtonType.SECONDARY);
+            EmitButtonKey(thumbClick, ButtonType.THUMBSTICKCLICK);
+            var link = _scene?.link;
+            if (link == null)
+                return;
+            if (trigger.wasPressedThisFrame || trigger.wasReleasedThisFrame)
+            {
+                var value = trigger.isPressed ? 1f : 0f;
+                link.OnTriggerAxisUpdate(HandSide.RIGHT, value);
+                EventBus.Trigger("OnTriggerAxisUpdate", new CustomEventArgs("", new object[] { (int)HandSide.RIGHT, value }));
+            }
+            if (stick != _lastStick)
+            {
+                _lastStick = stick;
+                link.OnControllerAxisUpdate(HandSide.RIGHT, stick.x, stick.y);
+                EventBus.Trigger("OnControllerAxisUpdate", new CustomEventArgs("", new object[] { (int)HandSide.RIGHT, stick.x, stick.y }));
+            }
+        }
+
+        void EmitButtonKey(KeyControl key, ButtonType button)
+        {
+            if (key.wasPressedThisFrame) EmitButton(button, true);
+            else if (key.wasReleasedThisFrame) EmitButton(button, false);
+        }
+
+        // The page's button events and Visual Scripting's controller nodes, as the app raises them for a real
+        // controller. The right hand, which these keys stand in for.
+        void EmitButton(ButtonType button, bool pressed)
+        {
+            var link = _scene?.link;
+            if (link == null)
+                return;
+            if (pressed) link.OnButtonPressed(button, HandSide.RIGHT);
+            else link.OnButtonReleased(button, HandSide.RIGHT);
+            EventBus.Trigger(pressed ? "OnControllerButtonPressed" : "OnControllerButtonReleased",
+                new CustomEventArgs("", new object[] { (int)button, (int)HandSide.RIGHT }));
         }
 
         /// <summary>

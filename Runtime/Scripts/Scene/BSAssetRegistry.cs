@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace BS
@@ -21,11 +22,11 @@ namespace BS
     }
 
     /// <summary>
-    /// Central registry for all assets in the Banter scene.
-    /// Manages asset lifecycle, reference counting, and provides lookup functionality.
+    /// The way in to the current world's assets, which live in a <see cref="BSAssetDatabase"/> for as long as the world
+    /// does. Assets are looked up by id or key, and their events and the page's messages come from here.
     /// Singleton pattern - use BSAssetRegistry.Instance
     /// </summary>
-    public class BSAssetRegistry : MonoBehaviour
+    public class BSAssetRegistry : MonoBehaviour, IBSAssetListener
     {
         private static BSAssetRegistry _instance;
 
@@ -43,14 +44,20 @@ namespace BS
             }
         }
 
-        // Asset storage
-        private Dictionary<string, UnityEngine.Object> assets = new Dictionary<string, UnityEngine.Object>();
-        private Dictionary<string, AssetMetadata> metadata = new Dictionary<string, AssetMetadata>();
-        private Dictionary<string, HashSet<string>> references = new Dictionary<string, HashSet<string>>();
+        const float ReclaimEverySeconds = 15f;
 
-        // Indexing for fast lookups
-        private Dictionary<AssetType, HashSet<string>> typeIndex = new Dictionary<AssetType, HashSet<string>>();
-        private Dictionary<string, string> urlIndex = new Dictionary<string, string>(); // URL -> assetId
+        BSAssetDatabase database;
+        BSAssetSources sources;
+        BSAssetMemoryPolicy memory;
+        float nextReclaim;
+
+        internal BSAssetMemoryPolicy Memory => memory ??= new BSAssetMemoryPolicy(new BSDeviceFreeMemory(), () => Time.realtimeSinceStartup);
+
+        /// <summary>The current world's assets.</summary>
+        internal BSAssetDatabase Database => database ??= new BSAssetDatabase(this, Memory);
+
+        /// <summary>Where the current world's keys lead.</summary>
+        internal BSAssetSources Sources => sources ??= new BSAssetSources();
 
         /// <summary>
         /// Events
@@ -71,12 +78,66 @@ namespace BS
             }
             _instance = this;
             DontDestroyOnLoad(gameObject);
+            Application.lowMemory += OnLowMemory;
         }
 
-        private void Start()
+        void OnDestroy()
         {
-            // Scan the scene for existing assets on startup
-            ScanScene();
+            Application.lowMemory -= OnLowMemory;
+        }
+
+        void Update()
+        {
+            Database.Tick();
+            ReclaimWhileLow();
+        }
+
+        void OnLowMemory()
+        {
+            Memory.LowMemoryReported();
+            Database.Tick();
+            ReclaimWhileLow();
+        }
+
+        // Evicting lets go of objects that others may share, so Unity decides what nothing uses any more. A full pass over
+        // the loaded objects, so only under pressure, and not often.
+        void ReclaimWhileLow()
+        {
+            if (!Memory.IsLow || Time.realtimeSinceStartup < nextReclaim || Database.TakeEvicted() == 0) return;
+            nextReclaim = Time.realtimeSinceStartup + ReclaimEverySeconds;
+            Resources.UnloadUnusedAssets();
+        }
+
+        /// <summary>
+        /// The world is being left: its assets stop being found now, and are released once <paramref name="worldGone"/>
+        /// completes, when its scene and bundles have gone. Main thread.
+        /// </summary>
+        internal static void WorldChanging(Task worldGone)
+        {
+            if (_instance != null) _instance.BeginNextWorld(worldGone);
+        }
+
+        void BeginNextWorld(Task worldGone)
+        {
+            var leaving = Database;
+            leaving.Retire();
+            database = null;
+            sources = null;
+            Database.TakeBrowsers(leaving);
+            ReleaseWhenGone(leaving, worldGone);
+        }
+
+        static async void ReleaseWhenGone(BSAssetDatabase leaving, Task worldGone)
+        {
+            try
+            {
+                await worldGone;
+            }
+            catch (Exception e)
+            {
+                Debug.LogWarning("[BSAssetRegistry] The world's unload failed; releasing its assets anyway: " + e.Message);
+            }
+            leaving.ReleaseAll();
         }
 
         /// <summary>
@@ -92,7 +153,7 @@ namespace BS
 
             // Generate unique ID
             string assetId = $"asset_{type}_{Guid.NewGuid().ToString("N").Substring(0, 8)}";
-            Store(assetId, asset, type, url, tag);
+            Database.Store(assetId, asset, type, url, tag, EstimateMemorySize(asset));
             return assetId;
         }
 
@@ -104,64 +165,42 @@ namespace BS
         /// </summary>
         public void SetAsset(string assetId, UnityEngine.Object asset, AssetType type, string tag = null)
         {
+            SetAsset(assetId, asset, type, tag, null);
+        }
+
+        /// <summary>
+        /// <see cref="SetAsset(string, UnityEngine.Object, AssetType, string)"/> for an asset that came from
+        /// <paramref name="url"/>, which a new id is indexed under.
+        /// </summary>
+        public void SetAsset(string assetId, UnityEngine.Object asset, AssetType type, string tag, string url)
+        {
             if (string.IsNullOrEmpty(assetId) || asset == null)
             {
                 Debug.LogError($"Cannot set asset '{assetId}' to null");
                 return;
             }
 
-            if (!assets.TryGetValue(assetId, out var current))
+            var entry = Database.Find(assetId);
+            if (entry == null)
             {
-                Store(assetId, asset, type, null, tag);
-                MarkAssetLoaded(assetId);
+                Database.MarkLoaded(Database.Store(assetId, asset, type, url, tag, EstimateMemorySize(asset)));
                 return;
             }
-            if (current == asset) return;
-
-            assets[assetId] = asset;
-            var meta = metadata[assetId];
-            meta.memorySize = EstimateMemorySize(asset);
-            metadata[assetId] = meta;
-
-            OnAssetUpdated?.Invoke(assetId);
-            SendAssetUpdated(assetId);
+            if (entry.Asset == asset) return;
+            Database.Replace(entry, asset, EstimateMemorySize(asset));
         }
 
-        void Store(string assetId, UnityEngine.Object asset, AssetType type, string url, string tag)
+        /// <summary>Nothing else owns this asset's object: it is destroyed with the entry. A page's Material, say.</summary>
+        internal void OwnAsset(string assetId)
         {
-            // Store asset
-            assets[assetId] = asset;
-
-            // Store metadata
-            metadata[assetId] = new AssetMetadata
+            var entry = Database.Find(assetId);
+            if (entry == null) return;
+            var asset = entry.Asset;
+            entry.Dispose = () =>
             {
-                id = assetId,
-                type = type,
-                url = url,
-                loaded = false,
-                memorySize = EstimateMemorySize(asset),
-                createdAt = DateTime.Now,
-                tag = tag
+                if (Application.isPlaying) Destroy(asset);
+                else DestroyImmediate(asset);
             };
-
-            // Index by type
-            if (!typeIndex.ContainsKey(type))
-            {
-                typeIndex[type] = new HashSet<string>();
-            }
-            typeIndex[type].Add(assetId);
-
-            // Index by URL if provided
-            if (!string.IsNullOrEmpty(url))
-            {
-                urlIndex[url] = assetId;
-            }
-
-            // Initialize reference tracking
-            references[assetId] = new HashSet<string>();
-
-            OnAssetRegistered?.Invoke(assetId, type);
-            SendAssetRegistered(assetId);
         }
 
         /// <summary>
@@ -169,36 +208,7 @@ namespace BS
         /// </summary>
         public void UnregisterAsset(string assetId)
         {
-            if (!assets.ContainsKey(assetId))
-            {
-                return;
-            }
-
-            var meta = metadata[assetId];
-
-            // Remove from type index
-            if (typeIndex.ContainsKey(meta.type))
-            {
-                typeIndex[meta.type].Remove(assetId);
-                if (typeIndex[meta.type].Count == 0)
-                {
-                    typeIndex.Remove(meta.type);
-                }
-            }
-
-            // Remove from URL index
-            if (!string.IsNullOrEmpty(meta.url) && urlIndex.ContainsKey(meta.url))
-            {
-                urlIndex.Remove(meta.url);
-            }
-
-            // Clean up
-            assets.Remove(assetId);
-            metadata.Remove(assetId);
-            references.Remove(assetId);
-
-            OnAssetDestroyed?.Invoke(assetId);
-            SendAssetDestroyed(assetId);
+            Database.Remove(assetId);
         }
 
         /// <summary>
@@ -206,11 +216,7 @@ namespace BS
         /// </summary>
         public T GetAsset<T>(string assetId) where T : UnityEngine.Object
         {
-            if (assets.TryGetValue(assetId, out var asset))
-            {
-                return asset as T;
-            }
-            return null;
+            return Database.Find(assetId)?.Asset as T;
         }
 
         /// <summary>
@@ -227,20 +233,7 @@ namespace BS
         /// </summary>
         public List<UnityEngine.Object> FindAssets(AssetType type)
         {
-            var results = new List<UnityEngine.Object>();
-
-            if (typeIndex.TryGetValue(type, out var assetIds))
-            {
-                foreach (var id in assetIds)
-                {
-                    if (assets.TryGetValue(id, out var asset))
-                    {
-                        results.Add(asset);
-                    }
-                }
-            }
-
-            return results;
+            return Database.Entries.Where(e => e.Meta.type == type).Select(e => e.Asset).ToList();
         }
 
         /// <summary>
@@ -248,11 +241,7 @@ namespace BS
         /// </summary>
         public UnityEngine.Object FindAssetByUrl(string url)
         {
-            if (urlIndex.TryGetValue(url, out var assetId))
-            {
-                return assets.TryGetValue(assetId, out var asset) ? asset : null;
-            }
-            return null;
+            return Database.Entries.FirstOrDefault(e => e.Meta.url == url)?.Asset;
         }
 
         /// <summary>
@@ -260,7 +249,8 @@ namespace BS
         /// </summary>
         public AssetMetadata? GetMetadata(string assetId)
         {
-            return metadata.TryGetValue(assetId, out var meta) ? meta : (AssetMetadata?)null;
+            var entry = Database.Find(assetId);
+            return entry != null ? entry.Meta : (AssetMetadata?)null;
         }
 
         /// <summary>
@@ -268,15 +258,8 @@ namespace BS
         /// </summary>
         public void MarkAssetLoaded(string assetId)
         {
-            if (metadata.ContainsKey(assetId))
-            {
-                var meta = metadata[assetId];
-                meta.loaded = true;
-                metadata[assetId] = meta;
-
-                OnAssetLoaded?.Invoke(assetId);
-                SendAssetLoaded(assetId);
-            }
+            var entry = Database.Find(assetId);
+            if (entry != null) Database.MarkLoaded(entry);
         }
 
         /// <summary>
@@ -293,11 +276,7 @@ namespace BS
         /// </summary>
         public void AddReference(string assetId, string ownerId)
         {
-            if (!references.ContainsKey(assetId))
-            {
-                references[assetId] = new HashSet<string>();
-            }
-            references[assetId].Add(ownerId);
+            Database.AddReference(assetId, ownerId);
         }
 
         /// <summary>
@@ -305,10 +284,7 @@ namespace BS
         /// </summary>
         public void RemoveReference(string assetId, string ownerId)
         {
-            if (references.TryGetValue(assetId, out var refs))
-            {
-                refs.Remove(ownerId);
-            }
+            Database.RemoveReference(assetId, ownerId);
         }
 
         /// <summary>
@@ -316,7 +292,7 @@ namespace BS
         /// </summary>
         public int GetReferenceCount(string assetId)
         {
-            return references.TryGetValue(assetId, out var refs) ? refs.Count : 0;
+            return Database.ReferenceCount(assetId);
         }
 
         /// <summary>
@@ -330,99 +306,37 @@ namespace BS
         }
 
         /// <summary>
-        /// Scan scene for existing assets (called on scene load)
+        /// Registers what the current world's scene uses: its textures, audio clips, materials and meshes. Nothing runs this
+        /// by itself: a world's assets are found when a script asks for them (<c>BS.Assets</c>).
         /// </summary>
         public void ScanScene()
         {
             int scannedCount = 0;
-
-            // Find all textures
-            var textures = Resources.FindObjectsOfTypeAll<Texture2D>();
-            foreach (var tex in textures)
+            foreach (var (asset, type) in Sources.WorldAssets())
             {
-                // Skip Unity internal assets
-                if (IsSceneAsset(tex))
-                {
-                    RegisterAsset(tex, AssetType.Texture2D);
-                    scannedCount++;
-                }
+                if (Database.Entries.Any(e => e.Asset == asset)) continue;
+                RegisterAsset(asset, type);
+                scannedCount++;
             }
-
-            // Find all audio clips
-            var audioClips = Resources.FindObjectsOfTypeAll<AudioClip>();
-            foreach (var clip in audioClips)
-            {
-                if (IsSceneAsset(clip))
-                {
-                    RegisterAsset(clip, AssetType.AudioClip);
-                    scannedCount++;
-                }
-            }
-
-            // Find all materials
-            var materials = Resources.FindObjectsOfTypeAll<Material>();
-            foreach (var mat in materials)
-            {
-                if (IsSceneAsset(mat))
-                {
-                    RegisterAsset(mat, AssetType.Material);
-                    scannedCount++;
-                }
-            }
-
-            // Find all meshes
-            var meshes = Resources.FindObjectsOfTypeAll<Mesh>();
-            foreach (var mesh in meshes)
-            {
-                if (IsSceneAsset(mesh))
-                {
-                    RegisterAsset(mesh, AssetType.Mesh);
-                    scannedCount++;
-                }
-            }
-
-            Debug.Log($"Asset registry scanned scene: {scannedCount} new assets registered (total: {assets.Count})");
-        }
-
-        /// <summary>
-        /// Check if an asset is a scene asset (not Unity internal/generated)
-        /// </summary>
-        private bool IsSceneAsset(UnityEngine.Object obj)
-        {
-            if (obj == null || string.IsNullOrEmpty(obj.name))
-                return false;
-
-            // Skip Unity internal assets
-            if (obj.name.StartsWith("Hidden") ||
-                obj.name.StartsWith("Default-") ||
-                obj.name.StartsWith("unity_") ||
-                obj.name.StartsWith("Generated"))
-                return false;
-
-            // Skip already registered assets
-            string testId = $"asset_{obj.GetType().Name}_{BSScene.UnityId(obj)}";
-            if (assets.ContainsKey(testId))
-                return false;
-
-            return true;
+            Debug.Log($"Asset registry scanned the world's scene: {scannedCount} new assets registered (total: {Database.Entries.Count()})");
         }
 
         /// <summary>
         /// Estimate memory size of an asset
         /// </summary>
-        private long EstimateMemorySize(UnityEngine.Object asset)
+        internal static long EstimateMemorySize(UnityEngine.Object asset)
         {
             if (asset is Texture2D tex)
             {
-                return tex.width * tex.height * 4; // Rough estimate
+                return (long)tex.width * tex.height * 4; // Rough estimate
             }
             else if (asset is AudioClip clip)
             {
-                return clip.samples * clip.channels * 2; // 16-bit samples
+                return (long)clip.samples * clip.channels * 2; // 16-bit samples
             }
             else if (asset is Mesh mesh)
             {
-                return mesh.vertexCount * 32; // Rough estimate
+                return (long)mesh.vertexCount * 32; // Rough estimate
             }
             return 0;
         }
@@ -432,42 +346,57 @@ namespace BS
         /// </summary>
         public long GetTotalMemoryUsage()
         {
-            return metadata.Values.Sum(m => m.memorySize);
+            return Database.Entries.Sum(e => e.Meta.memorySize);
         }
 
         #region Communication with JavaScript
 
-        private void SendAssetRegistered(string assetId)
+        void IBSAssetListener.AssetRegistered(BSAssetEntry entry)
         {
-            if (!metadata.TryGetValue(assetId, out var meta))
-                return;
+            OnAssetRegistered?.Invoke(entry.Meta.id, entry.Meta.type);
+            SendAssetRegistered(entry.Meta);
+        }
 
-            var message = $"!ar!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}" +
+        void IBSAssetListener.AssetLoaded(BSAssetEntry entry)
+        {
+            OnAssetLoaded?.Invoke(entry.Meta.id);
+            SendAssetLoaded(entry.Meta);
+        }
+
+        void IBSAssetListener.AssetUpdated(BSAssetEntry entry)
+        {
+            OnAssetUpdated?.Invoke(entry.Meta.id);
+            SendAssetUpdated(entry.Meta);
+        }
+
+        void IBSAssetListener.AssetRemoved(BSAssetEntry entry, bool tellPage)
+        {
+            OnAssetDestroyed?.Invoke(entry.Meta.id);
+            if (tellPage) SendAssetDestroyed(entry.Meta.id);
+        }
+
+        private void SendAssetRegistered(AssetMetadata meta)
+        {
+            var message = $"!ar!{MessageDelimiters.PRIMARY}{meta.id}{MessageDelimiters.SECONDARY}" +
                          $"{(int)meta.type}{MessageDelimiters.SECONDARY}" +
-                         $"{meta.url ?? ""}{MessageDelimiters.SECONDARY}" +
+                         $"{WireText.Encode(meta.url ?? "")}{MessageDelimiters.SECONDARY}" +
                          $"{(meta.loaded ? "1" : "0")}{MessageDelimiters.SECONDARY}" +
-                         $"{meta.tag ?? ""}";
+                         $"{WireText.Encode(meta.tag ?? "")}";
 
             BSScene.Instance()?.link?.Send(message);
         }
 
-        private void SendAssetLoaded(string assetId)
+        private void SendAssetLoaded(AssetMetadata meta)
         {
-            if (!metadata.TryGetValue(assetId, out var meta))
-                return;
-
-            var message = $"!al!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}" +
+            var message = $"!al!{MessageDelimiters.PRIMARY}{meta.id}{MessageDelimiters.SECONDARY}" +
                          $"{meta.memorySize}";
 
             BSScene.Instance()?.link?.Send(message);
         }
 
-        private void SendAssetUpdated(string assetId)
+        private void SendAssetUpdated(AssetMetadata meta)
         {
-            if (!metadata.TryGetValue(assetId, out var meta))
-                return;
-
-            var message = $"{APICommands.ASSET_UPDATED}{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}" +
+            var message = $"{APICommands.ASSET_UPDATED}{MessageDelimiters.PRIMARY}{meta.id}{MessageDelimiters.SECONDARY}" +
                          $"{meta.memorySize}";
 
             BSScene.Instance()?.link?.Send(message);
@@ -475,7 +404,7 @@ namespace BS
 
         private void SendAssetFailed(string assetId, string error)
         {
-            var message = $"!af!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}{error}";
+            var message = $"!af!{MessageDelimiters.PRIMARY}{assetId}{MessageDelimiters.SECONDARY}{WireText.Encode(error)}";
             BSScene.Instance()?.link?.Send(message);
         }
 
@@ -493,13 +422,13 @@ namespace BS
         public void DebugPrint()
         {
             Debug.Log($"=== Asset Registry ===");
-            Debug.Log($"Total Assets: {assets.Count}");
+            Debug.Log($"Total Assets: {Database.Entries.Count()}");
             Debug.Log($"Total Memory: {GetTotalMemoryUsage() / 1024f / 1024f:F2} MB");
             Debug.Log($"\nAssets by Type:");
-            foreach (var kvp in typeIndex)
+            foreach (var group in Database.Entries.GroupBy(e => e.Meta.type))
             {
-                var memory = kvp.Value.Sum(id => metadata.TryGetValue(id, out var m) ? m.memorySize : 0);
-                Debug.Log($"  {kvp.Key}: {kvp.Value.Count} ({memory / 1024f / 1024f:F2} MB)");
+                var memory = group.Sum(e => e.Meta.memorySize);
+                Debug.Log($"  {group.Key}: {group.Count()} ({memory / 1024f / 1024f:F2} MB)");
             }
         }
     }

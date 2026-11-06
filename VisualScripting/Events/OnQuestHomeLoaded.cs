@@ -55,7 +55,8 @@ namespace BS.VisualScripting
             var data = stack.GetElementData<QuestHomeData>(this);
             if (data.onLoaded != null) return;
 
-            var questHomeGo = Flow.FetchValue<GameObject>(questHomeObject, stack.ToReference());
+            GameObject questHomeGo = null;
+            ReportingFlow.Run(stack.ToReference(), this, flow => questHomeGo = flow.GetValue<GameObject>(questHomeObject));
             if (questHomeGo != null)
             {
                 var questHome = questHomeGo.GetComponent<BSQuestHome>();

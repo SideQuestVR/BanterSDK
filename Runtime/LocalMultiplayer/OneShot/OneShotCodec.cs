@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/OneShot/OneShotService.cs" sha256="ecd52830d31fee69e74199f8d3ed3e25305cf4fdcdd75abe7d1cba53ebb60435" mode="verbatim" />
+// <mirror source="Assets/Systems/Networking/OneShot/OneShotService.cs" sha256="b8af48c480c96634238e052a564435a0de4a9811855f277940009456159b24d5" mode="verbatim" />
 // Verbatim copy of OneShotMessage and OneShotCodec (OneShotService.cs:10-75); only the namespace differs. The
 // lane itself (OneShotService) is ported in OneShotModule.cs.
 using System;

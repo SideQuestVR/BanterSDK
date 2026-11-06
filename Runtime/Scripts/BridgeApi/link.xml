@@ -1,0 +1,6 @@
+<linker>
+	<!-- The typed API's thunks reference every member they call, so nothing they reach is stripped. This keeps the
+	     assembly itself, whose only entry is a RuntimeInitializeOnLoadMethod. The linker reads link.xml files under Assets
+	     only: this one goes in through BridgeApiLinkerProcessor in the SDK's editor assembly. -->
+	<assembly fullname="BS.BridgeApi" preserve="all" />
+</linker>

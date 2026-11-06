@@ -66,32 +66,34 @@ namespace BS.VisualScripting
             // Auto-register when graph starts
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    var targetKeyEvent = flow.GetValue<UIKeyboardEventType>(keyboardEventType);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
-                        // Map keyboard event type to UIEventType
-                        UIEventType eventType = targetKeyEvent switch
-                        {
-                            UIKeyboardEventType.KeyDown => UIEventType.KeyDown,
-                            UIKeyboardEventType.KeyUp => UIEventType.KeyUp,
-                            UIKeyboardEventType.KeyPress => UIEventType.KeyPress,
-                            _ => UIEventType.KeyDown
-                        };
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        var targetKeyEvent = flow.GetValue<UIKeyboardEventType>(keyboardEventType);
 
-                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIKeyboardEvent");
-                        _eventRegistered = true;
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            // Map keyboard event type to UIEventType
+                            UIEventType eventType = targetKeyEvent switch
+                            {
+                                UIKeyboardEventType.KeyDown => UIEventType.KeyDown,
+                                UIKeyboardEventType.KeyUp => UIEventType.KeyUp,
+                                UIKeyboardEventType.KeyPress => UIEventType.KeyPress,
+                                _ => UIEventType.KeyDown
+                            };
+
+                            UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIKeyboardEvent");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 

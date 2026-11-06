@@ -71,7 +71,7 @@ Every player has to have the object, under the same [BSObjectId](#bsobjectid): t
 | `syncRotation` | `true` | Off: the rotation isn't shared, only the position. |
 | `takeOwnershipOnCollision` | `true` | Touching the object with your body, head, hands or feet makes you its owner. |
 | `takeOwnershipOnGrab` | `true` | Grabbing the object makes you its owner and holds it until you let go, and the others see it in your hand. The object also has to be grabbable: a [grab handle](../components/vr-interaction.md#grabhandle) on the Grabbable layer, as the grab presets have. |
-| `kinematicIfNotOwned` | `false` | Ignored: the copies a player doesn't own are always kinematic (see below). |
+| `kinematicIfNotOwned` | `false` | The object rests, kinematic, until someone grabs it, bumps it or takes ownership, and goes back to resting when it's reset. The copies a player doesn't own are always kinematic either way (see below). |
 
 The app reads these once, when it sets the object up (a frame after the object starts). Set them in the Inspector, or in the component's config when a script adds it; changing them later has no effect.
 
@@ -205,7 +205,7 @@ window.addEventListener("bs-loaded", () => {
 - **Your own writes come back to you** as changes, so do the work in the change handler, not straight after writing. Then a player who arrives later runs the same code.
 - **Arriving players get everything:** when you join, `space-state-changed` fires with every value.
 - **It outlives the visit.** Space state is kept until 24 hours after the last change, whether or not anyone is in the space. Reading it, or joining, doesn't extend that.
-- **Public** values can be written by anyone in the room. **Protected** values can be written only by the world's owner, an Owner or Moderator of the community hosting it, or a SideQuest admin, and only while signed in. Anyone can read both. Once a key has been written as protected it stays protected; see [What "protected" means](../javascript-api/scene-api.md#what-protected-means).
+- **Public** values can be written by anyone in the room. **Protected** values can be written only by the world's owner, an Owner or Moderator of the community hosting it, or a SideQuest admin, and only while signed in. Anyone can read both. Once a key has been written as protected it stays protected; see [What "protected" means](../javascript-api/scene-api.md#what-quotprotectedquot-means).
 - `SetPublicSpaceProps` and `SetProtectedSpaceProps` take strings. `SpaceStateSet`, `SpaceStateMerge` and `SpaceStateDelete` take real JSON values and nested paths, and reject with an error you can catch. See [JSON space state](../javascript-api/scene-api.md#json-space-state), [Limits](../javascript-api/scene-api.md#limits) and [State Events](../javascript-api/scene-events.md#state-events).
 
 ## User state

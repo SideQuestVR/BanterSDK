@@ -43,6 +43,7 @@ namespace BS.LocalMultiplayer.Objects
         LocalNetworkObject _netObj;
         Rigidbody boundBody;
         bool authoredKinematic;
+        bool holdKinematicOnOwner;
         // The body's kinematic setting before local multiplayer touched it, restored on teardown.
         bool _hasOriginalKinematic;
         bool _originalKinematic;
@@ -114,7 +115,7 @@ namespace BS.LocalMultiplayer.Objects
                 }
                 // Recaptured on every enable, as production does. HeldSyncSuspender, the one caller that re-enables
                 // a non-owner whose body is network-kinematic, shows it the authored flag first.
-                authoredKinematic = boundBody.isKinematic;
+                if (!holdKinematicOnOwner) authoredKinematic = boundBody.isKinematic;
             }
             ApplyRemote(MachineClock.NowMs);
         }
@@ -139,6 +140,23 @@ namespace BS.LocalMultiplayer.Objects
         }
 
         /// <summary>
+        /// Keeps the bound Rigidbody kinematic while this player has authority too (Rigidbody binding only; non-owners
+        /// are always kinematic). The flag is re-applied every frame, so set this instead of Rigidbody.isKinematic to
+        /// rest an authored-dynamic body on its owner.
+        /// </summary>
+        public bool HoldKinematicOnOwner
+        {
+            get => holdKinematicOnOwner;
+            set
+            {
+                holdKinematicOnOwner = value;
+                if (boundBody != null && poseBinding == TransformPoseBinding.Rigidbody
+                    && _netObj != null && _netObj.IsTransformIdentityReady && _netObj.HasTransformAuthority)
+                    boundBody.isKinematic = authoredKinematic || value;
+            }
+        }
+
+        /// <summary>
         /// Production's kinematic rule for a synced body (PacketPartySynchronizedTransform.cs:965-999): null = leave it
         /// alone. Only Rigidbody-bound objects are touched, and only once they have a network identity: the owner gets
         /// its authored setting, everyone else (also while the record is missing) a kinematic body.
@@ -154,7 +172,7 @@ namespace BS.LocalMultiplayer.Objects
             if (_netObj == null || !_netObj.IsTransformIdentityReady) return;
             bool authority = _netObj.HasTransformAuthority;
             bool? kinematic = DesiredKinematic(_netObj.EverBound, authority,
-                boundBody != null && poseBinding == TransformPoseBinding.Rigidbody, authoredKinematic);
+                boundBody != null && poseBinding == TransformPoseBinding.Rigidbody, authoredKinematic || holdKinematicOnOwner);
             if (kinematic.HasValue && boundBody.isKinematic != kinematic.Value) boundBody.isKinematic = kinematic.Value;
 
             if (authority)

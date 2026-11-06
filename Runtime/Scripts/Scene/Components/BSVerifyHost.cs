@@ -4,8 +4,8 @@ namespace BS
 {
     /// <summary>
     /// Checks that the world is running from its own address (see <see cref="VerifyHostCheck"/>). A plain component on
-    /// purpose, with nothing on the bridge: a page script can't add it, read it or change it, so it runs on the values
-    /// saved in the build. The runtime route to it is a prefab, or the Verify Host node.
+    /// purpose, with nothing on the bridge: it runs on the values saved in the build. The runtime route to it is a prefab,
+    /// or the Verify Host node.
     /// </summary>
     [AddComponentMenu("BS/Verify Host")]
     public class BSVerifyHost : MonoBehaviour

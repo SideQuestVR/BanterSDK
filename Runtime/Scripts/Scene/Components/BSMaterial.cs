@@ -20,7 +20,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSMaterial : BSComponentBase
+    public partial class BSMaterial : BSComponentBase
     {
         public ShaderType shaderType = ShaderType.Custom;
         MeshRenderer _renderer;
@@ -67,18 +67,29 @@ namespace BS
 
         Texture2D defaultTexture;
         Texture2D mainTex;
+        // Holds a colour from SetColor on this renderer alone; null until the first one.
+        MaterialPropertyBlock tint;
+        // Counts requests for a main texture, so that of several still loading only the latest takes effect.
+        int textureRequest;
         // asset_ ids this component follows, per texture slot, so a replaced asset is re-assigned;
         // released when the slot resolves again and on destroy.
         readonly Dictionary<int, Action> assetFollowers = new Dictionary<int, Action>();
 
         private static Dictionary<string, Material> materialCache = new Dictionary<string, Material>();
+        // Every material the cache has made, which tells a shared material from a creator's own whatever this component's
+        // properties say. It keeps one dropped from materialCache: objects can still be drawing it.
+        static readonly HashSet<Material> cachedMaterials = new HashSet<Material>();
+        // The main textures SetTexture is loading, so an object that asks for the same material waits for the same load.
+        static readonly Dictionary<Material, Task<bool>> textureLoads = new Dictionary<Material, Task<bool>>();
 
         public static void ClearCache()
         {
-            foreach (var mat in materialCache)
+            foreach (var material in cachedMaterials)
             {
-                Destroy(mat.Value);
+                Destroy(material);
             }
+            cachedMaterials.Clear();
+            textureLoads.Clear();
             materialCache.Clear();
             BSShaderResolver.ClearCache();
         }
@@ -138,6 +149,7 @@ namespace BS
             }
             var material = new Material(BSShaderResolver.Find(shaderType == ShaderType.Custom ? shaderName : BSShaderResolver.DefaultShader));
             materialCache[signature] = material;
+            cachedMaterials.Add(material);
             created = true;
             return material;
         }
@@ -193,6 +205,10 @@ namespace BS
                 }
                 if (changedProperties != null && changedProperties.Count > 0)
                 {
+                    if (changedProperties.Contains(PropertyName.texture))
+                    {
+                        textureRequest++;
+                    }
                     // The cached material is a pure function of the signature, so ANY property change
                     // re-resolves it and the renderer always points at the instance for its current
                     // properties. Previously only a shaderName change swapped materials and every
@@ -200,6 +216,10 @@ namespace BS
                     // that still had the old signature.
                     var material = GetCachedMaterial(out var created);
                     _renderer.sharedMaterial = material;
+                    if (tint != null && changedProperties.Contains(PropertyName.color))
+                    {
+                        ApplyTint(new Color(color.x, color.y, color.z, color.w));
+                    }
                     if (created)
                     {
                         await ApplyProperties(material);
@@ -223,7 +243,7 @@ namespace BS
         }
 
         /// <summary>Resolve and follow only the slots that reference a registry asset (asset_...).</summary>
-        Task FollowAssetSlots(Material material)
+        async Task<bool> FollowAssetSlots(Material material)
         {
             var tasks = new List<Task>();
             void Follow(int propertyId, string reference, bool linear, bool isMain)
@@ -235,15 +255,19 @@ namespace BS
             Follow(RoughnessMapId, roughnessMap, true, false);
             Follow(AOMapId, aoMap, true, false);
             Follow(MainTexId, texture, false, true);
-            return Task.WhenAll(tasks);
+            await Task.WhenAll(tasks);
+            return true;
         }
 
         /// <summary>
         /// Writes every property onto a freshly created material. Only the main texture is awaited
         /// (it gates the LOADED event, as before); the optional maps land whenever they arrive.
+        /// A material whose main texture never came leaves the cache, or the next request for it
+        /// would find it and load nothing. False in that case.
         /// </summary>
-        async Task ApplyProperties(Material material)
+        async Task<bool> ApplyProperties(Material material, bool waitForTexture = false)
         {
+            var signature = GetSignature();
             BSShaderResolver.SetColor(material, new Color(color.x, color.y, color.z, color.w));
             if (material.HasProperty(CullId))
             {
@@ -267,7 +291,12 @@ namespace BS
             _ = SetTextureSlot(material, NormalMapId, normalMap, linear: true, isMain: false);
             _ = SetTextureSlot(material, RoughnessMapId, roughnessMap, linear: true, isMain: false);
             _ = SetTextureSlot(material, AOMapId, aoMap, linear: true, isMain: false);
-            await SetTextureSlot(material, MainTexId, texture, linear: false, isMain: true);
+            var loaded = await SetTextureSlot(material, MainTexId, texture, linear: false, isMain: true, waitForTexture);
+            if (!loaded)
+            {
+                materialCache.Remove(signature);
+            }
+            return loaded;
         }
 
         static void SetKeyword(Material material, string keyword, bool enabled)
@@ -281,30 +310,99 @@ namespace BS
             material.SetKeyword(local, enabled);
         }
 
+        /// <summary>
+        /// Colours this object. The cached material is shared with every BSMaterial of the same signature, so the
+        /// colour goes in a block on this renderer. A creator's own material is written directly.
+        /// </summary>
         public void SetColor(Color color)
         {
-            BSShaderResolver.SetColor(_renderer.sharedMaterial, color);
+            if (_renderer == null) return;
+            if (DrawsCachedMaterial())
+            {
+                ApplyTint(color);
+            }
+            else
+            {
+                BSShaderResolver.SetColor(_renderer.sharedMaterial, color);
+            }
         }
 
+        void ApplyTint(Color color)
+        {
+            tint ??= new MaterialPropertyBlock();
+            _renderer.GetPropertyBlock(tint);
+            BSShaderResolver.SetColor(tint, color);
+            _renderer.SetPropertyBlock(tint);
+        }
+
+        /// <summary>
+        /// Changes this object's main texture. On a cached material that means a different signature, so this object
+        /// moves to that material once the new texture has arrived, and stays as it is if it never does. Of several
+        /// requests the latest counts. A creator's own material is written directly.
+        /// </summary>
         public async Task SetTexture(string texture)
         {
             if (_renderer == null || _renderer.sharedMaterial == null) return;
-            await SetTextureSlot(_renderer.sharedMaterial, MainTexId, texture, linear: false, isMain: true);
+            if (string.IsNullOrEmpty(texture) || !DrawsCachedMaterial())
+            {
+                await SetTextureSlot(_renderer.sharedMaterial, MainTexId, texture, linear: false, isMain: true);
+                return;
+            }
+            var request = ++textureRequest;
+            // ApplyProperties and FollowAssetSlots read the properties before their first await, so the field only needs
+            // the new reference for this long. It goes back at once: it says what this object draws, and the load can fail.
+            var drawn = this.texture;
+            this.texture = texture;
+            var signature = GetSignature();
+            var material = GetCachedMaterial(out var created);
+            if (created)
+            {
+                textureLoads[material] = ApplyProperties(material, waitForTexture: true);
+            }
+            if (!textureLoads.TryGetValue(material, out var load))
+            {
+                load = FollowAssetSlots(material);
+            }
+            this.texture = drawn;
+
+            var loaded = await load;
+            textureLoads.Remove(material);
+            if (request != textureRequest || _renderer == null) return;
+            if (!loaded)
+            {
+                // The load took this component's asset slots with it, and this object still draws the old material.
+                await FollowAssetSlots(_renderer.sharedMaterial);
+                return;
+            }
+            this.texture = texture;
+            if (GetSignature() == signature)
+            {
+                _renderer.sharedMaterial = material;
+            }
+            else
+            {
+                // Another property changed while the texture loaded, so this object needs the material for all of them.
+                await SetupMaterial(new List<PropertyName> { PropertyName.texture });
+            }
         }
+
+        bool DrawsCachedMaterial() => cachedMaterials.Contains(_renderer.sharedMaterial);
 
         /// <summary>
         /// Resolves a texture reference and assigns it to one slot of <paramref name="material"/>.
         /// Accepted forms, checked in this order: empty (leave the shader default), an
-        /// <c>asset_</c> registry id, a registered <see cref="IBSTextureSource"/> scheme, an absolute URL.
+        /// <c>asset_</c> registry id, a registered <see cref="IBSTextureSource"/> scheme, a web address.
+        /// False when the reference gave nothing to show. A source's full-size file is only waited for, and only then
+        /// counts, with <paramref name="waitForTexture"/> and no preview showing.
         /// </summary>
-        async Task SetTextureSlot(Material material, int propertyId, string reference, bool linear, bool isMain)
+        async Task<bool> SetTextureSlot(Material material, int propertyId, string reference, bool linear, bool isMain, bool waitForTexture = false)
         {
             try
             {
                 UnfollowAsset(propertyId);
                 if (material == null || !material.HasProperty(propertyId) || string.IsNullOrEmpty(reference))
                 {
-                    return;
+                    return true;
                 }
 
                 if (reference.StartsWith("asset_"))
@@ -322,44 +420,53 @@ namespace BS
                     {
                         Debug.LogWarning($"Texture asset not found in registry: {reference}");
                     }
-                    return;
+                    return true;
                 }
 
                 if (TryGetTextureSource(reference, out var source, out var path))
                 {
-                    var task = source.Resolve(path, linear, true, preview => Assign(material, propertyId, preview, isMain));
+                    var previewed = false;
+                    var task = source.Resolve(path, linear, true, preview =>
+                    {
+                        previewed |= preview != null;
+                        Assign(material, propertyId, preview, isMain);
+                    });
                     // The preview (when the source has one) is already showing; the full-size file
                     // must not gate the LOADED event or the world load behind a 4K download.
-                    _ = SwapWhenDone(material, propertyId, task, isMain, reference);
-                    return;
+                    var swap = SwapWhenDone(material, propertyId, task, isMain, reference);
+                    return !waitForTexture || previewed || await swap;
                 }
 
                 // Original URL-based texture loading
                 if (!Uri.IsWellFormedUriString(reference, UriKind.Absolute))
                 {
-                    return;
+                    return false;
                 }
                 var downloaded = await Get.Texture(reference, linear, generateMipMaps);
                 Assign(material, propertyId, downloaded, isMain);
+                return downloaded != null;
             }
             catch (Exception e)
             {
                 Debug.Log("Could not get texture: " + reference);
                 Debug.LogError(e);
+                return false;
             }
         }
 
-        async Task SwapWhenDone(Material material, int propertyId, Task<Texture2D> task, bool isMain, string reference)
+        async Task<bool> SwapWhenDone(Material material, int propertyId, Task<Texture2D> task, bool isMain, string reference)
         {
             try
             {
                 var final = await task;
                 Assign(material, propertyId, final, isMain);
+                return final != null;
             }
             catch (Exception e)
             {
                 Debug.Log("Could not get texture: " + reference);
                 Debug.LogError(e);
+                return false;
             }
         }
 
@@ -387,10 +494,14 @@ namespace BS
             Action<string, AssetType> onRegistered = (id, type) => onChanged(id);
             registry.OnAssetUpdated += onChanged;
             registry.OnAssetRegistered += onRegistered;
+            // Holds the asset while this slot shows it, so it isn't evicted out from under the material.
+            var owner = cid + ":" + propertyId;
+            registry.AddReference(assetId, owner);
             assetFollowers[propertyId] = () =>
             {
                 registry.OnAssetUpdated -= onChanged;
                 registry.OnAssetRegistered -= onRegistered;
+                registry.RemoveReference(assetId, owner);
             };
         }
 
@@ -412,333 +523,5 @@ namespace BS
                 Destroy(_renderer);
             }
         }
-        // BS COMPILED CODE 
-        public System.String ShaderName { get { return shaderName; } set { shaderName = value; UpdateCallback(new List<PropertyName> { PropertyName.shaderName }); } }
-        public System.String Texture { get { return texture; } set { texture = value; UpdateCallback(new List<PropertyName> { PropertyName.texture }); } }
-        public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
-        public BS.MaterialSide Side { get { return side; } set { side = value; UpdateCallback(new List<PropertyName> { PropertyName.side }); } }
-        public System.Boolean GenerateMipMaps { get { return generateMipMaps; } set { generateMipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.generateMipMaps }); } }
-        public System.String CacheBust { get { return cacheBust; } set { cacheBust = value; UpdateCallback(new List<PropertyName> { PropertyName.cacheBust }); } }
-        public System.String NormalMap { get { return normalMap; } set { normalMap = value; UpdateCallback(new List<PropertyName> { PropertyName.normalMap }); } }
-        public System.String RoughnessMap { get { return roughnessMap; } set { roughnessMap = value; UpdateCallback(new List<PropertyName> { PropertyName.roughnessMap }); } }
-        public System.String AoMap { get { return aoMap; } set { aoMap = value; UpdateCallback(new List<PropertyName> { PropertyName.aoMap }); } }
-        public System.Single TextureScale { get { return textureScale; } set { textureScale = value; UpdateCallback(new List<PropertyName> { PropertyName.textureScale }); } }
-        public System.Single NormalStrength { get { return normalStrength; } set { normalStrength = value; UpdateCallback(new List<PropertyName> { PropertyName.normalStrength }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.shaderName, PropertyName.texture, PropertyName.color, PropertyName.side, PropertyName.generateMipMaps, PropertyName.cacheBust, PropertyName.normalMap, PropertyName.roughnessMap, PropertyName.aoMap, PropertyName.textureScale, PropertyName.normalStrength, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "Material" +  PropertyName.shaderName + shaderName + PropertyName.texture + texture + PropertyName.color + color + PropertyName.side + side + PropertyName.generateMipMaps + generateMipMaps + PropertyName.cacheBust + cacheBust + PropertyName.normalMap + normalMap + PropertyName.roughnessMap + roughnessMap + PropertyName.aoMap + aoMap + PropertyName.textureScale + textureScale + PropertyName.normalStrength + normalStrength;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Material);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null;
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valshaderName = (BSString)values[i];
-                    if (valshaderName.n == PropertyName.shaderName)
-                    {
-                        shaderName = valshaderName.x;
-                        changedProperties.Add(PropertyName.shaderName);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valtexture = (BSString)values[i];
-                    if (valtexture.n == PropertyName.texture)
-                    {
-                        texture = valtexture.x;
-                        changedProperties.Add(PropertyName.texture);
-                    }
-                }
-                if (values[i] is BSVector4)
-                {
-                    var valcolor = (BSVector4)values[i];
-                    if (valcolor.n == PropertyName.color)
-                    {
-                        color = new Vector4(valcolor.x, valcolor.y, valcolor.z, valcolor.w);
-                        changedProperties.Add(PropertyName.color);
-                    }
-                }
-                if (values[i] is BSInt)
-                {
-                    var valside = (BSInt)values[i];
-                    if (valside.n == PropertyName.side)
-                    {
-                        side = (MaterialSide)valside.x;
-                        changedProperties.Add(PropertyName.side);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valgenerateMipMaps = (BSBool)values[i];
-                    if (valgenerateMipMaps.n == PropertyName.generateMipMaps)
-                    {
-                        generateMipMaps = valgenerateMipMaps.x;
-                        changedProperties.Add(PropertyName.generateMipMaps);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valcacheBust = (BSString)values[i];
-                    if (valcacheBust.n == PropertyName.cacheBust)
-                    {
-                        cacheBust = valcacheBust.x;
-                        changedProperties.Add(PropertyName.cacheBust);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valnormalMap = (BSString)values[i];
-                    if (valnormalMap.n == PropertyName.normalMap)
-                    {
-                        normalMap = valnormalMap.x;
-                        changedProperties.Add(PropertyName.normalMap);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valroughnessMap = (BSString)values[i];
-                    if (valroughnessMap.n == PropertyName.roughnessMap)
-                    {
-                        roughnessMap = valroughnessMap.x;
-                        changedProperties.Add(PropertyName.roughnessMap);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valaoMap = (BSString)values[i];
-                    if (valaoMap.n == PropertyName.aoMap)
-                    {
-                        aoMap = valaoMap.x;
-                        changedProperties.Add(PropertyName.aoMap);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valtextureScale = (BSFloat)values[i];
-                    if (valtextureScale.n == PropertyName.textureScale)
-                    {
-                        textureScale = valtextureScale.x;
-                        changedProperties.Add(PropertyName.textureScale);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valnormalStrength = (BSFloat)values[i];
-                    if (valnormalStrength.n == PropertyName.normalStrength)
-                    {
-                        normalStrength = valnormalStrength.x;
-                        changedProperties.Add(PropertyName.normalStrength);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.shaderName,
-                    type = PropertyType.String,
-                    value = shaderName,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.texture,
-                    type = PropertyType.String,
-                    value = texture,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.color,
-                    type = PropertyType.Vector4,
-                    value = color,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.side,
-                    type = PropertyType.Int,
-                    value = side,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.generateMipMaps,
-                    type = PropertyType.Bool,
-                    value = generateMipMaps,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.cacheBust,
-                    type = PropertyType.String,
-                    value = cacheBust,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.normalMap,
-                    type = PropertyType.String,
-                    value = normalMap,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.roughnessMap,
-                    type = PropertyType.String,
-                    value = roughnessMap,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.aoMap,
-                    type = PropertyType.String,
-                    value = aoMap,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.textureScale,
-                    type = PropertyType.Float,
-                    value = textureScale,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.normalStrength,
-                    type = PropertyType.Float,
-                    value = normalStrength,
-                    componentType = ComponentType.Material,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

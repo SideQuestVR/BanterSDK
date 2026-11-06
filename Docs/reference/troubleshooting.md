@@ -47,6 +47,10 @@ scene.On("unity-loaded", async () => {
 
 Open the page's developer tools while the world is playing: **Creator SDK > Setup**, then **Open** on **Page developer tools**. Errors show in its console. Your `console.log` lines also appear in the Unity Console, starting `[Ora JS]`. See [Testing in Play Mode](../getting-started/testing-in-play-mode.md#page-logs-and-developer-tools).
 
+### A call rejects with "unsupported", or the console says it isn't supported
+
+Some older scene methods have nothing behind them in the app. See [Unsupported calls](legacy-apis.md#unsupported-calls).
+
 ### My C# scripts don't run in the published world
 
 A built world carries no code: only the scene and its assets. Your own `MonoBehaviour` scripts work in Play mode, where your project's code is loaded, but the app loads them as missing scripts, which do nothing. Script the world with JavaScript in its page or with Visual Scripting instead.
@@ -102,6 +106,14 @@ Worlds the Builder creates are Private. On altvr.app, open your world's page, ch
 - **Everywhere:** the material uses one of Unity's Built-in pipeline shaders (Standard, Legacy Shaders, Mobile, Nature…), its shader is missing or broken, or a material slot is empty. The checklist's **Materials** check lists them. Switch to a URP shader such as **Universal Render Pipeline/Lit**, or select the materials and use **Edit > Rendering > Materials > Convert Selected Built-in Materials to URP**.
 - **A custom shader:** one written for the Built-in pipeline (a surface shader, say) also renders pink, since URP draws none of its passes. Rewrite it for URP or rebuild it in Shader Graph. The **Materials** check flags these too.
 - **Only on Quest, or only on Windows:** the world has no shaders for the graphics API that device uses. Run the Setup panel's **Graphics APIs** item: Auto Graphics API on Android (Quest runs Vulkan), and Direct3D 11, Direct3D 12 and Vulkan on Windows. Then build again.
+
+### A shader shows in one eye only
+
+The headset draws both eyes in one pass, and a hand-written shader has to pass the eye through, or it shows in one eye only. Shader Graph does this for you, and Play mode on a flat screen doesn't show the problem. The checklist's **VR shaders** check finds most cases; see [Custom shaders in VR](../components/rendering.md#custom-shaders-in-vr).
+
+### Realtime reflection probes don't work on Quest
+
+The app only updates realtime reflection probes on Windows. Set the probe's **Type** to **Baked** and bake it. See [Rendering on Quest and Windows](performance.md#rendering-on-quest-and-windows).
 
 ### Tags don't match in the app
 

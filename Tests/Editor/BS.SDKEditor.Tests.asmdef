@@ -13,8 +13,11 @@
         "SideQuest.Ora",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow",
+        "Unity.VisualScripting.State",
         "Unity.RenderPipelines.Core.Runtime",
-        "UnityEngine.UI"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

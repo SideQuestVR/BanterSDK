@@ -136,11 +136,20 @@ public class BSPipe
         view.domReady.AddListener((url) =>
         {
             if (!pageLoadStarted) return;
-            link.scene.state = SceneState.DOM_READY;
+            link.scene.state = StateAtDomReady(link.scene.state);
             link.scene.events.OnDomReady.Invoke();
             link.scene.SetLoaded();
         });
     }
+
+    /// <summary>
+    /// The host reports DOM ready on its own schedule, so it can land after the page said SCENE_START or SCENE_READY, after
+    /// UNITY_READY, or on the error page of a failed load. The state only moves forward within a load: going back would park
+    /// everything waiting for a later one.
+    /// </summary>
+    internal static SceneState StateAtDomReady(SceneState current) =>
+        current < SceneState.SCENE_START ? SceneState.DOM_READY : current;
+
     public void Send(string msg)
     {
         BridgeTrace.Outbound(msg, "pipe");

@@ -86,7 +86,7 @@ public class BuilderWindow : EditorWindow
     BuildChecklistView checklistView;
     BuildChecklistResult lastChecklist;
 
-    Label confirmBuild;
+    Button confirmBuild;
     Button cancelBuild;
 
     VisualElement buildConfirm;
@@ -839,6 +839,9 @@ public class BuilderWindow : EditorWindow
                 Debug.LogWarning("Bundle Analyzer: the active scene isn't saved to disk yet, so there's no asset path to analyze.");
                 return;
             }
+            // The analyzer reads the saved scene.
+            if (scene.isDirty && !UnityEditor.SceneManagement.EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+                return;
 
             SideQuest.BundleAnalyzer.BundleAnalyzerWindow.OpenAndAnalyze(scene.path);
         };
@@ -898,17 +901,18 @@ public class BuilderWindow : EditorWindow
 
         buildConfirm = rootVisualElement.Q<VisualElement>("BuildConfirm");
 
-        confirmBuild = rootVisualElement.Q<Label>("ConfirmBuild");
+        confirmBuild = rootVisualElement.Q<Button>("ConfirmBuild");
         cancelBuild = rootVisualElement.Q<Button>("CancelBuild");
-        cancelBuild.RegisterCallback<MouseUpEvent>((e) =>
+        cancelBuild.clicked += () =>
         {
             buildConfirm.style.display = DisplayStyle.None;
-        });
-        confirmBuild.RegisterCallback<MouseUpEvent>((e) =>
+            status.AddStatus("Cancelled. Nothing was built or uploaded.");
+        };
+        confirmBuild.clicked += () =>
         {
             buildConfirm.style.display = DisplayStyle.None;
             confirmCallback?.Invoke();
-        });
+        };
 
         codeText = rootVisualElement.Q<Label>("LoginCode");
         worldDropdown = rootVisualElement.Q<DropdownField>("WorldDropdown");
@@ -1175,6 +1179,15 @@ public class BuilderWindow : EditorWindow
     private string lastBuiltScenePath;
     private DateTime lastBuiltWorldAssetUtc;
 
+    /// <summary>The build id (BasisBundleConnector.UniqueVersion) of the asset.world this session last built.</summary>
+    private string lastBuiltWorldBuildId;
+
+    /// <summary>
+    /// True for the whole of a scene build: the build marker belongs in the scene while it runs, and
+    /// SceneBundleMarkerCleanup leaves it alone.
+    /// </summary>
+    internal static bool SceneBundleBuildInProgress;
+
     /// <summary>The asset.world this upload actually sent; default when it sent none.</summary>
     private DateTime uploadedWorldAssetUtc;
 
@@ -1262,7 +1275,12 @@ public class BuilderWindow : EditorWindow
         yield return sq.UploadFileToWorld(name, data, selectedWorld?.WorldId, slug, (text) =>
         {
             status.AddStatus("Uploaded " + file + " to " + baseUrl + "/" + name);
-            if (name == "asset.world") uploadedWorldAssetUtc = File.GetLastWriteTimeUtc(file);
+            if (name == "asset.world")
+            {
+                uploadedWorldAssetUtc = File.GetLastWriteTimeUtc(file);
+                if (uploadedWorldAssetUtc == lastBuiltWorldAssetUtc && lastBuiltWorldBuildId != null)
+                    status.AddStatus("Uploaded build " + lastBuiltWorldBuildId + ".");
+            }
         }, e =>
         {
             // Recorded as well as logged: an upload step failing does not throw, so without this
@@ -1686,6 +1704,11 @@ public class BuilderWindow : EditorWindow
         var syncedNote = RuntimeOverridePrune.ConfirmationLine();
         confirmSyncedGraphs.style.display = syncedNote == null ? DisplayStyle.None : DisplayStyle.Flex;
         confirmSyncedGraphs.text = syncedNote ?? "";
+
+        status.AddStatus("Waiting for you to press " + confirmBuild.text + ". Nothing is " +
+                         (action == "Build" ? "built" : "uploaded") + " until you do.");
+        // Enter or Space then confirms, once the window has focus.
+        confirmBuild.schedule.Execute(() => confirmBuild.Focus());
     }
     void AddRemoveFlexaHead()
     {
@@ -1855,8 +1878,8 @@ public class BuilderWindow : EditorWindow
         {
             if (renderer.bones.Any(b => !IsIdentityScale(b.localScale)))
             {
-                status.AddStatus("Avatar has bones with scale applied, this will cause issues in Banter.");
-                MissingBones.text = "Avatar has bones with scale applied, this will cause issues in Banter.";
+                status.AddStatus("Avatar has bones with scale applied, this will cause issues in the app.");
+                MissingBones.text = "Avatar has bones with scale applied, this will cause issues in the app.";
                 return true;
             }
         }
@@ -1901,14 +1924,14 @@ public class BuilderWindow : EditorWindow
 
         if (RootHasRotation())
         {
-            if (!EditorUtility.DisplayDialog("ROOT ROTATED", "The root gameobject has rotation applied, this might be offset in the bones but will cause rotation problems in Banter.", "Continue", "Cancel"))
+            if (!EditorUtility.DisplayDialog("ROOT ROTATED", "The root gameobject has rotation applied, this might be offset in the bones but will cause rotation problems in the app.", "Continue", "Cancel"))
             {
                 return false;
             }
         }
         if (AnyBoneHasScale())
         {
-            if (!EditorUtility.DisplayDialog("BONES SCALED", "The avatar has bones with scale applied, this might be offset in the bones but will cause scaling problems in Banter.", "Continue", "Cancel"))
+            if (!EditorUtility.DisplayDialog("BONES SCALED", "The avatar has bones with scale applied, this might be offset in the bones but will cause scaling problems in the app.", "Continue", "Cancel"))
             {
                 return false;
             }
@@ -2024,7 +2047,15 @@ public class BuilderWindow : EditorWindow
                 // runtime falls back to legacy per-platform windows.banter / android.banter.
                 EditorApplication.LockReloadAssemblies();
                 reloadLockHeld = true;
-                names = await BuildSpaceBeeBundles();
+                SceneBundleBuildInProgress = true;
+                try
+                {
+                    names = await BuildSpaceBeeBundles();
+                }
+                finally
+                {
+                    SceneBundleBuildInProgress = false;
+                }
                 if (names.Count == 0)
                 {
                     status.AddStatus("Build failed. See the console for details.");
@@ -2047,6 +2078,9 @@ public class BuilderWindow : EditorWindow
                 // popup while building. (This used to poke the bar from a
                 // background Task, which touched UI off the main thread.)
                 status.AddStatus("Build finished.");
+                var built = new FileInfo(Path.Join(assetBundleRoot, assetBundleDirectory) + "/" + names[0]);
+                status.AddStatus(names[0] + " is " + EditorUtility.FormatBytes(built.Length) + ", build " + lastBuiltWorldBuildId +
+                                 ". That's Windows and Android together; each player downloads only their own part.");
 
                 if (autoUpload.value && sq.User != null)
                 {
@@ -2230,6 +2264,8 @@ public class BuilderWindow : EditorWindow
             // one THIS session built, from THIS scene — see UploadEverything.
             lastBuiltScenePath = scenePath;
             lastBuiltWorldAssetUtc = File.GetLastWriteTimeUtc(Path.Combine(webRoot, outName));
+            // Basis names the .bee after the build id it writes into the bundle's header.
+            lastBuiltWorldBuildId = Path.GetFileNameWithoutExtension(bee);
             // Never leave the plaintext password sidecar Basis drops next to the .bee lying around.
             // (Leave the .bee itself — Basis reveals this folder, so it should show the built bundle.)
             try

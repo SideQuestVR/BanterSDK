@@ -116,7 +116,7 @@
     background-color: rgb(160, 30, 84);
 }
 
-/* The Build / Confirm actions are labels in a pill (C# listens on the label). */
+/* The Build action is a label in a pill (C# listens on the label). */
 .alt-pill {
     flex-shrink: 0;
     height: 32px;
@@ -412,6 +412,21 @@
 
 .builder__confirm-pill {
     min-width: 130px;
+}
+
+/* Confirm is a Button: the rule Cancel uses matches it too, so it gets the pill's size and edge back here. */
+.builder__confirm-buttons > .unity-button.builder__confirm-pill {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0 16px;
+    min-height: 32px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: link;
+}
+
+.builder__confirm-buttons > .unity-button.builder__confirm-pill:focus {
+    border-color: rgb(255, 255, 255);
 }
 
 /* -- Text helpers --------------------------------------------------------------------------- */

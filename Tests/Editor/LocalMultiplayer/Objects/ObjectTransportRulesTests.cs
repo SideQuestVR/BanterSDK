@@ -88,5 +88,37 @@ namespace BS.LocalMultiplayer.Tests
             Assert.AreEqual(2, ObjectTransportRules.KindOpaqueJson);
             Assert.AreEqual(3, ObjectTransportRules.KindBatch);
         }
+
+        [TestCase(0, 0.25d)]
+        [TestCase(1, 0.5d)]
+        [TestCase(5, 8d)]
+        [TestCase(6, 10d)]
+        [TestCase(40, 10d)]
+        public void DeclareRetry_DoublesFromAQuarterSecond_ToTenSeconds(int attempt, double seconds)
+        {
+            Assert.AreEqual(seconds, ObjectTransportRules.DeclareRetrySeconds(attempt, 0.5d), 1e-9);
+            Assert.AreEqual(seconds * 0.5d, ObjectTransportRules.DeclareRetrySeconds(attempt, 0d), 1e-9);
+            Assert.AreEqual(seconds * 1.5d, ObjectTransportRules.DeclareRetrySeconds(attempt, 1d), 1e-9);
+        }
+
+        [TestCase(true, "them", null, true, TestName = "AWaitedTake_LeavesAnyRemoteOwner")]
+        [TestCase(false, "", null, false, TestName = "AWaitedTake_TakesAnUnownedObject")]
+        [TestCase(true, "them", "them", false, TestName = "ARetry_IsStillAimedAtTheOwnerItWasMadeAgainst")]
+        [TestCase(true, "someone-else", "them", true, TestName = "ARetry_LeavesAnOwnerWhoCameSince")]
+        public void TakeWouldDisplace_OnlyWhenSomeoneElseHasIt(bool remoteOwned, string owner, string aimedAt, bool displaces)
+        {
+            Assert.AreEqual(displaces, ObjectTransportRules.TakeWouldDisplace(remoteOwned, owner, aimedAt));
+        }
+
+        [TestCase("rate_limited", true)]
+        [TestCase("internal_error", true)]
+        [TestCase("timeout", true)]
+        [TestCase("not_connected", false)]
+        [TestCase("closed", false)]
+        [TestCase("object_limit", false)]
+        public void DeclareRetry_CoversOnlyFailuresThatSayNothingAboutTheObject(string code, bool retried)
+        {
+            Assert.AreEqual(retried, ObjectTransportRules.IsRetryableDeclareFailure(code));
+        }
     }
 }

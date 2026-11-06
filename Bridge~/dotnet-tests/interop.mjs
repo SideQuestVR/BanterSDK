@@ -28,13 +28,15 @@ function build() {
 }
 
 /** One C# BridgeView in a child process. cmd(c, arg) sends a line and returns the messages it posted to the page. */
-function startPeer() {
-    const proc = spawn('dotnet', [join(tmp, 'dotnet', 'BridgeCoreTests.dll'), '--peer'], { stdio: ['pipe', 'pipe', 'inherit'] });
+function startPeer(calls = false) {
+    const env = calls ? { ...process.env, BRIDGE_PEER_CALLS: '1' } : process.env;
+    const proc = spawn('dotnet', [join(tmp, 'dotnet', 'BridgeCoreTests.dll'), '--peer'], { stdio: ['pipe', 'pipe', 'inherit'], env });
     const exited = new Promise((r) => proc.on('exit', r));
     peers.push({ proc, exited });
     let buf = '';
     const lines = [];
     const ran = [];
+    const called = [];
     let waiter = null;
     proc.stdout.setEncoding('utf8');
     proc.stdout.on('data', (d) => {
@@ -54,29 +56,31 @@ function startPeer() {
             if (l === '.') break;
             if (l.startsWith('O ')) out.push(JSON.parse(l.substring(2)));
             else if (l.startsWith('X ')) { const sp = l.indexOf(' ', 2); ran.push({ epoch: Number(l.substring(2, sp)), text: JSON.parse(l.substring(sp + 1)) }); }
+            else if (l.startsWith('C ')) { const sp = l.indexOf(' ', 2); called.push({ member: Number(l.substring(2, sp)), args: JSON.parse(l.substring(sp + 1)) }); }
         }
         return out;
     }
-    return { cmd, ran, quit: () => { proc.stdin.end('Q\n'); return exited; } };
+    return { cmd, ran, called, quit: () => { proc.stdin.end('Q\n'); return exited; } };
 }
 
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('  ok   ' + name); }
 
+class Host {
+    constructor() { this.out = []; this.tasks = []; this.t = 0; this.timers = new Map(); this.nextTimer = 1; }
+    post(d) { this.out.push(d); }
+    now() { return this.t; }
+    schedule(fn) { this.tasks.push(fn); }
+    setTimer(fn) { const id = this.nextTimer++; this.timers.set(id, fn); return id; }
+    clearTimer(id) { this.timers.delete(id); }
+    run() { while (this.tasks.length) this.tasks.shift()(); }
+    /** Runs the timers now armed, as if their time had come. */
+    fire() { const due = [...this.timers.values()]; this.timers.clear(); for (const fn of due) fn(); }
+}
+
 async function interop() {
     const B = createRequire(import.meta.url)(join(tmp, 'ts', 'Injection~', 'src', 'bridge', 'index.js'));
     const { cmd, ran, quit } = startPeer();
-    class Host {
-        constructor() { this.out = []; this.tasks = []; this.t = 0; this.timers = new Map(); this.nextTimer = 1; }
-        post(d) { this.out.push(d); }
-        now() { return this.t; }
-        schedule(fn) { this.tasks.push(fn); }
-        setTimer(fn) { const id = this.nextTimer++; this.timers.set(id, fn); return id; }
-        clearTimer(id) { this.timers.delete(id); }
-        run() { while (this.tasks.length) this.tasks.shift()(); }
-        /** Runs the timers now armed, as if their time had come. */
-        fire() { const due = [...this.timers.values()]; this.timers.clear(); for (const fn of due) fn(); }
-    }
     async function pump(host, page, rounds = 40) {
         for (let i = 0; i < rounds; i++) {
             host.run();
@@ -287,11 +291,167 @@ async function e2eBundle() {
     await quit();
 }
 
+/** The real TS client against the real C# call host, with FakeApi's table standing in for the generated one. */
+async function typedCalls() {
+    const req = createRequire(import.meta.url);
+    const B = req(join(tmp, 'ts', 'Injection~', 'src', 'bridge', 'index.js'));
+    const C = req(join(tmp, 'ts', 'Injection~', 'src', 'unity', 'client.js'));
+    const open = async (calls) => {
+        const peer = startPeer(calls);
+        await peer.cmd('L', 'https://w.example/a');
+        await peer.cmd('N');
+        const host = new Host();
+        const page = new B.PageSession(host, () => {}, { href: 'https://w.example/a', isTop: true, sdkVersion: 'interop', docToken: 'tok', heartbeatMs: 0 });
+        C.useSession(page);
+        const pump = async () => {
+            for (let i = 0; i < 40; i++) {
+                host.run();
+                const up = host.out; host.out = [];
+                for (const d of up) await peer.cmd('R', d);
+                const down = await peer.cmd('D');
+                for (const d of down) page.receive(d);
+                host.run();
+                await new Promise((r) => setImmediate(r));
+                if (up.length === 0 && down.length === 0 && host.out.length === 0) return;
+            }
+        };
+        return { ...peer, host, page, pump };
+    };
+    const settled = (p) => p.then((value) => ({ value }), (error) => ({ code: error.code, message: error.message }));
+
+    // FakeApi's ids, as CallTests.cs declares them.
+    const Get = 1, Set = 2, Global = 3, Denied = 4, Echo = 6, Throws = 7, ReturnsOutsider = 8, Sum = 10;
+    const obj = (h) => new C.BridgeObject(h);
+    const t = await open(true);
+    const results = {
+        set: settled(C.call(obj(1001), Set, 'f', [4.5])),
+        get: settled(C.call(obj(1001), Get, '', [])),
+        dead: settled(C.call(obj(1002), Get, '', [])),
+        outside: settled(C.call(obj(1003), Set, 'f', [1])),
+        outsideArg: settled(C.call(null, Echo, 'r', [obj(1003)])),
+        unknown: settled(C.call(obj(777), Get, '', [])),
+        denied: settled(C.call(null, Denied, '', [])),
+        range: settled(C.call(null, Global, 'f', [11])),
+        throws: settled(C.call(null, Throws, '', [])),
+        echo: settled(C.call(null, Echo, 'r', [obj(1001)])),
+        filtered: settled(C.call(null, ReturnsOutsider, '', [])),
+        sum: settled(C.call(null, Sum, 'f[]', [[1, 2.5]])),
+        nope: settled(C.call(null, 999, '', [])),
+    };
+    await t.pump();
+    const r = {};
+    for (const k of Object.keys(results)) r[k] = await results[k];
+    check('typed calls TS client <-> C# host: effect, then one reply, each with its typed outcome', () => {
+        assert.equal(t.page.families, 1);
+        assert.equal(t.page.caps, 7);
+        assert.equal(r.set.value, null);
+        assert.equal(r.get.value, 4.5);
+        assert.equal(r.dead.code, 'DESTROYED');
+        assert.equal(r.outside.code, 'DENIED');
+        assert.match(r.outside.message, /does not belong to this world/);
+        assert.equal(r.outsideArg.code, 'DENIED');
+        assert.equal(r.unknown.code, 'UNKNOWN_HANDLE');
+        assert.equal(r.denied.code, 'DENIED');
+        assert.equal(r.range.code, 'DENIED');
+        assert.equal(r.throws.code, 'INTERNAL');
+        assert.match(r.throws.message, /boom/);
+        assert.equal(r.echo.value.unityId, 1001);
+        assert.equal(r.filtered.value, null);
+        assert.equal(r.sum.value, 3.5);
+        assert.equal(r.nope.code, 'UNKNOWN_MEMBER');
+    });
+    const burst = [];
+    for (let i = 0; i < 1000; i++) burst.push(settled(C.call(null, Sum, 'f[]', [[i]])));
+    await t.pump();
+    await t.pump();
+    await t.pump();
+    await t.pump();
+    const answers = await Promise.all(burst);
+    check('a 1000-call burst through the window: all answered, in order, none refused', () => {
+        assert.deepEqual(answers.map((a) => a.value), burst.map((_, i) => i));
+    });
+    await t.quit();
+
+    const old = await open(false);
+    const refused = settled(C.call(obj(1001), Get, '', []));
+    await old.pump();
+    const e = await refused;
+    check('a client with no call host: rejected UNSUPPORTED, and the page never sent the CALL', () => {
+        assert.equal(old.page.state, 'open');
+        assert.equal(old.page.families, 0);
+        assert.equal(e.code, 'UNSUPPORTED');
+    });
+    await old.quit();
+    C.useSession(null);
+}
+
+/** The built bundle's BS.Unity against the C# host: generated ids, through window.BS, down to a thunk and back. */
+async function e2eUnity() {
+    const { createPageContext } = await import(pathToFileURL(join(injectionDir, 'test/surface/load-bundle.mjs')).href);
+    const { cmd, called, quit } = startPeer(true);
+    const { context } = createPageContext();
+    const sent = [];
+    const timeouts = [];
+    const oraListeners = [];
+    context.crypto = { getRandomValues: (b) => { for (let i = 0; i < b.length; i++) b[i] = i * 7; return b; }, randomUUID: () => '00000000-0000-4000-8000-000000000001' };
+    context.setTimeout = (fn, ms) => { timeouts.push({ fn, ms: ms || 0 }); return timeouts.length; };
+    context.O = { sendMessage: (type, data) => { sent.push(String(data)); }, messages: { On: (n, fn) => oraListeners.push(fn) } };
+    context.location.href = 'https://world.example/space';
+    vm.runInContext(readFileSync(bundlePath, 'utf8'), context, { filename: 'injection.js' });
+    const BS = context.BS;
+    const runZero = () => { for (let g = 0; g < 1000; g++) { const i = timeouts.findIndex((t) => t.ms <= 0); if (i < 0) return; timeouts.splice(i, 1)[0].fn(); } };
+    async function pump(rounds = 30) {
+        for (let r = 0; r < rounds; r++) {
+            runZero();
+            const up = sent.splice(0);
+            for (const d of up) await cmd('R', d);
+            const down = await cmd('D');
+            for (const d of down) for (const l of oraListeners.slice()) l({ detail: { id: '', type: 'default-message', data: d } });
+            await new Promise((r2) => setImmediate(r2));
+            runZero();
+            if (up.length === 0 && down.length === 0 && sent.length === 0) return;
+        }
+    }
+    const policy = JSON.parse(readFileSync(join(sdkDir, 'Bridge~/unity-api.policy.json'), 'utf8'));
+    const idOf = (test) => policy.members.find(test).id;
+    const addForce = idOf((m) => m.sig === 'UnityEngine.Rigidbody.AddForce(UnityEngine.Vector3,UnityEngine.ForceMode)');
+    const raycast = idOf((m) => m.curated === 'Physics_RaycastAll' && m.params.length === 3);
+    const lookup = idOf((m) => m.curated === 'GameObject_GetComponent');
+    await cmd('M', addForce + ' 2 0');
+    await cmd('M', raycast + ' 3 1');
+    await cmd('M', lookup + ' 1 0');
+    await cmd('L', 'https://world.example/space');
+    await cmd('N');
+    const v = (x, y, z) => new BS.Vector3(x, y, z);
+    const a = new BS.Unity.Rigidbody(1001).AddForce(v(0, 5, 0), BS.ForceMode.Impulse);
+    const b = BS.Unity.Physics.RaycastAll(v(0, 1, 0), v(0, 0, 1), 50);
+    const c = BS.GameObject.prototype.GetComponentAsync.call({ Async: async () => {}, unityId: 1001 }, BS.Unity.Rigidbody);
+    await pump();
+    const [ra, rb, rc] = await Promise.all([a, b, c]);
+    check('built bundle: BS.Unity reaches a thunk by its generated id and the promise settles from the reply', () => {
+        assert.equal(ra, 2);
+        assert.equal(rb, 3);
+        assert.equal(rc, 1);
+        assert.deepEqual(called.map((x) => x.member), [addForce, raycast, lookup]);
+        assert.equal(called[0].args[1], 'i:1');
+        assert.equal(called[2].args[0], 'i:' + BS.Unity.Rigidbody.typeId);
+    });
+    check('built bundle: window.BS keeps its names and gains Unity and BridgeError', () => {
+        assert.equal(typeof BS.Unity.Physics.RaycastAll, 'function');
+        assert.equal(typeof BS.BridgeError, 'function');
+        assert.equal(typeof BS.GameObject, 'function');
+        assert.notEqual(BS.Unity.GameObject, BS.GameObject);
+    });
+    await quit();
+}
+
 let code = 0;
 try {
     build();
     await interop();
     await e2eBundle();
+    await typedCalls();
+    await e2eUnity();
     console.log(checks + ' interop checks passed');
 } catch (e) {
     console.error('INTEROP FAILED:', e);

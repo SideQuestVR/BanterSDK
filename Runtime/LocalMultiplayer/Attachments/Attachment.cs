@@ -41,8 +41,9 @@ namespace BS.LocalMultiplayer.Attachments
         {
             if (!_live || attachmentsSystem == null || !attachmentsSystem.IsLive)
                 return;
+            // The attached object itself is going away (a script Destroy, a seat removed under its rider).
             if (!isDestroyed)
-                attachmentsSystem.DestroyAttachmentComponents(this);
+                attachmentsSystem.DestroyAttachmentComponents(this, fromOnDestroy: true);
         }
     }
 }

@@ -99,6 +99,7 @@ namespace BS.Bridge
 
         public bool Failed => failed;
         public bool Done => !failed && pos == b.Length;
+        public int Remaining => b.Length - pos;
 
         bool Need(int n)
         {
@@ -109,6 +110,8 @@ namespace BS.Bridge
         public byte U8() { if (!Need(1)) return 0; return b[pos++]; }
         public ushort U16() { if (!Need(2)) return 0; var x = BinaryPrimitives.ReadUInt16LittleEndian(b.Slice(pos)); pos += 2; return x; }
         public uint U32() { if (!Need(4)) return 0; var x = BinaryPrimitives.ReadUInt32LittleEndian(b.Slice(pos)); pos += 4; return x; }
+        public float F32() { if (!Need(4)) return 0; var x = BitConverter.Int32BitsToSingle(BinaryPrimitives.ReadInt32LittleEndian(b.Slice(pos))); pos += 4; return x; }
+        public double F64() { if (!Need(8)) return 0; var x = BitConverter.Int64BitsToDouble(BinaryPrimitives.ReadInt64LittleEndian(b.Slice(pos))); pos += 8; return x; }
         public ReadOnlySpan<byte> Raw(int n) { if (!Need(n)) return default; var x = b.Slice(pos, n); pos += n; return x; }
         public uint Varint()
         {

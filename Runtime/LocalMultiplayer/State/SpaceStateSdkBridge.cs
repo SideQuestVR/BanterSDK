@@ -472,7 +472,7 @@ namespace BS.LocalMultiplayer.State
         private static void TriggerVisualScripting(string key, string value, bool isPublic)
         {
             // Argument order the OnSpaceStatePropsChanged node reads: (value, isPublic).
-            // BSStarterUpper's offline loopback steps aside while BSNetworkHost.Active, so this is
+            // The SDK's solo space state steps aside while BSNetworkHost.Active, so this is
             // the only producer, as under GREENFIELD_PROJECT.
             EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, isPublic }));
         }

@@ -181,7 +181,7 @@ Keys and values passed to `SetPublicSpaceProps`, `SetProtectedSpaceProps` and `S
 `¶ § | ‽ ¤`: a value containing one is cut short, stripped or dropped. The JSON API has no such limit, and
 neither do one-shots, browser messages or component properties.
 
-In Play mode on your own, space state and the JSON API need local multiplayer; see
+In Play mode on your own, space state is kept in memory until Play stops, and JSON user state needs local multiplayer; see
 [Playing without local multiplayer](../multiplayer/local-testing.md#playing-without-local-multiplayer).
 
 ### JSON space state
@@ -218,7 +218,7 @@ await scene.UserStateDelete("loadout");
 await scene.UserStateSet("status", "afk", { moderatorsCanWrite: true });
 ```
 
-Writes take no user id, because you can only ever write your own user state.
+Writes take no user id, because you can only ever write your own user state. `UserStateSet` replaces the whole value, so an object's members that you don't name are gone, and it settles once the server has answered: a refused write rejects. An object is kept as its members, so read `loadout.primary`, or use `UserStateGetAll`: `UserStateGet("loadout")` finds nothing.
 
 ### Errors
 

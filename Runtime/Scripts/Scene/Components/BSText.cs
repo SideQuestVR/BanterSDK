@@ -11,7 +11,7 @@ namespace BS
     [WatchComponent]
     [RequireComponent(typeof(BSObjectId))]
 
-    public class BSText : BSComponentBase
+    public partial class BSText : BSComponentBase
     {
         TextMeshPro tmpComponent;
         [Tooltip("The text content to display.")]
@@ -59,6 +59,7 @@ namespace BS
                 {
                     tmpComponent = gameObject.AddComponent<TextMeshPro>();
                 }
+                RepairFont(tmpComponent);
             }
             tmpComponent.text = text;
             tmpComponent.color = new Color(color.x, color.y, color.z, color.w);
@@ -96,6 +97,41 @@ namespace BS
             }
             SetLoadedIfNot();
         }
+
+        /// <summary>
+        /// Gives text that can't draw here the app's default font. Text that can keeps the builder's font and material.
+        /// </summary>
+        internal static void RepairFont(TMP_Text text)
+        {
+            if (text == null || CanDraw(text.font, text.fontSharedMaterial))
+            {
+                return;
+            }
+            var fallback = TMP_Settings.instance != null ? TMP_Settings.defaultFontAsset : null;
+            if (fallback == null)
+            {
+                return;
+            }
+            text.font = fallback;
+            text.fontSharedMaterial = fallback.material;
+            text.ForceMeshUpdate();
+        }
+
+        /// <summary>
+        /// Whether this font and material can show text here. The shader has to run on this device, so a bundle's copy that
+        /// can't, or a material that lost its shader, fails. So does a font with no glyphs and nothing to make them from.
+        /// A shader that runs but lacks a variant this device needs can't be told from here.
+        /// </summary>
+        internal static bool CanDraw(TMP_FontAsset font, Material material)
+        {
+            if (font == null || material == null || material.shader == null || !material.shader.isSupported ||
+                material.shader.name == "Hidden/InternalErrorShader")
+            {
+                return false;
+            }
+            return font.atlasPopulationMode == AtlasPopulationMode.Static ? font.characterTable.Count > 0 : font.sourceFontFile != null;
+        }
+
         internal override void DestroyStuff()
         {
             if (tmpComponent != null)
@@ -107,267 +143,5 @@ namespace BS
         {
             SetupText();
         }
-        // BS COMPILED CODE 
-        public System.String Text { get { return text; } set { text = value; UpdateCallback(new List<PropertyName> { PropertyName.text }); } }
-        public UnityEngine.Vector4 Color { get { return color; } set { color = value; UpdateCallback(new List<PropertyName> { PropertyName.color }); } }
-        public HorizontalAlignment HorizontalAlignment { get { return horizontalAlignment; } set { horizontalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.horizontalAlignment }); } }
-        public VerticalAlignment VerticalAlignment { get { return verticalAlignment; } set { verticalAlignment = value; UpdateCallback(new List<PropertyName> { PropertyName.verticalAlignment }); } }
-        public System.Single FontSize { get { return fontSize; } set { fontSize = value; UpdateCallback(new List<PropertyName> { PropertyName.fontSize }); } }
-        public System.Boolean RichText { get { return richText; } set { richText = value; UpdateCallback(new List<PropertyName> { PropertyName.richText }); } }
-        public System.Boolean EnableWordWrapping { get { return enableWordWrapping; } set { enableWordWrapping = value; UpdateCallback(new List<PropertyName> { PropertyName.enableWordWrapping }); } }
-        public UnityEngine.Vector2 RectTransformSizeDelta { get { return rectTransformSizeDelta; } set { rectTransformSizeDelta = value; UpdateCallback(new List<PropertyName> { PropertyName.rectTransformSizeDelta }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.text, PropertyName.color, PropertyName.horizontalAlignment, PropertyName.verticalAlignment, PropertyName.fontSize, PropertyName.richText, PropertyName.enableWordWrapping, PropertyName.rectTransformSizeDelta, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "Text" +  PropertyName.text + text + PropertyName.color + color + PropertyName.horizontalAlignment + horizontalAlignment + PropertyName.verticalAlignment + verticalAlignment + PropertyName.fontSize + fontSize + PropertyName.richText + richText + PropertyName.enableWordWrapping + enableWordWrapping + PropertyName.rectTransformSizeDelta + rectTransformSizeDelta;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Text);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null;
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valtext = (BSString)values[i];
-                    if (valtext.n == PropertyName.text)
-                    {
-                        text = valtext.x;
-                        changedProperties.Add(PropertyName.text);
-                    }
-                }
-                if (values[i] is BSVector4)
-                {
-                    var valcolor = (BSVector4)values[i];
-                    if (valcolor.n == PropertyName.color)
-                    {
-                        color = new Vector4(valcolor.x, valcolor.y, valcolor.z, valcolor.w);
-                        changedProperties.Add(PropertyName.color);
-                    }
-                }
-                if (values[i] is BSInt)
-                {
-                    var valhorizontalAlignment = (BSInt)values[i];
-                    if (valhorizontalAlignment.n == PropertyName.horizontalAlignment)
-                    {
-                        horizontalAlignment = (HorizontalAlignment)valhorizontalAlignment.x;
-                        changedProperties.Add(PropertyName.horizontalAlignment);
-                    }
-                }
-                if (values[i] is BSInt)
-                {
-                    var valverticalAlignment = (BSInt)values[i];
-                    if (valverticalAlignment.n == PropertyName.verticalAlignment)
-                    {
-                        verticalAlignment = (VerticalAlignment)valverticalAlignment.x;
-                        changedProperties.Add(PropertyName.verticalAlignment);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valfontSize = (BSFloat)values[i];
-                    if (valfontSize.n == PropertyName.fontSize)
-                    {
-                        fontSize = valfontSize.x;
-                        changedProperties.Add(PropertyName.fontSize);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valrichText = (BSBool)values[i];
-                    if (valrichText.n == PropertyName.richText)
-                    {
-                        richText = valrichText.x;
-                        changedProperties.Add(PropertyName.richText);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valenableWordWrapping = (BSBool)values[i];
-                    if (valenableWordWrapping.n == PropertyName.enableWordWrapping)
-                    {
-                        enableWordWrapping = valenableWordWrapping.x;
-                        changedProperties.Add(PropertyName.enableWordWrapping);
-                    }
-                }
-                if (values[i] is BSVector2)
-                {
-                    var valrectTransformSizeDelta = (BSVector2)values[i];
-                    if (valrectTransformSizeDelta.n == PropertyName.rectTransformSizeDelta)
-                    {
-                        rectTransformSizeDelta = new Vector2(valrectTransformSizeDelta.x, valrectTransformSizeDelta.y);
-                        changedProperties.Add(PropertyName.rectTransformSizeDelta);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.text,
-                    type = PropertyType.String,
-                    value = text,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.color,
-                    type = PropertyType.Vector4,
-                    value = color,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.horizontalAlignment,
-                    type = PropertyType.Int,
-                    value = horizontalAlignment,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.verticalAlignment,
-                    type = PropertyType.Int,
-                    value = verticalAlignment,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.fontSize,
-                    type = PropertyType.Float,
-                    value = fontSize,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.richText,
-                    type = PropertyType.Bool,
-                    value = richText,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.enableWordWrapping,
-                    type = PropertyType.Bool,
-                    value = enableWordWrapping,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.rectTransformSizeDelta,
-                    type = PropertyType.Vector2,
-                    value = rectTransformSizeDelta,
-                    componentType = ComponentType.Text,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

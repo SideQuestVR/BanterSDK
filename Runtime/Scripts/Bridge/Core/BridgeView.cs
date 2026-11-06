@@ -69,8 +69,19 @@ namespace BS.Bridge
         /// for is lost with the queue.
         /// </summary>
         public int MaxRepliesPastCap = 65536;
+        /// <summary>
+        /// Queued for a document beyond this, the session closes, acknowledging or not. Past MaxOutboundHardBytes only
+        /// small error replies queue, so this is that cap plus room for the largest message already on its way.
+        /// </summary>
+        public long MaxOutboundCloseBytes = 5L * BridgeWire.MaxMessage;
         public uint Families;
         public uint Caps;
+        /// <summary>Runs CALL ops; null: BridgeCallHost.Current, the one the BS.BridgeApi assembly registers.</summary>
+        public BridgeCallHost CallHost;
+        /// <summary>CALL ops of one document admitted and not run yet: past this they are answered LIMIT, unrun.</summary>
+        public int MaxCallsQueued = 256;
+        /// <summary>CALL ops refused in a row for that limit: past this the session closes. The page's client paces itself, so it stays well below this.</summary>
+        public int MaxCallsOverflowed = 1024;
         public BridgeReassembler.Budget ReassemblyBudget;
         public Action<string> Log;
     }
@@ -140,6 +151,7 @@ namespace BS.Bridge
         }
 
         public BridgeSession Current => current;
+        BridgeCallHost CallHost => Options.CallHost ?? BridgeCallHost.Current;
         public int InboundCount { get { lock (inLock) return inbound.Count; } }
         public int ReadyCount => ready.Count;
         public int LoadGeneration => loadGen;
@@ -165,6 +177,8 @@ namespace BS.Bridge
             {
                 if (ready.Count > 0)
                 {
+                    // Stays at the head, so order holds: a heavy call past this frame's allowance runs in the next one.
+                    if (CallMustWait(ready.Peek())) break;
                     if (DispatchReady(ready.Dequeue())) done++;
                 }
                 else
@@ -180,6 +194,13 @@ namespace BS.Bridge
                 if (outOfBudget != null && outOfBudget()) break;
             }
             return done;
+        }
+
+        bool CallMustWait((BridgeSession session, BridgeItem item) r)
+        {
+            if (r.item.IsText || r.item.Opcode != BridgeOp.Call || r.session == null || r.session.State == BridgeSessionState.Closed) return false;
+            var host = CallHost;
+            return host != null && !host.CanRun(r.item.Payload);
         }
 
         void Ingest(string msg)
@@ -272,6 +293,14 @@ namespace BS.Bridge
                     {
                         SessionOp(s, item);
                         continue;
+                    }
+                    if (!item.IsText && item.Opcode == BridgeOp.Call && !BridgeCallHost.Admit(this, CallHost, s, item.Payload, Options.MaxCallsQueued))
+                    {
+                        if (s.CallsOverflowed <= Options.MaxCallsOverflowed) continue;
+                        Stats.OutboundCloses++;
+                        Log($"[Bridge] Closed document epoch {s.Epoch}: {s.CallsOverflowed} calls past the queue limit in a row.");
+                        CloseSession(s, BridgeReason.Overflow, true);
+                        break;
                     }
                     if (!s.Held) { ready.Enqueue((s, item)); continue; }
                     if (!item.IsText && item.Opcode == BridgeOp.Bye)
@@ -381,6 +410,8 @@ namespace BS.Bridge
             if (revival && current != null && current.IsLive) { Refuse(BridgeReason.Superseded); return; }
 
             if (current != null && current.IsLive) CloseSession(current, BridgeReason.Superseded, true);
+            // Every new session starts from the client's globals, whichever document had the last one.
+            CallHost?.RestoreGlobals();
             var s = new BridgeSession(++epochCounter, hello.DocToken, hello.Href, NewLink(hello));
             s.LastHeardMs = clockMs();
             Stats.Sessions++;
@@ -437,8 +468,9 @@ namespace BS.Bridge
 
         WelcomePayload WelcomeFor(BridgeSession s) => new WelcomePayload
         {
-            Epoch = s.Epoch, Mode = WelcomePayload.ModeV2, Lane = WelcomePayload.LaneCarrier, Families = Options.Families,
-            Caps = Options.Caps, Features = BridgeFeature.TextForm, RecvWindow = (uint)Options.RecvWindow,
+            Epoch = s.Epoch, Mode = WelcomePayload.ModeV2, Lane = WelcomePayload.LaneCarrier,
+            Families = Options.Families | (CallHost?.Families ?? 0),
+            Caps = Options.Caps | (CallHost?.GrantedCaps ?? 0), Features = BridgeFeature.TextForm, RecvWindow = (uint)Options.RecvWindow,
             MaxFramePayload = BridgeWire.MaxFramePayload, FragmentSize = (uint)Options.FragmentSize,
         };
 
@@ -494,7 +526,10 @@ namespace BS.Bridge
         /// </summary>
         public void NotifyLoadStarted(string url, bool sameDocument = false)
         {
-            if (sameDocument || string.IsNullOrEmpty(url) || url.StartsWith("about:", StringComparison.OrdinalIgnoreCase)) return;
+            if (sameDocument) return;
+            // Whatever the URL: the scene resets for this load too.
+            CallHost?.WorldUnloaded();
+            if (string.IsNullOrEmpty(url) || url.StartsWith("about:", StringComparison.OrdinalIgnoreCase)) return;
             loadGen++;
             lastLoadUrl = url;
             lastLoadOnLoadDone = false;
@@ -679,6 +714,13 @@ namespace BS.Bridge
                     {
                         Stats.DroppedOps++; // invalid UTF-8
                     }
+                    else if (item.Opcode == BridgeOp.Call)
+                    {
+                        s.CallsQueued--;
+                        Stats.OpsDispatched++;
+                        s.CallsOverflowed = 0;
+                        CallHost?.Run(this, s, item.Payload);
+                    }
                     else
                     {
                         Stats.OpsDispatched++;
@@ -821,12 +863,10 @@ namespace BS.Bridge
                         s.ReplyFailLogged = true;
                         Log($"[Bridge] Document epoch {s.Epoch} has {s.Link.QueuedCost} bytes queued (over {Options.MaxOutboundHardBytes}): failing its replies until it catches up.");
                     }
-                    if (m.LegacyReplyId > 0)
-                    {
-                        Stats.OutboundDropped++;
-                        s.Link.EnqueueText("!i!:" + m.LegacyReplyId + "¶!ree!¶bridge: too many replies queued");
-                        continue;
-                    }
+                    Stats.OutboundDropped++;
+                    if (m.LegacyReplyId > 0) s.Link.EnqueueText("!i!:" + m.LegacyReplyId + "¶!ree!¶bridge: too many replies queued");
+                    else s.Link.EnqueueOp(TooManyReplies(m.TypedReplyId));
+                    continue;
                 }
                 if (m.LegacyReplyId == 0 && m.TypedReplyId == 0 && s.Link.QueuedCost > Options.MaxOutboundBytes)
                 {
@@ -842,11 +882,11 @@ namespace BS.Bridge
                 else s.Link.EnqueueOp(m.Op);
             }
             batch.Clear();
-            if (live && s.RepliesPastCap > Options.MaxRepliesPastCap)
+            if (live && (s.RepliesPastCap > Options.MaxRepliesPastCap || s.Link.QueuedCost > Options.MaxOutboundCloseBytes))
             {
                 // Closed, not reset: a RESET would keep the queue, and raw strings would go on adding replies to it.
                 Stats.OutboundCloses++;
-                Log($"[Bridge] Closed document epoch {s.Epoch}: {s.RepliesPastCap} replies past {Options.MaxOutboundHardBytes} queued bytes and nothing acknowledged.");
+                Log($"[Bridge] Closed document epoch {s.Epoch}: {s.Link.QueuedCost} bytes queued, {s.RepliesPastCap} replies past {Options.MaxOutboundHardBytes}.");
                 CloseSession(s, BridgeReason.Overflow, true);
             }
             if (paused) return 0;
@@ -882,6 +922,13 @@ namespace BS.Bridge
             return posted;
         }
 
+        static byte[] TooManyReplies(uint reqId)
+        {
+            var w = new ByteWriter(32);
+            w.Str("too many replies queued");
+            return BridgeOps.Encode(BridgeOp.Reply, ReplyPayload.Encode(reqId, ReplyStatus.Limit, w.Span));
+        }
+
         /// <summary>The application paused (OnApplicationPause / Editor pause): tell an open page, hold frames.</summary>
         public void Pause()
         {
@@ -905,6 +952,7 @@ namespace BS.Bridge
         /// </summary>
         public void Shutdown()
         {
+            CallHost?.WorldUnloaded();
             var s = current;
             if (s != null && s.IsLive) CloseSession(s, BridgeReason.Closed, false);
             current = null;

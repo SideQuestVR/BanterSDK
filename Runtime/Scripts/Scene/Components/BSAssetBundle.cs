@@ -18,7 +18,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSAssetBundle : BSComponentBase
+    public partial class BSAssetBundle : BSComponentBase
     {
         [Tooltip("The URL to the Windows asset bundle.")]
         [See(initial = "")][SerializeField] internal string windowsUrl = "";
@@ -680,6 +680,11 @@ namespace BS
                 {
                     foreach (Transform transform in thisgo.GetComponentsInChildren<Transform>(true))
                     {
+                        var body = transform.gameObject.GetComponent<Rigidbody>();
+                        if (body != null)
+                        {
+                            GuardConcaveColliders(body);
+                        }
                         var inputModule = transform.gameObject.GetComponent<StandaloneInputModule>();
                         if (inputModule != null)
                         {
@@ -707,12 +712,8 @@ namespace BS
                             // App-supplied per-source policy first (e.g. music vs. gameplay), then
                             // the single default group. Only assign if we actually resolved one, so
                             // a scene with no routing configured keeps the bundle's own value.
-                            var group = scene.settings.AudioGroupSelector?.Invoke(audioSource)
-                                        ?? scene.settings.SpaceAudioGroup;
-                            if (group != null)
-                            {
-                                audioSource.outputAudioMixerGroup = group;
-                            }
+                            RouteToApp(audioSource, scene.settings.AudioGroupSelector?.Invoke(audioSource)
+                                                    ?? scene.settings.SpaceAudioGroup);
                         }
                         var canvas = transform.gameObject.GetComponent<Canvas>();
                         if (canvas != null)
@@ -747,29 +748,122 @@ namespace BS
                             }
                         }
 
-                        // Replace font assets on TMP UI text
-                        var tmpmat = TMP_Settings.defaultFontAsset;
-                        var tmpui = transform.gameObject.GetComponent<TextMeshProUGUI>();
-                        {
-                            if (tmpui != null)
-                            {
-                                tmpui.font = tmpmat;
-                                tmpui.UpdateFontAsset();
-                                tmpui.ForceMeshUpdate();
-                            }
-                        }
-                        var tmptext = transform.gameObject.GetComponent<TMP_Text>();
-                        {
-                            if (tmptext != null)
-                            {
-                                tmptext.font = tmpmat;
-                                tmptext.ForceMeshUpdate();
-                            }
-                        }
+                        BSText.RepairFont(transform.gameObject.GetComponent<TMP_Text>());
                     }
                 }
             }
         }
+
+        /// <summary>
+        /// Puts a world's AudioSource under the app's volume sliders. A source with no mixer of its own plays through
+        /// <paramref name="group"/>. One routed through the creator's mixer stays there and that mixer plays through
+        /// <paramref name="group"/>, so its groups and effects still apply. A mixer has one output, so it follows the
+        /// first source that asks, and a source that belongs under another of the app's groups skips the mixer.
+        /// </summary>
+        internal static void RouteToApp(AudioSource source, AudioMixerGroup group)
+        {
+            if (group == null)
+            {
+                return;
+            }
+            var own = source.outputAudioMixerGroup;
+            var chained = false;
+            try
+            {
+                chained = own != null && ChainUnder(own.audioMixer, group);
+            }
+            catch (Exception e)
+            {
+                // One mixer that won't chain mustn't stop the rest of the world's setup.
+                Debug.LogWarning($"[Audio] Couldn't keep {source.name}'s mixer, so it plays through the app's: {e.Message}");
+            }
+            if (!chained)
+            {
+                source.outputAudioMixerGroup = group;
+            }
+        }
+
+        // Follows a mixer's output to the end of the creator's chain and sends that into the app's group. Bounded, as
+        // nothing stops a bundle's mixers from naming each other. False when the mixer can't be put under the group,
+        // which includes one already feeding a different group of the app's.
+        static bool ChainUnder(AudioMixer mixer, AudioMixerGroup group)
+        {
+            for (var hops = 0; mixer != null && hops < 16; hops++)
+            {
+                if (mixer == group.audioMixer)
+                {
+                    return true;
+                }
+                var next = mixer.outputAudioMixerGroup;
+                if (next == null)
+                {
+                    mixer.outputAudioMixerGroup = group;
+                    return mixer.outputAudioMixerGroup == group;
+                }
+                if (next.audioMixer == group.audioMixer)
+                {
+                    return next == group;
+                }
+                mixer = next.audioMixer;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Unity leaves a concave MeshCollider out of a moving body, so a body with nothing else to collide with falls
+        /// through the world. That body gets a collider that works: convex when its meshes can be cooked again here,
+        /// otherwise it goes kinematic, which can keep a concave shape. A body that collides through anything else, that
+        /// gravity doesn't pull down, that can't fall, or that a joint holds, stays as it was built.
+        /// </summary>
+        internal static void GuardConcaveColliders(Rigidbody body)
+        {
+            if (body.isKinematic || !body.useGravity || (body.constraints & RigidbodyConstraints.FreezePositionY) != 0)
+            {
+                return;
+            }
+            var concave = new List<MeshCollider>();
+            foreach (var collider in body.GetComponentsInChildren<Collider>(true))
+            {
+                if (!collider.enabled || collider.isTrigger || collider.GetComponentInParent<Rigidbody>(true) != body)
+                {
+                    continue;
+                }
+                if (!(collider is MeshCollider mesh) || mesh.convex)
+                {
+                    return;
+                }
+                if (mesh.sharedMesh != null)
+                {
+                    concave.Add(mesh);
+                }
+            }
+            if (concave.Count == 0 || IsJointed(body))
+            {
+                return;
+            }
+            var cookable = concave.TrueForAll(mesh => mesh.sharedMesh.isReadable);
+            if (!cookable)
+            {
+                body.isKinematic = true;
+            }
+            foreach (var mesh in concave)
+            {
+                if (cookable)
+                {
+                    mesh.convex = true;
+                }
+                // The shape was refused when the collider woke, so it has to be asked for again.
+                mesh.enabled = false;
+                mesh.enabled = true;
+            }
+            Debug.LogWarning($"[Colliders] '{body.name}' is a moving Rigidbody with only concave MeshColliders, which Unity can't " +
+                             $"simulate: {(cookable ? "made them Convex" : "made the Rigidbody kinematic")}. Tick Convex, or make it kinematic, in the world.", body);
+        }
+
+        static bool IsJointed(Rigidbody body) =>
+            body.GetComponent<Joint>() != null ||
+            FindObjects.All<Joint>(FindObjectsInactive.Include).Any(joint => joint.connectedBody == body);
+
         internal static void RegisterUnloading(string url, Task unloading)
         {
             if (string.IsNullOrEmpty(url) || unloading.IsCompleted) return;
@@ -1084,267 +1178,5 @@ namespace BS
             setupRan = true;
             Observe(SetupBundle(changedProperties), "setup");
         }
-        // BS COMPILED CODE 
-        public System.String WindowsUrl { get { return windowsUrl; } set { windowsUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.windowsUrl }); } }
-        public System.String OsxUrl { get { return osxUrl; } set { osxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.osxUrl }); } }
-        public System.String LinuxUrl { get { return linuxUrl; } set { linuxUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.linuxUrl }); } }
-        public System.String AndroidUrl { get { return androidUrl; } set { androidUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.androidUrl }); } }
-        public System.String IosUrl { get { return iosUrl; } set { iosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.iosUrl }); } }
-        public System.String VosUrl { get { return vosUrl; } set { vosUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.vosUrl }); } }
-        public System.Boolean IsScene { get { return isScene; } set { isScene = value; UpdateCallback(new List<PropertyName> { PropertyName.isScene }); } }
-        public System.Boolean LegacyShaderFix { get { return legacyShaderFix; } set { legacyShaderFix = value; UpdateCallback(new List<PropertyName> { PropertyName.legacyShaderFix }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.windowsUrl, PropertyName.osxUrl, PropertyName.linuxUrl, PropertyName.androidUrl, PropertyName.iosUrl, PropertyName.vosUrl, PropertyName.isScene, PropertyName.legacyShaderFix, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "AssetBundle" +  PropertyName.windowsUrl + windowsUrl + PropertyName.osxUrl + osxUrl + PropertyName.linuxUrl + linuxUrl + PropertyName.androidUrl + androidUrl + PropertyName.iosUrl + iosUrl + PropertyName.vosUrl + vosUrl + PropertyName.isScene + isScene + PropertyName.legacyShaderFix + legacyShaderFix;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.AssetBundle);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null;
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valwindowsUrl = (BSString)values[i];
-                    if (valwindowsUrl.n == PropertyName.windowsUrl)
-                    {
-                        windowsUrl = valwindowsUrl.x;
-                        changedProperties.Add(PropertyName.windowsUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valosxUrl = (BSString)values[i];
-                    if (valosxUrl.n == PropertyName.osxUrl)
-                    {
-                        osxUrl = valosxUrl.x;
-                        changedProperties.Add(PropertyName.osxUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var vallinuxUrl = (BSString)values[i];
-                    if (vallinuxUrl.n == PropertyName.linuxUrl)
-                    {
-                        linuxUrl = vallinuxUrl.x;
-                        changedProperties.Add(PropertyName.linuxUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valandroidUrl = (BSString)values[i];
-                    if (valandroidUrl.n == PropertyName.androidUrl)
-                    {
-                        androidUrl = valandroidUrl.x;
-                        changedProperties.Add(PropertyName.androidUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valiosUrl = (BSString)values[i];
-                    if (valiosUrl.n == PropertyName.iosUrl)
-                    {
-                        iosUrl = valiosUrl.x;
-                        changedProperties.Add(PropertyName.iosUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valvosUrl = (BSString)values[i];
-                    if (valvosUrl.n == PropertyName.vosUrl)
-                    {
-                        vosUrl = valvosUrl.x;
-                        changedProperties.Add(PropertyName.vosUrl);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valisScene = (BSBool)values[i];
-                    if (valisScene.n == PropertyName.isScene)
-                    {
-                        isScene = valisScene.x;
-                        changedProperties.Add(PropertyName.isScene);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var vallegacyShaderFix = (BSBool)values[i];
-                    if (vallegacyShaderFix.n == PropertyName.legacyShaderFix)
-                    {
-                        legacyShaderFix = vallegacyShaderFix.x;
-                        changedProperties.Add(PropertyName.legacyShaderFix);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.windowsUrl,
-                    type = PropertyType.String,
-                    value = windowsUrl,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.osxUrl,
-                    type = PropertyType.String,
-                    value = osxUrl,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.linuxUrl,
-                    type = PropertyType.String,
-                    value = linuxUrl,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.androidUrl,
-                    type = PropertyType.String,
-                    value = androidUrl,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.iosUrl,
-                    type = PropertyType.String,
-                    value = iosUrl,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.vosUrl,
-                    type = PropertyType.String,
-                    value = vosUrl,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.isScene,
-                    type = PropertyType.Bool,
-                    value = isScene,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.legacyShaderFix,
-                    type = PropertyType.Bool,
-                    value = legacyShaderFix,
-                    componentType = ComponentType.AssetBundle,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

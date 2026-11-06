@@ -24,7 +24,7 @@ namespace BS.SDKEditor.Tests
             Assert.That(mesh.triangles.Length / 3, Is.InRange(200, 1200));
             foreach (var uv in mesh.uv2)
                 Assert.That(uv.y, Is.InRange(-.0001f, 1.0001f));
-            Assert.That(BSGripHologram.SharedMaterial.shader.name, Is.EqualTo("Banter/Grip Hologram"));
+            Assert.That(BSGripHologram.SharedMaterial.shader.name, Is.EqualTo("BS/Grip Hologram"));
             Assert.That(BSGripHologram.SharedMaterial.passCount, Is.EqualTo(1));
             Assert.That(BSGripHologram.SharedMaterial.GetTag("RenderType", false), Is.EqualTo("Transparent"));
             Assert.That(BSGripHologram.SharedMaterial.renderQueue, Is.EqualTo(3101));

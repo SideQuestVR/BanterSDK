@@ -215,3 +215,64 @@ const weight = await smr.GetBlendShapeWeight(smile);   // 100
 </div>
 
 `blendShapes` lists the weights from when the component started; it isn't updated by `SetBlendShapeWeight`.
+
+## Custom shaders in VR
+
+The headset draws both eyes in one pass: single-pass instanced rendering, or multiview on Quest. A shader has to pass the eye from its vertex program to its fragment program, or it shows in one eye only.
+
+Shader Graph does this for you, and so do URP's own shaders, so only hand-written `.shader` files need it. Play mode on a flat screen doesn't show the problem: check custom shaders in a headset.
+
+The numbered lines are the ones a vertex and fragment program need:
+
+```hlsl
+#pragma vertex Vertex
+#pragma fragment Fragment
+#pragma multi_compile_instancing
+
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+struct Attributes
+{
+    float4 positionOS : POSITION;
+    float2 uv : TEXCOORD0;
+    UNITY_VERTEX_INPUT_INSTANCE_ID                   // 1
+};
+
+struct Varyings
+{
+    float4 positionCS : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    UNITY_VERTEX_OUTPUT_STEREO                       // 2
+};
+
+Varyings Vertex(Attributes input)
+{
+    Varyings output = (Varyings)0;
+    UNITY_SETUP_INSTANCE_ID(input);                  // 3
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);   // 4
+    output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+    output.uv = input.uv;
+    return output;
+}
+
+half4 Fragment(Varyings input) : SV_Target
+{
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input); // 5: before anything that depends on the eye
+    return half4(input.uv, 0, 1);
+}
+```
+
+**Screen textures.** `_CameraOpaqueTexture` and `_CameraDepthTexture` hold one slice per eye, so declaring one as a `sampler2D` reads the same eye on both sides. Include URP's declaration and use its helper, which picks the right eye (it needs step 5):
+
+```hlsl
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+
+// In the fragment program:
+half3 behind = SampleSceneColor(GetNormalizedScreenSpaceUV(input.positionCS));
+```
+
+For depth, include `DeclareDepthTexture.hlsl` and call `SampleSceneDepth`. For other per-eye textures of your own, use `TEXTURE2D_X` and `SAMPLE_TEXTURE2D_X`.
+
+!> The app's Quest settings turn the opaque and depth textures off, so on Quest a shader that reads them doesn't get the scene. That goes for Shader Graph's **Scene Color** and **Scene Depth** nodes too. Effects built on them, such as refraction or soft edges against geometry, work on Windows only: give Quest a version that doesn't need them, with a [Platform Filter](../building-in-unity/platform-filter.md).
+
+The checklist's **VR shaders** check warns about hand-written shaders that miss these steps. It reads the `.shader` file itself, so a shader that keeps its vertex program's output in an include isn't checked.

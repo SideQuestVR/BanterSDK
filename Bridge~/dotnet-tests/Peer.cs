@@ -10,13 +10,34 @@ using BS.Bridge;
 /// Out: "O <json string>" message to the page · "X <epoch> <json string>" a string Unity dispatched · "." end of step.
 /// Requests ("!i!:&lt;id&gt;¶…") are answered "!i!:&lt;id&gt;¶ok-&lt;epoch&gt;" unless the command is "!slow", whose
 /// answer is sent by the next "F" (finish) line, from the captured context (the way an await would).
+/// With BRIDGE_PEER_CALLS set the view has a call host, over FakeApi's table: handle 1001 is alive, 1002 dead, 1003 outside
+/// the world. "M &lt;id&gt; &lt;argc&gt; &lt;0|1 static&gt;" adds a member that answers its argument count and logs "C &lt;id&gt; &lt;json args&gt;".
 /// </summary>
 static class Peer
 {
     public static int Run()
     {
         Console.InputEncoding = System.Text.Encoding.UTF8;
-        var rig = new Rig(new BridgeViewOptions { LoadStartedMayTrail = false });
+        var options = new BridgeViewOptions { LoadStartedMayTrail = false };
+        BridgeMember[] members = null;
+        Action seed = null;
+        if (Environment.GetEnvironmentVariable("BRIDGE_PEER_CALLS") != null)
+        {
+            members = new BridgeMember[4096];
+            FakeApi.Table().CopyTo(members, 0);
+            var handles = new FakeHandles();
+            // After OnLoad: a LoadStarted forgets the last world's handles.
+            seed = () =>
+            {
+                handles.Table[1001] = new FakeObject(2.5f);
+                handles.Table[1002] = new FakeObject();
+                handles.Dead.Add(1002);
+                handles.Table[1003] = FakeApi.Outsider;
+                handles.OutOfWorld.Add(FakeApi.Outsider);
+            };
+            options.CallHost = new BridgeCallHost(members, handles, () => 1);
+        }
+        var rig = new Rig(options);
         var stdout = new StreamWriter(Console.OpenStandardOutput()) { AutoFlush = false };
         Action slow = null;
         rig.Disp.OnText = (s, t) =>
@@ -42,11 +63,24 @@ static class Peer
             {
                 case 'R': rig.View.Receive(JsonSerializer.Deserialize<string>(arg)); break;
                 case 'L': rig.View.NotifyLoadStarted(JsonSerializer.Deserialize<string>(arg)); break;
-                case 'N': rig.View.NotifyOnLoad(); break;
+                case 'N': rig.View.NotifyOnLoad(); seed?.Invoke(); break;
                 case 'S': rig.View.Send(JsonSerializer.Deserialize<string>(arg)); break;
                 case 'F': slow?.Invoke(); slow = null; break;
                 case 'T': rig.Now += long.Parse(arg); break;
                 case 'Q': stdout.Flush(); return 0;
+                case 'M':
+                {
+                    var p = arg.Trim('"').Split(' ');
+                    int id = int.Parse(p[0]), argc = int.Parse(p[1]);
+                    members[id] = new BridgeMember(id, BridgeTier.Write, false, p[2] == "1", argc, "", 0, c =>
+                    {
+                        var args = new string[c.ArgCount];
+                        for (int i = 0; i < c.ArgCount; i++) args[i] = CallTests.Describe(c.Args[i]);
+                        stdout.WriteLine("C " + id + " " + JsonSerializer.Serialize(args));
+                        c.RetInt(c.ArgCount);
+                    });
+                    break;
+                }
                 case 'D':
                     rig.View.Drain();
                     rig.View.Tick();

@@ -51,6 +51,11 @@ namespace BS.LocalMultiplayer.Objects
         private LocalSyncedTransform _syncTransform;
         private GameObject _proximity;
 
+        /// <summary>Kinematic If Not Owned on a body authored kinematic: a claim leaves it kinematic.</summary>
+        internal bool KeepKinematicOnClaim { get; set; }
+        /// <summary>Kinematic If Not Owned on a dynamic body; null without the flag.</summary>
+        internal SyncedObjectRestHold RestHold { get; set; }
+
         private Vector3 _lastPosition;
         private Vector3 _trackedVelocity;
         private bool _hasLastPosition;
@@ -133,19 +138,22 @@ namespace BS.LocalMultiplayer.Objects
         private void TryTakeOwnership(Collider other)
         {
             if (!_live || !_collisionOwnership) return;
+            // Already ours, so there is no claim to make, but a bump still wakes a resting body.
+            if (RestHold != null && _netObj != null && _netObj.IsOwned && !_netObj.IsLocked && IsLocalPlayer(other)) RestHold.Wake();
             if (_netObj == null || !_netObj.IsBound || _netObj.IsOwned || _netObj.IsLocked) return;
             if (_optimisticActive) return;
             if (Time.time - _lastAcquire < MinAcquireInterval) return;
             if (!IsLocalPlayer(other)) return;
 
             _lastAcquire = Time.time;
-            _ = _rigidbody != null ? OptimisticAcquireAsync() : PlainAcquireAsync();
+            _ = _rigidbody != null && !KeepKinematicOnClaim ? OptimisticAcquireAsync() : PlainAcquireAsync();
         }
 
         // Hide the Acquire round-trip: take control locally now, request authority, reconcile on the answer.
         private async Task OptimisticAcquireAsync()
         {
             _optimisticActive = true;
+            if (RestHold != null) RestHold.Wake();
             if (_syncTransform != null) _syncTransform.enabled = false; // stop the sync re-asserting kinematic + interpolating
             _rigidbody.isKinematic = false;
             ApplyVelocity(_trackedVelocity); // keep the incoming motion; physics resolves the contact with the player
@@ -166,6 +174,7 @@ namespace BS.LocalMultiplayer.Objects
                 // denied → re-kinematics and resnaps to the true owner.
                 if (_live && this != null)
                 {
+                    if (!granted && RestHold != null) RestHold.RestUnlessOwned();
                     if (_syncTransform != null) _syncTransform.enabled = true;
                     if (_rigidbody != null) _wasKinematic = _rigidbody.isKinematic;
                 }

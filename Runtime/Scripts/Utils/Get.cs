@@ -165,6 +165,15 @@ namespace BS
         }
 
         /// <summary>
+        /// Lets go of one cached download without destroying it: something else may hold the object, and Unity reclaims it
+        /// once nothing does. The next request downloads it again. A newer download under the URL stays.
+        /// </summary>
+        internal static void Forget(string url, UnityEngine.Object asset)
+        {
+            ((ICollection<KeyValuePair<string, UnityEngine.Object>>)objectCache).Remove(new KeyValuePair<string, UnityEngine.Object>(url, asset));
+        }
+
+        /// <summary>
         /// Texture downloads in flight, keyed like <see cref="objectCache"/>. Every BSMaterial that
         /// shares a texture asks for it in the same frame, and the result cache alone cannot help
         /// them: each would miss, download, and TryAdd — with all but one copy leaked. Main thread only.
@@ -741,6 +750,9 @@ namespace BS
             var connector = wrapper.LoadableBundle.BasisBundleConnector;
             if (connector?.BasisBundleGenerated != null)
                 connector.GetPlatform(out section);
+            // Answers "which build is this world on?" from any player's log. The host only: a url's query can hold tokens.
+            var host = Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : "?";
+            Debug.Log($"[Greenfield/BEE] {host}: build {connector?.UniqueVersion ?? "?"}, built {connector?.DateOfCreation ?? "?"} UTC.");
             return (wrapper.AssetBundle, section);
         }
 

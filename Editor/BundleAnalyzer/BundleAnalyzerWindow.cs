@@ -37,6 +37,10 @@ namespace SideQuest.BundleAnalyzer
         string m_RootAssetPath;
         string m_Platform = "Standalone";
 
+        // asset.world carries both sections, so the headline adds the platform the list isn't showing.
+        long m_OtherPlatformTotal;
+        bool m_SceneWasDirty;
+
         string[] m_PendingPaths = Array.Empty<string>();
         int m_PendingIndex;
         bool m_IsAnalyzing;
@@ -92,7 +96,13 @@ namespace SideQuest.BundleAnalyzer
             // CreateGUI runs on the next editor update after a freshly-created window, so
             // defer setting the target field by one frame if it isn't wired up yet.
             if (window.m_TargetField != null)
-                window.m_TargetField.value = obj;
+            {
+                // The same asset raises no change, and the scene may have changed since the last run.
+                if (window.m_TargetField.value == obj)
+                    window.StartAnalysis(assetPath);
+                else
+                    window.m_TargetField.value = obj;
+            }
             else
                 EditorApplication.delayCall += () => window.m_TargetField.value = obj;
         }
@@ -128,7 +138,8 @@ namespace SideQuest.BundleAnalyzer
             m_TargetField.RegisterValueChangedCallback(OnTargetChanged);
 
             m_PlatformDropdown = root.Q<DropdownField>("PlatformDropdown");
-            m_PlatformDropdown.choices = new List<string> { "Standalone", "Android", "iPhone", "WebGL" };
+            // Spaces are built for these two only. The list and pie show the chosen one; the headline covers both.
+            m_PlatformDropdown.choices = new List<string> { "Standalone", "Android" };
             m_Platform = DefaultPlatformForActiveBuildTarget();
             m_PlatformDropdown.SetValueWithoutNotify(m_Platform);
             m_PlatformDropdown.RegisterValueChangedCallback(evt =>
@@ -172,13 +183,7 @@ namespace SideQuest.BundleAnalyzer
 
         static string DefaultPlatformForActiveBuildTarget()
         {
-            return EditorUserBuildSettings.activeBuildTarget switch
-            {
-                BuildTarget.Android => "Android",
-                BuildTarget.iOS => "iPhone",
-                BuildTarget.WebGL => "WebGL",
-                _ => "Standalone",
-            };
+            return EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android ? "Android" : "Standalone";
         }
 
         void OnTargetChanged(ChangeEvent<UnityEngine.Object> evt)
@@ -214,6 +219,10 @@ namespace SideQuest.BundleAnalyzer
         {
             m_RootAssetPath = rootAssetPath;
             m_AllEntries = new List<AssetDependencyEntry>();
+            m_OtherPlatformTotal = 0;
+            // The dependency graph comes from the saved file.
+            var openScene = UnityEngine.SceneManagement.SceneManager.GetSceneByPath(rootAssetPath);
+            m_SceneWasDirty = openScene.IsValid() && openScene.isDirty;
             m_SizeBreakdown = null;
             m_TypeColors = new Dictionary<string, Color>();
             m_SelectedTypes.Clear();
@@ -247,8 +256,10 @@ namespace SideQuest.BundleAnalyzer
             for (int i = m_PendingIndex; i < end; i++)
             {
                 var entry = SafeEstimate(m_PendingPaths[i]);
-                if (entry != null)
-                    m_AllEntries.Add(entry);
+                if (entry == null)
+                    continue;
+                m_AllEntries.Add(entry);
+                m_OtherPlatformTotal += OtherPlatformSize(entry);
             }
             m_PendingIndex = end;
 
@@ -279,23 +290,44 @@ namespace SideQuest.BundleAnalyzer
             }
         }
 
+        long OtherPlatformSize(AssetDependencyEntry shown)
+        {
+            try
+            {
+                return DependencySizeAnalyzer.EstimateEntry(shown.AssetPath, m_Platform == "Android" ? "Standalone" : "Android").EstimatedSizeBytes;
+            }
+            catch (Exception)
+            {
+                return shown.EstimatedSizeBytes;
+            }
+        }
+
         void FinishAnalysis(bool cancelled)
         {
             EditorApplication.update -= ProcessChunk;
             m_IsAnalyzing = false;
             UpdateLoadingUI();
 
-            long total = m_AllEntries.Sum(e => e.EstimatedSizeBytes);
+            long total = m_AllEntries.Sum(e => e.EstimatedSizeBytes) + m_OtherPlatformTotal;
             long roughFinal = (long)(total * ArchiveCompressionFactor);
+            int shaders = m_AllEntries.Count(e => e.ClassName == nameof(Shader));
+            var lastBuild = new FileInfo("Assets/" + BS.BSStarterUpper.WEB_ROOT + "/asset.world");
+            bool showLastBuild = lastBuild.Exists && m_RootAssetPath.EndsWith(".unity", StringComparison.OrdinalIgnoreCase);
             m_StatusLabel.text = $"{Path.GetFileNameWithoutExtension(m_RootAssetPath)} — {m_AllEntries.Count} assets" +
                 (cancelled ? " (cancelled)" : "") +
-                $", ~{new AssetDependencyEntry { EstimatedSizeBytes = roughFinal }.SizeDisplay} estimated final bundle size";
+                $", ~{new AssetDependencyEntry { EstimatedSizeBytes = roughFinal }.SizeDisplay} for Windows + Android" +
+                (showLastBuild ? $", last built asset.world {new AssetDependencyEntry { EstimatedSizeBytes = lastBuild.Length }.SizeDisplay}" : "") +
+                (m_SceneWasDirty ? ". Unsaved changes aren't counted: save the scene and analyze again." : "");
             m_StatusLabel.tooltip = "Per-asset sizes (and the list/pie/block view) show each asset's estimated compressed size " +
-                "from its own per-platform import settings, before archive packing.\n\n" +
-                $"The final bundle size above additionally applies a rough ×{ArchiveCompressionFactor:0.00} correction for the " +
+                "from its own per-platform import settings, for the platform chosen above, before archive packing.\n\n" +
+                "The total above adds both platforms, as asset.world carries both and each player downloads their own part. " +
+                $"It applies a rough ×{ArchiveCompressionFactor:0.00} correction for the " +
                 "LZ4/LZMA compression Unity applies to the whole archive on top of that - calibrated from comparing this " +
-                "estimate against real Windows/Android builds, but that ratio is content-dependent and will vary by project. " +
-                $"Sum of per-asset estimates before that correction: {new AssetDependencyEntry { EstimatedSizeBytes = total }.SizeDisplay}.";
+                "estimate against real Windows/Android builds, but that ratio is content-dependent and will vary by project; " +
+                "textures compress less than meshes, so texture-heavy worlds come out larger. " +
+                $"Sum of per-asset estimates before that correction: {new AssetDependencyEntry { EstimatedSizeBytes = total }.SizeDisplay}." +
+                (shaders > 0 ? $"\n\n{shaders} shader(s) are counted by their source size. Compiled, they can be much larger." : "") +
+                (showLastBuild ? $"\n\nThe asset.world in the project was built at {lastBuild.LastWriteTime:g}, from whichever scene was built last." : "");
 
             RebuildTypeFilterMenu();
             ApplyFilter();

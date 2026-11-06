@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
 #if !GREENFIELD_PROJECT
 using BS.SDKEditor.Setup;
 #endif
@@ -35,6 +37,37 @@ namespace BS.SDKEditor.BuildChecks
             {
                 Overridable = false,
             });
+        }
+    }
+
+    /// <summary>With URP's Strip Unused Variants off, every variant of every shader is compiled for each graphics API.</summary>
+    sealed class ShaderStrippingCheck : BuildCheck
+    {
+        public override string Id => "project.shader-stripping";
+        public override string Title => "Shader stripping";
+        public override string Description =>
+            "URP's Strip Unused Variants is on, as in the client. Without it every shader variant is compiled, which makes builds far slower.";
+        public override int Order => 45;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            if (!GraphicsSettings.TryGetRenderPipelineSettings<URPShaderStrippingSetting>(out var stripping) || stripping.stripUnusedVariants)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    "URP's Strip Unused Variants is off",
+                    "Every shader variant is compiled for each graphics API, which makes builds much slower and the world bigger. " +
+                    "Turn it on in Project Settings > Graphics > URP.")
+                .WithFix("Turn stripping on", _ =>
+                {
+                    stripping.stripUnusedVariants = true;
+                    var settings = GraphicsSettings.GetSettingsForRenderPipeline<UniversalRenderPipeline>();
+                    if (settings != null)
+                    {
+                        EditorUtility.SetDirty(settings);
+                        AssetDatabase.SaveAssetIfDirty(settings);
+                    }
+                    return true;
+                }, needsLoadedScene: false));
         }
     }
 

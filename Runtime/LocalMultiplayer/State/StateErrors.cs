@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/StateErrors.cs" sha256="125a6c0b3740d37034f8552fbb7de6d73c84fc7691b04003adca8b473c582ac0" mode="verbatim" />
+// <mirror source="Assets/Systems/Networking/State/StateErrors.cs" sha256="eea06b1129186270518625e72aa21e01dc54a6a6b355670fc9529b5028b8c49f" mode="verbatim" />
 using System;
 using System.Collections.Concurrent;
 
@@ -45,6 +45,11 @@ namespace BS.LocalMultiplayer.State
 
         // --- client-side only ---
         public const string NotConnected = "not_connected";
+        public const string SocketClosed = "socket_closed";
+        public const string SocketNotConnected = "socket_not_connected";
+        public const string SignalTimeout = "signal_timeout";
+        public const string StateReset = "state_reset";
+        public const string WorldStateUnavailable = "world_state_unavailable";
         public const string Dropped = "dropped_offline";
         public const string Timeout = "timeout";
 
@@ -54,12 +59,17 @@ namespace BS.LocalMultiplayer.State
 
         /// <summary>Codes worth retrying rather than surfacing.</summary>
         public static bool IsTransient(string code) =>
-            code == RateLimited || code == SessionNotFound || code == InternalError || code == NotConnected;
+            code == RateLimited || code == SessionNotFound || code == InternalError || code == NotConnected
+            || code == SocketClosed || code == SocketNotConnected || code == SignalTimeout;
 
         public static string Describe(string code)
         {
             switch (code)
             {
+                case StateReset:
+                    return "the world state reset while this change was in flight";
+                case WorldStateUnavailable:
+                    return "this server does not support shared world state";
                 case InvalidPath:
                     return "the property name can't be used (letters, digits, _ - @ and . to nest; at most 64 characters per part)";
                 case InvalidValue:
@@ -91,7 +101,11 @@ namespace BS.LocalMultiplayer.State
                 case InternalError:
                     return "the space server had a problem; the change will be retried";
                 case NotConnected:
+                case SocketClosed:
+                case SocketNotConnected:
                     return "not connected to the space server";
+                case SignalTimeout:
+                    return "the space server did not answer in time; the change will be retried";
                 case Dropped:
                     return "dropped after 60 seconds offline";
                 case Timeout:

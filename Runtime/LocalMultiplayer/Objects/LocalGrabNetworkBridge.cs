@@ -116,6 +116,9 @@ namespace BS.LocalMultiplayer.Objects
 
             var netObj = grabbed.GetComponentInParent<LocalNetworkObject>();
             if (netObj == null) return;                               // not a synced object → local grab only
+            // A grab of what this player already owns has no claim to wait for; any other wakes once it is granted.
+            bool rests = netObj.TryGetComponent(out SyncedObjectRestHold restHold) && restHold.enabled;
+            if (rests && netObj.IsOwned) restHold.Wake();
             if (!netObj.TryGetComponent(out LocalGrabbable grabbable)) return; // not opted into grab ownership
 
             _rightHeld = netObj;
@@ -141,6 +144,7 @@ namespace BS.LocalMultiplayer.Objects
                     if (ReferenceEquals(_rightHeld, netObj)) _rightHeld = null;
                     return;
                 }
+                if (rests && restHold != null) restHold.Wake();
                 if (await DropIfLetGo(netObj, grabbable, destroyed)) return; // let go before the acquire landed
 
                 if (netObj == null || !netObj.TryGetComponent(out LocalHeldObject held)) return; // not set up for held replication

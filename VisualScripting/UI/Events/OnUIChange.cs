@@ -58,24 +58,26 @@ namespace BS.VisualScripting
                 return;
             }
 
-            var flow = Flow.New(stack.ToReference());
-            var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-            if (!shouldAutoRegister)
+            ReportingFlow.Run(stack.ToReference(), this, flow =>
             {
-                return;
-            }
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-            var targetId = flow.GetValue<string>(elementId);
-            var targetName = flow.GetValue<string>(elementName);
+                if (!shouldAutoRegister)
+                {
+                    return;
+                }
 
-            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
 
-            if (!string.IsNullOrEmpty(resolvedTarget))
-            {
-                UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnUIChange");
-                _eventRegistered = true;
-            }
+                string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                if (!string.IsNullOrEmpty(resolvedTarget))
+                {
+                    UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnUIChange");
+                    _eventRegistered = true;
+                }
+            });
         }
 
         public override void StopListening(GraphStack stack)

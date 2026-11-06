@@ -52,7 +52,11 @@ namespace BS
 
         void Start()
         {
-            scene.events.OnLoad.AddListener(() => usersAnnounced = false);
+            scene.events.OnLoad.AddListener(() =>
+            {
+                usersAnnounced = false;
+                ReleasePageAssets();
+            });
             scene.events.OnJsCallbackRecieved.AddListener((id, data, isReturn) =>
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
@@ -228,15 +232,19 @@ namespace BS
             }
             else if (msg.StartsWith(APICommands.TELEMETRY))
             {
-                string[] data = GetMsgData(msg, APICommands.TELEMETRY).Split(MessageDelimiters.PRIMARY);
-                var propsplit = data[1].Split(MessageDelimiters.SECONDARY);
-                List<KeyValuePair<string, string>> kvps = new();
-                foreach (var d in propsplit)
-                {
-                    var split = d.Split(MessageDelimiters.TERTIARY);
-                    kvps.Add(new KeyValuePair<string, string>(split[0], split[1]));
-                }
-                scene.data.SendTelemetry((data[0], kvps.ToArray()));
+                scene.data.SendTelemetry(ParseTelemetry(GetMsgData(msg, APICommands.TELEMETRY)));
+            }
+            // The page sends these two without a request id (asset.ts). Queued like the rest of a document's work, so a
+            // new page's asset lands behind the release of the old page's (OnLoad).
+            else if (msg.StartsWith(APICommands.CREATE_ASSET))
+            {
+                var data = GetMsgData(msg, APICommands.CREATE_ASSET);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => HandleCreateAsset(data, NoRequest), $"{nameof(BSLink)}.{nameof(ParseCommand)}.CREATE_ASSET"));
+            }
+            else if (msg.StartsWith(APICommands.DESTROY_ASSET))
+            {
+                var data = GetMsgData(msg, APICommands.DESTROY_ASSET);
+                UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => HandleDestroyAsset(data, NoRequest), $"{nameof(BSLink)}.{nameof(ParseCommand)}.DESTROY_ASSET"));
             }
             else if (UIElementBridge.IsUICommand(msg))
             {
@@ -247,6 +255,23 @@ namespace BS
                 LogLine.Do(Color.red, LogTag.Banter, "Unknown parse message: " + msg);
             }
         }
+
+        /// <summary>"event¶key|value§key|value", as scene.ts _t writes it. A prop with no value has an empty one.</summary>
+        internal static (string eventName, KeyValuePair<string, string>[] keyValues) ParseTelemetry(string data)
+        {
+            var parts = data.Split(MessageDelimiters.PRIMARY, 2);
+            var keyValues = new List<KeyValuePair<string, string>>();
+            if (parts.Length > 1)
+            {
+                foreach (var prop in parts[1].Split(MessageDelimiters.SECONDARY, StringSplitOptions.RemoveEmptyEntries))
+                {
+                    var keyValue = prop.Split(MessageDelimiters.TERTIARY, 2);
+                    keyValues.Add(new KeyValuePair<string, string>(WireText.Decode(keyValue[0]), keyValue.Length > 1 ? WireText.Decode(keyValue[1]) : ""));
+                }
+            }
+            return (WireText.Decode(parts[0]), keyValues.ToArray());
+        }
+
         void ParseRequest(string msg, int id, string full)
         {
             if (!scene.isReady)
@@ -416,7 +441,7 @@ namespace BS
                 else if (msg.StartsWith(APICommands.DEEP_LINK))
                 {
                     var parts = GetMsgData(msg, APICommands.DEEP_LINK).Split(MessageDelimiters.PRIMARY, 2);
-                    scene.events.OnDeepLink.Invoke(parts[0], parts[1]);
+                    scene.events.OnDeepLink.Invoke(WireText.Decode(parts[0]), parts[1]);
                 }
                 else if (msg.StartsWith(APICommands.LOAD_URL))
                 {
@@ -542,6 +567,10 @@ namespace BS
                 {
                     HandleQueryAsset(GetMsgData(msg, APICommands.QUERY_ASSET), id);
                 }
+                else if (msg.StartsWith(APICommands.ASSET_DATABASE))
+                {
+                    scene.AssetDatabaseRequest(GetMsgData(msg, APICommands.ASSET_DATABASE), id);
+                }
                 else if (msg.StartsWith(APICommands.SET_CAN_MOVE))
                 {
                     scene.SetActionsSystemCanMove(GetMsgData(msg, APICommands.SET_CAN_MOVE) == "1", id);
@@ -624,15 +653,7 @@ namespace BS
                 }
                 else if (msg.StartsWith(APICommands.TELEMETRY))
                 {
-                    string[] data = GetMsgData(msg, APICommands.TELEMETRY).Split(MessageDelimiters.PRIMARY);
-                    var propsplit = data[1].Split(MessageDelimiters.SECONDARY);
-                    List<KeyValuePair<string, string>> kvps = new();
-                    foreach (var d in propsplit)
-                    {
-                        var split = d.Split(MessageDelimiters.TERTIARY);
-                        kvps.Add(new KeyValuePair<string, string>(split[0], split[1]));
-                    }
-                    scene.data.SendTelemetry((data[0], kvps.ToArray()));
+                    scene.data.SendTelemetry(ParseTelemetry(GetMsgData(msg, APICommands.TELEMETRY)));
                 }
                 else
                 {
@@ -744,6 +765,7 @@ namespace BS
         }
         void Update()
         {
+            if (scene == null) return;
             if (scene.state == SceneState.NOTHING_20S && Time.frameCount % 10 == 0)
             {
                 scene.loadingManager?.SetLoadProgress("Still Loading... 😬", 0, $"No objects loaded yet, {Mathf.Round(260f - (Time.time - timeoutDisplay))} seconds left...", true);
@@ -1210,9 +1232,10 @@ namespace BS
 
         public void OnOneShot(string data, string fromId, bool fromAdmin)
         {
-            EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
             // Another user's text: WireText keeps any delimiter in it from cutting the data or the batch.
+            // The page first: the event is one-shot, and a graph that throws must not cost the page its copy.
             Send(APICommands.EVENT + APICommands.ONE_SHOT_RECIEVED + MessageDelimiters.PRIMARY + fromId + MessageDelimiters.SECONDARY + (fromAdmin ? "1" : "0") + MessageDelimiters.SECONDARY + WireText.Encode(data));
+            EventBus.Trigger("OnOneShot", new CustomEventArgs(fromId, new object[] { data }));
         }
 
         public void OnUserJoined(UserData user)
@@ -1284,9 +1307,10 @@ namespace BS
         }
         public void OnReceiveBrowserMessage(BSBrowser browser, string message)
         {
-            EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
             // Text from any web page: WireText keeps any delimiter in it from cutting the message or the batch.
+            // The page first, as with a one-shot.
             Send(APICommands.EVENT + APICommands.BROWSER_MESSAGE + MessageDelimiters.PRIMARY + BSScene.UnityId(browser.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(message));
+            EventBus.Trigger("OnReceiveBrowserMessage", new CustomEventArgs("browser-message", new object[] { message }));
         }
         public void OnKeyPress(KeyCode key)
         {
@@ -1302,37 +1326,37 @@ namespace BS
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
             var userData = scene.GetUserFromCollider(collision.collider);
-            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.COLLISION_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.name) + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnCollisionStay(GameObject obj, Collision collision)
         {
             ContactPoint[] contact = new ContactPoint[1];
             collision.GetContacts(contact);
-            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name);
+            Send(APICommands.EVENT + APICommands.COLLISION_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].point.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(contact[0].normal.z) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.name));
         }
 
         public void _OnCollisionExit(GameObject obj, Collision collision)
         {
             var userData = scene.GetUserFromCollider(collision.collider);
-            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + collision.gameObject.tag + MessageDelimiters.SECONDARY + collision.gameObject.name + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.COLLISION_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collision.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collision.gameObject.name) + MessageDelimiters.SECONDARY + collision.gameObject.layer + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerEnter(GameObject obj, Collider collider)
         {
             var userData = scene.GetUserFromCollider(collider);
-            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.TRIGGER_ENTER + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.name) + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void _OnTriggerStay(GameObject obj, Collider collider)
         {
-            Send(APICommands.EVENT + APICommands.TRIGGER_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name);
+            Send(APICommands.EVENT + APICommands.TRIGGER_STAY + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.name));
         }
 
         public void _OnTriggerExit(GameObject obj, Collider collider)
         {
             var userData = scene.GetUserFromCollider(collider);
-            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + collider.gameObject.tag + MessageDelimiters.SECONDARY + collider.gameObject.name + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
+            Send(APICommands.EVENT + APICommands.TRIGGER_EXIT + MessageDelimiters.PRIMARY + BSScene.UnityId(obj) + MessageDelimiters.SECONDARY + BSScene.UnityId(collider.gameObject) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.tag) + MessageDelimiters.SECONDARY + WireText.Encode(collider.gameObject.name) + MessageDelimiters.SECONDARY + (userData?.uid ?? "-1"));
         }
 
         public void CheckPipe()
@@ -1345,25 +1369,52 @@ namespace BS
 
         #region Asset System Handlers
 
+        /// <summary>The asset commands' id when they came without one, as the page sends them: nothing to answer.</summary>
+        const int NoRequest = -1;
+
+        // What the current page asked for, loading or loaded. Only that page can name these ids, so they leave with it.
+        readonly HashSet<string> pageAssets = new HashSet<string>();
+
+        void ReleasePageAssets()
+        {
+            foreach (var assetId in pageAssets) BSAssetRegistry.Instance.UnregisterAsset(assetId);
+            pageAssets.Clear();
+        }
+
         /// <summary>
         /// Handle CREATE_ASSET command from JavaScript
         /// Format: assetId§assetType§url§tag§...additional properties
         /// </summary>
         private void HandleCreateAsset(string data, int reqId)
         {
+            var parts = data.Split(MessageDelimiters.SECONDARY);
             try
             {
-                var parts = data.Split(MessageDelimiters.SECONDARY);
                 if (parts.Length < 2)
                 {
-                    Debug.LogError($"Invalid CREATE_ASSET message format: {data}");
+                    Debug.LogWarning($"Invalid CREATE_ASSET message format: {data}");
+                    RefuseAsset(parts[0], "Invalid CREATE_ASSET message", reqId);
                     return;
                 }
 
                 string assetId = parts[0];
                 AssetType assetType = (AssetType)int.Parse(parts[1]);
-                string url = parts.Length > 2 ? parts[2] : null;
-                string tag = parts.Length > 3 ? parts[3] : null;
+                string url = parts.Length > 2 ? WireText.Decode(parts[2]) : null;
+                string tag = parts.Length > 3 ? WireText.Decode(parts[3]) : null;
+
+                // An id names one asset, for good: a page's ids are new, and its own.
+                if (!BSAssetKey.IsPageId(assetId) || pageAssets.Contains(assetId) || BSAssetRegistry.Instance.Database.Find(assetId) != null)
+                {
+                    Debug.LogWarning($"Asset id can't be used: {assetId}");
+                    RefuseAsset(assetId, "This asset id can't be used", reqId);
+                    return;
+                }
+                if (pageAssets.Count >= BSAssetDatabase.MaxScriptEntries)
+                {
+                    RefuseAsset(assetId, BSAssetDatabase.WorldFull, reqId);
+                    return;
+                }
+                pageAssets.Add(assetId);
 
                 // Create asset based on type
                 switch (assetType)
@@ -1378,16 +1429,35 @@ namespace BS
                         CreateMaterialAsset(assetId, url, tag);
                         break;
                     default:
-                        Debug.LogWarning($"Asset type {assetType} not yet implemented for creation");
+                        Debug.LogWarning($"Asset type {assetType} can't be created from a script");
+                        FailAsset(assetId, $"{assetType} assets can't be created from a script");
                         break;
                 }
-                Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+                if (reqId != NoRequest) Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
 
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error handling CREATE_ASSET: {ex.Message}");
+                Debug.LogWarning($"Error handling CREATE_ASSET: {ex.Message}");
+                RefuseAsset(parts[0], ex.Message, reqId);
             }
+        }
+
+        // A failed asset holds nothing, so it stops counting against the page.
+        void FailAsset(string assetId, string reason)
+        {
+            pageAssets.Remove(assetId);
+            BSAssetRegistry.Instance.MarkAssetFailed(assetId, reason);
+        }
+
+        /// <summary>
+        /// The page's waitForReady ends on the failure; a request needs its answer as well. A world's bad asset is the
+        /// page's to report, so these logs are warnings: an error would open the client's error panel for every player.
+        /// </summary>
+        void RefuseAsset(string assetId, string reason, int reqId)
+        {
+            if (!string.IsNullOrEmpty(assetId)) BSAssetRegistry.Instance.MarkAssetFailed(assetId, reason);
+            if (reqId != NoRequest) ReplyError(reqId, APICommands.CREATE_ASSET + ": " + reason);
         }
 
         /// <summary>
@@ -1399,12 +1469,14 @@ namespace BS
             try
             {
                 string assetId = data.Trim();
-                BSAssetRegistry.Instance.UnregisterAsset(assetId);
-                Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
+                // A download's object stays: it is shared through Get's cache, which owns it. A Material goes with its entry.
+                if (pageAssets.Remove(assetId)) BSAssetRegistry.Instance.UnregisterAsset(assetId);
+                if (reqId != NoRequest) Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId);
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Error handling DESTROY_ASSET: {ex.Message}");
+                if (reqId != NoRequest) ReplyError(reqId, APICommands.DESTROY_ASSET + ": " + ex.Message);
             }
         }
 
@@ -1425,17 +1497,22 @@ namespace BS
                     var response = $"{APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId}{MessageDelimiters.PRIMARY}" +
                                  $"{assetId}{MessageDelimiters.SECONDARY}" +
                                  $"{(int)meta.type}{MessageDelimiters.SECONDARY}" +
-                                 $"{meta.url ?? ""}{MessageDelimiters.SECONDARY}" +
+                                 $"{WireText.Encode(meta.url ?? "")}{MessageDelimiters.SECONDARY}" +
                                  $"{(meta.loaded ? "1" : "0")}{MessageDelimiters.SECONDARY}" +
                                  $"{meta.memorySize}{MessageDelimiters.SECONDARY}" +
-                                 $"{meta.tag ?? ""}";
+                                 $"{WireText.Encode(meta.tag ?? "")}";
 
                     Send(response);
+                }
+                else
+                {
+                    ReplyError(reqId, APICommands.QUERY_ASSET + ": no asset " + assetId);
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Error handling QUERY_ASSET: {ex.Message}");
+                ReplyError(reqId, APICommands.QUERY_ASSET + ": " + ex.Message);
             }
         }
 
@@ -1443,8 +1520,14 @@ namespace BS
         {
             if (string.IsNullOrEmpty(url))
             {
-                Debug.LogError($"Cannot create texture asset without URL: {assetId}");
-                BSAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                Debug.LogWarning($"Cannot create texture asset without URL: {assetId}");
+                FailAsset(assetId, "No URL provided");
+                return;
+            }
+            if (!BSAssetKey.IsWebAddress(url))
+            {
+                Debug.LogWarning($"Cannot create texture asset from this address: {assetId}");
+                FailAsset(assetId, BSAssetKey.WebAddressesOnly);
                 return;
             }
 
@@ -1452,24 +1535,36 @@ namespace BS
             {
                 Debug.Log($"Loading texture asset: {assetId} from {url}");
 
-                // Load texture from URL using existing Get utility
-                var texture = await Get.Texture(url);
+                // Load texture from URL using existing Get utility, in turn with the world's other downloads
+                var database = BSAssetRegistry.Instance.Database;
+                await database.EnterDownload();
+                Texture2D texture;
+                try
+                {
+                    texture = await Get.Texture(url);
+                }
+                finally
+                {
+                    database.LeaveDownload();
+                }
 
                 if (texture == null)
                 {
                     throw new Exception("Texture loading returned null");
                 }
 
-                // Register the loaded texture
-                BSAssetRegistry.Instance.RegisterAsset(texture, AssetType.Texture2D, url, tag);
-                BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
+                // Destroyed, or its page has gone, while it loaded.
+                if (!pageAssets.Contains(assetId)) return;
+
+                // Under the page's id: that's what the page and any BSMaterial hold. Also tells the page it loaded.
+                BSAssetRegistry.Instance.SetAsset(assetId, texture, AssetType.Texture2D, tag, url);
 
                 Debug.Log($"Successfully loaded texture asset: {assetId} ({texture.width}x{texture.height})");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to create texture asset {assetId}: {ex.Message}");
-                BSAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+                Debug.LogWarning($"Failed to create texture asset {assetId}: {ex.Message}");
+                FailAsset(assetId, ex.Message);
             }
         }
 
@@ -1477,8 +1572,14 @@ namespace BS
         {
             if (string.IsNullOrEmpty(url))
             {
-                Debug.LogError($"Cannot create audio clip asset without URL: {assetId}");
-                BSAssetRegistry.Instance.MarkAssetFailed(assetId, "No URL provided");
+                Debug.LogWarning($"Cannot create audio clip asset without URL: {assetId}");
+                FailAsset(assetId, "No URL provided");
+                return;
+            }
+            if (!BSAssetKey.IsWebAddress(url))
+            {
+                Debug.LogWarning($"Cannot create audio clip asset from this address: {assetId}");
+                FailAsset(assetId, BSAssetKey.WebAddressesOnly);
                 return;
             }
 
@@ -1486,24 +1587,36 @@ namespace BS
             {
                 Debug.Log($"Loading audio clip asset: {assetId} from {url}");
 
-                // Load audio from URL using existing Get utility
-                var audioClip = await Get.Audio(url);
+                // Load audio from URL using existing Get utility, in turn with the world's other downloads
+                var database = BSAssetRegistry.Instance.Database;
+                await database.EnterDownload();
+                AudioClip audioClip;
+                try
+                {
+                    audioClip = await Get.Audio(url);
+                }
+                finally
+                {
+                    database.LeaveDownload();
+                }
 
                 if (audioClip == null)
                 {
                     throw new Exception("Audio loading returned null");
                 }
 
-                // Register the loaded audio clip
-                BSAssetRegistry.Instance.RegisterAsset(audioClip, AssetType.AudioClip, url, tag);
-                BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
+                // Destroyed, or its page has gone, while it loaded.
+                if (!pageAssets.Contains(assetId)) return;
+
+                // Under the page's id, as with a texture: a BSAudioSource plays it by that id.
+                BSAssetRegistry.Instance.SetAsset(assetId, audioClip, AssetType.AudioClip, tag, url);
 
                 Debug.Log($"Successfully loaded audio clip asset: {assetId} ({audioClip.length}s)");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Failed to create audio clip asset {assetId}: {ex.Message}");
-                BSAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+                Debug.LogWarning($"Failed to create audio clip asset {assetId}: {ex.Message}");
+                FailAsset(assetId, ex.Message);
             }
         }
 
@@ -1513,15 +1626,15 @@ namespace BS
             {
                 // Create a new material
                 var material = new Material(BSShaderResolver.Find("Standard"));
-                BSAssetRegistry.Instance.RegisterAsset(material, AssetType.Material, url, tag);
-                BSAssetRegistry.Instance.MarkAssetLoaded(assetId);
+                BSAssetRegistry.Instance.SetAsset(assetId, material, AssetType.Material, tag, url);
+                BSAssetRegistry.Instance.OwnAsset(assetId);
 
                 Debug.Log($"Created material asset: {assetId}");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"Failed to create material asset {assetId}: {ex.Message}");
-                BSAssetRegistry.Instance.MarkAssetFailed(assetId, ex.Message);
+                FailAsset(assetId, ex.Message);
             }
         }
 

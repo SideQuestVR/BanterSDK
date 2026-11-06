@@ -28,6 +28,8 @@ namespace BS.Bridge
         public void U8(int v) { Ensure(1); buf[Length++] = (byte)v; }
         public void U16(int v) { Ensure(2); BinaryPrimitives.WriteUInt16LittleEndian(new Span<byte>(buf, Length, 2), (ushort)v); Length += 2; }
         public void U32(uint v) { Ensure(4); BinaryPrimitives.WriteUInt32LittleEndian(new Span<byte>(buf, Length, 4), v); Length += 4; }
+        public void F32(float v) { Ensure(4); BinaryPrimitives.WriteInt32LittleEndian(new Span<byte>(buf, Length, 4), BitConverter.SingleToInt32Bits(v)); Length += 4; }
+        public void F64(double v) { Ensure(8); BinaryPrimitives.WriteInt64LittleEndian(new Span<byte>(buf, Length, 8), BitConverter.DoubleToInt64Bits(v)); Length += 8; }
         public void Bytes(ReadOnlySpan<byte> b) { Ensure(b.Length); b.CopyTo(new Span<byte>(buf, Length, b.Length)); Length += b.Length; }
         public void Varint(uint v)
         {

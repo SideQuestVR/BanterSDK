@@ -9,8 +9,8 @@ namespace BS
     /// The seam a host that networks this play session hooks into: the in-editor local multiplayer
     /// (assembly BS.SDK.LocalMultiplayer). While <see cref="Active"/>, the SDK's offline stand-ins step
     /// aside because the host provides the real thing: a page's user props go to
-    /// <see cref="BSSceneEvents.OnSetUserProps"/>, and the Visual Scripting space-prop loopback and the
-    /// once-per-page user replay are skipped. Nothing sets it in builds or in the Greenfield client.
+    /// <see cref="BSSceneEvents.OnSetUserProps"/>, and the in-memory space state and the once-per-page user
+    /// replay are skipped. Nothing sets it in builds or in the Greenfield client.
     /// </summary>
     public static class BSNetworkHost
     {

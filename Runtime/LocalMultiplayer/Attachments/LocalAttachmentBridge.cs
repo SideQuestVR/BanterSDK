@@ -377,8 +377,8 @@ namespace BS.LocalMultiplayer.Attachments
 
         // ---------------------------------------------------------------- diagnostics (no behaviour)
 
-        // A peer leaving the room we stay in. Whatever was reproduced on their avatar dies with it, as in production;
-        // the player's own leave restores reproductions first (AttachmentModule), so it is not this case.
+        // A peer leaving the room we stay in. Whatever was reproduced on their avatar comes off it and drops in place, as
+        // in production; the player's own leave restores reproductions first (AttachmentModule), so it is not this case.
         private void OnPeerLeft(LocalPeer peer)
         {
             if (peer == null || string.IsNullOrEmpty(peer.RoomSessionId)) return;
@@ -389,20 +389,12 @@ namespace BS.LocalMultiplayer.Attachments
             {
                 if (kv.Value == peer.RoomSessionId) _retryScratch.Add(kv.Key);
             }
-            var lost = 0;
             foreach (var objId in _retryScratch)
             {
-                if (_attachments.HasLiveReproduction(objId)) lost++;
+                _attachments.ReleaseRemoteAttachment(objId);
                 _reproducedFrom.Remove(objId);
             }
             _retryScratch.Clear();
-            if (lost > 0)
-            {
-                _diag.Quirk("peerLeftReproductions",
-                    $"{PeerName(peer.RoomSessionId)} left wearing {lost} object(s): they are destroyed with that player's "
-                    + "avatar for the rest of this session, as in production (the reproduction is parented to the avatar, "
-                    + "Greenfield RemotePlayer.cs:201-205, and AttachmentNetworkBridge has no peer-leave handler).");
-            }
         }
 
         private void NoteWaitingForObject(string objId, string roomSessionId)

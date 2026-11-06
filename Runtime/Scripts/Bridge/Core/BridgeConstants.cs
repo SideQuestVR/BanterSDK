@@ -60,7 +60,7 @@ namespace BS.Bridge
         public const ushort Complete = 3;
     }
 
-    /// <summary>BSB opcodes (M1 subset; typed families come from the lock in M3).</summary>
+    /// <summary>BSB opcodes. Session ops, LEGACY_TEXT, the typed CALL family (M5) and REPLY.</summary>
     internal static class BridgeOp
     {
         public const int Hello = 0x01;
@@ -71,6 +71,8 @@ namespace BS.Bridge
         // 0x06 is retired (LEGACY, the switch to strings): never reuse it.
         public const int Holding = 0x07;
         public const int LegacyText = 0x0F;
+        /// <summary>varint reqId Â· varint memberId Â· varint self Â· varint argc Â· values (BridgeValues).</summary>
+        public const int Call = 0x18;
         public const int Reply = 0x30;
     }
 
@@ -113,6 +115,20 @@ namespace BS.Bridge
     internal static class BridgeFeature
     {
         public const uint TextForm = 1;
+    }
+
+    /// <summary>WELCOME.families: the typed op families this client runs. Granted by Unity, never claimed by a page.</summary>
+    internal static class BridgeFamily
+    {
+        public const uint Call = 1;
+    }
+
+    /// <summary>WELCOME.caps: what this document may do through CALL, by tier.</summary>
+    internal static class BridgeCap
+    {
+        public const uint Read = 1;
+        public const uint Write = 2;
+        public const uint Global = 4;
     }
 
     internal enum BridgeError

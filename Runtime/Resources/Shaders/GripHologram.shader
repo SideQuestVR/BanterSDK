@@ -1,4 +1,4 @@
-Shader "Banter/Grip Hologram"
+Shader "BS/Grip Hologram"
 {
     Properties
     {

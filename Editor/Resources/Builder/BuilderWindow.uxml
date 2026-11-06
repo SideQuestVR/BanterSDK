@@ -188,9 +188,7 @@
             </ui:VisualElement>
             <ui:VisualElement class="builder__confirm-buttons">
                 <ui:Button text="Cancel" name="CancelBuild" />
-                <ui:VisualElement class="alt-pill builder__confirm-pill">
-                    <ui:Label text="Confirm" name="ConfirmBuild" class="alt-pill-label" />
-                </ui:VisualElement>
+                <ui:Button text="Confirm" name="ConfirmBuild" class="builder__primary-button builder__confirm-pill" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

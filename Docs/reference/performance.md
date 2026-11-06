@@ -37,7 +37,7 @@ Unity's Profiler, Frame Debugger and the Game view's **Stats** work in Play mode
 - **Detail only one platform needs:** a [Platform Filter](../building-in-unity/platform-filter.md) leaves objects out of the Quest build, or out of the Windows one.
 - **Everything the scene references is built in**, for both platforms. Remove what you don't use.
 
-The built world can be up to 300 MB ([Size limits](../building-in-unity/publishing.md#what-gets-uploaded)), but players wait for every megabyte when they join.
+The built world can be up to 1 GiB ([Size limits](../building-in-unity/publishing.md#what-gets-uploaded)), but players wait for every megabyte when they join.
 
 ## Rendering on Quest and Windows
 
@@ -45,14 +45,16 @@ The app renders differently on each:
 
 | | Quest | Windows |
 |---|---|---|
-| Rendering path | Forward | Forward+ |
-| Extra lights (beyond the main directional light) | At most 4 per object | No per-object limit |
+| Rendering path | Forward | Forward+, or Forward for a world built with Forward |
+| Extra lights (beyond the main directional light) | At most 4 per object | Forward+: no per-object limit. Forward: at most 8 per object |
 | Shadows | Only the main directional light casts them: hard shadows, one cascade, a 1024 px shadow map | Every shadow-casting light; soft shadows and four cascades available |
 | Graphics API | Vulkan (OpenGL ES 3 as a fallback) | Direct3D 11, Direct3D 12 or Vulkan |
+| Realtime reflection probes | Don't update | Update |
 
 What follows from that:
 
 - **Bake your lighting.** Baked lights cost nothing per frame. A realtime point or spot light lights every object it touches every frame, and on a Quest it casts no shadows and counts towards each object's limit of four. Bake in Linear color space (the Setup panel sets it), or baked lighting comes out too bright or too dark in the app.
+- **Bake your reflection probes.** The app only updates realtime reflection probes on Windows, so on Quest surfaces don't show what a realtime probe sees. Set the probe's **Type** to **Baked** and bake it. The checklist's **Reflection probes** check points out realtime ones.
 - **Mirrors are expensive.** Every [Mirror](../components/rendering.md#mirror) draws the whole scene twice more each frame (once per eye) into its own textures, `renderTextureSize` pixels square (1024 by default), whether or not anyone is looking at it. Use few, keep their textures small, and turn a mirror's object off when nobody is near it.
 - **Scene cameras that draw to the screen** draw the whole world again on top of the player's view. The checklist finds and disables them.
 
@@ -78,3 +80,14 @@ Your world's own page, the [space browser](../browser/space-browser.md), is copi
 - **Page scripts talk to Unity in messages.** Creating objects, setting properties and calling methods from JavaScript each send a message from the page to Unity. A handful a frame is nothing; changing hundreds of objects every frame from JavaScript is not. Leave per-frame motion to Unity (Rigidbodies, animation, Visual Scripting) and send the page only what changes.
 - **Visual Scripting** graphs run every frame from an **On Update** node: keep those graphs small, and use events where you can.
 - **[AO Baking](../components/special.md#aobaking)** runs on each player's device when it bakes: it merges the child meshes into one and works out their shading there. Bake small groups, once.
+
+## Build times
+
+The first build of a world is the slow one. Unity imports the project's assets for each platform, and compiles the shaders the world uses for every graphics API: Direct3D 11, Direct3D 12 and Vulkan for Windows, Vulkan and OpenGL ES 3 for Quest. Later builds reuse Unity's shader cache, so they're quicker.
+
+How many shader variants that means is up to your URP assets and renderers. They don't change how the app draws your world, which it does with its own settings. They decide which variants your world carries, and a material can only use a variant the world has. So a feature you turn off in your project is gone from your world in the app too, even where the app has it on.
+
+- **Keep URP's stripping on.** In **Project Settings > Graphics > URP**, under **Additional Shader Stripping Settings**, keep **Strip Unused Variants** ticked, as the app does. With it off, every variant is compiled. The checklist's **Shader stripping** check warns about this and can turn it back on.
+- **For Quest, turn off what the app doesn't use there.** The app has no SSAO or decals on Quest, and only hard shadows. If your Android quality level has a URP asset and renderer of its own, turn off **Soft Shadows** in the asset, and remove the **Screen Space Ambient Occlusion** and **Decal** features from the renderer.
+- **For Windows, turn off only what your world doesn't use.** The app draws SSAO, decals and soft shadows there, so turning one off takes it away from your world. Light cookies and rendering layers work on both platforms: keep **Light Cookies** on if a light in your world has a cookie, and **Use Rendering Layers** on if you use them.
+- **Using reflection probes? Keep their variants.** Turn on **Probe Blending** and **Box Projection** under **Lighting > Reflection Probes** in your URP assets, including the Android one. Without them probes don't blend, or reflections ignore the probe's box, although the app has both on. The checklist's **Reflection probes** check finds this and can turn them on.

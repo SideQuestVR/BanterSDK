@@ -32,7 +32,7 @@ Shares the object's position and rotation with every player in the space. One pl
 | `syncRotation` | boolean | true | Share the rotation too |
 | `takeOwnershipOnCollision` | boolean | true | Touching the object makes you its owner |
 | `takeOwnershipOnGrab` | boolean | true | Grabbing the object makes you its owner until you let go |
-| `kinematicIfNotOwned` | boolean | false | Ignored: copies a player doesn't own are always kinematic |
+| `kinematicIfNotOwned` | boolean | false | The object stays kinematic until someone takes ownership of it |
 
 The app reads these once, a frame after the object starts, so set them when you add the component.
 

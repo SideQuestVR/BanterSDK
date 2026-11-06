@@ -226,4 +226,7 @@ public class APICommands
     public const string WORLD_OPTION_PRESSED = "wop!";
     public const string FULL_WORLD_STATE_JSON = "fwj!";
     public const string WORLD_STATE_JSON = "wpj!";
+
+    // BS.Assets: op§field§..., answered with JSON (BSAssetRequests).
+    public const string ASSET_DATABASE = "!adb!";
 }
