@@ -103,7 +103,12 @@ namespace BS
         /// </summary>
         internal static void RepairFont(TMP_Text text)
         {
-            if (text == null || CanDraw(text.font, text.fontSharedMaterial))
+            if (text == null)
+            {
+                return;
+            }
+            DropFallbacksThatCannotDraw(text.font);
+            if (CanDraw(text.font, text.fontSharedMaterial))
             {
                 return;
             }
@@ -124,12 +129,28 @@ namespace BS
         /// </summary>
         internal static bool CanDraw(TMP_FontAsset font, Material material)
         {
-            if (font == null || material == null || material.shader == null || !material.shader.isSupported ||
+            // TMP compares the text's material with the font's own on every rebuild, so a font that lost its material
+            // throws each frame however good the text's material is.
+            if (font == null || font.material == null || material == null || material.shader == null || !material.shader.isSupported ||
                 material.shader.name == "Hidden/InternalErrorShader")
             {
                 return false;
             }
             return font.atlasPopulationMode == AtlasPopulationMode.Static ? font.characterTable.Count > 0 : font.sourceFontFile != null;
+        }
+
+        /// <summary>
+        /// Takes fallback fonts with no material out of <paramref name=font/>'s list: TMP throws each frame on a glyph it
+        /// looks up in one. The builder's own font stays.
+        /// </summary>
+        internal static void DropFallbacksThatCannotDraw(TMP_FontAsset font)
+        {
+            var fallbacks = font != null ? font.fallbackFontAssetTable : null;
+            if (fallbacks == null)
+            {
+                return;
+            }
+            fallbacks.RemoveAll(f => f == null || f.material == null);
         }
 
         internal override void DestroyStuff()

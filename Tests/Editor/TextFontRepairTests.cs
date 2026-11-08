@@ -84,6 +84,40 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void AFontThatLostItsOwnMaterial_GetsTheDefault()
+        {
+            var text = root.AddComponent<TextMeshPro>();
+            text.font = own;
+            text.fontSharedMaterial = preset;
+            own.material = null;
+            Assert.IsFalse(BSText.CanDraw(own, preset), "TMP reads the font's own material on every rebuild");
+            BSText.RepairFont(text);
+            Assert.AreSame(TMP_Settings.defaultFontAsset, text.font);
+        }
+
+        [Test]
+        public void FallbacksWithNoMaterial_AreDropped_AndTheFontKept()
+        {
+            var lost = Object.Instantiate(TMP_Settings.defaultFontAsset);
+            lost.atlasTextures = new Texture2D[0];
+            lost.material = null;
+            try
+            {
+                own.fallbackFontAssetTable = new System.Collections.Generic.List<TMP_FontAsset> { lost, null };
+                var text = root.AddComponent<TextMeshPro>();
+                text.font = own;
+                text.fontSharedMaterial = preset;
+                BSText.RepairFont(text);
+                Assert.AreSame(own, text.font);
+                CollectionAssert.IsEmpty(own.fallbackFontAssetTable);
+            }
+            finally
+            {
+                Object.DestroyImmediate(lost);
+            }
+        }
+
+        [Test]
         public void NothingToRepair_IsFine()
         {
             Assert.DoesNotThrow(() => BSText.RepairFont(null));

@@ -231,7 +231,26 @@ namespace BS
             if (!d.activeInHierarchy) return d.started ? "its object was deactivated before it reported" : "its object is inactive, so it never started";
             if (!d.enabled) return d.started ? "it was disabled before it reported" : "it is disabled, so it never started";
             if (!d.started) return "it has not started";
+            if (IsFinishing(d)) return "it has everything it needs and is still setting up";
             return d.progress > 0 ? "it stopped making progress" : "it started but hasn't reported loaded";
+        }
+
+        /// <summary>
+        /// Its download is done and it hasn't reported loaded yet: decoding or opening its scene, which reports no
+        /// progress of its own. Slow, not stuck.
+        /// </summary>
+        internal static bool IsFinishing(in Diagnosis d) =>
+            d.exists && d.activeInHierarchy && d.enabled && d.started && !d.reportedLoaded && d.progress >= 0.999f;
+
+        /// <summary>Every component still waiting is finishing (see <see cref="IsFinishing"/>): the 25 s report is a warning, not an error.</summary>
+        internal static bool OnlyFinishing(int waiting, IReadOnlyList<Diagnosis> named)
+        {
+            if (waiting == 0 || named.Count < waiting) return false;
+            for (int i = 0; i < named.Count; i++)
+            {
+                if (!IsFinishing(named[i])) return false;
+            }
+            return true;
         }
 
         internal static string Describe(in Diagnosis d)
@@ -263,7 +282,9 @@ namespace BS
         /// </summary>
         internal static string MissingReport(string url, SceneState state, int registered, int waiting, IReadOnlyList<Diagnosis> named, int queued = 0)
         {
-            var head = $"Failed to load after 25 seconds: {Printable(url)} (state {state}): ";
+            var head = OnlyFinishing(waiting, named)
+                ? $"Still loading after 25 seconds: {Printable(url)} (state {state}): "
+                : $"Failed to load after 25 seconds: {Printable(url)} (state {state}): ";
             var queuedText = queued > 0 ? $", {queued} queued, not yet created" : "";
             return waiting == 0
                 ? head + $"no component is still loading ({registered} registered){queuedText}."

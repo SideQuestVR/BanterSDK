@@ -225,6 +225,27 @@ namespace BS.SDKEditor.Tests
         }
 
         [Test]
+        public void ADownloadedBundleStillOpeningIsSlowNotFailed()
+        {
+            var opening = new BSLoadGate.Diagnosis
+            {
+                cid = 2, oid = 1, typeName = "AssetBundle", path = "World/AssetBundleLoader",
+                exists = true, activeInHierarchy = true, enabled = true, started = true, progress = 1f,
+            };
+            var named = new List<BSLoadGate.Diagnosis> { opening };
+            Assert.IsTrue(BSLoadGate.OnlyFinishing(1, named));
+            StringAssert.StartsWith("Still loading after 25 seconds: https://example.host (state SCENE_READY): 1 of 1 components still loading: " +
+                                    "AssetBundle 2 at 'World/AssetBundleLoader' (oid 1): it has everything it needs and is still setting up",
+                BSLoadGate.MissingReport("https://example.host", SceneState.SCENE_READY, 1, 1, named));
+
+            var stuck = opening;
+            stuck.progress = .4f;
+            Assert.IsFalse(BSLoadGate.OnlyFinishing(2, new List<BSLoadGate.Diagnosis> { opening, stuck }), "one stuck one is a failure");
+            Assert.IsFalse(BSLoadGate.OnlyFinishing(2, named), "one not named could be stuck");
+            Assert.IsFalse(BSLoadGate.OnlyFinishing(0, new List<BSLoadGate.Diagnosis>()));
+        }
+
+        [Test]
         public void LogLinesStayOneBoundedLine()
         {
             var named = Enumerable.Range(1, 12).Select(i => new BSLoadGate.Diagnosis
