@@ -12,14 +12,16 @@
 //                                        its torso stand-in -> ILocalRig.Torso, which already stays upright
 //   OnLocalAvatarChanged              -> nothing: a body target that is destroyed (the rig rebuilt) re-resolves
 //   OnEnable / OnDisable              -> Install / TearDown (onBeforeRender, sceneUnloaded)
-//   a dropped object's world scene    -> any loaded scene it came from: production also requires a scene loaded
-//                                        from a bundle and destroys a DontDestroyOnLoad root, neither of which an
-//                                        editor scene is
-//   `??` on UnityEngine.Object        -> explicit null checks (:296, :541), i.e. what a shipped build does
-//   Destroy                           -> DestroyImmediate only while the host tears down
+//   a dropped object's world scene    -> any loaded scene it came from but DontDestroyOnLoad, where page-made objects
+//                                        live under their page's root (a dropped one whose root is gone is destroyed,
+//                                        as in production): production also requires a scene loaded from a bundle,
+//                                        which an editor scene isn't
+//   `??` on UnityEngine.Object        -> explicit null checks, i.e. what a shipped build does
+//   Destroy                           -> DestroyImmediate while the host tears down, and in edit mode
 // Left out: the seat's View Smoothing (the desktop view doesn't smooth), the world-scope extension (BSUnityEventGuard
-// only reads it in the client), RemoteAttachmentDestroyed (the bridge keeps no list of applied reproductions), and the
-// safety-bubble scale. SyncedObjectSystem.ReleaseAfterRiding -> SyncedObjectsModule.ReleaseAfterRiding.
+// only reads it in the client), RemoteAttachmentDestroyed (the bridge only queues again what ReleaseRemoteAttachment
+// says it released, which a destroyed object never is), and the safety-bubble scale.
+// SyncedObjectSystem.ReleaseAfterRiding -> SyncedObjectsModule.ReleaseAfterRiding.
 // Deviations (plan parity ledger): RestoreRemoteReproductions on the player's own leave, and the host teardown.
 using System;
 using System.Collections.Generic;
@@ -207,7 +209,7 @@ namespace BS.LocalMultiplayer.Attachments
                         _diag.Quirk("standingPilot",
                             "A pilot attachment that isn't a seat (isSeat=false) stays attached after the player stands up, "
                             + "and its 'pilot' broadcast stays on: production only detaches isSeat entries "
-                            + "(Greenfield AttachmentsSystem.cs:118-131).");
+                            + "(Greenfield AttachmentsSystem.cs:158-164).");
                         break;
                     }
                 }
@@ -804,7 +806,7 @@ namespace BS.LocalMultiplayer.Attachments
                     // it back into its own scene, or, once that scene has unloaded, let it go the way its scene did.
                     t.SetParent(null, worldPositionStays: true);
                     var origin = attachment.remoteOriginScene;
-                    if (origin.IsValid() && origin.isLoaded)
+                    if (CanReturnTo(origin))
                         MoveToScene(t.gameObject, origin);
                     else
                     {
@@ -879,18 +881,14 @@ namespace BS.LocalMultiplayer.Attachments
 
         /// <summary>
         /// A holder is leaving: their reproduction comes off the bone before their avatar goes (Destroy is deferred to the
-        /// end of the frame) and drops in place, back under where it came from or in its own scene.
+        /// end of the frame) and drops in place, back under the parent it had when it was put on that bone, or in its own
+        /// scene (<see cref="RemoveRemoteAttachment"/>). True when there was a live reproduction to release.
         /// </summary>
-        public void ReleaseRemoteAttachment(string objectBid)
+        public bool ReleaseRemoteAttachment(string objectBid)
         {
-            bool known = _origins.TryGetValue(objectBid ?? "", out var origin);
+            bool live = HasLiveReproduction(objectBid);
             RemoveRemoteAttachment(objectBid);
-            if (!known || origin.Object == null)
-                return;
-            if (origin.Parent != null)
-                origin.Object.transform.SetParent(origin.Parent, worldPositionStays: true);
-            else
-                MoveToScene(origin.Object, origin.Scene);
+            return live;
         }
 
         public void DetachAll()
@@ -966,7 +964,7 @@ namespace BS.LocalMultiplayer.Attachments
                 var hasOrigin = _origins.TryGetValue(objectBid, out var origin);
                 GameObject go = hasOrigin ? origin.Object : null;
                 // The component can be gone while the object is still on the bone: a replaced reproduction reuses
-                // the component its own removal is destroying (production ApplyRemoteAttachment, :558 then :567).
+                // the component its own removal is destroying (production ApplyRemoteAttachment, :844 then :872).
                 if (go == null && attachment != null)
                     go = attachment.gameObject;
                 if (go == null)
@@ -982,10 +980,15 @@ namespace BS.LocalMultiplayer.Attachments
                             DestroyAttachmentComponents(attachment);
                     }
                     if (hasOrigin && go == origin.Object)
-                        RestoreOrigin(go.transform, origin);
+                    {
+                        if (RestoreOrigin(go.transform, origin))
+                            restored++;
+                    }
                     else
+                    {
                         go.transform.SetParent(null, worldPositionStays: true);
-                    restored++;
+                        restored++;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -997,14 +1000,21 @@ namespace BS.LocalMultiplayer.Attachments
             return restored;
         }
 
-        static void RestoreOrigin(Transform t, ReproductionOrigin origin)
+        // False when the object went instead: its parent is gone, and so is its scene, or it was a page's object (a
+        // page reload replaces the page root it hung under).
+        bool RestoreOrigin(Transform t, ReproductionOrigin origin)
         {
             if (origin.HadParent && origin.Parent == null)
             {
                 // Its parent is gone: drop in place, as production's RemoveRemoteAttachment does.
                 t.SetParent(null, worldPositionStays: true);
+                if (!CanReturnTo(origin.Scene))
+                {
+                    DestroyObject(t.gameObject);
+                    return false;
+                }
                 MoveToScene(t.gameObject, origin.Scene);
-                return;
+                return true;
             }
             t.SetParent(origin.Parent, worldPositionStays: false);
             if (!origin.HadParent)
@@ -1012,7 +1022,13 @@ namespace BS.LocalMultiplayer.Attachments
             t.localPosition = origin.LocalPosition;
             t.localRotation = origin.LocalRotation;
             t.localScale = origin.LocalScale;
+            return true;
         }
+
+        // A loaded scene a dropped object can be a root of. Not DontDestroyOnLoad: page-made objects (kit items) live
+        // under their page's root there (BSSceneSettings), and without that root a root of their own would outlive the
+        // page (production AttachmentsSystem.cs:820).
+        static bool CanReturnTo(Scene scene) => scene.IsValid() && scene.isLoaded && scene.name != "DontDestroyOnLoad";
 
         // Un-parented from a remote avatar (which lives under the DontDestroyOnLoad host), a root object would stay
         // in the DontDestroyOnLoad scene and outlive its own.
@@ -1125,10 +1141,10 @@ namespace BS.LocalMultiplayer.Attachments
 
         void DestroyObject(Object target)
         {
-            // Destroy ignores what is already gone; DestroyImmediate does not.
+            // Destroy ignores what is already gone; DestroyImmediate does not. Edit mode has no Destroy.
             if (target == null)
                 return;
-            if (_tearingDown)
+            if (_tearingDown || !Application.isPlaying)
                 Object.DestroyImmediate(target);
             else
                 Object.Destroy(target);
@@ -1146,25 +1162,25 @@ namespace BS.LocalMultiplayer.Attachments
                 _diag.Quirk("remoteUid",
                     "Attaching with a uid that isn't this player's (another player's, or none) attaches to THIS player's "
                     + "rig (or seats them) and broadcasts nothing: "
-                    + "production does the same (Greenfield AttachmentsSystem.cs:194, :203, :209).");
+                    + "production does the same (Greenfield AttachmentsSystem.cs:231, :239, :245).");
             }
             if (isAttachment && !data.autoSync && local)
             {
                 _diag.Quirk("autoSyncOff",
                     "An attachment with autoSync off stays on this player only; other players never see it "
-                    + "(Greenfield AttachmentsSystem.cs:202-204). Seats always sync.");
+                    + "(Greenfield AttachmentsSystem.cs:238-240). Seats always sync.");
             }
             if (isPilot && data.attachmentType != AttachmentType.Physics)
             {
                 _diag.Quirk("nonPhysicsPilot",
                     "A NonPhysics AvatarAttachTo seats no one and adds an inert ParentConstraint to the torso, but "
-                    + "'pilot' is still broadcast (Greenfield AttachmentsSystem.cs:315-328, :209-213).");
+                    + "'pilot' is still broadcast (Greenfield AttachmentsSystem.cs:367-378, :245-249).");
             }
             else if (isPilot && !data.jointAvatar)
             {
                 _diag.Quirk("unjointedPilot",
                     "An AvatarAttachTo with jointAvatar off seats no one, but still takes the vehicle's ownership, "
-                    + "ignores rider collisions and broadcasts 'pilot' (Greenfield AttachmentsSystem.cs:291-312).");
+                    + "ignores rider collisions and broadcasts 'pilot' (Greenfield AttachmentsSystem.cs:331-349).");
             }
         }
 
@@ -1177,7 +1193,7 @@ namespace BS.LocalMultiplayer.Attachments
                 return;
             _diag.Quirk("detachOtherUid",
                 "Detaching a broadcast attachment with a uid other than the wearer's detaches it here but sends no "
-                + "clear, so other players keep seeing it: production does the same (Greenfield AttachmentsSystem.cs:468-470).");
+                + "clear, so other players keep seeing it: production does the same (Greenfield AttachmentsSystem.cs:709-711).");
         }
     }
 }

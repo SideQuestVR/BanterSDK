@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/SceneEvents/BanterSceneEventHandler.cs" sha256="08faa653d9e81e5710920ef3da9b25dc19b37b5595a2283e063a9ef070b6350e" mode="port" />
+// <mirror source="Assets/Systems/SceneEvents/BanterSceneEventHandler.cs" sha256="adcb258b0d7b6dda9ed4771bcb001b6f3b3cac3890ca5436a718b4e075c7753a" mode="port" />
 // The SDK wiring of the one-shot lane: BanterSceneEventHandler.cs:345-365 (page -> room) and :806-847 (room -> page),
 // with OneShotService.Instance replaced by this module's OneShotLane, BSScene.Instance() by BSScene.Current, and
 // WorldFilesBridge.IsWorldOwner by the settings' world owner (LocalIdentity.WorldOwnerClientId).

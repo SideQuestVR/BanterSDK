@@ -1,6 +1,6 @@
-// No Greenfield counterpart: part of the plan's deliberate deviation for SyncedObjectPhysicsHandoff, whose proximity
-// trigger sits on a layer-2 (Ignore Raycast) child here instead of on the object itself. Its own file, so Unity has a
-// MonoScript for it (a MonoBehaviour's class must match its file name).
+// No Greenfield counterpart: SyncedObjectPhysicsHandoff's proximity trigger sits on a layer-2 (Ignore Raycast) child, as
+// in production, which reaches the handoff through the object's Rigidbody alone; this also covers an object without
+// one. Its own file, so Unity has a MonoScript for it (a MonoBehaviour's class must match its file name).
 using System;
 using UnityEngine;
 

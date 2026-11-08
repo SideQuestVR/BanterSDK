@@ -1,5 +1,5 @@
 // <mirror source="Assets/Systems/Networking/NetworkService.cs" sha256="4f45a31593b5e06c2e377d035d39324d3cdd48c1f0809c68d51b7f6393fb27f9" mode="port" />
-// <mirror source="Assets/Systems/SceneEvents/BanterSceneEventHandler.cs" sha256="08faa653d9e81e5710920ef3da9b25dc19b37b5595a2283e063a9ef070b6350e" mode="port" />
+// <mirror source="Assets/Systems/SceneEvents/BanterSceneEventHandler.cs" sha256="adcb258b0d7b6dda9ed4771bcb001b6f3b3cac3890ca5436a718b4e075c7753a" mode="port" />
 using System;
 using System.Collections;
 using System.Threading.Tasks;

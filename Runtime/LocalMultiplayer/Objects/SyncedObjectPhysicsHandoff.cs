@@ -1,10 +1,9 @@
-// <mirror source="Assets/Systems/Networking/SyncedObjectPhysicsHandoff.cs" sha256="8e64fd83781d272ea0fbea9a60eb8c253cf4121ff0527eb8c8b9cf09864e2478" mode="port" />
-// SyncedObjectPhysicsHandoff line for line (PacketParty types replaced by LocalNetworkObject / LocalSyncedTransform),
-// with one deliberate difference from the plan's parity ledger: the proximity trigger sits on a child GameObject on
-// layer 2 (Ignore Raycast) and reaches this component through HandoffTriggerForwarder. Production puts the sphere on
-// the object itself; on the desktop player the grab ray and the hand's layer-20 overlap would then grab the 0.3 m
-// trigger in mid-air, which VR hands (which touch the mesh) never do. Left out: the seat push (production's part 4,
-// with its rider checks, hand-back and driver reclaim), as SyncedObjectsModule.TakeForSeat leaves out the passenger and
+// <mirror source="Assets/Systems/Networking/SyncedObjectPhysicsHandoff.cs" sha256="fcf76bba720d45d6575990f46b278ce7ac2637f7ee94894eb5991ae5b5668347" mode="port" />
+// SyncedObjectPhysicsHandoff line for line (PacketParty types replaced by LocalNetworkObject / LocalSyncedTransform).
+// The proximity trigger sits on a child GameObject on layer 2 (Ignore Raycast), as in production, where the child's
+// trigger messages reach this component through the object's Rigidbody; here HandoffTriggerForwarder passes them on,
+// so an object with no Rigidbody (a collision-ownership object) gets them too. Left out: the seat push (production's
+// part 4, with its rider checks, hand-back and driver reclaim), as SyncedObjectsModule.TakeForSeat leaves out the
 // seat-push handling; the GREENFIELD_PHYSICS_DEBUG diagnostics; and FlexaBody's ThrowFlight exception to the
 // collision-detection switch. Teardown gives the body back its authored speed limits, collision detection and colliders.
 using System;
@@ -77,7 +76,10 @@ namespace BS.LocalMultiplayer.Objects
         private LocalSyncedTransform _syncTransform;
         private GameObject _proximity;
 
-        /// <summary>Kinematic If Not Owned on a body authored kinematic: a claim leaves it kinematic.</summary>
+        /// <summary>
+        /// Kinematic If Not Owned on a body authored kinematic: a claim leaves its flag alone even after a world script
+        /// made it dynamic. Without the flag a claim already leaves a still-kinematic one alone (<see cref="ClaimsOptimistically"/>).
+        /// </summary>
         internal bool KeepKinematicOnClaim { get; set; }
         /// <summary>Kinematic If Not Owned on a dynamic body; null without the flag.</summary>
         internal SyncedObjectRestHold RestHold { get; set; }
@@ -355,8 +357,18 @@ namespace BS.LocalMultiplayer.Objects
             if (_safetyNet != null && _safetyNet.IsInUse) return;
 
             _lastAcquire = Time.time;
-            _ = _rigidbody != null && !KeepKinematicOnClaim ? OptimisticAcquireAsync() : PlainAcquireAsync();
+            _ = ClaimsOptimistically ? OptimisticAcquireAsync() : PlainAcquireAsync();
         }
+
+        /// <summary>
+        /// Whether a claim turns the body dynamic at once (the optimistic claim). Only the sync makes a body kinematic
+        /// again, and only one it binds as a Rigidbody (authored dynamic). One bound by Transform was kinematic when the
+        /// world loaded and is moved by script (a platform, door or vehicle), so it is only acquired, flagged Kinematic If
+        /// Not Owned or not; one a world script has since made dynamic is claimed optimistically.
+        /// </summary>
+        internal bool ClaimsOptimistically =>
+            _rigidbody != null && !KeepKinematicOnClaim &&
+            (!_rigidbody.isKinematic || (_syncTransform != null && _syncTransform.PoseBinding == TransformPoseBinding.Rigidbody));
 
         // Hide the Acquire round-trip: take control locally now, request authority, reconcile on the answer.
         private async Task OptimisticAcquireAsync()

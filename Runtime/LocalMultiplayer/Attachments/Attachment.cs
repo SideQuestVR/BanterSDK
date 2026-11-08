@@ -1,7 +1,8 @@
 // <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="548b5a4e1e011610ce98efbc5f65d6ca37eae658ee97ded74d47f69bf9e773d2" mode="port" />
 // The Attachment component (AttachmentsSystem.cs:17-64) with the system reference typed to the port, plus the
-// host's lifetime guard: after a script reload or once the host is gone, OnDestroy does nothing. Not here:
-// ISyncedObjectHold, which only the client's synced-object idle reset reads.
+// host's lifetime guard: after a script reload or once the host is gone, OnDestroy does nothing. It doesn't implement
+// ISyncedObjectHold (HoldsSyncedObject = !isDestroyed): the port's idle reset, SyncedObjectSafetyNet, reads this
+// component's isDestroyed directly.
 using System;
 using BS;
 using UnityEngine;

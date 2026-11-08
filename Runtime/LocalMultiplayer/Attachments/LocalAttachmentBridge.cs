@@ -1,5 +1,5 @@
 // <mirror source="Assets/Systems/Attachments/AttachmentNetworkBridge.cs" sha256="5e1e451efe01a98d1414f1fe228ebe8142120631915a2ae1f7265c12fdb9df00" mode="port" />
-// AttachmentNetworkBridge (:26-390) with PacketParty swapped for the relay session, line by line. Substitutions:
+// AttachmentNetworkBridge (:27-391) with PacketParty swapped for the relay session, line by line. Substitutions:
 //   NetworkService.SetLocalUserState(key, value)        -> ILocalSession.SetEngineUserState (EditableOwnUserState)
 //   NetworkService.TryGetLocalHipBone                   -> ILocalRig.HipPosition / HipRotation, the desktop rig's hip
 //   PacketPartyClient.OnUserStateChanged / Snapshot     -> ILocalSession.EngineUserStateChanged / EngineUserStateSnapshot
@@ -9,11 +9,18 @@
 //   BSSeat / SyncedObjectSystem rider resolvers         -> IsOccupiedByOther, from the pilots received (the synced-object
 //                                                          module asks BSSeat)
 //   Start / OnDestroy / Update                          -> Start / Stop / Update, driven by AttachmentModule
-// Left out: re-applying after a peer's avatar teardown (an orb is never reloaded; a leaving peer's objects are released
-// in OnPeerLeft), the reveal wait (an orb's reveal touches only its own renderers), the avatar-before-object lookup
-// order (the waiting diagnostics read the object first) and the profiler markers.
+//   RemoteAvatarTearingDown                             -> PeerLeft: an orb is never reloaded, but it goes with a peer
+//                                                          whose socket closed. The relay keeps their user state for
+//                                                          the 30 s they may resume in (same room session, nothing
+//                                                          sent again), so what they wear is released and waits in
+//                                                          _pending again, their seat with it, for the orb a resume
+//                                                          builds; HasUserState drops it once their session ends
+//   RemoteAttachmentDestroyed                           -> nothing: only what ReleaseRemoteAttachment reports released
+//                                                          is queued again, and a destroyed object has nothing to release
+// Left out: the reveal wait (an orb's reveal touches only its own renderers), the avatar-before-object lookup order (the
+// waiting diagnostics read the object first) and the profiler markers.
 // Added, diagnostics only (behaviour unchanged): instructions pending over 3 s for an object or seat this scene
-// lacks, Ids that make user-state paths the room refuses, and the note when a leaving peer takes objects along.
+// lacks, and Ids that make user-state paths the room refuses.
 using System;
 using System.Collections.Generic;
 using BS;
@@ -46,9 +53,14 @@ namespace BS.LocalMultiplayer.Attachments
         // Remote attachment instructions awaiting their peer's avatar (or the object) to exist, keyed by
         // object BSObjectId.Id. Retried each Update until applied or cleared.
         private readonly Dictionary<string, Pending> _pending = new(StringComparer.Ordinal);
+        // Remote attachments currently reproduced, keyed the same way: a peer's orb goes when their socket closes, so
+        // these go back into _pending to be applied to the orb their resume builds.
+        private readonly Dictionary<string, Pending> _applied = new(StringComparer.Ordinal);
         // Remote pilot state awaiting the peer's avatar / seat object, keyed by roomSessionId.
         private readonly Dictionary<string, PendingPilot> _pendingPilots = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, string> _remotePilotSeats = new(StringComparer.Ordinal);
+        // The seat each peer's user state says they ride (production reads it from PacketParty's UserStates), with the
+        // offset, so their seat can be glued again when they come back.
+        private readonly Dictionary<string, PendingPilot> _remotePilotSeats = new(StringComparer.Ordinal);
         // Peers that have user state (HasUserState): seen in a change or the snapshot, gone with their removal.
         private readonly HashSet<string> _withUserState = new(StringComparer.Ordinal);
         private readonly List<string> _retryScratch = new();
@@ -60,10 +72,9 @@ namespace BS.LocalMultiplayer.Attachments
         private Transform _localSeatTf;
         private readonly PilotBroadcastGate _gate = new PilotBroadcastGate();
 
-        // Diagnostics only: since when each instruction waits, and which peer each reproduction came from.
+        // Diagnostics only: since when each instruction waits.
         private readonly Dictionary<string, double> _pendingSince = new(StringComparer.Ordinal);
         private readonly Dictionary<string, double> _pilotSince = new(StringComparer.Ordinal);
-        private readonly Dictionary<string, string> _reproducedFrom = new(StringComparer.Ordinal);
 
         private struct Pending
         {
@@ -284,7 +295,7 @@ namespace BS.LocalMultiplayer.Attachments
         {
             _pending.Remove(objId);
             ClearPendingDiagnostic(objId);
-            _reproducedFrom.Remove(objId);
+            _applied.Remove(objId);
             _attachments.RemoveRemoteAttachment(objId);
         }
 
@@ -292,7 +303,7 @@ namespace BS.LocalMultiplayer.Attachments
         private void ReceivePilot(string roomSessionId, string serialized)
         {
             if (!AttachmentWireCodec.TryParsePilot(serialized, out var pp)) { ClearPilot(roomSessionId); return; }
-            _remotePilotSeats[roomSessionId] = pp.SeatObjId;
+            _remotePilotSeats[roomSessionId] = pp;
             _pendingPilots[roomSessionId] = pp;
             if (!_pilotSince.ContainsKey(roomSessionId)) _pilotSince[roomSessionId] = Time.realtimeSinceStartupAsDouble;
             TryApplyPilot(roomSessionId);
@@ -370,9 +381,9 @@ namespace BS.LocalMultiplayer.Attachments
             if (user != null) data.uid = user.uid; // bookkeeping/parity
 
             _attachments.ApplyRemoteAttachment(objId, data, bone);
+            _applied[objId] = pending; // kept, so a resume can apply it again
             _pending.Remove(objId);
             ClearPendingDiagnostic(objId);
-            _reproducedFrom[objId] = pending.RoomSessionId;
         }
 
         // Whether a peer still has user state. The relay removes a peer's whole state when their session ends
@@ -402,32 +413,39 @@ namespace BS.LocalMultiplayer.Attachments
         private bool IsOccupiedByOther(BSSeat seat)
         {
             if (seat == null || !seat.TryGetComponent<BSObjectId>(out var id)) return false;
-            foreach (var seatId in _remotePilotSeats.Values)
-                if (string.Equals(seatId, id.Id, StringComparison.Ordinal)) return true;
+            foreach (var pilot in _remotePilotSeats.Values)
+                if (string.Equals(pilot.SeatObjId, id.Id, StringComparison.Ordinal)) return true;
             return false;
         }
 
-        // ---------------------------------------------------------------- diagnostics (no behaviour)
-
-        // A peer leaving the room we stay in. Whatever was reproduced on their avatar comes off it and drops in place, as
-        // in production; the player's own leave restores reproductions first (AttachmentModule), so it is not this case.
+        // A peer's socket closed while we stay in the room (production: their avatar is torn down). Their orb goes with
+        // them, so whatever was reproduced on it comes off and drops in place, as in production, and waits in _pending
+        // again, as production re-queues it, unless a newer instruction already waits there. The relay keeps their user
+        // state for the 30 s they may resume in, under the same room session and without sending it again: their seat
+        // stays taken, and both are applied to the orb a resume builds. When their session really ends, its removal
+        // drops them (HasUserState, OnUserStateRemoved). The player's own leave restores reproductions first
+        // (AttachmentModule), so it is not this case.
         private void OnPeerLeft(LocalPeer peer)
         {
             if (peer == null || string.IsNullOrEmpty(peer.RoomSessionId)) return;
-            ClearPilot(peer.RoomSessionId);
+            var roomSessionId = peer.RoomSessionId;
+            if (_remotePilotSeats.TryGetValue(roomSessionId, out var pilot)) _pendingPilots.TryAdd(roomSessionId, pilot);
             if (_client == null || _client.State != SessionState.Joined) return;
             _retryScratch.Clear();
-            foreach (var kv in _reproducedFrom)
+            foreach (var kv in _applied)
             {
-                if (kv.Value == peer.RoomSessionId) _retryScratch.Add(kv.Key);
+                if (kv.Value.RoomSessionId == roomSessionId) _retryScratch.Add(kv.Key);
             }
             foreach (var objId in _retryScratch)
             {
-                _attachments.ReleaseRemoteAttachment(objId);
-                _reproducedFrom.Remove(objId);
+                var applied = _applied[objId];
+                _applied.Remove(objId);
+                if (_attachments.ReleaseRemoteAttachment(objId)) _pending.TryAdd(objId, applied);
             }
             _retryScratch.Clear();
         }
+
+        // ---------------------------------------------------------------- diagnostics (no behaviour)
 
         private void NoteWaitingForObject(string objId, string roomSessionId)
         {
@@ -442,7 +460,7 @@ namespace BS.LocalMultiplayer.Attachments
             _diag.Warn(key,
                 $"{PeerName(roomSessionId)} wears the object with BSObjectId '{objId}', which doesn't exist here, so it "
                 + "can't be shown on their avatar; it waits (production keeps it pending for good, Greenfield "
-                + "AttachmentNetworkBridge.cs:272-274). Save the scene so every player loads the same Ids, and give "
+                + "AttachmentNetworkBridge.cs:363). Save the scene so every player loads the same Ids, and give "
                 + "objects created at runtime a fixed Id.");
         }
 
@@ -459,7 +477,7 @@ namespace BS.LocalMultiplayer.Attachments
             _diag.Warn(key,
                 $"{PeerName(roomSessionId)} sits on the seat with BSObjectId '{seatObjId}', which doesn't exist here, so "
                 + "their avatar isn't seated; it waits (production keeps it pending for good, Greenfield "
-                + "AttachmentNetworkBridge.cs:241-243). Save the scene so every player loads the same Ids.");
+                + "AttachmentNetworkBridge.cs:320). Save the scene so every player loads the same Ids.");
         }
 
         private void ClearPendingDiagnostic(string objId)

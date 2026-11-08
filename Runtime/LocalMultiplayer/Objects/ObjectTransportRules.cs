@@ -47,6 +47,28 @@ namespace BS.LocalMultiplayer.Objects
         public static bool TakeWouldDisplace(bool remoteOwned, string owner, string aimedAt) =>
             remoteOwned && !string.Equals(owner, aimedAt, StringComparison.Ordinal);
 
+        /// <summary>Seconds a seat's take waits for its owner's real pose before the copy it has counts as current.</summary>
+        public const float SeatPoseWait = 3f;
+        /// <summary>Seconds nobody may have been using a seat's object (held, worn, ridden) before it's taken from its owner.</summary>
+        public const float SeatFreeFor = 1f;
+        /// <summary>Seconds after which a seat's take gives up: the local player rides it as a passenger.</summary>
+        public const float SeatGiveUpAfter = 20f;
+
+        public enum SeatTakeoverStep { Wait, Take, GiveUp }
+
+        /// <summary>
+        /// A driver's take of a seat's object from someone else who owns it, when it can't simply go out: the player sat
+        /// before the object was bound, or before this copy had its owner's pose. It waits for the owner's pose (at most
+        /// <see cref="SeatPoseWait"/>) and for <see cref="SeatFreeFor"/> without anyone using it, then takes it; past
+        /// <see cref="SeatGiveUpAfter"/> it gives up. As the client's SyncedObjectClaims.SeatTakeover.
+        /// </summary>
+        public static SeatTakeoverStep SeatTakeover(float elapsed, bool hasOwnersPose, float freeFor)
+        {
+            if (float.IsNaN(elapsed) || elapsed >= SeatGiveUpAfter) return SeatTakeoverStep.GiveUp;
+            if (!hasOwnersPose && elapsed < SeatPoseWait) return SeatTakeoverStep.Wait;
+            return freeFor >= SeatFreeFor ? SeatTakeoverStep.Take : SeatTakeoverStep.Wait;
+        }
+
         /// <summary>
         /// Runs <paramref name="attempt"/>, sending it again while the relay answers rate_limited: claims share the
         /// declare bucket, so they meet the same limit during a big world's load. True once it succeeds, false when

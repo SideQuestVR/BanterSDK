@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/SyncedObjectSystem.cs" sha256="409516f5d04bc8dea16d8d4f9e25f7b7ec8b727c62a91254b92dafa71676139d" mode="port" />
+// <mirror source="Assets/Systems/Networking/SyncedObjectSystem.cs" sha256="277c913005a87b1f191471d3cfd2311053a446d96f7a25217e42bb977bdc8b63" mode="port" />
 // SyncedObjectSystem with its serialized Greenfield values (Assets/Scenes/Main.unity:366-377: 30 Hz, the five
 // local-player tags, fall threshold -250, a 15 s default idle reset, proximity margin 0.3). Differences: the
 // listeners are attached at install, before any scene object starts (BSSyncedObject announces itself from its own
@@ -480,9 +480,10 @@ namespace BS.LocalMultiplayer.Objects
 
         /// <summary>
         /// The local player sat on a seat of <paramref name="bso"/>: take it, so their riding reaches the others. Unlike a
-        /// script's take this one is aimed at whoever owns the object, or sitting right after load would never drive. One
-        /// that had to wait still leaves a seat someone else got on. As the client's HoldWhileRiding, without the
-        /// passenger and seat-push handling, which the desktop player doesn't have.
+        /// script's take this one is aimed at whoever owns the object, or sitting right after load would never drive. It
+        /// is never taken while someone else rides a seat on it, whether it had to wait or not: the local player then
+        /// rides as a passenger. As the client's HoldWhileRiding, without the seat-push handling, which the desktop
+        /// player doesn't have.
         /// </summary>
         internal void TakeForSeat(BSSyncedObject bso)
         {
@@ -533,6 +534,7 @@ namespace BS.LocalMultiplayer.Objects
                 }
                 string aimedAt = waited ? null : netObj.OwnerRoomSessionId;
                 if (DropsTake(netObj, waited, aimedAt, forSeat)) return;
+                if (forSeat && netObj.IsRemoteOwned && (waited || !HasOwnersPose(netObj)) && !await WaitUntilFreeToTakeAsync(netObj)) return;
                 bool granted = await ObjectTransportRules.RetryWhileRateLimitedAsync(
                     () => netObj.AcquireAsync(locked: false),
                     () => netObj != null && (!forSeat || _riding.Contains(netObj)) && !DropsTake(netObj, true, aimedAt, forSeat),
@@ -545,17 +547,57 @@ namespace BS.LocalMultiplayer.Objects
         }
 
         // A take that had to wait never displaces anyone: see ObjectTransportRules.TakeWouldDisplace. Riders and holders
-        // count too, as they can have an object they don't own. A seat's take only gives way to someone on it.
+        // count too, as they can have an object they don't own. A seat's take only gives way to someone on it, but does
+        // so whether it waited or not: a passenger never takes the vehicle from its driver (HoldWhileRiding).
         static bool DropsTake(LocalNetworkObject netObj, bool waited, string aimedAt, bool forSeat)
         {
             string there = !forSeat && ObjectTransportRules.TakeWouldDisplace(netObj.IsRemoteOwned, netObj.OwnerRoomSessionId, aimedAt)
                 ? netObj.OwnerRoomSessionId : null;
-            if (there == null && waited && HasOtherRider(netObj)) there = "another rider";
+            if (there == null && (waited || forSeat) && HasOtherRider(netObj)) there = "another rider";
             if (there == null && waited && !forSeat && netObj.TryGetComponent(out SyncedObjectSafetyNet net) && net.IsInUse)
                 there = "a player using it";
             if (there == null) return false;
-            Debug.Log($"[LocalMP][SyncedObjects] Dropped a take of '{netObj.name}' that had to wait: {there} has it now.");
+            if (forSeat && !waited)
+                Debug.Log($"[LocalMP][SyncedObjects] Riding '{netObj.name}' as a passenger: {there} drives it.");
+            else
+                Debug.Log($"[LocalMP][SyncedObjects] Dropped a take of '{netObj.name}' that had to wait: {there} has it now.");
             return true;
+        }
+
+        static readonly TimeSpan SeatCheckInterval = TimeSpan.FromSeconds(0.25);
+
+        static bool HasOwnersPose(LocalNetworkObject netObj) =>
+            !netObj.TryGetComponent(out LocalSyncedTransform sync) || sync.HasRemotePose;
+
+        // A free seat is still taken from whoever owns its object, safely (ObjectTransportRules.SeatTakeover): once this
+        // copy has the owner's pose, so the pose it had isn't published, and once nobody has used it for a moment (held,
+        // worn or ridden). False when the local player got off, someone got on, or it gave up: then they ride as a
+        // passenger. As the client's WaitUntilFreeToTakeAsync.
+        async Task<bool> WaitUntilFreeToTakeAsync(LocalNetworkObject netObj)
+        {
+            float start = Time.realtimeSinceStartup, freeSince = start;
+            while (true)
+            {
+                if (netObj == null || !_riding.Contains(netObj)) return false;
+                if (!netObj.IsRemoteOwned) return true; // it came to us, or its owner left
+                if (HasOtherRider(netObj))
+                {
+                    Debug.Log($"[LocalMP][SyncedObjects] Riding '{netObj.name}' as a passenger: another rider drives it.");
+                    return false;
+                }
+                float now = Time.realtimeSinceStartup;
+                if (netObj.IsLocked || netObj.IsAttachmentActive) freeSince = now;
+                switch (ObjectTransportRules.SeatTakeover(now - start, HasOwnersPose(netObj), now - freeSince))
+                {
+                    case ObjectTransportRules.SeatTakeoverStep.Take:
+                        return true;
+                    case ObjectTransportRules.SeatTakeoverStep.GiveUp:
+                        Debug.Log($"[LocalMP][SyncedObjects] Riding '{netObj.name}' as a passenger: its owner kept using it for " +
+                                  $"{ObjectTransportRules.SeatGiveUpAfter:0} s.");
+                        return false;
+                }
+                await Task.Delay(SeatCheckInterval, netObj.destroyCancellationToken);
+            }
         }
 
         static bool HasOtherRider(LocalNetworkObject netObj)

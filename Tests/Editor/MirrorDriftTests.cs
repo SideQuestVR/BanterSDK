@@ -11,13 +11,15 @@ namespace BS.SDKEditor.Tests
     /// <summary>
     /// Every "&lt;mirror source=… sha256=… mode=…/&gt;" header records the source a local multiplayer file was reviewed
     /// against. A verbatim copy has to match: a drifted wire codec talks a different protocol. A port is a rewrite, so its
-    /// drift is logged for review: re-port, or confirm the change doesn't apply, then update the sha256. Ignored outside the
-    /// Greenfield repo, where the sources don't exist.
+    /// drift is logged for review: re-port, or confirm the change doesn't apply, then update the sha256. A header this
+    /// can't read (a truncated hash, a misspelt attribute) fails everywhere, as it would otherwise never be checked.
+    /// Drift is ignored outside the Greenfield repo, where the sources don't exist.
     /// </summary>
     public class MirrorDriftTests
     {
         static readonly Regex Header = new Regex(
             "<mirror source=\"(?<source>[^\"]+)\" sha256=\"(?<sha>[0-9a-f]{64})\" mode=\"(?<mode>port|verbatim)\"\\s*/>");
+        const string HeaderMark = "<mirror";
         const int HeaderLines = 40;
 
         [Test]
@@ -29,14 +31,23 @@ namespace BS.SDKEditor.Tests
             int compared = 0, unavailable = 0;
             var verbatim = new List<string>();
             var ports = new List<string>();
+            var unreadable = new List<string>();
             foreach (var file in Directory.EnumerateFiles(sdkRoot, "*.cs", SearchOption.AllDirectories))
             {
                 string relative = file.Substring(sdkRoot.Length + 1).Replace('\\', '/');
                 if (relative.Split('/').Any(part => part.EndsWith("~"))) continue;
+                if (Path.GetFileName(file) == nameof(MirrorDriftTests) + ".cs") continue; // the pattern itself
+                int lineNumber = 0;
                 foreach (var line in File.ReadLines(file).Take(HeaderLines))
                 {
+                    lineNumber++;
+                    if (line.IndexOf(HeaderMark, System.StringComparison.Ordinal) < 0) continue;
                     var m = Header.Match(line);
-                    if (!m.Success) continue;
+                    if (!m.Success)
+                    {
+                        unreadable.Add($"{relative}:{lineNumber}");
+                        continue;
+                    }
                     string source = Path.Combine(repoRoot, m.Groups["source"].Value);
                     if (!File.Exists(source)) { unavailable++; continue; }
                     compared++;
@@ -47,6 +58,8 @@ namespace BS.SDKEditor.Tests
                 }
             }
 
+            Assert.IsEmpty(unreadable, "mirror headers that don't parse (source, a 64-digit lowercase sha256, port|verbatim):\n"
+                + string.Join("\n", unreadable));
             if (compared == 0)
                 Assert.Ignore($"None of the {unavailable} mirror sources exist here (an SDK checkout outside Greenfield).");
             Assert.That(unavailable, Is.LessThan((compared + unavailable) / 5),

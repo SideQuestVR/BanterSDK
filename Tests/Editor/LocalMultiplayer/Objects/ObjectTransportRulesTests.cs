@@ -120,5 +120,17 @@ namespace BS.LocalMultiplayer.Tests
         {
             Assert.AreEqual(retried, ObjectTransportRules.IsRetryableDeclareFailure(code));
         }
+
+        [TestCase(0f, false, 5f, ObjectTransportRules.SeatTakeoverStep.Wait)]   // no owner's pose yet
+        [TestCase(3f, false, 5f, ObjectTransportRules.SeatTakeoverStep.Take)]   // the owner never sent one: it hasn't moved
+        [TestCase(0.5f, true, 0.5f, ObjectTransportRules.SeatTakeoverStep.Wait)] // used a moment ago
+        [TestCase(0.5f, true, 1f, ObjectTransportRules.SeatTakeoverStep.Take)]
+        [TestCase(20f, true, 5f, ObjectTransportRules.SeatTakeoverStep.GiveUp)]
+        [TestCase(float.NaN, true, 5f, ObjectTransportRules.SeatTakeoverStep.GiveUp)]
+        public void SeatTakeover_WaitsForTheOwnersPoseAndAFreeMoment(float elapsed, bool hasPose, float freeFor,
+            ObjectTransportRules.SeatTakeoverStep step)
+        {
+            Assert.AreEqual(step, ObjectTransportRules.SeatTakeover(elapsed, hasPose, freeFor));
+        }
     }
 }
