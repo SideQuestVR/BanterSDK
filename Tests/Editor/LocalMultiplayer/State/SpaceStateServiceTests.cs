@@ -356,6 +356,28 @@ namespace BS.LocalMultiplayer.Tests
         }
 
         [Test]
+        public void AChange_ThatProtectsANewPrefix_IsClassifiedAsProtected()
+        {
+            var scopes = 0;
+            _service.ScopesChanged += () => scopes++;
+            // Another player's write protected "votes" just now: no join snapshot lists that prefix.
+            _session.Emit(RoomStateMessages.Changed, JObject.Parse(
+                "{\"scope\":\"protected\",\"revision\":4,\"changes\":[{\"path\":\"votes.open\",\"value\":\"1\"}]," +
+                "\"protectedPrefixes\":[\"admin\",\"game.locked\",\"votes\"]}"));
+
+            Assert.AreEqual(1, _changes.Count);
+            Assert.IsFalse(_changes[0].IsPublic);
+            Assert.IsFalse(_service.IsKeyPublic("votes.open"));
+            Assert.AreEqual(1, scopes);
+
+            // Value-only changes carry no prefixes and change nothing about protection.
+            _session.Emit(RoomStateMessages.Changed, JObject.Parse(
+                "{\"scope\":\"protected\",\"revision\":5,\"changes\":[{\"path\":\"votes.open\",\"value\":\"2\"}]}"));
+            Assert.IsFalse(_changes[1].IsPublic);
+            Assert.AreEqual(1, scopes);
+        }
+
+        [Test]
         public void ClearAll_ForgetsTheRoom()
         {
             _service.Set("score", "5", RoomStateScope.Public);

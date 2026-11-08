@@ -1,10 +1,17 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentNetworkBridge.cs" sha256="190f1ddfb95d591b7adbfd2e6fb171b144878bcb1bae6a67790f047d9162f22c" mode="port" />
-// AttachmentNetworkBridge (:26-297) with PacketParty swapped for the relay session, line by line. Substitutions:
+// <mirror source="Assets/Systems/Attachments/AttachmentNetworkBridge.cs" sha256="5e1e451efe01a98d1414f1fe228ebe8142120631915a2ae1f7265c12fdb9df00" mode="port" />
+// AttachmentNetworkBridge (:26-390) with PacketParty swapped for the relay session, line by line. Substitutions:
 //   NetworkService.SetLocalUserState(key, value)        -> ILocalSession.SetEngineUserState (EditableOwnUserState)
 //   NetworkService.TryGetLocalHipBone                   -> ILocalRig.HipPosition / HipRotation, the desktop rig's hip
 //   PacketPartyClient.OnUserStateChanged / Snapshot     -> ILocalSession.EngineUserStateChanged / EngineUserStateSnapshot
+//   PacketPartyClient.UserStates (HasUserState)         -> the players this bridge has seen engine user state for, until
+//                                                          their removal or the next snapshot (the session keeps no view)
 //   RemoteAvatarService.TryGetRemoteBone / SetPilotSeat -> IRemoteBoneSource, the orb avatars
+//   BSSeat / SyncedObjectSystem rider resolvers         -> IsOccupiedByOther, from the pilots received (the synced-object
+//                                                          module asks BSSeat)
 //   Start / OnDestroy / Update                          -> Start / Stop / Update, driven by AttachmentModule
+// Left out: re-applying after a peer's avatar teardown (an orb is never reloaded; a leaving peer's objects are released
+// in OnPeerLeft), the reveal wait (an orb's reveal touches only its own renderers), the avatar-before-object lookup
+// order (the waiting diagnostics read the object first) and the profiler markers.
 // Added, diagnostics only (behaviour unchanged): instructions pending over 3 s for an object or seat this scene
 // lacks, Ids that make user-state paths the room refuses, and the note when a leaving peer takes objects along.
 using System;
@@ -42,6 +49,8 @@ namespace BS.LocalMultiplayer.Attachments
         // Remote pilot state awaiting the peer's avatar / seat object, keyed by roomSessionId.
         private readonly Dictionary<string, PendingPilot> _pendingPilots = new(StringComparer.Ordinal);
         private readonly Dictionary<string, string> _remotePilotSeats = new(StringComparer.Ordinal);
+        // Peers that have user state (HasUserState): seen in a change or the snapshot, gone with their removal.
+        private readonly HashSet<string> _withUserState = new(StringComparer.Ordinal);
         private readonly List<string> _retryScratch = new();
 
         // Local pilot broadcast state: while seated we publish our hip's seat-relative offset (debounced)
@@ -82,7 +91,7 @@ namespace BS.LocalMultiplayer.Attachments
             _onUserStateChanged = OnUserStateChanged;
             _onUserStateSnapshot = OnUserStateSnapshot;
             _onPeerLeft = OnPeerLeft;
-            _onUserStateRemoved = ClearPilot;
+            _onUserStateRemoved = OnUserStateRemoved;
             _occupiedByOther = IsOccupiedByOther;
         }
 
@@ -136,6 +145,7 @@ namespace BS.LocalMultiplayer.Attachments
             if (BSSeat.OccupiedByOtherResolver == _occupiedByOther)
                 BSSeat.OccupiedByOtherResolver = null;
             _remotePilotSeats.Clear();
+            _withUserState.Clear();
             _client = null;
             _scene = null;
         }
@@ -208,6 +218,7 @@ namespace BS.LocalMultiplayer.Attachments
         private void OnUserStateChanged(string roomSessionId, string path, string value, bool deleted)
         {
             if (string.IsNullOrEmpty(roomSessionId) || IsSelf(roomSessionId)) return;
+            _withUserState.Add(roomSessionId);
             if (path == null) return;
             string val = deleted ? null : value;
             if (path.StartsWith(KeyPrefix, StringComparison.Ordinal))
@@ -226,6 +237,10 @@ namespace BS.LocalMultiplayer.Attachments
         private void OnUserStateSnapshot(IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> users)
         {
             if (users == null) return;
+            // The snapshot replaces every player's state, as PacketPartyClient's UserStates is replaced.
+            _withUserState.Clear();
+            foreach (var user in users)
+                if (user.Value != null && !IsSelf(user.Key)) _withUserState.Add(user.Key);
             _retryScratch.Clear();
             _retryScratch.AddRange(_remotePilotSeats.Keys);
             foreach (var roomSessionId in _retryScratch)
@@ -334,6 +349,9 @@ namespace BS.LocalMultiplayer.Attachments
             if (!_pending.TryGetValue(objId, out var pending)) return;
             var data = pending.Data;
 
+            // The peer's session ended while this waited.
+            if (!HasUserState(pending.RoomSessionId)) { _pending.Remove(objId); ClearPendingDiagnostic(objId); return; }
+
             // The object must exist locally (authored with the same BSObjectId across clients).
             var obj = _scene != null ? _scene.GetObjectByBid(objId) : default;
             if (obj.gameObject == null) { NoteWaitingForObject(objId, pending.RoomSessionId); return; } // not present yet — keep pending
@@ -355,6 +373,20 @@ namespace BS.LocalMultiplayer.Attachments
             _pending.Remove(objId);
             ClearPendingDiagnostic(objId);
             _reproducedFrom[objId] = pending.RoomSessionId;
+        }
+
+        // Whether a peer still has user state. The relay removes a peer's whole state when their session ends
+        // (app.userState.removed); a rejoin's snapshot replaces it all. True without a session: nothing to check.
+        private bool HasUserState(string roomSessionId)
+        {
+            return _client == null || (roomSessionId != null && _withUserState.Contains(roomSessionId));
+        }
+
+        // A peer's user state is gone: their seat clears, and what still waits for them goes on the next retry.
+        private void OnUserStateRemoved(string roomSessionId)
+        {
+            if (!string.IsNullOrEmpty(roomSessionId)) _withUserState.Remove(roomSessionId);
+            ClearPilot(roomSessionId);
         }
 
         private static bool TryResolveBone(BSAttachment data, out HumanBodyBones bone)

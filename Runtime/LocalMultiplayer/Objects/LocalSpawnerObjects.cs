@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/SpawnerObjectNetwork.cs" sha256="0d6339dd9552b190bff1188c0d0449c180f80fefe93a1a343baa2f2e9efc1232" mode="port" />
+// <mirror source="Assets/Systems/Networking/SpawnerObjectNetwork.cs" sha256="1b5dc4fe205f958a00f4970871f9da027f0350f37d110c32747a3d54c05daa9a" mode="port" />
 // SpawnerObjectNetwork for the local relay. PacketPartyClient and PacketPartyObjectBinder become LocalObjectBinder
 // (requests, the record mirror, SpawnHandler, ObjectSnapshot / RecordRemoved for the client's snapshot / deleted
 // events); SyncedObjectSystem.AddNetworkComponents becomes SyncedObjectsModule.SetUpSpawnedCopy. Differences: the

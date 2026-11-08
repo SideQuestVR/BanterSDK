@@ -1,10 +1,11 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartyTransformRuntime.cs" sha256="8fcfd1db8d5d212eda9e751a334abce4265d567df6636641e149885822902081" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartySynchronizedTransform.cs" sha256="14d63e9d57cea6b6d69a342680698d0e300b7fbd3e325e74f5d141c656e6fc6d" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/UnityTransformPoseAdapter.cs" sha256="88fd832ebc17a747813ab9fcd24ea5e18c9084542d0253c5daef0fa92bf89386" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartyTransformRuntime.cs" sha256="6e1d7856bc396c441284c8f3e288f7ea4905fcfb5211ff81377cc14f25ff0b05" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartySynchronizedTransform.cs" sha256="651f879f279d96c94c5c5d31f899f64e9220ad3f270bc7adb72c526d7814f5d8" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/UnityTransformPoseAdapter.cs" sha256="4aec2c3c8da174ef8eb1049e4208f0640e6f7909110402e17d96875b1f48bc72" mode="port" />
 // One participant publisher out of PacketPartyTransformRuntime: its state (Publisher :309-328, filled in
 // CreatePublisherAsync :425-437), the Tick gate (:692-749) and SamplesEqual (:984-988). The defaults are the inspector
 // values of PacketPartySynchronizedTransform (:98-113), which NetworkService.PublishPart (:1133-1155) keeps for the
-// local "root" (30 Hz, rotation and velocity, 1 s heartbeat). RootPoseSampler is UnityTransformPoseAdapter (:23-51)
+// local "root" (30 Hz, rotation and velocity, 1 s heartbeat). A jump between two samples is flagged as a
+// discontinuity, as DetectDiscontinuity (:1043-1057) does. RootPoseSampler is UnityTransformPoseAdapter (:23-51)
 // in world space.
 using System;
 using UnityEngine;
@@ -25,6 +26,16 @@ namespace BS.LocalMultiplayer.Avatars
         public const float RotationThresholdDegrees = .1f;
         public const float VelocityThresholdMetersPerSecond = .01f;
 
+        /// <summary>
+        /// A root that moves at least <see cref="DiscontinuityMinimumDistance"/> between two samples, at
+        /// <see cref="DiscontinuityMinimumSpeed"/> (m/s) or faster, teleported: the frame is flagged as a
+        /// discontinuity, so receivers jump to it instead of interpolating across the gap (:449-458).
+        /// </summary>
+        public const float DiscontinuityMinimumDistance = 2f;
+
+        /// <inheritdoc cref="DiscontinuityMinimumDistance"/>
+        public const float DiscontinuityMinimumSpeed = 100f;
+
         readonly double _minimumIntervalMs = 1000.0 / MaximumPublishHz;
         readonly double _heartbeatMs = Math.Max(1, StationaryHeartbeatSeconds * 1000.0);
         readonly float _positionThresholdSquared = Math.Max(0, PositionThresholdMeters * PositionThresholdMeters);
@@ -38,6 +49,9 @@ namespace BS.LocalMultiplayer.Avatars
         PoseSample _lastSample;
         bool _hasLastSample;
         bool _discontinuityNext = true;
+        Vector3 _previousSampledPosition;
+        double _previousSampledAt;
+        bool _hasPreviousSampled;
 
         /// <summary>The frames' validForMs: the publish interval, rounded (33 at 30 Hz).</summary>
         public ushort ValidForMs => (ushort)Math.Min(ushort.MaxValue, Math.Max(1, (int)Math.Round(_minimumIntervalMs)));
@@ -52,6 +66,7 @@ namespace BS.LocalMultiplayer.Avatars
         {
             _hasSent = false;
             _hasLastSample = false;
+            _hasPreviousSampled = false;
             _forceKeyframe = true;
             _discontinuityNext = true;
         }
@@ -61,13 +76,15 @@ namespace BS.LocalMultiplayer.Avatars
 
         /// <summary>
         /// Decides whether the sampled pose goes out now (Tick :719-744). When it does, returns its sequence and
-        /// whether it is the first frame of a registration, and records it as the last frame sent.
+        /// whether it is a discontinuity (the first frame of a registration, or a jump), and records it as the last
+        /// frame sent. Call it once per sample: the jump is measured from the previous sample, sent or not.
         /// </summary>
         public bool TryCommit(double nowMs, in PoseSample sample, bool hasExtension, out ushort sequence, out bool discontinuity)
         {
+            DetectDiscontinuity(sample, nowMs);
             bool changed = hasExtension || !_hasLastSample || !SamplesEqual(sample, _lastSample);
             bool heartbeat = !_hasSent || nowMs - _lastSentAt >= _heartbeatMs;
-            if (!changed && !heartbeat && !_forceKeyframe)
+            if (!changed && !heartbeat && !_forceKeyframe && !_discontinuityNext)
             {
                 sequence = 0;
                 discontinuity = false;
@@ -83,6 +100,22 @@ namespace BS.LocalMultiplayer.Avatars
             _forceKeyframe = false;
             _discontinuityNext = false;
             return true;
+        }
+
+        // Between consecutive samples, not sent frames: a still player sends rarely, so a teleport after a long idle
+        // would otherwise look slow. Under a low publish rate, real motion still spans the longer sample interval.
+        void DetectDiscontinuity(in PoseSample sample, double captureTimestampMs)
+        {
+            if (_hasPreviousSampled)
+            {
+                float jump = (sample.Position - _previousSampledPosition).magnitude;
+                double seconds = (captureTimestampMs - _previousSampledAt) / 1000.0;
+                if (jump >= DiscontinuityMinimumDistance && (seconds <= 0 || jump / seconds >= DiscontinuityMinimumSpeed))
+                    _discontinuityNext = true;
+            }
+            _previousSampledPosition = sample.Position;
+            _previousSampledAt = captureTimestampMs;
+            _hasPreviousSampled = true;
         }
 
         bool SamplesEqual(in PoseSample left, in PoseSample right)

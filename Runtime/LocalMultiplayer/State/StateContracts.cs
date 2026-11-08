@@ -1,9 +1,10 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Contracts/RoomStateContracts.cs" sha256="58fe3357aeda7b4c022d6eb1b454e062913975887c837df567d7c5fef6e5377b" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Contracts/RoomStateContracts.cs" sha256="22b57ce1ceeaccae2e6fcb8fa4dcc049f539b302b0edbbb337e2924c9a86fe14" mode="port" />
 // <mirror source="Packages/com.sidequest.packetparty/Runtime/Contracts/UserStateContracts.cs" sha256="0b91705d38f3faecc385f14751be09340607ef56dd83cd85c8e8288dee40988f" mode="port" />
 // <mirror source="Packages/com.sidequest.packetparty/Runtime/Util/JsonSettings.cs" sha256="3c60de9688b70cf32211d5445928e5f471a776818d423cec74a483447d6bb410" mode="port" />
 // The PacketParty client contracts the state services parse the relay's app.state.* / app.userState.* messages into
-// (RELAY.md 4 and 5 use exactly these shapes). The class bodies are verbatim; StateTree and the editable-own-state
-// helpers are left out because nothing here uses them.
+// (RELAY.md 4 and 5 use exactly these shapes). The class bodies are verbatim apart from the world-state ResetId, which
+// instance-local room state never carries; StateTree and the editable-own-state helpers are left out because nothing
+// here uses them.
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;

@@ -1524,10 +1524,11 @@ namespace BS
                 FailAsset(assetId, "No URL provided");
                 return;
             }
-            if (!BSAssetKey.IsWebAddress(url))
+            var problem = PageUrl.Problem(url);
+            if (problem != null)
             {
                 Debug.LogWarning($"Cannot create texture asset from this address: {assetId}");
-                FailAsset(assetId, BSAssetKey.WebAddressesOnly);
+                FailAsset(assetId, problem);
                 return;
             }
 
@@ -1576,10 +1577,11 @@ namespace BS
                 FailAsset(assetId, "No URL provided");
                 return;
             }
-            if (!BSAssetKey.IsWebAddress(url))
+            var problem = PageUrl.Problem(url);
+            if (problem != null)
             {
                 Debug.LogWarning($"Cannot create audio clip asset from this address: {assetId}");
-                FailAsset(assetId, BSAssetKey.WebAddressesOnly);
+                FailAsset(assetId, problem);
                 return;
             }
 

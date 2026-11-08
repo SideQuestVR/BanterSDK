@@ -1,6 +1,6 @@
-// <mirror source="Assets/Systems/Networking/RemotePlayer.cs" sha256="9154b202c1606435c3e9d33b59f299ccc5f7ce35d649088bbf0fba5dd2b790a9" mode="port" />
+// <mirror source="Assets/Systems/Networking/RemotePlayer.cs" sha256="915f27dee237031d6d2b8090fc2276ba0bce072f155b6529a366b797a7c2382b" mode="port" />
 // <mirror source="Assets/Systems/Networking/RemotePlayer.prefab" sha256="f879a0525366d7419bb59fd5e3b4b39c9a9b08fb555536b29639d977b1fbdc51" mode="port" />
-// <mirror source="Assets/Systems/Avatar/RemoteAvatarService.cs" sha256="5db62ab415833ac7fa705828119946493023d1fc0e8c3aa7ff1b943d44590117" mode="port" />
+// <mirror source="Assets/Systems/Avatar/RemoteAvatarService.cs" sha256="a79906d055cd1e7169c4b267267032d29f1e9e7af0c5e2c1e0b28ad32e684980" mode="port" />
 // RemotePlayer's root playback (:35-37, :207-220) and reveal (:50-69, :226-235); the prefab's "Body" trigger
 // (:53-167, its placeholder renderer left out since the orb is always present); and RemoteAvatarService's gating of a
 // loaded avatar on its first bone pose (:316-335). The PacketParty runtime's part of the receive path (validate the
@@ -13,8 +13,8 @@ namespace BS.LocalMultiplayer.Avatars
 {
     /// <summary>
     /// One remote player's orb, on the player root presence created: the root follows the peer's pose 100 ms behind
-    /// (interpolated, briefly extrapolated), the bones follow the pose extension near-live, and nothing shows until the
-    /// first pose has placed and posed it.
+    /// (interpolated, briefly extrapolated), the bones play the pose extension back on the same timeline, and nothing
+    /// shows until the first pose has placed and posed it.
     /// </summary>
     [AddComponentMenu("")]
     public sealed class RemoteOrbAvatar : MonoBehaviour
@@ -184,7 +184,7 @@ namespace BS.LocalMultiplayer.Avatars
             if (!PosePlaybackBuffer.SampleIsValid(sample)) return;
 
             // The sender flags the first frame of each registration (each join), which production marks with a new
-            // transform handle generation.
+            // transform handle generation, and the frame after a jump (a teleport): either way the buffer starts over.
             if (frame.Discontinuity) _generation++;
 
             double now = MachineClock.NowMs;
@@ -211,7 +211,8 @@ namespace BS.LocalMultiplayer.Avatars
             }
             else if (PoseExtCodec.TryNormalize(frame.Ext, out var ext))
             {
-                _applier.ReceivePose(validForMs, frame.Discontinuity, ext);
+                // Timed like the root's entry, so the bones play back on the root's timeline.
+                _applier.ReceivePose(validForMs, frame.Discontinuity, ext, captured);
             }
         }
 
@@ -269,6 +270,9 @@ namespace BS.LocalMultiplayer.Avatars
 
         void ApplyVisibility()
         {
+            // The Body trigger follows the reveal (RemotePlayer.ApplyVisibility :506-515): until a pose sample has
+            // placed the root it stands at the remote players' origin, where trigger volumes would find an unseen body.
+            if (_body != null) _body.enabled = _appeared;
             if (_orb != null) _orb.SetVisible(_appeared && _posed);
         }
 

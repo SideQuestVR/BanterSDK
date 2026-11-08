@@ -157,6 +157,59 @@ namespace BS.LocalMultiplayer.Tests
         }
 
         [Test]
+        public async Task ANewSession_DropsTheSyncStillInFlight_AndDoesNotWaitOnIt()
+        {
+            var relay = new FakeRelay();
+            var firstChunk = new TaskCompletionSource<JObject>();
+            var channel = new EngineUserStateChannel((body, cancellation) =>
+            {
+                relay.Batches.Add((JObject)body.DeepClone());
+                return relay.Batches.Count == 1 ? firstChunk.Task : Task.FromResult(new JObject { ["ok"] = true });
+            });
+            for (var i = 0; i < 70; i++) channel.Set("attachment_" + i.ToString("00"), "v1");
+
+            var stale = channel.SyncNowAsync();
+            Assert.IsFalse(stale.IsCompleted);
+            channel.ResetForNewSession();
+            Assert.IsFalse(channel.Syncing);
+
+            // The new session's sync starts at once and sends the whole document.
+            Sync(channel);
+            Assert.AreEqual(3, relay.Batches.Count);
+            Assert.AreEqual("set attachment_00=v1", relay.Ops(1)[0]);
+
+            // The old sync's first chunk is answered late: the rest of its diff never goes out, and it
+            // doesn't touch the new session's baseline.
+            firstChunk.SetResult(new JObject { ["ok"] = true });
+            await stale;
+            Assert.AreEqual(3, relay.Batches.Count);
+            Sync(channel);
+            Assert.AreEqual(3, relay.Batches.Count);
+        }
+
+        [Test]
+        public async Task AFailureOfASupersededSync_IsNotReported()
+        {
+            var relay = new FakeRelay();
+            var firstChunk = new TaskCompletionSource<JObject>();
+            var channel = new EngineUserStateChannel((body, cancellation) =>
+            {
+                relay.Batches.Add((JObject)body.DeepClone());
+                return relay.Batches.Count == 1 ? firstChunk.Task : Task.FromResult(new JObject { ["ok"] = true });
+            });
+            channel.Set("pilot", "x");
+
+            var stale = channel.SyncNowAsync();
+            channel.ResetForNewSession();
+            firstChunk.SetResult(new JObject { ["ok"] = false, ["error"] = "closed" });
+
+            await stale; // completes without throwing
+            // Nothing was latched: the new session still sends the document.
+            channel.Tick(true, 1f, CancellationToken.None);
+            Assert.AreEqual(2, relay.Batches.Count);
+        }
+
+        [Test]
         public void AutoSync_RunsOnlyWhileConnected_AndEvery50Ms()
         {
             var relay = new FakeRelay();

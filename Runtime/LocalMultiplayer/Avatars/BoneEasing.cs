@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Avatar/RemoteBonePoseApplier.cs" sha256="dd5734aee666b27342d9106b0ad5e85ca6d1160cfb8107bd3e16ecfbcff1fa08" mode="port" />
+// <mirror source="Assets/Systems/Avatar/RemoteBonePoseApplier.cs" sha256="036478f503bbfb2c19f885631a7de8c14da10d6b25a5add8567f07a707e8b598" mode="port" />
 // The easing arithmetic of RemoteBonePoseApplier: _smoothing (:26), the interval clamp (:30-31), the bone blend
 // (:172-184) and the seat-offset ease (:63, :204-206), pulled out so it can be tested on its own.
 using UnityEngine;

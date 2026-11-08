@@ -1,5 +1,5 @@
 // <mirror source="Assets/Systems/Networking/RoomClockSdkBridge.cs" sha256="051420fa1dfd51a96836892388832084a00e0f999ba64be97c0c2e6c8bcfbdec" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="6ab88cbf53c894dcdd8273685d80972419478499cfec5f09de9499a52b97367d" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="a9f01d8a9ca471d1b2d1f69658b35893d880da7151e731530bebe869a647e5a6" mode="port" />
 using System;
 using System.Threading;
 using System.Threading.Tasks;

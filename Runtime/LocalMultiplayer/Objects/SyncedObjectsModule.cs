@@ -1,11 +1,12 @@
-// <mirror source="Assets/Systems/Networking/SyncedObjectSystem.cs" sha256="3d2791fbfd2e6a50cfa83fb32a3534a6f047f299ea6c2bf0e6344eebca4c2a09" mode="port" />
-// SyncedObjectSystem with its serialized Greenfield values (Assets/Scenes/Main.unity:417-427: 30 Hz, the five
-// local-player tags, fall threshold -250, proximity margin 0.3). Differences: the listeners are attached at install,
-// before any scene object starts (BSSyncedObject announces itself from its own Start); the transform host always
-// exists, so the deferred-host retry is gone; the Rate-LOD preset has no local meaning (the relay delivers at full
-// rate); and an already-started object (late install) is replayed with Refresh(). It also owns the binder, the
-// transform runtime, the desktop grab bridge and the spawner-copy service (LocalSpawnerObjects), which Greenfield's
-// NetworkService and SyncedObjectSystem create.
+// <mirror source="Assets/Systems/Networking/SyncedObjectSystem.cs" sha256="409516f5d04bc8dea16d8d4f9e25f7b7ec8b727c62a91254b92dafa71676139d" mode="port" />
+// SyncedObjectSystem with its serialized Greenfield values (Assets/Scenes/Main.unity:366-377: 30 Hz, the five
+// local-player tags, fall threshold -250, a 15 s default idle reset, proximity margin 0.3). Differences: the
+// listeners are attached at install, before any scene object starts (BSSyncedObject announces itself from its own
+// Start); the transform host always exists, so the deferred-host retry is gone; the Rate-LOD preset has no local
+// meaning (the relay delivers at full rate); and an already-started object (late install) is replayed with Refresh().
+// It also owns the binder, the transform runtime, the desktop grab bridge and the spawner-copy service
+// (LocalSpawnerObjects), which Greenfield's NetworkService and SyncedObjectSystem create. Not added: the safety
+// bubble's BubbleHeldHider (there is no safety bubble here).
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,7 +29,7 @@ namespace BS.LocalMultiplayer.Objects
     [AddComponentMenu("")]
     public sealed class SyncedObjectsModule : MonoBehaviour, ILocalModule
     {
-        // Greenfield's serialized SyncedObjectSystem (Main.unity:417-427).
+        // Greenfield's serialized SyncedObjectSystem (Main.unity:366-377).
         const float SourceHz = 30f;
         const string TypeKey = "object";
         static readonly string[] OwnershipCollisionTags =
@@ -37,6 +38,13 @@ namespace BS.LocalMultiplayer.Objects
         };
         /// <summary>The serialized production fall threshold (the code default is -100).</summary>
         public const float FallThreshold = -250f;
+        /// <summary>
+        /// Seconds a moved synced physics prop (dynamic Rigidbody) is left owned but not held or attached before its
+        /// owner puts it back where it was placed, unless its BSSyncedObject sets its own (Reset After Seconds; -1 = this
+        /// default). Kinematic/Rigidbody-less objects and spawner copies only reset when the world sets a time. The
+        /// serialized production value (the code default is -1, never).
+        /// </summary>
+        public const float DefaultResetAfterSeconds = 15f;
         const float OwnershipProximityMargin = 0.3f;
         // The desktop player's body trigger (BSDesktopController) is on PhysicsPlayer.
         const int PhysicsPlayerLayer = 23;
@@ -63,6 +71,9 @@ namespace BS.LocalMultiplayer.Objects
         readonly HashSet<BSSyncedObject> _takeWhenReady = new HashSet<BSSyncedObject>();
         // Seats taken in that same window.
         readonly HashSet<BSSyncedObject> _rideWhenReady = new HashSet<BSSyncedObject>();
+        // The objects whose seats the local player is on (the client's Riding): a seat's take that had to wait for the
+        // bind is dropped if they got off meanwhile.
+        readonly HashSet<LocalNetworkObject> _riding = new HashSet<LocalNetworkObject>();
         // Takes under way: a graph asking every frame gets one, not one per frame while the first waits.
         readonly HashSet<LocalNetworkObject> _takesUnderWay = new HashSet<LocalNetworkObject>();
         // A take waits out the declare, and then the rate limit, which can each stretch to seconds on a big world's load.
@@ -127,7 +138,9 @@ namespace BS.LocalMultiplayer.Objects
             _pending.Clear();
             _takeWhenReady.Clear();
             _rideWhenReady.Clear();
+            _riding.Clear();
             _takesUnderWay.Clear();
+            _resetAfter.Clear();
             UnhookScene();
             if (_grabBridge != null)
             {
@@ -239,9 +252,16 @@ namespace BS.LocalMultiplayer.Objects
             // A spawner is never networked itself; its Synced Object only says how its copies sync (and the copies
             // arrive with their networking already added by LocalSpawnerObjects).
             if (bso.TryGetComponent(out BSSpawnerObject _)) return;
+            if (synced != null)
+            {
+                if (_resetAfter.Count >= 64) PruneResetAfter();
+                _resetAfter[bso] = synced.resetAfterSeconds;
+            }
             if (bso.TryGetComponent(out LocalNetworkObject _))
             {
-                // Already set up (a property change): Kinematic If Not Owned can change here.
+                // Already set up (a property change, or a spawner's copy announcing after LocalSpawnerObjects built it):
+                // only the reset time and Kinematic If Not Owned can change here.
+                ApplyIdleReset(bso);
                 var entry = _setUp.Find(e => e.GameObject == bso.gameObject);
                 if (entry != null && synced != null) ApplyKinematicIfNotOwned(entry, synced.kinematicIfNotOwned);
                 return;
@@ -249,6 +269,34 @@ namespace BS.LocalMultiplayer.Objects
             if (!_pending.Add(bso)) return;                             // already queued
             if (isActiveAndEnabled) StartCoroutine(SetupNextFrame(bso));
             else _pending.Remove(bso);
+        }
+
+        // Each object's authored BSSyncedObject.resetAfterSeconds from its latest announce (-1 = the app default), held
+        // until its safety net exists to take it (objects announce before setup, and a spawner's copy after).
+        readonly Dictionary<BSSyncedObject, float> _resetAfter = new Dictionary<BSSyncedObject, float>();
+        readonly List<BSSyncedObject> _pruneScratch = new List<BSSyncedObject>();
+
+        // Objects that announced but never got set up (destroyed first, no id, a world unloaded) leave entries behind.
+        void PruneResetAfter()
+        {
+            _pruneScratch.Clear();
+            foreach (var key in _resetAfter.Keys)
+                if (key == null) _pruneScratch.Add(key);
+            foreach (var key in _pruneScratch) _resetAfter.Remove(key);
+            _pruneScratch.Clear();
+        }
+
+        void ApplyIdleReset(BSSyncedObject bso)
+        {
+            if (bso == null || !bso.TryGetComponent(out SyncedObjectSafetyNet net)) return;
+            float authored = _resetAfter.TryGetValue(bso, out var value) ? value : -1f;
+            _resetAfter.Remove(bso);
+            // The app default is only for physics props players push around. Not for a spawner's copy (removed, not put
+            // back), nor a kinematic / Rigidbody-less object a world may move from script (putting it back would fight
+            // the script): those reset only when the world sets a time.
+            float seconds = authored >= 0f ? authored
+                : net.IsPhysicsProp && !net.IsSpawnerCopy && DefaultResetAfterSeconds > 0f ? DefaultResetAfterSeconds : 0f;
+            net.SetIdleReset(seconds);
         }
 
         IEnumerator SetupNextFrame(BSSyncedObject bso)
@@ -295,6 +343,7 @@ namespace BS.LocalMultiplayer.Objects
             {
                 AddNetworkComponents(entry, bso,
                     netObj => netObj.ConfigureSceneDeclare(_binder, TypeKey, objectId.Id, SyncedObjectDisconnectPolicy.Transfer));
+                ApplyIdleReset(bso);
                 ApplyKinematicIfNotOwned(entry, bso.KinematicIfNotOwned);
             }
             finally
@@ -408,7 +457,7 @@ namespace BS.LocalMultiplayer.Objects
 
             // Safety net for every synced object.
             entry.SafetyNet = go.AddComponent<SyncedObjectSafetyNet>();
-            entry.SafetyNet.Configure(FallThreshold, fellOut);
+            entry.SafetyNet.Configure(FallThreshold, isPhysicsProp: useRigidbodyBinding, fellOut);
         }
 
         // Explicit TakeOwnership() from the SDK / visual scripting.
@@ -440,9 +489,23 @@ namespace BS.LocalMultiplayer.Objects
             if (!_installed || bso == null) return;
             if (bso.TryGetComponent(out LocalNetworkObject netObj))
             {
+                if (!_riding.Add(netObj)) return;
                 if (_takesUnderWay.Add(netObj)) _ = AcquireAsync(netObj, !netObj.IsBound, forSeat: true);
             }
             else if (!bso.TryGetComponent(out BSSpawnerObject _)) _rideWhenReady.Add(bso);
+        }
+
+        /// <summary>
+        /// The local player got off a seat of <paramref name="bso"/> (the client's ReleaseAfterRiding): ownership stays, so
+        /// the object carries on from where they left it, but a take still waiting for the bind is dropped. The rest of
+        /// the client's release has nothing to undo here: the seat's take is unlocked, and the rest hold already rests the
+        /// object whenever this player loses it.
+        /// </summary>
+        internal void ReleaseAfterRiding(BSSyncedObject bso)
+        {
+            if (bso == null) return;
+            _rideWhenReady.Remove(bso);
+            if (bso.TryGetComponent(out LocalNetworkObject netObj)) _riding.Remove(netObj);
         }
 
         // DoIOwn(): does the local player currently hold this object's authority? Synchronous, from the mirror.
@@ -461,6 +524,8 @@ namespace BS.LocalMultiplayer.Objects
                         Debug.LogWarning($"[LocalMP][SyncedObjects] Taking '{netObj.name}' gave up: not bound after {BindWait.TotalSeconds:0} s.");
                     return;
                 }
+                // They may have got off while it bound.
+                if (forSeat && !_riding.Contains(netObj)) return;
                 if (waited && netObj.IsOwned)
                 {
                     WakeIfResting(netObj);
@@ -470,7 +535,7 @@ namespace BS.LocalMultiplayer.Objects
                 if (DropsTake(netObj, waited, aimedAt, forSeat)) return;
                 bool granted = await ObjectTransportRules.RetryWhileRateLimitedAsync(
                     () => netObj.AcquireAsync(locked: false),
-                    () => netObj != null && !DropsTake(netObj, true, aimedAt, forSeat),
+                    () => netObj != null && (!forSeat || _riding.Contains(netObj)) && !DropsTake(netObj, true, aimedAt, forSeat),
                     () => UnityEngine.Random.value, BindWait, netObj.destroyCancellationToken);
                 if (granted) WakeIfResting(netObj);
             }
@@ -486,7 +551,8 @@ namespace BS.LocalMultiplayer.Objects
             string there = !forSeat && ObjectTransportRules.TakeWouldDisplace(netObj.IsRemoteOwned, netObj.OwnerRoomSessionId, aimedAt)
                 ? netObj.OwnerRoomSessionId : null;
             if (there == null && waited && HasOtherRider(netObj)) there = "another rider";
-            if (there == null && waited && !forSeat && netObj.IsAttachmentActive) there = "a player using it";
+            if (there == null && waited && !forSeat && netObj.TryGetComponent(out SyncedObjectSafetyNet net) && net.IsInUse)
+                there = "a player using it";
             if (there == null) return false;
             Debug.Log($"[LocalMP][SyncedObjects] Dropped a take of '{netObj.name}' that had to wait: {there} has it now.");
             return true;
@@ -562,8 +628,8 @@ namespace BS.LocalMultiplayer.Objects
                     "takeOwnershipOnCollision off on vehicles and seats.");
             }
             NoteOnce(diagnostics, "objects.quirk.teleportSlide",
-                "Teleported synced objects slide to their new place on the other players: object frames carry no discontinuity, " +
-                "as in the Banter client (PacketPartyTransformRuntime.cs:729).");
+                "Teleported synced objects slide to their new place on the other players: tf.objects frames carry no discontinuity. " +
+                "The Banter client sends a big, fast jump as one, so there they jump (PacketPartyTransformRuntime.cs:1043-1057).");
         }
 
         void NoteOnce(ILocalDiagnostics diagnostics, string key, string message)

@@ -856,13 +856,28 @@ namespace BS
                 return;
             }
             var gravity = new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
+            // Finite and within what physics copes with; the client puts its own back when the world unloads.
+            if (!(Mathf.Abs(gravity.x) <= MaxGravity && Mathf.Abs(gravity.y) <= MaxGravity && Mathf.Abs(gravity.z) <= MaxGravity))
+            {
+                SendError(reqId, "GRAVITY: each component must be from -" + MaxGravity + " to " + MaxGravity);
+                return;
+            }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Physics.gravity = gravity, $"{nameof(BSScene)}.{nameof(Gravity)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.GRAVITY);
         }
 
+        const float MaxGravity = 1000f;
+        const float MaxTimeScale = 100f;
+
         public void TimeScale(string msg, int reqId)
         {
             var timeScale = NumberFormat.Parse(msg);
+            // Unity's own range: past it, Unity logs an error and keeps the old value.
+            if (!(timeScale >= 0f && timeScale <= MaxTimeScale))
+            {
+                SendError(reqId, "TIME_SCALE: must be from 0 to " + MaxTimeScale);
+                return;
+            }
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() => Time.timeScale = timeScale, $"{nameof(BSScene)}.{nameof(TimeScale)}"));
             link.Send(APICommands.REQUEST_ID + MessageDelimiters.REQUEST_ID + reqId + MessageDelimiters.PRIMARY + APICommands.TIME_SCALE);
         }
@@ -3016,7 +3031,7 @@ namespace BS
                 if (string.IsNullOrEmpty(imageUrl))
                 {
                     imageUrl = await Get.PageImage(url);
-                    if (!BSAssetKey.IsWebAddress(imageUrl)) imageUrl = null; // the page's meta is the page's: the same rule as its textures
+                    if (!PageUrl.IsAllowedWebAddress(imageUrl)) imageUrl = null; // the page's meta is the page's: the same rule as its textures
                 }
                 if (string.IsNullOrEmpty(imageUrl) || generation != spaceImageGeneration || !loading) return;
                 var texture = await Get.Texture(imageUrl);

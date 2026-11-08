@@ -62,7 +62,17 @@ namespace BS
             if (bundle != null)
             {
                 var paths = bundle.GetAllScenePaths();
-                if (paths.Length > 0) return SceneManager.GetSceneByName(System.IO.Path.GetFileNameWithoutExtension(paths[0]));
+                if (paths.Length > 0)
+                {
+                    // By handle, as the content guard passed it: a scene of the client's could have the same name.
+                    var name = System.IO.Path.GetFileNameWithoutExtension(paths[0]);
+                    for (var i = 0; i < SceneManager.sceneCount; i++)
+                    {
+                        var scene = SceneManager.GetSceneAt(i);
+                        if (scene.handle == BSUnityEventGuard.CurrentWorldScene && scene.name == name) return scene;
+                    }
+                    return default;
+                }
             }
 #if UNITY_EDITOR && !GREENFIELD_PROJECT
             // Play in the SDK: the creator's open scene is the world, and no bundle loaded it.
@@ -216,7 +226,8 @@ namespace BS
         static async Task<BSLoadedAsset> LoadUrl(BSAssetKey key, AssetType? wanted)
         {
             var url = key.Path;
-            if (!BSAssetKey.IsWebAddress(url)) throw new InvalidOperationException(BSAssetKey.WebAddressesOnly);
+            var problem = PageUrl.Problem(url);
+            if (problem != null) throw new InvalidOperationException(problem);
             var type = wanted ?? BSAssetManifest.TypeOf(new Uri(url).AbsolutePath);
             UnityEngine.Object asset;
             switch (type)

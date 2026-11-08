@@ -18,7 +18,11 @@ namespace BS.BridgeApi
         const int MaxSimplifyPositions = 4096;
 
         /// <summary>The world has gone.</summary>
-        internal static void Reset() => parameters.Clear();
+        internal static void Reset()
+        {
+            parameters.Clear();
+            prewarmedStarts.Clear();
+        }
 
         static bool Enabled(Behaviour b) => b.enabled && b.gameObject.activeInHierarchy;
 
@@ -138,6 +142,23 @@ namespace BS.BridgeApi
         }
 
         // ------------------------------------------------------------------------------------------- particles
+
+        static readonly Dictionary<ParticleSystem, float> prewarmedStarts = new Dictionary<ParticleSystem, float>();
+        const float PrewarmedStartSeconds = 5f;
+
+        /// <summary>A stopped, looping, prewarmed system simulates a whole run as it starts: at most one start every few seconds each.</summary>
+        public static void ParticlePlay(BridgeCallContext c, ParticleSystem self)
+        {
+            var main = self.main;
+            if (!main.prewarm || !main.loop || !self.isStopped) return;
+            float now = Time.realtimeSinceStartup;
+            if (prewarmedStarts.TryGetValue(self, out var last) && now - last < PrewarmedStartSeconds)
+            {
+                c.Fail(ReplyStatus.Limit, "this prewarmed system started less than " + PrewarmedStartSeconds + " s ago");
+                return;
+            }
+            prewarmedStarts[self] = now;
+        }
 
         public static void ParticleStopped(BridgeCallContext c, ParticleSystem self)
         {

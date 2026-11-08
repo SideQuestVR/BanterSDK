@@ -172,6 +172,24 @@ namespace BS.BridgeApi.Tests
         }
 
         [Test]
+        public void APrewarmedSystemStartsAtMostEveryFewSeconds()
+        {
+            var ps = f.Add("prewarmed", typeof(ParticleSystem)).GetComponent<ParticleSystem>();
+            var main = ps.main;
+            main.loop = true;
+            main.prewarm = true;
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            int p = f.Handle(ps);
+            int play = Id("UnityEngine.ParticleSystem.Play()");
+            Assert.AreEqual(ReplyStatus.Ok, f.Call(play, p), f.Host.FailMessage);
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            Assert.AreEqual(ReplyStatus.Limit, f.Call(play, p), "stopped and started again at once");
+            Assert.AreEqual(ReplyStatus.Limit, f.Call(Id("UnityEngine.ParticleSystem.Play(System.Boolean)"), p, Bool(true)));
+            main.prewarm = false;
+            Assert.AreEqual(ReplyStatus.Ok, f.Call(play, p), "without prewarm a start costs one frame");
+        }
+
+        [Test]
         public void TextHasALengthLimit()
         {
             var text = f.Add("text", typeof(TMPro.TextMeshPro)).GetComponent<TMPro.TextMeshPro>();

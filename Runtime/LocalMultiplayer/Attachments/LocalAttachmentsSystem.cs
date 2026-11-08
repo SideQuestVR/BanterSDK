@@ -1,14 +1,25 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="b076dc451c46ae3750aa426065d983c21944a1b7c7d5099d053c1edf53e878ef" mode="port" />
-// AttachmentsSystem (:47-589) on the SDK desktop player, line by line. Substitutions:
+// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="548b5a4e1e011610ce98efbc5f65d6ca37eae658ee97ded74d47f69bf9e773d2" mode="port" />
+// AttachmentsSystem (:66-939) on the SDK desktop player, line by line. Substitutions:
 //   _flexaBall (torso Rigidbody)      -> ILocalRig.TorsoBody / Torso, the desktop rig's hip anchor
 //   _physicsHands.PhysHands[0/1].RB   -> ILocalRig.LeftHand / RightHand
-//   FlexaMover.AttachToSeat           -> BSDesktopController.Seat, skipped while already seated ("if (SeatJoint) return;")
+//   FlexaMover.AttachToSeat           -> BSDesktopController.Seat, skipped while already seated ("if (SeatJoint) return;").
+//                                        It reads a BSSeat's view mode and pose itself, as the BSSeat overload passes them
 //   FlexaMover.RemoveSeatJoint        -> BSDesktopController.Unseat(true): it raises the stand-up callback whenever a
 //                                        seat was left, as RemoveSeatJoint raises OnSeatRemoved
 //   FlexaMover.OnSeatRemoved          -> the Seat(...) stand-up callback -> OnDesktopSeatRemoved (port of OnFlexaSeatRemoved)
 //   FlexaMover.SetSeated(isSeat)      -> nothing here: the orb's seated leg pose follows the seat the desktop player sits on
+//   the local avatar's humanoid bones -> the player's own orb (DesktopRig.LocalOrb), posed in the rig's LateUpdate;
+//                                        its torso stand-in -> ILocalRig.Torso, which already stays upright
+//   OnLocalAvatarChanged              -> nothing: a body target that is destroyed (the rig rebuilt) re-resolves
+//   OnEnable / OnDisable              -> Install / TearDown (onBeforeRender, sceneUnloaded)
+//   a dropped object's world scene    -> any loaded scene it came from: production also requires a scene loaded
+//                                        from a bundle and destroys a DontDestroyOnLoad root, neither of which an
+//                                        editor scene is
 //   `??` on UnityEngine.Object        -> explicit null checks (:296, :541), i.e. what a shipped build does
 //   Destroy                           -> DestroyImmediate only while the host tears down
+// Left out: the seat's View Smoothing (the desktop view doesn't smooth), the world-scope extension (BSUnityEventGuard
+// only reads it in the client), RemoteAttachmentDestroyed (the bridge keeps no list of applied reproductions), and the
+// safety-bubble scale. SyncedObjectSystem.ReleaseAfterRiding -> SyncedObjectsModule.ReleaseAfterRiding.
 // Deviations (plan parity ledger): RestoreRemoteReproductions on the player's own leave, and the host teardown.
 using System;
 using System.Collections.Generic;
@@ -58,6 +69,8 @@ namespace BS.LocalMultiplayer.Attachments
         readonly Action _onDesktopSeatRemoved;
         readonly Action<BSAttachment> _attachDelegate;
         readonly Action<BSAttachment> _detachDelegate;
+        readonly UnityEngine.Events.UnityAction _driveBodyAttachments;
+        readonly UnityEngine.Events.UnityAction<Scene> _onSceneUnloaded;
         Action<BSAttachment> _savedAttach;
         Action<BSAttachment> _savedDetach;
         BSScene _delegateScene;
@@ -90,6 +103,8 @@ namespace BS.LocalMultiplayer.Attachments
             _onDesktopSeatRemoved = OnDesktopSeatRemoved;
             _attachDelegate = OnAttachObject;
             _detachDelegate = OnDetachObject;
+            _driveBodyAttachments = DriveBodyAttachments;
+            _onSceneUnloaded = OnSceneUnloaded;
         }
 
         /// <summary>
@@ -123,6 +138,11 @@ namespace BS.LocalMultiplayer.Attachments
             _installed = true;
             _sceneDying = false;
             _generation++;
+            // OnEnable: body-driven attachments, and reproductions whose scene unloads. Once each, however often installed.
+            Application.onBeforeRender -= _driveBodyAttachments;
+            Application.onBeforeRender += _driveBodyAttachments;
+            SceneManager.sceneUnloaded -= _onSceneUnloaded;
+            SceneManager.sceneUnloaded += _onSceneUnloaded;
             if (scene == null || scene.data == null)
             {
                 return;
@@ -419,6 +439,17 @@ namespace BS.LocalMultiplayer.Attachments
             }
             else // Non-Physics attachment
             {
+                // Torso, hips, limbs: posed by us after the rig's LateUpdate (see DriveBodyAttachments), not by a
+                // ParentConstraint, which evaluates before the rig poses the orb's bones and would trail them a frame.
+                _attached.bodyDriven = isAttachment && GetAttachmentTransform(_attached.data) == null;
+                _attached.bodyTarget = null; // (re)resolved on the next drive
+                if (_attached.bodyDriven)
+                {
+                    if (_attached.parentConstraint != null) // a reattach from a hand/head point
+                        _attached.parentConstraint.constraintActive = false;
+                    MakeKinematicWhileAttached(_attached);
+                    return;
+                }
                 _attached.data.attachedObject.gameObject.TryGetComponent(out _attached.parentConstraint);
 
                 if (!_attached.parentConstraint)
@@ -440,16 +471,20 @@ namespace BS.LocalMultiplayer.Attachments
                     _attached.parentConstraint.translationOffsets = new Vector3[] { _attached.data.attachmentPosition };
                     _attached.parentConstraint.rotationOffsets = new Vector3[] { _attached.data.attachmentRotation.eulerAngles };
                     _attached.parentConstraint.constraintActive = true;
-
-                    // A Rigidbody the physics engine moves would fight the constraint (gravity drags it off every
-                    // step, and it flies off on detach): hold it kinematic while attached, as the old physics joint
-                    // held it, and give it back on detach.
-                    if (_attached.data.attachedObject.gameObject.TryGetComponent(out Rigidbody ownBody) && !ownBody.isKinematic)
-                    {
-                        ownBody.isKinematic = true;
-                        _attached.madeKinematic = ownBody;
-                    }
+                    MakeKinematicWhileAttached(_attached);
                 }
+            }
+        }
+
+        // A Rigidbody the physics engine moves would fight the attachment (gravity drags it off every step, and it
+        // flies off on detach): hold it kinematic while attached, as the old physics joint held it, and give it
+        // back on detach.
+        static void MakeKinematicWhileAttached(Attachment attached)
+        {
+            if (attached.data.attachedObject.gameObject.TryGetComponent(out Rigidbody ownBody) && !ownBody.isKinematic)
+            {
+                ownBody.isKinematic = true;
+                attached.madeKinematic = ownBody;
             }
         }
 
@@ -476,8 +511,9 @@ namespace BS.LocalMultiplayer.Attachments
         }
 
         /// <summary>
-        /// Maps an attachment's bone (avatarAttachmentPoint) to a desktop rig transform for the local player: the hand
-        /// anchors for hand bones, the camera for the head, the torso for everything else (GetAttachmentTransform).
+        /// The local player's transform for a hand or head attachment point: the rig's hand anchors for hand bones, the
+        /// camera for head/neck. Null for every other point (torso, hips, limbs) — those are body-driven
+        /// (<see cref="DriveBodyAttachments"/>), as is a hand/head point whose transform isn't available.
         /// </summary>
         Transform GetAttachmentTransform(BSAttachment data)
         {
@@ -499,8 +535,77 @@ namespace BS.LocalMultiplayer.Attachments
                     break;
             }
 
-            // Fallback to torso
+            return null;
+        }
+
+        /// <summary>
+        /// What a body-driven attachment follows: the player's own orb's bone (the stand-in for the local avatar, posed
+        /// from the pose this player publishes, as remotes reproduce it via LocalAttachmentBridge, so the broadcast
+        /// offset means the same for every player), or, with no orb to follow, the rig's torso.
+        /// </summary>
+        Transform ResolveBodyTarget(AvatarBoneName point)
+        {
+            var bone = GetLocalAvatarBone(point);
+            if (bone != null)
+                return bone;
+            var rig = Rig;
             return rig != null ? rig.Torso : null;
+        }
+
+        Transform GetLocalAvatarBone(AvatarBoneName point)
+        {
+            var orb = Rig is BS.LocalMultiplayer.Avatars.DesktopRig desktop ? desktop.LocalOrb : null;
+            if (orb == null)
+                return null;
+
+            Transform bone = null;
+            if (AvatarBoneMapping.TryGetHumanBone(point, out var humanBone))
+                orb.TryGetBone(humanBone, out bone);
+            // Bones the orb doesn't have (UpperChest, jaw, eyes): use the hips instead.
+            return bone != null ? bone : orb.Hips;
+        }
+
+        // A world object a peer is holding sits under that peer's orb bone, outside its scene, so unloading the scene
+        // doesn't take it. Release those reproductions when their scene goes: with no scene to return to, the release
+        // destroys them (see ReleaseAttachmentComponents).
+        void OnSceneUnloaded(Scene scene)
+        {
+            if (!IsLive)
+                return;
+            List<string> gone = null;
+            foreach (var kv in _remoteAttachments)
+                if (kv.Value != null && kv.Value.remoteOriginScene.handle == scene.handle)
+                    (gone ??= new List<string>()).Add(kv.Key);
+            if (gone == null) return;
+            foreach (var objId in gone)
+                RemoveRemoteAttachment(objId);
+            Debug.Log($"[LocalMP][Attachments] Released {gone.Count} held object(s) whose scene unloaded.");
+        }
+
+        /// <summary>
+        /// Poses body-driven local attachments on their target. Runs in onBeforeRender, which is after every
+        /// LateUpdate — so after DesktopRig.LateUpdate has posed this frame's orb. Same offset semantics as the remote
+        /// reproduction (the offset is in the target's local space).
+        /// </summary>
+        void DriveBodyAttachments()
+        {
+            if (!IsLive)
+                return;
+            foreach (var attachment in _attachments.Values)
+            {
+                if (attachment == null || attachment.isDestroyed || !attachment.isAttached || !attachment.bodyDriven
+                    || attachment.data == null)
+                    continue;
+
+                if (attachment.bodyTarget == null)
+                    attachment.bodyTarget = ResolveBodyTarget(attachment.data.avatarAttachmentPoint);
+                var target = attachment.bodyTarget;
+                if (target == null)
+                    continue;
+
+                attachment.transform.SetPositionAndRotation(target.TransformPoint(attachment.data.attachmentPosition),
+                    target.rotation * attachment.data.attachmentRotation);
+            }
         }
 
         // FlexaMover.AttachToSeat (enabled) / RemoveSeatJoint (disabled) on the desktop player.
@@ -662,7 +767,13 @@ namespace BS.LocalMultiplayer.Attachments
             }
 
             if (isPilot)
+            {
                 IgnoreCollision(attachment.attachedRigidbody, false);
+                var seat = attachment.data.attachedObject.gameObject;
+                var syncedBso = seat != null ? seat.GetComponentInParent<BSSyncedObject>() : null;
+                var syncedObjects = AttachmentServices.Get<BS.LocalMultiplayer.Objects.SyncedObjectsModule>(_host);
+                if (syncedBso != null && syncedObjects != null) syncedObjects.ReleaseAfterRiding(syncedBso);
+            }
 
             if (attachment.rigidbodyWasAdded)
                 DestroyObject(attachment.attachedRigidbody);
@@ -677,10 +788,32 @@ namespace BS.LocalMultiplayer.Attachments
                 DestroyObject(attachment.parentConstraint);
 
             // Remote reproductions are rigid-parented to a bone — un-parent (keeping world pose) so the
-            // object drops in place rather than staying stuck under the (soon-destroyed) avatar bone.
-            // Not from OnDestroy: the object is going away itself and can't be re-parented.
+            // object drops in place rather than staying stuck under the (soon-destroyed) avatar bone. Then
+            // put its own scale back: keeping world scale would bake in the bone's current scale.
+            // Not from OnDestroy: the object is going away itself and can't be re-parented. The null check covers a
+            // component destroyed under a stale entry.
             if (attachment.remoteParented && !fromOnDestroy && attachment != null)
-                attachment.transform.SetParent(null, worldPositionStays: true);
+            {
+                var t = attachment.transform;
+                if (attachment.remoteOriginalParent != null)
+                    t.SetParent(attachment.remoteOriginalParent, worldPositionStays: true);
+                else
+                {
+                    // It was a root of its scene, or its old parent is gone. SetParent(null) alone would leave it a root
+                    // of the orbs' DontDestroyOnLoad scene, outliving its own scene with its scripts still running: put
+                    // it back into its own scene, or, once that scene has unloaded, let it go the way its scene did.
+                    t.SetParent(null, worldPositionStays: true);
+                    var origin = attachment.remoteOriginScene;
+                    if (origin.IsValid() && origin.isLoaded)
+                        MoveToScene(t.gameObject, origin);
+                    else
+                    {
+                        DestroyObject(t.gameObject);
+                        return;
+                    }
+                }
+                t.localScale = attachment.remoteOriginalLocalScale;
+            }
         }
 
         /// <summary>
@@ -701,7 +834,13 @@ namespace BS.LocalMultiplayer.Attachments
             CaptureOrigin(objectBid, go);
             RemoveRemoteAttachment(objectBid); // replace any prior reproduction for this object
 
+            // The scene it belongs to, taken before it goes under the bone (an earlier reproduction already knows it).
+            go.TryGetComponent(out Attachment known);
+            var originScene = known != null && known.remoteOriginScene.IsValid() ? known.remoteOriginScene : go.scene;
+
             var t = go.transform;
+            var originalParent = t.parent;
+            var originalLocalScale = t.localScale;
             // Preserve the object's world scale (SetParent with worldPositionStays adjusts localScale so a
             // non-unit bone scale doesn't distort the attached object), then place it at the grip offset.
             t.SetParent(bone, worldPositionStays: true);
@@ -715,6 +854,9 @@ namespace BS.LocalMultiplayer.Attachments
                 attachment = go.AddComponent<Attachment>();
                 _added.Add(attachment);
             }
+            attachment.remoteOriginalParent = originalParent;
+            attachment.remoteOriginalLocalScale = originalLocalScale;
+            attachment.remoteOriginScene = originScene;
             attachment.attachmentsSystem = this;
             attachment._live = true;
             attachment.data = data;
@@ -912,6 +1054,8 @@ namespace BS.LocalMultiplayer.Attachments
             }
             finally
             {
+                Application.onBeforeRender -= _driveBodyAttachments;
+                SceneManager.sceneUnloaded -= _onSceneUnloaded;
                 _attachments.Clear();
                 _attachmentsTo.Clear();
                 _remoteAttachments.Clear();

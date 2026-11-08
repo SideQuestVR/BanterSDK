@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/UnityTransformPoseAdapter.cs" sha256="08ddc17832f88bf1efc3c57685f437203214ff4eb5b6df9a03a525ce50dadcff" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/UnityTransformPoseAdapter.cs" sha256="4aec2c3c8da174ef8eb1049e4208f0640e6f7909110402e17d96875b1f48bc72" mode="port" />
 // UnityTransformPoseAdapter (world space only: synced objects are never network-parented) and
 // UnityRigidbodyPoseAdapter, line for line. ITransformPoseSource is PacketPartyTransformRuntime.cs:22-26.
 using System;
@@ -90,10 +90,28 @@ namespace BS.LocalMultiplayer.Objects
             return true;
         }
 
+        /// <summary>
+        /// A presentation step longer than this is placed, not moved: a teleport or reset crosses the gap in a few large
+        /// steps (tf.objects frames carry no discontinuity, so playback interpolates across it), the first pose of a new
+        /// stream in one, and MovePosition across such a step gives the kinematic body the implied velocity (hundreds of
+        /// m/s) for that step, which it hands to anything it touches. No real interpolated step comes close.
+        /// </summary>
+        public const float SnapDistance = 5f;
+
         public void Apply(SynchronizedTransformSample sample)
         {
-            body.MovePosition(sample.Position);
-            if (sample.HasRotation) body.MoveRotation(sample.Rotation);
+            if ((sample.Position - body.position).sqrMagnitude > SnapDistance * SnapDistance)
+            {
+                Quaternion rotation = sample.HasRotation ? sample.Rotation : body.rotation;
+                body.position = sample.Position;
+                body.rotation = rotation;
+                body.transform.SetPositionAndRotation(sample.Position, rotation);
+            }
+            else
+            {
+                body.MovePosition(sample.Position);
+                if (sample.HasRotation) body.MoveRotation(sample.Rotation);
+            }
             // Remote physics views are deliberately kinematic. Their velocity is
             // interpolation/prediction input, not a value Unity allows us to set
             // on the presentation body.

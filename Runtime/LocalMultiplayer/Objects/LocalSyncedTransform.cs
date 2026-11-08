@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartySynchronizedTransform.cs" sha256="650040f9afb83df9d34611a0eb1b86dee9420b689cf7bca4f52a7c32e6f206c6" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartySynchronizedTransform.cs" sha256="651f879f279d96c94c5c5d31f899f64e9220ad3f270bc7adb72c526d7814f5d8" mode="port" />
 // The automatic-identity path of PacketPartySynchronizedTransform: ConfigureAutomatic (:294-314), the authored
 // kinematic capture on every enable (:584-602), the authority switch of RefreshAutomaticBindingAsync (:963-1022),
 // remote presentation (:724-819, Render clock) and OnDisable (:627-651). The runtime's descriptor registration, views

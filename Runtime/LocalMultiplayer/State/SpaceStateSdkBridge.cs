@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/SpaceStateSdkBridge.cs" sha256="e1257e1338ba2f3c0d477bfd8b3445c0333abcefa1ab94537c3a8eb73bd51e67" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/SpaceStateSdkBridge.cs" sha256="a0f78f297eb3b35536c3ef40abc6aa51720fc83b6aa1e95c1cb896da316e394c" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class SpaceStateModule ticks; the service is
 // handed in instead of polled from SpaceStateService.Instance; BSScene.Instance() -> BSScene.Current (never builds a
 // scene during teardown); the GetSpaceStateValue delegate is put back on unhook when it is still ours; the scene-load replay waits for the next

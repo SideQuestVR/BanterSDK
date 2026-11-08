@@ -1286,8 +1286,8 @@ namespace BS.BridgeApi
         static void T424(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); if (c.Failed) return; self.Clear(a0); }
         static void T425(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; self.Pause(); }
         static void T426(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); if (c.Failed) return; self.Pause(a0); }
-        static void T427(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; self.Play(); }
-        static void T428(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); if (c.Failed) return; self.Play(a0); }
+        static void T427(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; BridgeApiGuards.ParticlePlay(c, self); if (c.Failed) return; self.Play(); }
+        static void T428(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); if (c.Failed) return; BridgeApiGuards.ParticlePlay(c, self); if (c.Failed) return; self.Play(a0); }
         static void T429(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; self.Stop(); }
         static void T430(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); if (c.Failed) return; self.Stop(a0); }
         static void T431(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); var a1 = (UnityEngine.ParticleSystemStopBehavior)c.Enum(1, E_UnityEngine_ParticleSystemStopBehavior); if (c.Failed) return; self.Stop(a0, a1); }

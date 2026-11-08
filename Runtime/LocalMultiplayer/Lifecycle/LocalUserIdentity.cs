@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/LocalUserService.cs" sha256="6e179fb28ec14463a540ce93ac82b6aa9845b72e8a583e70001ef92f59c17124" mode="port" />
+// <mirror source="Assets/Systems/Networking/LocalUserService.cs" sha256="bbe3bdde63190b3e921ea55e4a76045d35a0154fda94396802bfffb6dde9480c" mode="port" />
 using UnityEngine;
 
 namespace BS.LocalMultiplayer
@@ -9,6 +9,7 @@ namespace BS.LocalMultiplayer
     /// is joined and the room session id while in it, set in place so the page never sees this player leave
     /// and rejoin. Here the UserData is the desktop player's, stamped before its Start runs, and announced at
     /// once so "me" resolves for every scene object (LocalUserService.EnsureUser at BanterSceneEventHandler.Start).
+    /// Its isSpaceAdmin comes from the settings' world owner and moderators (see RefreshSpaceAdmin).
     /// </summary>
     internal sealed class LocalUserIdentity
     {
@@ -49,6 +50,7 @@ namespace BS.LocalMultiplayer
             _user.isLocal = true;
             _user.color = LocalColor;
             ApplyIdentity();
+            RefreshSpaceAdmin();
             scene.AddUser(_user);
             Debug.Log($"[LocalMP] Registered local user uid={_user.uid} id={_user.id} " +
                       $"(session={(_networkSessionId != null ? _networkSessionId : "offline")}).");
@@ -62,6 +64,7 @@ namespace BS.LocalMultiplayer
         {
             _networkSessionId = string.IsNullOrEmpty(roomSessionId) ? null : roomSessionId;
             ApplyIdentity();
+            RefreshSpaceAdmin();
         }
 
         /// <summary>Left the room: revert to the offline session id; the user stays present.</summary>
@@ -69,6 +72,25 @@ namespace BS.LocalMultiplayer
         {
             _networkSessionId = null;
             ApplyIdentity();
+            RefreshSpaceAdmin();
+        }
+
+        /// <summary>
+        /// The SDK's <c>isSpaceAdmin</c> for the local user, as LocalUserService.RefreshSpaceAdmin gives it: the
+        /// space's owner or its moderators. Production reads the room join (<c>is_owner</c> / <c>is_space_admin</c>),
+        /// the world record and the API-admin check; here the settings' worldOwnerSlot and moderatorSlots decide,
+        /// the same offline and in the room.
+        /// </summary>
+        void RefreshSpaceAdmin()
+        {
+            if (_user != null) SetSpaceAdmin(_identity != null && _identity.Role != PlayerRole.Member);
+        }
+
+        void SetSpaceAdmin(bool admin)
+        {
+            if (_user == null || _user.isSpaceAdmin == admin) return;
+            _user.isSpaceAdmin = admin;
+            AnnounceToPage();
         }
 
         // Stamp name/uid/id from the identity + session state. Safe to call repeatedly.
@@ -85,11 +107,17 @@ namespace BS.LocalMultiplayer
 
         // LocalUserService.AnnounceIfChanged: the page learns a user's fields only from user-joined (refreshed
         // in place on a repeat join for the same uid), and the scene-ready resync runs before the room join, so
-        // a new session id or name is announced again. A changed uid isn't (the page would add a second user).
+        // a new session id or name is announced again (isSpaceAdmin too, see SetSpaceAdmin). A changed uid isn't
+        // (the page would add a second user).
         void AnnounceIfChanged(string previousUid, string previousId, string previousName)
         {
             if (_user.uid != previousUid) return;
             if (_user.id == previousId && _user.name == previousName) return;
+            AnnounceToPage();
+        }
+
+        void AnnounceToPage()
+        {
             var scene = BSScene.Current;
             if (scene == null || scene.link == null || !scene.users.Contains(_user)) return;
             scene.link.OnUserJoined(_user);
