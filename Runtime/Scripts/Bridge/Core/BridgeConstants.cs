@@ -70,10 +70,18 @@ namespace BS.Bridge
         public const int Pong = 0x05;
         // 0x06 is retired (LEGACY, the switch to strings): never reuse it.
         public const int Holding = 0x07;
+        /// <summary>Page to Unity, session plane: u32 families, the pushed families WELCOME offered that this page reads.</summary>
+        public const int Accept = 0x08;
         public const int LegacyText = 0x0F;
         /// <summary>varint reqId Â· varint memberId Â· varint self Â· varint argc Â· values (BridgeValues).</summary>
         public const int Call = 0x18;
         public const int Reply = 0x30;
+        /// <summary>Objects and components Unity created, introduced to the page (BridgePush).</summary>
+        public const int Announce = 0x32;
+        /// <summary>Coalesced property and watched-transform changes, with the page's applied item count (BridgePush).</summary>
+        public const int Delta = 0x33;
+        /// <summary>Objects and components that have gone (BridgePush).</summary>
+        public const int Destroyed = 0x35;
     }
 
     internal static class ReplyStatus
@@ -121,6 +129,25 @@ namespace BS.Bridge
     internal static class BridgeFamily
     {
         public const uint Call = 1;
+        /// <summary>A CALL waits until scheduler work queued by this document's earlier ops has started. Unity-side only.</summary>
+        public const uint Fence = 2;
+        /// <summary>DELTA instead of "!u!" updates and TRANSFORM_UPDATED events. Pushed: the page must ACCEPT it.</summary>
+        public const uint Delta = 4;
+        /// <summary>ANNOUNCE instead of the "!u!" stand-in and the page's OBJECT_UPDATE_REQUEST. Pushed: the page must ACCEPT it.</summary>
+        public const uint Announce = 8;
+        /// <summary>DESTROYED pushes (OnDestroy and a sweep). Pushed: the page must ACCEPT it.</summary>
+        public const uint Destroyed = 16;
+        /// <summary>Families Unity sends ops for: only a page that has said ACCEPT gets them.</summary>
+        public const uint Pushed = Delta | Announce | Destroyed;
+    }
+
+    /// <summary>DESTROYED reasons, one per handle.</summary>
+    internal static class DestroyedReason
+    {
+        /// <summary>Its OnDestroy ran.</summary>
+        public const byte Destroyed = 1;
+        /// <summary>The sweep found it gone (destroyed without its OnDestroy, e.g. never active).</summary>
+        public const byte Swept = 2;
     }
 
     /// <summary>WELCOME.caps: what this document may do through CALL, by tier.</summary>

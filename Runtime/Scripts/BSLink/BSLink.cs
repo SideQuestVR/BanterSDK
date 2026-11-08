@@ -890,11 +890,58 @@ namespace BS
             false;
 #endif
 
+        /// <summary>
+        /// The M3 families this client offers pages (BridgeFamily.Fence, Delta, Announce, Destroyed), read once at start
+        /// from --bs-bridge-families=fence,delta,announce,destroyed (or all) and, in the editor, the EditorPrefs string
+        /// BS.Bridge.Families. None by default: pages then see exactly what they saw before these families.
+        /// </summary>
+        internal static uint BridgeFamilies;
+
+        internal const string BridgeFamiliesArgument = "--bs-bridge-families=";
+        internal const string BridgeFamiliesEditorPref = "BS.Bridge.Families";
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ReadBridgeFamilies()
+        {
+            string list = null;
+            try
+            {
+                foreach (var a in Environment.GetCommandLineArgs())
+                    if (a.StartsWith(BridgeFamiliesArgument, StringComparison.OrdinalIgnoreCase)) list = a.Substring(BridgeFamiliesArgument.Length);
+            }
+            catch (Exception) { /* no command line */ }
+#if UNITY_EDITOR
+            if (list == null) list = UnityEditor.EditorPrefs.GetString(BridgeFamiliesEditorPref, "");
+#endif
+            BridgeFamilies = ParseBridgeFamilies(list);
+            if (BridgeFamilies != 0) LogLine.Do(LogLine.banterColor, LogTag.Banter, "[Bridge] Offering families " + BridgeFamilies + " (" + list + ").");
+        }
+
+        /// <summary>"fence,delta,announce,destroyed" or "all" (any case, commas or spaces) as BridgeFamily bits; unknown names are ignored.</summary>
+        internal static uint ParseBridgeFamilies(string list)
+        {
+            uint families = 0;
+            if (string.IsNullOrEmpty(list)) return 0;
+            foreach (var raw in list.Split(new[] { ',', ' ', ';' }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                switch (raw.Trim().ToLowerInvariant())
+                {
+                    case "fence": families |= BridgeFamily.Fence; break;
+                    case "delta": families |= BridgeFamily.Delta; break;
+                    case "announce": families |= BridgeFamily.Announce; break;
+                    case "destroyed": families |= BridgeFamily.Destroyed; break;
+                    case "all": families |= BridgeFamily.Fence | BridgeFamily.Pushed; break;
+                }
+            }
+            return families;
+        }
+
         void StartBridge()
         {
             var options = new BridgeViewOptions
             {
                 LoadStartedMayTrail = LoadStartedMayTrail,
+                Families = BridgeFamilies,
                 // One cap for fragments being reassembled across every view.
                 ReassemblyBudget = BridgeReassemblyBudget,
                 Log = m => LogLine.Do(LogLine.banterColor, LogTag.Banter, m),
@@ -929,7 +976,12 @@ namespace BS
             if (bridge == null) return;
             DrainWithinFrameBudget();
             bridge.Tick();
+            // DESTROYED: objects and components destroyed without their OnDestroy, a few each frame.
+            if (scene != null && bridge.Pushes(BridgeFamily.Destroyed)) scene.SweepDestroyed(DestroyedSweepPerFrame);
         }
+
+        /// <summary>DESTROYED's sweep: entries of each table looked at per frame.</summary>
+        internal static int DestroyedSweepPerFrame = 64;
 
         /// <summary>Drains while this frame's budget (shared by the inline drains in the Ora callback) lasts.</summary>
         void DrainWithinFrameBudget()
@@ -1059,6 +1111,18 @@ namespace BS
             {
                 return;
             }
+            // DELTA (when this document reads it): each watched value joins the next DELTA, the newest per property.
+            var b = bridge;
+            if (b != null && b.Pushes(BridgeFamily.Delta))
+            {
+                uint stamp = b.AppliedMark;
+                foreach (var update in updates)
+                {
+                    var part = TransformDeltaText(update);
+                    if (part != null) b.SendDelta(oid, 0, (int)ComponentType.Transform, (int)update.name, part, stamp);
+                }
+                return;
+            }
             foreach (var update in updates)
             {
                 switch (update.name)
@@ -1108,6 +1172,35 @@ namespace BS
                 }
             }
             Send(APICommands.EVENT + APICommands.TRANSFORM_UPDATED + MessageDelimiters.PRIMARY + oid + updatesString.ToString());
+        }
+
+        /// <summary>
+        /// One watched value as TRANSFORM_UPDATED writes it ("prop|x|y|z", a quaternion with |w), without its leading
+        /// delimiter; null for a property that event never carries.
+        /// </summary>
+        internal static string TransformDeltaText(BSComponentPropertyUpdate update)
+        {
+            string t = MessageDelimiters.TERTIARY;
+            switch (update.name)
+            {
+                case PropertyName.position:
+                case PropertyName.localPosition:
+                case PropertyName.eulerAngles:
+                case PropertyName.localEulerAngles:
+                case PropertyName.localScale:
+                {
+                    var v = (Vector3)update.value;
+                    return (int)update.name + t + NumberFormat.Format(v.x) + t + NumberFormat.Format(v.y) + t + NumberFormat.Format(v.z);
+                }
+                case PropertyName.rotation:
+                case PropertyName.localRotation:
+                {
+                    var q = (Quaternion)update.value;
+                    return (int)update.name + t + NumberFormat.Format(q.x) + t + NumberFormat.Format(q.y) + t + NumberFormat.Format(q.z) + t + NumberFormat.Format(q.w);
+                }
+                default:
+                    return null;
+            }
         }
 
         public void OnSendVersion(string versionData)

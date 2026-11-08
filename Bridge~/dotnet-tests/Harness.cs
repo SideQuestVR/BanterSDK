@@ -112,6 +112,8 @@ sealed class TestPage
     public readonly List<string> Got = new List<string>();
     public readonly List<(uint reqId, byte status)> Replies = new List<(uint, byte)>();
     public readonly Dictionary<uint, byte[]> ReplyBodies = new Dictionary<uint, byte[]>();
+    /// <summary>ANNOUNCE, DELTA and DESTROYED ops, in arrival order (their place among strings is marked in Got).</summary>
+    public readonly List<(uint opcode, byte[] payload)> Pushes = new List<(uint, byte[])>();
     public uint Families, Caps;
     public int Stale;
     public bool HonorWindow = true;
@@ -168,6 +170,9 @@ sealed class TestPage
 
     /// <summary>pagehide: BYE out of band (epoch 0, with the token).</summary>
     public void Bye() => Notice(0, BridgeOp.Bye, BridgeReason.PageHide);
+
+    /// <summary>The page reads these pushed families (what WELCOME offered, or more, to test Unity's side).</summary>
+    public void Accept(uint families) => Link.EnqueueOp(BridgeOps.Encode(BridgeOp.Accept, BridgePush.EncodeAccept(families)));
 
     public void Request(uint opcode, uint reqId)
     {
@@ -252,6 +257,12 @@ sealed class TestPage
                         {
                             Replies.Add((id, st));
                             ReplyBodies[id] = body.ToArray();
+                        }
+                        else if (it.Opcode == BridgeOp.Delta || it.Opcode == BridgeOp.Announce || it.Opcode == BridgeOp.Destroyed)
+                        {
+                            Pushes.Add((it.Opcode, it.Payload.ToArray()));
+                            // In order with the strings: "#<opcode>" marks where a push arrived.
+                            Got.Add("#" + it.Opcode);
                         }
                     }
                 return;

@@ -12,6 +12,10 @@ using BS.Bridge;
 /// answer is sent by the next "F" (finish) line, from the captured context (the way an await would).
 /// With BRIDGE_PEER_CALLS set the view has a call host, over FakeApi's table: handle 1001 is alive, 1002 dead, 1003 outside
 /// the world. "M &lt;id&gt; &lt;argc&gt; &lt;0|1 static&gt;" adds a member that answers its argument count and logs "C &lt;id&gt; &lt;json args&gt;".
+/// BRIDGE_PEER_FAMILIES (a number) is what the view offers besides CALL. "P &lt;json [oid,cid,ct,prop,text]&gt;" reads a
+/// DELTA value now (stamped with the applied count as it stands), "K &lt;handle&gt;" reports one destroyed, "J &lt;json&gt;"
+/// announces an object ([1,oid,active,name,layer,tag,parent]) or a component ([2,oid,cid,componentType]), and "Z" prints
+/// "Z &lt;json&gt;" with the current document's accepted families, items in and applied count.
 /// </summary>
 static class Peer
 {
@@ -19,6 +23,7 @@ static class Peer
     {
         Console.InputEncoding = System.Text.Encoding.UTF8;
         var options = new BridgeViewOptions { LoadStartedMayTrail = false };
+        if (uint.TryParse(Environment.GetEnvironmentVariable("BRIDGE_PEER_FAMILIES"), out var families)) options.Families = families;
         BridgeMember[] members = null;
         Action seed = null;
         if (Environment.GetEnvironmentVariable("BRIDGE_PEER_CALLS") != null)
@@ -79,6 +84,26 @@ static class Peer
                         stdout.WriteLine("C " + id + " " + JsonSerializer.Serialize(args));
                         c.RetInt(c.ArgCount);
                     });
+                    break;
+                }
+                case 'P':
+                {
+                    var d = JsonSerializer.Deserialize<JsonElement>(arg);
+                    rig.View.SendDelta(d[0].GetInt32(), d[1].GetInt32(), d[2].GetInt32(), d[3].GetInt32(), d[4].GetString(), rig.View.AppliedMark);
+                    break;
+                }
+                case 'K': rig.View.SendDestroyed(int.Parse(arg.Trim('"')), DestroyedReason.Destroyed); break;
+                case 'J':
+                {
+                    var a = JsonSerializer.Deserialize<JsonElement>(arg);
+                    if (a[0].GetInt32() == 1) rig.View.SendAnnounce(new AnnounceEntry(a[1].GetInt32(), a[2].GetInt32() == 1, a[3].GetString(), a[4].GetInt32(), a[5].GetString(), a[6].GetInt32()));
+                    else rig.View.SendAnnounce(new AnnounceEntry(a[1].GetInt32(), a[2].GetInt32(), a[3].GetInt32()));
+                    break;
+                }
+                case 'Z':
+                {
+                    var s = rig.View.Current;
+                    stdout.WriteLine("Z " + JsonSerializer.Serialize(new { accepted = s?.Accepted ?? 0, itemsIn = s?.ItemsIn ?? 0, applied = s?.Applied ?? 0 }));
                     break;
                 }
                 case 'D':

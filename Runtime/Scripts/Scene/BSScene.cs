@@ -283,12 +283,88 @@ namespace BS
 
         public void EnqueueChange(string change)
         {
+            // DELTA (when this document reads it): coalesced into the next DELTA, stamped with the page's applied count
+            // as it stood when the value was read.
+            var bridge = link?.bridge;
+            if (bridge != null && bridge.Pushes(global::BS.Bridge.BridgeFamily.Delta)
+                && TryParseChange(change, out int oid, out int cid, out int ct, out int prop, out string value))
+            {
+                bridge.SendDelta(oid, cid, ct, prop, value, inPropertyWorker ? propertyWorkerStamp : bridge.AppliedMark);
+                return;
+            }
             link.Send(APICommands.UPDATE + change);
         }
-        private void EnqueuePropertyUpdates(List<BSComponentPropertyUpdate> updates)
+
+        /// <summary>
+        /// "oid¶cid¶ct¶n§type§...", what Serialise writes for a component's property. False for anything else (an object's
+        /// presence marker, a property with no value), which stays a string.
+        /// </summary>
+        internal static bool TryParseChange(string change, out int oid, out int cid, out int ct, out int prop, out string value)
+        {
+            oid = cid = ct = prop = 0;
+            value = null;
+            if (change == null) return false;
+            char primary = MessageDelimiters.PRIMARY[0], secondary = MessageDelimiters.SECONDARY[0];
+            int a = change.IndexOf(primary);
+            int b = a < 0 ? -1 : change.IndexOf(primary, a + 1);
+            int c = b < 0 ? -1 : change.IndexOf(primary, b + 1);
+            int d = c < 0 ? -1 : change.IndexOf(secondary, c + 1);
+            if (d < 0 || !Digits(change, 0, a, out oid) || !Digits(change, a + 1, b, out cid) || !Digits(change, b + 1, c, out ct)
+                || !Digits(change, c + 1, d, out prop) || oid == 0 || cid == 0)
+                return false;
+            value = change.Substring(c + 1);
+            return true;
+        }
+
+        static bool Digits(string s, int start, int end, out int value)
+        {
+            value = 0;
+            if (end <= start || end - start > 9) return false;
+            for (int i = start; i < end; i++)
+            {
+                if (s[i] < '0' || s[i] > '9') return false;
+                value = value * 10 + (s[i] - '0');
+            }
+            return true;
+        }
+
+        // DELTA: the property worker reads values the main thread queued earlier, so each batch carries the applied
+        // count from when it was queued (a DeltaStamp ahead of it), and what the worker sends is stamped with that.
+        sealed class DeltaStamp : BSComponentPropertyUpdate
+        {
+            public readonly uint Stamp;
+            public DeltaStamp(uint stamp) { Stamp = stamp; }
+        }
+        [ThreadStatic] static bool inPropertyWorker;
+        uint propertyWorkerStamp;
+        uint lastQueuedStamp;
+        readonly object stampGate = new object();
+
+        private void EnqueuePropertyUpdates(List<BSComponentPropertyUpdate> updates) => EnqueuePropertyUpdates(updates, null);
+
+        /// <param name="stamp">DELTA only: the stamp a retry was read under; otherwise the applied count now.</param>
+        void EnqueuePropertyUpdates(List<BSComponentPropertyUpdate> updates, uint? stamp)
         {
             if (updates.Count > 0)
             {
+                var bridge = link?.bridge;
+                if (bridge != null && bridge.Pushes(global::BS.Bridge.BridgeFamily.Delta))
+                {
+                    lock (stampGate)
+                    {
+                        uint mark = stamp ?? bridge.AppliedMark;
+                        if (stamp == null && mark == lastQueuedStamp)
+                        {
+                            propertyUpdates.Add(updates);
+                            return;
+                        }
+                        lastQueuedStamp = mark;
+                        var stamped = new List<BSComponentPropertyUpdate>(updates.Count + 1) { new DeltaStamp(mark) };
+                        stamped.AddRange(updates);
+                        propertyUpdates.Add(stamped);
+                    }
+                    return;
+                }
                 propertyUpdates.Add(updates);
             }
         }
@@ -296,8 +372,13 @@ namespace BS
         public BSScene()
         {
             InstanceID = Guid.NewGuid();
+            // The worker serves every document and does none's op: it never counts in a document's fence (M3 FENCE).
             propertyUpdates = new BS.Bridge.DrainQueue<BSComponentPropertyUpdate>(DoPropertyUpdateQueue,
-                drain => BS.TaskRunner.Run(drain, $"{nameof(BSScene)}.{nameof(EnqueuePropertyUpdates)}"), Debug.LogException);
+                drain =>
+                {
+                    using (global::BS.Bridge.BridgeContext.WithoutFence())
+                        BS.TaskRunner.Run(drain, $"{nameof(BSScene)}.{nameof(EnqueuePropertyUpdates)}");
+                }, Debug.LogException);
             users = new List<UserData>();
             events = new BSSceneEvents();
             _instance = this;
@@ -1264,13 +1345,18 @@ namespace BS
             }
             return null;
         }
-        public void DestroyBanterObject(int oid)
+        public void DestroyBanterObject(int oid) => DestroyBanterObject(oid, global::BS.Bridge.DestroyedReason.Destroyed);
+
+        void DestroyBanterObject(int oid, byte reason)
         {
             var banterObject = GetBanterObject(oid);
             if (banterObject != null)
             {
                 banterObject.Destroy();
                 objects.TryRemove(oid, out _);
+                // DESTROYED (when this document reads it): the page drops the object and fires destroyed/object-removed.
+                var bridge = link?.bridge;
+                if (bridge != null && bridge.Pushes(global::BS.Bridge.BridgeFamily.Destroyed)) bridge.SendDestroyed(oid, reason);
             }
         }
         public BSComponent AddBanterComponent(int objectId, int componetId, string linkId, ComponentType type)
@@ -1393,7 +1479,10 @@ namespace BS
             var named = waiting.Where(c => BSLoadGate.IsCritical(c.type))
                 .Concat(waiting.Where(c => !BSLoadGate.IsCritical(c.type)).Take(BSLoadGate.NamedInLog))
                 .Select(Diagnose).ToList();
-            Debug.LogError(BSLoadGate.MissingReport(BSLink.DescribeUrlForLog(CurrentUrl), state, banterComponents.Count, waiting.Count, named, pendingCreates.Count));
+            var report = BSLoadGate.MissingReport(BSLink.DescribeUrlForLog(CurrentUrl), state, banterComponents.Count, waiting.Count, named, pendingCreates.Count);
+            // Only slow (everything left is finishing): a warning, not a failure.
+            if (BSLoadGate.OnlyFinishing(waiting.Count, named)) Debug.LogWarning(report);
+            else Debug.LogError(report);
         }
 
         // The bounded wait, reset with each load: see BSLoadGate and ReleaseStalledComponents.
@@ -1704,6 +1793,66 @@ namespace BS
             {
                 obj.mainThreadComponentMap.Remove(UnityId(comp));
             }
+            // Its OnDestroy. DESTROYED (when this document reads it), for a component the page can know.
+            var bridge = link?.bridge;
+            if (bridge != null && bridge.Pushes(global::BS.Bridge.BridgeFamily.Destroyed))
+            {
+                int cid = UnityId(comp);
+                if (banterComponents.ContainsKey(cid)) bridge.SendDestroyed(cid, global::BS.Bridge.DestroyedReason.Destroyed);
+            }
+        }
+
+        // The DESTROYED sweep's place in each table: a snapshot of the keys, walked a budget at a time.
+        int[] sweepObjects, sweepComponents;
+        int sweepObjectAt, sweepComponentAt;
+
+        /// <summary>
+        /// DESTROYED's sweep (main thread, a few each frame, while the document reads DESTROYED): objects and components
+        /// destroyed without their OnDestroy (they never woke up) are let go and reported as swept. Returns how many it
+        /// found.
+        /// </summary>
+        internal int SweepDestroyed(int budget)
+        {
+            var bridge = link?.bridge;
+            if (bridge == null || !bridge.Pushes(global::BS.Bridge.BridgeFamily.Destroyed)) return 0;
+            int found = 0;
+            if (sweepObjects == null || sweepObjectAt >= sweepObjects.Length)
+            {
+                sweepObjects = objects.Keys.ToArray();
+                sweepObjectAt = 0;
+            }
+            for (int n = 0; n < budget && sweepObjectAt < sweepObjects.Length; n++)
+            {
+                int oid = sweepObjects[sweepObjectAt++];
+                if (!objects.TryGetValue(oid, out var entry)) continue;
+                // Unity's null: the object is gone, though its entry is still here.
+                if (!ReferenceEquals(entry.gameObject, null) && entry.gameObject == null)
+                {
+                    DestroyBanterObject(oid, global::BS.Bridge.DestroyedReason.Swept);
+                    found++;
+                }
+            }
+            if (sweepComponents == null || sweepComponentAt >= sweepComponents.Length)
+            {
+                sweepComponents = banterComponents.Keys.ToArray();
+                sweepComponentAt = 0;
+            }
+            for (int n = 0; n < budget && sweepComponentAt < sweepComponents.Length; n++)
+            {
+                int cid = sweepComponents[sweepComponentAt++];
+                if (!banterComponents.TryGetValue(cid, out var record)) continue;
+                var objectId = record.banterObject?.unityAndBanterObject.id;
+                var map = ReferenceEquals(objectId, null) ? null : objectId.mainThreadComponentMap;
+                if (map == null || !map.TryGetValue(cid, out var unityComponent)) continue;
+                if (!ReferenceEquals(unityComponent, null) && unityComponent == null)
+                {
+                    map.Remove(cid);
+                    DestroyBanterComponent(cid);
+                    bridge.SendDestroyed(cid, global::BS.Bridge.DestroyedReason.Swept);
+                    found++;
+                }
+            }
+            return found;
         }
         #endregion
 
@@ -3523,11 +3672,30 @@ namespace BS
 
         private void DoPropertyUpdateQueue(List<BSComponentPropertyUpdate> toProcess)
         {
+            inPropertyWorker = true;
+            try
+            {
+                DoPropertyUpdates(toProcess);
+            }
+            finally
+            {
+                inPropertyWorker = false;
+            }
+        }
+
+        void DoPropertyUpdates(List<BSComponentPropertyUpdate> toProcess)
+        {
             List<BSComponentPropertyUpdate> toReenqueue = null;
+            uint? retryStamp = null;
             int dropped = 0;
             for (int i = 0; i < toProcess.Count; i++)
             {
                 var property = toProcess[i];
+                if (property is DeltaStamp deltaStamp)
+                {
+                    propertyWorkerStamp = deltaStamp.Stamp;
+                    continue;
+                }
                 var component = GetBanterComponent(property.cid);
                 if (component == null)
                 {
@@ -3550,6 +3718,9 @@ namespace BS
                     if (toReenqueue == null)
                     {
                         toReenqueue = new List<BSComponentPropertyUpdate>();
+                        // DELTA: a retry keeps the stamp it was read under.
+                        var bridge = link?.bridge;
+                        if (bridge != null && bridge.Pushes(global::BS.Bridge.BridgeFamily.Delta)) retryStamp = propertyWorkerStamp;
                     }
                     property.retries++;
                     toReenqueue.Add(property);
@@ -3564,7 +3735,7 @@ namespace BS
             {
                 UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
                  {
-                     EnqueuePropertyUpdates(toReenqueue);
+                     EnqueuePropertyUpdates(toReenqueue, retryStamp);
                  }, $"{nameof(BSScene)}.{nameof(DoPropertyUpdateQueue)}"));
             }
         }
@@ -3805,9 +3976,36 @@ namespace BS
         public void FlushObjectToChanges(int oid, int cid = 0, ComponentType ct = 0)
         {
             // An empty update to trigger this object to be sent to JS
+            if (TryAnnounce(oid, cid, ct)) return;
+            // Always the string, never DELTA: the page makes the object from it, then asks for the rest.
+            link.Send(APICommands.UPDATE + $"{oid}¶{cid}¶{(int)ct}¶{(int)PropertyName.hasUnity}§{(int)PropertyType.Bool}§1");
 
-            EnqueueChange($"{oid}¶{cid}¶{(int)ct}¶{(int)PropertyName.hasUnity}§{(int)PropertyType.Bool}§1");
+        }
 
+        /// <summary>
+        /// ANNOUNCE (when this document reads it): the object with what the page would otherwise ask for, or the
+        /// component. False when it can't (an unknown object, or off the main thread): then the string goes.
+        /// </summary>
+        bool TryAnnounce(int oid, int cid, ComponentType ct)
+        {
+            var bridge = link?.bridge;
+            if (bridge == null || !bridge.Pushes(global::BS.Bridge.BridgeFamily.Announce)) return false;
+            if (cid != 0)
+            {
+                bridge.SendAnnounce(new global::BS.Bridge.AnnounceEntry(oid, cid, (int)ct));
+                return true;
+            }
+            var go = GetGameObject(oid);
+            if (go == null) return false;
+            try
+            {
+                bridge.SendAnnounce(new global::BS.Bridge.AnnounceEntry(oid, go.activeSelf, go.name, go.layer, go.tag, PageParentId(go)));
+                return true;
+            }
+            catch (UnityException)
+            {
+                return false; // Unity's object API is main-thread only
+            }
         }
         public void KillAllKitItemsBeforeLoad()
         {

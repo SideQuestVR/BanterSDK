@@ -19,8 +19,10 @@ static class Program
         RereviewTests.Run();
         DrainQueueTests.Run();
         CallTests.Run();
+        PushTests.Run();
         FuzzTests.Run(n, seed);
         CallTests.Fuzz(n, seed);
+        PushTests.Fuzz(n, seed);
         Console.WriteLine($"\n{T.Passed} passed, {T.Failed} failed");
         foreach (var f in T.Failures) Console.WriteLine("  FAILED: " + f);
         return T.Failed == 0 ? 0 : 1;

@@ -74,8 +74,17 @@ namespace BS.Bridge
         /// small error replies queue, so this is that cap plus room for the largest message already on its way.
         /// </summary>
         public long MaxOutboundCloseBytes = 5L * BridgeWire.MaxMessage;
+        /// <summary>
+        /// Families this client offers besides CALL (BridgeFamily.Fence, Delta, Announce, Destroyed). 0, the default: none,
+        /// and the wire is what it was before them.
+        /// </summary>
         public uint Families;
         public uint Caps;
+        /// <summary>
+        /// A document's fence that has not been empty for this long stops holding anything back, until it is empty again
+        /// (counted and logged): work that keeps queueing itself must not stop CALLs, or DELTA's applied count, for good.
+        /// </summary>
+        public int FenceMaxBusyMs = 5000;
         /// <summary>Runs CALL ops; null: BridgeCallHost.Current, the one the BS.BridgeApi assembly registers.</summary>
         public BridgeCallHost CallHost;
         /// <summary>CALL ops of one document admitted and not run yet: past this they are answered LIMIT, unrun.</summary>
@@ -93,6 +102,8 @@ namespace BS.Bridge
         public long LateReplies, DuplicateReplies, ReusedRequestIds, DroppedForClosedDocument, DroppedOps, DroppedNoSession;
         public long HeldItems, HoldTimeouts, HoldDiscarded, HoldOverflowDropped, HandlerErrors, Hellos, Refusals, Sessions;
         public long OutboundDropped, OutboundCloses, Revivals, RevivalsGivenUp, Reopens, FlushBudgetStops;
+        /// <summary>M3 families: ACCEPTs read, drains a CALL waited behind the fence, fences that expired, pushes sent and dropped.</summary>
+        public long Accepts, FenceWaits, FenceExpiries, PushesSent, PushesDropped;
     }
 
     /// <summary>
@@ -116,7 +127,8 @@ namespace BS.Bridge
         List<OutMsg> outbox = new List<OutMsg>();
         List<OutMsg> outSwap = new List<OutMsg>();
 
-        readonly Queue<(BridgeSession session, BridgeItem item)> ready = new Queue<(BridgeSession, BridgeItem)>();
+        /// <summary>Ready to run, in order: the document, the item, and its number among the page's items (0: unnumbered).</summary>
+        readonly Queue<(BridgeSession session, BridgeItem item, uint number)> ready = new Queue<(BridgeSession, BridgeItem, uint)>();
         readonly List<BridgeMessage> scratchMessages = new List<BridgeMessage>();
         readonly List<RawOp> scratchOps = new List<RawOp>();
         /// <summary>Scratch list slots kept between uses (more are released after a huge batch).</summary>
@@ -140,6 +152,7 @@ namespace BS.Bridge
             public uint Epoch;
             public int LegacyReplyId;   // > 0: "!i!:<id>" reply text
             public uint TypedReplyId;   // > 0: REPLY op
+            public BridgePushBatch Batch; // ANNOUNCE, DELTA or DESTROYED for document Epoch, encoded at Flush
         }
 
         public BridgeView(IBridgeSink sink, IBridgeDispatcher dispatcher, BridgeViewOptions options, Func<long> clockMs)
@@ -196,9 +209,16 @@ namespace BS.Bridge
             return done;
         }
 
-        bool CallMustWait((BridgeSession session, BridgeItem item) r)
+        bool CallMustWait((BridgeSession session, BridgeItem item, uint number) r)
         {
             if (r.item.IsText || r.item.Opcode != BridgeOp.Call || r.session == null || r.session.State == BridgeSessionState.Closed) return false;
+            // FENCE: scheduler work queued by this document's earlier ops starts first, so a CALL sees their effects.
+            var f = r.session.Fence;
+            if (f != null && (r.session.Offered & BridgeFamily.Fence) != 0 && f.Pending > 0 && !f.Expired)
+            {
+                Stats.FenceWaits++;
+                return true;
+            }
             var host = CallHost;
             return host != null && !host.CanRun(r.item.Payload);
         }
@@ -218,7 +238,7 @@ namespace BS.Bridge
         {
             var s = current;
             if (s != null && s.IsLive && s.Held) { HoldItem(s, new BridgeItem(text), 0); return; }
-            ready.Enqueue((s != null && s.IsLive ? s : null, new BridgeItem(text)));
+            ready.Enqueue((s != null && s.IsLive ? s : null, new BridgeItem(text), 0));
         }
 
         void IngestCarrier(string msg)
@@ -294,6 +314,9 @@ namespace BS.Bridge
                         SessionOp(s, item);
                         continue;
                     }
+                    // Numbered as the page numbers its sends (everything but session-plane ops and BYE), so DELTA's
+                    // applied count names one of them.
+                    uint number = item.IsText || item.Opcode != BridgeOp.Bye ? ++s.ItemsIn : 0;
                     if (!item.IsText && item.Opcode == BridgeOp.Call && !BridgeCallHost.Admit(this, CallHost, s, item.Payload, Options.MaxCallsQueued))
                     {
                         if (s.CallsOverflowed <= Options.MaxCallsOverflowed) continue;
@@ -302,7 +325,7 @@ namespace BS.Bridge
                         CloseSession(s, BridgeReason.Overflow, true);
                         break;
                     }
-                    if (!s.Held) { ready.Enqueue((s, item)); continue; }
+                    if (!s.Held) { ready.Enqueue((s, item, number)); continue; }
                     if (!item.IsText && item.Opcode == BridgeOp.Bye)
                     {
                         // The document leaves before anything of it ran: close now, as an epoch-0 BYE does, instead of
@@ -310,7 +333,7 @@ namespace BS.Bridge
                         CloseSession(s, BridgeReason.PageHide, false);
                         break;
                     }
-                    HoldItem(s, item, m.FirstSeq);
+                    HoldItem(s, item, m.FirstSeq, number);
                 }
             }
             scratchMessages.Clear();
@@ -351,6 +374,15 @@ namespace BS.Bridge
                     if (n >= 0) s.Link.EnqueueOp(BridgeOps.Encode(BridgeOp.Pong, BridgeOps.EncodeU32((uint)n)));
                     return;
                 }
+                case BridgeOp.Accept:
+                {
+                    // Only what WELCOME offered, and only families Unity pushes: from here on they replace the strings.
+                    long families = BridgePush.DecodeAccept(item.Payload);
+                    if (families < 0) return;
+                    Stats.Accepts++;
+                    s.Accepted = (uint)families & s.Offered & BridgeFamily.Pushed;
+                    return;
+                }
                 default:
                     return; // PONG, and HELLO/WELCOME/HOLDING out of place
             }
@@ -378,7 +410,7 @@ namespace BS.Bridge
                         {
                             if (current.Held) CloseSession(current, BridgeReason.PageHide, false);
                             // In order: what the page sent before its BYE still runs.
-                            else ready.Enqueue((current, new BridgeItem(BridgeOp.Bye, Array.Empty<byte>(), 0, 0)));
+                            else ready.Enqueue((current, new BridgeItem(BridgeOp.Bye, Array.Empty<byte>(), 0, 0), 0));
                         }
                         break;
                 }
@@ -466,10 +498,24 @@ namespace BS.Bridge
             return i > 0 && closedTokenSet.Contains(token.Substring(0, i));
         }
 
-        WelcomePayload WelcomeFor(BridgeSession s) => new WelcomePayload
+        /// <summary>
+        /// The WELCOME for s, which also records what it offers: a document is fenced (and its items' scheduler work
+        /// counted) only when FENCE or DELTA is on offer, and keeps only the ACCEPTs that are still offered.
+        /// </summary>
+        WelcomePayload WelcomeFor(BridgeSession s)
+        {
+            uint families = Options.Families | (CallHost?.Families ?? 0);
+            s.Offered = families;
+            s.Accepted &= families;
+            if (s.Fence == null && (families & (BridgeFamily.Fence | BridgeFamily.Delta)) != 0)
+                s.Fence = new BridgeFence { Drained = s.UpdateApplied };
+            return NewWelcome(s, families);
+        }
+
+        WelcomePayload NewWelcome(BridgeSession s, uint families) => new WelcomePayload
         {
             Epoch = s.Epoch, Mode = WelcomePayload.ModeV2, Lane = WelcomePayload.LaneCarrier,
-            Families = Options.Families | (CallHost?.Families ?? 0),
+            Families = families,
             Caps = Options.Caps | (CallHost?.GrantedCaps ?? 0), Features = BridgeFeature.TextForm, RecvWindow = (uint)Options.RecvWindow,
             MaxFramePayload = BridgeWire.MaxFramePayload, FragmentSize = (uint)Options.FragmentSize,
         };
@@ -577,14 +623,18 @@ namespace BS.Bridge
                 Log($"[Bridge] Released document epoch {s.Epoch} after {Options.HoldTimeoutMs} ms without its LoadStarted/OnLoad ({s.Hold.Count} held).");
             }
             s.Held = false;
-            while (s.Hold.Count > 0) ready.Enqueue((s, s.Hold.Dequeue().Item));
+            while (s.Hold.Count > 0)
+            {
+                var h = s.Hold.Dequeue();
+                ready.Enqueue((s, h.Item, h.Number));
+            }
             s.HeldBytes = 0;
             s.HeldFramedBytes = 0;
             s.FirstHeldFramedSeq = 0;
             s.Link.UnfreezeAck();
         }
 
-        void HoldItem(BridgeSession s, BridgeItem item, uint firstSeq)
+        void HoldItem(BridgeSession s, BridgeItem item, uint firstSeq, uint number = 0)
         {
             bool framed = firstSeq != 0;
             long cost = HeldCost(item);
@@ -600,7 +650,7 @@ namespace BS.Bridge
                 return;
             }
             if (framed && s.FirstHeldFramedSeq == 0) s.FirstHeldFramedSeq = firstSeq;
-            s.Hold.Enqueue(new HeldItem(item, framed));
+            s.Hold.Enqueue(new HeldItem(item, framed, number));
             s.HeldBytes += cost;
             if (framed) s.HeldFramedBytes += cost;
             Stats.HeldItems++;
@@ -610,6 +660,16 @@ namespace BS.Bridge
         public void Tick()
         {
             var s = current;
+            var f = s != null && s.IsLive ? s.Fence : null;
+            if (f != null)
+            {
+                if (f.Check(clockMs(), Options.FenceMaxBusyMs))
+                {
+                    Stats.FenceExpiries++;
+                    Log($"[Bridge] Document epoch {s.Epoch}: work its ops queued has not drained for {Options.FenceMaxBusyMs} ms ({f.Pending} still to start); the fence stops holding until it does.");
+                }
+                s.UpdateApplied();
+            }
             if (s == null || !s.IsLive || !s.Held) return;
             long heldMs = clockMs() - s.HeldSinceMs;
             if (!s.HoldExpired)
@@ -691,12 +751,12 @@ namespace BS.Bridge
 
         // ======================================================================================= dispatch
 
-        bool DispatchReady((BridgeSession session, BridgeItem item) r)
+        bool DispatchReady((BridgeSession session, BridgeItem item, uint number) r)
         {
             var s = r.session;
             if (s != null && s.State == BridgeSessionState.Closed) { Stats.DroppedForClosedDocument++; return false; }
             var item = r.item;
-            using (BridgeContext.Enter(s?.Epoch ?? 0))
+            using (BridgeContext.Enter(s?.Epoch ?? 0, s?.Fence))
             {
                 try
                 {
@@ -732,6 +792,11 @@ namespace BS.Bridge
                     Stats.HandlerErrors++;
                     Log("[Bridge] Handler threw: " + ex);
                 }
+            }
+            if (s != null && r.number != 0)
+            {
+                s.ItemsDone = r.number;
+                s.UpdateApplied();
             }
             return true;
         }
@@ -796,6 +861,68 @@ namespace BS.Bridge
             lock (outLock) outbox.Add(new OutMsg { Op = op, Epoch = epoch, TypedReplyId = reqId });
         }
 
+        // ------------------------------------------------------------------------------------- pushed families (M3)
+
+        /// <summary>Whether the current document reads this pushed family (it said ACCEPT to it). Any thread.</summary>
+        public bool Pushes(uint family)
+        {
+            var s = current;
+            return s != null && s.IsLive && s.Accepts(family);
+        }
+
+        /// <summary>The current document's applied count (BridgeSession.Applied), the stamp of a value read now. Any thread.</summary>
+        public uint AppliedMark
+        {
+            get
+            {
+                var s = current;
+                return s != null && s.IsLive ? s.Applied : 0;
+            }
+        }
+
+        /// <summary>
+        /// A property or watched-transform value for the current document's next DELTA (any thread). stamp: the applied
+        /// count when the value was read (AppliedMark then), so the page can tell a value that predates its own write.
+        /// </summary>
+        public void SendDelta(int oid, int cid, int componentType, int prop, string text, uint stamp)
+        {
+            var e = new DeltaEntry(oid, cid, componentType, prop, text);
+            lock (outLock) TailBatch(BridgeFamily.Delta, stamp)?.AddDelta(e, stamp);
+        }
+
+        /// <summary>An object or component Unity created, for the current document's next ANNOUNCE. Any thread.</summary>
+        public void SendAnnounce(in AnnounceEntry e)
+        {
+            lock (outLock) TailBatch(BridgeFamily.Announce)?.AddAnnounce(e);
+        }
+
+        /// <summary>An object or component that has gone, for the current document's next DESTROYED. Any thread.</summary>
+        public void SendDestroyed(int handle, byte reason)
+        {
+            if (handle <= 0) return;
+            lock (outLock) TailBatch(BridgeFamily.Destroyed)?.AddDestroyed(handle, reason);
+        }
+
+        /// <summary>
+        /// Under outLock: the batch at the end of the outbox if it is this family's and this document's, else a new one
+        /// there. So a push merges only with the pushes right before it and never overtakes anything queued before it.
+        /// Null when the current document does not read the family.
+        /// </summary>
+        BridgePushBatch TailBatch(uint family, uint stamp = 0)
+        {
+            var s = current;
+            if (s == null || !s.IsLive || !s.Accepts(family)) return null;
+            if (outbox.Count > 0)
+            {
+                var last = outbox[outbox.Count - 1];
+                if (last.Batch != null && last.Batch.Family == family && last.Epoch == s.Epoch && last.Batch.TakesStamp(stamp))
+                    return last.Batch;
+            }
+            var batch = new BridgePushBatch(family);
+            outbox.Add(new OutMsg { Batch = batch, Epoch = s.Epoch });
+            return batch;
+        }
+
         public bool HasOutbound
         {
             get
@@ -828,6 +955,29 @@ namespace BS.Bridge
             }
             foreach (var m in batch)
             {
+                if (m.Batch != null)
+                {
+                    // For the document it was read for, if it still reads the family; capped like an event.
+                    if (!live || s.Epoch != m.Epoch || !s.Accepts(m.Batch.Family) || m.Batch.Count == 0)
+                    {
+                        Stats.PushesDropped++;
+                        continue;
+                    }
+                    if (s.Link.QueuedCost > Options.MaxOutboundBytes)
+                    {
+                        Stats.OutboundDropped++;
+                        Stats.PushesDropped++;
+                        if (!s.OutboundDropLogged)
+                        {
+                            s.OutboundDropLogged = true;
+                            Log($"[Bridge] Document epoch {s.Epoch} has {s.Link.QueuedCost} bytes queued (over {Options.MaxOutboundBytes}): dropping its events until it catches up.");
+                        }
+                        continue;
+                    }
+                    s.Link.EnqueueOp(m.Batch.Encode());
+                    Stats.PushesSent++;
+                    continue;
+                }
                 if (m.Epoch != 0 && (!live || s.Epoch != m.Epoch))
                 {
                     Stats.LateReplies++;

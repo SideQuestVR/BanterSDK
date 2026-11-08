@@ -1,6 +1,7 @@
 // Cross-language checks against the real C# BridgeView, driven through this suite's --peer mode (Peer.cs):
 //   1. interop: the real TS PageSession (compiled from Injection~/src/bridge) <-> BridgeView;
-//   2. e2e: the BUILT injection.js, in the M0 page shim <-> BridgeView.
+//   2. e2e: the BUILT injection.js, in the M0 page shim <-> BridgeView;
+//   3. M3: the TS page's ACCEPT, item numbering and read-your-writes against BridgeView's.
 // usage: node interop.mjs [path/to/injection.js]        (default: Runtime/Resources/injection.js)
 // Builds what it needs into a temp folder: this suite (dotnet build) and the TS bridge (the injection package's tsc).
 import assert from 'node:assert/strict';
@@ -28,8 +29,8 @@ function build() {
 }
 
 /** One C# BridgeView in a child process. cmd(c, arg) sends a line and returns the messages it posted to the page. */
-function startPeer(calls = false) {
-    const env = calls ? { ...process.env, BRIDGE_PEER_CALLS: '1' } : process.env;
+function startPeer(calls = false, extraEnv = {}) {
+    const env = { ...process.env, ...(calls ? { BRIDGE_PEER_CALLS: '1' } : {}), ...extraEnv };
     const proc = spawn('dotnet', [join(tmp, 'dotnet', 'BridgeCoreTests.dll'), '--peer'], { stdio: ['pipe', 'pipe', 'inherit'], env });
     const exited = new Promise((r) => proc.on('exit', r));
     peers.push({ proc, exited });
@@ -37,6 +38,7 @@ function startPeer(calls = false) {
     const lines = [];
     const ran = [];
     const called = [];
+    const status = [];
     let waiter = null;
     proc.stdout.setEncoding('utf8');
     proc.stdout.on('data', (d) => {
@@ -57,10 +59,11 @@ function startPeer(calls = false) {
             if (l.startsWith('O ')) out.push(JSON.parse(l.substring(2)));
             else if (l.startsWith('X ')) { const sp = l.indexOf(' ', 2); ran.push({ epoch: Number(l.substring(2, sp)), text: JSON.parse(l.substring(sp + 1)) }); }
             else if (l.startsWith('C ')) { const sp = l.indexOf(' ', 2); called.push({ member: Number(l.substring(2, sp)), args: JSON.parse(l.substring(sp + 1)) }); }
+            else if (l.startsWith('Z ')) status.push(JSON.parse(l.substring(2)));
         }
         return out;
     }
-    return { cmd, ran, called, quit: () => { proc.stdin.end('Q\n'); return exited; } };
+    return { cmd, ran, called, status, quit: () => { proc.stdin.end('Q\n'); return exited; } };
 }
 
 let checks = 0;
@@ -445,6 +448,138 @@ async function e2eUnity() {
     await quit();
 }
 
+/** M3: the TS page's ACCEPT, its item numbering and its read-your-writes filter against the C# view's. */
+async function pushedFamilies() {
+    const B = createRequire(import.meta.url)(join(tmp, 'ts', 'Injection~', 'src', 'bridge', 'index.js'));
+    const F = B.Family;
+    const peer = startPeer(false, { BRIDGE_PEER_FAMILIES: String(F.FENCE | F.DELTA | F.ANNOUNCE | F.DESTROYED) });
+    const { cmd, status } = peer;
+    await cmd('L', 'https://w.example/a');
+    await cmd('N');
+    const host = new Host();
+    const page = new B.PageSession(host, () => {}, { href: 'https://w.example/a', isTop: true, sdkVersion: 'interop', docToken: 'tok-m3', heartbeatMs: 0 });
+    const deltas = [];
+    const destroyed = [];
+    page.onPush(F.DELTA, (d) => deltas.push(d));
+    page.onPush(F.DESTROYED, (x) => destroyed.push(x));
+    const pump = async () => {
+        for (let i = 0; i < 40; i++) {
+            host.run();
+            const up = host.out; host.out = [];
+            for (const d of up) await cmd('R', d);
+            const down = await cmd('D');
+            for (const d of down) page.receive(d);
+            host.run();
+            if (up.length === 0 && down.length === 0 && host.out.length === 0) return;
+        }
+    };
+    const z = async () => { await cmd('Z'); return status[status.length - 1]; };
+    page.sendText('!sst!');
+    page.sendText('two');
+    page.request(0x80, new Uint8Array([1]), () => {});
+    await pump();
+    const s1 = await z();
+    check('M3: the TS page ACCEPTs what it reads of what C# offers; both number its items the same', () => {
+        assert.equal(page.families, F.FENCE | F.DELTA | F.ANNOUNCE | F.DESTROYED);
+        assert.equal(page.accepted, F.DELTA | F.DESTROYED);
+        assert.equal(s1.accepted, F.DELTA | F.DESTROYED);
+        assert.equal(s1.itemsIn, page.itemsSent);
+        assert.equal(s1.itemsIn, 3);
+        assert.equal(s1.applied, 3);
+    });
+    page.sendText('!i!:10000¶!cu!¶the write');
+    page.noteComponentWrite(6, [8]);
+    // Unity reads the property before the write reaches it: the value is older than the write.
+    await cmd('P', [5, 6, 7, 8, '8§3§old']);
+    await cmd('P', [5, 6, 7, 9, '9§3§other']);
+    for (const d of await cmd('D')) page.receive(d);
+    host.run();
+    await pump();
+    await cmd('P', [5, 6, 7, 8, '8§3§new']);
+    await cmd('K', '5');
+    await pump();
+    const s2 = await z();
+    check('M3: a value C# read before the TS page\'s write is left out; one read after it, and DESTROYED, arrive', () => {
+        assert.deepEqual(deltas.map((d) => d.entries.map((e) => e.text)), [['9§3§other'], ['8§3§new']]);
+        assert.equal(deltas[0].applied, 3);
+        assert.equal(deltas[1].applied, 4);
+        assert.equal(page.stats.staleValues, 1);
+        assert.equal(page.pendingWriteCount, 0);
+        assert.deepEqual(destroyed, [[{ handle: 5, reason: 1 }]]);
+        assert.equal(s2.itemsIn, page.itemsSent);
+    });
+    await peer.quit();
+}
+
+/** M3 in the BUILT bundle: scene.ts reads ANNOUNCE, DELTA and DESTROYED from the C# view into window.BS's mirror. */
+async function e2ePushes() {
+    const { createPageContext } = await import(pathToFileURL(join(injectionDir, 'test/surface/load-bundle.mjs')).href);
+    const F = { FENCE: 2, DELTA: 4, ANNOUNCE: 8, DESTROYED: 16 };
+    const { cmd, status, quit } = startPeer(false, { BRIDGE_PEER_FAMILIES: String(F.FENCE | F.DELTA | F.ANNOUNCE | F.DESTROYED) });
+    const { context } = createPageContext();
+    const sent = [];
+    const timeouts = [];
+    const oraListeners = [];
+    let rnd = 11;
+    context.crypto = { getRandomValues: (b) => { for (let i = 0; i < b.length; i++) { rnd = (rnd * 1103515245 + 12345) >>> 0; b[i] = rnd >>> 24; } return b; }, randomUUID: () => '00000000-0000-4000-8000-000000000002' };
+    context.setTimeout = (fn, ms) => { timeouts.push({ fn, ms: ms || 0 }); return timeouts.length; };
+    context.O = { sendMessage: (type, data) => { sent.push(String(data)); }, messages: { On: (n, fn) => oraListeners.push(fn) } };
+    context.location.href = 'https://world.example/space';
+    vm.runInContext(readFileSync(bundlePath, 'utf8'), context, { filename: 'injection.js' });
+    const BS = context.BS;
+    const runZero = () => { for (let g = 0; g < 1000; g++) { const i = timeouts.findIndex((t) => t.ms <= 0); if (i < 0) return; timeouts.splice(i, 1)[0].fn(); } };
+    async function pump(rounds = 30) {
+        for (let r = 0; r < rounds; r++) {
+            runZero();
+            const up = sent.splice(0);
+            for (const d of up) await cmd('R', d);
+            const down = await cmd('D');
+            for (const d of down) for (const l of oraListeners.slice()) l({ detail: { id: '', type: 'default-message', data: d } });
+            await new Promise((r2) => setImmediate(r2));
+            runZero();
+            if (up.length === 0 && down.length === 0 && sent.length === 0) return;
+        }
+    }
+    await cmd('L', 'https://world.example/space');
+    await cmd('N');
+    const scene = BS.Scene.GetInstance();
+    await pump();
+    await cmd('Z');
+    const z = status[status.length - 1];
+    // Rigidbody (component type 46), mass (property 186), position (property 1): the lock's ids.
+    await cmd('J', [1, 41, 1, 'Cube', 3, 'Untagged', 0]);
+    await cmd('J', [2, 41, 42, 46]);
+    await pump();
+    const announced = scene.objects[41];
+    const rb = scene.components[42];
+    await cmd('P', [41, 42, 46, 186, '186§5§2.5']);
+    await cmd('P', [41, 0, 0, 1, '1|1|2|3']);
+    let watched = 0;
+    if (announced) announced.watchCallbackFunction = () => { watched++; };
+    await pump();
+    const events = [];
+    if (announced) announced.On('destroyed', (e) => events.push('destroyed ' + e.detail.reason));
+    scene.On('object-removed', (e) => events.push('object-removed ' + e.detail.unityId));
+    await cmd('K', '41');
+    await pump();
+    check('built bundle: scene.ts ACCEPTs, makes announced objects and components, applies DELTA, and DESTROYED fires its events', () => {
+        assert.equal(z.accepted, F.DELTA | F.ANNOUNCE | F.DESTROYED);
+        assert.ok(announced, 'announced object in scene.objects');
+        assert.equal(announced.name, 'Cube');
+        assert.equal(announced.layer, 3);
+        assert.equal(announced.active, true);
+        assert.ok(rb, 'announced component in scene.components');
+        assert.equal(rb.mass, 2.5);
+        assert.equal(announced.transform.position.x, 1);
+        assert.equal(announced.transform.position.z, 3);
+        assert.equal(watched, 1, 'the transform watcher called once');
+        assert.deepEqual(events, ['destroyed destroyed', 'object-removed 41']);
+        assert.equal(scene.objects[41], undefined);
+        assert.equal(scene.components[42], undefined);
+    });
+    await quit();
+}
+
 let code = 0;
 try {
     build();
@@ -452,6 +587,8 @@ try {
     await e2eBundle();
     await typedCalls();
     await e2eUnity();
+    await pushedFamilies();
+    await e2ePushes();
     console.log(checks + ' interop checks passed');
 } catch (e) {
     console.error('INTEROP FAILED:', e);

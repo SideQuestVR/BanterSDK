@@ -65,6 +65,35 @@ namespace BS.Bridge
         /// <summary>CALL ops refused for the queue limit since the last one ran.</summary>
         public int CallsOverflowed;
 
+        /// <summary>The families the last WELCOME offered this document.</summary>
+        public uint Offered;
+        /// <summary>The pushed families this document said ACCEPT to: Offered's pushed bits that the page reads.</summary>
+        public uint Accepted;
+        /// <summary>Scheduler work this document's ops queued and not started; null unless FENCE or DELTA is offered.</summary>
+        public BridgeFence Fence;
+        /// <summary>
+        /// The page's items taken in, numbered from 1 in the order it sent them: strings and typed ops in its DATA frames,
+        /// not session-plane ops. The page numbers them the same way, so a number names one of its sends.
+        /// </summary>
+        public uint ItemsIn;
+        /// <summary>The number of the last of those dispatched (or refused).</summary>
+        public uint ItemsDone;
+        uint applied;
+        /// <summary>
+        /// DELTA's applied count: every item up to it has been dispatched and none of the scheduler work it queued is
+        /// still to start (or the fence has expired). Written on the main thread, read anywhere.
+        /// </summary>
+        public uint Applied => Volatile.Read(ref applied);
+
+        /// <summary>Moves Applied up to ItemsDone if no work they queued is still to start. Main thread.</summary>
+        public void UpdateApplied()
+        {
+            var f = Fence;
+            if (f == null || f.Pending == 0 || f.Expired) Volatile.Write(ref applied, ItemsDone);
+        }
+
+        public bool Accepts(uint family) => (Accepted & family) != 0;
+
         public BridgeSession(uint epoch, string docToken, string href, BridgeLink link)
         {
             Epoch = epoch;
@@ -84,12 +113,16 @@ namespace BS.Bridge
         public override string ToString() => $"session epoch={Epoch} state={State} held={Held} claimed={ClaimedLoad}";
     }
 
-    /// <summary>An item held for a document, and whether it came in a frame (the page re-sends those after a RESET).</summary>
+    /// <summary>
+    /// An item held for a document, whether it came in a frame (the page re-sends those after a RESET), and its number
+    /// among the page's items (BridgeSession.ItemsIn; 0 for an unframed string, which the page does not number).
+    /// </summary>
     internal readonly struct HeldItem
     {
         public readonly BridgeItem Item;
         public readonly bool Framed;
-        public HeldItem(BridgeItem item, bool framed) { Item = item; Framed = framed; }
+        public readonly uint Number;
+        public HeldItem(BridgeItem item, bool framed, uint number = 0) { Item = item; Framed = framed; Number = number; }
     }
 
     /// <summary>
@@ -100,37 +133,93 @@ namespace BS.Bridge
     internal static class BridgeContext
     {
         static readonly AsyncLocal<uint> epoch = new AsyncLocal<uint>();
+        // The document's fence (FENCE/DELTA families), alongside its epoch; null otherwise, and then never written, so a
+        // document without those families flows exactly what it did before.
+        static readonly AsyncLocal<BridgeFence> fence = new AsyncLocal<BridgeFence>();
 
         public static uint CurrentEpoch => epoch.Value;
+        public static BridgeFence CurrentFence => fence.Value;
 
-        public static Scope Enter(uint e)
+        public static Scope Enter(uint e) => Enter(e, null);
+
+        /// <param name="f">Counts the scheduler work queued from here on (Bind), until the scope ends; null: nothing counts.</param>
+        public static Scope Enter(uint e, BridgeFence f)
         {
             var prev = epoch.Value;
+            var prevFence = fence.Value;
             epoch.Value = e;
-            return new Scope(prev);
+            if (!ReferenceEquals(prevFence, f)) fence.Value = f;
+            return new Scope(prev, prevFence);
+        }
+
+        /// <summary>
+        /// Until disposed, nothing queued here counts in the current document's fence: for work started now that serves
+        /// every document rather than doing this one's op (BSScene's property worker). No fence set: nothing changes.
+        /// </summary>
+        public static FenceScope WithoutFence()
+        {
+            var f = fence.Value;
+            if (f != null) fence.Value = null;
+            return new FenceScope(f);
+        }
+
+        public readonly struct FenceScope : IDisposable
+        {
+            readonly BridgeFence prev;
+            internal FenceScope(BridgeFence prev) { this.prev = prev; }
+            public void Dispose() { if (prev != null) fence.Value = prev; }
         }
 
         public readonly struct Scope : IDisposable
         {
             readonly uint prev;
-            internal Scope(uint prev) { this.prev = prev; }
-            public void Dispose() => epoch.Value = prev;
+            readonly BridgeFence prevFence;
+            internal Scope(uint prev, BridgeFence prevFence) { this.prev = prev; this.prevFence = prevFence; }
+            public void Dispose()
+            {
+                epoch.Value = prev;
+                if (!ReferenceEquals(fence.Value, prevFence)) fence.Value = prevFence;
+            }
         }
 
         /// <summary>
         /// For queues that keep bare delegates (they don't carry the ExecutionContext): the action runs in the epoch
-        /// current when it was queued. No epoch set (no op being handled) = the action itself.
+        /// current when it was queued. No epoch set (no op being handled) = the action itself. With a fence set, the
+        /// action is counted in it from now until it starts.
         /// </summary>
         public static Action Bind(Action action)
         {
             uint e = epoch.Value;
             if (e == 0 || action == null) return action;
+            var f = fence.Value;
+            if (f != null) return Fenced(action, e, f);
             return () =>
             {
                 var prev = epoch.Value;
                 epoch.Value = e;
                 try { action(); }
                 finally { epoch.Value = prev; }
+            };
+        }
+
+        static Action Fenced(Action action, uint e, BridgeFence f)
+        {
+            f.Add();
+            int started = 0;
+            return () =>
+            {
+                // Released as it starts: what it queues while it runs is counted in its turn.
+                if (Interlocked.Exchange(ref started, 1) == 0) f.Release();
+                var prev = epoch.Value;
+                var prevFence = fence.Value;
+                epoch.Value = e;
+                if (!ReferenceEquals(prevFence, f)) fence.Value = f;
+                try { action(); }
+                finally
+                {
+                    epoch.Value = prev;
+                    if (!ReferenceEquals(fence.Value, prevFence)) fence.Value = prevFence;
+                }
             };
         }
 
@@ -151,34 +240,55 @@ namespace BS.Bridge
             };
         }
 
-        /// <summary>The same for a coroutine: every MoveNext (and nested coroutines it yields) runs in the epoch.</summary>
+        /// <summary>
+        /// The same for a coroutine: every MoveNext (and nested coroutines it yields) runs in the epoch. With a fence
+        /// set, the coroutine is counted in it until its first step starts.
+        /// </summary>
         public static IEnumerator Bind(IEnumerator coroutine)
         {
             uint e = epoch.Value;
             if (e == 0 || coroutine == null) return coroutine;
-            return new EpochCoroutine(coroutine, e);
+            var f = fence.Value;
+            f?.Add();
+            return new EpochCoroutine(coroutine, e, f, f != null);
         }
 
         sealed class EpochCoroutine : IEnumerator
         {
             readonly IEnumerator inner;
             readonly uint e;
+            readonly BridgeFence f;
+            bool counted;
             object current;
-            public EpochCoroutine(IEnumerator inner, uint e) { this.inner = inner; this.e = e; }
+            public EpochCoroutine(IEnumerator inner, uint e, BridgeFence f = null, bool counted = false)
+            {
+                this.inner = inner; this.e = e; this.f = f; this.counted = counted;
+            }
             public object Current => current;
             public void Reset() => inner.Reset();
             public bool MoveNext()
             {
+                if (counted)
+                {
+                    counted = false;
+                    f.Release();
+                }
                 var prev = epoch.Value;
+                var prevFence = fence.Value;
                 epoch.Value = e;
+                if (!ReferenceEquals(prevFence, f)) fence.Value = f;
                 try
                 {
                     bool more = inner.MoveNext();
                     var c = more ? inner.Current : null;
-                    current = c is IEnumerator nested && !(c is EpochCoroutine) ? new EpochCoroutine(nested, e) : c;
+                    current = c is IEnumerator nested && !(c is EpochCoroutine) ? new EpochCoroutine(nested, e, f) : c;
                     return more;
                 }
-                finally { epoch.Value = prev; }
+                finally
+                {
+                    epoch.Value = prev;
+                    if (!ReferenceEquals(fence.Value, prevFence)) fence.Value = prevFence;
+                }
             }
         }
     }
