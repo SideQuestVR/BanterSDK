@@ -1,0 +1,14 @@
+{
+    "name": "BS.AudioStream.Core",
+    "rootNamespace": "BS.AudioStream",
+    "references": ["BS.Concentus"],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}

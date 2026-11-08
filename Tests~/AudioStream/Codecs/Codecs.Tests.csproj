@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Compares the AC-3 and Opus decoders with ffmpeg, and checks E-AC-3 framing and the system E-AC-3 decoder where this
+    machine has one. Needs ffmpeg with libopus, on the PATH or named by FFMPEG.
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="*.cs" />
+    <Compile Include="..\..\..\Runtime\Scripts\AudioStream\Core\**\*.cs" />
+    <Compile Include="..\..\..\Runtime\Scripts\3rdParty\Concentus\**\*.cs" />
+    <None Include="..\..\..\Runtime\Plugins\AudioDecode\x86_64\BSAudioDecode.dll" Link="BSAudioDecode.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('..\..\..\Runtime\Plugins\AudioDecode\x86_64\BSAudioDecode.dll')" />
+  </ItemGroup>
+
+</Project>

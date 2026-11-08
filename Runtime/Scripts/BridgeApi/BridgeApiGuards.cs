@@ -204,5 +204,14 @@ namespace BS.BridgeApi
         {
             if (!Enabled(self) || !self.isOnNavMesh) c.Fail(ReplyStatus.NotReady, "this agent is not on a NavMesh");
         }
+
+        // ------------------------------------------------------------------------------------------- audio streams
+
+        /// <summary>A stream fetches what any page may have fetched (PageUrl). Empty clears it.</summary>
+        public static void AudioStreamUrl(BridgeCallContext c, BSAudioStream self, string url)
+        {
+            var problem = url.Length > 0 ? PageUrl.Problem(url) : null;
+            if (problem != null) c.Fail(ReplyStatus.Type, problem);
+        }
     }
 }

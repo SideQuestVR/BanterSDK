@@ -7,6 +7,8 @@ namespace BS.BridgeApi
 {
     internal static class BridgeApiThunks
     {
+        static readonly int[] E_BS_BSAudioStreamLayout = { 1, 2, 4, 6 };
+        static readonly int[] E_BS_BSAudioStreamRole = { 0, 1, 2, 3, 4, 5, 6, 7 };
         const int E_TMPro_FontStyles = 1023;
         static readonly int[] E_TMPro_HorizontalAlignmentOptions = { 1, 2, 4, 8, 16, 32 };
         static readonly int[] E_TMPro_TextAlignmentOptions = { 257, 258, 260, 264, 272, 288, 513, 514, 516, 520, 528, 544, 1025, 1026, 1028, 1032, 1040, 1056, 2049, 2050, 2052, 2056, 2064, 2080, 4097, 4098, 4100, 4104, 4112, 4128, 8193, 8194, 8196, 8200, 8208, 8224, 65535 };
@@ -40,7 +42,7 @@ namespace BS.BridgeApi
         /// <summary>The members, by id. Gaps are retired or never-used ids.</summary>
         public static BridgeMember[] Build()
         {
-            var t = new BridgeMember[762];
+            var t = new BridgeMember[790];
             t[1] = new BridgeMember(1, BridgeTier.Read, false, false, 0, "", 1, T1);
             t[2] = new BridgeMember(2, BridgeTier.Read, false, false, 0, "", 3, T2);
             t[3] = new BridgeMember(3, BridgeTier.Read, false, false, 0, "", 3, T3);
@@ -802,13 +804,41 @@ namespace BS.BridgeApi
             t[759] = new BridgeMember(759, BridgeTier.Read, true, false, 0, "", 31, T759);
             t[760] = new BridgeMember(760, BridgeTier.Read, false, false, 1, "s", 3, T760);
             t[761] = new BridgeMember(761, BridgeTier.Read, false, false, 1, "s", 2, T761);
+            t[762] = new BridgeMember(762, BridgeTier.Read, false, false, 0, "", 33, T762);
+            t[763] = new BridgeMember(763, BridgeTier.Write, false, false, 1, "s", 33, T763);
+            t[764] = new BridgeMember(764, BridgeTier.Read, false, false, 0, "", 33, T764);
+            t[765] = new BridgeMember(765, BridgeTier.Write, false, false, 1, "b", 33, T765);
+            t[766] = new BridgeMember(766, BridgeTier.Read, false, false, 0, "", 33, T766);
+            t[767] = new BridgeMember(767, BridgeTier.Write, false, false, 1, "b", 33, T767);
+            t[768] = new BridgeMember(768, BridgeTier.Read, false, false, 0, "", 33, T768);
+            t[769] = new BridgeMember(769, BridgeTier.Write, false, false, 1, "e1", 33, T769);
+            t[770] = new BridgeMember(770, BridgeTier.Read, false, false, 0, "", 33, T770);
+            t[771] = new BridgeMember(771, BridgeTier.Write, false, false, 1, "f", 33, T771);
+            t[772] = new BridgeMember(772, BridgeTier.Read, false, false, 0, "", 33, T772);
+            t[773] = new BridgeMember(773, BridgeTier.Write, false, false, 1, "f", 33, T773);
+            t[774] = new BridgeMember(774, BridgeTier.Read, false, false, 0, "", 33, T774);
+            t[775] = new BridgeMember(775, BridgeTier.Write, false, false, 1, "r18", 33, T775);
+            t[776] = new BridgeMember(776, BridgeTier.Read, false, false, 1, "e0", 33, T776);
+            t[777] = new BridgeMember(777, BridgeTier.Write, false, false, 2, "e0,b", 33, T777);
+            t[778] = new BridgeMember(778, BridgeTier.Read, false, false, 1, "e0", 33, T778);
+            t[779] = new BridgeMember(779, BridgeTier.Write, false, false, 2, "e0,r18", 33, T779);
+            t[780] = new BridgeMember(780, BridgeTier.Write, true, false, 0, "", 33, T780);
+            t[781] = new BridgeMember(781, BridgeTier.Write, true, false, 0, "", 33, T781);
+            t[782] = new BridgeMember(782, BridgeTier.Read, false, false, 0, "", 33, T782);
+            t[783] = new BridgeMember(783, BridgeTier.Read, false, false, 0, "", 33, T783);
+            t[784] = new BridgeMember(784, BridgeTier.Read, false, false, 0, "", 33, T784);
+            t[785] = new BridgeMember(785, BridgeTier.Read, false, false, 0, "", 33, T785);
+            t[786] = new BridgeMember(786, BridgeTier.Read, false, false, 0, "", 33, T786);
+            t[787] = new BridgeMember(787, BridgeTier.Read, false, false, 0, "", 33, T787);
+            t[788] = new BridgeMember(788, BridgeTier.Read, false, false, 0, "", 33, T788);
+            t[789] = new BridgeMember(789, BridgeTier.Read, false, false, 0, "", 33, T789);
             return t;
         }
 
         /// <summary>The types a handle can show as, by id.</summary>
         public static Type[] BuildTypes()
         {
-            var t = new Type[32];
+            var t = new Type[34];
             t[1] = typeof(UnityEngine.Object);
             t[2] = typeof(UnityEngine.GameObject);
             t[3] = typeof(UnityEngine.Component);
@@ -838,13 +868,15 @@ namespace BS.BridgeApi
             t[27] = typeof(UnityEngine.Mesh);
             t[30] = typeof(UnityEngine.AI.NavMeshAgent);
             t[31] = typeof(TMPro.TMP_Text);
+            t[32] = typeof(UnityEngine.MonoBehaviour);
+            t[33] = typeof(BS.BSAudioStream);
             return t;
         }
 
         /// <summary>The classes a page may ask an object for, by id. Abstract types are not among them.</summary>
         public static Type[] BuildComponentTypes()
         {
-            var t = new Type[32];
+            var t = new Type[34];
             t[5] = typeof(UnityEngine.Transform);
             t[6] = typeof(UnityEngine.Rigidbody);
             t[7] = typeof(UnityEngine.Collider);
@@ -869,6 +901,7 @@ namespace BS.BridgeApi
             t[26] = typeof(UnityEngine.MeshFilter);
             t[30] = typeof(UnityEngine.AI.NavMeshAgent);
             t[31] = typeof(TMPro.TMP_Text);
+            t[33] = typeof(BS.BSAudioStream);
             return t;
         }
 
@@ -1617,5 +1650,33 @@ namespace BS.BridgeApi
         static void T759(BridgeCallContext c) { var self = c.SelfAs<TMPro.TMP_Text>(); if (c.Failed) return; c.RetString(self.GetParsedText()); }
         static void T760(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Component>(); var a0 = c.Str(0); if (c.Failed) return; c.RetBool(BridgeApiCurated.Component_CompareTag(self, a0)); }
         static void T761(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.GameObject>(); var a0 = c.Str(0); if (c.Failed) return; c.RetBool(BridgeApiCurated.GameObject_CompareTag(self, a0)); }
+        static void T762(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetString(self.Url); }
+        static void T763(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = c.Str(0); c.RangeLength(0, 4096); if (c.Failed) return; BridgeApiGuards.AudioStreamUrl(c, self, a0); if (c.Failed) return; self.Url = a0; }
+        static void T764(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetBool(self.PlayOnEnable); }
+        static void T765(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = c.Bool(0); if (c.Failed) return; self.PlayOnEnable = a0; }
+        static void T766(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetBool(self.Loop); }
+        static void T767(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = c.Bool(0); if (c.Failed) return; self.Loop = a0; }
+        static void T768(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt((int)self.MaxChannels); }
+        static void T769(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = (BS.BSAudioStreamLayout)c.Enum(0, E_BS_BSAudioStreamLayout); if (c.Failed) return; self.MaxChannels = a0; }
+        static void T770(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetFloat(self.PrebufferSeconds); }
+        static void T771(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = c.Float(0); c.RangeFloat(0, 0.1, 10); if (c.Failed) return; self.PrebufferSeconds = a0; }
+        static void T772(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetFloat(self.SpeakerRadius); }
+        static void T773(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = c.Float(0); c.RangeFloat(0, 0, 1000); if (c.Failed) return; self.SpeakerRadius = a0; }
+        static void T774(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetRef(self.SourceTemplate); }
+        static void T775(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = c.Ref<UnityEngine.AudioSource>(0, true); if (c.Failed) return; self.SourceTemplate = a0; }
+        static void T776(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = (BS.BSAudioStreamRole)c.Enum(0, E_BS_BSAudioStreamRole); if (c.Failed) return; c.RetBool(self.GetChannelEnabled(a0)); }
+        static void T777(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = (BS.BSAudioStreamRole)c.Enum(0, E_BS_BSAudioStreamRole); var a1 = c.Bool(1); if (c.Failed) return; self.SetChannelEnabled(a0, a1); }
+        static void T778(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = (BS.BSAudioStreamRole)c.Enum(0, E_BS_BSAudioStreamRole); if (c.Failed) return; c.RetRef(self.GetChannelSource(a0)); }
+        static void T779(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); var a0 = (BS.BSAudioStreamRole)c.Enum(0, E_BS_BSAudioStreamRole); var a1 = c.Ref<UnityEngine.AudioSource>(1, true); if (c.Failed) return; self.SetChannelSource(a0, a1); }
+        static void T780(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; self.Play(); }
+        static void T781(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; self.Stop(); }
+        static void T782(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt((int)self.State); }
+        static void T783(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetString(self.Codec); }
+        static void T784(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt(self.StreamChannels); }
+        static void T785(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt(self.PlayingChannels); }
+        static void T786(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt(self.SampleRate); }
+        static void T787(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetDouble(self.BufferedSeconds); }
+        static void T788(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetString(self.FailureReason); }
+        static void T789(BridgeCallContext c) { var self = c.SelfAs<BS.BSAudioStream>(); if (c.Failed) return; c.RetInt(BridgeApiCurated.AudioStream_GetUnderruns(self)); }
     }
 }

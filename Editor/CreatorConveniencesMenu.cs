@@ -253,6 +253,9 @@ internal static class CreatorConveniencesMenu
     [MenuItem(Root + "Objects/Verify Host", false, 42)]
     private static void CreateVerifyHost(MenuCommand command) => CreateComponentObject<BSVerifyHost>("Verify Host", command);
 
+    [MenuItem(Root + "Objects/Audio Stream", false, 43)]
+    private static void CreateAudioStream(MenuCommand command) => CreateComponentObject<BSAudioStream>("Audio Stream", command);
+
     // ------------------------------------------------------------------ Helpers
 
     private static void CreatePrefab(string guid, string displayName, MenuCommand command)

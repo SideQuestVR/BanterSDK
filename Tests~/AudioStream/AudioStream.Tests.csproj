@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <AudioStreamCore Condition="'$(AudioStreamCore)' == ''">$(MSBuildProjectDirectory)/../../Runtime/Scripts/AudioStream/Core</AudioStreamCore>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildProjectDirectory)/*.cs" />
+    <Compile Include="$(AudioStreamCore)/**/*.cs" Exclude="$(AudioStreamCore)/AssemblyInfo.cs" />
+    <Compile Include="$(AudioStreamCore)/../../3rdParty/Concentus/**/*.cs" />
+    <!-- The system decoders (AAC, E-AC-3) go through the package's own Windows build of BSAudioDecode. -->
+    <None Include="$(AudioStreamCore)/../../../Plugins/AudioDecode/x86_64/BSAudioDecode.dll" Link="BSAudioDecode.dll" CopyToOutputDirectory="PreserveNewest" Condition="Exists('$(AudioStreamCore)/../../../Plugins/AudioDecode/x86_64/BSAudioDecode.dll')" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnitLite" Version="3.14.0" />
+  </ItemGroup>
+</Project>

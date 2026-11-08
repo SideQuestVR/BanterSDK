@@ -428,5 +428,10 @@ namespace BS.BridgeApi
             if (n > MaxMeshIndices) { c.Fail(ReplyStatus.Limit, "more than " + MaxMeshIndices + " indices"); return; }
             BridgeApiArgs.Ret(c, self.triangles);
         }
+
+        // ------------------------------------------------------------------------------------------- audio streams
+
+        /// <summary>A count past int.MaxValue reads as int.MaxValue.</summary>
+        public static int AudioStream_GetUnderruns(BSAudioStream self) => (int)Math.Min(self.Underruns, int.MaxValue);
     }
 }
