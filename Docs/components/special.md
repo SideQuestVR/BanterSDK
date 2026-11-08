@@ -136,7 +136,7 @@ Send To World won't send a player to the host they're already on, because they w
 
 If **Url** is empty or isn't a valid expression, or the page's address can't be read, nothing happens to the player and a warning is logged. An expression that takes too long to run counts the same way. SDK Play Mode runs from localhost, so the check is skipped there, though a bad **Url** still logs its warning: visit your world once it's published to test it.
 
-The Domain comparison is exact, so a visitor on an older alias of your world's address counts as being at the wrong host. **Url** and **World Url** are saved in your build, so upload a new build as soon as you [change your world's address](../building-in-unity/publishing.md): until then, every visitor fails the check.
+The Domain comparison is exact, except that a world's address on SideQuest's other world domain is the same world: `my-world.worldspace.host` also matches `my-world.bant.ing`, and the other way round. A visitor on any other older alias of your world's address (a previous name, or a custom domain you no longer use) counts as being at the wrong host. **Url** and **World Url** are saved in your build, so upload a new build as soon as you [change your world's address](../building-in-unity/publishing.md): until then, every visitor fails the check.
 
 This deters copies; it can't stop them. For the strongest check, keep it on its own object at the root of the scene, with no BS components: page scripts only see objects that have them.
 

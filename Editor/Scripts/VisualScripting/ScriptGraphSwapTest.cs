@@ -54,21 +54,21 @@ namespace BS.SDKEditor
                     "list(withRefs).graphRef equals GraphHash");
 
                 // --- first override
-                var vm1 = JObject.Parse(manager.HandleCommand("open", openBody, scene));
+                var vm1 = JObject.Parse(manager.HandleCommandAsHost("open", openBody, scene));
                 var s1 = (string)vm1["sessionId"];
                 Ops(manager, scene, s1, (int)vm1["rev"], new JObject { ["op"] = "setGraphTitle", ["title"] = "Edited once" });
-                manager.HandleCommand("apply", Session(s1), scene);
+                manager.HandleCommandAsHost("apply", Session(s1), scene);
                 Close(manager, scene, s1);
                 report.Check(ScriptGraphSession.IsOverridden(machine), "machine is overridden after Apply");
                 report.Check(ScriptGraphSession.AuthoredHash(machine) == authored, "the authored hash was recorded");
                 report.Check(machine.graph.title == "Edited once", "the override is what is running");
 
                 // --- the chaining bug: reopening an overridden machine must keep the AUTHORED base
-                var vm2 = JObject.Parse(manager.HandleCommand("open", openBody, scene));
+                var vm2 = JObject.Parse(manager.HandleCommandAsHost("open", openBody, scene));
                 var s2 = (string)vm2["sessionId"];
                 report.Check((string)vm2["baseGraphRef"] == authored,
                     "reopening an overridden machine keeps the authored hash as its base");
-                var saved = JObject.Parse(manager.HandleCommand("save", Session(s2), scene));
+                var saved = JObject.Parse(manager.HandleCommandAsHost("save", Session(s2), scene));
                 report.Check((string)saved["meta"]?["baseGraphRef"] == authored,
                     "a second save of an overridden machine records the authored base");
                 Close(manager, scene, s2);
@@ -80,47 +80,47 @@ namespace BS.SDKEditor
 
                 // --- the wire: both shapes, since bundles in the wild send the bare one
                 var wrapped = new JObject { ["target"] = target, ["envelope"] = saved }.ToString();
-                report.Check(Ok(manager.HandleCommand("applyEnvelope", wrapped, scene)),
+                report.Check(Ok(manager.HandleCommandAsHost("applyEnvelope", wrapped, scene)),
                     "applyEnvelope accepts {target, envelope}");
                 var bare = (JObject)saved.DeepClone();
                 bare["meta"]["target"] = target;
-                report.Check(Ok(manager.HandleCommand("applyEnvelope", bare.ToString(), scene)),
+                report.Check(Ok(manager.HandleCommandAsHost("applyEnvelope", bare.ToString(), scene)),
                     "applyEnvelope accepts a bare envelope (what TS used to send, and Unity rejected)");
 
                 // --- a swap closes sessions editing the machine it replaced
                 var s3 = Open(manager, scene, openBody);
-                var reply = JObject.Parse(manager.HandleCommand("applyEnvelope", wrapped, scene));
+                var reply = JObject.Parse(manager.HandleCommandAsHost("applyEnvelope", wrapped, scene));
                 report.Check(((JArray)reply["invalidated"])?.Any(t => (string)t == s3) == true,
                     "applyEnvelope reports the session it closed");
                 string opError = null;
-                try { manager.HandleCommand("ops", new JObject { ["sessionId"] = s3, ["baseRev"] = 0, ["ops"] = new JArray() }.ToString(), scene); }
+                try { manager.HandleCommandAsHost("ops", new JObject { ["sessionId"] = s3, ["baseRev"] = 0, ["ops"] = new JArray() }.ToString(), scene); }
                 catch (Exception e) { opError = e.Message; }
                 report.Check(opError != null && opError.Contains("No session"),
                     "the closed session refuses further edits instead of editing a stale copy");
 
                 // --- no leak across repeated swaps
                 var before = Resources.FindObjectsOfTypeAll<ScriptGraphAsset>().Length;
-                for (var i = 0; i < 10; i++) manager.HandleCommand("applyEnvelope", wrapped, scene);
+                for (var i = 0; i < 10; i++) manager.HandleCommandAsHost("applyEnvelope", wrapped, scene);
                 var after = Resources.FindObjectsOfTypeAll<ScriptGraphAsset>().Length;
                 report.Check(after - before <= 0, $"10 swaps leave the runtime asset count flat ({before} -> {after})");
 
                 // --- revert
-                var revert = JObject.Parse(manager.HandleCommand("revertMachine", openBody, scene));
+                var revert = JObject.Parse(manager.HandleCommandAsHost("revertMachine", openBody, scene));
                 report.Check(revert["reverted"]?.Value<bool>() == true, "revertMachine reports a revert");
                 report.Check(machine.nest.source == GraphSource.Embed, "the authored embedded graph is back");
                 report.Check(ScriptGraphSession.GraphHash(machine.graph) == authored, "the restored graph IS the authored one");
                 report.Check(!ScriptGraphSession.IsOverridden(machine), "the machine is no longer overridden");
-                var again = JObject.Parse(manager.HandleCommand("revertMachine", openBody, scene));
+                var again = JObject.Parse(manager.HandleCommandAsHost("revertMachine", openBody, scene));
                 report.Check(again["reverted"]?.Value<bool>() == false, "reverting an unmodified machine is a no-op");
 
                 // --- an untitled override keeps the authored name, not "ScriptGraphStaging_Applied"
                 var s4 = Open(manager, scene, openBody);
-                var untitled = JObject.Parse(manager.HandleCommand("save", Session(s4), scene));
+                var untitled = JObject.Parse(manager.HandleCommandAsHost("save", Session(s4), scene));
                 Close(manager, scene, s4);
-                manager.HandleCommand("applyEnvelope", new JObject { ["target"] = target, ["envelope"] = untitled }.ToString(), scene);
+                manager.HandleCommandAsHost("applyEnvelope", new JObject { ["target"] = target, ["envelope"] = untitled }.ToString(), scene);
                 report.Check(MachineDirectory.FriendlyTitle(machine) == "SGSwapTest",
                     $"an untitled override keeps the authored title ('{MachineDirectory.FriendlyTitle(machine)}')");
-                manager.HandleCommand("revertMachine", openBody, scene);
+                manager.HandleCommandAsHost("revertMachine", openBody, scene);
 
                 // --- nested blocked members
                 var inner = new FlowGraph();
@@ -315,13 +315,13 @@ namespace BS.SDKEditor
 
         static JToken ListRow(ScriptGraphSessionManager manager, BSScene scene)
         {
-            var list = JObject.Parse(manager.HandleCommand("list", "{\"withRefs\":true}", scene));
+            var list = JObject.Parse(manager.HandleCommandAsHost("list", "{\"withRefs\":true}", scene));
             return ((JArray)list["machines"]).FirstOrDefault(m => (string)m["path"] == "SGSwapTest");
         }
 
         static string Open(ScriptGraphSessionManager manager, BSScene scene, string body)
         {
-            var vm = JObject.Parse(manager.HandleCommand("open", body, scene));
+            var vm = JObject.Parse(manager.HandleCommandAsHost("open", body, scene));
             if (vm["error"] != null) throw new InvalidOperationException("open failed: " + vm["error"]);
             return (string)vm["sessionId"];
         }
@@ -329,13 +329,13 @@ namespace BS.SDKEditor
         static void Ops(ScriptGraphSessionManager manager, BSScene scene, string sessionId, int rev, JObject op)
         {
             var batch = new JObject { ["sessionId"] = sessionId, ["baseRev"] = rev, ["ops"] = new JArray { op } };
-            var vm = JObject.Parse(manager.HandleCommand("ops", batch.ToString(), scene));
+            var vm = JObject.Parse(manager.HandleCommandAsHost("ops", batch.ToString(), scene));
             if (vm["error"] != null) throw new InvalidOperationException("ops failed: " + vm["error"]);
         }
 
         static void Close(ScriptGraphSessionManager manager, BSScene scene, string sessionId)
         {
-            manager.HandleCommand("close", Session(sessionId), scene);
+            manager.HandleCommandAsHost("close", Session(sessionId), scene);
         }
 
         static string Session(string sessionId) => new JObject { ["sessionId"] = sessionId }.ToString();

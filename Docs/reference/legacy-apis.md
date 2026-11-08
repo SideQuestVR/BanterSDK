@@ -17,6 +17,8 @@ These scene methods are left over from older spaces. They have nothing behind th
 | Method | What your script sees |
 |--------|-----------------------|
 | `AiImage`, `AiModel`, `Base64ToCDN`, `SelectFile` | The Promise rejects with a message containing `unsupported`. |
-| `OpenPage`, `StartTTS`, `StopTTS`, `SendBrowserMessage` | The Promise resolves, so a page that doesn't wait for an answer carries on, and the page's console warns `… is not supported in this client.` |
+| `StartTTS`, `StopTTS`, `SendBrowserMessage` | The Promise resolves, so a page that doesn't wait for an answer carries on, and the page's console warns `… is not supported in this client.` |
 
-The Visual Scripting nodes **Menu Browser Open URL**, **Select file (GLB/JPG/PNG)** and **Base64 To CDN** do nothing either.
+The Visual Scripting nodes **Select file (GLB/JPG/PNG)** and **Base64 To CDN** do nothing either.
+
+`OpenPage` (and the **Menu Browser Open URL** node) works in the app, where it asks the player before opening a site in their menu browser: see [Opening a Website](../javascript-api/scene-api.md#opening-a-website). In Play mode it behaves like `StartTTS` above.

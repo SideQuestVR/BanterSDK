@@ -355,7 +355,7 @@ Under it, the first 15 offenders are listed by identifier, such as `UnityEngine.
 
 The Console lists them as well each time Unity reloads scripts (when the project opens, and after code changes): `[VisualScripting] Found elements that are not allowed for Visual Scripting`, then one error per node that starts `[VisualScripting] Element not allowed` and ends with the node's identifier.
 
-!> Play mode doesn't enforce the allow list, so a graph can work there and not in the app. In the app, a Script Machine whose own graph has a node that isn't allowed doesn't run at all. The app doesn't check again inside the subgraphs and states a graph nests, so don't rely on it: fix everything the Builder lists.
+!> Play mode doesn't enforce the allow list, so a graph can work there and not in the app. In the app, a Script Machine that uses a node that isn't allowed doesn't run at all. Fix everything the Builder lists.
 
 ## Sample Graphs
 

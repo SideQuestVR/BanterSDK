@@ -125,7 +125,7 @@ namespace BS
             if (match != VerifyHostMatch.RegularExpression)
             {
                 var expected = HostOf(url);
-                return expected.Length == 0 ? (bool?)null : expected == page;
+                return expected.Length == 0 ? (bool?)null : IsSameWorldHost(expected, page);
             }
             if (string.IsNullOrWhiteSpace(url)) return null;
             try
@@ -157,7 +157,7 @@ namespace BS
                 return;
             }
             // Sent to the host it is already on, the world would load, fail the check and send the player again, for ever.
-            if (HostOf(address) == pageHost)
+            if (IsSameWorldHost(HostOf(address), pageHost))
             {
                 Debug.LogWarning($"[BS] Verify Host won't send the player to '{Shown(address)}': this world is already there.");
                 return;
@@ -177,6 +177,42 @@ namespace BS
         {
             if (!Uri.TryCreate(WithScheme(urlOrHost), UriKind.Absolute, out var uri)) return "";
             return uri.IsDefaultPort ? uri.IdnHost : uri.IdnHost + ":" + uri.Port;
+        }
+
+        // SideQuest serves every world under each of these base domains alike (a 200, not a redirect), so a world's
+        // address on one is the same world on the others: my-world.worldspace.host is also my-world.bant.ing.
+        static readonly string[] WorldBaseDomains = { "worldspace.host", "bant.ing" };
+
+        /// <summary>
+        /// Whether two hosts, spelled as <see cref="HostOf"/> spells them, are the same world: equal, or the same world
+        /// name under two of SideQuest's world domains, with the same port. Any other domain only matches itself.
+        /// </summary>
+        internal static bool IsSameWorldHost(string expected, string page)
+        {
+            if (string.IsNullOrEmpty(expected) || string.IsNullOrEmpty(page)) return false;
+            if (expected == page) return true;
+            return WorldNameOf(expected, out var expectedRest) is string a && WorldNameOf(page, out var pageRest) is string b
+                   && a == b && expectedRest == pageRest;
+        }
+
+        // The part before a world domain ("wip.my-world" of wip.my-world.bant.ing:8443), and the port in rest; null when
+        // the host isn't under one, or is the domain itself.
+        static string WorldNameOf(string host, out string rest)
+        {
+            rest = "";
+            int colon = host.LastIndexOf(':');
+            string name = host;
+            if (colon > 0 && host.IndexOf(']') < colon)
+            {
+                rest = host.Substring(colon);
+                name = host.Substring(0, colon);
+            }
+            foreach (var domain in WorldBaseDomains)
+            {
+                if (name.Length > domain.Length + 1 && name.EndsWith("." + domain, StringComparison.Ordinal))
+                    return name.Substring(0, name.Length - domain.Length - 1);
+            }
+            return null;
         }
 
         /// <summary>An address Go To URL accepts: http or https, a bare host counting as https. Empty when it can't be.</summary>

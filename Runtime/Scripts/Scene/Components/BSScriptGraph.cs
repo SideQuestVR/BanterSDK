@@ -29,6 +29,7 @@ namespace BS
         {
             var machine = gameObject.AddComponent<ScriptMachine>();
             machine.nest.SwitchToEmbed(FlowGraph.WithStartUpdate());
+            GraphEditPermission.NotePageMade(machine);
             RefreshMachinesInternal();
         }
 
@@ -38,6 +39,12 @@ namespace BS
             var machines = GetComponents<ScriptMachine>();
             if (machineIndex >= 0 && machineIndex < machines.Length)
             {
+                // The world's own machines are its owner's to remove (GraphEditPermission); the page's own are its.
+                if (!GraphEditPermission.MayChange(machines[machineIndex]))
+                {
+                    GraphEditPermission.WarnOnce("removing one of the world's own machines");
+                    return;
+                }
                 Destroy(machines[machineIndex]);
                 // StartCoroutine throws on an inactive GameObject; the immediate refresh
                 // then briefly counts the dying machine, which the deferred one corrects.

@@ -114,6 +114,24 @@ namespace BS.SDKEditor.Tests
             Assert.AreEqual(expected, VerifyHostCheck.IsRightPage(VerifyHostMatch.Domain, url, Host));
         }
 
+        // SideQuest serves each world at <name>.worldspace.host and <name>.bant.ing alike: both are the world's own address.
+        [TestCase("https://my-world.worldspace.host", "my-world.bant.ing", true)]
+        [TestCase("https://my-world.bant.ing", "my-world.worldspace.host", true)]
+        [TestCase("https://wip.my-world.worldspace.host", "wip.my-world.bant.ing", true)]
+        [TestCase("https://my-world.worldspace.host", "other.bant.ing", false)]
+        [TestCase("https://my-world.worldspace.host", "my-world.bant.ing:8443", false)]
+        [TestCase("https://my-world.worldspace.host:8443", "my-world.bant.ing:8443", true)]
+        [TestCase("https://my-world.worldspace.host", "bant.ing", false)]
+        [TestCase("https://worldspace.host", "bant.ing", false)]
+        [TestCase("https://my-world.worldspace.host", "my-world.bant.ing.example.com", false)]
+        [TestCase("https://my-world.worldspace.host", "my-world.notbant.ing", false)]
+        [TestCase("https://my-world.example.com", "my-world.bant.ing", false)]
+        [TestCase("https://example.com", "example.com", true)]
+        public void Domain_TakesAWorldsOtherSideQuestDomainAsTheSameWorld(string url, string page, bool expected)
+        {
+            Assert.AreEqual(expected, VerifyHostCheck.IsRightPage(VerifyHostMatch.Domain, url, page));
+        }
+
         [TestCase(null)]
         [TestCase("")]
         [TestCase(@"^https://my-world\.worldspace\.host/")]

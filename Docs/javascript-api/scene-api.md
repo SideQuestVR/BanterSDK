@@ -294,6 +294,23 @@ space is loading, and that includes this space's own load, so call it once the p
 example), not straight away on start-up. In SDK Play Mode it only logs where it would go. In a graph, use the **Go To
 URL** node (`BS > Space`).
 
+## Opening a Website
+
+```js
+// Offer the player a website in their menu browser
+scene.OpenPage("https://example.com/shop");
+```
+
+In the app, the player is asked first: a dialog names the site's host, and the page opens in their menu browser only if
+they choose Open. The Promise resolves once the request is passed on; it doesn't say whether the player opened the page.
+Only absolute `http` and `https` addresses of up to 2,048 characters are offered. Addresses with a user name or password
+in them, addresses on the player's own machine or network (unless your space is served from there), and SideQuest
+and AltspaceVR sign-in and account pages are refused with a warning in the Unity log. One dialog shows at a time, with a pause of a few seconds after each, and requests made
+while another dialog is open or the space is loading are dropped. Once the player has declined three times, the space
+can't ask again until they have been somewhere else. So call it from a player action, such as a click, not on start-up
+or in a loop. In SDK Play Mode nothing opens and the page's console warns that the call isn't supported. In a graph,
+use the **Menu Browser Open URL** node (`BS > Browser`).
+
 ## Deep Links
 
 ```js
