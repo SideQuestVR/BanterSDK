@@ -1,4 +1,4 @@
-// <mirror source="Assets/Tests/SpaceState/Editor/SdkWireCodecTests.cs" sha256="c26d79295d8c1e1bba694ba17eeb8096e164c96667180d5a9f79dba203908629" mode="verbatim" />
+// <mirror source="Assets/Tests/SpaceState/Editor/SdkWireCodecTests.cs" sha256="8b0ebe788b18fb68b17908c72279faba64467f9f660b02ad9fca121d8d8a5797" mode="verbatim" />
 using BS.LocalMultiplayer.State;
 using Newtonsoft.Json.Linq;
 using NUnit.Framework;
@@ -123,5 +123,27 @@ namespace BS.LocalMultiplayer.Tests
             Assert.That(SdkWireCodec.IsSentinel("score"), Is.False);
             Assert.That(SdkWireCodec.IsSentinel(null), Is.False);
         }
+
+        // --- Legacy props from the page -------------------------------------------------------
+
+        [Test]
+        public void ALegacyPropIsReadWithEachSideDecoded()
+        {
+            Assert.That(SdkWireCodec.TryParseLegacyProp("score|10", out var key, out var value), Is.True);
+            Assert.That(key, Is.EqualTo("score"));
+            Assert.That(value, Is.EqualTo("10"));
+            Assert.That(SdkWireCodec.TryParseLegacyProp("\"a\\u007cb\"|\"c\\u00a7d\\u00b6e\"", out key, out value), Is.True);
+            Assert.That(key, Is.EqualTo("a|b"));
+            Assert.That(value, Is.EqualTo("c§d¶e"));
+            Assert.That(SdkWireCodec.TryParseLegacyProp("k|\"\\\"x\\\"\"", out key, out value), Is.True);
+            Assert.That(value, Is.EqualTo("\"x\""), "a value starting with a quote comes through as written");
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("no pipe")]
+        [TestCase("a|b|c")]
+        public void AnythingElseIsNotALegacyProp(string prop) =>
+            Assert.That(SdkWireCodec.TryParseLegacyProp(prop, out _, out _), Is.False);
     }
 }

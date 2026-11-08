@@ -336,6 +336,8 @@ namespace BS.SDKEditor.Tests
             frame.MoveNext();
             Assert.AreEqual(TaskStatus.RanToCompletion, ok.Status);
             Assert.IsTrue(bad.IsFaulted);
+            // Reading the exception observes it: otherwise the finalizer reports it later, as an error in whichever test runs then.
+            Assert.IsInstanceOf<InvalidOperationException>(bad.Exception.InnerException);
         }
 
         class InlineProbe : UnityMainThreadTaskScheduler

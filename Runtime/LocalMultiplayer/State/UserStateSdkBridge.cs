@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/UserStateSdkBridge.cs" sha256="4add273eeb8804423beddfb510b15271445a0cb0b23fecaa0edd673f6bccf972" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/UserStateSdkBridge.cs" sha256="461348ba9d4bbcaee54eb2596ab0dc05978d563ab507b328c445254a46ea2404" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class UserStateModule ticks; the service is handed
 // in instead of polled from UserStateService.Instance; BSScene.Instance() -> BSScene.Current; the LINQ user lookups are
 // plain loops with the same first-match semantics (the replay drain runs every frame while anything is pending); the
@@ -174,10 +174,13 @@ namespace BS.LocalMultiplayer.State
             foreach (string prop in props)
             {
                 if (string.IsNullOrEmpty(prop)) continue;
-                string[] parts = prop.Split(MessageDelimiters.TERTIARY.ToCharArray()[0]);
-                if (parts.Length != 2) { Debug.LogWarning($"[LocalMP][UserState] Invalid prop: {prop}"); continue; }
+                if (!SdkWireCodec.TryParseLegacyProp(prop, out string key, out string value))
+                {
+                    Debug.LogWarning($"[LocalMP][UserState] Invalid prop: {prop}");
+                    continue;
+                }
                 // Legacy props are strings and owner-only; the new API is where scope is chosen.
-                _service.SetOwnProp(parts[0], SdkWireCodec.ParseLegacy(parts[1]), UserPropScope.OwnerOnly);
+                _service.SetOwnProp(key, SdkWireCodec.ParseLegacy(value), UserPropScope.OwnerOnly);
             }
         }
 

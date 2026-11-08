@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/SdkWireCodec.cs" sha256="1c1d3ec92a1d7fe3e402487f0486f540d5ce12070fd7a1f7aa487ed943144517" mode="verbatim" />
+// <mirror source="Assets/Systems/Networking/State/SdkWireCodec.cs" sha256="1e28b71c7169b96bedd34e0012cec8b5f439942abaf2ad30f491e9807ee47095" mode="verbatim" />
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -71,6 +71,21 @@ namespace BS.LocalMultiplayer.State
         /// JSON-looking text. The new API is where real JSON enters.
         /// </summary>
         public static JToken ParseLegacy(string value) => JValue.CreateString(value ?? string.Empty);
+
+        /// <summary>
+        /// One legacy prop from the page: <c>key|value</c>, each side wire-encoded the way space props are
+        /// (<see cref="BS.WireText"/>), so a value may hold any text. False when it isn't one.
+        /// </summary>
+        public static bool TryParseLegacyProp(string prop, out string key, out string value)
+        {
+            key = value = null;
+            if (string.IsNullOrEmpty(prop)) return false;
+            string[] parts = prop.Split(BS.MessageDelimiters.TERTIARY);
+            if (parts.Length != 2) return false;
+            key = BS.WireText.Decode(parts[0]);
+            value = BS.WireText.Decode(parts[1]);
+            return true;
+        }
 
         /// <summary>
         /// Strip bus delimiters. <b>Outbound legacy frames only</b> — see the class remarks.

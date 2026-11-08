@@ -967,7 +967,7 @@ namespace BS
                     {
                         user.SetProps(props);
                         // uid, as Greenfield's bridge sends: the page keys scene.users by uid.
-                        UserPropChanged(props, user.uid);
+                        UserPropChanged(UserPropEcho(props), user.uid);
                     }
                 }
 #endif
@@ -1007,6 +1007,23 @@ namespace BS
         public void UserPropChanged(string[] props, string id)
         {
             link.OnUserStateChanged(id + MessageDelimiters.SECONDARY + string.Join(MessageDelimiters.SECONDARY, props));
+        }
+
+        /// <summary>
+        /// The page reads this echo raw, so it gets what Greenfield's bridge sends: each side decoded, with the bus
+        /// delimiters dropped. A prop that isn't key|value goes back as it came.
+        /// </summary>
+        internal static string[] UserPropEcho(string[] props)
+        {
+            var echo = new string[props.Length];
+            for (var i = 0; i < props.Length; i++)
+            {
+                var parts = props[i].Split(MessageDelimiters.TERTIARY);
+                echo[i] = parts.Length == 2
+                    ? WireText.Strip(WireText.Decode(parts[0])) + MessageDelimiters.TERTIARY + WireText.Strip(WireText.Decode(parts[1]))
+                    : props[i];
+            }
+            return echo;
         }
 
         #region JSON state API

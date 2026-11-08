@@ -160,14 +160,14 @@ namespace BS.BridgeApi.Tests
         }
 
         [Test]
-        public void AParticleSystemIsNotAskedToRunPastItsDuration()
+        public void AParticleSystemsTimeIsNotSetFromAPage()
         {
             var ps = f.Add("particles", typeof(ParticleSystem)).GetComponent<ParticleSystem>();
             int p = f.Handle(ps);
             int member = Id("UnityEngine.ParticleSystem.time.set");
-            Assert.AreEqual(ReplyStatus.Denied, f.Call(member, p, Float(ps.main.duration + 1)));
-            Assert.AreEqual(ReplyStatus.Denied, f.Call(member, p, Float(-1)));
-            Assert.AreEqual(ReplyStatus.Ok, f.Call(member, p, Float(ps.main.duration / 2)), f.Host.FailMessage);
+            // A seek simulates every particle up to the time asked, so its cost isn't bounded by a cap on the time.
+            Assert.AreEqual(ReplyStatus.Denied, f.Call(member, p, Float(0)));
+            Assert.AreEqual(ReplyStatus.Denied, f.Call(member, p, Float(ps.main.duration / 2)));
             Assert.AreEqual(ReplyStatus.Denied, f.Call(Id("ParticleSystem_SetSimulationSpeed/1"), p, Float(1000)));
         }
 

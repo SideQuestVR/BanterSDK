@@ -36,12 +36,16 @@ namespace BS.BridgeApi
 
         const uint AllCaps = BridgeCap.Read | BridgeCap.Write | BridgeCap.Global;
 
-        /// <summary>A limit that can't be read counts as off.</summary>
+        /// <summary>A limit that can't be read, or that names a tier there isn't, counts as off.</summary>
         static uint ClientCaps()
         {
             var caps = BSTypedApi.Caps;
             if (caps == null) return AllCaps;
-            try { return (uint)caps() & AllCaps; }
+            try
+            {
+                var value = (uint)caps();
+                return (value & ~AllCaps) == 0 ? value : 0;
+            }
             catch (System.Exception) { return 0; }
         }
 

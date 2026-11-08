@@ -458,7 +458,7 @@ namespace BS.BridgeApi
             t[415] = new BridgeMember(415, BridgeTier.Read, false, false, 0, "", 19, T415);
             t[416] = new BridgeMember(416, BridgeTier.Read, false, false, 0, "", 19, T416);
             t[417] = new BridgeMember(417, BridgeTier.Read, false, false, 0, "", 19, T417);
-            t[418] = new BridgeMember(418, BridgeTier.Write, true, false, 1, "f", 19, T418);
+            t[418] = new BridgeMember(418, BridgeTier.Denied, false, false, 0, "", 0, null);
             t[419] = new BridgeMember(419, BridgeTier.Read, false, false, 0, "", 19, T419);
             t[420] = new BridgeMember(420, BridgeTier.Write, false, false, 1, "b", 19, T420);
             t[421] = new BridgeMember(421, BridgeTier.Read, false, false, 0, "", 19, T421);
@@ -1053,7 +1053,7 @@ namespace BS.BridgeApi
         static void T186(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); if (c.Failed) return; c.RetRef(self.attachedRigidbody); }
         static void T187(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); if (c.Failed) return; A.Ret(c, self.bounds); }
         static void T188(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); if (c.Failed) return; c.RetFloat(self.contactOffset); }
-        static void T189(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); var a0 = c.Float(0); c.RangeFloat(0, 0.00001, 1000); if (c.Failed) return; self.contactOffset = a0; }
+        static void T189(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); var a0 = c.Float(0); c.RangeFloat(0, 0.00001, 1); if (c.Failed) return; self.contactOffset = a0; }
         static void T190(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); if (c.Failed) return; c.RetBool(self.enabled); }
         static void T191(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); var a0 = c.Bool(0); if (c.Failed) return; self.enabled = a0; }
         static void T192(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.Collider>(); if (c.Failed) return; c.RetBool(self.isTrigger); }
@@ -1278,7 +1278,6 @@ namespace BS.BridgeApi
         static void T415(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; c.RetInt(self.particleCount); }
         static void T416(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; c.RetFloat(self.totalTime); }
         static void T417(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; c.RetFloat(self.time); }
-        static void T418(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Float(0); if (c.Failed) return; BridgeApiGuards.ParticleTime(c, self, a0); if (c.Failed) return; self.time = a0; }
         static void T419(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; c.RetBool(self.useAutoRandomSeed); }
         static void T420(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); var a0 = c.Bool(0); if (c.Failed) return; BridgeApiGuards.ParticleStopped(c, self); if (c.Failed) return; self.useAutoRandomSeed = a0; }
         static void T421(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.ParticleSystem>(); if (c.Failed) return; c.RetBool(self.IsAlive()); }
@@ -1373,9 +1372,9 @@ namespace BS.BridgeApi
         static void T510(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); if (c.Failed) return; c.RetInt(self.positionCount); }
         static void T511(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 16384); if (c.Failed) return; self.positionCount = a0; }
         static void T512(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); if (c.Failed) return; c.RetInt(self.numCapVertices); }
-        static void T513(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 90); if (c.Failed) return; self.numCapVertices = a0; }
+        static void T513(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 16); if (c.Failed) return; self.numCapVertices = a0; }
         static void T514(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); if (c.Failed) return; c.RetInt(self.numCornerVertices); }
-        static void T515(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 90); if (c.Failed) return; self.numCornerVertices = a0; }
+        static void T515(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 16); if (c.Failed) return; self.numCornerVertices = a0; }
         static void T516(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); if (c.Failed) return; BridgeApiGuards.LineIndex(c, self, a0); if (c.Failed) return; A.Ret(c, self.GetPosition(a0)); }
         static void T517(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = c.Int(0); var a1 = A.V3(c, 1); if (c.Failed) return; BridgeApiGuards.LineIndex(c, self, a0); if (c.Failed) return; self.SetPosition(a0, a1); }
         static void T518(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.LineRenderer>(); var a0 = A.V3s(c, 0); if (c.Failed) return; self.SetPositions(a0); }
@@ -1411,9 +1410,9 @@ namespace BS.BridgeApi
         static void T548(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); if (c.Failed) return; c.RetFloat(self.widthMultiplier); }
         static void T549(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = c.Float(0); if (c.Failed) return; self.widthMultiplier = a0; }
         static void T550(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); if (c.Failed) return; c.RetInt(self.numCapVertices); }
-        static void T551(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 90); if (c.Failed) return; self.numCapVertices = a0; }
+        static void T551(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 16); if (c.Failed) return; self.numCapVertices = a0; }
         static void T552(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); if (c.Failed) return; c.RetInt(self.numCornerVertices); }
-        static void T553(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 90); if (c.Failed) return; self.numCornerVertices = a0; }
+        static void T553(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = c.Int(0); c.RangeInt(0, 0, 16); if (c.Failed) return; self.numCornerVertices = a0; }
         static void T554(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = c.Int(0); if (c.Failed) return; BridgeApiGuards.TrailIndex(c, self, a0); if (c.Failed) return; A.Ret(c, self.GetPosition(a0)); }
         static void T555(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = A.V3(c, 0); if (c.Failed) return; BridgeApiGuards.TrailHasRoom(c, self); if (c.Failed) return; self.AddPosition(a0); }
         static void T556(BridgeCallContext c) { var self = c.SelfAs<UnityEngine.TrailRenderer>(); var a0 = A.V3s(c, 0); if (c.Failed) return; BridgeApiGuards.TrailHasRoomFor(c, self, a0); if (c.Failed) return; self.AddPositions(a0); }

@@ -139,15 +139,6 @@ namespace BS.BridgeApi
 
         // ------------------------------------------------------------------------------------------- particles
 
-        /// <summary>Unity simulates up to the time it is given, in the call: it stays within one run of the system.</summary>
-        // A system simulates up to the time it's given, so a long one is a long stall in a single call.
-        const float MaxParticleTime = 60f;
-
-        public static void ParticleTime(BridgeCallContext c, ParticleSystem self, float time)
-        {
-            if (time < 0 || time > Mathf.Min(self.main.duration, MaxParticleTime)) c.Fail(ReplyStatus.Denied, "the time is outside this system's duration");
-        }
-
         public static void ParticleStopped(BridgeCallContext c, ParticleSystem self)
         {
             if (!self.isStopped) c.Fail(ReplyStatus.NotReady, "stop this system first");
