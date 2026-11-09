@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdio>
 #include <map>
 
 namespace bsvd {
@@ -617,11 +618,18 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
         DrawFailed("Unity gave no access to the target texture");
         return;
     }
-    if ((out.format != VK_FORMAT_R8G8B8A8_UNORM && out.format != VK_FORMAT_R8G8B8A8_SRGB) || !(out.usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT) ||
-        (out.layout != VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && out.layout != VK_IMAGE_LAYOUT_GENERAL)) {
+    // The layout isn't checked: Unity reports the one the image had before the barrier this call recorded (Quest 3, build
+    // 9155: every texture refused), and the barrier puts it in TRANSFER_DST_OPTIMAL before anything recorded after it.
+    if (out.format != VK_FORMAT_R8G8B8A8_UNORM && out.format != VK_FORMAT_R8G8B8A8_SRGB) {
         DeleteImage(image);
-        Fail(BSVD_ERROR_GRAPHICS, "the target texture isn't an RGBA32 texture frames can be copied into (format " +
-                                      std::to_string((int)out.format) + ")");
+        Fail(BSVD_ERROR_GRAPHICS, "the target texture isn't RGBA32 (Vulkan format " + std::to_string((int)out.format) + ")");
+        return;
+    }
+    if (!(out.usage & VK_IMAGE_USAGE_TRANSFER_DST_BIT)) {
+        DeleteImage(image);
+        char usage[16];
+        std::snprintf(usage, sizeof usage, "0x%x", (unsigned)out.usage);
+        Fail(BSVD_ERROR_GRAPHICS, std::string("the target texture can't be copied into (Vulkan usage ") + usage + ")");
         return;
     }
     // The intermediate has the texture's own format: Adreno records a copy between R8G8B8A8_UNORM and _SRGB images in
@@ -680,7 +688,8 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
     region.extent.width = std::min(inter_.width, out.extent.width);
     region.extent.height = std::min(inter_.height, out.extent.height);
     region.extent.depth = 1;
-    fn.vkCmdCopyImage(cb, inter_.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, out.image, out.layout, 1, &region);
+    // The layout the access's barrier put it in, not out.layout (the one before it).
+    fn.vkCmdCopyImage(cb, inter_.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, out.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
     unsigned long long frame = state.currentFrameNumber;
     inFlight_.push_back({image, frame});

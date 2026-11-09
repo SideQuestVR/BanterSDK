@@ -102,12 +102,15 @@ bool UNITY_INTERFACE_API AccessTexture(void* native, const VkImageSubresource*, 
     auto* t = static_cast<HostTexture*>(native);
     if (!t || !t->image || !gHost.recording) return false;
     gHost.accessCalls++;
+    // As Unity does on Quest (build 9155): the layout reported is the one before the barrier this call records, not the
+    // one asked for. A check on it refused every Unity texture while this harness passed.
+    const VkImageLayout before = t->layout;
     if (mode == kUnityVulkanResourceAccess_PipelineBarrier) HostBarrier(gHost.recording, t, layout, stage, access);
     if (out) {
         *out = UnityVulkanImage{};
         out->memory.memory = t->memory;
         out->image = t->image;
-        out->layout = t->layout;
+        out->layout = before;
         out->aspect = VK_IMAGE_ASPECT_COLOR_BIT;
         out->usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
         out->format = t->format;
