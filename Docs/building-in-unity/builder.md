@@ -46,7 +46,7 @@ When the Builder opens on a scene, on **Re-check**, before every build and befor
 | Project setup | Everything the Setup panel marks Required is done. Missing build support blocks the build; anything else is a warning, with a button to open Setup. |
 | Shader stripping | URP's **Strip Unused Variants** is on, or every shader variant is compiled (see [Build times](../reference/performance.md#build-times)). The fix turns it on. |
 | One scene per project | The project has no other scenes. Every scene shares the one page, `Assets/WebRoot/index.html`, so the snippets and page scripts for other scenes would be published with this world. |
-| Visual Scripting node support | Graphs only use nodes the app can run: every graph asset in the project, every graph on a prefab, and every graph in this scene, including subgraphs and state graphs inside them. Blocks the build. |
+| Visual Scripting node support | Graphs only use nodes the app can run: every graph asset in the project, every graph on a prefab, and every graph in this scene, including subgraphs and state graphs inside them. Blocks the build. Nodes that aren't on the Banter node list, which a coming app update won't run, are a warning (see [Build Validation](../visual-scripting/overview.md#build-validation)). |
 | Convex mesh colliders | No large static floor or wall has **Convex** ticked. |
 | Mesh colliders on moving bodies | A mesh collider on a body physics moves, a Rigidbody or BS Rigidbody, has **Convex** ticked; otherwise it doesn't collide. The fix ticks it. |
 | Terrains | Every Terrain has its Terrain Data, an enabled Terrain Collider using that same data, and no tree types with a missing prefab. The fix adds or corrects the collider. |

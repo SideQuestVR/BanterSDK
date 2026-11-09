@@ -355,7 +355,23 @@ Under it, the first 15 offenders are listed by identifier, such as `UnityEngine.
 
 The Console lists them as well each time Unity reloads scripts (when the project opens, and after code changes): `[VisualScripting] Found elements that are not allowed for Visual Scripting`, then one error per node that starts `[VisualScripting] Element not allowed` and ends with the node's identifier.
 
-!> Play mode doesn't enforce the allow list, so a graph can work there and not in the app. In the app, a Script Machine that uses a node that isn't allowed doesn't run at all. Fix everything the Builder lists.
+Some nodes still run in the app today but aren't on the Banter node list, and a coming app update won't run graphs that use them. The checklist shows these as a warning, which doesn't block the build or the upload:
+
+```
+2 Visual Scripting node(s) aren't on the Banter node list
+```
+
+Under it, each node is listed with the graph asset, prefab or scene object that uses it, and **Select** picks those out. The warning covers:
+
+- member nodes (Get, Set and Invoke) that aren't approved;
+- **Literal**, **Expose** and **Create Struct** nodes of a type with no approved members, such as `Literal of System.Version`;
+- a type value of such a type, in a node's input (Get Component's type, say) or in a graph variable;
+- a formula that reads a member, as in `[a.position]`: use a **Get Member** node instead;
+- graphs nested more than 16 levels deep.
+
+Replace them before you upload. Once the update is out, the app won't run graphs that use them in any world, including worlds uploaded before.
+
+!> Play mode doesn't enforce the allow list, so a graph can work there and not in the app. In the app, a Script Machine that uses a node that isn't allowed doesn't run at all. Fix everything the Builder lists, the warnings included.
 
 ## Sample Graphs
 

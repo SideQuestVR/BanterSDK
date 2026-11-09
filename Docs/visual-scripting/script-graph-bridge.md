@@ -6,6 +6,8 @@
 
 All bridge calls are async and return Promises (the `toBase64` / `fromBase64` helpers are synchronous). In the app, a call that fails resolves with an object whose `error` holds the reason (for example `No session 's3'` or `Machine not found`) rather than rejecting, so check for it.
 
+!> **Whose graphs a page can change.** The world's own machines, the ones its build brought, change only for the world's owner (and SideQuest staff), who are also the people who can open the scene editor. For anyone else, `apply`, `applyEnvelope`, `revertMachine`, `removeMachine` and `pause` on them resolve with `code: "refused"`. Any visitor's page can change the machines it made itself with `create`, which is what restoring a saved scene's graphs needs. Reading (`list`, `open`, staging edits, `save`) is open to every page.
+
 Machines are addressed by a target: `{ bid, machineIndex }` — the object's BS id plus the index of the Script Machine on that object. Each row returned by `list()` describes one machine: `bid`, `machineIndex`, `objectName`, `path`, `active`, `source` (`"embed"` or `"macro"`), `graphTitle`, `unitCount`, `blocked` (the graph's top level contains nodes outside the app's allow list), `paused` and `overridden` (a graph has been applied over the one the world was built with). A target can also carry the row's `path`, which is used when the `bid` doesn't find the object.
 
 | Function | Returns | Description |

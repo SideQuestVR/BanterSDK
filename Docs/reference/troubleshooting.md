@@ -59,6 +59,10 @@ A built world carries no code: only the scene and its assets. Your own `MonoBeha
 
 The app only runs graphs whose nodes are on its allow list, so the checklist blocks the build and lists the node types it found. Remove or replace those nodes. Graph assets anywhere in the project count, as do graphs in prefabs, not only the scene's: delete graph assets you don't use, such as ones from imported samples. When the project loads, the Console also reports them, starting `[VisualScripting] Found elements that are not allowed for Visual Scripting`. See [Visual Scripting](../visual-scripting/overview.md#build-validation).
 
+### The checklist warns: "Visual Scripting node(s) aren't on the Banter node list"
+
+These nodes run in the app today, but a coming app update won't run graphs that use them. The warning doesn't block the build or the upload. Each line names a node and where it's used: replace it with an approved node, such as a BS node or a member of a common `UnityEngine` type, then upload again. See [Visual Scripting](../visual-scripting/overview.md#build-validation) for what the warning covers.
+
 ### Snippets or scripts from another scene run in my world
 
 Every scene in a project shares the one page, `Assets/WebRoot/index.html`, so snippets placed in one scene, and page code written for it, are published with every world built from the project. Keep one scene per project. The Setup panel's **One scene per project** item and the checklist's matching warning list the other scenes.

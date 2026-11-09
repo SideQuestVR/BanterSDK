@@ -1,6 +1,8 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 #if !GREENFIELD_PROJECT
@@ -17,26 +19,79 @@ namespace BS.SDKEditor.BuildChecks
         public override string Title => "Visual Scripting node support";
         public override string Description =>
             "Visual Scripting graphs only use nodes the client can run: graph assets anywhere in the project, every graph on prefabs, " +
-            "and every graph in this scene, subgraphs and state graphs included.";
+            "and every graph in this scene, subgraphs and state graphs included. Nodes that aren't on the Banter node list, " +
+            "which a coming client update won't run, are a warning.";
         public override int Order => 10;
         // Not knowing is as bad as knowing they're there: the space would break in the client.
         public override bool BlockOnException => true;
 
         public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
         {
-            var disallowed = ValidateVisualScripting.CollectDisallowedElements(context.Roots, refresh: context.ForBuild);
-            if (disallowed.Count == 0)
-                return;
-            var listed = string.Join("\n", disallowed.Take(15).Select(id => "• " + id));
-            if (disallowed.Count > 15)
-                listed += $"\n• ...and {disallowed.Count - 15} more";
-            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error,
-                $"{disallowed.Count} Visual Scripting node type(s) aren't allowed in spaces",
-                "The client won't run graphs that use these. Remove or replace them; graphs anywhere in the project " +
-                "count, not just this scene's.\n" + listed)
+            var report = ValidateVisualScripting.CollectGraphReport(context.Roots, refresh: context.ForBuild);
+            var disallowed = report.Disallowed;
+            if (disallowed.Count > 0)
             {
-                Overridable = false,
-            });
+                var listed = string.Join("\n", disallowed.Take(15).Select(id => "• " + id));
+                if (disallowed.Count > 15)
+                    listed += $"\n• ...and {disallowed.Count - 15} more";
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error,
+                    $"{disallowed.Count} Visual Scripting node type(s) aren't allowed in spaces",
+                    "The client won't run graphs that use these. Remove or replace them; graphs anywhere in the project " +
+                    "count, not just this scene's.\n" + listed)
+                {
+                    Overridable = false,
+                });
+            }
+            if (report.Unlisted.Count > 0)
+                issues.Add(UnlistedWarning(Id, report.Unlisted, context.Target));
+        }
+
+        /// <summary>
+        /// The nodes a coming client update won't run, as a warning: the build and upload go ahead. Never throws, since
+        /// a check that throws blocks the build (<see cref="BlockOnException"/>).
+        /// </summary>
+        internal static BuildCheckIssue UnlistedWarning(string checkId, IReadOnlyList<ValidateVisualScripting.UnlistedUse> uses,
+            Func<GameObject, BuildCheckTarget> sceneTarget)
+        {
+            try
+            {
+                var byNode = uses.GroupBy(use => use.Node).OrderBy(group => group.Key, StringComparer.Ordinal).ToList();
+                var lines = byNode.Take(15).Select(group =>
+                {
+                    var places = group.Select(use => use.Where).Distinct().ToList();
+                    return $"• {group.Key}: in {string.Join("; ", places.Take(2))}" + (places.Count > 2 ? $" (+{places.Count - 2} more)" : "");
+                }).ToList();
+                if (byNode.Count > 15)
+                    lines.Add($"• ...and {byNode.Count - 15} more");
+                // One target per object. A prefab's asset is a GameObject too, so go by which field is set, not by type.
+                var targets = new List<BuildCheckTarget>();
+                var targeted = new HashSet<UnityEngine.Object>();
+                foreach (var use in uses)
+                {
+                    if (targets.Count >= 30)
+                        break;
+                    if (use.SceneObject != null)
+                    {
+                        if (sceneTarget != null && targeted.Add(use.SceneObject))
+                            targets.Add(sceneTarget(use.SceneObject));
+                    }
+                    else if (use.Asset != null && targeted.Add(use.Asset))
+                        targets.Add(BuildCheckTarget.ForAsset(use.Asset));
+                }
+                return new BuildCheckIssue(checkId, BuildCheckSeverity.Warning,
+                        $"{byNode.Count} Visual Scripting node(s) aren't on the Banter node list",
+                        "They run today, but a coming client update won't run graphs that use them. Replace them before uploading; " +
+                        "the upload isn't blocked for now. Graphs anywhere in the project count, not just this scene's.\n" +
+                        string.Join("\n", lines))
+                    .WithTargets(targets);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return new BuildCheckIssue(checkId, BuildCheckSeverity.Warning,
+                    "Some Visual Scripting nodes aren't on the Banter node list",
+                    "A coming client update won't run graphs that use them, and listing them failed: " + e.Message);
+            }
         }
     }
 
