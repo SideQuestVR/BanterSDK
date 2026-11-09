@@ -35,6 +35,10 @@ constexpr int kCpuMaxHeight = 1080;
 
 int64_t SteadyUs();
 
+// The present render event's id (BSVD_GetRenderEventId): BSVD_EVENT_PRESENT until UnityPluginLoad, then the id Unity
+// reserved, which is set before PlatformLoad and before any device event reaches the platform. Any thread.
+int32_t RenderEventId();
+
 struct Unit {
     std::vector<uint8_t> bytes;
     int64_t ptsUs = 0;

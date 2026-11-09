@@ -62,7 +62,7 @@ namespace BS.VideoStream
         {
             if (VideoDecoderNative.Available && VideoDecoderNative.LiveCount > 0)
             {
-                GL.IssuePluginEvent(VideoDecoderNative.RenderEvent, VideoDecoderNative.EventPresent);
+                GL.IssuePluginEvent(VideoDecoderNative.RenderEvent, VideoDecoderNative.RenderEventId);
             }
         }
 

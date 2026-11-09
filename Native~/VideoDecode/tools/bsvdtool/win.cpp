@@ -346,13 +346,16 @@ struct Harness {
 
     // Unity's frame: clocks, the present event, then whatever looks at the textures. Until done() or timeoutMs.
     bool Run(const std::vector<Stream*>& streams, const std::function<bool()>& done, int timeoutMs) {
+        // As the C# side: the function and the id the library reserved (the stand-in Unity hands out real ids, so
+        // BSVD_EVENT_PRESENT would be ignored).
         BSVD_RenderEvent present = api->GetRenderEventFunc();
+        const int eventId = api->GetRenderEventId();
         int64_t start = NowUs(), tick = 1000000 / hz;
         int64_t next = start;
         for (;;) {
             for (Stream* s : streams)
                 if (s->handle > 0 && s->clockSet) api->SetClock(s->handle, s->MediaNow(), s->running ? 1 : 0);
-            present(BSVD_EVENT_PRESENT);
+            present(eventId);
             for (Stream* s : streams)
                 if (s->handle > 0) Inspect(*s);
             if (done && done()) return true;
@@ -700,7 +703,7 @@ void Errors(Harness& h, const Clip& clip, bool cpu) {
 }
 
 void Caps(Api& api) {
-    std::printf("api version %d, %s\n", api.GetApiVersion(), api.name.c_str());
+    std::printf("api version %d, %s, render event id %d\n", api.GetApiVersion(), api.name.c_str(), api.GetRenderEventId());
     std::printf("path %d: %s\n", api.GetPath(), api.Text(0, BSVD_TEXT_PLATFORM).c_str());
     std::printf("H.264 %s, HEVC %s\n", api.IsCodecSupported(BSVD_CODEC_H264) ? "supported" : "NOT supported",
                 api.IsCodecSupported(BSVD_CODEC_HEVC) ? "supported" : "NOT supported");
@@ -813,8 +816,12 @@ int RunAll(const std::string& adapter) {
     Report("no Unity: no path", api.GetPath() == BSVD_PATH_NONE, Fmt("path=%d", api.GetPath()));
     unity::SetRenderer(kUnityGfxRendererD3D11);
     unity::SetDevice(device.device.Get());
+    int idBefore = api.GetRenderEventId();
     api.PluginLoad(unity::Interfaces());
     Caps(api);
+    Report("render event id reserved at load", idBefore == BSVD_EVENT_PRESENT && api.GetRenderEventId() == unity::LastReservedEventId() &&
+           api.GetRenderEventId() != BSVD_EVENT_PRESENT,
+           Fmt("before load %d, after %d, Unity reserved %d", idBefore, api.GetRenderEventId(), unity::LastReservedEventId()));
     Report("D3D11 path", api.GetPath() == BSVD_PATH_D3D11 && api.IsCodecSupported(BSVD_CODEC_H264),
            api.Text(0, BSVD_TEXT_PLATFORM));
     {
@@ -896,6 +903,9 @@ int RunAll(const std::string& adapter) {
             SwitchRenderer(kUnityGfxRendererD3D11, device.device.Get());
             dll.PluginLoad(unity::Interfaces());
             Caps(dll);
+            Report("dll: render event id reserved at load",
+                   dll.GetRenderEventId() == unity::LastReservedEventId() && dll.GetRenderEventId() != BSVD_EVENT_PRESENT,
+                   Fmt("id %d, Unity reserved %d", dll.GetRenderEventId(), unity::LastReservedEventId()));
             Harness d{&dll, &device, gOpt.hz};
             Report("dll: D3D11 path", dll.GetPath() == BSVD_PATH_D3D11, dll.Text(0, BSVD_TEXT_PLATFORM));
             Paced(d, "dll: crop, orientation", {{crop, Check::Crop, 1920, 1080, "1080p"}}, false);

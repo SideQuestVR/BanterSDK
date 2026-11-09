@@ -22,6 +22,10 @@ int32_t gNextHandle = 1;
 IUnityInterfaces* gUnity = nullptr;
 IUnityGraphics* gGraphics = nullptr;
 std::atomic<int> gSupported[3] = {{-1}, {-1}, {-1}};
+// The present event's id: the one Unity reserved at UnityPluginLoad, else BSVD_EVENT_PRESENT. Unity evidently applies an
+// event's Vulkan configuration (ConfigureEvent: outside any render pass) only to an id it reserved: configured with the
+// fixed id, the event ran inside a render pass on Quest 3 (build 9157). Unity's WebRTC plugin reserves its id the same way.
+std::atomic<int32_t> gEventId{BSVD_EVENT_PRESENT};
 
 std::shared_ptr<Decoder> Find(int32_t handle) {
     std::lock_guard<std::mutex> g(gLock);
@@ -65,7 +69,7 @@ void UNITY_INTERFACE_API OnDeviceEvent(UnityGfxDeviceEventType type) {
 }
 
 void UNITY_INTERFACE_API OnRenderEvent(int eventId) {
-    if (eventId != BSVD_EVENT_PRESENT) return;
+    if (eventId != gEventId.load(std::memory_order_acquire)) return;
     std::vector<std::shared_ptr<Decoder>> live, dying;
     {
         std::lock_guard<std::mutex> g(gLock);
@@ -99,11 +103,16 @@ void UNITY_INTERFACE_API OnRenderEvent(int eventId) {
 
 }  // namespace
 
+int32_t bsvd::RenderEventId() { return gEventId.load(std::memory_order_acquire); }
+
 extern "C" {
 
 void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* interfaces) {
     gUnity = interfaces;
     gGraphics = interfaces ? interfaces->Get<IUnityGraphics>() : nullptr;
+    // First, so the id is the reserved one before the platform configures it (Android: at the device's Initialize,
+    // which may come from the OnDeviceEvent below or from Unity itself).
+    if (gGraphics && gGraphics->ReserveEventIDRange) gEventId.store(gGraphics->ReserveEventIDRange(1), std::memory_order_release);
     PlatformLoad(interfaces);
     if (gGraphics) {
         gGraphics->RegisterDeviceEventCallback(OnDeviceEvent);
@@ -242,6 +251,8 @@ BSVD_API int32_t BSVD_CALL BSVD_GetLiveCount(void) {
 }
 
 BSVD_API BSVD_RenderEvent BSVD_CALL BSVD_GetRenderEventFunc(void) { return (BSVD_RenderEvent)&OnRenderEvent; }
+
+BSVD_API int32_t BSVD_CALL BSVD_GetRenderEventId(void) { return RenderEventId(); }
 
 BSVD_API int32_t BSVD_CALL BSVD_LockFrame(int32_t handle, void** pixels, int32_t* width, int32_t* height) {
     auto d = Find(handle);

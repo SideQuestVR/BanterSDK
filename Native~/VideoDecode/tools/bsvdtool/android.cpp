@@ -1,7 +1,7 @@
 // bsvdtool on Android: drives the C API as VideoDecoderNative.cs does, against a stand-in for Unity's Vulkan device
 // (android_host), and checks every result with numbers. Run over adb shell from /data/local/tmp/bsvd (run-android.sh).
 //
-//   bsvdtool startup                                     paths per renderer, the start-up hook, event config
+//   bsvdtool startup                                     paths per renderer, the start-up hook, event id and config
 //   bsvdtool order <clip> [--cpu] [--frames n]           every frame shown in order with its time (clock stepped)
 //   bsvdtool bars <clip> <601|709> <0|1> [--cpu]         colour bars within 2/255
 //   bsvdtool orient <clip>                               GPU frame equals the CPU path's frame, not its mirror image
@@ -989,6 +989,13 @@ bool TestStartup() {
     std::printf("after load: path %d, hooks registered %d (priority %d), platform: %s\n", BSVD_GetPath(), host.hooks, host.hookPriority,
                 Text(0, BSVD_TEXT_PLATFORM).c_str());
     ok = ok && BSVD_GetPath() == BSVD_PATH_NONE && host.hooks == 1 && host.hookPriority < kUnityVulkanInitCallbackMaxPriority;
+    // The library reserves exactly one event id at load, and that is the id the C# side is told to issue.
+    const int eventId = Host::EventId();
+    bool reservedOne = host.reserved.size() == 1 && host.reserved[0].count == 1 && host.reserved[0].base == eventId;
+    std::printf("render event id %d (what the C# side issues); reserved at load:", eventId);
+    for (const Host::Range& r : host.reserved) std::printf(" %d+%d", r.base, r.count);
+    std::printf("%s -> %s\n", host.reserved.empty() ? " nothing" : "", reservedOne ? "as specified" : "WRONG");
+    ok = ok && reservedOne;
     BSVD_Config cfg{};
     cfg.codec = BSVD_CODEC_H264;
     int32_t none = BSVD_Create(&cfg, nullptr, 0);
@@ -1028,9 +1035,14 @@ bool TestStartup() {
             bool config = host.eventConfigured && e.renderPassPrecondition == kUnityVulkanRenderPass_EnsureOutside &&
                           e.graphicsQueueAccess == kUnityVulkanGraphicsQueueAccess_DontCare &&
                           e.flags == (kUnityVulkanEventConfigFlag_EnsurePreviousFrameSubmission | kUnityVulkanEventConfigFlag_ModifiesCommandBuffersState);
-            std::printf("  event config: set %d, render pass %d, queue %d, flags %u -> %s\n", host.eventConfigured, (int)e.renderPassPrecondition,
-                        (int)e.graphicsQueueAccess, e.flags, config ? "as specified" : "WRONG");
-            ok = ok && config;
+            // Configured with the id it reserved and hands out, so Unity would honour it.
+            int reservedId = host.reserved.empty() ? -1 : host.reserved[0].base;
+            bool sameId = host.configuredId == reservedId && reservedId == Host::EventId() && host.RunsOutsideRenderPass(Host::EventId());
+            std::printf("  event config: set %d, render pass %d, queue %d, flags %u -> %s; configured id %d, reserved %d, "
+                        "BSVD_GetRenderEventId %d -> %s\n",
+                        host.eventConfigured, (int)e.renderPassPrecondition, (int)e.graphicsQueueAccess, e.flags, config ? "as specified" : "WRONG",
+                        host.configuredId, reservedId, Host::EventId(), sameId ? "one id" : "WRONG (Unity would run the event inside a render pass)");
+            ok = ok && config && sameId;
             // A decoder made now runs on Vulkan; render events with no target do nothing.
             Clip clip;
             if (LoadFixture("o1080.h264", clip)) {
@@ -1091,7 +1103,11 @@ int main(int argc, char** argv) {
     if (!host.CreateVulkan(DeviceOptions())) return 2;
     host.Initialize(gCpu ? kUnityGfxRendererOpenGLES30 : kUnityGfxRendererVulkan);
     int path = BSVD_GetPath();
-    std::printf("device %s; path %d; %s\n", host.deviceName.c_str(), path, Text(0, BSVD_TEXT_PLATFORM).c_str());
+    std::printf("device %s; path %d; render event %d%s; %s\n", host.deviceName.c_str(), path, Host::EventId(),
+                path != BSVD_PATH_VULKAN                         ? ""
+                : host.RunsOutsideRenderPass(Host::EventId()) ? " (runs outside render passes)"
+                                                                 : " (runs INSIDE a render pass: not reserved and configured)",
+                Text(0, BSVD_TEXT_PLATFORM).c_str());
     if (path != (gCpu ? BSVD_PATH_CPU : BSVD_PATH_VULKAN)) {
         std::printf("RESULT FAIL (wrong path)\n");
         return 1;

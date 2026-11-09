@@ -40,7 +40,13 @@ void UNITY_INTERFACE_API RegisterDeviceEventCallback(IUnityGraphicsDeviceEventCa
 void UNITY_INTERFACE_API UnregisterDeviceEventCallback(IUnityGraphicsDeviceEventCallback callback) {
     if (gHost.deviceCallback == callback) gHost.deviceCallback = nullptr;
 }
-int UNITY_INTERFACE_API ReserveEventIDRange(int) { return 0; }
+// Real ids, never 0, each range after the last, as Unity hands them out to plugins.
+int UNITY_INTERFACE_API ReserveEventIDRange(int count) {
+    int base = gHost.nextEventId;
+    gHost.nextEventId += std::max(count, 1);
+    gHost.reserved.push_back({base, count});
+    return base;
+}
 
 bool UNITY_INTERFACE_API AddInterceptInitialization(UnityVulkanInitCallback func, void* userdata, int32_t priority) {
     if (gHost.instance.device) return false;  // too late, as in Unity
@@ -58,11 +64,13 @@ bool UNITY_INTERFACE_API RemoveInterceptInitialization(UnityVulkanInitCallback f
     return true;
 }
 PFN_vkVoidFunction UNITY_INTERFACE_API InterceptVulkanAPI(const char*, PFN_vkVoidFunction) { return nullptr; }
+// Recorded for any id; RunsOutsideRenderPass decides whether Unity would honour it.
 void UNITY_INTERFACE_API ConfigureEvent(int eventId, const UnityVulkanPluginEventConfig* config) {
-    if (eventId == BSVD_EVENT_PRESENT && config) {
-        gHost.eventConfigured = true;
-        gHost.eventConfig = *config;
-    }
+    if (!config) return;
+    gHost.eventConfigured = true;
+    gHost.configuredId = eventId;
+    gHost.eventConfig = *config;
+    gHost.eventConfigs[eventId] = *config;
 }
 UnityVulkanInstance UNITY_INTERFACE_API Instance() { return gHost.instance; }
 
@@ -73,7 +81,9 @@ bool UNITY_INTERFACE_API CommandRecordingState(UnityVulkanRecordingState* out, U
     out->commandBufferLevel = gHost.recordingLevel;  // SECONDARY unless --primary, as Unity 6 on Android with graphics jobs
     out->renderPass = VK_NULL_HANDLE;
     out->framebuffer = VK_NULL_HANDLE;
-    out->subPassIndex = -1;
+    // Inside a render pass for an event Unity wasn't told (by a reserved, configured id) to run outside one, as on Quest 3
+    // (build 9157). The host's buffer is never really in one: the library must refuse to record, which is what is checked.
+    out->subPassIndex = gHost.insideRenderPass ? 0 : -1;
     out->currentFrameNumber = gHost.frameNumber;
     out->safeFrameNumber = gHost.safeFrame;
     return true;
@@ -130,7 +140,10 @@ bool UNITY_INTERFACE_API AccessRenderBufferTexture(UnityRenderBuffer, const VkIm
 bool UNITY_INTERFACE_API AccessBuffer(void*, VkPipelineStageFlags, VkAccessFlags, UnityVulkanResourceAccessMode, UnityVulkanBuffer*) {
     return false;
 }
-void UNITY_INTERFACE_API EnsureRenderPass() {}
+// Leaves an event that runs inside a render pass inside it, as Unity did on Quest 3 (build 9157) for an event configured
+// with an id it never reserved; an event that runs outside one is already out.
+void UNITY_INTERFACE_API EnsureOutsideRenderPass() { gHost.ensureOutsideCalls++; }
+void UNITY_INTERFACE_API EnsureInsideRenderPass() {}
 void UNITY_INTERFACE_API AccessQueue(UnityRenderingEventAndData, int, void*, bool) {}
 bool UNITY_INTERFACE_API ConfigureSwapchain(const UnityVulkanSwapchainConfiguration*) { return true; }
 bool UNITY_INTERFACE_API AccessTextureByID(UnityTextureID, const VkImageSubresource*, VkImageLayout, VkPipelineStageFlags, VkAccessFlags,
@@ -159,8 +172,8 @@ IUnityGraphicsVulkanV2 MakeVulkanInterface() {
     v.AccessRenderBufferTexture = &AccessRenderBufferTexture;
     v.AccessRenderBufferResolveTexture = &AccessRenderBufferTexture;
     v.AccessBuffer = &AccessBuffer;
-    v.EnsureOutsideRenderPass = &EnsureRenderPass;
-    v.EnsureInsideRenderPass = &EnsureRenderPass;
+    v.EnsureOutsideRenderPass = &EnsureOutsideRenderPass;
+    v.EnsureInsideRenderPass = &EnsureInsideRenderPass;
     v.AccessQueue = &AccessQueue;
     v.ConfigureSwapchain = &ConfigureSwapchain;
     v.AccessTextureByID = &AccessTextureByID;
@@ -196,6 +209,22 @@ bool Check(VkResult r, const char* what) {
 }  // namespace
 
 Host& TheHost() { return gHost; }
+
+int Host::EventId() {
+#if BSVD_API_VERSION >= 2
+    return BSVD_GetRenderEventId();
+#else
+    return BSVD_EVENT_PRESENT;
+#endif
+}
+
+bool Host::RunsOutsideRenderPass(int eventId) const {
+    bool wasReserved = false;
+    for (const Range& r : reserved)
+        if (eventId >= r.base && eventId < r.base + r.count) wasReserved = true;
+    auto it = eventConfigs.find(eventId);
+    return wasReserved && it != eventConfigs.end() && it->second.renderPassPrecondition == kUnityVulkanRenderPass_EnsureOutside;
+}
 
 uint32_t Host::MemoryType(uint32_t bits, VkMemoryPropertyFlags want) const {
     for (uint32_t i = 0; i < memory_.memoryTypeCount; ++i)
@@ -413,7 +442,7 @@ void Host::Retire(Slot& s) {
 void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent) {
     if (!device_) {
         // No Vulkan device (the CPU path with a fake renderer): the render event still runs, for releases.
-        BSVD_GetRenderEventFunc()(BSVD_EVENT_PRESENT);
+        BSVD_GetRenderEventFunc()(EventId());
         std::vector<Readback> none;
         if (afterPresent) afterPresent(none);
         return;
@@ -452,9 +481,12 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         recording = s.cb;
         recordingLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     }
+    int id = EventId();
+    insideRenderPass = !RunsOutsideRenderPass(id);
     double e0 = NowSeconds();
-    BSVD_GetRenderEventFunc()(BSVD_EVENT_PRESENT);
+    BSVD_GetRenderEventFunc()(id);
     lastEventMs = (NowSeconds() - e0) * 1000;
+    insideRenderPass = false;
     if (secondary) {
         if (vkEndCommandBuffer(s.eventCb) != VK_SUCCESS) std::printf("FAILED vkEndCommandBuffer (secondary)\n");
         vkCmdExecuteCommands(s.cb, 1, &s.eventCb);

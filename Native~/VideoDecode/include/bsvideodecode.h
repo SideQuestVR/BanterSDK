@@ -49,7 +49,10 @@
 extern "C" {
 #endif
 
-#define BSVD_API_VERSION 1
+/* 1: the first.
+   2: BSVD_GetRenderEventId. The present event's id is the one Unity reserves for the library at UnityPluginLoad, and the
+      event does its work only when issued with that id; BSVD_EVENT_PRESENT is the id only when Unity reserved none. */
+#define BSVD_API_VERSION 2
 
 /* Codecs. */
 #define BSVD_CODEC_H264 1
@@ -91,7 +94,8 @@ extern "C" {
 /* A time that isn't one. */
 #define BSVD_NO_TIME INT64_MIN
 
-/* The render event id for GL.IssuePluginEvent(BSVD_GetRenderEventFunc(), BSVD_EVENT_PRESENT). */
+/* The present event's id when Unity reserved none (the library loaded outside Unity). Never pass it to
+   GL.IssuePluginEvent yourself: pass BSVD_GetRenderEventId(). */
 #define BSVD_EVENT_PRESENT 0x56445631
 
 /* BSVD_GetText. */
@@ -178,9 +182,15 @@ BSVD_API void BSVD_CALL BSVD_DestroyAll(void);
 /* Decoders alive, plus destroyed ones whose resources a render event still has to release. */
 BSVD_API int32_t BSVD_CALL BSVD_GetLiveCount(void);
 
-/* For GL.IssuePluginEvent(..., BSVD_EVENT_PRESENT): draws every decoder's due frame into its target. Call once a
-   frame, before the cameras render. */
+/* For GL.IssuePluginEvent(BSVD_GetRenderEventFunc(), BSVD_GetRenderEventId()): draws every decoder's due frame into
+   its target. Call once a frame, before the cameras render. */
 BSVD_API BSVD_RenderEvent BSVD_CALL BSVD_GetRenderEventFunc(void);
+
+/* The id to pass with BSVD_GetRenderEventFunc() to GL.IssuePluginEvent: the one Unity reserved for this library
+   (IUnityGraphics::ReserveEventIDRange) when it called UnityPluginLoad, or BSVD_EVENT_PRESENT when it reserved none.
+   On Vulkan the library configures that id to run outside any render pass; Unity applies the configuration only to an
+   id it reserved. The render event ignores every other id. (API 2) */
+BSVD_API int32_t BSVD_CALL BSVD_GetRenderEventId(void);
 
 /* BSVD_PATH_CPU: when a frame newer than the last one taken is due (or is the first frame after BSVD_Create or
    BSVD_Flush), points pixels at it, RGBA, target width x height x 4 bytes, bottom row first, and returns 1; the frame

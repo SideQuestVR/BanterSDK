@@ -37,6 +37,7 @@ struct Api {
     decltype(&BSVD_DestroyAll) DestroyAll = nullptr;
     decltype(&BSVD_GetLiveCount) GetLiveCount = nullptr;
     decltype(&BSVD_GetRenderEventFunc) GetRenderEventFunc = nullptr;
+    decltype(&BSVD_GetRenderEventId) GetRenderEventId = nullptr;
     decltype(&BSVD_LockFrame) LockFrame = nullptr;
     decltype(&BSVD_UnlockFrame) UnlockFrame = nullptr;
     void(UNITY_INTERFACE_API* PluginLoad)(IUnityInterfaces*) = nullptr;
@@ -60,6 +61,8 @@ void SetRenderer(UnityGfxRenderer renderer);
 void SetDevice(ID3D11Device* device);
 // Calls every device event callback a plugin registered, as Unity does on its render thread.
 void SendDeviceEvent(UnityGfxDeviceEventType type);
+// IUnityGraphics::ReserveEventIDRange hands out real ids from 2000 up, as Unity does: the base it returned last, or -1.
+int LastReservedEventId();
 }  // namespace unity
 
 // ---- devices

@@ -8,6 +8,11 @@
 // pass), which the host then executes in its primary; bsvdtool --primary hands out the primary itself instead, as Unity
 // does without graphics jobs. Targets are real RGBA images; AccessTexture records the barrier Unity would, into the
 // buffer the event records into. Rows of any target can be read back after a frame.
+//
+// Event ids as Unity hands them out: ReserveEventIDRange returns real ids from 2000 up, and the present event is issued
+// with BSVD_GetRenderEventId(), as the C# side does. As Unity on Quest 3 (build 9157) behaved, an event runs outside a
+// render pass only when its id was reserved and then configured with kUnityVulkanRenderPass_EnsureOutside; any other id
+// runs inside one (CommandRecordingState says subpass 0), and EnsureOutsideRenderPass doesn't get it out.
 #pragma once
 
 #define VK_USE_PLATFORM_ANDROID_KHR 1
@@ -19,6 +24,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -78,12 +84,28 @@ public:
     // Waits for every frame in flight and runs their inspections.
     void Finish();
 
+    // The id the present event is issued with: BSVD_GetRenderEventId(), as the C# side does. Built against a library
+    // from before API 2 (no BSVD_GetRenderEventId), BSVD_EVENT_PRESENT, as the C# side did then: that is how this host
+    // shows such a library's event running inside a render pass.
+    static int EventId();
+    // Whether Unity would run an event with this id outside any render pass: reserved, then configured EnsureOutside.
+    bool RunsOutsideRenderPass(int eventId) const;
+
     // What the plugin registered and configured.
     int hooks = 0;
     int hookPriority = 0;
-    bool eventConfigured = false;
+    bool eventConfigured = false;  // the last ConfigureEvent, whatever its id
+    int configuredId = 0;
     UnityVulkanPluginEventConfig eventConfig{};
+    std::map<int, UnityVulkanPluginEventConfig> eventConfigs;  // every id configured, the last configuration each
+    struct Range {
+        int base, count;
+    };
+    std::vector<Range> reserved;  // every ReserveEventIDRange, in order
+    int nextEventId = 2000;
     int accessCalls = 0;
+    int ensureOutsideCalls = 0;
+    bool insideRenderPass = false;  // while the render event runs: Unity's command buffer is in a render pass
     double lastEventMs = 0;  // the plugin's render event alone, last frame
     unsigned long long frameNumber = 0, safeFrame = 0;
     std::string deviceName;

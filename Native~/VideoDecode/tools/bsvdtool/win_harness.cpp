@@ -46,6 +46,7 @@ void StaticApi(Api& api) {
     api.DestroyAll = &BSVD_DestroyAll;
     api.GetLiveCount = &BSVD_GetLiveCount;
     api.GetRenderEventFunc = &BSVD_GetRenderEventFunc;
+    api.GetRenderEventId = &BSVD_GetRenderEventId;
     api.LockFrame = &BSVD_LockFrame;
     api.UnlockFrame = &BSVD_UnlockFrame;
     api.PluginLoad = &UnityPluginLoad;
@@ -83,6 +84,7 @@ bool DllApi(const std::wstring& path, Api& api, std::string& why) {
     resolve(api.DestroyAll, "BSVD_DestroyAll");
     resolve(api.GetLiveCount, "BSVD_GetLiveCount");
     resolve(api.GetRenderEventFunc, "BSVD_GetRenderEventFunc");
+    resolve(api.GetRenderEventId, "BSVD_GetRenderEventId");
     resolve(api.LockFrame, "BSVD_LockFrame");
     resolve(api.UnlockFrame, "BSVD_UnlockFrame");
     resolve(api.PluginLoad, "UnityPluginLoad");
@@ -122,7 +124,16 @@ void UNITY_INTERFACE_API UnregisterCallback(IUnityGraphicsDeviceEventCallback ca
     gCallbacks.erase(std::remove(gCallbacks.begin(), gCallbacks.end(), callback), gCallbacks.end());
 }
 
-int UNITY_INTERFACE_API ReserveEventIDRange(int) { return 0; }
+int gNextEventId = 2000;
+int gLastReserved = -1;
+
+// Real ids, never 0, each range after the last, as Unity hands them out to plugins.
+int UNITY_INTERFACE_API ReserveEventIDRange(int count) {
+    std::lock_guard<std::mutex> g(gLock);
+    gLastReserved = gNextEventId;
+    gNextEventId += std::max(count, 1);
+    return gLastReserved;
+}
 
 ID3D11Device* UNITY_INTERFACE_API GetDevice() {
     std::lock_guard<std::mutex> g(gLock);
@@ -196,6 +207,11 @@ void SendDeviceEvent(UnityGfxDeviceEventType type) {
         callbacks = gCallbacks;
     }
     for (auto c : callbacks) c(type);
+}
+
+int LastReservedEventId() {
+    std::lock_guard<std::mutex> g(gLock);
+    return gLastReserved;
 }
 
 }  // namespace unity

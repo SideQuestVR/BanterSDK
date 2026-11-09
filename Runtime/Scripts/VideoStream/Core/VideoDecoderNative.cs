@@ -13,7 +13,8 @@ namespace BS.VideoStream
     {
         const string Library = "BSVideoDecode";
 
-        public const int ApiVersion = 1;
+        // 2: the render event's id comes from BSVD_GetRenderEventId (reserved from Unity), not EventPresent.
+        public const int ApiVersion = 2;
 
         public const int CodecH264 = 1;
         public const int CodecHevc = 2;
@@ -123,8 +124,15 @@ namespace BS.VideoStream
         /// <summary>The library has been loaded and works. Unlike <see cref="Available"/>, never loads it.</summary>
         public static bool Loaded => _available == 1;
 
-        /// <summary>For GL.IssuePluginEvent with <see cref="EventPresent"/>.</summary>
+        /// <summary>For GL.IssuePluginEvent with <see cref="RenderEventId"/>.</summary>
         public static IntPtr RenderEvent => Available ? _renderEvent : IntPtr.Zero;
+
+        /// <summary>
+        /// The id to issue <see cref="RenderEvent"/> with: one the library reserved from Unity, so the settings it gave the
+        /// event (Vulkan: run outside any render pass) apply. Unity ignores settings for an id it didn't hand out. Asked
+        /// each time, so a library Unity loads late still gives the one it reserved.
+        /// </summary>
+        public static int RenderEventId => Available ? BSVD_GetRenderEventId() : EventPresent;
 
         public static int Path => Available ? BSVD_GetPath() : PathNone;
 
@@ -212,6 +220,7 @@ namespace BS.VideoStream
         [DllImport(Library)] static extern void BSVD_DestroyAll();
         [DllImport(Library)] static extern int BSVD_GetLiveCount();
         [DllImport(Library)] static extern IntPtr BSVD_GetRenderEventFunc();
+        [DllImport(Library)] static extern int BSVD_GetRenderEventId();
         [DllImport(Library)] static extern int BSVD_LockFrame(int handle, out IntPtr pixels, out int width, out int height);
         [DllImport(Library)] static extern int BSVD_UnlockFrame(int handle);
     }

@@ -17,5 +17,6 @@ EXPORTS
     BSVD_DestroyAll
     BSVD_GetLiveCount
     BSVD_GetRenderEventFunc
+    BSVD_GetRenderEventId
     BSVD_LockFrame
     BSVD_UnlockFrame

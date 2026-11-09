@@ -268,11 +268,15 @@ std::unique_ptr<Device> OpenDevice(std::string& why) {
     if (!CanWriteIntermediate(*d, o, why)) return nullptr;
     if (!CreateRenderer(*d, why)) return nullptr;
 
+    // The id Unity reserved for the library (UnityPluginLoad reserves it before anything reaches here): Unity applies the
+    // configuration to no other.
     UnityVulkanPluginEventConfig event{};
     event.renderPassPrecondition = kUnityVulkanRenderPass_EnsureOutside;
     event.graphicsQueueAccess = kUnityVulkanGraphicsQueueAccess_DontCare;
     event.flags = kUnityVulkanEventConfigFlag_EnsurePreviousFrameSubmission | kUnityVulkanEventConfigFlag_ModifiesCommandBuffersState;
-    unity->ConfigureEvent(BSVD_EVENT_PRESENT, &event);
+    int32_t id = RenderEventId();
+    unity->ConfigureEvent(id, &event);
+    Log("present event %d configured outside render passes%s", (int)id, id == BSVD_EVENT_PRESENT ? " (Unity reserved no id)" : "");
     return d;
 }
 

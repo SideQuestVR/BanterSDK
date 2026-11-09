@@ -564,6 +564,9 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
         return;
     }
 
+    // Out of any render pass before the access records its barrier, as Unity's WebRTC plugin does; the event is
+    // configured to start outside one, and RecordingOutsideRenderPass checks that it did.
+    if (d.unity->EnsureOutsideRenderPass) d.unity->EnsureOutsideRenderPass();
     UnityVulkanImage out{};
     if (!d.unity->AccessTexture(target.texture, UnityVulkanWholeImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
                                 VK_ACCESS_TRANSFER_WRITE_BIT, kUnityVulkanResourceAccess_PipelineBarrier, &out) ||
