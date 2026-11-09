@@ -19,6 +19,7 @@ namespace BS
     - `enableForceGrab` - Players can grab objects from a distance.
     - `enableSpiderMan` - Players can use the grapple (spider-man) ability.
     - `enableBirdFlight` - Allow controller-driven wing flight, also gated by each player's preference.
+    - `avatarSyncMode` - How often players far from each other see each other move: `social` (the default) or `action`.
     - `enableHandHold` - Players can hold hands.
     - `enableRadar` - Show the radar.
     - `enableNametags` - Show name tags above players.
@@ -122,6 +123,13 @@ namespace BS
         [Tooltip("Allow bird flight with tracked controllers. Allowed by default; disable to forbid it in this space. Players can also disable it in Controls.")]
         [See(initial = "true")][SerializeField] internal bool enableBirdFlight = true;
 
+        [Header("Networking")]
+        [Tooltip("How often players far from each other see each other move. \"social\" (the default): full rate " +
+                 "within 15 m, thinning to once a second past 70 m, which keeps big gatherings cheap. \"action\": full " +
+                 "rate within 10 m, then 24, 15 and 8 updates a second out to 150 m, and 2 past that, for games and " +
+                 "flight where distant players must move smoothly. Costs more bandwidth per distant player.")]
+        [See(initial = "\"social\"")][SerializeField] internal string avatarSyncMode = "social";
+
         bool started;
         // The settings object (it is recreated on every page load) that this component locked, if any.
         // Its own locks don't stop it; locks set by anything else do.
@@ -179,6 +187,7 @@ namespace BS
                 if (Has(PropertyName.enableForceGrab)) settings.EnableForceGrab = enableForceGrab;
                 if (Has(PropertyName.enableSpiderMan)) settings.EnableSpiderMan = enableSpiderMan;
                 if (Has(PropertyName.enableBirdFlight)) settings.EnableBirdFlight = enableBirdFlight;
+                if (Has(PropertyName.avatarSyncMode)) settings.AvatarSyncMode = avatarSyncMode;
                 if (Has(PropertyName.enableHandHold)) settings.EnableHandHold = enableHandHold;
                 if (Has(PropertyName.enableRadar)) settings.EnableRadar = enableRadar;
                 if (Has(PropertyName.enableNametags)) settings.EnableNametags = enableNametags;

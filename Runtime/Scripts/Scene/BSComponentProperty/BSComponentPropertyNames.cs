@@ -301,5 +301,6 @@ namespace BS
         label,
         isToggle,
         isOn,
+        avatarSyncMode,
     }
 }

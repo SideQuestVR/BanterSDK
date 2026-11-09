@@ -34,6 +34,7 @@ namespace BS
         public const string EnableForceGrab = "EnableForceGrab";
         public const string EnableSpiderMan = "EnableSpiderMan";
         public const string EnableBirdFlight = "EnableBirdFlight";
+        public const string AvatarSyncMode = "AvatarSyncMode";
         public const string EnableHandHold = "EnableHandHold";
         public const string EnableRadar = "EnableRadar";
         public const string EnableNametags = "EnableNametags";
@@ -3874,6 +3875,9 @@ namespace BS
                                  break;
                              case SettingsMap.EnableBirdFlight:
                                  settings.EnableBirdFlight = setting[1] == "1";
+                                 break;
+                             case SettingsMap.AvatarSyncMode:
+                                 settings.AvatarSyncMode = setting[1];
                                  break;
                              case SettingsMap.EnableHandHold:
                                  settings.EnableHandHold = setting[1] == "1";

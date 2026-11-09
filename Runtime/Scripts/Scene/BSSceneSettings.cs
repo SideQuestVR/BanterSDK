@@ -8,6 +8,15 @@ using Unity.VisualScripting;
 
 namespace BS
 {
+    /// <summary>The values of <see cref="BSSceneSettings.AvatarSyncMode"/> (BS Settings' Avatar Sync Mode).</summary>
+    public static class AvatarSyncModes
+    {
+        /// <summary>Full rate nearby, thinning to once a second far away: big gatherings.</summary>
+        public const string Social = "social";
+        /// <summary>Distant players still update several times a second: games and flight.</summary>
+        public const string Action = "action";
+    }
+
     [RenamedFrom("Banter.SDK.BanterSceneSettings")]
     public class BSSceneSettings
     {
@@ -23,6 +32,11 @@ namespace BS
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
         private bool _EnableBirdFlight = true;
         public bool EnableBirdFlight { get { return _EnableBirdFlight; } set { _EnableBirdFlight = value; scene.events.OnEnableBirdFlightChanged.Invoke(value); } }
+        /// <summary>How often distant players' movement is sent: <see cref="AvatarSyncModes.Social"/> (the default) or
+        /// <see cref="AvatarSyncModes.Action"/>. A string so more modes can follow; the client treats one it doesn't
+        /// know as Social.</summary>
+        private string _AvatarSyncMode = AvatarSyncModes.Social;
+        public string AvatarSyncMode { get { return _AvatarSyncMode; } set { _AvatarSyncMode = value; scene.events.OnAvatarSyncModeChanged.Invoke(value); } }
         // TODO(not wired up in the app yet): let players grab and hold other players' hands (remote players' hands get
         // grabbable colliders, also gated by the player's own Hand Holding comfort option). Remote players have no hand
         // colliders in the client yet.
@@ -208,6 +222,7 @@ namespace BS
             EnableForceGrab = false;
             EnableSpiderMan = false;
             EnableBirdFlight = true;
+            AvatarSyncMode = AvatarSyncModes.Social;
             EnableHandHold = true;
             EnableRadar = true;
             EnableNametags = true;
