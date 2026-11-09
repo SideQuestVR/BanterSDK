@@ -125,6 +125,8 @@ namespace BS
         /// <summary>
         /// Whether this font and material can show text here. The shader has to run on this device, so a bundle's copy that
         /// can't, or a material that lost its shader, fails. So does a font with no glyphs and nothing to make them from.
+        /// The material also has to be a text shader reading this font's atlas: one that runs but isn't (URP Unlit, say), or
+        /// that reads another font's atlas or none, draws blocks or nothing.
         /// A shader that runs but lacks a variant this device needs can't be told from here.
         /// </summary>
         internal static bool CanDraw(TMP_FontAsset font, Material material)
@@ -136,7 +138,25 @@ namespace BS
             {
                 return false;
             }
+            if (!IsTextShader(material) || !ReadsAtlasOf(font, material))
+            {
+                return false;
+            }
             return font.atlasPopulationMode == AtlasPopulationMode.Static ? font.characterTable.Count > 0 : font.sourceFontFile != null;
+        }
+
+        static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        static readonly int GradientScaleId = Shader.PropertyToID("_GradientScale");
+
+        /// <summary>Every TMP SDF shader, built-in or Shader Graph, has _GradientScale; the bitmap ones are TMP's own.</summary>
+        static bool IsTextShader(Material material)
+            => material.HasProperty(GradientScaleId) || material.shader.name.StartsWith("TextMeshPro/", System.StringComparison.Ordinal);
+
+        static bool ReadsAtlasOf(TMP_FontAsset font, Material material)
+        {
+            var atlas = material.HasProperty(MainTexId) ? material.GetTexture(MainTexId) : null;
+            var atlases = font.atlasTextures;
+            return atlas != null && atlases != null && System.Array.IndexOf(atlases, atlas) >= 0;
         }
 
         /// <summary>

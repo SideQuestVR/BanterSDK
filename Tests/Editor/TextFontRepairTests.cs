@@ -83,6 +83,34 @@ namespace BS.SDKEditor.Tests
             Object.DestroyImmediate(broken);
         }
 
+        // Bob's world: URP Unlit runs everywhere, so the shader check alone kept it, and the text drew nothing.
+        [Test]
+        public void AShaderThatIsNotForText_GetsTheDefault()
+        {
+            var shader = Shader.Find("Universal Render Pipeline/Unlit");
+            if (shader == null) Assert.Ignore("This project has no URP Unlit shader.");
+            var unlit = new Material(shader);
+            var text = root.AddComponent<TextMeshPro>();
+            text.font = own;
+            text.fontSharedMaterial = unlit;
+            Assert.IsFalse(BSText.CanDraw(own, unlit));
+            BSText.RepairFont(text);
+            Assert.AreSame(TMP_Settings.defaultFontAsset, text.font);
+            Assert.AreSame(TMP_Settings.defaultFontAsset.material, text.fontSharedMaterial);
+            Object.DestroyImmediate(unlit);
+        }
+
+        [Test]
+        public void ATextMaterialWithoutThisFontsAtlas_CannotDraw()
+        {
+            var other = new Texture2D(4, 4);
+            preset.SetTexture("_MainTex", other);
+            Assert.IsFalse(BSText.CanDraw(own, preset), "another font's atlas");
+            preset.SetTexture("_MainTex", null);
+            Assert.IsFalse(BSText.CanDraw(own, preset), "no atlas");
+            Object.DestroyImmediate(other);
+        }
+
         [Test]
         public void AFontThatLostItsOwnMaterial_GetsTheDefault()
         {
