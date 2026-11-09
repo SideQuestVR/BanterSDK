@@ -556,29 +556,45 @@ namespace BS
 
             public double DspTime => AudioSettings.dspTime;
 
+            StreamFormat _format;
+            ChannelReader[] _readers = Array.Empty<ChannelReader>();
+
+            /// <summary>Picks a source per channel. The clips come in PlayAt, once the conductor has armed the readers.</summary>
             public void Prepare(StreamFormat format, ChannelReader[] readers)
             {
                 var hasBackPair = Array.IndexOf(format.Roles, AudioChannelRole.BackLeft) >= 0;
                 var sources = new AudioSource[readers.Length];
-                var clips = new AudioClip[readers.Length];
                 for (var i = 0; i < readers.Length; i++)
                 {
-                    var reader = readers[i];
                     var source = _owner.SourceFor((BSAudioStreamRole)format.Roles[i], hasBackPair);
                     _owner.WarnAboutRate(source);
-                    var clip = AudioClip.Create(format.Roles[i].ToString(), ClipFrames, 1, format.SampleRate, true, reader.OnRead, reader.OnSetPosition);
-                    source.clip = clip;
-                    source.loop = true;
                     sources[i] = source;
-                    clips[i] = clip;
                 }
+                _format = format;
+                _readers = readers;
                 _owner._playing = sources;
-                _owner._clips = clips;
+                _owner._clips = new AudioClip[readers.Length];
             }
 
+            /// <summary>
+            /// Makes the clips and schedules them. Creating a streamed clip has Unity read about 0.8 s ahead at once, and
+            /// PlayScheduled sends no position back to 0 afterwards: a clip made before its reader was armed got that read as
+            /// silence and the reader moved on, so every start lost its first 0.8 s. Made here, after Arm, that read is the
+            /// stream's start.
+            /// </summary>
             public void PlayAt(double dspTime)
             {
-                foreach (var source in _owner._playing)
+                var sources = _owner._playing;
+                var clips = _owner._clips;
+                for (var i = 0; i < sources.Length && i < _readers.Length; i++)
+                {
+                    var reader = _readers[i];
+                    var clip = AudioClip.Create(_format.Roles[i].ToString(), ClipFrames, 1, _format.SampleRate, true, reader.OnRead, reader.OnSetPosition);
+                    sources[i].clip = clip;
+                    sources[i].loop = true;
+                    clips[i] = clip;
+                }
+                foreach (var source in sources)
                 {
                     source.PlayScheduled(dspTime);
                 }

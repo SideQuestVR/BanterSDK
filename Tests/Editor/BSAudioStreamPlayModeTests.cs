@@ -110,6 +110,77 @@ namespace BS.SDKEditor.Tests
             }
         }
 
+        const float RampPerSecond = 0.08f;
+
+        // A mono 1 kHz tone whose level is 0.08 times its media time, so the loudest sample of a moment says which moment it is.
+        static byte[] RampFile(int seconds)
+        {
+            var frames = Rate * seconds;
+            var data = new byte[frames * 2];
+            for (var i = 0; i < frames; i++)
+            {
+                var t = i / (double)Rate;
+                var value = (short)Math.Round(RampPerSecond * t * Math.Sin(2 * Math.PI * 1000 * t) * short.MaxValue);
+                data[i * 2] = (byte)value;
+                data[i * 2 + 1] = (byte)(value >> 8);
+            }
+            using (var stream = new MemoryStream())
+            using (var w = new BinaryWriter(stream))
+            {
+                w.Write(Encoding.ASCII.GetBytes("RIFF"));
+                w.Write(36 + data.Length);
+                w.Write(Encoding.ASCII.GetBytes("WAVEfmt "));
+                w.Write(16);
+                w.Write((short)1);
+                w.Write((short)1);
+                w.Write(Rate);
+                w.Write(Rate * 2);
+                w.Write((short)2);
+                w.Write((short)16);
+                w.Write(Encoding.ASCII.GetBytes("data"));
+                w.Write(data.Length);
+                w.Write(data);
+                return stream.ToArray();
+            }
+        }
+
+        // The loudest sample of each 10 ms the source plays, in order.
+        sealed class LevelProbe : MonoBehaviour
+        {
+            readonly List<float> _windows = new List<float>();
+            int _window;
+            int _filled;
+            float _peak;
+
+            void Awake() => _window = AudioSettings.outputSampleRate / 100;
+
+            void OnAudioFilterRead(float[] data, int channels)
+            {
+                var frames = data.Length / channels;
+                for (var i = 0; i < frames; i++)
+                {
+                    _peak = Math.Max(_peak, Math.Abs(data[i * channels]));
+                    if (++_filled >= _window)
+                    {
+                        lock (_windows)
+                        {
+                            _windows.Add(_peak);
+                        }
+                        _filled = 0;
+                        _peak = 0;
+                    }
+                }
+            }
+
+            public float[] Windows()
+            {
+                lock (_windows)
+                {
+                    return _windows.ToArray();
+                }
+            }
+        }
+
         static HttpListener Serve(byte[] body, out string url)
         {
             var probe = new TcpListener(IPAddress.Loopback, 0);
@@ -144,6 +215,84 @@ namespace BS.SDKEditor.Tests
         static void Set(object target, string field, object value)
         {
             target.GetType().GetField(field, BindingFlags.Instance | BindingFlags.NonPublic).SetValue(target, value);
+        }
+
+        // Nothing at the start goes missing: the first sound heard is the stream's own start (its first 50 ms are too quiet
+        // to count). Creating a streamed clip has Unity read about 0.8 s ahead at once; read before the reader was armed,
+        // that came out as silence and the stream's first 0.8 s were never heard.
+        [UnityTest]
+        public IEnumerator TheFirstSoundHeardIsTheStreamsStart()
+        {
+            yield return new EnterPlayMode();
+            var runInBackground = Application.runInBackground;
+            Application.runInBackground = true;
+            var root = new GameObject("Audio stream under test");
+            var listenerObject = Object.FindAnyObjectByType<AudioListener>() == null ? new GameObject("Listener", typeof(AudioListener)) : null;
+            HttpListener server = null;
+            try
+            {
+                var dspAtStart = AudioSettings.dspTime;
+                var waited = 0f;
+                while (waited < 1f)
+                {
+                    waited += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+                if (AudioSettings.dspTime == dspAtStart)
+                {
+                    Assert.Ignore("The audio clock isn't running here, so there is nothing to measure.");
+                }
+
+                server = Serve(RampFile(6), out var url);
+                root.SetActive(false);
+                var stream = root.AddComponent<BSAudioStream>();
+                Set(stream, "url", url);
+                Set(stream, "playOnEnable", false);
+                Set(stream, "maxChannels", BSAudioStreamLayout.Mono);
+                Set(stream, "prebufferSeconds", 0.5f);
+                var rows = (BSAudioStreamChannel[])typeof(BSAudioStream).GetField("channels", BindingFlags.Instance | BindingFlags.NonPublic).GetValue(stream);
+                var roles = BSAudioStream.RolesOf(BSAudioStreamLayout.Mono);
+                LevelProbe probe = null;
+                foreach (var row in rows.Where(r => System.Array.IndexOf(roles, r.role) >= 0))
+                {
+                    var child = new GameObject(row.role.ToString());
+                    child.transform.SetParent(root.transform, false);
+                    var source = child.AddComponent<AudioSource>();
+                    source.playOnAwake = false;
+                    source.spatialBlend = 0f;
+                    source.dopplerLevel = 0f;
+                    row.source = source;
+                    probe = child.AddComponent<LevelProbe>();
+                }
+                Assert.NotNull(probe, "a mono row to play on");
+                root.SetActive(true);
+                stream.Play();
+
+                var clock = 0f;
+                while (clock < 4f)
+                {
+                    clock += Time.unscaledDeltaTime;
+                    yield return null;
+                }
+                Assert.AreEqual(BSAudioStreamState.Playing, stream.State, stream.FailureReason);
+                var windows = probe.Windows();
+                var first = Array.FindIndex(windows, peak => peak > 0.004f);
+                Assert.GreaterOrEqual(first, 0, "the tone was heard");
+                var heard = windows[first] / RampPerSecond - 0.01;
+                Debug.Log($"[BSAudioStream test] first heard at media time {heard:F3} s ({windows.Length} windows, loudest {windows.Max():F3}, underruns {stream.Underruns})");
+                Assert.That(heard, Is.EqualTo(0.05).Within(0.03), "the first sound heard is the stream's start");
+            }
+            finally
+            {
+                server?.Stop();
+                Object.Destroy(root);
+                if (listenerObject != null)
+                {
+                    Object.Destroy(listenerObject);
+                }
+                Application.runInBackground = runInBackground;
+            }
+            yield return new ExitPlayMode();
         }
 
         // ClipFrames sets how soon the clip reaches its loop point: 1 << 16 is about 1.4 seconds, so a run passes several.
