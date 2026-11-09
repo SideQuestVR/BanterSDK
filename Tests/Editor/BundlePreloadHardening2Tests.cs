@@ -180,7 +180,12 @@ namespace BS.SDKEditor.Tests
         {
             var verdict = BundleGraphTypes.Judge("System.Threading.Thread, mscorlib", false, out var detail);
             Assert.AreEqual(BundleGraphTypes.Verdict.Refused, verdict);
+#if GREENFIELD_PROJECT
             StringAssert.Contains("deserialization backstop", detail);
+#else
+            // A creator project has no runtime backstop to share: the checker names its own rule.
+            StringAssert.Contains("neither content nor a plain value", detail);
+#endif
         }
     }
 }

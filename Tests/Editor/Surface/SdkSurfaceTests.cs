@@ -85,6 +85,9 @@ namespace BS.SDKEditor.Tests.Surface
             var assemblies = SdkSurface.ReadStringArray(json, "assemblies");
             Assert.Greater(baseline.Count, 1000, "the baseline looks empty or unreadable");
             CollectionAssert.IsNotEmpty(assemblies);
+            // BS.SDK.Splines compiles only with com.unity.splines (BS_HAS_SPLINES), and the baseline holds its names too.
+            if (assemblies.Contains("BS.SDK.Splines") && !AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == "Unity.Splines"))
+                Assert.Ignore("com.unity.splines is not installed, so BS.SDK.Splines is not compiled: compare the surface in a project that has it.");
 
             var problems = new List<string>();
             var current = Current(assemblies, problems);

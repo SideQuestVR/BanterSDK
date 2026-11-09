@@ -505,7 +505,11 @@ namespace BS.SDKEditor.Tests
         [Test]
         public void HostScriptsAreRefusedAndMissingScriptsAreInert()
         {
-            AssertRefused(Check(ButtonWorld("Slash.Unity.DataBind.dll", "Slash.Unity.DataBind.Core.Presentation", "ContextHolder")), BundleRule.DeniedScript);
+            // A script resolves only to a type the project has: where the app's assembly is absent (a creator project), the
+            // same script is missing, and a missing script is inert.
+            var hostScript = Check(ButtonWorld("Slash.Unity.DataBind.dll", "Slash.Unity.DataBind.Core.Presentation", "ContextHolder"));
+            if (AppDomain.CurrentDomain.GetAssemblies().Any(a => a.GetName().Name == "Slash.Unity.DataBind")) AssertRefused(hostScript, BundleRule.DeniedScript);
+            else AssertPassed(hostScript);
             AssertRefused(Check(ButtonWorld("BS.SDK.dll", "BS", "DontDestroyOnLoad")), BundleRule.DeniedScript);
             var verdict = Check(ButtonWorld("Assembly-CSharp.dll", "", "NoSuchAuthorScript4242", new Call { Target = 0, TypeName = "System.IO.File, mscorlib", Method = "Delete", Mode = 5 }));
             AssertPassed(verdict); // never deserialized: its calls cannot run
