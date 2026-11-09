@@ -185,6 +185,27 @@ namespace BS.Bridge
             return n;
         }
 
+        /// <summary>The UTF-8 length, or -1 when the string holds a lone surrogate (UTF-8 would carry U+FFFD instead).</summary>
+        public static int LengthIfWellFormed(string s)
+        {
+            int n = 0;
+            for (int i = 0; i < s.Length; i++)
+            {
+                char c = s[i];
+                if (c < 0x80) n += 1;
+                else if (c < 0x800) n += 2;
+                else if (char.IsHighSurrogate(c))
+                {
+                    if (i + 1 >= s.Length || !char.IsLowSurrogate(s[i + 1])) return -1;
+                    n += 4;
+                    i++;
+                }
+                else if (char.IsLowSurrogate(c)) return -1;
+                else n += 3;
+            }
+            return n;
+        }
+
         public static void Encode(string s, Span<byte> o)
         {
             int p = 0;

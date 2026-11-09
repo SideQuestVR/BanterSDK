@@ -114,6 +114,8 @@ sealed class TestPage
     public readonly Dictionary<uint, byte[]> ReplyBodies = new Dictionary<uint, byte[]>();
     /// <summary>ANNOUNCE, DELTA and DESTROYED ops, in arrival order (their place among strings is marked in Got).</summary>
     public readonly List<(uint opcode, byte[] payload)> Pushes = new List<(uint, byte[])>();
+    /// <summary>DATA frames received, and how many of them were binary: a page runs promise continuations between frames.</summary>
+    public int DataFrames, BinaryDataFrames;
     public uint Families, Caps;
     public int Stale;
     public bool HonorWindow = true;
@@ -246,6 +248,8 @@ sealed class TestPage
         {
             case FrameKind.Data:
             {
+                DataFrames++;
+                if (!f.IsText) BinaryDataFrames++;
                 var msgs = new List<BridgeMessage>();
                 var e = f.IsText ? Link.ReceiveData(h, f.Body, null, 0, 0, msgs) : Link.ReceiveData(h, null, f.Frame, BridgeWire.HeaderBytes, h.Length, msgs);
                 if (e != BridgeError.None) throw new Exception("Unity frames broke the page link: " + e);

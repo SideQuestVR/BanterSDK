@@ -207,12 +207,62 @@ namespace BS.Bridge
         public bool HasOutbound => queue.Count > 0 || pending.Count > 0;
         public int QueuedCount => queue.Count + pending.Count;
 
+        /// <summary>A pushed family's op (ANNOUNCE, DELTA, DESTROYED): the only ops strings share a frame with.</summary>
+        static bool IsPush(byte[] op) => op.Length > 0 && (op[0] == BridgeOp.Announce || op[0] == BridgeOp.Delta || op[0] == BridgeOp.Destroyed);
+
+        /// <summary>A session-plane op (WELCOME, PING, HOLDING...): never in a frame with strings.</summary>
+        static bool IsSessionOp(byte[] op) => op.Length > 0 && op[0] < BridgeOp.LegacyText;
+
+        /// <summary>
+        /// Whether the string at the head of the queue goes in a binary frame with a push: one turns up before the strings
+        /// ahead of it fill a frame (and before any other op), and UTF-8 can carry the head string as it is.
+        /// </summary>
+        bool HeadTextJoinsPush(int size)
+        {
+            int total = 0;
+            foreach (var e in queue)
+            {
+                if (!e.IsText) return IsPush(e.Op) && BridgeUtf8.LengthIfWellFormed(queue.Peek().Text) >= 0;
+                total += BridgeCarrier.EntrySize(e.Text);
+                if (total >= size) return false;
+            }
+            return false;
+        }
+
+        /// <summary>A string as a LEGACY_TEXT op in a binary frame: its envelope size, or -1 when UTF-8 can't carry it as it is.</summary>
+        static int LegacyTextOpSize(string text)
+        {
+            int n = BridgeUtf8.LengthIfWellFormed(text);
+            return n < 0 ? -1 : 1 + VarintSize((uint)n) + n;
+        }
+
+        static int VarintSize(uint v)
+        {
+            int n = 1;
+            while (v >= 0x80) { v >>= 7; n++; }
+            return n;
+        }
+
+        static int WriteVarint(byte[] b, int at, uint v)
+        {
+            int o = at;
+            while (v >= 0x80) { b[o++] = (byte)(v | 0x80); v >>= 7; }
+            b[o++] = (byte)v;
+            return o - at;
+        }
+
         bool BuildNext()
         {
             if (queue.Count == 0) return false;
             int size = FragmentSize;
             var entries = new List<OutEntry>();
-            if (queue.Peek().IsText)
+            // Strings go in text frames, unless a push (ANNOUNCE, DELTA, DESTROYED) is among them: then one binary frame
+            // carries both, the strings as LEGACY_TEXT ops (which the page reads as strings). The page runs promise
+            // continuations between frames, so a reply and what Unity queued around it (a link, a "loaded" event, the
+            // values a push now carries) must share one, as they do when they are all strings. With no pushes on, the
+            // frames are what they were.
+            bool startsWithText = queue.Peek().IsText;
+            if (startsWithText && !HeadTextJoinsPush(size))
             {
                 int total = 0;
                 while (queue.Count > 0 && queue.Peek().IsText)
@@ -253,19 +303,49 @@ namespace BS.Bridge
             else
             {
                 int total = 0;
-                while (queue.Count > 0 && !queue.Peek().IsText)
+                bool push = startsWithText, hasText = false, hasSession = false;
+                while (queue.Count > 0)
                 {
-                    int n = queue.Peek().Op.Length;
+                    var head = queue.Peek();
+                    int n;
+                    if (head.IsText)
+                    {
+                        // Strings join a frame with a push in it (or one ahead), never one with a session op.
+                        if (!push || hasSession) break;
+                        n = LegacyTextOpSize(head.Text);
+                        if (n < 0) break; // a string UTF-8 would change goes in a text frame
+                    }
+                    else
+                    {
+                        if (hasText && IsSessionOp(head.Op)) break;
+                        n = head.Op.Length;
+                    }
                     if (entries.Count > 0 && total + n > size) break;
                     var e = queue.Dequeue();
                     QueuedCost -= e.Cost;
                     entries.Add(e);
                     total += n;
+                    if (e.IsText) hasText = true;
+                    else if (IsPush(e.Op)) push = true;
+                    else if (IsSessionOp(e.Op)) hasSession = true;
                     if (total >= size) break;
                 }
                 var body = new byte[total];
                 int o = 0;
-                foreach (var e in entries) { System.Buffer.BlockCopy(e.Op, 0, body, o, e.Op.Length); o += e.Op.Length; }
+                foreach (var e in entries)
+                {
+                    if (e.IsText)
+                    {
+                        body[o++] = (byte)BridgeOp.LegacyText;
+                        int n = BridgeUtf8.Length(e.Text);
+                        o += WriteVarint(body, o, (uint)n);
+                        BridgeUtf8.Encode(e.Text, new Span<byte>(body, o, n));
+                        o += n;
+                        continue;
+                    }
+                    System.Buffer.BlockCopy(e.Op, 0, body, o, e.Op.Length);
+                    o += e.Op.Length;
+                }
                 int count = Math.Max(1, (body.Length + size - 1) / size);
                 for (int i = 0; i < count; i++)
                 {

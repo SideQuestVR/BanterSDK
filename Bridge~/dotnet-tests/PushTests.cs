@@ -424,6 +424,44 @@ static class PushTests
             T.Seq(new[] { "41:1", "42:2" }, d.Select(x => x.handle + ":" + x.reason), "handles and reasons");
         });
 
+        T.Run("a push shares its frame with the strings around it, so a reply and what follows it arrive together", () =>
+        {
+            var lab = new Lab(BridgeFamily.Pushed, accept: BridgeFamily.Pushed);
+            var v = lab.Rig.View;
+            // What creating two objects and a component queues: announce, link (a reply, here a plain string), values, "loaded".
+            v.SendAnnounce(new AnnounceEntry(41, true, "a", 0, "Untagged", 0));
+            v.Send("link a");
+            v.SendAnnounce(new AnnounceEntry(43, true, "b", 0, "Untagged", 0));
+            v.Send("link b");
+            v.SendAnnounce(new AnnounceEntry(41, 42, 37));
+            v.Send("link c");
+            v.SendDelta(41, 42, 37, 8, "8§3§1", 0);
+            v.Send("!e!l!¶42");
+            int before = lab.Page.DataFrames;
+            lab.Frame();
+            T.Eq(1, lab.Page.DataFrames - before, "one frame");
+            T.Seq(new[] { "#50", "link a", "#50", "link b", "#50", "link c", "#51", "!e!l!¶42" },
+                lab.Got(), "in order, strings as strings");
+        });
+
+        T.Run("strings with no push among them keep their text frame; a lone surrogate never goes as UTF-8", () =>
+        {
+            var lab = new Lab(BridgeFamily.Pushed, accept: BridgeFamily.Pushed);
+            var v = lab.Rig.View;
+            v.Send("plain 1");
+            v.Send("plain 2");
+            int before = lab.Page.BinaryDataFrames;
+            lab.Frame();
+            T.Eq(0, lab.Page.BinaryDataFrames - before, "text frame");
+            T.Seq(new[] { "plain 1", "plain 2" }, lab.Got(), "strings");
+            string lone = "half " + (char)0xD83D + " pair";
+            v.SendDestroyed(9, DestroyedReason.Destroyed);
+            v.Send(lone);
+            v.SendDestroyed(10, DestroyedReason.Destroyed);
+            lab.Frame();
+            T.Seq(new[] { "#53", lone, "#53" }, lab.Got(), "the lone surrogate arrives as it was sent, in order");
+        });
+
         T.Run("ANNOUNCE names and tags are cut at a code point, within MaxText", () =>
         {
             var lab = new Lab(BridgeFamily.Announce, accept: BridgeFamily.Announce);
