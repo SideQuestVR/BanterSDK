@@ -195,7 +195,8 @@ namespace SideQuest.FlexaBody
             {
                 Rigidbody r2 = WorldObj.RB;
 
-                pose.position = r2.InverseTransformPoint(closestPoint);
+                // Becomes the grab joint's connectedAnchor: scaled local space (see RigidbodyExtensions).
+                pose.position = r2.InverseTransformPointScaled(closestPoint);
                 pose.rotation = Quaternion.Euler(40f, 0f, 0f) * finalRot * Quaternion.Inverse(transform.localRotation);
             }
             else
@@ -223,7 +224,8 @@ namespace SideQuest.FlexaBody
             {
                 Rigidbody r2 = WorldObj.RB;
 
-                pose.position = r2.InverseTransformPoint(closestPoint);
+                // Becomes the grab joint's connectedAnchor: scaled local space (see RigidbodyExtensions).
+                pose.position = r2.InverseTransformPointScaled(closestPoint);
 
                 Quaternion finalRot = palmToSurfaceRot * r2.rotation;
                 pose.rotation = Quaternion.Inverse(r.rotation) * finalRot;
@@ -317,7 +319,8 @@ namespace SideQuest.FlexaBody
             if (WorldObj)
             {
                 Rigidbody r2 = WorldObj.RB;
-                pose.position = r2.InverseTransformPoint(closestPoint);
+                // Becomes the grab joint's connectedAnchor: scaled local space (see RigidbodyExtensions).
+                pose.position = r2.InverseTransformPointScaled(closestPoint);
 
                 Vector3 colliderCenter = Col.bounds.center;
                 Vector3 toSurfaceDir = colliderCenter - worldGrabPos;

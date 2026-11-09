@@ -91,9 +91,6 @@ namespace BS
                 body.position = body.transform.position;
                 body.rotation = body.transform.rotation;
             }
-            // The solver's queries read the physics shapes: with autoSyncTransforms off (a new project's default) they
-            // would still have the copies' previous scale and pose.
-            if (!Physics.autoSyncTransforms) Physics.SyncTransforms();
             handle.GrabType = (GrabType)type;
             handle._grabRadius = radius;
             handle.UseCustomPointPose = false;

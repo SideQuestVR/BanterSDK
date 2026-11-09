@@ -203,7 +203,9 @@ namespace BS.Bridge
         // ---------------------------------------------------------------------------------------------- sending
 
         public void EnqueueText(string text) { var e = new OutEntry(text); queue.Enqueue(e); QueuedCost += e.Cost; }
-        public void EnqueueOp(byte[] op) { var e = new OutEntry(op); queue.Enqueue(e); QueuedCost += e.Cost; }
+        public void EnqueueOp(byte[] op) { var e = new OutEntry(op); queue.Enqueue(e); QueuedCost += e.Cost; if (IsPush(op)) pushesQueued++; }
+        /// <summary>Pushes in the queue: strings only look for one to share a frame with while there is any.</summary>
+        int pushesQueued;
         public bool HasOutbound => queue.Count > 0 || pending.Count > 0;
         public int QueuedCount => queue.Count + pending.Count;
 
@@ -219,6 +221,7 @@ namespace BS.Bridge
         /// </summary>
         bool HeadTextJoinsPush(int size)
         {
+            if (pushesQueued == 0) return false;
             int total = 0;
             foreach (var e in queue)
             {
@@ -326,7 +329,7 @@ namespace BS.Bridge
                     entries.Add(e);
                     total += n;
                     if (e.IsText) hasText = true;
-                    else if (IsPush(e.Op)) push = true;
+                    else if (IsPush(e.Op)) { push = true; pushesQueued--; }
                     else if (IsSessionOp(e.Op)) hasSession = true;
                     if (total >= size) break;
                 }
@@ -439,6 +442,7 @@ namespace BS.Bridge
             foreach (var p in pending) if (p.Entries != null) r.AddRange(p.Entries);
             r.AddRange(queue);
             inflight.Clear(); pending.Clear(); queue.Clear();
+            pushesQueued = 0;
             InflightBytes = 0;
             QueuedCost = 0;
             return r;
