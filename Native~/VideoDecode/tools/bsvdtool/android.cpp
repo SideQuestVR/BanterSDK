@@ -11,6 +11,9 @@
 //   bsvdtool eos <clip>                                  end of stream reaches ENDED with every frame accounted for
 //   bsvdtool destroy <clip>                              destroy in every state; live count and objects back to 0
 //
+// The render event records into a secondary command buffer, as in Unity 6 on Android with graphics jobs (its default);
+// --primary on any check gives it the frame's primary buffer instead.
+//
 // Memory rows are bottom-first (the header's contract): the picture's top counter (source row 16) is memory row
 // height-17 and its bottom counter (source row height-16) is memory row 15.
 #include "android_clip.h"
@@ -51,11 +54,14 @@ bool Flag(const char* name) {
         if (!std::strcmp(gArgv[i], name)) return true;
     return false;
 }
+bool ValueLess(const char* flag) {
+    return !std::strcmp(flag, "--cpu") || !std::strcmp(flag, "--unorm") || !std::strcmp(flag, "--primary");
+}
 std::string Positional(int index) {
     int seen = 0;
     for (int i = 1; i < gArgc; ++i) {
         if (gArgv[i][0] == '-' && gArgv[i][1] == '-') {
-            if (i + 1 < gArgc && gArgv[i + 1][0] != '-' && std::strcmp(gArgv[i], "--cpu") != 0) ++i;
+            if (i + 1 < gArgc && gArgv[i + 1][0] != '-' && !ValueLess(gArgv[i])) ++i;
             continue;
         }
         if (seen++ == index) return gArgv[i];
@@ -998,14 +1004,16 @@ bool TestStartup() {
         int renderer;
         int path;
     };
-    DeviceOptions full, noFeature, noForeign, noAhb;
+    DeviceOptions full, noFeature, noForeign, noAhb, vulkan10;
     noFeature.ycbcrFeature = false;
     noForeign.foreign = false;
     noAhb.ahb = false;
+    vulkan10.vulkan11 = false;  // YCbCr by its extension, but no extended image usage for the sRGB storage intermediate
     Case cases[] = {{"Vulkan device with everything", full, kUnityGfxRendererVulkan, BSVD_PATH_VULKAN},
                     {"Vulkan device without samplerYcbcrConversion", noFeature, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
                     {"Vulkan device without the foreign queue extension", noForeign, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
                     {"Vulkan device without buffer import", noAhb, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
+                    {"Vulkan 1.0 device without VK_KHR_maintenance2", vulkan10, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
                     {"OpenGL ES", full, kUnityGfxRendererOpenGLES30, BSVD_PATH_CPU},
                     {"the null renderer", full, kUnityGfxRendererNull, BSVD_PATH_NONE}};
     for (const Case& c : cases) {
@@ -1049,6 +1057,10 @@ int main(int argc, char** argv) {
     gArgv = argv;
     gFx = Arg("--fx", ".");
     gCpu = Flag("--cpu");
+    // Unity 6 on Android records plugin events into secondary command buffers (graphics jobs, its default); --primary
+    // hands the event the frame's primary buffer instead, as Unity does without graphics jobs.
+    TheHost().secondary = !Flag("--primary");
+    std::printf("render event command buffer: %s\n", TheHost().secondary ? "secondary (graphics jobs)" : "primary");
     StartBinderPool();
     std::string test = argc > 1 ? argv[1] : "";
     bool pass = false;
@@ -1069,7 +1081,8 @@ int main(int argc, char** argv) {
     if (!chosen) {
         std::printf("usage: bsvdtool startup | order <clip> [--frames n] | bars <clip> <matrix> <full> | orient <clip> |\n"
                     "       paced <clip[:n],...> [--loops n] | preroll <clip> | seek <clip> | eos <clip> | destroy <clip>\n"
-                    "       [--cpu] (CPU path: Unity on OpenGL ES) [--fx dir]\n");
+                    "       [--cpu] (CPU path: Unity on OpenGL ES) [--fx dir]\n"
+                    "       [--primary] (the render event records into a primary command buffer, not a secondary one)\n");
         return 2;
     }
     Host& host = TheHost();

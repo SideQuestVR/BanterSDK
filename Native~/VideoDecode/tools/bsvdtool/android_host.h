@@ -3,8 +3,11 @@
 // The host hands UnityPluginLoad fake IUnityInterfaces (IUnityGraphics and IUnityGraphicsVulkanV2), runs the Vulkan
 // start-up hooks the plugin registers and creates its own instance and device through them, sends the device events
 // (the null renderer first, as Unity does), and plays Unity's render thread: each frame it begins a command buffer,
-// reports it through CommandRecordingState with frame numbers, issues the present render event, and submits. Targets are
-// real RGBA images; AccessTexture records the barrier Unity would. Rows of any target can be read back after a frame.
+// reports it through CommandRecordingState with frame numbers, issues the present render event, and submits. As Unity 6
+// on Android does with graphics jobs (its default), the event gets a SECONDARY command buffer (begun outside any render
+// pass), which the host then executes in its primary; bsvdtool --primary hands out the primary itself instead, as Unity
+// does without graphics jobs. Targets are real RGBA images; AccessTexture records the barrier Unity would, into the
+// buffer the event records into. Rows of any target can be read back after a frame.
 #pragma once
 
 #define VK_USE_PLATFORM_ANDROID_KHR 1
@@ -46,6 +49,7 @@ struct DeviceOptions {
     bool ahb = true;            // enable VK_ANDROID_external_memory_android_hardware_buffer
     bool foreign = true;        // enable VK_EXT_queue_family_foreign
     bool ycbcrFeature = true;   // enable samplerYcbcrConversion
+    bool vulkan11 = true;       // the instance asks for Vulkan 1.1 (as Unity on Quest 3), else 1.0
 };
 
 class Host {
@@ -59,6 +63,10 @@ public:
     void Initialize(int renderer);
     void Shutdown();
     void Unload();
+
+    // The render event records into a secondary command buffer (Unity with graphics jobs), or into the primary itself.
+    // Set before CreateVulkan.
+    bool secondary = true;
 
     HostTexture* MakeTexture(uint32_t width, uint32_t height, VkFormat format = VK_FORMAT_UNDEFINED);
     VkFormat textureFormat = VK_FORMAT_R8G8B8A8_SRGB;  // for MakeTexture without a format
@@ -90,11 +98,13 @@ public:
     IUnityGraphicsDeviceEventCallback deviceCallback = nullptr;
     int renderer = kUnityGfxRendererNull;
     UnityVulkanInstance instance{};
-    VkCommandBuffer recording = VK_NULL_HANDLE;
+    VkCommandBuffer recording = VK_NULL_HANDLE;  // what the render event records into, while it runs
+    VkCommandBufferLevel recordingLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
 private:
     struct Slot {
-        VkCommandBuffer cb = VK_NULL_HANDLE;
+        VkCommandBuffer cb = VK_NULL_HANDLE;       // primary: submitted
+        VkCommandBuffer eventCb = VK_NULL_HANDLE;  // secondary: the render event's, executed in cb
         VkFence fence = VK_NULL_HANDLE;
         bool busy = false;
         unsigned long long frame = 0;

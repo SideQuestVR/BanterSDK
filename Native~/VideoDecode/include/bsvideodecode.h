@@ -66,7 +66,7 @@ extern "C" {
 /* How frames reach the target. */
 #define BSVD_PATH_NONE 0    /* nothing can be drawn: no Unity graphics device is known (yet) */
 #define BSVD_PATH_D3D11 1   /* Windows: decoded and converted on the GPU, copied into the texture on the render thread */
-#define BSVD_PATH_VULKAN 2  /* Android: decoder buffers drawn through a YCbCr sampler into the texture on the render thread */
+#define BSVD_PATH_VULKAN 2  /* Android: decoder buffers read through a YCbCr sampler by a compute dispatch, copied into the texture on the render thread */
 #define BSVD_PATH_CPU 3     /* any other graphics API, or the GPU route is unavailable: converted on the decoder thread,
                                taken by the caller with BSVD_LockFrame. Frames are capped at 1920x1080 */
 

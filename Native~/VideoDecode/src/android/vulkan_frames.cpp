@@ -1,10 +1,12 @@
-// BSVD_PATH_VULKAN: each due frame, still in the decoder's own buffer, is imported into Unity's Vulkan device and drawn
-// through a YCbCr sampler into an RGBA intermediate at the target's size (scaled, cropped, flipped), which is then copied
-// into the Unity texture. All of it is recorded into Unity's command buffer at the present render event.
+// BSVD_PATH_VULKAN: each due frame, still in the decoder's own buffer, is imported into Unity's Vulkan device and read
+// through a YCbCr sampler by a compute dispatch that writes an RGBA intermediate at the target's size (scaled, cropped,
+// flipped), which is then copied into the Unity texture. All of it is recorded into Unity's command buffer at the
+// present render event. With graphics jobs (on by default for Unity 6 on Android) that is a secondary command buffer,
+// which can't begin a render pass: hence a dispatch, not a draw.
 //
 // Proven on Quest 3 (notes/video-engine-v1-quest-2026-11-08.md): external-format import with a dedicated allocation,
-// ownership taken from VK_QUEUE_FAMILY_FOREIGN_EXT in GENERAL layout and given back after the draw, and the conversion's
-// matrix and range set from the stream, never the driver's suggestion (it says limited range for BT.709 full).
+// ownership taken from VK_QUEUE_FAMILY_FOREIGN_EXT in GENERAL layout and given back after the conversion, and the
+// conversion's matrix and range set from the stream, never the driver's suggestion (it says limited range for BT.709 full).
 #include "android/codec_worker.h"
 
 #include <android/hardware_buffer.h>
@@ -23,12 +25,10 @@ namespace droid {
 
 namespace {
 
-const uint32_t kVert[] =
-#include "frame.vert.inc"
+const uint32_t kComp[] =
+#include "frame.comp.inc"
     ;
-const uint32_t kFrag[] =
-#include "frame.frag.inc"
-    ;
+constexpr uint32_t kGroupSize = 8;  // frame.comp's local size, both axes
 
 // The reader's images: what the GPU is still reading plus two, which acquireLatestImage needs free to skip ahead.
 constexpr int32_t kReaderImages = 6;
@@ -70,6 +70,22 @@ void Barrier(const Device& d, VkCommandBuffer cb, VkImage image, VkImageLayout f
 
 std::string VkError(const char* what, VkResult r) { return std::string(what) + " failed (VkResult " + std::to_string((int)r) + ")"; }
 
+// Unity's command buffer for this event, outside any render pass: barriers, a dispatch and a copy are valid in it whether
+// it is primary or secondary (Unity 6 on Android records plugin events into secondary buffers when graphics jobs are on).
+// The event is configured to start outside a render pass; if Unity is inside one anyway, it is asked to end it.
+bool RecordingOutsideRenderPass(Device& d, UnityVulkanRecordingState& rs, std::string& why) {
+    if (!d.unity->CommandRecordingState(&rs, kUnityVulkanGraphicsQueueAccess_DontCare) || !rs.commandBuffer)
+        return why = "Unity has no command buffer to record into now", false;
+    if (rs.subPassIndex < 0) return true;
+    int subpass = rs.subPassIndex;
+    if (d.unity->EnsureOutsideRenderPass) d.unity->EnsureOutsideRenderPass();
+    if (!d.unity->CommandRecordingState(&rs, kUnityVulkanGraphicsQueueAccess_DontCare) || !rs.commandBuffer)
+        return why = "Unity has no command buffer to record into after ending its render pass (it was in subpass " + std::to_string(subpass) + ")", false;
+    if (rs.subPassIndex >= 0)
+        return why = "Unity's command buffer stays inside a render pass (subpass " + std::to_string(rs.subPassIndex) + ")", false;
+    return true;
+}
+
 }  // namespace
 
 // ---------------------------------------------------------------- Renderer: what every decoder on the device shares
@@ -77,7 +93,7 @@ std::string VkError(const char* what, VkResult r) { return std::string(what) + "
 struct Pipeline {
     VkSamplerYcbcrConversion conversion = VK_NULL_HANDLE;
     VkSampler sampler = VK_NULL_HANDLE;
-    VkDescriptorSetLayout setLayout = VK_NULL_HANDLE;
+    VkDescriptorSetLayout setLayout = VK_NULL_HANDLE;  // set 0: the decoder buffer through the immutable YCbCr sampler
     VkPipelineLayout layout = VK_NULL_HANDLE;
     VkPipeline pipeline = VK_NULL_HANDLE;
 };
@@ -91,12 +107,14 @@ public:
     // The conversion, sampler and pipeline for a decoder buffer's format and the colour to convert with.
     Pipeline* Get(const VkAndroidHardwareBufferFormatPropertiesANDROID& format, Colour colour, std::string& error);
 
-    VkRenderPass renderPass = VK_NULL_HANDLE;
+    // Set 1: the intermediate as a storage image. A set of its own, since the intermediate lives per decoder (and is
+    // replaced when the target's size changes) while a buffer's set lives as long as its import.
+    VkDescriptorSetLayout pictureLayout = VK_NULL_HANDLE;
     unsigned long long lastUsed = 0;
 
 private:
     Device& d_;
-    VkShaderModule vert_ = VK_NULL_HANDLE, frag_ = VK_NULL_HANDLE;
+    VkShaderModule comp_ = VK_NULL_HANDLE;
     std::map<std::array<uint64_t, 11>, std::unique_ptr<Pipeline>> pipelines_;
 };
 
@@ -111,66 +129,30 @@ Renderer::~Renderer() {
         if (p.sampler) fn.vkDestroySampler(dev, p.sampler, nullptr);
         if (p.conversion) fn.vkDestroySamplerYcbcrConversion(dev, p.conversion, nullptr);
     }
-    if (vert_) fn.vkDestroyShaderModule(dev, vert_, nullptr);
-    if (frag_) fn.vkDestroyShaderModule(dev, frag_, nullptr);
-    if (renderPass) fn.vkDestroyRenderPass(dev, renderPass, nullptr);
+    if (comp_) fn.vkDestroyShaderModule(dev, comp_, nullptr);
+    if (pictureLayout) fn.vkDestroyDescriptorSetLayout(dev, pictureLayout, nullptr);
 }
 
 bool Renderer::Init(std::string& error) {
     const VkFunctions& fn = d_.fn;
     VkShaderModuleCreateInfo smi{};
     smi.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    smi.codeSize = sizeof(kVert);
-    smi.pCode = kVert;
-    VkResult r = fn.vkCreateShaderModule(d_.device, &smi, nullptr, &vert_);
-    if (r != VK_SUCCESS) return error = VkError("vkCreateShaderModule", r), false;
-    smi.codeSize = sizeof(kFrag);
-    smi.pCode = kFrag;
-    r = fn.vkCreateShaderModule(d_.device, &smi, nullptr, &frag_);
+    smi.codeSize = sizeof(kComp);
+    smi.pCode = kComp;
+    VkResult r = fn.vkCreateShaderModule(d_.device, &smi, nullptr, &comp_);
     if (r != VK_SUCCESS) return error = VkError("vkCreateShaderModule", r), false;
 
-    // Every pixel is written, so the old contents are never loaded; afterwards the image is copied from.
-    VkAttachmentDescription att{};
-    att.format = VK_FORMAT_R8G8B8A8_UNORM;
-    att.samples = VK_SAMPLE_COUNT_1_BIT;
-    att.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    att.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-    att.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-    att.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    att.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    att.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-    VkAttachmentReference ref{};
-    ref.attachment = 0;
-    ref.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-    VkSubpassDescription sub{};
-    sub.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    sub.colorAttachmentCount = 1;
-    sub.pColorAttachments = &ref;
-    VkSubpassDependency deps[2]{};
-    // The previous frame's copy out of the intermediate finishes before this draw overwrites it.
-    deps[0].srcSubpass = VK_SUBPASS_EXTERNAL;
-    deps[0].dstSubpass = 0;
-    deps[0].srcStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    deps[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    deps[0].srcAccessMask = 0;
-    deps[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    // The draw finishes before the copy reads it.
-    deps[1].srcSubpass = 0;
-    deps[1].dstSubpass = VK_SUBPASS_EXTERNAL;
-    deps[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    deps[1].dstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-    deps[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-    deps[1].dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-    VkRenderPassCreateInfo rpi{};
-    rpi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    rpi.attachmentCount = 1;
-    rpi.pAttachments = &att;
-    rpi.subpassCount = 1;
-    rpi.pSubpasses = &sub;
-    rpi.dependencyCount = 2;
-    rpi.pDependencies = deps;
-    r = fn.vkCreateRenderPass(d_.device, &rpi, nullptr, &renderPass);
-    if (r != VK_SUCCESS) return error = VkError("vkCreateRenderPass", r), false;
+    VkDescriptorSetLayoutBinding binding{};
+    binding.binding = 0;
+    binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    binding.descriptorCount = 1;
+    binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+    VkDescriptorSetLayoutCreateInfo dli{};
+    dli.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    dli.bindingCount = 1;
+    dli.pBindings = &binding;
+    r = fn.vkCreateDescriptorSetLayout(d_.device, &dli, nullptr, &pictureLayout);
+    if (r != VK_SUCCESS) return error = VkError("vkCreateDescriptorSetLayout", r), false;
     return true;
 }
 
@@ -237,7 +219,7 @@ Pipeline* Renderer::Get(const VkAndroidHardwareBufferFormatPropertiesANDROID& fo
     binding.binding = 0;
     binding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     binding.descriptorCount = 1;
-    binding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     binding.pImmutableSamplers = &pl.sampler;  // a YCbCr sampler must be immutable
     VkDescriptorSetLayoutCreateInfo dli{};
     dli.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -247,69 +229,27 @@ Pipeline* Renderer::Get(const VkAndroidHardwareBufferFormatPropertiesANDROID& fo
     if (r != VK_SUCCESS) return fail("vkCreateDescriptorSetLayout", r);
 
     VkPushConstantRange pc{};
-    pc.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    pc.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
     pc.size = 32;
+    VkDescriptorSetLayout setLayouts[2] = {pl.setLayout, pictureLayout};
     VkPipelineLayoutCreateInfo pli{};
     pli.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pli.setLayoutCount = 1;
-    pli.pSetLayouts = &pl.setLayout;
+    pli.setLayoutCount = 2;
+    pli.pSetLayouts = setLayouts;
     pli.pushConstantRangeCount = 1;
     pli.pPushConstantRanges = &pc;
     r = fn.vkCreatePipelineLayout(d_.device, &pli, nullptr, &pl.layout);
     if (r != VK_SUCCESS) return fail("vkCreatePipelineLayout", r);
 
-    VkPipelineShaderStageCreateInfo stages[2]{};
-    stages[0].sType = stages[1].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-    stages[0].stage = VK_SHADER_STAGE_VERTEX_BIT;
-    stages[0].module = vert_;
-    stages[0].pName = "main";
-    stages[1].stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-    stages[1].module = frag_;
-    stages[1].pName = "main";
-    VkPipelineVertexInputStateCreateInfo vin{};
-    vin.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    VkPipelineInputAssemblyStateCreateInfo ia{};
-    ia.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    ia.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    VkPipelineViewportStateCreateInfo vps{};
-    vps.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-    vps.viewportCount = 1;
-    vps.scissorCount = 1;
-    VkPipelineRasterizationStateCreateInfo rs{};
-    rs.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rs.polygonMode = VK_POLYGON_MODE_FILL;
-    rs.cullMode = VK_CULL_MODE_NONE;
-    rs.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rs.lineWidth = 1.0f;
-    VkPipelineMultisampleStateCreateInfo ms{};
-    ms.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    ms.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    VkPipelineColorBlendAttachmentState cba{};
-    cba.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    VkPipelineColorBlendStateCreateInfo cb{};
-    cb.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-    cb.attachmentCount = 1;
-    cb.pAttachments = &cba;
-    VkDynamicState dynamic[2] = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-    VkPipelineDynamicStateCreateInfo ds{};
-    ds.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-    ds.dynamicStateCount = 2;
-    ds.pDynamicStates = dynamic;
-    VkGraphicsPipelineCreateInfo gpi{};
-    gpi.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    gpi.stageCount = 2;
-    gpi.pStages = stages;
-    gpi.pVertexInputState = &vin;
-    gpi.pInputAssemblyState = &ia;
-    gpi.pViewportState = &vps;
-    gpi.pRasterizationState = &rs;
-    gpi.pMultisampleState = &ms;
-    gpi.pColorBlendState = &cb;
-    gpi.pDynamicState = &ds;
-    gpi.layout = pl.layout;
-    gpi.renderPass = renderPass;
-    r = fn.vkCreateGraphicsPipelines(d_.device, VK_NULL_HANDLE, 1, &gpi, nullptr, &pl.pipeline);
-    if (r != VK_SUCCESS) return fail("vkCreateGraphicsPipelines", r);
+    VkComputePipelineCreateInfo cpi{};
+    cpi.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    cpi.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    cpi.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    cpi.stage.module = comp_;
+    cpi.stage.pName = "main";
+    cpi.layout = pl.layout;
+    r = fn.vkCreateComputePipelines(d_.device, VK_NULL_HANDLE, 1, &cpi, nullptr, &pl.pipeline);
+    if (r != VK_SUCCESS) return fail("vkCreateComputePipelines", r);
     Log("pipeline for external format 0x%llx (format %d): matrix %d %s range, driver suggested model %d range %d",
         (unsigned long long)format.externalFormat, (int)format.format, colour.matrix, colour.fullRange == 1 ? "full" : "limited",
         (int)format.suggestedYcbcrModel, (int)format.suggestedYcbcrRange);
@@ -381,17 +321,21 @@ private:
     // Objects waiting for the GPU to finish with them.
     struct Retired {
         Import import;
+        // an intermediate's
         VkImage image = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
         VkImageView view = VK_NULL_HANDLE;
-        VkFramebuffer framebuffer = VK_NULL_HANDLE;
+        VkDescriptorPool pool = VK_NULL_HANDLE;
+        VkDescriptorSet set = VK_NULL_HANDLE;
         unsigned long long frame = 0;
     };
+    // What the conversion writes (a storage image) and the texture is copied from.
     struct Intermediate {
         VkImage image = VK_NULL_HANDLE;
         VkDeviceMemory memory = VK_NULL_HANDLE;
-        VkImageView view = VK_NULL_HANDLE;
-        VkFramebuffer framebuffer = VK_NULL_HANDLE;
+        VkImageView view = VK_NULL_HANDLE;  // R8G8B8A8_UNORM, storage
+        VkDescriptorPool pool = VK_NULL_HANDLE;
+        VkDescriptorSet set = VK_NULL_HANDLE;  // the view, as set 1
         uint32_t width = 0, height = 0;
         VkFormat format = VK_FORMAT_UNDEFINED;
         unsigned long long lastUsed = 0;
@@ -412,7 +356,17 @@ private:
     Import* FindImport(Device& d, AHardwareBuffer* buffer, Colour colour, std::string& error);
     bool EnsureIntermediate(Device& d, uint32_t width, uint32_t height, VkFormat format, std::string& error);
     VkDescriptorSet AllocateSet(Device& d, VkDescriptorSetLayout layout, VkDescriptorPool& pool, std::string& error);
-    void Retire(Retired r) { retired_.push_back(r); }
+    void RetireIntermediate(unsigned long long frame) {
+        Retired r;
+        r.image = inter_.image;
+        r.memory = inter_.memory;
+        r.view = inter_.view;
+        r.pool = inter_.pool;
+        r.set = inter_.set;
+        r.frame = frame;
+        retired_.push_back(r);
+        inter_ = Intermediate();
+    }
     void RetireImport(Import& import) {
         Retired r;
         r.import = import;
@@ -490,7 +444,7 @@ void VulkanDecoder::Destroy(Device* d, Retired& r) {
         if (i.view) fn.vkDestroyImageView(d->device, i.view, nullptr);
         if (i.image) fn.vkDestroyImage(d->device, i.image, nullptr);
         if (i.memory) fn.vkFreeMemory(d->device, i.memory, nullptr);
-        if (r.framebuffer) fn.vkDestroyFramebuffer(d->device, r.framebuffer, nullptr);
+        if (r.set) fn.vkFreeDescriptorSets(d->device, r.pool, 1, &r.set);
         if (r.view) fn.vkDestroyImageView(d->device, r.view, nullptr);
         if (r.image) fn.vkDestroyImage(d->device, r.image, nullptr);
         if (r.memory) fn.vkFreeMemory(d->device, r.memory, nullptr);
@@ -499,7 +453,7 @@ void VulkanDecoder::Destroy(Device* d, Retired& r) {
         AHardwareBuffer_release(i.buffer);
         Live().imports.fetch_sub(1);
     }
-    int objects = (r.framebuffer != VK_NULL_HANDLE) + (r.view != VK_NULL_HANDLE) + (r.image != VK_NULL_HANDLE) + (r.memory != VK_NULL_HANDLE);
+    int objects = (r.view != VK_NULL_HANDLE) + (r.image != VK_NULL_HANDLE) + (r.memory != VK_NULL_HANDLE);
     if (objects) Live().vulkan.fetch_sub(objects);
     r = Retired();
 }
@@ -641,10 +595,9 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
     }
     // Resource access may have recorded commands, so the command buffer is asked for afterwards.
     UnityVulkanRecordingState rs{};
-    if (!d.unity->CommandRecordingState(&rs, kUnityVulkanGraphicsQueueAccess_DontCare) || !rs.commandBuffer ||
-        rs.commandBufferLevel != VK_COMMAND_BUFFER_LEVEL_PRIMARY || rs.subPassIndex >= 0) {
+    if (!RecordingOutsideRenderPass(d, rs, error)) {
         DeleteImage(image);
-        DrawFailed("Unity's command buffer can't take a render pass now");
+        DrawFailed(error);
         return;
     }
     VkCommandBuffer cb = rs.commandBuffer;
@@ -652,20 +605,13 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
     Pipeline& p = *import->pipeline;
 
     Barrier(d, cb, import->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_QUEUE_FAMILY_FOREIGN_EXT,
-            d.queueFamily, 0, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-    VkRenderPassBeginInfo rbi{};
-    rbi.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    rbi.renderPass = d.renderer->renderPass;
-    rbi.framebuffer = inter_.framebuffer;
-    rbi.renderArea.extent = {inter_.width, inter_.height};
-    fn.vkCmdBeginRenderPass(cb, &rbi, VK_SUBPASS_CONTENTS_INLINE);
-    fn.vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, p.pipeline);
-    fn.vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_GRAPHICS, p.layout, 0, 1, &import->set, 0, nullptr);
-    VkViewport viewport{0, 0, (float)inter_.width, (float)inter_.height, 0, 1};
-    VkRect2D scissor{};
-    scissor.extent = {inter_.width, inter_.height};
-    fn.vkCmdSetViewport(cb, 0, 1, &viewport);
-    fn.vkCmdSetScissor(cb, 0, 1, &scissor);
+            d.queueFamily, 0, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    // Every pixel is written, so the old contents are dropped; the previous frame's copy out of it finishes first.
+    Barrier(d, cb, inter_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 0,
+            VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    fn.vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_COMPUTE, p.pipeline);
+    VkDescriptorSet sets[2] = {import->set, inter_.set};
+    fn.vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_COMPUTE, p.layout, 0, 2, sets, 0, nullptr);
     float bw = (float)import->width, bh = (float)import->height;
     float map[8] = {
         (float)cropWidth / ((float)inter_.width * bw),     // scale x
@@ -675,13 +621,15 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
         ((float)crop.left + 0.5f) / bw,  ((float)crop.top + 0.5f) / bh,     // clamp low
         ((float)crop.right - 0.5f) / bw, ((float)crop.bottom - 0.5f) / bh,  // clamp high
     };
-    fn.vkCmdPushConstants(cb, p.layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof map, map);
-    fn.vkCmdDraw(cb, 3, 1, 0, 0);
-    fn.vkCmdEndRenderPass(cb);
+    fn.vkCmdPushConstants(cb, p.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof map, map);
+    fn.vkCmdDispatch(cb, (inter_.width + kGroupSize - 1) / kGroupSize, (inter_.height + kGroupSize - 1) / kGroupSize, 1);
     Barrier(d, cb, import->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, d.queueFamily, VK_QUEUE_FAMILY_FOREIGN_EXT,
-            VK_ACCESS_SHADER_READ_BIT, 0, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+            VK_ACCESS_SHADER_READ_BIT, 0, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+    // The conversion's writes finish before the copy reads them.
+    Barrier(d, cb, inter_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+            VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
-    // R8G8B8A8_UNORM into the texture's R8G8B8A8_SRGB or _UNORM: same texel size, bytes copied as they are.
+    // Between images of the same format (the intermediate has the texture's): bytes copied as they are.
     VkImageCopy region{};
     region.srcSubresource.aspectMask = region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     region.srcSubresource.layerCount = region.dstSubresource.layerCount = 1;
@@ -827,13 +775,15 @@ VkDescriptorSet VulkanDecoder::AllocateSet(Device& d, VkDescriptorSetLayout layo
         dai.descriptorPool = p;
         if (fn.vkAllocateDescriptorSets(d.device, &dai, &set) == VK_SUCCESS) return pool = p, set;
     }
-    VkDescriptorPoolSize size{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, kSetsPerPool * kDescriptorsPerSet};
+    // Decoder buffers' sets (the sampler) and intermediates' sets (the storage image) come from the same pools.
+    VkDescriptorPoolSize sizes[2] = {{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, kSetsPerPool * kDescriptorsPerSet},
+                                     {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, kSetsPerPool}};
     VkDescriptorPoolCreateInfo dpi{};
     dpi.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     dpi.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
     dpi.maxSets = kSetsPerPool;
-    dpi.poolSizeCount = 1;
-    dpi.pPoolSizes = &size;
+    dpi.poolSizeCount = 2;
+    dpi.pPoolSizes = sizes;
     VkDescriptorPool fresh = VK_NULL_HANDLE;
     VkResult r = fn.vkCreateDescriptorPool(d.device, &dpi, nullptr, &fresh);
     if (r != VK_SUCCESS) return error = VkError("vkCreateDescriptorPool", r), VK_NULL_HANDLE;
@@ -848,16 +798,7 @@ VkDescriptorSet VulkanDecoder::AllocateSet(Device& d, VkDescriptorSetLayout layo
 
 bool VulkanDecoder::EnsureIntermediate(Device& d, uint32_t width, uint32_t height, VkFormat format, std::string& error) {
     if (inter_.image && inter_.width == width && inter_.height == height && inter_.format == format) return true;
-    if (inter_.image) {
-        Retired r;
-        r.image = inter_.image;
-        r.memory = inter_.memory;
-        r.view = inter_.view;
-        r.framebuffer = inter_.framebuffer;
-        r.frame = inter_.lastUsed;
-        Retire(r);
-        inter_ = Intermediate();
-    }
+    if (inter_.image) RetireIntermediate(inter_.lastUsed);
     const VkFunctions& fn = d.fn;
     Intermediate in;
     in.width = width;
@@ -868,7 +809,8 @@ bool VulkanDecoder::EnsureIntermediate(Device& d, uint32_t width, uint32_t heigh
         dead.image = in.image;
         dead.memory = in.memory;
         dead.view = in.view;
-        dead.framebuffer = in.framebuffer;
+        dead.pool = in.pool;
+        dead.set = in.set;
         Destroy(&d, dead);
         error = what;
         return false;
@@ -876,15 +818,17 @@ bool VulkanDecoder::EnsureIntermediate(Device& d, uint32_t width, uint32_t heigh
     VkImageCreateInfo ici{};
     ici.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     ici.imageType = VK_IMAGE_TYPE_2D;
-    // Drawn through an R8G8B8A8_UNORM view, so the bytes are written as computed (gamma-encoded), never sRGB-encoded.
-    ici.flags = format != VK_FORMAT_R8G8B8A8_UNORM ? VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT : 0;
+    // Written through an R8G8B8A8_UNORM storage view, so the bytes are the values computed (gamma-encoded), never
+    // sRGB-encoded. An sRGB format can't be a storage image itself; EXTENDED_USAGE (Vulkan 1.1, checked when the device
+    // was opened) lets the image carry the usage its UNORM view supports.
+    ici.flags = format != VK_FORMAT_R8G8B8A8_UNORM ? VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT : 0;
     ici.format = format;
     ici.extent = {width, height, 1};
     ici.mipLevels = 1;
     ici.arrayLayers = 1;
     ici.samples = VK_SAMPLE_COUNT_1_BIT;
     ici.tiling = VK_IMAGE_TILING_OPTIMAL;
-    ici.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+    ici.usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
     ici.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     ici.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     VkResult r = fn.vkCreateImage(d.device, &ici, nullptr, &in.image);
@@ -903,8 +847,12 @@ bool VulkanDecoder::EnsureIntermediate(Device& d, uint32_t width, uint32_t heigh
     Live().vulkan.fetch_add(1);
     r = fn.vkBindImageMemory(d.device, in.image, in.memory, 0);
     if (r != VK_SUCCESS) return fail(VkError("vkBindImageMemory (intermediate)", r));
+    VkImageViewUsageCreateInfo viewUsage{};
+    viewUsage.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_USAGE_CREATE_INFO;
+    viewUsage.usage = VK_IMAGE_USAGE_STORAGE_BIT;  // the view is only written by the conversion
     VkImageViewCreateInfo vci{};
     vci.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    vci.pNext = &viewUsage;
     vci.image = in.image;
     vci.viewType = VK_IMAGE_VIEW_TYPE_2D;
     vci.format = VK_FORMAT_R8G8B8A8_UNORM;
@@ -914,17 +862,18 @@ bool VulkanDecoder::EnsureIntermediate(Device& d, uint32_t width, uint32_t heigh
     r = fn.vkCreateImageView(d.device, &vci, nullptr, &in.view);
     if (r != VK_SUCCESS) return fail(VkError("vkCreateImageView (intermediate)", r));
     Live().vulkan.fetch_add(1);
-    VkFramebufferCreateInfo fci{};
-    fci.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    fci.renderPass = d.renderer->renderPass;
-    fci.attachmentCount = 1;
-    fci.pAttachments = &in.view;
-    fci.width = width;
-    fci.height = height;
-    fci.layers = 1;
-    r = fn.vkCreateFramebuffer(d.device, &fci, nullptr, &in.framebuffer);
-    if (r != VK_SUCCESS) return fail(VkError("vkCreateFramebuffer", r));
-    Live().vulkan.fetch_add(1);
+    in.set = AllocateSet(d, d.renderer->pictureLayout, in.pool, error);
+    if (!in.set) return fail(error);
+    VkDescriptorImageInfo ii{};
+    ii.imageView = in.view;
+    ii.imageLayout = VK_IMAGE_LAYOUT_GENERAL;  // the layout during the dispatch
+    VkWriteDescriptorSet w{};
+    w.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    w.dstSet = in.set;
+    w.descriptorCount = 1;
+    w.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
+    w.pImageInfo = &ii;
+    fn.vkUpdateDescriptorSets(d.device, 1, &w, 0, nullptr);
     inter_ = in;
     return true;
 }
@@ -966,15 +915,7 @@ void VulkanDecoder::ReleaseRender() {
     DropImages();
     for (Import& i : imports_) RetireImport(i);
     imports_.clear();
-    if (inter_.image) {
-        Retired r;
-        r.image = inter_.image;
-        r.memory = inter_.memory;
-        r.view = inter_.view;
-        r.framebuffer = inter_.framebuffer;
-        Retire(r);
-        inter_ = Intermediate();
-    }
+    if (inter_.image) RetireIntermediate(0);
     for (Retired& r : retired_) Destroy(d, r);
     retired_.clear();
     for (VkDescriptorPool p : pools_) {

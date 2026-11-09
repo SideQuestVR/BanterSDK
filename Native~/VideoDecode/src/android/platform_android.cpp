@@ -3,7 +3,9 @@
 //
 // The path is Vulkan only when the hook saw Unity's own vkCreateDevice ask for everything the import needs
 // (VK_ANDROID_external_memory_android_hardware_buffer, VK_EXT_queue_family_foreign, sampler YCbCr conversion as an
-// extension or Vulkan 1.1, and the samplerYcbcrConversion feature) and every device function resolves. The hook never
+// extension or Vulkan 1.1, and the samplerYcbcrConversion feature), every device function resolves, and the GPU can
+// write the conversion's intermediate as a storage image (R8G8B8A8_UNORM storage, and an R8G8B8A8_SRGB image written
+// through that view, which needs Vulkan 1.1 or VK_KHR_maintenance2 for its extended usage). The hook never
 // changes Unity's request: adding at device creation is what made Greenfield's WebRTC fork crash at start-up on Quest,
 // and Unity's OpenXR device on Quest 3 already asks for all of it. Anything else draws on the CPU path.
 #include "core/platform.h"
@@ -18,6 +20,7 @@
 #include <media/NdkMediaCodec.h>
 #include <sys/system_properties.h>
 
+#include <algorithm>
 #include <cstdarg>
 #include <cstdio>
 #include <cstring>
@@ -74,7 +77,7 @@ unsigned long long gLastSafe = 0;
 
 struct Observed {
     VkDevice device = VK_NULL_HANDLE;
-    bool ahb = false, foreign = false, ycbcrExtension = false, ycbcrFeature = false;
+    bool ahb = false, foreign = false, ycbcrExtension = false, ycbcrFeature = false, maintenance2 = false;
     uint32_t instanceApi = 0;
 };
 
@@ -120,6 +123,7 @@ VKAPI_ATTR VkResult VKAPI_CALL HookCreateDevice(VkPhysicalDevice physical, const
     o.ahb = Named(names, count, VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
     o.foreign = Named(names, count, VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
     o.ycbcrExtension = Named(names, count, VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
+    o.maintenance2 = Named(names, count, VK_KHR_MAINTENANCE2_EXTENSION_NAME);
     for (auto* s = static_cast<const VkBaseInStructure*>(info->pNext); s; s = s->pNext) {
         if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES)
             o.ycbcrFeature |= reinterpret_cast<const VkPhysicalDeviceSamplerYcbcrConversionFeatures*>(s)->samplerYcbcrConversion == VK_TRUE;
@@ -179,6 +183,35 @@ bool FindObserved(VkDevice device, Observed& out) {
 
 IUnityGraphicsVulkanV2* VulkanInterface() { return gInterfaces ? gInterfaces->Get<IUnityGraphicsVulkanV2>() : nullptr; }
 
+// The conversion writes its intermediate (the target texture's format: R8G8B8A8_SRGB, or _UNORM for a linear texture)
+// as a storage image through an R8G8B8A8_UNORM view. An sRGB format can't be a storage image, so that image is made with
+// VK_IMAGE_CREATE_EXTENDED_USAGE_BIT: core in Vulkan 1.1 (as far as the instance asked for it), else VK_KHR_maintenance2.
+bool CanWriteIntermediate(const Device& d, const Observed& o, std::string& why) {
+    VkPhysicalDeviceProperties props{};
+    d.fn.vkGetPhysicalDeviceProperties(d.physical, &props);
+    uint32_t api = std::min(o.instanceApi, props.apiVersion);
+    if (api < VK_API_VERSION_1_1 && !o.maintenance2)
+        return why = "Unity's Vulkan device is not Vulkan 1.1 and lacks " VK_KHR_MAINTENANCE2_EXTENSION_NAME " (an sRGB image written through a storage view)", false;
+    VkFormatProperties fp{};
+    d.fn.vkGetPhysicalDeviceFormatProperties(d.physical, VK_FORMAT_R8G8B8A8_UNORM, &fp);
+    if (!(fp.optimalTilingFeatures & VK_FORMAT_FEATURE_STORAGE_IMAGE_BIT)) return why = "the GPU can't write R8G8B8A8_UNORM storage images", false;
+    struct Kind {
+        VkFormat format;
+        VkImageCreateFlags flags;
+        const char* name;
+    };
+    const Kind kinds[] = {{VK_FORMAT_R8G8B8A8_UNORM, 0, "R8G8B8A8_UNORM"},
+                          {VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT, "R8G8B8A8_SRGB"}};
+    for (const Kind& k : kinds) {
+        VkImageFormatProperties ifp{};
+        VkResult r = d.fn.vkGetPhysicalDeviceImageFormatProperties(d.physical, k.format, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL,
+                                                                   VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT, k.flags, &ifp);
+        if (r != VK_SUCCESS)
+            return why = std::string("the GPU can't make an ") + k.name + " storage image for the picture (VkResult " + std::to_string((int)r) + ")", false;
+    }
+    return true;
+}
+
 void SetReason(const std::string& reason) {
     std::lock_guard<std::mutex> g(gTextLock);
     gReason = reason;
@@ -232,6 +265,7 @@ std::unique_ptr<Device> OpenDevice(std::string& why) {
     if (!d->fn.vkCreateSamplerYcbcrConversion || !d->fn.vkDestroySamplerYcbcrConversion) missing += " vkCreateSamplerYcbcrConversion";
     if (!missing.empty()) return why = "Unity's Vulkan device lacks the functions" + missing, nullptr;
     d->fn.vkGetPhysicalDeviceMemoryProperties(d->physical, &d->memory);
+    if (!CanWriteIntermediate(*d, o, why)) return nullptr;
     if (!CreateRenderer(*d, why)) return nullptr;
 
     UnityVulkanPluginEventConfig event{};

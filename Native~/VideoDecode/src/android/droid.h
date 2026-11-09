@@ -26,15 +26,18 @@ struct LiveCounts {
     std::atomic<int> readers{0};    // AImageReader
     std::atomic<int> images{0};     // AImage acquired and not yet deleted
     std::atomic<int> imports{0};    // decoder buffers imported into Vulkan (each holds an AHardwareBuffer reference)
-    std::atomic<int> vulkan{0};     // other Vulkan objects the decoders made (images, memory, views, framebuffers, pools)
+    std::atomic<int> vulkan{0};     // other Vulkan objects the decoders made (images, memory, views, pools)
     std::atomic<int> decoders{0};   // Decoder objects
 };
 LiveCounts& Live();
 
 // ---------------------------------------------------------------- Vulkan
 
-#define BSVD_VK_INSTANCE_FUNCTIONS(X) \
-    X(vkGetPhysicalDeviceMemoryProperties)
+#define BSVD_VK_INSTANCE_FUNCTIONS(X)               \
+    X(vkGetPhysicalDeviceMemoryProperties)          \
+    X(vkGetPhysicalDeviceProperties)                \
+    X(vkGetPhysicalDeviceFormatProperties)          \
+    X(vkGetPhysicalDeviceImageFormatProperties)
 
 #define BSVD_VK_DEVICE_FUNCTIONS(X)                  \
     X(vkGetAndroidHardwareBufferPropertiesANDROID)  \
@@ -52,13 +55,9 @@ LiveCounts& Live();
     X(vkDestroyDescriptorSetLayout)                 \
     X(vkCreatePipelineLayout)                       \
     X(vkDestroyPipelineLayout)                      \
-    X(vkCreateRenderPass)                           \
-    X(vkDestroyRenderPass)                          \
-    X(vkCreateFramebuffer)                          \
-    X(vkDestroyFramebuffer)                         \
     X(vkCreateShaderModule)                         \
     X(vkDestroyShaderModule)                        \
-    X(vkCreateGraphicsPipelines)                    \
+    X(vkCreateComputePipelines)                     \
     X(vkDestroyPipeline)                            \
     X(vkCreateDescriptorPool)                       \
     X(vkDestroyDescriptorPool)                      \
@@ -66,14 +65,10 @@ LiveCounts& Live();
     X(vkFreeDescriptorSets)                         \
     X(vkUpdateDescriptorSets)                       \
     X(vkCmdPipelineBarrier)                         \
-    X(vkCmdBeginRenderPass)                         \
-    X(vkCmdEndRenderPass)                           \
     X(vkCmdBindPipeline)                            \
     X(vkCmdBindDescriptorSets)                      \
-    X(vkCmdSetViewport)                             \
-    X(vkCmdSetScissor)                              \
     X(vkCmdPushConstants)                           \
-    X(vkCmdDraw)                                    \
+    X(vkCmdDispatch)                                \
     X(vkCmdCopyImage)                               \
     X(vkDeviceWaitIdle)
 
@@ -99,7 +94,7 @@ struct Device {
     uint32_t queueFamily = 0;
     VkPhysicalDeviceMemoryProperties memory{};
     VkFunctions fn;
-    std::unique_ptr<Renderer> renderer;  // what all decoders share: render pass, shaders, pipelines
+    std::unique_ptr<Renderer> renderer;  // what all decoders share: the shader, pipelines, the picture's set layout
 
     Device();
     ~Device();
@@ -121,7 +116,7 @@ unsigned long long LastSafeFrame();
 std::unique_ptr<Decoder> CreateVulkanDecoder(int32_t handle, const BSVD_Config& config, const uint8_t* sets, int32_t setsSize);
 std::unique_ptr<Decoder> CreateCpuDecoder(int32_t handle, const BSVD_Config& config, const uint8_t* sets, int32_t setsSize);
 
-// Device-wide drawing state (render pass, shaders, pipelines), made at the device's Initialize, destroyed at Shutdown.
+// Device-wide drawing state (the shader, pipelines), made at the device's Initialize, destroyed at Shutdown.
 bool CreateRenderer(Device& device, std::string& error);
 void DestroyRenderer(Device& device);
 

@@ -70,7 +70,7 @@ bool UNITY_INTERFACE_API CommandRecordingState(UnityVulkanRecordingState* out, U
     if (!out || !gHost.recording) return false;
     *out = UnityVulkanRecordingState{};
     out->commandBuffer = gHost.recording;
-    out->commandBufferLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    out->commandBufferLevel = gHost.recordingLevel;  // SECONDARY unless --primary, as Unity 6 on Android with graphics jobs
     out->renderPass = VK_NULL_HANDLE;
     out->framebuffer = VK_NULL_HANDLE;
     out->subPassIndex = -1;
@@ -223,7 +223,7 @@ bool Host::CreateVulkan(const DeviceOptions& options) {
     VkApplicationInfo app{};
     app.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     app.pApplicationName = "bsvdtool";
-    app.apiVersion = VK_API_VERSION_1_1;
+    app.apiVersion = options.vulkan11 ? VK_API_VERSION_1_1 : VK_API_VERSION_1_0;
     VkInstanceCreateInfo ici{};
     ici.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     ici.pApplicationInfo = &app;
@@ -298,6 +298,10 @@ bool Host::CreateVulkan(const DeviceOptions& options) {
         ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         ai.commandBufferCount = 1;
         if (!Check(vkAllocateCommandBuffers(device_, &ai, &s.cb), "vkAllocateCommandBuffers")) return false;
+        if (secondary) {
+            ai.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+            if (!Check(vkAllocateCommandBuffers(device_, &ai, &s.eventCb), "vkAllocateCommandBuffers (secondary)")) return false;
+        }
         VkFenceCreateInfo fi{};
         fi.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         if (!Check(vkCreateFence(device_, &fi, nullptr, &s.fence), "vkCreateFence")) return false;
@@ -431,10 +435,31 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
     bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
     vkResetCommandBuffer(s.cb, 0);
     vkBeginCommandBuffer(s.cb, &bi);
-    recording = s.cb;
+    if (secondary) {
+        // As Unity's graphics jobs: the event records into a secondary buffer begun outside any render pass (the event
+        // is configured with kUnityVulkanRenderPass_EnsureOutside), executed in the frame's primary afterwards.
+        VkCommandBufferInheritanceInfo inherit{};
+        inherit.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
+        VkCommandBufferBeginInfo sbi{};
+        sbi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        sbi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        sbi.pInheritanceInfo = &inherit;
+        vkResetCommandBuffer(s.eventCb, 0);
+        vkBeginCommandBuffer(s.eventCb, &sbi);
+        recording = s.eventCb;
+        recordingLevel = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
+    } else {
+        recording = s.cb;
+        recordingLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    }
     double e0 = NowSeconds();
     BSVD_GetRenderEventFunc()(BSVD_EVENT_PRESENT);
     lastEventMs = (NowSeconds() - e0) * 1000;
+    if (secondary) {
+        if (vkEndCommandBuffer(s.eventCb) != VK_SUCCESS) std::printf("FAILED vkEndCommandBuffer (secondary)\n");
+        vkCmdExecuteCommands(s.cb, 1, &s.eventCb);
+    }
+    recording = VK_NULL_HANDLE;
     std::vector<Readback> reads;
     if (afterPresent) afterPresent(reads);
     for (Readback& r : reads) {
@@ -490,7 +515,6 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         vkCmdPipelineBarrier(s.cb, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, nullptr, 1, &bb, 0, nullptr);
         s.pending.push_back({rb.buffer, rb.memory, rb.mapped, t->width, t->height, r.inspect});
     }
-    recording = VK_NULL_HANDLE;
     vkEndCommandBuffer(s.cb);
     vkResetFences(device_, 1, &s.fence);
     VkSubmitInfo si{};

@@ -1,7 +1,8 @@
 # Android (arm64-v8a, API 26+): MediaCodec through the NDK into an AImageReader; frames drawn on Unity's Vulkan device
 # through a YCbCr sampler (BSVD_PATH_VULKAN) or converted on the CPU (BSVD_PATH_CPU). Included by ../../CMakeLists.txt.
 #
-# The two shaders are compiled to SPIR-V with the NDK's glslc into the build directory and included as C arrays.
+# The conversion's compute shader is compiled to SPIR-V with the NDK's glslc into the build directory and included as a C
+# array.
 
 set(BSVD_ANDROID_DIR "${CMAKE_CURRENT_LIST_DIR}")
 set(BSVD_ANDROID_SHADER_OUT "${CMAKE_CURRENT_BINARY_DIR}/android-shaders")
@@ -32,7 +33,7 @@ if(NOT BSVD_GLSLC)
 endif()
 
 set(BSVD_ANDROID_SHADER_INCS "")
-foreach(shader frame.vert frame.frag)
+foreach(shader frame.comp)
     set(source "${BSVD_ANDROID_DIR}/shaders/${shader}")
     set(output "${BSVD_ANDROID_SHADER_OUT}/${shader}.inc")
     add_custom_command(

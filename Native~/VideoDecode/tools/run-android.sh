@@ -2,12 +2,14 @@
 # BSVideoDecode's Android checks: pushes bsvdtool and the fixtures to the one adb device, runs every check over adb shell
 # (tools/bsvdtool/android.cpp says what each proves), pulls the log into build/android-tests/ and prints a summary.
 #
-# Usage: bash tools/run-android.sh [fixture dir] [full|quick|soak]
+# Usage: bash tools/run-android.sh [fixture dir] [full|quick|soak] [secondary|primary]
 #   The fixture dir defaults to $BSVD_FIXTURES (as build.ps1's -Fixtures does). Without fixtures only the start-up check
 #   runs and the rest are reported as skipped. build.ps1 -Test runs this with BSVD_ADB and BSVD_ANDROID_BUILD set.
 #   full   every check on the Vulkan and CPU paths (about 4 minutes)
 #   quick  start-up, order, bars and one paced run
 #   soak   the mixed load (four 1080p30 streams and one 4K30) for SOAK_LOOPS loops of 10 s (default 30, 5 minutes)
+#   secondary (default) the render event records into a secondary command buffer, as Unity 6 on Android does with
+#          graphics jobs (its default); primary gives it a primary buffer, as Unity without graphics jobs (bsvdtool --primary)
 #   KEEP=1 leaves /data/local/tmp/bsvd on the device afterwards.
 #
 # Builds nothing: build first (cmake --build build/android-arm64 --target bsvdtool, or build.ps1).
@@ -20,17 +22,21 @@ export MSYS_NO_PATHCONV=1   # Git Bash would rewrite /data/local/tmp into a Wind
 
 FX=${BSVD_FIXTURES:-}
 MODE=full
+CB=secondary
 for a in "$@"; do
   case "$a" in
     full|quick|soak) MODE=$a ;;
+    secondary|primary) CB=$a ;;
     *) FX=$a ;;
   esac
 done
+CBARG=""
+[ "$CB" = "primary" ] && CBARG="--primary"
 ROOT=../../../..
 TOOL=${BSVD_ANDROID_BUILD:-build/android-arm64}/bsvdtool
 D=/data/local/tmp/bsvd
 OUT=build/android-tests
-LOG="$OUT/android-$MODE-$(date +%Y%m%d-%H%M%S).txt"
+LOG="$OUT/android-$MODE-$CB-$(date +%Y%m%d-%H%M%S).txt"
 
 ADB=${ADB:-${BSVD_ADB:-}}
 if [ -z "$ADB" ]; then
@@ -59,7 +65,9 @@ sh_() { "$ADB" shell "$@" | tr -d '\r'; }
   for p in ro.product.model ro.build.display.id ro.build.version.sdk ro.board.platform; do echo "$p=$(sh_ getprop $p)"; done
   sh_ dumpsys power | grep -E 'mWakefulness=' | head -1
   echo "## tool: $(ls -l "$TOOL" | awk '{print $5, $6, $7, $8}')"
+  echo "## render event command buffer: $CB"
 } > "$LOG" 2>&1
+echo "render event command buffer: $CB"
 
 sh_ "mkdir -p $D"
 "$ADB" push "$(local_path "$TOOL")" "$D/" >/dev/null || { echo "push failed"; exit 2; }
@@ -79,7 +87,7 @@ FAILED=""
 run() {
   local name="$1"; shift
   printf '\n### %s\n' "$name" >> "$LOG"
-  sh_ "cd $D && timeout ${LIMIT:-240} ./bsvdtool $* >> $D/last.txt 2>&1; echo exit=\$? >> $D/last.txt; cat $D/last.txt; rm -f $D/last.txt" > "$OUT/last.txt" 2>&1
+  sh_ "cd $D && timeout ${LIMIT:-240} ./bsvdtool $* $CBARG >> $D/last.txt 2>&1; echo exit=\$? >> $D/last.txt; cat $D/last.txt; rm -f $D/last.txt" > "$OUT/last.txt" 2>&1
   cat "$OUT/last.txt" >> "$LOG"
   local line
   line=$(grep -E '^(frames=|expected=|decoder=.*worst_bar|mean_abs_diff|released all|seek to|total:|playing from|clip .* ended at|render_event_ms)' "$OUT/last.txt" | tail -3 | cut -c1-170 | tr '\n' '|')
@@ -135,5 +143,5 @@ fi
 
 rm -f "$OUT/last.txt"
 if [ "${KEEP:-0}" != "1" ]; then sh_ "rm -rf $D"; fi
-printf '\n%d passed, %d failed%b\nlog: %s\n' "$PASS" "$FAIL" "$FAILED" "$LOG" | tee -a "$LOG"
+printf '\n%d passed, %d failed (%s command buffer)%b\nlog: %s\n' "$PASS" "$FAIL" "$CB" "$FAILED" "$LOG" | tee -a "$LOG"
 [ "$FAIL" = "0" ]
