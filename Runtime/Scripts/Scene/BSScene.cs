@@ -4112,6 +4112,13 @@ namespace BS
         {
             UnityMainThreadTaskScheduler.Default.Enqueue(TaskRunner.Track(() =>
              {
+                 // A BSVideoPlayer plays its url on its own engine (a creator's VideoPlayer beside it is only its settings).
+                 var player = gameObject.GetComponentInChildren<BSVideoPlayer>();
+                 if (player != null)
+                 {
+                     player.PlayFromLegacy(url, () => events.OnVideoPrepareCompleted.Invoke(id));
+                     return;
+                 }
                  var video = gameObject.GetComponentInChildren<VideoPlayer>();
                  if (video != null)
                  {

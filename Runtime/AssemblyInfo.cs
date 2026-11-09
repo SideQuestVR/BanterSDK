@@ -20,3 +20,6 @@ using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("BS.SDK.LocalMultiplayer")]
 [assembly: InternalsVisibleTo("BS.SDK.LocalMultiplayer.Editor")]
 [assembly: InternalsVisibleTo("BS.SDK.LocalMultiplayer.Tests")]
+
+// The URL video engine's play-mode tests drive VideoPlayback directly.
+[assembly: InternalsVisibleTo("BS.SDK.Video.Tests")]
