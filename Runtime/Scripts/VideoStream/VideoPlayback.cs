@@ -1078,6 +1078,12 @@ namespace BS.VideoStream
 
             public double DspTime => AudioSettings.dspTime;
 
+            StreamFormat _format;
+            ChannelReader[] _readers = Array.Empty<ChannelReader>();
+
+            // The sources only: the clips are made in PlayAt. Unity reads a streamed clip's first 0.8 s as it makes it, and
+            // here the readers aren't armed yet (the conductor arms them after this), so that read was silence and play
+            // began with 0.8 s of it in place of the sound's start, at every start and seek.
             public void Prepare(StreamFormat format, ChannelReader[] readers)
             {
                 if (_owner._host != this)
@@ -1086,19 +1092,14 @@ namespace BS.VideoStream
                 }
                 var hasBackPair = Array.IndexOf(format.Roles, AudioChannelRole.BackLeft) >= 0;
                 var sources = new AudioSource[readers.Length];
-                var clips = new AudioClip[readers.Length];
                 for (var i = 0; i < readers.Length; i++)
                 {
-                    var reader = readers[i];
-                    var source = _owner.SourceFor(format.Roles[i], hasBackPair);
-                    var clip = AudioClip.Create(format.Roles[i].ToString(), BSAudioStream.ClipFrames, 1, format.SampleRate, true, reader.OnRead, reader.OnSetPosition);
-                    source.clip = clip;
-                    source.loop = true;
-                    sources[i] = source;
-                    clips[i] = clip;
+                    sources[i] = _owner.SourceFor(format.Roles[i], hasBackPair);
                 }
+                _format = format;
+                _readers = readers;
                 _owner._playing = sources;
-                _owner._clips = clips;
+                _owner._clips = new AudioClip[readers.Length];
             }
 
             public void PlayAt(double dspTime)
@@ -1107,7 +1108,18 @@ namespace BS.VideoStream
                 {
                     return;
                 }
-                foreach (var source in _owner._playing)
+                var sources = _owner._playing;
+                var clips = _owner._clips;
+                for (var i = 0; i < sources.Length && i < _readers.Length; i++)
+                {
+                    // Armed by now, so what Unity reads ahead is the sound from its first frame.
+                    var reader = _readers[i];
+                    var clip = AudioClip.Create(_format.Roles[i].ToString(), BSAudioStream.ClipFrames, 1, _format.SampleRate, true, reader.OnRead, reader.OnSetPosition);
+                    sources[i].clip = clip;
+                    sources[i].loop = true;
+                    clips[i] = clip;
+                }
+                foreach (var source in sources)
                 {
                     source.PlayScheduled(dspTime);
                 }

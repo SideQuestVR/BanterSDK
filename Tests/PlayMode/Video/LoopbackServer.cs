@@ -17,9 +17,11 @@ namespace BS.VideoStream.Tests
 
         public LoopbackServer(string folder)
         {
-            foreach (var file in Directory.GetFiles(folder))
+            // Subfolders too, for a playlist and its segments.
+            var root = Path.GetFullPath(folder);
+            foreach (var file in Directory.GetFiles(root, "*", SearchOption.AllDirectories))
             {
-                _files["/" + Path.GetFileName(file)] = File.ReadAllBytes(file);
+                _files["/" + Path.GetRelativePath(root, file).Replace('\\', '/')] = File.ReadAllBytes(file);
             }
             var probe = new TcpListener(IPAddress.Loopback, 0);
             probe.Start();
@@ -64,7 +66,8 @@ namespace BS.VideoStream.Tests
                     response.StatusCode = 404;
                     return;
                 }
-                response.ContentType = context.Request.Url.AbsolutePath.EndsWith(".ts") ? "video/mp2t" : "video/mp4";
+                var path = context.Request.Url.AbsolutePath;
+                response.ContentType = path.EndsWith(".m3u8") ? "application/vnd.apple.mpegurl" : path.EndsWith(".ts") ? "video/mp2t" : "video/mp4";
                 long start = 0, end = bytes.Length - 1;
                 var range = context.Request.Headers["Range"];
                 if (!string.IsNullOrEmpty(range) && range.StartsWith("bytes="))

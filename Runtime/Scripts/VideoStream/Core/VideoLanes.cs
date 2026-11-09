@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using BS.AudioStream;
 
@@ -56,6 +57,19 @@ namespace BS.VideoStream
         long _skipBeforeUs = VideoDecoderNative.NoTime;
         bool _refused;
 
+        // A decoder can hand a frame's sound back a frame or more after the frame went in: Media Foundation's AAC decoder
+        // one frame, MediaCodec several. So a timestamp waits with the number of the compressed frame it came with, and
+        // applies when that frame's sound comes out; applied on arrival it would land on earlier sound and put the sound
+        // a frame or more behind the picture.
+        const int MaxStamps = 1024;
+        readonly Queue<(long Input, long PtsUs)> _stamps = new Queue<(long, long)>();
+        long _inputs;     // compressed frames given to the decoder since it was made or reset
+        long _consumed;   // of those, how many have come out
+        int _perInput;    // decoded frames one compressed frame gives: the first block out
+
+        /// <summary>Whether a timestamp has been given since the last break, applied or still waiting for its sound.</summary>
+        public bool HasTimestamp => _ptsUs != VideoDecoderNative.NoTime || _stamps.Count > 0;
+
         public AudioLane(VideoSessionOptions options, VideoSessionInfo info, IStreamOutput output)
         {
             _options = options;
@@ -91,9 +105,19 @@ namespace BS.VideoStream
         public void Discontinuity(long skipBeforeUs)
         {
             _decoder?.Reset();
+            ForgetStamps();
             _skipBeforeUs = skipBeforeUs;
             _ptsUs = VideoDecoderNative.NoTime;
             _markPending = true;
+        }
+
+        // The decoder holds nothing any more (new, or reset).
+        void ForgetStamps()
+        {
+            _stamps.Clear();
+            _inputs = 0;
+            _consumed = 0;
+            _perInput = 0;
         }
 
         public void SetSkipBefore(long skipBeforeUs) => _skipBeforeUs = skipBeforeUs;
@@ -113,6 +137,7 @@ namespace BS.VideoStream
             }
             Finish(false);
             Release();
+            ForgetStamps();
             _decoder = entry.Decoder(config);
             if (_decoder.Refusal != null)
             {
@@ -139,10 +164,14 @@ namespace BS.VideoStream
             Refuse(what);
         }
 
+        /// <summary>The stream time of the next compressed frame.</summary>
         public void OnTimestamp(long ptsUs)
         {
-            _ptsUs = ptsUs;
-            _markPending = true;
+            if (_stamps.Count >= MaxStamps)
+            {
+                _stamps.Dequeue();
+            }
+            _stamps.Enqueue((_inputs, ptsUs));
         }
 
         public void OnFrame(byte[] data, int offset, int count)
@@ -151,7 +180,36 @@ namespace BS.VideoStream
             {
                 return;
             }
-            Emit(_decoder.Decode(data, offset, count, _planes));
+            var frames = _decoder.Decode(data, offset, count, _planes);
+            _inputs++;
+            Emit(frames);
+        }
+
+        // Before a block is written: the timestamp of the compressed frame it starts with, if one came with it, and the
+        // count of compressed frames out moved on past it.
+        void TakeStamp(int frames, int rate)
+        {
+            if (_perInput <= 0)
+            {
+                _perInput = frames;
+            }
+            var first = _consumed;
+            var found = false;
+            var ptsUs = 0L;
+            while (_stamps.Count > 0 && _stamps.Peek().Input <= first)
+            {
+                var stamp = _stamps.Dequeue();
+                // One overtaken by a block of several frames: on from where its frame started.
+                ptsUs = stamp.PtsUs + (first - stamp.Input) * _perInput * 1000000L / rate;
+                found = true;
+            }
+            if (found)
+            {
+                _ptsUs = ptsUs;
+                _markPending = true;
+            }
+            // A block of several frames' sound (a decoder catching up, or draining at the end) counts as several.
+            _consumed += Math.Max(1, (frames + _perInput / 2) / _perInput);
         }
 
         /// <summary>What the decoder still holds, at an end, a loop or before a break. Write false: just drop it.</summary>
@@ -220,7 +278,17 @@ namespace BS.VideoStream
                     _options.Log("[BSVideoPlayer] " + notice);
                 }
             }
-            if (frames <= 0 || _output == null)
+            if (frames <= 0)
+            {
+                return;
+            }
+            var rate = decoder.SampleRate;
+            if (rate <= 0)
+            {
+                return;
+            }
+            TakeStamp(frames, rate);
+            if (_output == null)
             {
                 return;
             }
@@ -228,11 +296,6 @@ namespace BS.VideoStream
             {
                 // The sound has stopped being a clock (refused, failed, or its sources stopped reading): don't let a full
                 // ring hold the picture up. Decoded and dropped, so a later seek or resume picks it up again cleanly.
-                return;
-            }
-            var rate = decoder.SampleRate;
-            if (rate <= 0)
-            {
                 return;
             }
             var blockUs = frames * 1000000L / rate;

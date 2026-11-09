@@ -103,6 +103,11 @@ namespace VideoStreamTests
 
         public bool Configure(StreamFormat format) { lock (this) Formats.Add(format); return !_cancel.IsCancellationRequested; }
 
+        // The loudest sample written, and where each click starts (a frame over 0.2 after a quarter second without one).
+        public float Peak;
+        public readonly List<long> Onsets = new List<long>();
+        int _hold;
+
         public bool Write(float[][] planes, int count)
         {
             while (Blocked)
@@ -110,8 +115,27 @@ namespace VideoStreamTests
                 if (_cancel.WaitHandle.WaitOne(5)) return false;
             }
             if (_cancel.IsCancellationRequested) return false;
+            var start = Interlocked.Read(ref Frames);
+            for (var i = 0; i < count; i++)
+            {
+                var sample = Math.Abs(planes[0][i]);
+                if (sample > Peak) Peak = sample;
+                if (_hold > 0) { _hold--; continue; }
+                if (sample > 0.2f) { lock (this) Onsets.Add(start + i); _hold = Math.Max(1, Rate / 4); }
+            }
             Interlocked.Add(ref Frames, count);
             return true;
+        }
+
+        /// <summary>A written frame's time, from the newest mark at or before it.</summary>
+        public long PtsOf(long frame)
+        {
+            lock (this)
+            {
+                var mark = Marks.LastOrDefault(m => m.frame <= frame);
+                if (Marks.Count == 0 || Rate == 0) return long.MinValue;
+                return mark.pts + (frame - mark.frame) * 1000000L / Rate;
+            }
         }
 
         public void MarkTimestamp(long ptsUs) { lock (this) Marks.Add((Interlocked.Read(ref Frames), ptsUs)); }
@@ -159,9 +183,9 @@ namespace VideoStreamTests
             public Thread Thread;
             public readonly List<string> Log = new List<string>();
 
-            public Run(string path, Action<VideoSessionOptions> configure = null, Action<RecordingVideo> setup = null)
+            public Run(string path, Action<VideoSessionOptions> configure = null, Action<RecordingVideo> setup = null, string root = null)
             {
-                Transport = new FolderTransport(Root);
+                Transport = new FolderTransport(root ?? Root);
                 OutputCancel = CancellationTokenSource.CreateLinkedTokenSource(Cancel.Token);
                 Audio = new RecordingAudio(OutputCancel.Token);
                 var options = new VideoSessionOptions
@@ -305,6 +329,31 @@ namespace VideoStreamTests
                 CheckVideo(run.Video, 360);
                 Assert.That(run.Audio.Frames, Is.EqualTo(12 * 48000).Within(8192));
                 Assert.That(run.Info.Base.Known, Is.True);
+            }
+        }
+
+        // The PlayMode clapper: from 2 s, a white frame and a 20 ms click on every whole second, as MP4 and as MPEG-TS.
+        static readonly string Clapper = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", "Tests", "PlayMode", "Video", "Fixtures~"));
+
+        [TestCase("clapper.mp4")]
+        [TestCase("clapper.ts")]
+        [TestCase("clapper-hls/index.m3u8")]
+        public void Each_click_comes_out_at_its_frames_time(string file)
+        {
+            using (var run = new Run(file, root: Clapper))
+            {
+                run.WaitFor(() => run.Info.InputEnded, "the end");
+                run.WaitFor(() => run.Audio.Finished, "the sound's end");
+                var zero = run.Video.Snapshot().Min(u => u.pts);
+                var clicks = run.Audio.Onsets.Select(f => (run.Audio.PtsOf(f) - zero) / 1000.0).ToList();
+                TestContext.Out.WriteLine($"{file}: peak {run.Audio.Peak:F3}, {run.Audio.Frames} frames, first mark {run.Audio.Marks.FirstOrDefault().pts - zero} us after the first frame; clicks at " +
+                                          string.Join(", ", clicks.Select(c => c.ToString("F1") + " ms")));
+                Assert.That(run.Audio.Peak, Is.GreaterThan(0.5f), "the clicks are there");
+                Assert.That(clicks.Count, Is.EqualTo(8), "one click a second from 2 s");
+                for (var k = 0; k < clicks.Count; k++)
+                {
+                    Assert.That(clicks[k], Is.EqualTo((k + 2) * 1000.0).Within(3.0), $"click {k + 2} s against the picture's clock");
+                }
             }
         }
 

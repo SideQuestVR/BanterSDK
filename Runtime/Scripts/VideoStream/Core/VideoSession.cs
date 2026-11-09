@@ -1432,7 +1432,7 @@ namespace BS.VideoStream
                 {
                     return;
                 }
-                if (sample.Discontinuity || _audio.PtsUs == VideoDecoderNative.NoTime)
+                if (sample.Discontinuity || !_audio.HasTimestamp)
                 {
                     _audio.OnTimestamp(sample.PtsUs);
                 }
