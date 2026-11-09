@@ -236,13 +236,18 @@ public class BuilderWindow : EditorWindow
         // Here as well as in ShowMainWindow: a window restored with the layout keeps whatever title it was saved with.
         titleContent = new GUIContent("Builder", Resources.Load<Texture2D>("UI/Images/altspace-window-icon"));
         // A window that survives a domain reload still holds its old tree, and this builds a new one.
+        // Only this window's own sheets come off: the root also holds Unity's editor theme, which gives every label its
+        // font and colour (clearing all of them left the window with no text).
         rootVisualElement.Clear();
-        rootVisualElement.styleSheets.Clear();
+        // The checklist's look, shared with the Setup panel's.
+        var checklistStyles = AssetDatabase.LoadAssetAtPath<StyleSheet>(BS.SDKEditor.Setup.SdkSetupWindow.ChecklistStyleSheetPath);
+        if (_mainWindowStyleSheet != null)
+            rootVisualElement.styleSheets.Remove(_mainWindowStyleSheet);
+        if (checklistStyles != null)
+            rootVisualElement.styleSheets.Remove(checklistStyles);
         VisualElement content = _mainWindowVisualTree.CloneTree();
         content.style.height = new StyleLength(Length.Percent(100));
         rootVisualElement.styleSheets.Add(_mainWindowStyleSheet);
-        // The checklist's look, shared with the Setup panel's.
-        var checklistStyles = AssetDatabase.LoadAssetAtPath<StyleSheet>(BS.SDKEditor.Setup.SdkSetupWindow.ChecklistStyleSheetPath);
         if (checklistStyles != null)
             rootVisualElement.styleSheets.Add(checklistStyles);
         ApplySkinClass();
