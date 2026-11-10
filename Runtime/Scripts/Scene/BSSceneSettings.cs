@@ -37,6 +37,10 @@ namespace BS
         /// know as Social.</summary>
         private string _AvatarSyncMode = AvatarSyncModes.Social;
         public string AvatarSyncMode { get { return _AvatarSyncMode; } set { _AvatarSyncMode = value; scene.events.OnAvatarSyncModeChanged.Invoke(value); } }
+        /// <summary>Scales how far voices carry in this space, on top of each player's own Voice Distance (1 = unchanged).
+        /// Stored as given; the app clamps it when it applies it.</summary>
+        private float _VoiceDistanceMultiplier = 1f;
+        public float VoiceDistanceMultiplier { get { return _VoiceDistanceMultiplier; } set { _VoiceDistanceMultiplier = value; scene.events.OnVoiceDistanceMultiplierChanged.Invoke(value); } }
         // TODO(not wired up in the app yet): let players grab and hold other players' hands (remote players' hands get
         // grabbable colliders, also gated by the player's own Hand Holding comfort option). Remote players have no hand
         // colliders in the client yet.
@@ -223,6 +227,7 @@ namespace BS
             EnableSpiderMan = false;
             EnableBirdFlight = true;
             AvatarSyncMode = AvatarSyncModes.Social;
+            VoiceDistanceMultiplier = 1f;
             EnableHandHold = true;
             EnableRadar = true;
             EnableNametags = true;

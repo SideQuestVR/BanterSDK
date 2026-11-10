@@ -20,6 +20,7 @@ namespace BS
     - `enableSpiderMan` - Players can use the grapple (spider-man) ability.
     - `enableBirdFlight` - Allow controller-driven wing flight, also gated by each player's preference.
     - `avatarSyncMode` - How often players far from each other see each other move: `social` (the default) or `action`.
+    - `voiceDistanceMultiplier` - Scales how far voices carry here, on top of each player's own Voice Distance: 2 = twice as far, 0.5 = half (default 1).
     - `enableHandHold` - Players can hold hands.
     - `enableRadar` - Show the radar.
     - `enableNametags` - Show name tags above players.
@@ -130,6 +131,15 @@ namespace BS
                  "flight where distant players must move smoothly. Costs more bandwidth per distant player.")]
         [See(initial = "\"social\"")][SerializeField] internal string avatarSyncMode = "social";
 
+        // Declared last on purpose: the JS constructor takes these fields in declaration order, and only a trailing
+        // new parameter keeps existing pages' positional calls working (the bridge lock enforces it).
+        [Header("Voice")]
+        [Tooltip("Scales how far voices carry in this space, on top of each player's own Voice Distance setting: " +
+                 "2 = twice as far (a stage or an auditorium), 0.5 = half (a quiet, close-up space). 1 = unchanged. " +
+                 "The app clamps it to 0.1-10. Voices further away than this aren't received at all, so a big " +
+                 "multiplier in a crowded space costs players bandwidth.")]
+        [See(initial = "1")][SerializeField] internal float voiceDistanceMultiplier = 1f;
+
         bool started;
         // The settings object (it is recreated on every page load) that this component locked, if any.
         // Its own locks don't stop it; locks set by anything else do.
@@ -188,6 +198,7 @@ namespace BS
                 if (Has(PropertyName.enableSpiderMan)) settings.EnableSpiderMan = enableSpiderMan;
                 if (Has(PropertyName.enableBirdFlight)) settings.EnableBirdFlight = enableBirdFlight;
                 if (Has(PropertyName.avatarSyncMode)) settings.AvatarSyncMode = avatarSyncMode;
+                if (Has(PropertyName.voiceDistanceMultiplier)) settings.VoiceDistanceMultiplier = voiceDistanceMultiplier;
                 if (Has(PropertyName.enableHandHold)) settings.EnableHandHold = enableHandHold;
                 if (Has(PropertyName.enableRadar)) settings.EnableRadar = enableRadar;
                 if (Has(PropertyName.enableNametags)) settings.EnableNametags = enableNametags;

@@ -177,6 +177,7 @@ When it starts, it applies all of its values, so anything you don't set goes bac
 | `enableSpiderMan` | boolean | false | `EnableSpiderMan`: players can use the grapple |
 | `enableBirdFlight` | boolean | true | `EnableBirdFlight`: space permission for controller-driven wing flight. Explicit `false` forbids it; the player's Bird Flight preference must also be on. Missing values allow flight. |
 | `avatarSyncMode` | string | "social" | `AvatarSyncMode`: how often distant players see each other move. `"social"` thins to once a second past 70 m; `"action"` keeps 2 to 24 updates a second out to 150 m and beyond, for games and flight |
+| `voiceDistanceMultiplier` | number | 1 | `VoiceDistanceMultiplier`: scales how far voices carry here, on top of each player's own Voice Distance setting: 2 = twice as far (a stage or auditorium), 0.5 = half. Clamped to 0.1-10. Voices beyond that distance aren't received at all, so a large multiplier in a crowded space costs players bandwidth |
 | `enableHandHold` | boolean | true | `EnableHandHold`: players can hold hands |
 | `enableRadar` | boolean | true | `EnableRadar`: the radar is shown |
 | `enableNametags` | boolean | true | `EnableNametags`: name tags show above players |
