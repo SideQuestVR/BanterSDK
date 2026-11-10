@@ -1,8 +1,19 @@
 // BSVD_PATH_VULKAN: each due frame, still in the decoder's own buffer, is imported into Unity's Vulkan device and read
 // through a YCbCr sampler by a compute dispatch that writes an RGBA intermediate at the target's size (scaled, cropped,
-// flipped), which is then copied into the Unity texture. All of it is recorded into Unity's command buffer at the
-// present render event. With graphics jobs (on by default for Unity 6 on Android) that is a secondary command buffer,
-// which can't begin a render pass: hence a dispatch, not a draw.
+// flipped), which is then copied into the Unity texture.
+//
+// None of it goes into Unity's command buffers. On Quest 3 (Unity 6000.3, URP, OpenXR, graphics jobs at Unity's default:
+// builds 9157-9159) the present event always got a secondary command buffer inside a render pass (subpass 0), however it
+// was issued and configured, and EnsureOutsideRenderPass didn't get it out: no layout change, copy or dispatch can go
+// there. So the library submits its own work:
+//   - At the present event (render thread), each decoder with a frame to show asks Unity for the target's VkImage and the
+//     layout Unity tracks for it (AccessTexture with ObserveOnly, which records nothing), and adds a Job to the event's
+//     batch. At the end of the event the batch goes to Unity through one AccessQueue call.
+//   - In the callback (Unity's queue access: any thread, maybe later), the library records its own primary command buffer
+//     from its own pool on Unity's queue family and submits it to Unity's graphics queue with a fence of its own: per job,
+//     the decoder buffer taken from the foreign queue, the conversion into the intermediate, the target from Unity's
+//     layout to TRANSFER_DST, the copy, and the target back to Unity's layout, so what Unity tracks stays true.
+//   - AImages, imports and intermediates are freed by those fences (submission numbers), never Unity's frame numbers.
 //
 // Proven on Quest 3 (notes/video-engine-v1-quest-2026-11-08.md): external-format import with a dedicated allocation,
 // ownership taken from VK_QUEUE_FAMILY_FOREIGN_EXT in GENERAL layout and given back after the conversion, and the
@@ -39,6 +50,23 @@ constexpr uint32_t kDescriptorsPerSet = 3;
 constexpr int64_t kFenceWaitMs = 2;
 constexpr int64_t kFenceGiveUpUs = 200000;
 constexpr int kMaxFailedDraws = 30;
+// How long a decoder's release, or the device's shutdown, waits for the library's submissions.
+constexpr uint64_t kWorkWaitNs = 2000000000ull;
+// Present events after which a batch Unity hasn't run the queue callback for is logged (once).
+constexpr uint64_t kStallEvents = 90;
+// AccessQueue's flush argument. A job's barriers name the layout Unity tracked for the target at the event: the layout
+// after every command Unity recorded before the event. With flush, Unity submits all of those before the callback, so on
+// the one queue they come before the library's submission and the image really is in that layout. Without it, Unity may
+// submit them after ours: if one of them changes the target's layout (its first sampling after the upload, say), the
+// library's barrier names a layout the image isn't in yet, and Unity's own barrier then names one it is no longer in
+// (bsvdtool's stand-in for Unity catches exactly that with flush off). The barriers' ALL_COMMANDS scopes order the
+// memory accesses whichever way round they go; the layouts need the order. The cost: one more vkQueueSubmit of what Unity
+// has recorded so far, only on events that carry a frame (one in three at 90 Hz for 30 fps video), and VideoFrameDriver
+// issues the event at the end of the frame, where little is left to record before Unity's own submit.
+// Assumed (bsvdtool --deferred plays it, unproven in Unity itself): a late callback still runs at the event's place in
+// Unity's submission order, ahead of what Unity recorded after the event. Once a texture is being sampled Unity only
+// reads it, so its layout stays put after the event either way.
+constexpr bool kFlush = true;
 
 VkSamplerYcbcrModelConversion ModelOf(int matrix) {
     return matrix == 601 ? VK_SAMPLER_YCBCR_MODEL_CONVERSION_YCBCR_601
@@ -70,22 +98,6 @@ void Barrier(const Device& d, VkCommandBuffer cb, VkImage image, VkImageLayout f
 
 std::string VkError(const char* what, VkResult r) { return std::string(what) + " failed (VkResult " + std::to_string((int)r) + ")"; }
 
-// Unity's command buffer for this event, outside any render pass: barriers, a dispatch and a copy are valid in it whether
-// it is primary or secondary (Unity 6 on Android records plugin events into secondary buffers when graphics jobs are on).
-// The event is configured to start outside a render pass; if Unity is inside one anyway, it is asked to end it.
-bool RecordingOutsideRenderPass(Device& d, UnityVulkanRecordingState& rs, std::string& why) {
-    if (!d.unity->CommandRecordingState(&rs, kUnityVulkanGraphicsQueueAccess_DontCare) || !rs.commandBuffer)
-        return why = "Unity has no command buffer to record into now", false;
-    if (rs.subPassIndex < 0) return true;
-    int subpass = rs.subPassIndex;
-    if (d.unity->EnsureOutsideRenderPass) d.unity->EnsureOutsideRenderPass();
-    if (!d.unity->CommandRecordingState(&rs, kUnityVulkanGraphicsQueueAccess_DontCare) || !rs.commandBuffer)
-        return why = "Unity has no command buffer to record into after ending its render pass (it was in subpass " + std::to_string(subpass) + ")", false;
-    if (rs.subPassIndex >= 0)
-        return why = "Unity's command buffer stays inside a render pass (subpass " + std::to_string(rs.subPassIndex) + ")", false;
-    return true;
-}
-
 }  // namespace
 
 // ---------------------------------------------------------------- Renderer: what every decoder on the device shares
@@ -110,7 +122,6 @@ public:
     // Set 1: the intermediate as a storage image. A set of its own, since the intermediate lives per decoder (and is
     // replaced when the target's size changes) while a buffer's set lives as long as its import.
     VkDescriptorSetLayout pictureLayout = VK_NULL_HANDLE;
-    unsigned long long lastUsed = 0;
 
 private:
     Device& d_;
@@ -258,19 +269,316 @@ Pipeline* Renderer::Get(const VkAndroidHardwareBufferFormatPropertiesANDROID& fo
     return made;
 }
 
+// ---------------------------------------------------------------- Work: the library's own submissions
+
+namespace {
+
+// One decoder's frame in one submission: what the queue callback records, by value, so it reads nothing the render
+// thread keeps changing. The objects it names stay alive until its submission's fence has signalled (decoders retire them
+// by submission number), or until it is cancelled before it was recorded.
+struct Job {
+    const void* owner = nullptr;
+    VkImage source = VK_NULL_HANDLE;  // the decoder buffer: the foreign queue's (the codec's) outside the job
+    VkDescriptorSet sourceSet = VK_NULL_HANDLE;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    VkPipelineLayout layout = VK_NULL_HANDLE;
+    VkImage inter = VK_NULL_HANDLE;
+    VkDescriptorSet interSet = VK_NULL_HANDLE;
+    uint32_t groupsX = 0, groupsY = 0;
+    float map[8] = {};
+    VkImage target = VK_NULL_HANDLE;
+    VkImageLayout unityLayout = VK_IMAGE_LAYOUT_UNDEFINED;  // the layout Unity tracked for the target at the event
+    VkImageLayout finalLayout = VK_IMAGE_LAYOUT_UNDEFINED;  // the layout the target is left in
+    VkExtent2D copy{};
+};
+
+class Work {
+public:
+    bool Open(Device& d, std::string& error);
+    void Close();
+
+    // Render thread.
+    uint64_t Add(const Job& job);  // to this event's batch; returns its submission number
+    void Begin();
+    void End(int eventId);
+    uint64_t Completed() const { return completed_; }
+    bool CancelAndWait(const void* owner, uint64_t number);
+
+    // Unity's queue access callback: records and submits, in order, every batch up to the one it was asked for.
+    static void UNITY_INTERFACE_API OnQueueAccess(int eventId, void* data);
+
+private:
+    struct Batch {
+        uint64_t number = 0, event = 0;
+        std::vector<Job> jobs;
+    };
+    struct Submission {
+        VkCommandBuffer cb = VK_NULL_HANDLE;
+        VkFence fence = VK_NULL_HANDLE;
+        uint64_t number = 0;
+    };
+    void Run(uint64_t upTo);
+    void RecycleLocked();
+    void SubmitLocked(Batch& batch);
+    void SubmitFailedLocked(const std::string& why, const Batch& batch);
+    void Record(VkCommandBuffer cb, const Job& job);
+
+    std::mutex lock_;
+    // Under lock_: whichever thread Unity calls the callback from, and the render thread.
+    Device* device_ = nullptr;
+    VkCommandPool pool_ = VK_NULL_HANDLE;
+    std::deque<Batch> pending_;        // handed to AccessQueue, not recorded yet, in order
+    std::deque<Submission> inFlight_;  // submitted, in order
+    std::vector<Submission> spare_;    // finished (or never submitted): reused
+    uint64_t processed_ = 0;           // every batch up to this number is submitted or dropped
+    uint64_t done_ = 0;                // every batch up to this number has finished or will never run
+    uint64_t failures_ = 0;
+    // Render thread only.
+    Batch building_;
+    uint64_t next_ = 1, events_ = 0, completed_ = 0;
+    bool warnedStall_ = false;
+};
+
+Work gWork;
+
+bool Work::Open(Device& d, std::string& error) {
+    VkCommandPoolCreateInfo ci{};
+    ci.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    ci.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT | VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+    ci.queueFamilyIndex = d.queueFamily;  // Unity's (UnityVulkanInstance::queueFamilyIndex)
+    VkCommandPool pool = VK_NULL_HANDLE;
+    VkResult r = d.fn.vkCreateCommandPool(d.device, &ci, nullptr, &pool);
+    if (r != VK_SUCCESS) return error = VkError("vkCreateCommandPool", r), false;
+    std::lock_guard<std::mutex> g(lock_);
+    device_ = &d;
+    pool_ = pool;
+    processed_ = done_ = completed_ = next_ - 1;
+    return true;
+}
+
+void Work::Close() {
+    building_ = Batch();
+    std::lock_guard<std::mutex> g(lock_);
+    if (!device_) return;
+    const Device& d = *device_;
+    // Batches Unity never ran the callback for are dropped (their decoders were released before this); a callback that
+    // still comes finds nothing to do.
+    pending_.clear();
+    std::vector<VkFence> fences;
+    for (const Submission& s : inFlight_) fences.push_back(s.fence);
+    if (!fences.empty() && d.fn.vkWaitForFences(d.device, (uint32_t)fences.size(), fences.data(), VK_TRUE, kWorkWaitNs) != VK_SUCCESS)
+        Log("the GPU didn't finish the library's submissions within 2 s of the device's shutdown");
+    spare_.insert(spare_.end(), inFlight_.begin(), inFlight_.end());
+    inFlight_.clear();
+    for (const Submission& s : spare_)
+        if (s.fence) d.fn.vkDestroyFence(d.device, s.fence, nullptr);
+    spare_.clear();
+    if (pool_) d.fn.vkDestroyCommandPool(d.device, pool_, nullptr);  // and its command buffers
+    pool_ = VK_NULL_HANDLE;
+    device_ = nullptr;
+    processed_ = done_ = completed_ = next_ - 1;
+}
+
+uint64_t Work::Add(const Job& job) {
+    if (building_.jobs.empty()) {
+        building_.number = next_++;
+        building_.event = events_;
+    }
+    building_.jobs.push_back(job);
+    return building_.number;
+}
+
+void Work::Begin() {
+    std::lock_guard<std::mutex> g(lock_);
+    if (!device_) return;
+    RecycleLocked();
+    completed_ = done_;
+}
+
+void Work::End(int eventId) {
+    ++events_;
+    if (building_.jobs.empty()) return;
+    uint64_t number = building_.number;
+    IUnityGraphicsVulkanV2* unity = nullptr;
+    {
+        std::lock_guard<std::mutex> g(lock_);
+        if (device_) {
+            unity = device_->unity;
+            pending_.push_back(std::move(building_));
+            // A callback that never comes holds its frames (each decoder stops taking new ones at its in-flight limit).
+            if (!warnedStall_ && pending_.front().event + kStallEvents < events_) {
+                warnedStall_ = true;
+                Log("Unity hasn't run the queue access callback for %llu present events (%zu submissions waiting)",
+                    (unsigned long long)(events_ - pending_.front().event), pending_.size());
+            }
+        }
+    }
+    building_ = Batch();
+    // Not under lock_: Unity may call the callback from inside this call.
+    if (unity) unity->AccessQueue(&Work::OnQueueAccess, eventId, reinterpret_cast<void*>((uintptr_t)number), kFlush);
+}
+
+void UNITY_INTERFACE_API Work::OnQueueAccess(int, void* data) { gWork.Run((uint64_t)(uintptr_t)data); }
+
+// Batches go in the order they were made, even if Unity ran a later event's callback first; a callback whose batch an
+// earlier one already took finds nothing to do.
+void Work::Run(uint64_t upTo) {
+    std::lock_guard<std::mutex> g(lock_);
+    if (!device_) return;
+    RecycleLocked();
+    while (!pending_.empty() && pending_.front().number <= upTo) {
+        Batch batch = std::move(pending_.front());
+        pending_.pop_front();
+        if (!batch.jobs.empty()) SubmitLocked(batch);
+        processed_ = batch.number;
+    }
+    RecycleLocked();
+}
+
+// One queue: a fence that signals means every submission before it has finished too.
+void Work::RecycleLocked() {
+    const Device& d = *device_;
+    while (!inFlight_.empty()) {
+        // VK_SUCCESS; or the device is lost, when nothing will ever finish and holding on helps nobody.
+        if (d.fn.vkGetFenceStatus(d.device, inFlight_.front().fence) == VK_NOT_READY) break;
+        spare_.push_back(inFlight_.front());
+        inFlight_.pop_front();
+    }
+    done_ = inFlight_.empty() ? processed_ : inFlight_.front().number - 1;
+}
+
+void Work::SubmitFailedLocked(const std::string& why, const Batch& batch) {
+    // The batch's frames are lost (already counted as shown); their resources are freed as if it had run.
+    if (failures_++ % 300 == 0)
+        Log("the library's submission %llu (%zu frames) failed: %s (%llu failures so far)", (unsigned long long)batch.number,
+            batch.jobs.size(), why.c_str(), (unsigned long long)failures_);
+}
+
+void Work::SubmitLocked(Batch& batch) {
+    const Device& d = *device_;
+    const VkFunctions& fn = d.fn;
+    Submission s;
+    VkResult r = VK_SUCCESS;
+    if (!spare_.empty()) {
+        s = spare_.back();
+        spare_.pop_back();
+        r = fn.vkResetFences(d.device, 1, &s.fence);
+        if (r != VK_SUCCESS) {
+            spare_.push_back(s);
+            return SubmitFailedLocked(VkError("vkResetFences", r), batch);
+        }
+    } else {
+        VkCommandBufferAllocateInfo ai{};
+        ai.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+        ai.commandPool = pool_;
+        ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+        ai.commandBufferCount = 1;
+        r = fn.vkAllocateCommandBuffers(d.device, &ai, &s.cb);
+        if (r != VK_SUCCESS) return SubmitFailedLocked(VkError("vkAllocateCommandBuffers", r), batch);
+        VkFenceCreateInfo fi{};
+        fi.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        r = fn.vkCreateFence(d.device, &fi, nullptr, &s.fence);
+        if (r != VK_SUCCESS) return SubmitFailedLocked(VkError("vkCreateFence", r), batch);  // the buffer goes with the pool
+    }
+    VkCommandBufferBeginInfo bi{};
+    bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    r = fn.vkBeginCommandBuffer(s.cb, &bi);  // resets it: the pool lets its buffers reset one by one
+    if (r == VK_SUCCESS) {
+        for (const Job& job : batch.jobs) Record(s.cb, job);
+        r = fn.vkEndCommandBuffer(s.cb);
+    }
+    if (r == VK_SUCCESS) {
+        VkSubmitInfo si{};
+        si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        si.commandBufferCount = 1;
+        si.pCommandBuffers = &s.cb;
+        r = fn.vkQueueSubmit(d.queue, 1, &si, s.fence);
+    }
+    if (r != VK_SUCCESS) {
+        spare_.push_back(s);
+        return SubmitFailedLocked(VkError("recording or vkQueueSubmit", r), batch);
+    }
+    s.number = batch.number;
+    inFlight_.push_back(s);
+}
+
+void Work::Record(VkCommandBuffer cb, const Job& j) {
+    const Device& d = *device_;
+    const VkFunctions& fn = d.fn;
+    // The decoder buffer, from the codec (the foreign queue family) in GENERAL, as it hands it over.
+    Barrier(d, cb, j.source, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_QUEUE_FAMILY_FOREIGN_EXT, d.queueFamily, 0,
+            VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    // Every pixel of the intermediate is written, so its old contents are dropped; the copy out of it in an earlier
+    // submission finishes first.
+    Barrier(d, cb, j.inter, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 0,
+            VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    fn.vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_COMPUTE, j.pipeline);
+    VkDescriptorSet sets[2] = {j.sourceSet, j.interSet};
+    fn.vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_COMPUTE, j.layout, 0, 2, sets, 0, nullptr);
+    fn.vkCmdPushConstants(cb, j.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof j.map, j.map);
+    fn.vkCmdDispatch(cb, j.groupsX, j.groupsY, 1);
+    Barrier(d, cb, j.source, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, d.queueFamily, VK_QUEUE_FAMILY_FOREIGN_EXT,
+            VK_ACCESS_SHADER_READ_BIT, 0, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
+    // The conversion's writes finish before the copy reads them.
+    Barrier(d, cb, j.inter, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+            VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    // The target, from the layout Unity tracks, after everything earlier on the queue did with it (Unity sampling it in
+    // earlier frames, or writing it).
+    Barrier(d, cb, j.target, j.unityLayout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+            VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_PIPELINE_STAGE_TRANSFER_BIT);
+    // Between images of the same format (the intermediate has the texture's): bytes copied as they are.
+    VkImageCopy region{};
+    region.srcSubresource.aspectMask = region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.srcSubresource.layerCount = region.dstSubresource.layerCount = 1;
+    region.extent = {j.copy.width, j.copy.height, 1};
+    fn.vkCmdCopyImage(cb, j.inter, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, j.target, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+    // Back to Unity's layout, so what Unity tracks is true again, the picture visible to whatever comes next on the queue.
+    Barrier(d, cb, j.target, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, j.finalLayout, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
+            VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_MEMORY_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+}
+
+bool Work::CancelAndWait(const void* owner, uint64_t number) {
+    auto drop = [owner](std::vector<Job>& jobs) {
+        jobs.erase(std::remove_if(jobs.begin(), jobs.end(), [owner](const Job& j) { return j.owner == owner; }), jobs.end());
+    };
+    drop(building_.jobs);
+    std::lock_guard<std::mutex> g(lock_);
+    if (!device_) return true;
+    const Device& d = *device_;
+    for (Batch& b : pending_) drop(b.jobs);
+    std::vector<VkFence> fences;
+    for (const Submission& s : inFlight_)
+        if (s.number <= number) fences.push_back(s.fence);
+    bool finished = fences.empty() ||
+                    d.fn.vkWaitForFences(d.device, (uint32_t)fences.size(), fences.data(), VK_TRUE, kWorkWaitNs) == VK_SUCCESS;
+    RecycleLocked();
+    completed_ = done_;
+    return finished;
+}
+
+}  // namespace
+
+void BeginWork(Device&) { gWork.Begin(); }
+void EndWork(Device&) { gWork.End(RenderEventId()); }
+uint64_t CompletedWork() { return gWork.Completed(); }
+bool CancelAndWaitWork(const void* owner, uint64_t number) { return gWork.CancelAndWait(owner, number); }
+
 Device::Device() = default;
 Device::~Device() = default;
 
 bool CreateRenderer(Device& device, std::string& error) {
     auto renderer = std::make_unique<Renderer>(device);
     if (!renderer->Init(error)) return false;
+    if (!gWork.Open(device, error)) return false;
     device.renderer = std::move(renderer);
     return true;
 }
 
 void DestroyRenderer(Device& device) {
-    if (!device.renderer) return;
-    if (device.renderer->lastUsed > LastSafeFrame()) device.fn.vkDeviceWaitIdle(device.device);
+    gWork.Close();  // waits for the library's submissions, which use the renderer's pipelines
     device.renderer.reset();
 }
 
@@ -316,7 +624,7 @@ private:
         Pipeline* pipeline = nullptr;
         Colour colour;
         uint32_t width = 0, height = 0;
-        unsigned long long lastUsed = 0;
+        uint64_t lastUsed = 0;  // the last submission (Work's number) that reads it
     };
     // Objects waiting for the GPU to finish with them.
     struct Retired {
@@ -327,7 +635,7 @@ private:
         VkImageView view = VK_NULL_HANDLE;
         VkDescriptorPool pool = VK_NULL_HANDLE;
         VkDescriptorSet set = VK_NULL_HANDLE;
-        unsigned long long frame = 0;
+        uint64_t work = 0;  // destroyed once this submission has finished
     };
     // What the conversion writes (a storage image) and the texture is copied from.
     struct Intermediate {
@@ -338,11 +646,11 @@ private:
         VkDescriptorSet set = VK_NULL_HANDLE;  // the view, as set 1
         uint32_t width = 0, height = 0;
         VkFormat format = VK_FORMAT_UNDEFINED;
-        unsigned long long lastUsed = 0;
+        uint64_t lastUsed = 0;
     };
     struct InFlight {
         AImage* image;
-        unsigned long long frame;
+        uint64_t work;  // the submission that reads it
     };
 
     static void BufferRemoved(void* context, AImageReader*, AHardwareBuffer* buffer) {
@@ -351,26 +659,26 @@ private:
         self->removed_.push_back(buffer);
     }
 
-    void Collect(Device& d, unsigned long long safe);
+    void Collect(Device& d, uint64_t done);
     void Draw(Device& d, AImage* image, const Target& target);
     Import* FindImport(Device& d, AHardwareBuffer* buffer, Colour colour, std::string& error);
     bool EnsureIntermediate(Device& d, uint32_t width, uint32_t height, VkFormat format, std::string& error);
     VkDescriptorSet AllocateSet(Device& d, VkDescriptorSetLayout layout, VkDescriptorPool& pool, std::string& error);
-    void RetireIntermediate(unsigned long long frame) {
+    void RetireIntermediate(uint64_t work) {
         Retired r;
         r.image = inter_.image;
         r.memory = inter_.memory;
         r.view = inter_.view;
         r.pool = inter_.pool;
         r.set = inter_.set;
-        r.frame = frame;
+        r.work = work;
         retired_.push_back(r);
         inter_ = Intermediate();
     }
     void RetireImport(Import& import) {
         Retired r;
         r.import = import;
-        r.frame = import.lastUsed;
+        r.work = import.lastUsed;
         retired_.push_back(r);
         import = Import();
     }
@@ -395,13 +703,15 @@ private:
     AImage* fenced_ = nullptr;
     int fence_ = -1;
     int64_t fencedSinceUs_ = 0;
-    unsigned long long lastUsed_ = 0;
+    uint64_t lastUsed_ = 0;  // the last submission with one of this decoder's frames
     int failedDraws_ = 0;
+    int layoutNotes_ = 0;
+    VkImageLayout seenLayout_ = VK_IMAGE_LAYOUT_MAX_ENUM;
     bool releasedRender_ = false, warnedUnmatched_ = false;
 };
 
-void VulkanDecoder::Collect(Device& d, unsigned long long safe) {
-    while (!inFlight_.empty() && inFlight_.front().frame <= safe) {
+void VulkanDecoder::Collect(Device& d, uint64_t safe) {
+    while (!inFlight_.empty() && inFlight_.front().work <= safe) {
         DeleteImage(inFlight_.front().image);
         inFlight_.pop_front();
     }
@@ -427,7 +737,7 @@ void VulkanDecoder::Collect(Device& d, unsigned long long safe) {
         imports_.erase(imports_.begin() + (std::ptrdiff_t)oldest);
     }
     for (size_t i = 0; i < retired_.size();) {
-        if (retired_[i].frame <= safe) {
+        if (retired_[i].work <= safe) {
             Destroy(&d, retired_[i]);
             retired_.erase(retired_.begin() + (std::ptrdiff_t)i);
         } else {
@@ -461,8 +771,7 @@ void VulkanDecoder::Destroy(Device* d, Retired& r) {
 void VulkanDecoder::Present() {
     Device* d = CurrentDevice();
     if (!d || !d->renderer || !InPresent()) return;
-    const UnityVulkanRecordingState& state = PresentState();
-    Collect(*d, state.safeFrameNumber);
+    Collect(*d, CompletedWork());
     AImageReader* reader = reader_.load(std::memory_order_acquire);
     if (!reader || Failed()) return;
     Target target = CurrentTarget();
@@ -512,7 +821,6 @@ void VulkanDecoder::Present() {
 }
 
 void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
-    const UnityVulkanRecordingState& state = PresentState();
     int64_t ns = 0;
     AImage_getTimestamp(image, &ns);
     int64_t pts = ns / 1000;
@@ -564,19 +872,23 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
         return;
     }
 
-    // Out of any render pass before the access records its barrier, as Unity's WebRTC plugin does; the event is
-    // configured to start outside one, and RecordingOutsideRenderPass checks that it did.
-    if (d.unity->EnsureOutsideRenderPass) d.unity->EnsureOutsideRenderPass();
+    // Observe only: records nothing (Unity's command buffer is inside a render pass here), reports the image and the
+    // layout Unity tracks for it now (the one before any barrier: Quest 3, build 9155). Allowed in this event, which isn't
+    // configured for queue access; never in the queue callback, which is why the job carries the answer.
     UnityVulkanImage out{};
     if (!d.unity->AccessTexture(target.texture, UnityVulkanWholeImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                VK_ACCESS_TRANSFER_WRITE_BIT, kUnityVulkanResourceAccess_PipelineBarrier, &out) ||
+                                VK_ACCESS_TRANSFER_WRITE_BIT, kUnityVulkanResourceAccess_ObserveOnly, &out) ||
         !out.image) {
         DeleteImage(image);
         DrawFailed("Unity gave no access to the target texture");
         return;
     }
-    // The layout isn't checked: Unity reports the one the image had before the barrier this call recorded (Quest 3, build
-    // 9155: every texture refused), and the barrier puts it in TRANSFER_DST_OPTIMAL before anything recorded after it.
+    if (out.layout != seenLayout_ && layoutNotes_ < 2) {
+        // The first layouts Unity reports, for the record: the upload's, then (once something samples it) a read layout.
+        layoutNotes_++;
+        Log("decoder %d: Unity tracks the target texture in layout %d", handle, (int)out.layout);
+    }
+    seenLayout_ = out.layout;
     if (out.format != VK_FORMAT_R8G8B8A8_UNORM && out.format != VK_FORMAT_R8G8B8A8_SRGB) {
         DeleteImage(image);
         Fail(BSVD_ERROR_GRAPHICS, "the target texture isn't RGBA32 (Vulkan format " + std::to_string((int)out.format) + ")");
@@ -596,27 +908,18 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
         DrawFailed(error);
         return;
     }
-    // Resource access may have recorded commands, so the command buffer is asked for afterwards.
-    UnityVulkanRecordingState rs{};
-    if (!RecordingOutsideRenderPass(d, rs, error)) {
-        DeleteImage(image);
-        DrawFailed(error);
-        return;
-    }
-    VkCommandBuffer cb = rs.commandBuffer;
-    const VkFunctions& fn = d.fn;
-    Pipeline& p = *import->pipeline;
-
-    Barrier(d, cb, import->image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_QUEUE_FAMILY_FOREIGN_EXT,
-            d.queueFamily, 0, VK_ACCESS_SHADER_READ_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-    // Every pixel is written, so the old contents are dropped; the previous frame's copy out of it finishes first.
-    Barrier(d, cb, inter_.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED, 0,
-            VK_ACCESS_SHADER_WRITE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-    fn.vkCmdBindPipeline(cb, VK_PIPELINE_BIND_POINT_COMPUTE, p.pipeline);
-    VkDescriptorSet sets[2] = {import->set, inter_.set};
-    fn.vkCmdBindDescriptorSets(cb, VK_PIPELINE_BIND_POINT_COMPUTE, p.layout, 0, 2, sets, 0, nullptr);
+    Job job;
+    job.owner = this;
+    job.source = import->image;
+    job.sourceSet = import->set;
+    job.pipeline = import->pipeline->pipeline;
+    job.layout = import->pipeline->layout;
+    job.inter = inter_.image;
+    job.interSet = inter_.set;
+    job.groupsX = (inter_.width + kGroupSize - 1) / kGroupSize;
+    job.groupsY = (inter_.height + kGroupSize - 1) / kGroupSize;
     float bw = (float)import->width, bh = (float)import->height;
-    float map[8] = {
+    const float map[8] = {
         (float)cropWidth / ((float)inter_.width * bw),     // scale x
         -(float)cropHeight / ((float)inter_.height * bh),  // scale y: target row 0 is the picture's bottom row
         (float)crop.left / bw,                              // offset x
@@ -624,27 +927,19 @@ void VulkanDecoder::Draw(Device& d, AImage* image, const Target& target) {
         ((float)crop.left + 0.5f) / bw,  ((float)crop.top + 0.5f) / bh,     // clamp low
         ((float)crop.right - 0.5f) / bw, ((float)crop.bottom - 0.5f) / bh,  // clamp high
     };
-    fn.vkCmdPushConstants(cb, p.layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof map, map);
-    fn.vkCmdDispatch(cb, (inter_.width + kGroupSize - 1) / kGroupSize, (inter_.height + kGroupSize - 1) / kGroupSize, 1);
-    Barrier(d, cb, import->image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, d.queueFamily, VK_QUEUE_FAMILY_FOREIGN_EXT,
-            VK_ACCESS_SHADER_READ_BIT, 0, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT);
-    // The conversion's writes finish before the copy reads them.
-    Barrier(d, cb, inter_.image, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_QUEUE_FAMILY_IGNORED, VK_QUEUE_FAMILY_IGNORED,
-            VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
+    std::copy(map, map + 8, job.map);
+    job.target = out.image;
+    job.unityLayout = out.layout;
+    // Put back as Unity tracks it. A layout an image can't be put back into (UNDEFINED, PREINITIALIZED): left readable by
+    // a shader, which a barrier of Unity's from UNDEFINED accepts.
+    job.finalLayout = out.layout == VK_IMAGE_LAYOUT_UNDEFINED || out.layout == VK_IMAGE_LAYOUT_PREINITIALIZED
+                          ? VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+                          : out.layout;
+    job.copy = {std::min(inter_.width, out.extent.width), std::min(inter_.height, out.extent.height)};
+    uint64_t work = gWork.Add(job);
 
-    // Between images of the same format (the intermediate has the texture's): bytes copied as they are.
-    VkImageCopy region{};
-    region.srcSubresource.aspectMask = region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.srcSubresource.layerCount = region.dstSubresource.layerCount = 1;
-    region.extent.width = std::min(inter_.width, out.extent.width);
-    region.extent.height = std::min(inter_.height, out.extent.height);
-    region.extent.depth = 1;
-    // The layout the access's barrier put it in, not out.layout (the one before it).
-    fn.vkCmdCopyImage(cb, inter_.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, out.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-    unsigned long long frame = state.currentFrameNumber;
-    inFlight_.push_back({image, frame});
-    import->lastUsed = inter_.lastUsed = d.renderer->lastUsed = lastUsed_ = frame;
+    inFlight_.push_back({image, work});
+    import->lastUsed = inter_.lastUsed = lastUsed_ = work;
     failedDraws_ = 0;
     SetVideoSize(cropWidth, cropHeight);
     // Not counted when a flush arrived meanwhile: the wait for the first picture after it must go on.
@@ -881,11 +1176,7 @@ bool VulkanDecoder::EnsureIntermediate(Device& d, uint32_t width, uint32_t heigh
     return true;
 }
 
-bool VulkanDecoder::ReadyToRelease() {
-    if (!Finished()) return false;
-    unsigned long long safe = InPresent() ? PresentState().safeFrameNumber : LastSafeFrame();
-    return lastUsed_ <= safe;
-}
+bool VulkanDecoder::ReadyToRelease() { return Finished() && lastUsed_ <= CompletedWork(); }
 
 void VulkanDecoder::DropImages() {
     if (fenced_) {
@@ -912,9 +1203,10 @@ void VulkanDecoder::ReleaseRender() {
     if (releasedRender_) return;
     releasedRender_ = true;
     Device* d = CurrentDevice();
-    unsigned long long safe = InPresent() ? PresentState().safeFrameNumber : LastSafeFrame();
-    // Outside a present event (the device going away) nothing says the GPU is done, so it is waited for.
-    if (d && lastUsed_ > safe) d->fn.vkDeviceWaitIdle(d->device);
+    // Released before its work finished (the device going away): what Unity hasn't run the callback for is dropped,
+    // and the GPU is waited for on the rest (by the library's fences: the queue is Unity's).
+    if (d && lastUsed_ > CompletedWork() && !CancelAndWaitWork(this, lastUsed_))
+        Log("decoder %d: the GPU didn't finish its frames within 2 s", handle);
     DropImages();
     for (Import& i : imports_) RetireImport(i);
     imports_.clear();

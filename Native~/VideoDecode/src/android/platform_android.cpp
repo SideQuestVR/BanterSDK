@@ -1,5 +1,5 @@
 // Android's side of platform.h: which path frames take, an observe-only Vulkan start-up hook, the device Unity draws
-// with, and the present event's frame numbers.
+// with, and the present event around the library's own submissions (vulkan_frames.cpp).
 //
 // The path is Vulkan only when the hook saw Unity's own vkCreateDevice ask for everything the import needs
 // (VK_ANDROID_external_memory_android_hardware_buffer, VK_EXT_queue_family_foreign, sampler YCbCr conversion as an
@@ -69,9 +69,7 @@ std::unique_ptr<Device> gDevice;
 std::mutex gTextLock;
 std::string gReason;  // why the path is what it is
 
-UnityVulkanRecordingState gState{};
 bool gInPresent = false;
-unsigned long long gLastSafe = 0;
 
 // ---------------------------------------------------------------- the observe-only start-up hook
 
@@ -220,10 +218,12 @@ void SetReason(const std::string& reason) {
 // Unity's Vulkan device, if frames can be drawn with it; else why not.
 std::unique_ptr<Device> OpenDevice(std::string& why) {
     IUnityGraphicsVulkanV2* unity = VulkanInterface();
-    if (!unity || !unity->Instance || !unity->CommandRecordingState || !unity->AccessTexture || !unity->ConfigureEvent)
+    if (!unity || !unity->Instance || !unity->AccessTexture || !unity->ConfigureEvent)
         return why = "Unity has no Vulkan plugin interface", nullptr;
+    if (!unity->AccessQueue) return why = "Unity's Vulkan plugin interface has no AccessQueue", nullptr;
     UnityVulkanInstance instance = unity->Instance();
-    if (!instance.device || !instance.instance || !instance.getInstanceProcAddr) return why = "Unity has no Vulkan device yet", nullptr;
+    if (!instance.device || !instance.instance || !instance.getInstanceProcAddr || !instance.graphicsQueue)
+        return why = "Unity has no Vulkan device yet", nullptr;
     Observed o;
     if (!FindObserved(instance.device, o))
         return why = gHookAdded ? "the plugin didn't see Unity create its Vulkan device" : "the plugin wasn't loaded before Unity's Vulkan start-up", nullptr;
@@ -241,6 +241,7 @@ std::unique_ptr<Device> OpenDevice(std::string& why) {
     d->instance = instance.instance;
     d->physical = instance.physicalDevice;
     d->device = instance.device;
+    d->queue = instance.graphicsQueue;
     d->queueFamily = instance.queueFamilyIndex;
     PFN_vkGetInstanceProcAddr gipa = instance.getInstanceProcAddr;
     auto gdpa = (PFN_vkGetDeviceProcAddr)gipa(instance.instance, "vkGetDeviceProcAddr");
@@ -269,7 +270,8 @@ std::unique_ptr<Device> OpenDevice(std::string& why) {
     if (!CreateRenderer(*d, why)) return nullptr;
 
     // The id Unity reserved for the library (UnityPluginLoad reserves it before anything reaches here): Unity applies the
-    // configuration to no other.
+    // configuration to no other. Nothing is recorded into Unity's command buffer any more (frames go through the
+    // library's own submissions), so the render-pass precondition no longer matters; it is kept as it was, harmless.
     UnityVulkanPluginEventConfig event{};
     event.renderPassPrecondition = kUnityVulkanRenderPass_EnsureOutside;
     event.graphicsQueueAccess = kUnityVulkanGraphicsQueueAccess_DontCare;
@@ -299,8 +301,6 @@ const char* PathName(int32_t path) {
 
 Device* CurrentDevice() { return gDevice.get(); }
 bool InPresent() { return gInPresent; }
-const UnityVulkanRecordingState& PresentState() { return gState; }
-unsigned long long LastSafeFrame() { return gLastSafe; }
 
 }  // namespace droid
 
@@ -382,16 +382,16 @@ std::unique_ptr<Decoder> PlatformCreate(int32_t handle, int32_t path, const BSVD
 }
 
 bool PlatformBeginPresent() {
-    if (gPath.load() != BSVD_PATH_VULKAN || !gDevice) return false;
-    UnityVulkanRecordingState state{};
-    if (!gDevice->unity->CommandRecordingState(&state, kUnityVulkanGraphicsQueueAccess_DontCare)) return false;
-    gState = state;
-    gLastSafe = state.safeFrameNumber;
+    if (gPath.load() != BSVD_PATH_VULKAN || !gDevice || !gDevice->renderer) return false;
+    BeginWork(*gDevice);
     gInPresent = true;
     return true;
 }
 
-void PlatformEndPresent() { gInPresent = false; }
+void PlatformEndPresent() {
+    if (gInPresent && gDevice) EndWork(*gDevice);
+    gInPresent = false;
+}
 
 std::string PlatformDescription() {
     char sdk[PROP_VALUE_MAX] = {};

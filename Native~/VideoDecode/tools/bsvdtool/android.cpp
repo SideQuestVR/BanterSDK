@@ -11,8 +11,11 @@
 //   bsvdtool eos <clip>                                  end of stream reaches ENDED with every frame accounted for
 //   bsvdtool destroy <clip>                              destroy in every state; live count and objects back to 0
 //
-// The render event records into a secondary command buffer, as in Unity 6 on Android with graphics jobs (its default);
-// --primary on any check gives it the frame's primary buffer instead.
+// The render event records into a secondary command buffer inside a render pass, as Unity 6 on Quest 3 gave it (graphics
+// jobs, its default); --primary on any check gives it the frame's primary buffer instead, outside a render pass when its
+// id is reserved and configured so. --deferred: Unity's submissions and queue access callbacks run two frames late, on
+// another thread. Every check also fails on any of the host's own counts (android_host.h: recording into Unity's buffer
+// inside a render pass, submitting outside a queue callback, forbidden calls in the callback, wrong layouts).
 //
 // Memory rows are bottom-first (the header's contract): the picture's top counter (source row 16) is memory row
 // height-17 and its bottom counter (source row height-16) is memory row 15.
@@ -55,7 +58,7 @@ bool Flag(const char* name) {
     return false;
 }
 bool ValueLess(const char* flag) {
-    return !std::strcmp(flag, "--cpu") || !std::strcmp(flag, "--unorm") || !std::strcmp(flag, "--primary");
+    return !std::strcmp(flag, "--cpu") || !std::strcmp(flag, "--unorm") || !std::strcmp(flag, "--primary") || !std::strcmp(flag, "--deferred");
 }
 std::string Positional(int index) {
     int seen = 0;
@@ -636,7 +639,7 @@ bool TestPaced() {
     for (Stream& s : streams) longest = std::max(longest, (double)s.clip->frames * loops / Clip::kFps);
     double t0 = NowSeconds();
     long long frame = 0;
-    std::vector<float> eventMs;
+    std::vector<float> eventMs, callbackMs, ownMs;
     while (NowSeconds() - t0 < longest + 3) {
         int64_t clockUs = (int64_t)((NowSeconds() - t0) * 1e6);
         // As the C# side does: the media time from the audio clock, every frame.
@@ -646,6 +649,9 @@ bool TestPaced() {
             for (Stream& s : streams) Observe(s, clockUs, reads);
         });
         eventMs.push_back((float)host.lastEventMs);
+        // Run inside the event unless deferred; then the event's own work is what is left.
+        if (host.lastCallbackMs > 0) callbackMs.push_back((float)host.lastCallbackMs);
+        ownMs.push_back((float)(host.lastEventMs - (host.lag == 0 ? host.lastCallbackMs : 0)));
         if (gCpu)
             for (Stream& s : streams) TakeCpu(s, clockUs);
         load.Sample();
@@ -701,8 +707,17 @@ bool TestPaced() {
                 "late=%lld worst_lag_ms=%.1f\n",
                 expected, decoded, shown, dropped, checked, skipped, order, tears, ptsErrors, late, worstLag);
     if (!eventMs.empty())
-        std::printf("render_event_ms p50=%.3f p99=%.3f max=%.2f (n=%zu, the plugin's present event alone)\n", eventMs[eventMs.size() / 2],
-                    eventMs[(size_t)(eventMs.size() * 0.99)], eventMs.back(), eventMs.size());
+        std::printf("render_event_ms p50=%.3f p99=%.3f max=%.2f (n=%zu, the plugin's present event alone%s)\n", eventMs[eventMs.size() / 2],
+                    eventMs[(size_t)(eventMs.size() * 0.99)], eventMs.back(), eventMs.size(),
+                    host.lag == 0 && !callbackMs.empty() ? ", with the queue callback Unity ran inside it" : "");
+    std::sort(ownMs.begin(), ownMs.end());
+    if (!ownMs.empty() && !callbackMs.empty())
+        std::printf("render_event_ms_without_callback p50=%.3f p99=%.3f max=%.2f\n", ownMs[ownMs.size() / 2],
+                    ownMs[(size_t)(ownMs.size() * 0.99)], ownMs.back());
+    std::sort(callbackMs.begin(), callbackMs.end());
+    if (!callbackMs.empty())
+        std::printf("queue_callback_ms p50=%.3f p99=%.3f max=%.2f (n=%zu frames with a callback: recording + vkQueueSubmit)\n",
+                    callbackMs[callbackMs.size() / 2], callbackMs[(size_t)(callbackMs.size() * 0.99)], callbackMs.back(), callbackMs.size());
     load.Print();
     for (Stream& s : streams) {
         s.feeder->Stop();
@@ -1041,7 +1056,7 @@ bool TestStartup() {
             std::printf("  event config: set %d, render pass %d, queue %d, flags %u -> %s; configured id %d, reserved %d, "
                         "BSVD_GetRenderEventId %d -> %s\n",
                         host.eventConfigured, (int)e.renderPassPrecondition, (int)e.graphicsQueueAccess, e.flags, config ? "as specified" : "WRONG",
-                        host.configuredId, reservedId, Host::EventId(), sameId ? "one id" : "WRONG (Unity would run the event inside a render pass)");
+                        host.configuredId, reservedId, Host::EventId(), sameId ? "one id" : "WRONG (configured under an id Unity didn't reserve)");
             ok = ok && config && sameId;
             // A decoder made now runs on Vulkan; render events with no target do nothing.
             Clip clip;
@@ -1058,6 +1073,7 @@ bool TestStartup() {
         host.DestroyVulkan();
     }
     host.Unload();
+    ok = host.Clean() && ok;
     return CheckLeaks("at the end") && ok;
 }
 
@@ -1069,10 +1085,13 @@ int main(int argc, char** argv) {
     gArgv = argv;
     gFx = Arg("--fx", ".");
     gCpu = Flag("--cpu");
-    // Unity 6 on Android records plugin events into secondary command buffers (graphics jobs, its default); --primary
-    // hands the event the frame's primary buffer instead, as Unity does without graphics jobs.
+    // Unity 6 on Android records plugin events into secondary command buffers inside a render pass (graphics jobs, its
+    // default); --primary hands the event the frame's primary buffer instead, as Unity does without graphics jobs.
+    // --deferred: Unity runs its submissions and the queue access callbacks two frames late, on another thread.
     TheHost().secondary = !Flag("--primary");
-    std::printf("render event command buffer: %s\n", TheHost().secondary ? "secondary (graphics jobs)" : "primary");
+    TheHost().lag = Flag("--deferred") ? 2 : 0;
+    std::printf("render event command buffer: %s; queue access callbacks %s\n",
+                TheHost().secondary ? "secondary inside a render pass (graphics jobs)" : "primary", TheHost().lag ? "two frames late, on another thread" : "run at once");
     StartBinderPool();
     std::string test = argc > 1 ? argv[1] : "";
     bool pass = false;
@@ -1094,7 +1113,8 @@ int main(int argc, char** argv) {
         std::printf("usage: bsvdtool startup | order <clip> [--frames n] | bars <clip> <matrix> <full> | orient <clip> |\n"
                     "       paced <clip[:n],...> [--loops n] | preroll <clip> | seek <clip> | eos <clip> | destroy <clip>\n"
                     "       [--cpu] (CPU path: Unity on OpenGL ES) [--fx dir]\n"
-                    "       [--primary] (the render event records into a primary command buffer, not a secondary one)\n");
+                    "       [--primary] (the render event records into a primary command buffer, not a secondary one)\n"
+                    "       [--deferred] (Unity's submissions and queue callbacks run two frames late, on another thread)\n");
         return 2;
     }
     Host& host = TheHost();
@@ -1104,9 +1124,9 @@ int main(int argc, char** argv) {
     host.Initialize(gCpu ? kUnityGfxRendererOpenGLES30 : kUnityGfxRendererVulkan);
     int path = BSVD_GetPath();
     std::printf("device %s; path %d; render event %d%s; %s\n", host.deviceName.c_str(), path, Host::EventId(),
-                path != BSVD_PATH_VULKAN                         ? ""
-                : host.RunsOutsideRenderPass(Host::EventId()) ? " (runs outside render passes)"
-                                                                 : " (runs INSIDE a render pass: not reserved and configured)",
+                path != BSVD_PATH_VULKAN                                      ? ""
+                : !host.secondary && host.RunsOutsideRenderPass(Host::EventId()) ? " (runs outside render passes)"
+                                                                              : " (runs INSIDE a render pass)",
                 Text(0, BSVD_TEXT_PLATFORM).c_str());
     if (path != (gCpu ? BSVD_PATH_CPU : BSVD_PATH_VULKAN)) {
         std::printf("RESULT FAIL (wrong path)\n");
@@ -1115,6 +1135,7 @@ int main(int argc, char** argv) {
     double start = NowSeconds();
     pass = chosen->run();
     host.Shutdown();
+    pass = host.Clean() && pass;
     pass = CheckLeaks("after shutdown") && pass;
     host.DestroyVulkan();
     host.Unload();

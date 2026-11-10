@@ -1,5 +1,5 @@
 // What the Android parts share: logging, live-object counts, the Vulkan device Unity draws with (functions resolved
-// through Unity's own instance), the present event's recording state, and the two decoder kinds.
+// through Unity's own instance), the library's own GPU submissions, and the two decoder kinds.
 #pragma once
 
 #ifndef VK_USE_PLATFORM_ANDROID_KHR
@@ -70,7 +70,17 @@ LiveCounts& Live();
     X(vkCmdPushConstants)                           \
     X(vkCmdDispatch)                                \
     X(vkCmdCopyImage)                               \
-    X(vkDeviceWaitIdle)
+    X(vkCreateCommandPool)                          \
+    X(vkDestroyCommandPool)                         \
+    X(vkAllocateCommandBuffers)                     \
+    X(vkBeginCommandBuffer)                         \
+    X(vkEndCommandBuffer)                           \
+    X(vkQueueSubmit)                                \
+    X(vkCreateFence)                                \
+    X(vkDestroyFence)                               \
+    X(vkGetFenceStatus)                             \
+    X(vkWaitForFences)                              \
+    X(vkResetFences)
 
 struct VkFunctions {
 #define BSVD_VK_DECLARE(name) PFN_##name name = nullptr;
@@ -85,12 +95,14 @@ struct VkFunctions {
 class Renderer;
 
 // Unity's Vulkan device, while it is the one frames are drawn with. Created at the device's Initialize event and
-// destroyed at its Shutdown, both on Unity's render thread, which is the only thread that uses it.
+// destroyed at its Shutdown, both on Unity's render thread. The render thread uses it, and so does the queue callback
+// (vulkan_frames.cpp), under that code's lock, which the device's teardown takes too.
 struct Device {
     IUnityGraphicsVulkanV2* unity = nullptr;
     VkInstance instance = VK_NULL_HANDLE;
     VkPhysicalDevice physical = VK_NULL_HANDLE;
     VkDevice device = VK_NULL_HANDLE;
+    VkQueue queue = VK_NULL_HANDLE;  // Unity's graphics queue: submitted to only from inside an AccessQueue callback
     uint32_t queueFamily = 0;
     VkPhysicalDeviceMemoryProperties memory{};
     VkFunctions fn;
@@ -104,19 +116,32 @@ struct Device {
 // Render thread only: the device, or null when frames aren't drawn with Vulkan.
 Device* CurrentDevice();
 
-// Render thread only, between PlatformBeginPresent and PlatformEndPresent: the frame numbers of this event.
+// Render thread only: between PlatformBeginPresent and PlatformEndPresent.
 bool InPresent();
-const UnityVulkanRecordingState& PresentState();
 
-// The newest frame number known to be safe, from the last present event (0 before any).
-unsigned long long LastSafeFrame();
+// The library's own GPU work (vulkan_frames.cpp). Nothing is recorded into Unity's command buffers: on Quest 3 (builds
+// 9157-9159) the present event always ran inside a render pass, where no copy or dispatch may go. Each present event's
+// frames go into one submission of the library's own, recorded and submitted from Unity's AccessQueue callback.
+// Render thread: at the start of a present event, what the GPU has finished.
+void BeginWork(Device& device);
+// Render thread: at the end of a present event, this event's frames go to Unity's queue (one AccessQueue call).
+void EndWork(Device& device);
+
+// Submissions are numbered from 1, one per present event that drew something. The newest number such that it and every
+// one before it has finished on the GPU or will never run, as of the last BeginWork or CancelAndWaitWork. Render thread.
+uint64_t CompletedWork();
+
+// Render thread: drops an owner's frames that Unity hasn't run the callback for yet (they were never recorded), then
+// waits (2 s at most) for its submitted work up to number. True when that finished.
+bool CancelAndWaitWork(const void* owner, uint64_t number);
 
 // ---------------------------------------------------------------- decoders
 
 std::unique_ptr<Decoder> CreateVulkanDecoder(int32_t handle, const BSVD_Config& config, const uint8_t* sets, int32_t setsSize);
 std::unique_ptr<Decoder> CreateCpuDecoder(int32_t handle, const BSVD_Config& config, const uint8_t* sets, int32_t setsSize);
 
-// Device-wide drawing state (the shader, pipelines), made at the device's Initialize, destroyed at Shutdown.
+// Device-wide drawing state (the shader, pipelines, the library's command pool), made at the device's Initialize,
+// destroyed at Shutdown (after waiting for the library's submissions).
 bool CreateRenderer(Device& device, std::string& error);
 void DestroyRenderer(Device& device);
 

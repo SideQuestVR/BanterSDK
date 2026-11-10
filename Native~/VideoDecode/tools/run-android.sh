@@ -2,14 +2,16 @@
 # BSVideoDecode's Android checks: pushes bsvdtool and the fixtures to the one adb device, runs every check over adb shell
 # (tools/bsvdtool/android.cpp says what each proves), pulls the log into build/android-tests/ and prints a summary.
 #
-# Usage: bash tools/run-android.sh [fixture dir] [full|quick|soak] [secondary|primary]
+# Usage: bash tools/run-android.sh [fixture dir] [full|quick|soak] [secondary|primary|deferred]
 #   The fixture dir defaults to $BSVD_FIXTURES (as build.ps1's -Fixtures does). Without fixtures only the start-up check
 #   runs and the rest are reported as skipped. build.ps1 -Test runs this with BSVD_ADB and BSVD_ANDROID_BUILD set.
 #   full   every check on the Vulkan and CPU paths (about 4 minutes)
 #   quick  start-up, order, bars and one paced run
 #   soak   the mixed load (four 1080p30 streams and one 4K30) for SOAK_LOOPS loops of 10 s (default 30, 5 minutes)
-#   secondary (default) the render event records into a secondary command buffer, as Unity 6 on Android does with
-#          graphics jobs (its default); primary gives it a primary buffer, as Unity without graphics jobs (bsvdtool --primary)
+#   secondary (default) the render event records into a secondary command buffer inside a render pass, as Unity 6 on
+#          Quest 3 gave it (graphics jobs, its default); primary gives it a primary buffer, as Unity without graphics jobs
+#          (bsvdtool --primary); deferred is secondary with Unity's submissions and queue access callbacks two frames
+#          late, on another thread (bsvdtool --deferred)
 #   KEEP=1 leaves /data/local/tmp/bsvd on the device afterwards.
 #
 # Builds nothing: build first (cmake --build build/android-arm64 --target bsvdtool, or build.ps1).
@@ -26,12 +28,13 @@ CB=secondary
 for a in "$@"; do
   case "$a" in
     full|quick|soak) MODE=$a ;;
-    secondary|primary) CB=$a ;;
+    secondary|primary|deferred) CB=$a ;;
     *) FX=$a ;;
   esac
 done
 CBARG=""
 [ "$CB" = "primary" ] && CBARG="--primary"
+[ "$CB" = "deferred" ] && CBARG="--deferred"
 ROOT=../../../..
 TOOL=${BSVD_ANDROID_BUILD:-build/android-arm64}/bsvdtool
 D=/data/local/tmp/bsvd
@@ -65,9 +68,9 @@ sh_() { "$ADB" shell "$@" | tr -d '\r'; }
   for p in ro.product.model ro.build.display.id ro.build.version.sdk ro.board.platform; do echo "$p=$(sh_ getprop $p)"; done
   sh_ dumpsys power | grep -E 'mWakefulness=' | head -1
   echo "## tool: $(ls -l "$TOOL" | awk '{print $5, $6, $7, $8}')"
-  echo "## render event command buffer: $CB"
+  echo "## harness mode: $CB"
 } > "$LOG" 2>&1
-echo "render event command buffer: $CB"
+echo "harness mode: $CB"
 
 sh_ "mkdir -p $D"
 "$ADB" push "$(local_path "$TOOL")" "$D/" >/dev/null || { echo "push failed"; exit 2; }
@@ -90,7 +93,7 @@ run() {
   sh_ "cd $D && timeout ${LIMIT:-240} ./bsvdtool $* $CBARG >> $D/last.txt 2>&1; echo exit=\$? >> $D/last.txt; cat $D/last.txt; rm -f $D/last.txt" > "$OUT/last.txt" 2>&1
   cat "$OUT/last.txt" >> "$LOG"
   local line
-  line=$(grep -E '^(frames=|expected=|decoder=.*worst_bar|mean_abs_diff|released all|seek to|total:|playing from|clip .* ended at|render_event_ms)' "$OUT/last.txt" | tail -3 | cut -c1-170 | tr '\n' '|')
+  line=$(grep -E '^(frames=|expected=|decoder=.*worst_bar|mean_abs_diff|released all|seek to|total:|playing from|clip .* ended at|render_event_ms|queue_callback_ms)' "$OUT/last.txt" | tail -3 | cut -c1-170 | tr '\n' '|')
   if grep -q '^RESULT PASS' "$OUT/last.txt"; then
     PASS=$((PASS + 1)); printf 'PASS  %-46s %s\n' "$name" "$line"
   else
@@ -143,5 +146,5 @@ fi
 
 rm -f "$OUT/last.txt"
 if [ "${KEEP:-0}" != "1" ]; then sh_ "rm -rf $D"; fi
-printf '\n%d passed, %d failed (%s command buffer)%b\nlog: %s\n' "$PASS" "$FAIL" "$CB" "$FAILED" "$LOG" | tee -a "$LOG"
+printf '\n%d passed, %d failed (harness mode %s)%b\nlog: %s\n' "$PASS" "$FAIL" "$CB" "$FAILED" "$LOG" | tee -a "$LOG"
 [ "$FAIL" = "0" ]

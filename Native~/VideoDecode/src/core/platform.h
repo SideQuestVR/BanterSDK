@@ -27,7 +27,8 @@ std::unique_ptr<Decoder> PlatformCreate(int32_t handle, int32_t path, const BSVD
                                         const uint8_t* parameterSets, int32_t parameterSetsSize);
 
 // Around each present render event, on the render thread: BeginPresent gets what every decoder's Present() and
-// ReadyToRelease()/ReleaseRender() need (Vulkan: the command buffer and frame numbers). False skips GPU work this event
+// ReadyToRelease()/ReleaseRender() need (Android Vulkan: which of the library's own submissions have finished; its
+// EndPresent hands the event's frames to Unity's queue; Windows: the immediate context). False skips GPU work this event
 // (CPU-path decoders are still released).
 // On the device's Shutdown event the core stops every decoder, waits for its thread and calls ReleaseRender() outside any
 // present event, before PlatformDeviceEvent(Shutdown): ReleaseRender() must then make sure the GPU is done by itself.

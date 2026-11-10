@@ -9,6 +9,8 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <mutex>
+#include <thread>
 
 extern "C" {
 void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* interfaces);
@@ -32,6 +34,165 @@ struct ReadbackBuffer {
     uint8_t* mapped = nullptr;
 };
 std::map<std::pair<int, HostTexture*>, ReadbackBuffer> gReadbacks;
+
+void Report(std::atomic<int>& counter, const std::string& what) {
+    int n = ++counter;
+    if (n <= 6) std::printf("FAILED %s (frame %llu)\n", what.c_str(), gHost.frameNumber);
+}
+
+// ---------------------------------------------------------------- the targets' layouts, in submission order
+
+const char* LayoutName(VkImageLayout l) {
+    switch (l) {
+        case VK_IMAGE_LAYOUT_UNDEFINED: return "UNDEFINED";
+        case VK_IMAGE_LAYOUT_GENERAL: return "GENERAL";
+        case VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL: return "SHADER_READ_ONLY";
+        case VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL: return "TRANSFER_SRC";
+        case VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL: return "TRANSFER_DST";
+        case VK_IMAGE_LAYOUT_PREINITIALIZED: return "PREINITIALIZED";
+        default: return "other";
+    }
+}
+
+// A target's layout changed (from -> to) or named by a use (from == to), as recorded into a command buffer; checked and
+// applied when the buffer is submitted.
+struct Op {
+    VkImage image;
+    VkImageLayout from, to;
+    bool use;
+    bool library;  // recorded through the functions the library got from the host, else by Unity
+};
+std::mutex gSim;
+std::map<VkCommandBuffer, std::vector<Op>> gOps;
+std::map<VkImage, VkImageLayout> gReal;  // each target's layout as the queue has it: after everything submitted so far
+std::map<VkImage, HostTexture*> gTargets;
+
+void Note(VkCommandBuffer cb, VkImage image, VkImageLayout from, VkImageLayout to, bool use, bool library) {
+    std::lock_guard<std::mutex> g(gSim);
+    if (gReal.count(image)) gOps[cb].push_back({image, from, to, use, library});
+}
+
+void ClearOps(VkCommandBuffer cb) {
+    std::lock_guard<std::mutex> g(gSim);
+    gOps.erase(cb);
+}
+
+// A secondary's operations, executed in a primary.
+void Splice(VkCommandBuffer from, VkCommandBuffer into) {
+    std::lock_guard<std::mutex> g(gSim);
+    auto it = gOps.find(from);
+    if (it == gOps.end()) return;
+    std::vector<Op>& to = gOps[into];
+    to.insert(to.end(), it->second.begin(), it->second.end());
+    gOps.erase(it);
+}
+
+void Submitted(const VkCommandBuffer* cbs, uint32_t count) {
+    std::lock_guard<std::mutex> g(gSim);
+    for (uint32_t i = 0; i < count; ++i) {
+        auto it = gOps.find(cbs[i]);
+        if (it == gOps.end()) continue;
+        for (const Op& op : it->second) {
+            auto real = gReal.find(op.image);
+            if (real == gReal.end()) continue;
+            const char* who = op.library ? "the library" : "Unity";
+            if (op.use) {
+                if (op.to != real->second)
+                    Report(gHost.layoutErrors, std::string("layout: a copy by ") + who + " names " + LayoutName(op.to) + ", the target is in " +
+                                                   LayoutName(real->second));
+            } else {
+                if (op.from != VK_IMAGE_LAYOUT_UNDEFINED && op.from != real->second)
+                    Report(gHost.layoutErrors, std::string("layout: a barrier by ") + who + " from " + LayoutName(op.from) + " to " +
+                                                   LayoutName(op.to) + ", the target is in " + LayoutName(real->second));
+                real->second = op.to;
+            }
+        }
+        gOps.erase(it);
+    }
+}
+
+// ---------------------------------------------------------------- what the library records and submits
+
+// Commands recorded into Unity's buffer while the event runs inside a render pass: invalid there.
+void InsideCheck(VkCommandBuffer cb, const char* what) {
+    if (cb && cb == gHost.recording && gHost.insideRenderPass)
+        Report(gHost.renderPassViolations, std::string("render pass: ") + what + " recorded into Unity's command buffer inside a render pass");
+}
+
+VKAPI_ATTR void VKAPI_CALL WrapCmdPipelineBarrier(VkCommandBuffer cb, VkPipelineStageFlags src, VkPipelineStageFlags dst, VkDependencyFlags dep,
+                                                  uint32_t memoryCount, const VkMemoryBarrier* memory, uint32_t bufferCount,
+                                                  const VkBufferMemoryBarrier* buffers, uint32_t imageCount, const VkImageMemoryBarrier* images) {
+    InsideCheck(cb, "a pipeline barrier");
+    for (uint32_t i = 0; i < imageCount; ++i) Note(cb, images[i].image, images[i].oldLayout, images[i].newLayout, false, true);
+    vkCmdPipelineBarrier(cb, src, dst, dep, memoryCount, memory, bufferCount, buffers, imageCount, images);
+}
+VKAPI_ATTR void VKAPI_CALL WrapCmdCopyImage(VkCommandBuffer cb, VkImage src, VkImageLayout srcLayout, VkImage dst, VkImageLayout dstLayout,
+                                            uint32_t count, const VkImageCopy* regions) {
+    InsideCheck(cb, "a copy");
+    Note(cb, src, srcLayout, srcLayout, true, true);
+    Note(cb, dst, dstLayout, dstLayout, true, true);
+    {
+        std::lock_guard<std::mutex> g(gSim);
+        auto t = gTargets.find(dst);
+        if (t != gTargets.end()) t->second->written = true;
+    }
+    vkCmdCopyImage(cb, src, srcLayout, dst, dstLayout, count, regions);
+}
+VKAPI_ATTR void VKAPI_CALL WrapCmdDispatch(VkCommandBuffer cb, uint32_t x, uint32_t y, uint32_t z) {
+    InsideCheck(cb, "a dispatch");
+    vkCmdDispatch(cb, x, y, z);
+}
+VKAPI_ATTR void VKAPI_CALL WrapCmdBindPipeline(VkCommandBuffer cb, VkPipelineBindPoint point, VkPipeline pipeline) {
+    InsideCheck(cb, "a pipeline bind");
+    vkCmdBindPipeline(cb, point, pipeline);
+}
+VKAPI_ATTR void VKAPI_CALL WrapCmdBindDescriptorSets(VkCommandBuffer cb, VkPipelineBindPoint point, VkPipelineLayout layout, uint32_t first,
+                                                     uint32_t count, const VkDescriptorSet* sets, uint32_t dynamicCount, const uint32_t* dynamic) {
+    InsideCheck(cb, "a descriptor set bind");
+    vkCmdBindDescriptorSets(cb, point, layout, first, count, sets, dynamicCount, dynamic);
+}
+VKAPI_ATTR void VKAPI_CALL WrapCmdPushConstants(VkCommandBuffer cb, VkPipelineLayout layout, VkShaderStageFlags stages, uint32_t offset,
+                                                uint32_t size, const void* values) {
+    InsideCheck(cb, "push constants");
+    vkCmdPushConstants(cb, layout, stages, offset, size, values);
+}
+VKAPI_ATTR VkResult VKAPI_CALL WrapBeginCommandBuffer(VkCommandBuffer cb, const VkCommandBufferBeginInfo* info) {
+    ClearOps(cb);
+    return vkBeginCommandBuffer(cb, info);
+}
+VKAPI_ATTR VkResult VKAPI_CALL WrapQueueSubmit(VkQueue queue, uint32_t count, const VkSubmitInfo* submits, VkFence fence) {
+    if (gHost.inCallback.load() == 0)
+        Report(gHost.queueViolations, "queue: the library submitted to Unity's queue outside an AccessQueue callback");
+    for (uint32_t i = 0; i < count; ++i) Submitted(submits[i].pCommandBuffers, submits[i].commandBufferCount);
+    return vkQueueSubmit(queue, count, submits, fence);
+}
+
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL HostGetDeviceProcAddr(VkDevice device, const char* name) {
+    struct Wrap {
+        const char* name;
+        PFN_vkVoidFunction fn;
+    };
+    static const Wrap wraps[] = {{"vkCmdPipelineBarrier", (PFN_vkVoidFunction)&WrapCmdPipelineBarrier},
+                                 {"vkCmdCopyImage", (PFN_vkVoidFunction)&WrapCmdCopyImage},
+                                 {"vkCmdDispatch", (PFN_vkVoidFunction)&WrapCmdDispatch},
+                                 {"vkCmdBindPipeline", (PFN_vkVoidFunction)&WrapCmdBindPipeline},
+                                 {"vkCmdBindDescriptorSets", (PFN_vkVoidFunction)&WrapCmdBindDescriptorSets},
+                                 {"vkCmdPushConstants", (PFN_vkVoidFunction)&WrapCmdPushConstants},
+                                 {"vkBeginCommandBuffer", (PFN_vkVoidFunction)&WrapBeginCommandBuffer},
+                                 {"vkQueueSubmit", (PFN_vkVoidFunction)&WrapQueueSubmit}};
+    if (name)
+        for (const Wrap& w : wraps)
+            if (!std::strcmp(name, w.name)) return w.fn;
+    return vkGetDeviceProcAddr(device, name);
+}
+
+// What UnityVulkanInstance::getInstanceProcAddr hands the library: the loader's, but device functions come through
+// HostGetDeviceProcAddr, so the host sees what the library records and submits.
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL HostGetInstanceProcAddr(VkInstance instance, const char* name) {
+    if (name && !std::strcmp(name, "vkGetDeviceProcAddr")) return (PFN_vkVoidFunction)&HostGetDeviceProcAddr;
+    if (name && !std::strcmp(name, "vkGetInstanceProcAddr")) return (PFN_vkVoidFunction)&HostGetInstanceProcAddr;
+    return vkGetInstanceProcAddr(instance, name);
+}
 
 // ---------------------------------------------------------------- the fake Unity interfaces
 
@@ -64,7 +225,7 @@ bool UNITY_INTERFACE_API RemoveInterceptInitialization(UnityVulkanInitCallback f
     return true;
 }
 PFN_vkVoidFunction UNITY_INTERFACE_API InterceptVulkanAPI(const char*, PFN_vkVoidFunction) { return nullptr; }
-// Recorded for any id; RunsOutsideRenderPass decides whether Unity would honour it.
+// Recorded for any id; RunsOutsideRenderPass decides whether Unity would honour it (only --primary does).
 void UNITY_INTERFACE_API ConfigureEvent(int eventId, const UnityVulkanPluginEventConfig* config) {
     if (!config) return;
     gHost.eventConfigured = true;
@@ -74,21 +235,28 @@ void UNITY_INTERFACE_API ConfigureEvent(int eventId, const UnityVulkanPluginEven
 }
 UnityVulkanInstance UNITY_INTERFACE_API Instance() { return gHost.instance; }
 
+void CallbackCheck(const char* what) {
+    if (gHost.inCallback.load())
+        Report(gHost.callbackViolations, std::string("callback: ") + what + " called inside the queue access callback (the header forbids it)");
+}
+
 bool UNITY_INTERFACE_API CommandRecordingState(UnityVulkanRecordingState* out, UnityVulkanGraphicsQueueAccess) {
+    CallbackCheck("CommandRecordingState with DontCare");
     if (!out || !gHost.recording) return false;
     *out = UnityVulkanRecordingState{};
     out->commandBuffer = gHost.recording;
     out->commandBufferLevel = gHost.recordingLevel;  // SECONDARY unless --primary, as Unity 6 on Android with graphics jobs
     out->renderPass = VK_NULL_HANDLE;
     out->framebuffer = VK_NULL_HANDLE;
-    // Inside a render pass for an event Unity wasn't told (by a reserved, configured id) to run outside one, as on Quest 3
-    // (build 9157). The host's buffer is never really in one: the library must refuse to record, which is what is checked.
+    // The host's buffer is never really in a render pass: what the library records into it while this says subpass 0 is
+    // counted (InsideCheck) as Unity would have it invalid.
     out->subPassIndex = gHost.insideRenderPass ? 0 : -1;
     out->currentFrameNumber = gHost.frameNumber;
     out->safeFrameNumber = gHost.safeFrame;
     return true;
 }
 
+// A barrier of Unity's, from the layout it tracks; changes what it tracks.
 void HostBarrier(VkCommandBuffer cb, HostTexture* t, VkImageLayout layout, VkPipelineStageFlags stage, VkAccessFlags access) {
     VkImageMemoryBarrier b{};
     b.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -101,6 +269,7 @@ void HostBarrier(VkCommandBuffer cb, HostTexture* t, VkImageLayout layout, VkPip
     b.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     b.subresourceRange.levelCount = 1;
     b.subresourceRange.layerCount = 1;
+    Note(cb, t->image, t->layout, layout, false, false);
     vkCmdPipelineBarrier(cb, t->stage ? t->stage : VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, stage, 0, 0, nullptr, 0, nullptr, 1, &b);
     t->layout = layout;
     t->access = access;
@@ -109,13 +278,18 @@ void HostBarrier(VkCommandBuffer cb, HostTexture* t, VkImageLayout layout, VkPip
 
 bool UNITY_INTERFACE_API AccessTexture(void* native, const VkImageSubresource*, VkImageLayout layout, VkPipelineStageFlags stage,
                                        VkAccessFlags access, UnityVulkanResourceAccessMode mode, UnityVulkanImage* out) {
+    CallbackCheck("AccessTexture");
     auto* t = static_cast<HostTexture*>(native);
     if (!t || !t->image || !gHost.recording) return false;
     gHost.accessCalls++;
-    // As Unity does on Quest (build 9155): the layout reported is the one before the barrier this call records, not the
-    // one asked for. A check on it refused every Unity texture while this harness passed.
+    // As Unity does on Quest (build 9155): the layout reported is the one before any barrier this call records.
     const VkImageLayout before = t->layout;
-    if (mode == kUnityVulkanResourceAccess_PipelineBarrier) HostBarrier(gHost.recording, t, layout, stage, access);
+    if (mode == kUnityVulkanResourceAccess_PipelineBarrier) {
+        if (gHost.insideRenderPass)
+            Report(gHost.renderPassViolations, "render pass: AccessTexture's barrier recorded into Unity's command buffer inside a render pass");
+        HostBarrier(gHost.recording, t, layout, stage, access);
+    }
+    // ObserveOnly: nothing recorded, nothing tracked changes.
     if (out) {
         *out = UnityVulkanImage{};
         out->memory.memory = t->memory;
@@ -140,11 +314,16 @@ bool UNITY_INTERFACE_API AccessRenderBufferTexture(UnityRenderBuffer, const VkIm
 bool UNITY_INTERFACE_API AccessBuffer(void*, VkPipelineStageFlags, VkAccessFlags, UnityVulkanResourceAccessMode, UnityVulkanBuffer*) {
     return false;
 }
-// Leaves an event that runs inside a render pass inside it, as Unity did on Quest 3 (build 9157) for an event configured
-// with an id it never reserved; an event that runs outside one is already out.
-void UNITY_INTERFACE_API EnsureOutsideRenderPass() { gHost.ensureOutsideCalls++; }
+// Leaves an event that runs inside a render pass inside it, as Unity did on Quest 3 (builds 9157-9159).
+void UNITY_INTERFACE_API EnsureOutsideRenderPass() {
+    CallbackCheck("EnsureOutsideRenderPass");
+    gHost.ensureOutsideCalls++;
+}
 void UNITY_INTERFACE_API EnsureInsideRenderPass() {}
-void UNITY_INTERFACE_API AccessQueue(UnityRenderingEventAndData, int, void*, bool) {}
+void UNITY_INTERFACE_API AccessQueue(UnityRenderingEventAndData callback, int eventId, void* data, bool flush) {
+    CallbackCheck("AccessQueue");
+    if (callback) gHost.QueueAccess(callback, eventId, data, flush);
+}
 bool UNITY_INTERFACE_API ConfigureSwapchain(const UnityVulkanSwapchainConfiguration*) { return true; }
 bool UNITY_INTERFACE_API AccessTextureByID(UnityTextureID, const VkImageSubresource*, VkImageLayout, VkPipelineStageFlags, VkAccessFlags,
                                            UnityVulkanResourceAccessMode, UnityVulkanImage*) {
@@ -224,6 +403,14 @@ bool Host::RunsOutsideRenderPass(int eventId) const {
         if (eventId >= r.base && eventId < r.base + r.count) wasReserved = true;
     auto it = eventConfigs.find(eventId);
     return wasReserved && it != eventConfigs.end() && it->second.renderPassPrecondition == kUnityVulkanRenderPass_EnsureOutside;
+}
+
+bool Host::Clean() const {
+    int pass = renderPassViolations, queue = queueViolations, callback = callbackViolations, layout = layoutErrors;
+    std::printf("harness: render_pass_violations=%d queue_violations=%d callback_violations=%d layout_errors=%d "
+                "(queue access calls %d, flushed %d, callbacks run %d, most waiting at once %d)\n",
+                pass, queue, callback, layout, queueAccessCalls, flushes, callbacksRun, mostWaiting);
+    return !pass && !queue && !callback && !layout;
 }
 
 uint32_t Host::MemoryType(uint32_t bits, VkMemoryPropertyFlags want) const {
@@ -327,6 +514,7 @@ bool Host::CreateVulkan(const DeviceOptions& options) {
         ai.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         ai.commandBufferCount = 1;
         if (!Check(vkAllocateCommandBuffers(device_, &ai, &s.cb), "vkAllocateCommandBuffers")) return false;
+        if (!Check(vkAllocateCommandBuffers(device_, &ai, &s.pre), "vkAllocateCommandBuffers (pre)")) return false;
         if (secondary) {
             ai.level = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
             if (!Check(vkAllocateCommandBuffers(device_, &ai, &s.eventCb), "vkAllocateCommandBuffers (secondary)")) return false;
@@ -334,14 +522,15 @@ bool Host::CreateVulkan(const DeviceOptions& options) {
         VkFenceCreateInfo fi{};
         fi.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         if (!Check(vkCreateFence(device_, &fi, nullptr, &s.fence), "vkCreateFence")) return false;
-        s.busy = false;
+        s.busy = s.submitted = false;
     }
     instance = UnityVulkanInstance{};
     instance.instance = vkInstance_;
     instance.physicalDevice = physical_;
     instance.device = device_;
     instance.graphicsQueue = queue_;
-    instance.getInstanceProcAddr = &vkGetInstanceProcAddr;  // the loader's, as Unity documents
+    // The loader's, as Unity documents, but with the host's eyes on the device functions (see HostGetInstanceProcAddr).
+    instance.getInstanceProcAddr = &HostGetInstanceProcAddr;
     instance.queueFamilyIndex = family_;
     frameNumber = 1;
     safeFrame = 0;
@@ -360,6 +549,11 @@ void Host::DestroyVulkan() {
     for (Slot& s : slots_) {
         if (s.fence) vkDestroyFence(device_, s.fence, nullptr);
         s = Slot();
+    }
+    stream_.clear();
+    {
+        std::lock_guard<std::mutex> g(gSim);
+        gOps.clear();
     }
     if (pool_) vkDestroyCommandPool(device_, pool_, nullptr);
     pool_ = VK_NULL_HANDLE;
@@ -408,6 +602,10 @@ HostTexture* Host::MakeTexture(uint32_t width, uint32_t height, VkFormat format)
     mai.memoryTypeIndex = MemoryType(req.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
     Check(vkAllocateMemory(device_, &mai, nullptr, &t->memory), "vkAllocateMemory (target)");
     Check(vkBindImageMemory(device_, t->image, t->memory, 0), "vkBindImageMemory (target)");
+    textures.push_back(t);
+    std::lock_guard<std::mutex> g(gSim);
+    gReal[t->image] = VK_IMAGE_LAYOUT_UNDEFINED;
+    gTargets[t->image] = t;
     return t;
 }
 
@@ -424,14 +622,103 @@ void Host::DestroyTexture(HostTexture* t) {
             ++it;
         }
     }
+    textures.erase(std::remove(textures.begin(), textures.end(), t), textures.end());
+    {
+        std::lock_guard<std::mutex> g(gSim);
+        gReal.erase(t->image);
+        gTargets.erase(t->image);
+    }
     if (t->image) vkDestroyImage(device_, t->image, nullptr);
     if (t->memory) vkFreeMemory(device_, t->memory, nullptr);
     delete t;
 }
 
+// Texture2D.Apply: an upload, which leaves the texture in TRANSFER_DST_OPTIMAL. (What Unity tracks after an upload on
+// Quest isn't known; this makes the first present start from a layout other than the sampled one.)
+void Host::Apply(VkCommandBuffer cb, HostTexture* t) {
+    HostBarrier(cb, t, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_ACCESS_TRANSFER_WRITE_BIT);
+    VkClearColorValue black{};
+    black.float32[3] = 1.0f;
+    VkImageSubresourceRange range{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+    Note(cb, t->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, true, false);
+    vkCmdClearColorImage(cb, t->image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &black, 1, &range);
+    t->applied = true;
+}
+
+void Host::QueueAccess(UnityRenderingEventAndData callback, int eventId, void* data, bool flush) {
+    queueAccessCalls++;
+    if (flush && open_ && preOpen_) {
+        // "All Unity command buffers of this frame are submitted before" the callback: what it recorded before the event.
+        vkEndCommandBuffer(open_->pre);
+        Item pre;
+        pre.frame = frameNumber;
+        pre.cbs.push_back(open_->pre);
+        stream_.push_back(std::move(pre));
+        preOpen_ = false;
+        flushes++;
+    }
+    Item item;
+    item.frame = frameNumber;
+    item.callback = callback;
+    item.eventId = eventId;
+    item.data = data;
+    stream_.push_back(std::move(item));
+    int waiting = (int)std::count_if(stream_.begin(), stream_.end(), [](const Item& i) { return i.callback != nullptr; });
+    mostWaiting = std::max(mostWaiting, waiting);
+    if (lag == 0) Process(ULLONG_MAX);  // called synchronously
+}
+
+void Host::Run(Item& item) {
+    if (item.callback) {
+        inCallback++;
+        double t0 = NowSeconds();
+        item.callback(item.eventId, item.data);
+        lastCallbackMs += (NowSeconds() - t0) * 1000;
+        inCallback--;
+        callbacksRun++;
+        return;
+    }
+    Submitted(item.cbs.data(), (uint32_t)item.cbs.size());
+    VkSubmitInfo si{};
+    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    si.commandBufferCount = (uint32_t)item.cbs.size();
+    si.pCommandBuffers = item.cbs.data();
+    if (vkQueueSubmit(queue_, 1, &si, item.slot ? item.slot->fence : VK_NULL_HANDLE) != VK_SUCCESS) std::printf("FAILED vkQueueSubmit\n");
+    if (!item.slot) return;
+    item.slot->submitted = true;
+    // The frame's last submission: everything Unity recorded for it is on the queue, after every callback before it.
+    std::lock_guard<std::mutex> g(gSim);
+    for (const auto& kv : item.tracked) {
+        auto real = gReal.find(kv.first);
+        if (real != gReal.end() && kv.second != VK_IMAGE_LAYOUT_UNDEFINED && real->second != kv.second)
+            Report(layoutErrors, std::string("layout: after frame ") + std::to_string(item.frame) + " Unity tracks " + LayoutName(kv.second) +
+                                     ", the target is in " + LayoutName(real->second));
+    }
+}
+
+// Unity's submission order, up to a frame: at once, or (lag) late, on another thread, as from a submission thread.
+void Host::Process(unsigned long long upToFrame) {
+    if (stream_.empty() || stream_.front().frame > upToFrame) return;
+    auto run = [this, upToFrame] {
+        while (!stream_.empty() && stream_.front().frame <= upToFrame) {
+            Item item = std::move(stream_.front());
+            stream_.pop_front();
+            Run(item);
+        }
+    };
+    if (lag > 0) {
+        std::thread thread(run);
+        thread.join();
+    } else {
+        run();
+    }
+}
+
 void Host::Retire(Slot& s) {
     if (!s.busy) return;
-    vkWaitForFences(device_, 1, &s.fence, VK_TRUE, UINT64_MAX);
+    if (!s.submitted) Process(s.frame);
+    if (s.submitted) vkWaitForFences(device_, 1, &s.fence, VK_TRUE, UINT64_MAX);
+    else std::printf("FAILED frame %llu was never submitted\n", s.frame);
     s.busy = false;
     safeFrame = std::max(safeFrame, s.frame);
     for (auto& p : s.pending)
@@ -447,6 +734,9 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         if (afterPresent) afterPresent(none);
         return;
     }
+    lastCallbackMs = 0;
+    // Unity's submission thread, running behind.
+    if (lag > 0 && frameNumber > (unsigned long long)lag) Process(frameNumber - (unsigned long long)lag);
     int index = (int)(frameNumber % 3);
     Slot& s = slots_[index];
     Retire(s);
@@ -455,18 +745,34 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         Slot* next = nullptr;
         for (Slot& other : slots_)
             if (other.busy && (!next || other.frame < next->frame)) next = &other;
-        if (!next || vkGetFenceStatus(device_, next->fence) != VK_SUCCESS) break;
+        if (!next || !next->submitted || vkGetFenceStatus(device_, next->fence) != VK_SUCCESS) break;
         Retire(*next);
     }
 
     VkCommandBufferBeginInfo bi{};
     bi.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     bi.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    // Unity's commands before the event: uploads of new textures, then sampling of those the library has drawn into.
+    vkResetCommandBuffer(s.pre, 0);
+    vkBeginCommandBuffer(s.pre, &bi);
+    ClearOps(s.pre);
+    for (HostTexture* t : textures)
+        if (!t->applied) Apply(s.pre, t);
+    for (HostTexture* t : textures)
+        if (t->written && t->layout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            HostBarrier(s.pre, t, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_ACCESS_SHADER_READ_BIT);
+    open_ = &s;
+    preOpen_ = true;
+    s.frame = frameNumber;
+    s.busy = true;
+    s.submitted = false;
+    vkResetFences(device_, 1, &s.fence);
+
     vkResetCommandBuffer(s.cb, 0);
     vkBeginCommandBuffer(s.cb, &bi);
+    ClearOps(s.cb);
     if (secondary) {
-        // As Unity's graphics jobs: the event records into a secondary buffer begun outside any render pass (the event
-        // is configured with kUnityVulkanRenderPass_EnsureOutside), executed in the frame's primary afterwards.
+        // As Unity's graphics jobs: the event records into a secondary buffer, executed in the frame's primary.
         VkCommandBufferInheritanceInfo inherit{};
         inherit.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO;
         VkCommandBufferBeginInfo sbi{};
@@ -475,6 +781,7 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         sbi.pInheritanceInfo = &inherit;
         vkResetCommandBuffer(s.eventCb, 0);
         vkBeginCommandBuffer(s.eventCb, &sbi);
+        ClearOps(s.eventCb);
         recording = s.eventCb;
         recordingLevel = VK_COMMAND_BUFFER_LEVEL_SECONDARY;
     } else {
@@ -482,14 +789,18 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         recordingLevel = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     }
     int id = EventId();
-    insideRenderPass = !RunsOutsideRenderPass(id);
+    // Quest 3, builds 9157-9159: with graphics jobs every plugin event ran inside a render pass, however configured.
+    insideRenderPass = secondary || !RunsOutsideRenderPass(id);
+    inEvent = true;
     double e0 = NowSeconds();
     BSVD_GetRenderEventFunc()(id);
     lastEventMs = (NowSeconds() - e0) * 1000;
+    inEvent = false;
     insideRenderPass = false;
     if (secondary) {
         if (vkEndCommandBuffer(s.eventCb) != VK_SUCCESS) std::printf("FAILED vkEndCommandBuffer (secondary)\n");
         vkCmdExecuteCommands(s.cb, 1, &s.eventCb);
+        Splice(s.eventCb, s.cb);
     }
     recording = VK_NULL_HANDLE;
     std::vector<Readback> reads;
@@ -536,6 +847,7 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
             }
             regions.push_back(c);
         }
+        Note(s.cb, t->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, true, false);
         vkCmdCopyImageToBuffer(s.cb, t->image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, rb.buffer, (uint32_t)regions.size(), regions.data());
         VkBufferMemoryBarrier bb{};
         bb.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
@@ -548,19 +860,25 @@ void Host::Frame(const std::function<void(std::vector<Readback>&)>& afterPresent
         s.pending.push_back({rb.buffer, rb.memory, rb.mapped, t->width, t->height, r.inspect});
     }
     vkEndCommandBuffer(s.cb);
-    vkResetFences(device_, 1, &s.fence);
-    VkSubmitInfo si{};
-    si.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    si.commandBufferCount = 1;
-    si.pCommandBuffers = &s.cb;
-    if (vkQueueSubmit(queue_, 1, &si, s.fence) != VK_SUCCESS) std::printf("FAILED vkQueueSubmit\n");
-    s.busy = true;
-    s.frame = frameNumber;
+    Item item;
+    item.frame = frameNumber;
+    item.slot = &s;
+    if (preOpen_) {
+        vkEndCommandBuffer(s.pre);
+        item.cbs.push_back(s.pre);
+    }
+    item.cbs.push_back(s.cb);
+    preOpen_ = false;
+    open_ = nullptr;
+    for (HostTexture* t : textures) item.tracked.push_back({t->image, t->layout});
+    stream_.push_back(std::move(item));
+    if (lag == 0) Process(ULLONG_MAX);
     frameNumber++;
 }
 
 void Host::Finish() {
     if (!device_) return;
+    Process(ULLONG_MAX);
     // Oldest first, so inspections run in frame order.
     std::vector<Slot*> order;
     for (Slot& s : slots_)
