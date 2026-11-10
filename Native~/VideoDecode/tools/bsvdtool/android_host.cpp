@@ -12,6 +12,9 @@
 #include <mutex>
 #include <thread>
 
+#include <sys/mman.h>
+#include <unistd.h>
+
 extern "C" {
 void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginLoad(IUnityInterfaces* interfaces);
 void UNITY_INTERFACE_EXPORT UNITY_INTERFACE_API UnityPluginUnload();
@@ -425,11 +428,33 @@ bool Host::Load() {
     return true;
 }
 
+// The Steam Frame-like runtime below the hooks (DeviceOptions::danglingChain): creates the device as asked, then links the
+// end of the caller's chain to a page it has just unmapped.
+VKAPI_ATTR VkResult VKAPI_CALL DanglingCreateDevice(VkPhysicalDevice physical, const VkDeviceCreateInfo* info,
+                                                    const VkAllocationCallbacks* allocator, VkDevice* device) {
+    VkResult result = vkCreateDevice(physical, info, allocator, device);
+    if (!info) return result;
+    const long page = sysconf(_SC_PAGESIZE);
+    void* gone = mmap(nullptr, (size_t)page, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+    if (gone == MAP_FAILED) return result;
+    munmap(gone, (size_t)page);
+    auto* last = reinterpret_cast<VkBaseOutStructure*>(const_cast<VkDeviceCreateInfo*>(info));
+    while (last->pNext) last = last->pNext;
+    last->pNext = static_cast<VkBaseOutStructure*>(gone);
+    gHost.danglingLinks++;
+    return result;
+}
+VKAPI_ATTR PFN_vkVoidFunction VKAPI_CALL DanglingGipa(VkInstance instance, const char* name) {
+    if (name && std::strcmp(name, "vkCreateDevice") == 0) return (PFN_vkVoidFunction)&DanglingCreateDevice;
+    if (name && std::strcmp(name, "vkGetInstanceProcAddr") == 0) return (PFN_vkVoidFunction)&DanglingGipa;
+    return vkGetInstanceProcAddr(instance, name);
+}
+
 bool Host::CreateVulkan(const DeviceOptions& options) {
     // The chain as Unity builds it: the highest priority gets the loader's vkGetInstanceProcAddr, the lowest is outermost.
     std::vector<Hook> order = hookList;
     std::stable_sort(order.begin(), order.end(), [](const Hook& a, const Hook& b) { return a.priority > b.priority; });
-    PFN_vkGetInstanceProcAddr gipa = &vkGetInstanceProcAddr;
+    PFN_vkGetInstanceProcAddr gipa = options.danglingChain ? &DanglingGipa : &vkGetInstanceProcAddr;
     for (const Hook& h : order) {
         PFN_vkGetInstanceProcAddr next = h.callback(gipa, h.userdata);
         if (next) gipa = next;

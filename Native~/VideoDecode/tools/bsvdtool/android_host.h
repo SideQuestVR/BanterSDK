@@ -75,6 +75,10 @@ struct DeviceOptions {
     bool foreign = true;        // enable VK_EXT_queue_family_foreign
     bool ycbcrFeature = true;   // enable samplerYcbcrConversion
     bool vulkan11 = true;       // the instance asks for Vulkan 1.1 (as Unity on Quest 3), else 1.0
+    // Below the hooks, a runtime whose vkCreateDevice leaves the caller's pNext chain linked to memory that is gone once
+    // it returns, as on Steam Frame (2026-11-10: the hook read the chain after the call and crashed). The link goes to an
+    // unmapped page, so anything that reads the chain after the call faults every time.
+    bool danglingChain = false;
 };
 
 class Host {
@@ -117,6 +121,7 @@ public:
     // What the plugin registered and configured.
     int hooks = 0;
     int hookPriority = 0;
+    int danglingLinks = 0;  // device chains the dangling runtime left linked to an unmapped page
     bool eventConfigured = false;  // the last ConfigureEvent, whatever its id
     int configuredId = 0;
     UnityVulkanPluginEventConfig eventConfig{};

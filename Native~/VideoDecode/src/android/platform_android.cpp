@@ -112,23 +112,30 @@ VKAPI_ATTR VkResult VKAPI_CALL HookCreateDevice(VkPhysicalDevice physical, const
         next = gNextCreateDevice;
     }
     if (!next) return VK_ERROR_INITIALIZATION_FAILED;
+    // Unity's request is read BEFORE it is passed on, and never after: what's below may link its own structures into the
+    // chain for the call and leave them there once they're gone. On Steam Frame (SteamOS, the APK through Lepton) reading
+    // the chain after the call followed such a link into reused memory and crashed the app at start-up (SIGSEGV here,
+    // 2026-11-10, build 222).
+    Observed o;
+    if (info) {
+        const char* const* names = info->ppEnabledExtensionNames;
+        uint32_t count = info->enabledExtensionCount;
+        o.ahb = Named(names, count, VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
+        o.foreign = Named(names, count, VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
+        o.ycbcrExtension = Named(names, count, VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
+        o.maintenance2 = Named(names, count, VK_KHR_MAINTENANCE2_EXTENSION_NAME);
+        int links = 0;
+        for (auto* s = static_cast<const VkBaseInStructure*>(info->pNext); s && links < 64; s = s->pNext, ++links) {
+            if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES)
+                o.ycbcrFeature |= reinterpret_cast<const VkPhysicalDeviceSamplerYcbcrConversionFeatures*>(s)->samplerYcbcrConversion == VK_TRUE;
+            else if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES)
+                o.ycbcrFeature |= reinterpret_cast<const VkPhysicalDeviceVulkan11Features*>(s)->samplerYcbcrConversion == VK_TRUE;
+            // VkPhysicalDeviceFeatures2 carries only the 1.0 features; the chain is walked through it.
+        }
+    }
     VkResult result = next(physical, info, allocator, device);  // Unity's request, exactly as it came
     if (result != VK_SUCCESS || !info || !device) return result;
-    Observed o;
     o.device = *device;
-    const char* const* names = info->ppEnabledExtensionNames;
-    uint32_t count = info->enabledExtensionCount;
-    o.ahb = Named(names, count, VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME);
-    o.foreign = Named(names, count, VK_EXT_QUEUE_FAMILY_FOREIGN_EXTENSION_NAME);
-    o.ycbcrExtension = Named(names, count, VK_KHR_SAMPLER_YCBCR_CONVERSION_EXTENSION_NAME);
-    o.maintenance2 = Named(names, count, VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-    for (auto* s = static_cast<const VkBaseInStructure*>(info->pNext); s; s = s->pNext) {
-        if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SAMPLER_YCBCR_CONVERSION_FEATURES)
-            o.ycbcrFeature |= reinterpret_cast<const VkPhysicalDeviceSamplerYcbcrConversionFeatures*>(s)->samplerYcbcrConversion == VK_TRUE;
-        else if (s->sType == VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_FEATURES)
-            o.ycbcrFeature |= reinterpret_cast<const VkPhysicalDeviceVulkan11Features*>(s)->samplerYcbcrConversion == VK_TRUE;
-        // VkPhysicalDeviceFeatures2 carries only the 1.0 features; the chain is walked through it.
-    }
     std::lock_guard<std::mutex> g(gHookLock);
     o.instanceApi = gInstanceApi;
     gObserved.push_back(o);

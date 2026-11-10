@@ -1026,12 +1026,14 @@ bool TestStartup() {
         int renderer;
         int path;
     };
-    DeviceOptions full, noFeature, noForeign, noAhb, vulkan10;
+    DeviceOptions full, noFeature, noForeign, noAhb, vulkan10, dangling;
     noFeature.ycbcrFeature = false;
     noForeign.foreign = false;
     noAhb.ahb = false;
     vulkan10.vulkan11 = false;  // YCbCr by its extension, but no extended image usage for the sRGB storage intermediate
+    dangling.danglingChain = true;  // Steam Frame: the chain is left linked to freed memory after vkCreateDevice
     Case cases[] = {{"Vulkan device with everything", full, kUnityGfxRendererVulkan, BSVD_PATH_VULKAN},
+                    {"a runtime that leaves the device chain dangling (Steam Frame)", dangling, kUnityGfxRendererVulkan, BSVD_PATH_VULKAN},
                     {"Vulkan device without samplerYcbcrConversion", noFeature, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
                     {"Vulkan device without the foreign queue extension", noForeign, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
                     {"Vulkan device without buffer import", noAhb, kUnityGfxRendererVulkan, BSVD_PATH_CPU},
@@ -1040,11 +1042,18 @@ bool TestStartup() {
                     {"the null renderer", full, kUnityGfxRendererNull, BSVD_PATH_NONE}};
     for (const Case& c : cases) {
         host.eventConfigured = false;
+        const int danglingBefore = host.danglingLinks;
         if (!host.CreateVulkan(c.options)) return false;
         host.Initialize(c.renderer);
         int path = BSVD_GetPath();
         std::printf("%s: path %d (want %d); %s\n", c.name, path, c.path, Text(0, BSVD_TEXT_PLATFORM).c_str());
         ok = ok && path == c.path;
+        if (c.options.danglingChain) {
+            // Getting here at all is the check: a hook that read the chain after the call would have faulted.
+            bool linked = host.danglingLinks == danglingBefore + 1;
+            std::printf("  the runtime left the chain linked to an unmapped page: %s\n", linked ? "yes, and nothing read it" : "NO (not exercised)");
+            ok = ok && linked;
+        }
         if (c.path == BSVD_PATH_VULKAN) {
             const UnityVulkanPluginEventConfig& e = host.eventConfig;
             bool config = host.eventConfigured && e.renderPassPrecondition == kUnityVulkanRenderPass_EnsureOutside &&
