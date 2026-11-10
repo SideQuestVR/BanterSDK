@@ -44,12 +44,9 @@ namespace BS
             }
         }
 
-        const float ReclaimEverySeconds = 15f;
-
         BSAssetDatabase database;
         BSAssetSources sources;
         BSAssetMemoryPolicy memory;
-        float nextReclaim;
 
         internal BSAssetMemoryPolicy Memory => memory ??= new BSAssetMemoryPolicy(new BSDeviceFreeMemory(), () => Time.realtimeSinceStartup);
 
@@ -89,23 +86,15 @@ namespace BS
         void Update()
         {
             Database.Tick();
-            ReclaimWhileLow();
         }
 
+        // No Resources.UnloadUnusedAssets() here: it runs a full, blocking collection that can stall the frame and audio
+        // for a long time on a device that is already short of memory. Evicted entries are left for Unity's own
+        // unloading (world changes).
         void OnLowMemory()
         {
             Memory.LowMemoryReported();
             Database.Tick();
-            ReclaimWhileLow();
-        }
-
-        // Evicting lets go of objects that others may share, so Unity decides what nothing uses any more. A full pass over
-        // the loaded objects, so only under pressure, and not often.
-        void ReclaimWhileLow()
-        {
-            if (!Memory.IsLow || Time.realtimeSinceStartup < nextReclaim || Database.TakeEvicted() == 0) return;
-            nextReclaim = Time.realtimeSinceStartup + ReclaimEverySeconds;
-            Resources.UnloadUnusedAssets();
         }
 
         /// <summary>
