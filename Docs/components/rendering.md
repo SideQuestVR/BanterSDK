@@ -216,6 +216,22 @@ const weight = await smr.GetBlendShapeWeight(smile);   // 100
 
 `blendShapes` lists the weights from when the component started; it isn't updated by `SetBlendShapeWeight`.
 
+## Passthrough
+
+Turns a surface into a window to the player's real room: the headset's passthrough shows through it. On any object with a mesh, choose **Add Component > BS > Passthrough**. That also puts the **BS Passthrough** material on its renderer. A quad makes a window, a hole in a wall shows the room behind it, and an inverted sphere around the player (with [InvertedMesh](#invertedmesh)) makes the whole world mixed reality.
+
+Things in front of the window still cover it, and transparent things in front of it blend over it as usual. The material's **Opacity** and **Mask (alpha)** fade the window, for soft edges. Its whole surface still counts as window, even where the mask is fully transparent: it writes depth there, and an older-style transparent shader in front of that part can let a little of the room through.
+
+While a window is open on a headset that shows passthrough, post-processing (bloom and the like) and HDR are off for the whole world, because both would hide the window.
+
+It's an ordinary component with nothing in the script API. To open or close a window from a script or a graph, enable or disable its object. The headset's passthrough stays on while any enabled Passthrough is in the world, and turns off about two seconds after the last one goes. Passthrough costs the headset battery and heat, so close windows nobody is looking at.
+
+Passthrough works on standalone headsets that offer it to OpenXR apps: Quest, Steam Frame, Pico 4 Ultra and Android XR. Everywhere else the window draws its **Fallback Colour** (black unless you change it): on PC VR over Link or SteamVR, on desktop, in the editor, and in mono views such as photos, recordings, mirrors and portals.
+
+Keep windows on your world's own layers, such as Default. The client draws the Menu, UIOnTop, AvatarOnTop and AvatarPreview layers over the world, so a window on one of those cuts through everything in front of it, the player's hands included. The Inspector warns about this.
+
+Windows mark their pixels with stencil bit 128, so don't write that bit in your own shaders. Where it's set, the client leaves the pixel's transparency as it is: a shader that sets it outside a window can let the room show through, and one that clears it inside a window closes the window there.
+
 ## Custom shaders in VR
 
 The headset draws both eyes in one pass: single-pass instanced rendering, or multiview on Quest. A shader has to pass the eye from its vertex program to its fragment program, or it shows in one eye only.
