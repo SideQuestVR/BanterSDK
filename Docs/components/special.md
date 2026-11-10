@@ -33,6 +33,7 @@ Shares the object's position and rotation with every player in the space. One pl
 | `takeOwnershipOnCollision` | boolean | true | Touching the object makes you its owner |
 | `takeOwnershipOnGrab` | boolean | true | Grabbing the object makes you its owner until you let go |
 | `kinematicIfNotOwned` | boolean | false | The object stays kinematic until someone takes ownership of it |
+| `takeOwnershipOnProximity` | boolean | true | Coming close (about 0.3 m) makes you its owner, just before you touch it. Off: only a touch (`takeOwnershipOnCollision`) or a grab takes it |
 
 The app reads these once, a frame after the object starts, so set them when you add the component.
 

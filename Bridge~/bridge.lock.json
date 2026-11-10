@@ -385,7 +385,8 @@
     {"id": 296, "name": "label"},
     {"id": 297, "name": "isToggle"},
     {"id": 298, "name": "isOn"},
-    {"id": 299, "name": "avatarSyncMode"}
+    {"id": 299, "name": "avatarSyncMode"},
+    {"id": 300, "name": "takeOwnershipOnProximity"}
   ],
   "tags": [
     {"index": 0, "name": "UserTag1"},
@@ -2816,13 +2817,14 @@
         {"name": "takeOwnershipOnCollision", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 215, "initial": "true"},
         {"name": "takeOwnershipOnGrab", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 216, "initial": "true"},
         {"name": "kinematicIfNotOwned", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 217, "initial": "false"},
-        {"name": "resetAfterSeconds", "attr": "See", "type": "System.Single", "wire": "Float", "propId": 287, "initial": "-1"}
+        {"name": "resetAfterSeconds", "attr": "See", "type": "System.Single", "wire": "Float", "propId": 287, "initial": "-1"},
+        {"name": "takeOwnershipOnProximity", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 300, "initial": "true"}
       ],
       "methods": [
         {"name": "_TakeOwnership", "returns": "System.Void", "params": []},
         {"name": "_DoIOwn", "returns": "System.Boolean", "params": []}
       ],
-      "tsConstructor": ["syncPosition: boolean | any = true", "syncRotation: boolean = true", "takeOwnershipOnCollision: boolean = true", "takeOwnershipOnGrab: boolean = true", "kinematicIfNotOwned: boolean = false", "resetAfterSeconds: number = -1"]
+      "tsConstructor": ["syncPosition: boolean | any = true", "syncRotation: boolean = true", "takeOwnershipOnCollision: boolean = true", "takeOwnershipOnGrab: boolean = true", "kinematicIfNotOwned: boolean = false", "resetAfterSeconds: number = -1", "takeOwnershipOnProximity: boolean = true"]
     },
     {
       "name": "Text",

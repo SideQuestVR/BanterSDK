@@ -302,5 +302,6 @@ namespace BS
         isToggle,
         isOn,
         avatarSyncMode,
+        takeOwnershipOnProximity,
     }
 }

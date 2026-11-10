@@ -70,6 +70,7 @@ Every player has to have the object, under the same [BSObjectId](#bsobjectid): t
 | `syncPosition` | `true` | Ignored: the position is always shared. |
 | `syncRotation` | `true` | Off: the rotation isn't shared, only the position. |
 | `takeOwnershipOnCollision` | `true` | Touching the object with your body, head, hands or feet makes you its owner. |
+| `takeOwnershipOnProximity` | `true` | Coming within about 0.3 m of the object makes you its owner, just before you touch it, so it's already moving with your physics when you do. Off: walking past or standing near it never takes it; with `takeOwnershipOnCollision` it's taken on touch instead, and is still for a moment when first bumped. |
 | `takeOwnershipOnGrab` | `true` | Grabbing the object makes you its owner and holds it until you let go, and the others see it in your hand. The object also has to be grabbable: a [grab handle](../components/vr-interaction.md#grabhandle) on the Grabbable layer, as the grab presets have. |
 | `kinematicIfNotOwned` | `false` | The object rests, kinematic, until someone grabs it, bumps it or takes ownership, and goes back to resting when it's reset. The copies a player doesn't own are always kinematic either way (see below). |
 
@@ -93,14 +94,15 @@ The first player in the room owns every synced object, so a player alone in a sp
 |---|---|
 | A script calls `TakeOwnership()` | You become the owner, unless someone is holding the object. |
 | You grab it (`takeOwnershipOnGrab`) | You become the owner and nobody can take it while you hold it. When you let go you stay the owner. If someone else got it first, your hand lets go. |
-| You touch it (`takeOwnershipOnCollision`) | When your body, head, hands or feet come within about 0.3 m of it, you become the owner, at most about three times a second, and never while someone holds it. Only players count: objects hitting each other don't move ownership. |
+| You come close (`takeOwnershipOnProximity`) | When your body, head, hands or feet come within about 0.3 m of it, you become the owner, at most about three times a second, and never while someone holds it. Only players count: objects hitting each other don't move ownership. |
+| You touch it (`takeOwnershipOnCollision`) | The same, on contact. With `takeOwnershipOnProximity` on as well (the default), you already own it by then. |
 | You sit on a seat that is, or is inside, a synced object | You become the owner, so you drive the vehicle. |
 | The owner leaves | About a second later the object passes to the player who owns the fewest objects. |
 | Everyone leaves | The object is forgotten. The next player to arrive starts it again from where the scene puts it. |
 
 There is no event when ownership changes.
 
-!> Turn `takeOwnershipOnCollision` off on kinematic objects such as vehicles and moving platforms. Walking into one claims it and turns its Rigidbody dynamic, so it starts to fall and be pushed around.
+!> Turn `takeOwnershipOnCollision` and `takeOwnershipOnProximity` off on kinematic objects such as vehicles and moving platforms. Walking into or near one claims it and turns its Rigidbody dynamic, so it starts to fall and be pushed around.
 
 ### Spawned copies
 

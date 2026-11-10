@@ -16,6 +16,7 @@ namespace BS
         public System.Boolean TakeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
         public System.Boolean KinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
         public System.Single ResetAfterSeconds { get { return resetAfterSeconds; } set { resetAfterSeconds = value; UpdateCallback(new List<PropertyName> { PropertyName.resetAfterSeconds }); } }
+        public System.Boolean TakeOwnershipOnProximity { get { return takeOwnershipOnProximity; } set { takeOwnershipOnProximity = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnProximity }); } }
 
         BSScene _scene;
         public BSScene scene
@@ -38,12 +39,12 @@ namespace BS
 
         internal override void ReSetup()
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, PropertyName.resetAfterSeconds, };
+            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, PropertyName.resetAfterSeconds, PropertyName.takeOwnershipOnProximity, };
             UpdateCallback(changedProperties);
         }
         internal override string GetSignature()
         {
-            return "SyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned + PropertyName.resetAfterSeconds + resetAfterSeconds;
+            return "SyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned + PropertyName.resetAfterSeconds + resetAfterSeconds + PropertyName.takeOwnershipOnProximity + takeOwnershipOnProximity;
         }
 
         internal override void Init(List<object> constructorProperties = null)
@@ -162,6 +163,15 @@ namespace BS
                         changedProperties.Add(PropertyName.resetAfterSeconds);
                     }
                 }
+                if (values[i] is BSBool)
+                {
+                    var valtakeOwnershipOnProximity = (BSBool)values[i];
+                    if (valtakeOwnershipOnProximity.n == PropertyName.takeOwnershipOnProximity)
+                    {
+                        takeOwnershipOnProximity = valtakeOwnershipOnProximity.x;
+                        changedProperties.Add(PropertyName.takeOwnershipOnProximity);
+                    }
+                }
             }
             if (values.Count > 0) { UpdateCallback(changedProperties); }
         }
@@ -236,6 +246,18 @@ namespace BS
                     name = PropertyName.resetAfterSeconds,
                     type = PropertyType.Float,
                     value = resetAfterSeconds,
+                    componentType = ComponentType.SyncedObject,
+                    oid = oid,
+                    cid = cid
+                });
+            }
+            if (force)
+            {
+                updates.Add(new BSComponentPropertyUpdate()
+                {
+                    name = PropertyName.takeOwnershipOnProximity,
+                    type = PropertyType.Bool,
+                    value = takeOwnershipOnProximity,
                     componentType = ComponentType.SyncedObject,
                     oid = oid,
                     cid = cid
