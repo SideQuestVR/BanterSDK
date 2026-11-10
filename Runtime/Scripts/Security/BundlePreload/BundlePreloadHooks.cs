@@ -190,10 +190,12 @@ namespace BS.Security
             var downloaded = request.Downloaded;
             var stampLength = request.EntryLength;
             var stampTicks = request.EntryWriteTicks;
+            // Basis decrypts in place: only the first DataLength bytes are the bundle, and exactly those are what Unity loads.
+            var length = request.DataLength > 0 && request.DataLength <= bytes.Length ? request.DataLength : bytes.Length;
             BeeVerdictRecord record = null;
             string contentKey = null;
             var run = await BundleCheckService.RunCheckAsync(
-                () => JudgeDecrypted(bytes, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey), options);
+                () => JudgeDecrypted(bytes, length, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey), options);
             AfterDecryptedCheck(run, record, contentKey, file, stampLength, stampTicks);
             return Decide(run, kit, url, mode);
         }
@@ -206,19 +208,24 @@ namespace BS.Security
         /// and nothing is recalled or kept.
         /// </summary>
         internal static BundleVerdict JudgeDecrypted(byte[] bytes, BundleCheckOptions options, string url, string versionTag, string file, bool downloaded,
+            long stampLength, long stampTicks, out BeeVerdictRecord record, out string contentKey) =>
+            JudgeDecrypted(bytes, bytes.Length, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey);
+
+        /// <summary>As above, for the bundle in the first <paramref name="count"/> bytes of <paramref name="bytes"/>.</summary>
+        internal static BundleVerdict JudgeDecrypted(byte[] bytes, int count, BundleCheckOptions options, string url, string versionTag, string file, bool downloaded,
             long stampLength, long stampTicks, out BeeVerdictRecord record, out string contentKey)
         {
             record = null;
             contentKey = null;
-            if (BundleCheckService.SkippedForTests) return Fresh(bytes, options);
+            if (BundleCheckService.SkippedForTests) return Fresh(bytes, count, options);
             if (string.IsNullOrEmpty(file))
             {
                 // Not from Basis' cache (a .bee on disk, read where it lies): the content-hash fallback.
-                return BundleCheckService.CheckBytes(bytes, 0, bytes.Length, options, out contentKey);
+                return BundleCheckService.CheckBytes(bytes, 0, count, options, out contentKey);
             }
             if (stampTicks == 0 || !TryStamp(file, out var length, out var written) || length != stampLength || written != stampTicks)
             {
-                return Fresh(bytes, options); // no stamp, or the file changed after its bytes were read: judged, nothing kept
+                return Fresh(bytes, count, options); // no stamp, or the file changed after its bytes were read: judged, nothing kept
             }
             var versions = BundleCheckPolicy.Versions(options, BundleCheckService.Environment);
             var candidate = new BeeVerdictRecord
@@ -229,24 +236,24 @@ namespace BS.Security
                 Versions = versions,
                 Length = stampLength,
                 Written = stampTicks,
-                Section = bytes.Length,
+                Section = count,
             };
             var kept = downloaded ? null : BeeVerdictRecord.Read(file + VerdictSuffix);
             if (kept != null && kept.SameEntry(candidate))
             {
-                if (kept.Versions == versions) return Recalled(kept.Passed, kept.Reason, versions, bytes.Length);
+                if (kept.Versions == versions) return Recalled(kept.Passed, kept.Reason, versions, count);
                 candidate.Nonce = kept.Nonce; // the same download, judged again under newer rules
             }
             if (string.IsNullOrEmpty(candidate.Nonce)) candidate.Nonce = Guid.NewGuid().ToString("N");
-            var verdict = Fresh(bytes, options);
+            var verdict = Fresh(bytes, count, options);
             candidate.Passed = verdict.Passed;
             candidate.Reason = verdict.FirstReason;
             record = candidate;
             return verdict;
         }
 
-        static BundleVerdict Fresh(byte[] bytes, BundleCheckOptions options) =>
-            BundleCheckService.CheckFresh(new ByteArrayBundleSource(bytes, 0, bytes.Length), options);
+        static BundleVerdict Fresh(byte[] bytes, int count, BundleCheckOptions options) =>
+            BundleCheckService.CheckFresh(new ByteArrayBundleSource(bytes, 0, count), options);
 
         /// <summary>
         /// After a .bee check has ended, on the caller's side: keeps its verdict beside the cache file (if that file is still
