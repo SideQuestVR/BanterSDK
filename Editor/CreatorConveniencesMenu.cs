@@ -256,6 +256,23 @@ internal static class CreatorConveniencesMenu
     [MenuItem(Root + "Objects/Audio Stream", false, 43)]
     private static void CreateAudioStream(MenuCommand command) => CreateComponentObject<BSAudioStream>("Audio Stream", command);
 
+    [MenuItem(Root + "Objects/Passthrough Box", false, 44)]
+    private static void CreatePassthroughBox(MenuCommand command)
+    {
+        // A 1 m box whose surface is a window to the player's real room: BSPassthrough with the BS Passthrough
+        // material. No collider, because it's a window, not a wall. Where passthrough isn't available it draws the
+        // material's fallback colour.
+        var go = Primitive(PrimitiveType.Cube, "BS Passthrough Box", null, Vector3.zero, Vector3.one, keepCollider: false);
+        Place(go, command);
+        var material = Resources.Load<Material>(BSPassthrough.MaterialResource);
+        if (material)
+            go.GetComponent<MeshRenderer>().sharedMaterial = material;
+        else
+            Debug.LogError("Creator SDK BS Passthrough material is missing. Reinstall the Creator SDK package.");
+        Add<BSPassthrough>(go);
+        Finish(go, "Passthrough Box");
+    }
+
     // ------------------------------------------------------------------ Helpers
 
     private static void CreatePrefab(string guid, string displayName, MenuCommand command)

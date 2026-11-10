@@ -218,7 +218,7 @@ const weight = await smr.GetBlendShapeWeight(smile);   // 100
 
 ## Passthrough
 
-Turns a surface into a window to the player's real room: the headset's passthrough shows through it. On any object with a mesh, choose **Add Component > BS > Passthrough**. That also puts the **BS Passthrough** material on its renderer. A quad makes a window, a hole in a wall shows the room behind it, and an inverted sphere around the player (with [InvertedMesh](#invertedmesh)) makes the whole world mixed reality.
+Turns a surface into a window to the player's real room: the headset's passthrough shows through it. On any object with a mesh, choose **Add Component > BS > Passthrough**. That also puts the **BS Passthrough** material on its renderer. For a ready-made one, choose **GameObject > BS > Objects > Passthrough Box**: a 1 m box with no collider, so it's a window rather than a wall. A quad makes a window, a hole in a wall shows the room behind it, and an inverted sphere around the player (with [InvertedMesh](#invertedmesh)) makes the whole world mixed reality.
 
 Things in front of the window still cover it, and transparent things in front of it blend over it as usual. The material's **Opacity** and **Mask (alpha)** fade the window, for soft edges. Its whole surface still counts as window, even where the mask is fully transparent: it writes depth there, and an older-style transparent shader in front of that part can let a little of the room through.
 
