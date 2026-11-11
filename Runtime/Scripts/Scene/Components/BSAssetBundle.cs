@@ -114,6 +114,56 @@ namespace BS
         /// its renderer to the world before the first frame renders.
         /// </summary>
         public static event Action<string, string> SceneBundleLoading;
+
+        /// <summary>
+        /// Raised on the main thread just before Void or a world scene replaces the loaded scenes
+        /// (<c>LoadSceneMode.Single</c>). <see cref="SingleSceneLoadFinished"/> follows once that load has finished, with
+        /// its operation, or with null when it didn't start. After every Single load Unity runs
+        /// <c>Resources.UnloadUnusedAssets</c> by itself, a few frames after the load finishes; its scan of the managed heap
+        /// stops every thread that has run managed code, so the host can pause its audio output across it.
+        /// </summary>
+        public static event Action SingleSceneLoadStarting;
+
+        /// <inheritdoc cref="SingleSceneLoadStarting"/>
+        public static event Action<AsyncOperation> SingleSceneLoadFinished;
+
+        /// <summary>Starts a Single scene load between <see cref="SingleSceneLoadStarting"/> and <see cref="SingleSceneLoadFinished"/>.</summary>
+        static AsyncOperation LoadSingle(Func<AsyncOperation> load)
+        {
+            try
+            {
+                SingleSceneLoadStarting?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            AsyncOperation operation = null;
+            try
+            {
+                operation = load();
+            }
+            finally
+            {
+                // Called at once if the operation has already finished.
+                if (operation != null) operation.completed += RaiseSingleSceneLoadFinished;
+                else RaiseSingleSceneLoadFinished(null);
+            }
+            return operation;
+        }
+
+        static void RaiseSingleSceneLoadFinished(AsyncOperation operation)
+        {
+            try
+            {
+                SingleSceneLoadFinished?.Invoke(operation);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+        }
+
         internal override void StartStuff()
         {
             // Created from a script (the page, the snippet runtime, C# or Visual Scripting setting its URLs): UpdateCallback
@@ -654,7 +704,7 @@ namespace BS
                 // (BSUnityEventGuard).
                 using (var guard = BSUnityEventGuard.SanitizeWhenLoaded(scenes[0], sceneName))
                 {
-                    await SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
+                    await LoadSingle(() => SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single));
                     if (!guard.Complete())
                     {
                         SetLoadedIfNot(false, "The world failed its content check.");
@@ -1063,7 +1113,7 @@ namespace BS
         internal static AsyncOperation LoadVoid()
         {
             var index = VoidBuildIndex();
-            return index < 0 ? null : SceneManager.LoadSceneAsync(index, LoadSceneMode.Single);
+            return index < 0 ? null : LoadSingle(() => SceneManager.LoadSceneAsync(index, LoadSceneMode.Single));
         }
 
         /// <summary>
