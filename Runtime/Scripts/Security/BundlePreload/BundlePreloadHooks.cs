@@ -57,6 +57,7 @@ namespace BS.Security
             BundleCheckService.Configure(Path.Combine(root, "bundle-verdicts.json"), Application.version + "+" + Application.buildGUID);
             BundleFileCache.Configure(Path.Combine(root, "bundle-cache"), CacheCapacityBytes);
             BasisPreLoadCheck.SetHook(CheckDecryptedAsync);
+            BasisPreLoadCheck.SetRecallHook(RecallDecrypted);
             if (Active) return;
             Active = true;
             ReclaimUnityCacheOnce(root);
@@ -195,9 +196,52 @@ namespace BS.Security
             BeeVerdictRecord record = null;
             string contentKey = null;
             var run = await BundleCheckService.RunCheckAsync(
-                () => JudgeDecrypted(bytes, length, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey), options);
+                () => JudgeDecrypted(bytes, length, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey, request.ContentDigest), options);
             AfterDecryptedCheck(run, record, contentKey, file, stampLength, stampTicks);
             return Decide(run, kit, url, mode);
+        }
+
+        /// <summary>
+        /// The Basis recall hook (Quest memory, 2026-11-11): the verdict kept beside the request's cache file, without the
+        /// bytes, when it still holds exactly as <see cref="JudgeDecrypted"/> would recall it (same file stamp, URL, version
+        /// tag, kind, decrypted length <paramref name="sectionLength"/> and rule versions; not a fresh download), with what
+        /// the load does under the current mode (logged by <see cref="Decide"/>): recalled = true, refusal null to go on.
+        /// Anything else answers recalled = false and Basis judges the bytes. Basis calls it only for a section whose chunk
+        /// MACs it kept from the load that judged it, and streams that section against them, so a file that changed under
+        /// the same stamp (whole seconds on IL2CPP) still can't load other bytes.
+        /// </summary>
+        internal static (bool recalled, string refusal) RecallDecrypted(BasisPreLoadCheck.Request request, long sectionLength)
+        {
+            if (request == null) return (false, null);
+            if (request.Kind == BasisPreLoadCheck.Kind.Unchecked) return (true, null);
+            var mode = BundleCheckService.Mode;
+            if (mode == BundleCheckService.EnforcementMode.Off) return (true, null);
+            if (BundleCheckService.SkippedForTests) return (false, null);
+            // As CheckDecryptedAsync: with too many abandoned checks nothing is judged (Enforce refuses there); judge the bytes.
+            if (BundleCheckService.AbandonedChecks >= BundleCheckService.MaxAbandoned) return (false, null);
+            // Recalled only for bytes Basis can tie to the verdict: the keyed digest of the bytes it was made for.
+            if (string.IsNullOrEmpty(request.ContentDigest)) return (false, null);
+            var file = request.CacheEntryFile;
+            if (string.IsNullOrEmpty(file) || request.Downloaded || request.EntryWriteTicks == 0 || sectionLength <= 0) return (false, null);
+            if (!TryStamp(file, out var length, out var written) || length != request.EntryLength || written != request.EntryWriteTicks) return (false, null);
+            var options = OptionsFor(request.Kind);
+            var versions = BundleCheckPolicy.Versions(options, BundleCheckService.Environment);
+            var candidate = new BeeVerdictRecord
+            {
+                UrlHash = BundleFileCache.HashUrl(request.Url),
+                TagHash = BundleFileCache.HashUrl(request.VersionTag ?? ""),
+                Kind = options.MaxScenes == 0 ? "Kit" : "World",
+                Versions = versions,
+                Length = request.EntryLength,
+                Written = request.EntryWriteTicks,
+                Section = sectionLength,
+                Digest = request.ContentDigest,
+            };
+            var kept = BeeVerdictRecord.Read(file + VerdictSuffix);
+            if (kept == null || !kept.SameEntry(candidate) || kept.Versions != versions) return (false, null);
+            var run = new BundleCheckService.CheckRun(Recalled(kept.Passed, kept.Reason, versions, sectionLength),
+                BundleCheckService.CheckState.Judged, TimeSpan.Zero, 0);
+            return (true, Decide(run, request.Kind == BasisPreLoadCheck.Kind.Kit, request.Url, mode));
         }
 
         /// <summary>
@@ -208,12 +252,12 @@ namespace BS.Security
         /// and nothing is recalled or kept.
         /// </summary>
         internal static BundleVerdict JudgeDecrypted(byte[] bytes, BundleCheckOptions options, string url, string versionTag, string file, bool downloaded,
-            long stampLength, long stampTicks, out BeeVerdictRecord record, out string contentKey) =>
-            JudgeDecrypted(bytes, bytes.Length, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey);
+            long stampLength, long stampTicks, out BeeVerdictRecord record, out string contentKey, string digest = null) =>
+            JudgeDecrypted(bytes, bytes.Length, options, url, versionTag, file, downloaded, stampLength, stampTicks, out record, out contentKey, digest);
 
         /// <summary>As above, for the bundle in the first <paramref name="count"/> bytes of <paramref name="bytes"/>.</summary>
         internal static BundleVerdict JudgeDecrypted(byte[] bytes, int count, BundleCheckOptions options, string url, string versionTag, string file, bool downloaded,
-            long stampLength, long stampTicks, out BeeVerdictRecord record, out string contentKey)
+            long stampLength, long stampTicks, out BeeVerdictRecord record, out string contentKey, string digest = null)
         {
             record = null;
             contentKey = null;
@@ -237,6 +281,7 @@ namespace BS.Security
                 Length = stampLength,
                 Written = stampTicks,
                 Section = count,
+                Digest = digest ?? "", // Basis' keyed digest: a kept verdict only stands for these very bytes
             };
             var kept = downloaded ? null : BeeVerdictRecord.Read(file + VerdictSuffix);
             if (kept != null && kept.SameEntry(candidate))
@@ -294,12 +339,15 @@ namespace BS.Security
         internal sealed class BeeVerdictRecord
         {
             internal string UrlHash, TagHash, Kind, Versions, Nonce, Reason;
+            /// <summary>Basis' keyed digest of the judged bytes (per-chunk MACs under a per-install key; "" when it has none).</summary>
+            internal string Digest = "";
             internal long Length, Written, Section;
             internal bool Passed;
 
             internal bool SameEntry(BeeVerdictRecord other) =>
                 UrlHash == other.UrlHash && TagHash == other.TagHash && Kind == other.Kind && Length == other.Length
-                && Written == other.Written && Section == other.Section && !string.IsNullOrEmpty(Nonce);
+                && Written == other.Written && Section == other.Section && !string.IsNullOrEmpty(Nonce)
+                && (Digest ?? "") == (other.Digest ?? "");
 
             internal void Write(string path)
             {
@@ -312,6 +360,7 @@ namespace BS.Security
                     .Append(",\"written\":").Append(Written)
                     .Append(",\"section\":").Append(Section)
                     .Append(",\"nonce\":\"").Append(Plain(Nonce)).Append('"')
+                    .Append(",\"digest\":\"").Append(Plain(Digest ?? "")).Append('"')
                     .Append(",\"passed\":").Append(Passed ? "true" : "false")
                     .Append(",\"reason\":\"").Append(Plain(Reason)).Append("\"}\n");
                 var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
@@ -353,6 +402,7 @@ namespace BS.Security
                         Versions = Text(line, "versions"),
                         Nonce = Text(line, "nonce"),
                         Reason = Text(line, "reason"),
+                        Digest = Text(line, "digest") ?? "", // absent before 2026-11-11: matches only bytes without a digest
                     };
                     var passed = Bare(line, "passed");
                     if (record.UrlHash == null || record.TagHash == null || record.Kind == null || record.Versions == null
