@@ -167,6 +167,8 @@ namespace BS
                     return gameObject.AddComponent<BSPlatformFilter>();
                 case ComponentType.WorldOption:
                     return gameObject.AddComponent<BSWorldOption>();
+                case ComponentType.AvatarMirror:
+                    return gameObject.AddComponent<BSAvatarMirror>();
                 default:
                     return null;
             }

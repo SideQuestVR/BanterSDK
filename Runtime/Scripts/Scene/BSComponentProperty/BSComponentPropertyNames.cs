@@ -304,5 +304,8 @@ namespace BS
         avatarSyncMode,
         takeOwnershipOnProximity,
         voiceDistanceMultiplier,
+        shared,
+        heightOffset,
+        loadDistance,
     }
 }

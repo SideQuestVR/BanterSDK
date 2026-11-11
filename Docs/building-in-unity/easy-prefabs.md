@@ -4,7 +4,7 @@ Ready-made objects for common space features, under `GameObject > BS` (also the 
 
 - **Player**: Spawn Point, Spawn Range, Seat, Teleporter, Scene Settings.
 - **Grab**: one preset per grab type (Point, Point as a gun, Cylinder, Ball, Soft) and a climbable handhold.
-- **Objects**: Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Billboard, Collider Events, Verify Host.
+- **Objects**: Mirror, Avatar Mirror, Browser, Video Player, Text, Audio Source, Portal, GLTF Model, Synced Object, UI Panel, Billboard, Collider Events, Verify Host.
 
 New objects land where Unity's own `GameObject` menu puts them: under the object you right-clicked, otherwise at the Scene view's centre (or the world origin, if **Preferences > Scene View > Create Objects at Origin** is on).
 
@@ -134,6 +134,7 @@ Each object is one SDK component, set up for the usual case:
 | Object | What you get |
 |---|---|
 | Mirror | `BSMirror`: a 2.5 × 2.5 m mirror, seen from the object's back (−Z). |
+| Avatar Mirror | `BSAvatarMirror` on an empty object on the floor: a still copy of the player's avatar that mirrors their movements and faces them; see [Avatar Mirror](#avatar-mirror-bsavatarmirror). |
 | Browser | `BSBrowser` showing `https://sidequestvr.com`; see [Browser](#browser-bsbrowser). |
 | Video Player | A 1.6 × 0.9 m quad with `BSVideoPlayer`; the video plays on it. |
 | Text | `BSText` saying "Hello World" at font size 2, wrapping inside a 20 × 5 m area, read from −Z. |
@@ -146,6 +147,19 @@ Each object is one SDK component, set up for the usual case:
 | Billboard | A quad with `BSBillboard`, which turns it to face the player. |
 | Collider Events | A 2 m trigger box standing on the object, with `BSColliderEvents` reporting enter and exit to the page and Visual Scripting. |
 | Verify Host | `BSVerifyHost` on an empty object, checking the world is running from its own address. Set its **Url** and choose what happens at any other address; see [VerifyHost](../components/special.md#verifyhost). |
+
+### Avatar Mirror (`BSAvatarMirror`)
+
+A mirror image of the player as a real copy of their avatar, not a camera picture. The copy stands still on this object and mirrors the player's movements like a reflection: head, arms, hands, fingers, face, jiggle bones, every worn item and colour, and their exact height, so crouching and jumping come through. It always faces the player it mirrors. Walking around doesn't move it. Players in VR can always fist bump and high five it, and hold hands with it (palm on its palm, then grip).
+
+It is one object with no meshes: put it on the floor the players stand on. While it is selected, the Seat's hologram robot stands on it in the Scene view, and a ring on the floor shows the Load Distance. A player within that distance is mirrored: the copy appears with a shimmer, growing up from the floor, and shrinks back into it when they walk away.
+
+- **Shared**: off (default): everyone near sees their own copy, on their own screen only, so any number of people can use it at once. On: one person at a time is mirrored, and everyone near sees that copy; the next person can step up once they leave.
+- **Height Offset**: raises (or, negative, lowers) the copy, in metres.
+- **Load Distance**: how close a player must be to be mirrored (default 3 m, across the floor, on the same floor). The copy is only loaded for viewers that close.
+- Turn the component off to switch the mirror off. Scripts can add it too: `await gameObject.AddComponent(new BS.BSAvatarMirror(false, 0, 3))`.
+
+Shared mirrors are told apart by the object's `BSObjectId`, so there is nothing to set. Copies only appear in the client, not in SDK Play Mode, and at most two are drawn at once (the nearest).
 
 ### Browser (`BSBrowser`)
 

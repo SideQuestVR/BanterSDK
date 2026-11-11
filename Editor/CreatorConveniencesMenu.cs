@@ -159,6 +159,11 @@ internal static class CreatorConveniencesMenu
     [MenuItem(Root + "Objects/Mirror", false, 30)]
     private static void CreateMirror(MenuCommand command) => CreateComponentObject<BSMirror>("Mirror", command);
 
+    // A mirror image of the player as a real avatar copy that stands still on this spot and mirrors their movements. One
+    // object, no meshes, on the floor where the menu puts it; the component gives it its own Mirror Id when added.
+    [MenuItem(Root + "Objects/Avatar Mirror", false, 30)]
+    private static void CreateAvatarMirror(MenuCommand command) => CreateComponentObject<BSAvatarMirror>("Avatar Mirror", command);
+
     [MenuItem(Root + "Objects/Browser", false, 31)]
     private static void CreateBrowser(MenuCommand command) =>
         CreateComponentObject<BSBrowser>("Browser", command, so => so.FindProperty("url").stringValue = "https://sidequestvr.com");

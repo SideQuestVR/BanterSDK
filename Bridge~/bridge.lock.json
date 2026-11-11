@@ -83,7 +83,8 @@
     {"id": 78, "name": "Teleporter"},
     {"id": 79, "name": "SpawnerObject"},
     {"id": 80, "name": "PlatformFilter"},
-    {"id": 81, "name": "WorldOption"}
+    {"id": 81, "name": "WorldOption"},
+    {"id": 82, "name": "AvatarMirror"}
   ],
   "propertyNames": [
     {"id": 0, "name": "hasUnity"},
@@ -387,7 +388,10 @@
     {"id": 298, "name": "isOn"},
     {"id": 299, "name": "avatarSyncMode"},
     {"id": 300, "name": "takeOwnershipOnProximity"},
-    {"id": 301, "name": "voiceDistanceMultiplier"}
+    {"id": 301, "name": "voiceDistanceMultiplier"},
+    {"id": 302, "name": "shared"},
+    {"id": 303, "name": "heightOffset"},
+    {"id": 304, "name": "loadDistance"}
   ],
   "tags": [
     {"index": 0, "name": "UserTag1"},
@@ -3181,6 +3185,18 @@
       ],
       "methods": [],
       "tsConstructor": ["slot: number | any = 1", "label: String = new String()", "isToggle: boolean = false", "isOn: boolean = false"]
+    },
+    {
+      "name": "AvatarMirror",
+      "cs": "BS.BSAvatarMirror",
+      "base": "BS.BSComponentBase",
+      "fields": [
+        {"name": "shared", "attr": "See", "type": "System.Boolean", "wire": "Bool", "propId": 302, "initial": "false"},
+        {"name": "heightOffset", "attr": "See", "type": "System.Single", "wire": "Float", "propId": 303, "initial": "0"},
+        {"name": "loadDistance", "attr": "See", "type": "System.Single", "wire": "Float", "propId": 304, "initial": "3"}
+      ],
+      "methods": [],
+      "tsConstructor": ["shared: boolean | any = false", "heightOffset: number = 0", "loadDistance: number = 3"]
     }
   ],
   "jsAliases": [
