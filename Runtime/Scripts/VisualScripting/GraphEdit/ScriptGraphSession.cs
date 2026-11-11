@@ -32,9 +32,67 @@ namespace BS
         public readonly Dictionary<string, ObjectRefDescriptor> unresolvedPortRefs =
             new Dictionary<string, ObjectRefDescriptor>();
 
-        // Flow-visualization watch state.
+        // Flow-visualization watch state. `watching` is what the page asked for; the lease below is
+        // what the runtime holds for it, and lapses when the page stops polling.
         public bool watching;
         public float lastSampleTime;
+
+        /// <summary>
+        /// How long a watch lasts without a poll. Past it the machine stops recording; the next poll
+        /// starts it again.
+        /// </summary>
+        public const float WatchLeaseSeconds = 5f;
+
+        // The machine this session's watch is recording, and when that lapses (realtime).
+        ScriptMachine watchedMachine;
+        float watchLeaseUntil;
+
+        /// <summary>True while this session's watch is making a machine record.</summary>
+        public bool HoldsWatch => !ReferenceEquals(watchedMachine, null);
+
+        /// <summary>
+        /// Start or renew this session's watch on its target machine, for another
+        /// <see cref="WatchLeaseSeconds"/>, moving it if the target now resolves to a different machine.
+        /// </summary>
+        /// <returns>The target machine, or null when it does not resolve (nothing is then recorded).</returns>
+        public ScriptMachine RenewWatch()
+        {
+            var machine = MachineDirectory.Resolve(target);
+            if (!ReferenceEquals(machine, watchedMachine))
+            {
+                DropWatch();
+                if (machine != null)
+                {
+                    ScriptGraphDebugProvider.Watch(machine);
+                    watchedMachine = machine;
+                }
+            }
+            watchLeaseUntil = Time.realtimeSinceStartup + WatchLeaseSeconds;
+            return machine;
+        }
+
+        /// <summary>Stop this session's watch, if it holds one. <see cref="watching"/> stays as the page set it.</summary>
+        public void DropWatch()
+        {
+            if (ReferenceEquals(watchedMachine, null)) return;
+            ScriptGraphDebugProvider.Unwatch(watchedMachine);
+            watchedMachine = null;
+        }
+
+        /// <summary>
+        /// Drop the watch if its lease ran out (the page stopped polling) or its machine was destroyed.
+        /// </summary>
+        /// <returns>Whether the session still holds a watch.</returns>
+        public bool ExpireWatch(float now)
+        {
+            if (ReferenceEquals(watchedMachine, null)) return false;
+            if (now > watchLeaseUntil || watchedMachine == null)
+            {
+                DropWatch();
+                return false;
+            }
+            return true;
+        }
 
         public static ScriptGraphSession OpenFromMachine(string sessionId, ScriptMachine machine, TargetRef target)
         {
@@ -366,6 +424,8 @@ namespace BS
 
         public void Dispose()
         {
+            // Every way a session ends comes through here, so none leaves its machine recording.
+            DropWatch();
             DisposeStaging();
         }
 

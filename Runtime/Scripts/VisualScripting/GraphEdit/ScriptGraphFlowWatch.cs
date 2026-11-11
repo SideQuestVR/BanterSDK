@@ -8,18 +8,57 @@ using UnityObject = UnityEngine.Object;
 namespace BS
 {
     /// <summary>
-    /// Installs a runtime debug-data provider so UVS's own flow recording (per-connection and
-    /// per-unit lastInvokeTime, per-value-connection lastValue) runs in the player, where the
-    /// editor's provider is absent. Chained: in editor play mode the editor's binding wins, so
+    /// Runtime debug-data provider for flow watching: UVS's own flow recording (per-connection and
+    /// per-unit lastInvokeTime, per-value-connection lastValue) runs in the player only for the
+    /// machines a session is watching. Chained: in editor play mode the editor's binding wins, so
     /// UVS's graph window debugging is untouched.
     /// </summary>
+    /// <remarks>
+    /// A root with no debug data records nothing, which is how stock UVS runs every graph in a
+    /// player. Until 2026-11 this provider gave EVERY root debug data, so every machine in every
+    /// world paid for recording on every unit, control pulse and value fetch, all the time, with
+    /// nothing reading it (Backrooms on Quest 3: 57.3 FPS against 59.8 / 61.4 watch-scoped).
+    /// </remarks>
     public static class ScriptGraphDebugProvider
     {
+        // Debug data, only ever for watched roots.
         static readonly Dictionary<IGraphRoot, GraphDebugData> data =
             new Dictionary<IGraphRoot, GraphDebugData>();
 
+        // How many sessions watch each root.
+        static readonly Dictionary<IGraphRoot, int> watchers = new Dictionary<IGraphRoot, int>();
+
         static bool installed;
-        static int fetchesSincePrune;
+
+        /// <summary>True while at least one session is watching <paramref name="root"/>.</summary>
+        public static bool IsWatched(IGraphRoot root) => root != null && watchers.ContainsKey(root);
+
+        /// <summary>Start recording for <paramref name="root"/>. Counted: each call needs its own <see cref="Unwatch"/>.</summary>
+        public static void Watch(IGraphRoot root)
+        {
+            if (root == null) return;
+            watchers.TryGetValue(root, out var count);
+            watchers[root] = count + 1;
+            if (count == 0)
+            {
+                // The machine's pointers were built without debug data; have them ask again.
+                GraphPointer.InvalidateDebugData();
+            }
+        }
+
+        /// <summary>Undo one <see cref="Watch"/>. The last one stops recording and drops the root's data.</summary>
+        public static void Unwatch(IGraphRoot root)
+        {
+            if (root == null || !watchers.TryGetValue(root, out var count)) return;
+            if (count > 1)
+            {
+                watchers[root] = count - 1;
+                return;
+            }
+            watchers.Remove(root);
+            data.Remove(root);
+            GraphPointer.InvalidateDebugData();
+        }
 
         /// <summary>
         /// Forget a root's debug data, so the next fetch builds it for the graph now installed.
@@ -27,11 +66,30 @@ namespace BS
         /// <remarks>
         /// Keyed on the ROOT, and a graph swap keeps the same root (the machine) while replacing
         /// its graph — so without this the swapped-in graph was handed the debug data built for the
-        /// graph it replaced, and every old element's data stayed referenced for the session.
+        /// graph it replaced, and every old element's data stayed referenced for the session. The
+        /// machine re-caches its reference during the swap, from the old data, so the pointers are
+        /// told to ask again.
         /// </remarks>
         public static void Release(IGraphRoot root)
         {
-            if (root != null) data.Remove(root);
+            if (root != null && data.Remove(root))
+            {
+                GraphPointer.InvalidateDebugData();
+            }
+        }
+
+        /// <summary>
+        /// The runtime binding: debug data for a watched root, null (no recording) for any other.
+        /// </summary>
+        public static IGraphDebugData FetchRuntime(IGraphRoot root)
+        {
+            if (root == null || !watchers.ContainsKey(root)) return null;
+            if (!data.TryGetValue(root, out var debugData))
+            {
+                debugData = new GraphDebugData(root.childGraph);
+                data[root] = debugData;
+            }
+            return debugData;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -40,36 +98,7 @@ namespace BS
             if (installed) return;
             installed = true;
             var previous = GraphPointer.fetchRootDebugDataBinding;
-            GraphPointer.fetchRootDebugDataBinding = root =>
-            {
-                var existing = previous?.Invoke(root);
-                if (existing != null) return existing;
-                // Roots are usually Machines (UnityEngine.Objects); prune entries whose
-                // root has been destroyed so a long session doesn't retain every dead
-                // machine's per-element debug data. Amortized: every 64th fetch.
-                if (++fetchesSincePrune >= 64)
-                {
-                    fetchesSincePrune = 0;
-                    var dead = new List<IGraphRoot>();
-                    foreach (var pair in data)
-                    {
-                        if (pair.Key is UnityEngine.Object obj && obj == null)
-                        {
-                            dead.Add(pair.Key);
-                        }
-                    }
-                    foreach (var key in dead)
-                    {
-                        data.Remove(key);
-                    }
-                }
-                if (!data.TryGetValue(root, out var debugData))
-                {
-                    debugData = new GraphDebugData(root.childGraph);
-                    data[root] = debugData;
-                }
-                return debugData;
-            };
+            GraphPointer.fetchRootDebugDataBinding = root => previous?.Invoke(root) ?? FetchRuntime(root);
         }
     }
 
@@ -102,7 +131,8 @@ namespace BS
             };
 
             if (!session.watching) return result;
-            var machine = MachineDirectory.Resolve(session.target);
+            // Each poll keeps the session's watch lease alive, and takes it again after one ran out.
+            var machine = session.RenewWatch();
             if (machine == null || machine.graph == null) return result;
 
             var pointer = machine.GetReference();

@@ -54,7 +54,11 @@ Applied graphs are checked against the allow list, nested graphs included: a bat
 
 Unit `type` strings and port keys are exactly as the view-model reports them — each unit in `vm.units` lists its `id`, `type`, `title`, `pos` plus `controlIn`, `controlOut`, `valueIn` and `valueOut` ports, each with its `key`. Connections are listed as `[[sourceId, sourcePort], [destinationId, destinationPort]]` pairs under `vm.connections.control` and `vm.connections.value`.
 
-**Flow watching:** `watch(sessionId, true)` turns on the sampler, then each `watchPoll(sessionId)` returns a delta `{ t, live, units, control, values }` for the session's live machine:
+**Flow watching:** `watch(sessionId, true)` turns on the sampler, then each `watchPoll(sessionId)` returns a delta `{ t, live, units, control, values }` for the session's live machine.
+
+Only a watched machine records what runs; every other machine runs without that cost. A watch lasts 5 seconds after the last `watchPoll`, so poll at least that often while you show it. If polling stops (the page closed, or the player left), the machine stops recording. The next `watchPoll` starts it again, with nothing recorded for the gap. `watch(sessionId, false)` or closing the session ends that session's watch at once; the machine stops recording when no session is watching it.
+
+Each delta holds:
 
 | Field | What it holds |
 |---|---|

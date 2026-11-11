@@ -375,13 +375,27 @@ namespace BS
             public bool enabled;
         }
 
+        /// <summary>
+        /// Turn flow watching on or off for a session. Only a watched machine records debug data
+        /// (<see cref="ScriptGraphDebugProvider"/>), and only while its page keeps polling: a watch
+        /// lapses <see cref="ScriptGraphSession.WatchLeaseSeconds"/> after the last poll.
+        /// </summary>
         string Watch(string payloadJson)
         {
             var body = JsonConvert.DeserializeObject<WatchBody>(payloadJson);
             var session = Require(body?.sessionId);
             session.watching = body.enabled;
+            if (body.enabled)
+            {
+                session.RenewWatch();
+            }
+            else
+            {
+                session.DropWatch();
+            }
             // Same clock UVS stamps lastInvokeTime with (see ScriptGraphFlowWatch.Poll).
             session.lastSampleTime = EditorTimeBinding.time;
+            StartWatchTick();
             return JsonConvert.SerializeObject(new { ok = true });
         }
 
@@ -389,7 +403,47 @@ namespace BS
         {
             var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
             var session = Require(body?.sessionId);
-            return ScriptGraphFlowWatch.Poll(session).ToString(Formatting.None);
+            var reply = ScriptGraphFlowWatch.Poll(session).ToString(Formatting.None);
+            StartWatchTick();
+            return reply;
+        }
+
+        // True while OnBeforeRenderTick is subscribed. It is only while some session holds a watch,
+        // so a client nobody is debugging pays nothing for this.
+        bool watchTicking;
+
+        void StartWatchTick()
+        {
+            if (watchTicking) return;
+            foreach (var session in sessions.Values)
+            {
+                if (!session.HoldsWatch) continue;
+                Application.onBeforeRender += OnBeforeRenderTick;
+                watchTicking = true;
+                return;
+            }
+        }
+
+        void OnBeforeRenderTick() => Tick(Time.realtimeSinceStartup);
+
+        /// <summary>
+        /// Lapse watches whose page stopped polling, or whose machine was destroyed, so a page that
+        /// closed or crashed without saying so does not leave a machine recording. The tick
+        /// unsubscribes itself once no session holds a watch.
+        /// </summary>
+        /// <param name="now">Realtime, the clock leases are taken on (<c>Time.realtimeSinceStartup</c>).</param>
+        public void Tick(float now)
+        {
+            var anyHeld = false;
+            foreach (var session in sessions.Values)
+            {
+                if (session.ExpireWatch(now)) anyHeld = true;
+            }
+            if (!anyHeld && watchTicking)
+            {
+                Application.onBeforeRender -= OnBeforeRenderTick;
+                watchTicking = false;
+            }
         }
 
         public void CloseSessionsFor(string bid)
