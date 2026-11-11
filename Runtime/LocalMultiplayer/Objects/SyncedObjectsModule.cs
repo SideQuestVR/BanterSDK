@@ -20,9 +20,9 @@ namespace BS.LocalMultiplayer.Objects
     /// bridges it to PacketParty. For each authored <see cref="BSSyncedObject"/> (announced via <c>OnSyncedObject</c>) it
     /// attaches a <see cref="LocalNetworkObject"/> scene-declared under the object's <see cref="BSObjectId"/> and a
     /// <see cref="LocalSyncedTransform"/>, plus the physics handoff, the grab components and the safety net.
-    /// Ownership: <c>OnTakeOwnership</c> → Acquire, <c>NSODoIOwn</c> → IsOwned, plus take-ownership on collision and on
-    /// grab. <c>syncRotation</c>, <c>takeOwnershipOnCollision</c>, <c>takeOwnershipOnGrab</c> and
-    /// <c>kinematicIfNotOwned</c> are read, as in production: <c>syncPosition</c> is ignored.
+    /// Ownership: <c>OnTakeOwnership</c> → Acquire, <c>NSODoIOwn</c> → IsOwned, plus take-ownership on approach, on
+    /// collision and on grab. <c>syncRotation</c>, <c>takeOwnershipOnProximity</c>, <c>takeOwnershipOnCollision</c>,
+    /// <c>takeOwnershipOnGrab</c> and <c>kinematicIfNotOwned</c> are read, as in production: <c>syncPosition</c> is ignored.
     /// </summary>
     [LocalModule(ModuleOrder.SyncedObjects)]
     [DisallowMultipleComponent]
@@ -352,7 +352,7 @@ namespace BS.LocalMultiplayer.Objects
                 go.SetActive(wasActive);
             }
             Debug.Log($"[LocalMP][SyncedObjects] Bound '{go.name}' → id={objectId.Id} (rigidbody={entry.Body != null}, " +
-                      $"syncRotation={bso.SyncRotation}, collisionOwnership={bso.TakeOwnershipOnCollision}).");
+                      $"syncRotation={bso.SyncRotation}, collisionOwnership={bso.TakeOwnershipOnCollision}, proximityOwnership={bso.TakeOwnershipOnProximity}).");
             NoteQuirks(bso, entry.Body);
             if (_takeWhenReady.Remove(bso)) TakeOwnership(entry.NetworkObject, waited: true);
             if (_rideWhenReady.Remove(bso)) TakeForSeat(bso);
@@ -433,12 +433,13 @@ namespace BS.LocalMultiplayer.Objects
             entry.SyncTransform = syncTransform;
 
             // Physics handoff: velocity preservation on ownership transfer + optimistic take-ownership
-            // on collision (fixes the brick-wall / stops-dead effect). Added for physics objects and any
-            // object that opts into collision ownership.
-            if (hasRigidbody || bso.TakeOwnershipOnCollision)
+            // on approach and/or contact (fixes the brick-wall / stops-dead effect). Added for physics objects
+            // and any object that opts into either.
+            if (hasRigidbody || bso.TakeOwnershipOnCollision || bso.TakeOwnershipOnProximity)
             {
                 entry.Handoff = go.AddComponent<SyncedObjectPhysicsHandoff>();
-                entry.Handoff.Configure(OwnershipCollisionTags, bso.TakeOwnershipOnCollision, OwnershipProximityMargin);
+                entry.Handoff.Configure(OwnershipCollisionTags, bso.TakeOwnershipOnCollision, bso.TakeOwnershipOnProximity,
+                    OwnershipProximityMargin);
             }
 
             // Grab ownership: LocalGrabbable lets LocalGrabNetworkBridge atomically acquire+lock the
@@ -662,12 +663,12 @@ namespace BS.LocalMultiplayer.Objects
                 NoteOnce(diagnostics, "objects.quirk.ignoredFlags",
                     $"'{bso.name}' sets syncPosition=false: it is ignored, as in the Banter client.");
             }
-            if (rb != null && rb.isKinematic && bso.TakeOwnershipOnCollision && !bso.KinematicIfNotOwned)
+            if (rb != null && rb.isKinematic && (bso.TakeOwnershipOnCollision || bso.TakeOwnershipOnProximity) && !bso.KinematicIfNotOwned)
             {
                 NoteOnce(diagnostics, "objects.quirk.kinematicClaim",
-                    $"'{bso.name}' is a kinematic Rigidbody with takeOwnershipOnCollision: walking or flying into it claims it and " +
-                    "turns it dynamic, as in the Banter client. Tick Kinematic If Not Owned to keep it kinematic, or turn " +
-                    "takeOwnershipOnCollision off on vehicles and seats.");
+                    $"'{bso.name}' is a kinematic Rigidbody with takeOwnershipOnCollision/OnProximity: walking or flying into or near it " +
+                    "claims it and turns it dynamic, as in the Banter client. Tick Kinematic If Not Owned to keep it kinematic, or " +
+                    "turn both off on vehicles and seats.");
             }
             NoteOnce(diagnostics, "objects.quirk.teleportSlide",
                 "Teleported synced objects slide to their new place on the other players: tf.objects frames carry no discontinuity. " +
@@ -686,7 +687,7 @@ namespace BS.LocalMultiplayer.Objects
         {
             if (!Physics.GetIgnoreLayerCollision(SyncedObjectPhysicsHandoff.ProximityLayer, PhysicsPlayerLayer)) return;
             const string message = "The physics collision matrix ignores Ignore Raycast vs PhysicsPlayer, so walking into synced " +
-                                   "objects can't claim them (takeOwnershipOnCollision). Enable that pair in Project Settings > Physics.";
+                                   "objects can't claim them (takeOwnershipOnProximity). Enable that pair in Project Settings > Physics.";
             Debug.LogWarning("[LocalMP][SyncedObjects] " + message);
             if (_host != null && _host.Diagnostics != null)
             {

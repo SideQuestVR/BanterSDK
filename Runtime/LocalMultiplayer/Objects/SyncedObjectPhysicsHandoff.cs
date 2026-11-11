@@ -22,13 +22,14 @@ namespace BS.LocalMultiplayer.Objects
     ///    from its networked motion and, on the kinematic→dynamic authority flip (detected in
     ///    FixedUpdate), re-apply it so momentum carries through instead of the object stopping dead.
     ///
-    /// 2. OPTIMISTIC OWNERSHIP via a PROXIMITY TRIGGER — a non-owner's body is kinematic (an immovable
-    ///    wall). OnCollisionEnter is too late: by the time it fires the solver has already stopped you
-    ///    that step. So a slightly-larger trigger fires on APPROACH; we optimistically disable the
+    /// 2. OPTIMISTIC OWNERSHIP via a PROXIMITY TRIGGER (BSSyncedObject.takeOwnershipOnProximity) — a non-owner's
+    ///    body is kinematic (an immovable wall). OnCollisionEnter is too late: by the time it fires the solver has
+    ///    already stopped you that step. So a slightly-larger trigger fires on APPROACH; we optimistically disable the
     ///    LocalSyncedTransform (it re-asserts kinematic every frame), go dynamic with the
     ///    preserved velocity, and Acquire — so by the time your body actually contacts the object it's
     ///    already dynamic and physics resolves the push naturally. Granted → re-enable (publish live
-    ///    sim); denied → re-enable (re-kinematics + resnaps to the true owner).
+    ///    sim); denied → re-enable (re-kinematics + resnaps to the true owner). Without it, an object that takes
+    ///    ownership on collision is claimed the same way on first contact (still for that one step).
     ///
     /// 3. NO YEETS — a jump (a reset, a fall respawn, a late joiner's snap) reads as a huge speed, so a speed past
     ///    <see cref="TeleportSpeed"/> is never carried into a new owner's body, and what is carried is capped at
@@ -67,7 +68,8 @@ namespace BS.LocalMultiplayer.Objects
         private const float SnapSpin = 100f;
 
         private string[] _localPlayerTags = DefaultTags;
-        private bool _collisionOwnership;
+        private bool _collisionOwnership; // claim on contact
+        private bool _proximityOwnership; // claim on approach (the trigger)
         private float _proximityMargin = 0.3f;
 
         [NonSerialized] bool _live;
@@ -107,10 +109,11 @@ namespace BS.LocalMultiplayer.Objects
         private float _authoredMaxLinearVelocity;
         private float _authoredMaxAngularVelocity;
 
-        public void Configure(string[] localPlayerTags, bool collisionOwnership, float proximityMargin)
+        public void Configure(string[] localPlayerTags, bool collisionOwnership, bool proximityOwnership, float proximityMargin)
         {
             if (localPlayerTags != null && localPlayerTags.Length > 0) _localPlayerTags = localPlayerTags;
             _collisionOwnership = collisionOwnership;
+            _proximityOwnership = proximityOwnership;
             _proximityMargin = Mathf.Max(0f, proximityMargin);
             _live = true;
         }
@@ -143,7 +146,7 @@ namespace BS.LocalMultiplayer.Objects
                 _authoredDetection = _rigidbody.collisionDetectionMode;
             }
 
-            if (_collisionOwnership) AddProximityTrigger();
+            if (_proximityOwnership) AddProximityTrigger();
         }
 
         // Trigger sized to the object bounds + margin, so approach is detected BEFORE physical contact.
@@ -335,17 +338,20 @@ namespace BS.LocalMultiplayer.Objects
             return false;
         }
 
-        private void OnTriggerEnter(Collider other) => TryTakeOwnership(other);
-        // Fallback: catch the (rare) case of contact without a prior trigger enter (e.g. spawned in
-        // contact). Guards below make it a no-op if the proximity trigger already handled it.
-        private void OnCollisionEnter(Collision collision) => TryTakeOwnership(collision.collider);
+        private void OnTriggerEnter(Collider other) => TryTakeOwnership(other, contact: false);
+        // Contact: the claim for objects that take ownership on collision, and the fallback for the (rare) contact
+        // without a prior trigger enter (e.g. spawned in contact). Guards below make it a no-op if the proximity
+        // trigger already handled it.
+        private void OnCollisionEnter(Collision collision) => TryTakeOwnership(collision.collider, contact: true);
 
         /// <summary>The proximity child saw a collider enter (Unity may also report it here directly; the guards dedupe).</summary>
-        internal void OnProximityEnter(Collider other) => TryTakeOwnership(other);
+        internal void OnProximityEnter(Collider other) => TryTakeOwnership(other, contact: false);
 
-        private void TryTakeOwnership(Collider other)
+        // contact: a collision, not the approach trigger. Approach follows takeOwnershipOnProximity, contact
+        // takeOwnershipOnCollision, as in production.
+        private void TryTakeOwnership(Collider other, bool contact)
         {
-            if (!_live || !_collisionOwnership) return;
+            if (!_live || !(contact ? _collisionOwnership : _proximityOwnership)) return;
             // Already ours, so there is no claim to make, but a bump still wakes a resting body.
             if (RestHold != null && _netObj != null && _netObj.IsOwned && !_netObj.IsLocked && IsLocalPlayer(other)) RestHold.Wake();
             if (_netObj == null || !_netObj.IsBound || _netObj.IsOwned || _netObj.IsLocked) return;
