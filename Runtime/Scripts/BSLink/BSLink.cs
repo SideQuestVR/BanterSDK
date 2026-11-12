@@ -1371,6 +1371,16 @@ namespace BS
             Send(APICommands.EVENT + APICommands.BUTTON_RELEASED + MessageDelimiters.PRIMARY + (int)button + MessageDelimiters.SECONDARY + (int)side);
         }
 
+        public void OnPointerOverUI(bool isOverUI, HandSide side)
+        {
+            Send(APICommands.EVENT + APICommands.POINTER_OVER_UI + MessageDelimiters.PRIMARY + (isOverUI ? "1" : "0") + MessageDelimiters.SECONDARY + (int)side);
+        }
+
+        public void OnPlayerTeleported(Vector3 position, Vector3 rotation, bool isSpawn)
+        {
+            Send(APICommands.EVENT + APICommands.PLAYER_TELEPORTED + MessageDelimiters.PRIMARY + NumberFormat.Format(position.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(position.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(position.z) + MessageDelimiters.SECONDARY + NumberFormat.Format(rotation.x) + MessageDelimiters.SECONDARY + NumberFormat.Format(rotation.y) + MessageDelimiters.SECONDARY + NumberFormat.Format(rotation.z) + MessageDelimiters.SECONDARY + (isSpawn ? "1" : "0"));
+        }
+
         public void OnControllerAxisUpdate(HandSide hand, float x, float y)
         {
             Send(APICommands.EVENT + APICommands.CONTROLLER_AXIS_UPDATE + MessageDelimiters.PRIMARY + (int)hand + MessageDelimiters.SECONDARY + NumberFormat.Format(x, "F3") + MessageDelimiters.SECONDARY + NumberFormat.Format(y, "F3"));

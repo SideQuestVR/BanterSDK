@@ -859,6 +859,8 @@ namespace BS
             ApplyLook();
 
             _hand.OnRigTeleported(fromPosition, fromRotation, _head.position, _head.rotation);
+
+            if (_scene != null) _scene.PlayerTeleported(position, new Vector3(0f, rotation.y, 0f), isSpawn);
         }
 
         void OnClippingPlaneChanged(Vector2 planes)

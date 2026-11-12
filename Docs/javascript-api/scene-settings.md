@@ -137,9 +137,26 @@ await scene.AddPlayerForce(new BS.Vector3(0, 5, 0), BS.ForceMode.VelocityChange)
 await scene.SendHapticImpulse(0.5, 0.1, BS.HandSide.LEFT);
 ```
 
-- **`TeleportTo`** works in the app and in SDK Play Mode. It takes a fourth argument, `isSpawn`, which has no effect. In the app, if your space has no `SpawnPoint`, the first `TeleportTo` while it's still loading becomes its spawn point.
+- **`TeleportTo`** works in the app and in SDK Play Mode. It takes a fourth argument, `isSpawn`, which marks the teleport as a respawn for the `player-teleported` event. In the app, if your space has no `SpawnPoint`, the first `TeleportTo` while it's still loading becomes its spawn point.
 - **`AddPlayerForce`** only moves players in the app. With `VelocityChange` or `Acceleration` every part of the player gets the same push. `Impulse` and `Force` are shared out over the whole player by weight, 76 kg in all, so they need much bigger values.
 - **`SendHapticImpulse`** buzzes a VR controller. Nothing happens on desktop or in SDK Play Mode.
+
+### Teleport Event
+
+Your page hears every time the local player is teleported, once they have moved: by `TeleportTo`, a portal or BS Teleporter, a seat, arriving, respawning from the menu, or the app catching a fall out of the world. It fires in the app and in SDK Play Mode.
+
+```js
+scene.On("player-teleported", (e) => {
+    if (e.detail.isSpawn) resetGame(); // arrived, respawned, or caught falling
+    console.log(e.detail.position, e.detail.rotation);
+});
+```
+
+| `detail` | |
+|---|---|
+| `position` | Where they landed, a `BS.Vector3`. |
+| `rotation` | Which way they face, Euler degrees as a `BS.Vector3`; only `y` is used. |
+| `isSpawn` | True when they arrived, respawned from the menu or were caught falling out of the world, and for a `TeleportTo` with `isSpawn`. |
 
 ## Input Blocking & Controller Events
 
@@ -190,3 +207,18 @@ scene.On("trigger-axis-update", (e) => {
 | `button-pressed`, `button-released` | `button`: a `BS.ButtonType` (`TRIGGER`, `GRIP`, `PRIMARY` (A or X), `SECONDARY` (B or Y), `THUMBSTICKCLICK`). `side`: a `BS.HandSide` (`LEFT`, `RIGHT`). |
 | `controller-axis-update` | `hand`: a `BS.HandSide`. `x` and `y`: the thumbstick, -1 to 1 (left/right, down/up). Sent when the stick moves by more than 0.01. |
 | `trigger-axis-update` | `hand`: a `BS.HandSide`. `value`: how far the trigger is pressed, 0 to 1. Sent when it changes by more than 0.01. |
+
+### Pointer Over UI
+
+Unlike the controller events, this one fires on desktop and in SDK Play Mode too. It tells your page when one of the local player's pointers moves onto UI (a canvas or UI Toolkit panel, the app's or your space's, the radial menu included) or off it. UI doesn't stop your own input, so use it to pause a tool that reads the trigger or mouse while the player uses a panel.
+
+```js
+scene.On("pointer-over-ui", (e) => {
+    console.log(e.detail.isOverUI, e.detail.side);
+});
+```
+
+| `detail` | |
+|---|---|
+| `isOverUI` | True when the pointer moved onto UI, false when it left. |
+| `side` | A `BS.HandSide`. The mouse is `RIGHT`. |

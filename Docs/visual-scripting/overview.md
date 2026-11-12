@@ -105,6 +105,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 |------|---------|
 | On User Joined | A user joined the space. Outputs `User Info` (BSUser). Fires for you in every world you load, once the room's join has said whether you're a space admin, so `isSpaceAdmin` is already right |
 | On User Left | A user left the space. Outputs `User Info` (BSUser) |
+| On Player Teleported | You (the local player) were just teleported: by a script, a portal, a seat, arriving, respawning from the menu, or the app catching a fall out of the world. Outputs `Position`, `Rotation` (Euler degrees, only Y used) and `Is Spawn`, true for arriving, a respawn and a fall caught, and for a `Teleport To Location` with `Is Spawn` on. Use `Is Spawn` to reset a game when the player respawns |
 | On User State Value Changed | A participant's prop changed. Filter by `Key` (leave empty for all); outputs `Value`, `JSON`, `UserId`, `Is Local`, `Deleted` |
 | On User State Result | The outcome of a write you tagged with a `Request Id`. Outputs `Ok`, `Error`, `Key`, `JSON` |
 | On User State Error | **Any** failed user-state write, including uncorrelated ones. Filter by `Key`; outputs `Code`, `Message` |
@@ -203,7 +204,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Get User State Value | Read any participant's prop from the local mirror. `UserId Or Me` defaults to `"me"`; outputs `Value`, `JSON`, `Exists` |
 | Get Local User Language | The local user's language, such as `English` (empty in Play mode) |
 | Add Force To Player | Apply a physics force to the player, with a `Mode` (ForceMode). App only |
-| Teleport To Location | Teleport the player to `Position`, turned to face `Rotation` (degrees around Y) |
+| Teleport To Location | Teleport the player to `Position`, turned to face `Rotation` (degrees around Y). `Is Spawn` marks it as a respawn for On Player Teleported |
 | Lock Player Position | Stop the player moving and grabbing. App only |
 | Unlock Player Position | Release the lock |
 | Release Grab | Make the local player let go of `Object`, or of whatever the `Hand` (Both, Left or Right) holds when `Object` is empty. The object's `drop` event fires as for a normal drop. `Released` is true if something was let go |

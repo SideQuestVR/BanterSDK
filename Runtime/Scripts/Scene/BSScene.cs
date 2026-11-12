@@ -446,16 +446,39 @@ namespace BS
         /// One of the local player's pointers moved onto UI (a canvas or UI Toolkit panel, the host's or the world's)
         /// or off it: Visual Scripting's On Pointer Over UI. Hosts call it on each change, with the mouse as the right
         /// hand. Lets a world pause its own pointer input, which UI doesn't consume, while the player uses a panel.
+        /// The page gets it as the pointer-over-ui event.
         /// </summary>
         public void PointerOverUI(HandSide side, bool isOverUI)
         {
             try
             {
                 EventBus.Trigger("OnPointerOverUI", new CustomEventArgs("", new object[] { isOverUI, (int)side }));
+                if (link != null) link.OnPointerOverUI(isOverUI, side);
             }
             catch (Exception e)
             {
                 // Called from inside the host's pointer processing, which a world's graph must not stop.
+                Debug.LogException(e);
+            }
+        }
+
+        /// <summary>
+        /// The local player has just been teleported: Visual Scripting's On Player Teleported, and the page's
+        /// player-teleported event. Hosts call it once the player has moved, for every teleport: a script, a portal,
+        /// a seat, arriving, respawning from the menu, or the host catching a fall out of the world. isSpawn marks the
+        /// last three (and any teleport a world sends with Is Spawn), so a world can tell a respawn from the rest.
+        /// Rotation is Euler degrees; only y is used today.
+        /// </summary>
+        public void PlayerTeleported(Vector3 position, Vector3 rotation, bool isSpawn)
+        {
+            try
+            {
+                EventBus.Trigger("OnPlayerTeleported", new CustomEventArgs("", new object[] { position, rotation, isSpawn }));
+                if (link != null) link.OnPlayerTeleported(position, rotation, isSpawn);
+            }
+            catch (Exception e)
+            {
+                // Called from inside the host's teleport, which a world's graph must not stop.
                 Debug.LogException(e);
             }
         }
