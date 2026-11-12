@@ -128,7 +128,7 @@ Only the world that took the photo hears about its upload. If the player has lef
 
 ## Errors
 
-`scene.HostExtension` never rejects: when a photo isn't taken it resolves with `ok: false`, an `error` code and a `message`.
+`scene.HostExtension` never rejects: when a photo isn't taken it resolves with `ok: false` and an `error` code, and usually a `message` with more detail.
 
 | `error` | Meaning |
 |---|---|
