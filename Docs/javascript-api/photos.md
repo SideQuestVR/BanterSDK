@@ -90,7 +90,7 @@ A photo is only taken when:
 - **That click hasn't already taken a photo.** Each click allows one photo.
 - **The last photo was at least 2 seconds ago.**
 
-Your script runs for every player, but only the player who pressed the button can take a photo with that click, and the photo is always theirs. To take a photo of everyone in the booth, take it from the one camera: everyone in the shot is in the picture and tagged, unless they opted out. The photo goes to the player who pressed the button.
+Your script runs for every player, but only the player who pressed the button can take a photo with that click, and the photo is always theirs. To take a photo of everyone in the booth, take it from the one camera: everyone in the shot is in the picture and tagged, unless they opted out.
 
 ## Check first
 
