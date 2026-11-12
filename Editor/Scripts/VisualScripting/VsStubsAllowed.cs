@@ -6,6 +6,10 @@ namespace BS.SDKEditor
     public struct VsStubsAllowed
     {
         public static readonly string[] members = new string[] {
+            "BS.BSGrantXP.EventKey",
+            "BS.BSGrantXP.Grant",
+            "BS.BSGrantXP.GrantKey",
+            "BS.BSGrantXP.KeyIsValid",
             "BS.BSAOBaking._BakeAO",
             "BS.BanterAOBaking._BakeAO",
             "Banter.SDK.BSAOBaking._BakeAO",

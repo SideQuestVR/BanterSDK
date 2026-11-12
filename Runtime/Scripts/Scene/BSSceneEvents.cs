@@ -108,6 +108,14 @@ public class BSSceneEvents
     /// </summary>
     public UnityEvent<BSHostRequest> OnProgressionRequest = new UnityEvent<BSHostRequest>();
 
+    /// <summary>
+    /// A world says the local player earned an XP action, by event key (<see cref="BSGrantXP"/>, a
+    /// Visual Scripting unit or a page). Fire-and-forget: the SDK knows nothing about XP amounts or
+    /// hooks. The host app sends the key on the hook an admin bound to this world, and the server
+    /// rule for that key decides whether it pays, how much and how often. No handler means no XP.
+    /// </summary>
+    public UnityEvent<string> OnGrantXp = new UnityEvent<string>();
+
     public UnityEvent OnBanterUiPanelActiveChanged = new UnityEvent();
 
     /// <summary>A stored lighting payload arrived from the page (space load) for the
@@ -161,6 +169,7 @@ public class BSSceneEvents
         // Stop Event Listeners
         OnStateRequest.RemoveAllListeners();
         OnProgressionRequest.RemoveAllListeners();
+        OnGrantXp.RemoveAllListeners();
         OnSetUserProps.RemoveAllListeners();
         OnLoad.RemoveAllListeners();
         OnDomReady.RemoveAllListeners();

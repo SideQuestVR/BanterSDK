@@ -14,7 +14,6 @@ namespace BS.SDKEditor
             if (target is BSCone)
             {
                 var script = (BSCone)target;
-                // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
                 var path = AssetDatabase.GetAssetPath(script);
             }
         }
@@ -23,34 +22,11 @@ namespace BS.SDKEditor
         {
             var script = (BSCone)target;
             Editor editor = Editor.CreateEditor(script);
-            // script.gameObject.GetComponent<MeshFilter>().hideFlags = HideFlags.HideInInspector;
-            VisualElement myInspector = new VisualElement();
 
-            var _mainWindowStyleSheet = Resources.Load<StyleSheet>("BanterCustomInspector");
-            myInspector.styleSheets.Add(_mainWindowStyleSheet);
-
-            var title = new Label("PROPERTIES SEEN BY JS");
-            title.style.fontSize = 14;
-            myInspector.Add(title);
-            var seeFields = new Label("radius, height, radialSegments, heightSegments, openEnded, thetaStart, thetaLength, ");
-            seeFields.style.unityFontStyleAndWeight = FontStyle.Bold;
-            seeFields.style.flexWrap = Wrap.Wrap;
-            seeFields.style.whiteSpace = WhiteSpace.Normal;
-            seeFields.style.marginBottom = 10;
-            seeFields.style.marginTop = 10;
-            seeFields.style.color = Color.gray;
-            myInspector.Add(seeFields);
-
-            //#if GREENFIELD_PROJECT
-            var foldout = new Foldout();
-            foldout.text = "Available Properties";
-            IMGUIContainer inspectorIMGUI = new IMGUIContainer(() => { editor.OnInspectorGUI(); });
-            foldout.value = false;
-            foldout.Add(inspectorIMGUI);
-            myInspector.Add(foldout);
-            //#endif
-
-            return myInspector;
+            return BSComponentInspector.Build(
+                editor,
+                new string[] { "radius", "height", "radialSegments", "heightSegments", "openEnded", "thetaStart", "thetaLength" },
+                new string[] {  });
         }
     }
 }
