@@ -87,6 +87,12 @@ namespace BS.VisualScripting.UI.Helpers
                             continue;
                         }
 
+                        if (!HoldsElement(bridge, elementId))
+                        {
+                            LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Panel '{panel.name}' has no element '{elementId}', skipping");
+                            continue;
+                        }
+
                         // Try to get the formatted panel ID
                         var panelId = panel.GetFormattedPanelId();
                         LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Panel '{panel.name}' has ID '{panelId}' and bridge is ready");
@@ -191,6 +197,11 @@ namespace BS.VisualScripting.UI.Helpers
                             continue;
                         }
 
+                        if (!HoldsElement(bridge, elementId))
+                        {
+                            continue;
+                        }
+
                         // Try to get the formatted panel ID
                         var panelId = panel.GetFormattedPanelId();
 
@@ -222,6 +233,19 @@ namespace BS.VisualScripting.UI.Helpers
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Whether this panel holds the element, by ID or by name.
+        /// </summary>
+        /// <remarks>
+        /// Registration goes to that panel only. With several panels live, the first one found would
+        /// otherwise take it and drop it, since RegisterEvent only warns when the element isn't there.
+        /// A panel that isn't up yet holds nothing, so the retry waits for it.
+        /// </remarks>
+        private static bool HoldsElement(UIElementBridge bridge, string elementIdOrName)
+        {
+            return bridge.HasElement(bridge.ResolveElementIdOrName(elementIdOrName));
         }
 
         private static void LogVerbose(string nodeName, string message)
