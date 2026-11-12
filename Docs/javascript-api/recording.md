@@ -125,7 +125,7 @@ try {
 
 ## Camera feeds and monitors
 
-A camera feed is a camera in your world whose picture the app renders into a texture. Feeds can be shown on screens, recorded, and cut to program. Both parts are components you add in Unity (**Add Component**, then search for their names); scripts refer to feeds by their id.
+A camera feed is a camera in your world whose picture the app renders into a texture. Feeds can be shown on screens, recorded, and cut to program. A world can also take a player's [photo](photos.md) from one. Both parts are components you add in Unity (**Add Component**, then search for their names); scripts refer to feeds by their id.
 
 ### Camera Feed (`BSCameraFeed`)
 

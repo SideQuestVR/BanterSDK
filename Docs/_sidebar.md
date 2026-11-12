@@ -21,6 +21,7 @@
   - [User & Multiplayer](/javascript-api/user-multiplayer.md)
   - [Saving Data](/javascript-api/saving-data.md)
   - [Recording](/javascript-api/recording.md)
+  - [Photos](/javascript-api/photos.md)
 - Multiplayer
   - [Overview](/multiplayer/overview.md)
   - [Testing Multiplayer Locally](/multiplayer/local-testing.md)
