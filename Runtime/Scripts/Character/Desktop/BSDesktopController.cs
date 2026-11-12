@@ -100,6 +100,7 @@ namespace BS
         GameObject _clickTarget;
         GameObject _hoverTarget;
         PointerEventData _hoverPointer;
+        bool _overUI;
         readonly BSGripHologram _gripHologram = new BSGripHologram();
 
         bool _seated;
@@ -499,10 +500,12 @@ namespace BS
             if (_hand != null && _hand.IsActive)
             {
                 SetHoverTarget(null);
+                SetOverUI(false);
                 _hand.UpdateHeldGripHologram(_gripHologram, Time.unscaledDeltaTime);
                 return;
             }
             var target = ResolvePointerTarget(screenPoint, ray, out var hit);
+            SetOverUI(target == PressOwner.UI);
             if (_hoverPointer == null)
                 _hoverPointer = new PointerEventData(EventSystem.current) { pointerId = PointerInputModule.kMouseLeftId };
             _hoverPointer.position = screenPoint;
@@ -521,7 +524,17 @@ namespace BS
         void ClearHover()
         {
             SetHoverTarget(null);
+            SetOverUI(false);
             _gripHologram.Clear();
+        }
+
+        // The client's pointer reports the same: worlds pause their own mouse input while it's on a panel.
+        void SetOverUI(bool overUI)
+        {
+            if (_overUI == overUI)
+                return;
+            _overUI = overUI;
+            _scene?.PointerOverUI(HandSide.RIGHT, overUI);
         }
 
         void SetHoverTarget(GameObject target)

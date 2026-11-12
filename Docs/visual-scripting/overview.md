@@ -65,6 +65,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 | On Controller Button Released | Any controller button released. Outputs `Button Type` and `Hand Side` |
 | On Controller Axis Update | Thumbstick axis changed. Outputs `Hand Side`, `X Axis`, `Y Axis` |
 | On Trigger Axis Update | Trigger axis changed. Outputs `Hand Side` and `Trigger Value` |
+| On Pointer Over UI | One of the player's pointers moved onto UI (a canvas or UI Toolkit panel, the app's or the world's, the radial menu included) or off it. Outputs `Is Over UI` and `Hand Side`; the mouse is the right hand. UI doesn't stop a world's own input, so use it to pause a tool that reads the trigger or mouse directly while the player uses a panel |
 
 **Trigger events** (`Events > BS > Trigger`)
 

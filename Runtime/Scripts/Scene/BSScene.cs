@@ -441,6 +441,24 @@ namespace BS
             EventBus.Trigger("OnClick", new CustomEventArgs(UnityId(obj).ToString(), new object[] { point, normal }));
             link.OnClick(obj, point, normal);
         }
+
+        /// <summary>
+        /// One of the local player's pointers moved onto UI (a canvas or UI Toolkit panel, the host's or the world's)
+        /// or off it: Visual Scripting's On Pointer Over UI. Hosts call it on each change, with the mouse as the right
+        /// hand. Lets a world pause its own pointer input, which UI doesn't consume, while the player uses a panel.
+        /// </summary>
+        public void PointerOverUI(HandSide side, bool isOverUI)
+        {
+            try
+            {
+                EventBus.Trigger("OnPointerOverUI", new CustomEventArgs("", new object[] { isOverUI, (int)side }));
+            }
+            catch (Exception e)
+            {
+                // Called from inside the host's pointer processing, which a world's graph must not stop.
+                Debug.LogException(e);
+            }
+        }
         #endregion
 
         #region Spawn point
