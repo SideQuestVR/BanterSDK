@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="6ab88cbf53c894dcdd8273685d80972419478499cfec5f09de9499a52b97367d" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="a9f01d8a9ca471d1b2d1f69658b35893d880da7151e731530bebe869a647e5a6" mode="port" />
 // The room-state and user-state halves of PacketPartyClient that the state services sit on, with the signaling
 // socket replaced by ILocalSession:
 // - requests: BatchRoomStateAsync / RequestRoomStateRawAsync / PrepareRoomStateRequestAsync (:1985-1999, :2855-2887)

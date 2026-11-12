@@ -1,5 +1,7 @@
 # Scene API
 
+The scene singleton: what's in the space, waiting for it to load, finding and creating objects, shared state, sending players to other spaces and websites, and device checks.
+
 ## Getting the Scene
 
 ```js
@@ -181,7 +183,7 @@ Keys and values passed to `SetPublicSpaceProps`, `SetProtectedSpaceProps` and `S
 `¶ § | ‽ ¤`: a value containing one is cut short, stripped or dropped. The JSON API has no such limit, and
 neither do one-shots, browser messages or component properties.
 
-In Play mode on your own, space state and the JSON API need local multiplayer; see
+In Play mode on your own, space state is kept in memory until Play stops, and JSON user state needs local multiplayer; see
 [Playing without local multiplayer](../multiplayer/local-testing.md#playing-without-local-multiplayer).
 
 ### JSON space state
@@ -218,7 +220,7 @@ await scene.UserStateDelete("loadout");
 await scene.UserStateSet("status", "afk", { moderatorsCanWrite: true });
 ```
 
-Writes take no user id, because you can only ever write your own user state.
+Writes take no user id, because you can only ever write your own user state. `UserStateSet` replaces the whole value, so an object's members that you don't name are gone, and it settles once the server has answered: a refused write rejects. An object is kept as its members, so read `loadout.primary`, or use `UserStateGetAll`: `UserStateGet("loadout")` finds nothing.
 
 ### Errors
 
@@ -293,6 +295,23 @@ warning. The server picks the instance, as it does for a [portal](../components/
 space is loading, and that includes this space's own load, so call it once the player is in (from a player action, for
 example), not straight away on start-up. In SDK Play Mode it only logs where it would go. In a graph, use the **Go To
 URL** node (`BS > Space`).
+
+## Opening a Website
+
+```js
+// Offer the player a website in their menu browser
+scene.OpenPage("https://example.com/shop");
+```
+
+In the app, the player is asked first: a dialog names the site's host, and the page opens in their menu browser only if
+they choose Open. The Promise resolves once the request is passed on; it doesn't say whether the player opened the page.
+Only absolute `http` and `https` addresses of up to 2,048 characters are offered. Addresses with a user name or password
+in them, addresses on the player's own machine or network (unless your space is served from there), and SideQuest
+and AltspaceVR sign-in and account pages are refused with a warning in the Unity log. One dialog shows at a time, with a pause of a few seconds after each, and requests made
+while another dialog is open or the space is loading are dropped. Once the player has declined three times, the space
+can't ask again until they have been somewhere else. So call it from a player action, such as a click, not on start-up
+or in a loop. In SDK Play Mode nothing opens and the page's console warns that the call isn't supported. In a graph,
+use the **Menu Browser Open URL** node (`BS > Browser`).
 
 ## Deep Links
 

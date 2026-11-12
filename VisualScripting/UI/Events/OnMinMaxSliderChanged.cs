@@ -66,22 +66,24 @@ namespace BS.VisualScripting
             // Auto-register when graph starts, not when event arrives
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
-                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnMinMaxSliderChanged");
-                        _eventRegistered = true;
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+
+                            UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnMinMaxSliderChanged");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -146,8 +148,8 @@ namespace BS.VisualScripting
                     var parts = strValue.Split(',');
                     if (parts.Length >= 2)
                     {
-                        float.TryParse(parts[0].Trim(), out min);
-                        float.TryParse(parts[1].Trim(), out max);
+                        NumberFormat.TryParse(parts[0].Trim(), out min);
+                        NumberFormat.TryParse(parts[1].Trim(), out max);
                     }
                 }
 

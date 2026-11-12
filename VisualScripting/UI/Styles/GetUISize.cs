@@ -110,13 +110,20 @@ namespace BS.VisualScripting
                 {
                     result = args.arguments[0]?.ToString() ?? "";
                 }
-                EventBus.Unregister(new EventHook(eventName), callback);
             };
 
             EventBus.Register<CustomEventArgs>(new EventHook(eventName), callback);
 
             var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}";
-            UIElementBridge.HandleMessage(message);
+            try
+            {
+                // The bridge answers inline; when it doesn't (element gone, unknown style) the handler must not stay.
+                UIElementBridge.HandleMessage(message);
+            }
+            finally
+            {
+                EventBus.Unregister(new EventHook(eventName), callback);
+            }
 
             return result;
         }
@@ -125,37 +132,37 @@ namespace BS.VisualScripting
         {
             if (string.IsNullOrEmpty(value)) return (0f, SetUISize.LengthUnit.Pixel);
 
-            value = value.Trim().ToLower();
+            value = value.Trim().ToLowerInvariant();
 
             if (value == "auto") return (0f, SetUISize.LengthUnit.Auto);
 
             if (value.EndsWith("px"))
             {
                 var numStr = value.Replace("px", "").Trim();
-                if (float.TryParse(numStr, out float num))
+                if (NumberFormat.TryParse(numStr, out float num))
                     return (num, SetUISize.LengthUnit.Pixel);
             }
             else if (value.EndsWith("%"))
             {
                 var numStr = value.Replace("%", "").Trim();
-                if (float.TryParse(numStr, out float num))
+                if (NumberFormat.TryParse(numStr, out float num))
                     return (num, SetUISize.LengthUnit.Percent);
             }
             else if (value.EndsWith("em"))
             {
                 var numStr = value.Replace("em", "").Trim();
-                if (float.TryParse(numStr, out float num))
+                if (NumberFormat.TryParse(numStr, out float num))
                     return (num, SetUISize.LengthUnit.Em);
             }
             else if (value.EndsWith("rem"))
             {
                 var numStr = value.Replace("rem", "").Trim();
-                if (float.TryParse(numStr, out float num))
+                if (NumberFormat.TryParse(numStr, out float num))
                     return (num, SetUISize.LengthUnit.Rem);
             }
 
             // Default: try to parse as pixel value
-            if (float.TryParse(value, out float result))
+            if (NumberFormat.TryParse(value, out float result))
                 return (result, SetUISize.LengthUnit.Pixel);
 
             return (0f, SetUISize.LengthUnit.Pixel);

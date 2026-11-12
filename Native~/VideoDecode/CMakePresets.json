@@ -1,0 +1,31 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": { "major": 3, "minor": 21, "patch": 0 },
+  "configurePresets": [
+    {
+      "name": "win-x64",
+      "displayName": "Windows x64 (MSVC)",
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/win-x64",
+      "cacheVariables": {
+        "BSVD_UNITY_PLUGIN_API": "$env{BSVD_UNITY_PLUGIN_API}"
+      }
+    },
+    {
+      "name": "android-arm64",
+      "displayName": "Android arm64-v8a (Unity NDK)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/android-arm64",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "$env{BSVD_ANDROID_NDK}/build/cmake/android.toolchain.cmake",
+        "ANDROID_ABI": "arm64-v8a",
+        "ANDROID_PLATFORM": "android-26",
+        "ANDROID_STL": "c++_static",
+        "ANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES": "ON",
+        "BSVD_UNITY_PLUGIN_API": "$env{BSVD_UNITY_PLUGIN_API}"
+      }
+    }
+  ]
+}

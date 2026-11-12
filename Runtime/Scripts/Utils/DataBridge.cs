@@ -10,6 +10,16 @@ namespace BS
     /// </summary>
     public class DataBridge
     {
+        /// <summary>
+        /// Page requests with nothing behind them in this client: they're refused rather than acknowledged and dropped. A
+        /// host that implements one removes it from this set and listens to its event.
+        /// </summary>
+        public readonly HashSet<string> UnsupportedRequests = new HashSet<string>
+        {
+            APICommands.OPEN_PAGE, APICommands.SEND_MENU_BROWSER_MESSAGE, APICommands.START_TTS, APICommands.STOP_TTS,
+            APICommands.AI_IMAGE, APICommands.AI_MODEL, APICommands.BASE_64_TO_CDN, APICommands.SELECT_FILE,
+        };
+
         public Func<bool> IsSpaceFavourited = () => false;
         public Func<bool> IsSpaceOwner = () => false;
         public Func<BSSynced, BSObjectId, bool> NSODoIOwn = (_, _) => false;

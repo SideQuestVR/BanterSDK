@@ -93,11 +93,22 @@ namespace BS
         public async Task GetProperties()
         {
             var done = false;
-            _ = ObjectOnMainThread(component =>
+            // Awaited, so a throw reaches the caller (it used to vanish with the discarded task and hang below).
+            await ObjectOnMainThread(component =>
             {
+                // Destroyed since the page asked: nothing to refresh.
+                if (component == null)
+                {
+                    done = true;
+                    return;
+                }
                 component.SyncProperties(true, () => done = true);
             });
-            await new WaitUntil(() => done);
+            // The callback comes with the last property update; one that failed to apply never calls it, and one re-queued
+            // because its component went away only calls it when dropped. Answer with what there is rather than wait.
+            var deadline = Time.realtimeSinceStartup + 5f;
+            await new WaitUntil(() => done || Time.realtimeSinceStartup > deadline);
+            if (!done) Debug.LogWarning("[Banter] GetProperties gave up waiting for component " + cid);
         }
         public async Task CallMethod(string methodName, List<object> parameters, Action<object> callback)
         {

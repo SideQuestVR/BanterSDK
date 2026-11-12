@@ -9,7 +9,6 @@ using Debug = UnityEngine.Debug;
 using System.Collections;
 using SideQuest.Ora;
 using SideQuest.Ora.WebRTC;
-using Unity.VisualScripting;
 
 namespace BS
 {
@@ -115,7 +114,15 @@ namespace BS
                 oraView = viewGo.AddComponent<OraView>();
                 oraView.customInjectedJavascript = Resources.Load<TextAsset>("injection");
                 oraView.injectShims = true;
+                // The space view's link profile (the large rings). Before Awake, which opens its channel.
+                oraView.linkProfile = OraChannelProfile.SdkView;
                 viewGo.SetActive(true);
+            }
+            else
+            {
+                // A view that came with the prefab (Greenfield's Creator SDK prefab): this Awake (order -1001) runs
+                // before the view's, which opens its channel when it registers its window.
+                oraView.linkProfile = OraChannelProfile.SdkView;
             }
 
             oraView.openBrowser = openBrowser;
@@ -154,24 +161,17 @@ namespace BS
                 yield return new WaitForSeconds(2);
             }
             // Ora's web server serves Assets/WebRoot on this port (see BeforeEditorPlay).
-            scene.link.pipe.view.LoadUrl("http://localhost:" + port);
+            var pageUrl = "http://localhost:" + port;
+            // Recorded as BSScene.LoadUrl records a space's URL, which this load doesn't go through: relative
+            // glTF URLs resolve on it.
+            scene.CurrentUrl = pageUrl;
+            scene.link.pipe.view.LoadUrl(pageUrl);
         }
 
         // Teleports are handled by BSDesktopController, which owns the local user.
         void SetupExtraEvents()
         {
-            // Argument order the OnSpaceStatePropsChanged node reads: (value, isPublic). A network
-            // host raises it from the room's echo instead, so it isn't raised twice.
-            scene.events.OnPublicSpaceStateChanged.AddListener((key, value) =>
-            {
-                if (BSNetworkHost.Active) return;
-                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, true }));
-            });
-            scene.events.OnProtectedSpaceStateChanged.AddListener((key, value) =>
-            {
-                if (BSNetworkHost.Active) return;
-                EventBus.Trigger("OnSpaceStatePropsChanged", new CustomEventArgs(key, new object[] { value, false }));
-            });
+            SoloSpaceState.Attach(scene.events, () => scene.link);
         }
 
         private void OnApplicationQuit()
@@ -181,8 +181,11 @@ namespace BS
 
         void OnDestroy()
         {
-            scene.state = SceneState.NONE;
-            scene.Destroy();
+            if (scene != null)
+            {
+                scene.state = SceneState.NONE;
+                scene.Destroy();
+            }
             try
             {
                 var unitySched = UnityMainThreadTaskScheduler.Default;
@@ -320,7 +323,8 @@ namespace BS
 
         void FixedUpdate()
         {
-            scene.FixedUpdate();
+            // BSScene isn't serializable, so a script reload in Play leaves this null.
+            scene?.FixedUpdate();
         }
 
 #if UNITY_EDITOR && !GREENFIELD_PROJECT

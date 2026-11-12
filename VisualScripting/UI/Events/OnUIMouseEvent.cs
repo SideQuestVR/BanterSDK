@@ -66,38 +66,40 @@ namespace BS.VisualScripting
             // Auto-register when graph starts
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    var targetMouseEvent = flow.GetValue<UIMouseEventType>(mouseEventType);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
-                        // Map mouse event type to UIEventType
-                        UIEventType eventType = targetMouseEvent switch
-                        {
-                            UIMouseEventType.Click => UIEventType.Click,
-                            UIMouseEventType.DoubleClick => UIEventType.DoubleClick,
-                            UIMouseEventType.MouseDown => UIEventType.MouseDown,
-                            UIMouseEventType.MouseUp => UIEventType.MouseUp,
-                            UIMouseEventType.MouseMove => UIEventType.MouseMove,
-                            UIMouseEventType.MouseEnter => UIEventType.MouseEnter,
-                            UIMouseEventType.MouseLeave => UIEventType.MouseLeave,
-                            UIMouseEventType.MouseOver => UIEventType.MouseOver,
-                            UIMouseEventType.MouseOut => UIEventType.MouseOut,
-                            _ => UIEventType.Click
-                        };
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        var targetMouseEvent = flow.GetValue<UIMouseEventType>(mouseEventType);
 
-                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIMouseEvent");
-                        _eventRegistered = true;
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            // Map mouse event type to UIEventType
+                            UIEventType eventType = targetMouseEvent switch
+                            {
+                                UIMouseEventType.Click => UIEventType.Click,
+                                UIMouseEventType.DoubleClick => UIEventType.DoubleClick,
+                                UIMouseEventType.MouseDown => UIEventType.MouseDown,
+                                UIMouseEventType.MouseUp => UIEventType.MouseUp,
+                                UIMouseEventType.MouseMove => UIEventType.MouseMove,
+                                UIMouseEventType.MouseEnter => UIEventType.MouseEnter,
+                                UIMouseEventType.MouseLeave => UIEventType.MouseLeave,
+                                UIMouseEventType.MouseOver => UIEventType.MouseOver,
+                                UIMouseEventType.MouseOut => UIEventType.MouseOut,
+                                _ => UIEventType.Click
+                            };
+
+                            UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIMouseEvent");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -196,8 +198,8 @@ namespace BS.VisualScripting
 
             var parts = value.Split(',');
             if (parts.Length >= 2 &&
-                float.TryParse(parts[0].Trim(), out var x) &&
-                float.TryParse(parts[1].Trim(), out var y))
+                NumberFormat.TryParse(parts[0].Trim(), out var x) &&
+                NumberFormat.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;

@@ -13,7 +13,7 @@ namespace BS.LocalMultiplayer
     /// any scene object has started, it: stamps and announces the local user, so "me" resolves as in
     /// production; creates the relay session; adds every [LocalModule] of this assembly and installs them in
     /// order, each attaching its SDK listeners and delegates at once; and only then sets
-    /// BSNetworkHost.Active, so the SDK's offline stand-ins (the Visual Scripting space-state loopback, the
+    /// BSNetworkHost.Active, so the SDK's offline stand-ins (the solo space state, the
     /// per-page user replay) step aside only when their replacements are in place. If any module fails, all
     /// of it comes off again and the SDK behaves as it does offline.
     /// It stops when Play stops, the editor quits, or scripts reload (which also ends the rest of the SDK's

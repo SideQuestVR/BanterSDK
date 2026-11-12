@@ -6,6 +6,8 @@
 
 All bridge calls are async and return Promises (the `toBase64` / `fromBase64` helpers are synchronous). In the app, a call that fails resolves with an object whose `error` holds the reason (for example `No session 's3'` or `Machine not found`) rather than rejecting, so check for it.
 
+!> **Whose graphs a page can change.** The world's own machines, the ones its build brought, change only for the world's owner (and SideQuest staff), who are also the people who can open the scene editor. For anyone else, `apply`, `applyEnvelope`, `revertMachine`, `removeMachine` and `pause` on them resolve with `code: "refused"`. Any visitor's page can change the machines it made itself with `create`, which is what restoring a saved scene's graphs needs. Reading (`list`, `open`, staging edits, `save`) is open to every page.
+
 Machines are addressed by a target: `{ bid, machineIndex }` — the object's BS id plus the index of the Script Machine on that object. Each row returned by `list()` describes one machine: `bid`, `machineIndex`, `objectName`, `path`, `active`, `source` (`"embed"` or `"macro"`), `graphTitle`, `unitCount`, `blocked` (the graph's top level contains nodes outside the app's allow list), `paused` and `overridden` (a graph has been applied over the one the world was built with). A target can also carry the row's `path`, which is used when the `bid` doesn't find the object.
 
 | Function | Returns | Description |
@@ -52,7 +54,11 @@ Applied graphs are checked against the allow list, nested graphs included: a bat
 
 Unit `type` strings and port keys are exactly as the view-model reports them — each unit in `vm.units` lists its `id`, `type`, `title`, `pos` plus `controlIn`, `controlOut`, `valueIn` and `valueOut` ports, each with its `key`. Connections are listed as `[[sourceId, sourcePort], [destinationId, destinationPort]]` pairs under `vm.connections.control` and `vm.connections.value`.
 
-**Flow watching:** `watch(sessionId, true)` turns on the sampler, then each `watchPoll(sessionId)` returns a delta `{ t, live, units, control, values }` for the session's live machine:
+**Flow watching:** `watch(sessionId, true)` turns on the sampler, then each `watchPoll(sessionId)` returns a delta `{ t, live, units, control, values }` for the session's live machine.
+
+Only a watched machine records what runs; every other machine runs without that cost. A watch lasts 5 seconds after the last `watchPoll`, so poll at least that often while you show it. If polling stops (the page closed, or the player left), the machine stops recording. The next `watchPoll` starts it again, with nothing recorded for the gap. `watch(sessionId, false)` or closing the session ends that session's watch at once; the machine stops recording when no session is watching it.
+
+Each delta holds:
 
 | Field | What it holds |
 |---|---|

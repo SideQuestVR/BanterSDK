@@ -1,5 +1,5 @@
-// <mirror source="Assets/Systems/Avatar/Nametags/RemoteNametag.cs" sha256="0f0538ea918abad9e64d46d08120144c9b84b582d0344a46c109cbd9bdbdc7a2" mode="port" />
-// <mirror source="Assets/Systems/Avatar/Nametags/NametagService.cs" sha256="ed4b08022c5ca1479d56c7f67df3a22003d46161aec781efba4c0d6777766199" mode="port" />
+// <mirror source="Assets/Systems/Avatar/Nametags/RemoteNametag.cs" sha256="8c4752df803ed43373190084e59cede4a6fff0db241cc2454f7fbe59b51b8e5e" mode="port" />
+// <mirror source="Assets/Systems/Avatar/Nametags/NametagService.cs" sha256="26194cf1a46bb882bbfdfbfb18c21f74d2f00c2d56bc4abd3911f7fdbbd97a6d" mode="port" />
 // RemoteNametag's placement and visibility (:56-88) with the "Always" display mode, hidden while the space turns
 // nametags off (NametagService.SceneAllowsNametags, :372-379), at NametagService's size and height (:31, :34) and
 // parented under the player for its lifetime (:179-182). The baked pill texture is replaced by a

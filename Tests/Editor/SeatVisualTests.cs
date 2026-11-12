@@ -313,7 +313,7 @@ namespace BS.SDKEditor.Tests
         {
             var material = Resources.Load<Material>("CreatorConveniences/Materials/SeatMarker");
             Assert.That(material, Is.Not.Null);
-            Assert.That(material.shader.name, Is.EqualTo("Banter/Seat Marker"));
+            Assert.That(material.shader.name, Is.EqualTo("BS/Seat Marker"));
             Assert.That(material.passCount, Is.EqualTo(1));
             Assert.That(material.GetTexturePropertyNames(), Is.Empty);
             Assert.That(ShaderUtil.ShaderHasError(material.shader), Is.False);

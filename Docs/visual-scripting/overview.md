@@ -1,5 +1,7 @@
 # Visual Scripting
 
+Script a world with node graphs instead of code: setup, a first graph, the SDK's BS nodes, build checks, samples, and controlling graphs from JavaScript.
+
 ## Overview
 
 The SDK ships Unity Visual Scripting plus its own library of BS nodes: node graphs that run on `Script Machine` components. Graphs execute inside the space at runtime — you can build interactive behaviour (buttons, levers, doors, vehicles, scoreboards) without writing any JavaScript.
@@ -25,15 +27,15 @@ A cube that rotates when clicked:
 2. In the Inspector, set the cube's **Layer** to **UI**. Only the UI and Menu layers can be clicked, in the headset and in Play mode (see [Layers](../building-in-unity/layers.md)).
 3. Select the cube and click `Add Component > Visual Scripting > Script Machine`.
 4. Leave Source set to `Embed` (or choose `Graph` and create a new graph asset), then click `Edit Graph`.
-5. In the graph window, right-click an empty spot to open the fuzzy finder. BS nodes appear under `BS` and `Events > BS`.
-6. Add `Events > BS > PlayerEvents > On Click`. Leave its object input empty — an empty input means "this object". The node also outputs the click `Point` and `Normal` (world-space position and surface normal of the click).
+5. In the graph window, right-click an empty spot to open the fuzzy finder. BS nodes appear under `BS` and `Events > BS`. To search, type the node's own name, such as `On Click`: search doesn't look at category names, so `PlayerEvents` won't find it.
+6. Add **On Click**: search for it, or browse to `Events > BS > PlayerEvents`. Leave its object input empty — an empty input means "this object". The node also outputs the click `Point` and `Normal` (world-space position and surface normal of the click).
 7. Add a member node: search for `Transform Rotate` and pick `Transform: Rotate (X Angle, Y Angle, Z Angle)`.
 8. Wire the control (arrow) output of `On Click` into the control input of `Rotate`, and set `Y Angle` to `15`.
 9. Enter Play mode (or upload the space) and click the cube — it rotates 15° per click. In Play mode, left-click it ([Testing in Play Mode](../getting-started/testing-in-play-mode.md#clicking-grabbing-and-typing)).
 
 ## Event Nodes
 
-Event nodes start a graph's control flow when something happens in the space. They all live under `Events > BS` in the fuzzy finder.
+Event nodes start a graph's control flow when something happens in the space. They all live under `Events > BS` in the fuzzy finder. The paths below are for browsing; to search, type the node's name.
 
 **Player events** (`Events > BS > PlayerEvents`)
 
@@ -41,7 +43,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 |------|---------|
 | On Click | A user clicked the object's collider, which must be on the UI or Menu layer. The object input defaults to this object; outputs the click `Point` and `Normal` |
 
-**Held events** (`Events > BS > HeldEvents`) — fire while a player holds the object. They need a **BS Held Events** component on the object, which makes it grabbable and reports the input (see [HeldEvents](../components/vr-interaction.md#heldevents)); like anything grabbable, its collider goes on the Grabbable layer. The object input defaults to this object; every held event outputs `Is Left`, which reports which hand.
+**Held events** (`Events > BS > HeldEvents`) — fire while a player holds the object. On Grab and On Release fire for anything a player grabs: without BS Held Events, on the object with the Rigidbody, or the collider's object if there's no Rigidbody. The others need a **BS Held Events** component on the object, which makes it grabbable and reports the input (see [HeldEvents](../components/vr-interaction.md#heldevents)); like anything grabbable, its collider goes on the Grabbable layer. The object input defaults to this object; every held event outputs `Is Left`, which reports which hand.
 
 | Node | Purpose |
 |------|---------|
@@ -57,7 +59,7 @@ Event nodes start a graph's control flow when something happens in the space. Th
 | On ThumbClickUp | Thumbstick click released while holding |
 | On Thumbstick | Continuously while held: the thumbstick's `Input` (Vector2) |
 
-**Controller events** (`Events > BS > Controller`) — global controller input, not tied to a held object. These only fire in the app, not in Play mode.
+**Controller events** (`Events > BS > Controller`) — global controller input, not tied to a held object. In Play mode the keyboard stands in for the right controller; see [Testing in Play mode](../getting-started/testing-in-play-mode.md).
 
 | Node | Purpose |
 |------|---------|
@@ -84,13 +86,13 @@ Event nodes start a graph's control flow when something happens in the space. Th
 | Node | Purpose |
 |------|---------|
 | On Quest Home Loaded | A Quest home finished loading. Takes the `Quest Home Object`; outputs `Success` and `Error Message` |
+| On World Option | The local player pressed the **BS World Option** on this object (a button on their radial menu). The object input defaults to this object; outputs `Is On`, the state after the press. See [WorldOption](../components/special.md#worldoption) |
 
 **Networking events** (`Events > BS > Networking`) — see [Multiplayer](../multiplayer/overview.md).
 
 | Node | Purpose |
 |------|---------|
 | On One Shot | A one-shot network message arrived. Outputs `Data` |
-| On World Option | The local player pressed the **BS World Option** on this object (a button on their radial menu). The object input defaults to this object; outputs `Is On`, the state after the press. See [WorldOption](../components/special.md#worldoption) |
 | On Space State Properties Changed | A space state property changed. Filter by `Property Name` (leave empty for all); outputs `New Value` and whether it is a public property |
 | On Space State Value Changed | As above, plus the JSON value and a `Deleted` flag. Filter by `Path` (leave empty for all); outputs `Value`, `JSON`, `Is Public Property?`, `Deleted` |
 | On Space State Result | The outcome of a write you tagged with a `Request Id`. Outputs `Ok`, `Error`, `Path`, `JSON` |
@@ -177,6 +179,7 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Set World Option | Set the toggle state of a **BS World Option**. The object input defaults to this object |
 | Get Users | Get the users in the space, as a list of BSUser |
 | Go To URL | Send the local player to another space by its `URL` (http or https only); the server picks the instance. Ignored while a space is loading, this one included, so not straight from On Start; in SDK Play Mode it only logs |
+| Verify Host | Check the address the world is running from. It waits for the space to load, so it can run from On Start. `Match` says how to read `URL`: Domain compares only the host, and Regular Expression runs it against the page's entire URL. In the wrong place it runs `Outcome` (teleport to `Teleport Position`, or show `Error Message` and send the player to `World URL`) and carries on from **Wrong Host**; otherwise it carries on from **Verified**, which also runs if the address can't be read. Either way it carries on later, in a new flow, so pass values from before the node through graph or object variables. SDK Play Mode skips the check. Unlike the [VerifyHost component](../components/special.md#verifyhost), its inputs live in the graph, which a page can edit |
 | Load Quest Home | Load a Quest home environment |
 | Send a One Shot Message | Broadcast a one-shot network message |
 | Set World Browser Size | Size the space's own page in pixels (default 1024 × 768), for example 1920 × 1080 to fill a 16:9 screen through `asset_browser_world`. Clamped to 320–3840 × 180–2160; 0 × 0 restores the default, as does loading the next space |
@@ -203,6 +206,9 @@ The action-side BS nodes, grouped as they appear in the fuzzy finder.
 | Lock Player Position | Stop the player moving and grabbing. App only |
 | Unlock Player Position | Release the lock |
 | Release Grab | Make the local player let go of `Object`, or of whatever the `Hand` (Both, Left or Right) holds when `Object` is empty. The object's `drop` event fires as for a normal drop. `Released` is true if something was let go |
+| Attach To Player | Attach `Object` to the local player using its BS Attached Object's settings: the bone and offsets, or a seat for the player to sit on. `Object` defaults to this object. `Attached` is false if it has no BS Attached Object. Play mode only does head attachments and seats |
+| Detach From Player | Undo Attach To Player: `Object` comes off the local player, or the local player gets up from it. `Detached` is false if it has no BS Attached Object |
+| Get the voice volume of the Local User | `Volume` is the local player's voice as the room hears it: a peak level from 0 to 1, and 0 while muted. App only |
 | Add Toast Message | Show a notification with your `Message`, after `Delay` seconds, for `Timeout` seconds (default 5). App only |
 
 **Utils** (`BS > Utils`, `BS > Browser`, `BS > Networking`) — helpers and content loading.
@@ -347,11 +353,27 @@ If any node isn't allowed, the checklist shows an error that blocks the build an
 3 Visual Scripting node type(s) aren't allowed in spaces
 ```
 
-Under it, the first 15 offenders are listed by identifier, such as `UnityEngine.Application.OpenURL`. Remove or replace those nodes and build again. Graph assets you don't use count too, such as ones from imported samples: delete them. See also [Troubleshooting](../reference/troubleshooting.md#the-build-stops-visual-scripting-node-types-arent-allowed-in-spaces).
+Under it, the first 15 offenders are listed by identifier, such as `UnityEngine.Application.OpenURL`. Remove or replace those nodes and build again. Graph assets you don't use count too, such as ones from imported samples: delete them. See also [Troubleshooting](../reference/troubleshooting.md#the-build-stops-quotvisual-scripting-node-types-aren39t-allowed-in-spacesquot).
 
 The Console lists them as well each time Unity reloads scripts (when the project opens, and after code changes): `[VisualScripting] Found elements that are not allowed for Visual Scripting`, then one error per node that starts `[VisualScripting] Element not allowed` and ends with the node's identifier.
 
-!> Play mode doesn't enforce the allow list, so a graph can work there and not in the app. In the app, a Script Machine whose own graph has a node that isn't allowed doesn't run at all. The app doesn't check again inside the subgraphs and states a graph nests, so don't rely on it: fix everything the Builder lists.
+Some nodes still run in the app today but aren't on the Banter node list, and a coming app update won't run graphs that use them. The checklist shows these as a warning, which doesn't block the build or the upload:
+
+```
+2 Visual Scripting node(s) aren't on the Banter node list
+```
+
+Under it, each node is listed with the graph asset, prefab or scene object that uses it, and **Select** picks those out. The warning covers:
+
+- member nodes (Get, Set and Invoke) that aren't approved;
+- **Literal**, **Expose** and **Create Struct** nodes of a type with no approved members, such as `Literal of System.Version`;
+- a type value of such a type, in a node's input (Get Component's type, say) or in a graph variable;
+- a formula that reads a member, as in `[a.position]`: use a **Get Member** node instead;
+- graphs nested more than 16 levels deep.
+
+Replace them before you upload. Once the update is out, the app won't run graphs that use them in any world, including worlds uploaded before.
+
+!> Play mode doesn't enforce the allow list, so a graph can work there and not in the app. In the app, a Script Machine that uses a node that isn't allowed doesn't run at all. Fix everything the Builder lists, the warnings included.
 
 ## Sample Graphs
 

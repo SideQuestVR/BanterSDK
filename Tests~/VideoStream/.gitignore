@@ -1,0 +1,8 @@
+bin/
+obj/
+fx/
+e2e/
+mut/
+run.txt
+!*.csproj
+TestResult.xml

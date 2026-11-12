@@ -13,7 +13,7 @@ namespace BS
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
 
-    public class BSUIPanel : BSComponentBase
+    public partial class BSUIPanel : BSComponentBase
     {
         private const string LogPrefix = "[BSUIPanel]";
 
@@ -109,7 +109,11 @@ namespace BS
         /// <returns>Formatted panel ID string</returns>
         public string GetFormattedPanelId()
         {
-            return $"panel_{oid}_{cid}";
+            // oid/cid are set by Init, from Start. A panel initialised before that (Process UXML Tree on an inactive
+            // GameObject) uses the ids Init will assign rather than registering as panel_0_0.
+            var objectId = oid != 0 ? oid : BSScene.UnityId(gameObject);
+            var componentId = cid != 0 ? cid : BSScene.UnityId(this);
+            return $"panel_{objectId}_{componentId}";
         }
 
         /// <summary>
@@ -161,6 +165,13 @@ namespace BS
         /// <returns>True if initialization was successful</returns>
         public bool InitializePanel(UIDocument document = null)
         {
+            // Not only Start's initialisation (EnsureInitialized): Process UXML Tree can initialise a panel before
+            // its Start, and ValidateForUIOperation refuses a panel without an id.
+            if (internalPanelId == -1)
+            {
+                internalPanelId = nextPanelId++;
+            }
+
             try
             {
                 if (document != null && document.panelSettings != null)
@@ -222,9 +233,13 @@ namespace BS
                 // per element instead of one per style property. Absent is fine; loading nothing
                 // must never break a panel, which is why this is a lookup and not a reference.
                 var panelClasses = Resources.Load<StyleSheet>("UI/PanelClasses");
-                if (panelClasses != null)
+                // A creator's UIDocument can be disabled, or on an inactive GameObject: it has no root until
+                // it is enabled, so the root-dependent steps wait for it (LateUpdate below).
+                var root = uiDocument.rootVisualElement;
+                waitingForDocumentRoot = root == null;
+                if (panelClasses != null && root != null)
                 {
-                    uiDocument.rootVisualElement.styleSheets.Add(panelClasses);
+                    root.styleSheets.Add(panelClasses);
                 }
 
                 // Configure panel settings
@@ -258,8 +273,9 @@ namespace BS
 
                 LogVerbose($"Successfully initialized panel with ID: {registrationId}");
 
-                // Auto-register UXML elements if the UIDocument has a visual tree asset
-                if (uiDocument.visualTreeAsset != null && uiDocument.rootVisualElement != null)
+                // Auto-register UXML elements if the UIDocument has a visual tree asset. For a disabled document the
+                // bridge keeps the request and LateUpdate has it registered once the document is enabled.
+                if (uiDocument.visualTreeAsset != null)
                 {
                     LogVerbose($"Auto-registering UXML elements from visual tree asset");
                     var elementMap = uiElementBridge.ProcessUXMLTree(uiDocument, "uxml");
@@ -296,6 +312,29 @@ namespace BS
             return InitializePanel(document);
         }
 
+        // InitializePanel ran while the UIDocument had no root: finish its root-dependent steps (class sheet,
+        // UXML registration, haptic/sound handlers) once the document is enabled.
+        private bool waitingForDocumentRoot;
+
+        private void LateUpdate()
+        {
+            if (waitingForDocumentRoot && uiDocument != null && uiDocument.rootVisualElement != null)
+            {
+                waitingForDocumentRoot = false;
+                var root = uiDocument.rootVisualElement;
+                var panelClasses = Resources.Load<StyleSheet>("UI/PanelClasses");
+                if (panelClasses != null)
+                    root.styleSheets.Add(panelClasses);
+                if (enableHaptics || enableSounds)
+                    RegisterUIEventHandlers(root);
+            }
+
+            // UXML asked for while its document was disabled (InitializePanel's "uxml" pass, then Process UXML
+            // Tree's own prefix), registered in that order once the document has a root.
+            if (uiElementBridge != null && uiElementBridge.HasPendingUXML)
+                uiElementBridge.ProcessPendingUXML();
+        }
+
         /// <summary>
         /// Initialize haptics and sounds for UI interactions
         /// </summary>
@@ -322,17 +361,17 @@ namespace BS
             {
                 if (clickSound == null && !string.IsNullOrEmpty(clickSoundUrl))
                 {
-                    clickSound = await Get.Audio(clickSoundUrl);
+                    clickSound = await LoadSound(clickSoundUrl);
                     // StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
                 }
                 if (enterSound == null && !string.IsNullOrEmpty(enterSoundUrl))
                 {
-                    enterSound = await Get.Audio(enterSoundUrl);
+                    enterSound = await LoadSound(enterSoundUrl);
                     // StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
                 }
                 if (exitSound == null && !string.IsNullOrEmpty(exitSoundUrl))
                 {
-                    exitSound = await Get.Audio(exitSoundUrl);
+                    exitSound = await LoadSound(exitSoundUrl);
                     // StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
                 }
             }
@@ -897,6 +936,9 @@ namespace BS
             }
         }
 
+        static async System.Threading.Tasks.Task<AudioClip> LoadSound(string url) =>
+            PageUrl.Refuse(url, nameof(BSUIPanel)) ? null : await Get.Audio(url);
+
         internal override void DestroyStuff()
         {
             // Remove from screenSpace tracking
@@ -987,13 +1029,26 @@ namespace BS
         /// <returns>True if initialization is successful or already initialized</returns>
         private bool EnsureInitialized()
         {
+            if (internalPanelId == -1)
+            {
+                internalPanelId = nextPanelId++;
+            }
             if (uiDocument == null || uiElementBridge == null)
             {
-                if (internalPanelId == -1)
-                {
-                    internalPanelId = nextPanelId++;
-                }
                 return InitializePanel();
+            }
+
+            // Initialised before Start (Process UXML Tree): make sure the bridge is registered under the id the
+            // UI nodes and the page address it by, without removing another panel's registration.
+            var registrationId = GetFormattedPanelId();
+            if (uiElementBridge.panelId != registrationId)
+            {
+                if (!string.IsNullOrEmpty(uiElementBridge.panelId) &&
+                    UIElementBridge.GetPanelInstance(uiElementBridge.panelId) == uiElementBridge)
+                {
+                    UIElementBridge.UnregisterPanelInstance(uiElementBridge.panelId);
+                }
+                UIElementBridge.RegisterPanelInstance(registrationId, uiElementBridge, this);
             }
             return true;
         }
@@ -1150,7 +1205,7 @@ namespace BS
                     {
                         if (!string.IsNullOrEmpty(clickSoundUrl))
                         {
-                            clickSound = await Get.Audio(clickSoundUrl);
+                            clickSound = await LoadSound(clickSoundUrl);
                             // StartCoroutine(LoadAudioClip(clickSoundUrl, clip => clickSound = clip));
                         }
                     }
@@ -1158,7 +1213,7 @@ namespace BS
                     {
                         if (!string.IsNullOrEmpty(enterSoundUrl))
                         {
-                            enterSound = await Get.Audio(enterSoundUrl); // Clear inspector-assigned clip
+                            enterSound = await LoadSound(enterSoundUrl); // Clear inspector-assigned clip
                             // StartCoroutine(LoadAudioClip(enterSoundUrl, clip => enterSound = clip));
                         }
                     }
@@ -1166,7 +1221,7 @@ namespace BS
                     {
                         if (!string.IsNullOrEmpty(exitSoundUrl))
                         {
-                            exitSound = await Get.Audio(exitSoundUrl); // Clear inspector-assigned clip
+                            exitSound = await LoadSound(exitSoundUrl); // Clear inspector-assigned clip
                             // StartCoroutine(LoadAudioClip(exitSoundUrl, clip => exitSound = clip));
                         }
                     }
@@ -1202,347 +1257,5 @@ namespace BS
         {
 
         }
-        // BS COMPILED CODE 
-        public UnityEngine.Vector2 Resolution { get { return resolution; } set { resolution = value; UpdateCallback(new List<PropertyName> { PropertyName.resolution }); } }
-        public System.Boolean ScreenSpace { get { return screenSpace; } set { screenSpace = value; UpdateCallback(new List<PropertyName> { PropertyName.screenSpace }); } }
-        public System.Boolean MeshInput { get { return meshInput; } set { meshInput = value; UpdateCallback(new List<PropertyName> { PropertyName.meshInput }); } }
-        public System.Boolean EnableHaptics { get { return enableHaptics; } set { enableHaptics = value; UpdateCallback(new List<PropertyName> { PropertyName.enableHaptics }); } }
-        public UnityEngine.Vector2 ClickHaptic { get { return clickHaptic; } set { clickHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.clickHaptic }); } }
-        public UnityEngine.Vector2 EnterHaptic { get { return enterHaptic; } set { enterHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.enterHaptic }); } }
-        public UnityEngine.Vector2 ExitHaptic { get { return exitHaptic; } set { exitHaptic = value; UpdateCallback(new List<PropertyName> { PropertyName.exitHaptic }); } }
-        public System.Boolean EnableSounds { get { return enableSounds; } set { enableSounds = value; UpdateCallback(new List<PropertyName> { PropertyName.enableSounds }); } }
-        public System.String ClickSoundUrl { get { return clickSoundUrl; } set { clickSoundUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.clickSoundUrl }); } }
-        public System.String EnterSoundUrl { get { return enterSoundUrl; } set { enterSoundUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.enterSoundUrl }); } }
-        public System.String ExitSoundUrl { get { return exitSoundUrl; } set { exitSoundUrl = value; UpdateCallback(new List<PropertyName> { PropertyName.exitSoundUrl }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.resolution, PropertyName.screenSpace, PropertyName.meshInput, PropertyName.enableHaptics, PropertyName.clickHaptic, PropertyName.enterHaptic, PropertyName.exitHaptic, PropertyName.enableSounds, PropertyName.clickSoundUrl, PropertyName.enterSoundUrl, PropertyName.exitSoundUrl, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "UIPanel" + PropertyName.resolution + resolution + PropertyName.screenSpace + screenSpace + PropertyName.meshInput + meshInput + PropertyName.enableHaptics + enableHaptics + PropertyName.clickHaptic + clickHaptic + PropertyName.enterHaptic + enterHaptic + PropertyName.exitHaptic + exitHaptic + PropertyName.enableSounds + enableSounds + PropertyName.clickSoundUrl + clickSoundUrl + PropertyName.enterSoundUrl + enterSoundUrl + PropertyName.exitSoundUrl + exitSoundUrl;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.UIPanel);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        void SetBackgroundColor(Vector4 color)
-        {
-            _SetBackgroundColor(color);
-        }
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-
-            if (methodName == "SetBackgroundColor" && parameters.Count == 1 && parameters[0] is Vector4)
-            {
-                var color = (Vector4)parameters[0];
-                SetBackgroundColor(color);
-                return null;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSVector2)
-                {
-                    var valresolution = (BSVector2)values[i];
-                    if (valresolution.n == PropertyName.resolution)
-                    {
-                        resolution = new Vector2(valresolution.x, valresolution.y);
-                        changedProperties.Add(PropertyName.resolution);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valscreenSpace = (BSBool)values[i];
-                    if (valscreenSpace.n == PropertyName.screenSpace)
-                    {
-                        screenSpace = valscreenSpace.x;
-                        changedProperties.Add(PropertyName.screenSpace);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valmeshInput = (BSBool)values[i];
-                    if (valmeshInput.n == PropertyName.meshInput)
-                    {
-                        meshInput = valmeshInput.x;
-                        changedProperties.Add(PropertyName.meshInput);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valenableHaptics = (BSBool)values[i];
-                    if (valenableHaptics.n == PropertyName.enableHaptics)
-                    {
-                        enableHaptics = valenableHaptics.x;
-                        changedProperties.Add(PropertyName.enableHaptics);
-                    }
-                }
-                if (values[i] is BSVector2)
-                {
-                    var valclickHaptic = (BSVector2)values[i];
-                    if (valclickHaptic.n == PropertyName.clickHaptic)
-                    {
-                        clickHaptic = new Vector2(valclickHaptic.x, valclickHaptic.y);
-                        changedProperties.Add(PropertyName.clickHaptic);
-                    }
-                }
-                if (values[i] is BSVector2)
-                {
-                    var valenterHaptic = (BSVector2)values[i];
-                    if (valenterHaptic.n == PropertyName.enterHaptic)
-                    {
-                        enterHaptic = new Vector2(valenterHaptic.x, valenterHaptic.y);
-                        changedProperties.Add(PropertyName.enterHaptic);
-                    }
-                }
-                if (values[i] is BSVector2)
-                {
-                    var valexitHaptic = (BSVector2)values[i];
-                    if (valexitHaptic.n == PropertyName.exitHaptic)
-                    {
-                        exitHaptic = new Vector2(valexitHaptic.x, valexitHaptic.y);
-                        changedProperties.Add(PropertyName.exitHaptic);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valenableSounds = (BSBool)values[i];
-                    if (valenableSounds.n == PropertyName.enableSounds)
-                    {
-                        enableSounds = valenableSounds.x;
-                        changedProperties.Add(PropertyName.enableSounds);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valclickSoundUrl = (BSString)values[i];
-                    if (valclickSoundUrl.n == PropertyName.clickSoundUrl)
-                    {
-                        clickSoundUrl = valclickSoundUrl.x;
-                        changedProperties.Add(PropertyName.clickSoundUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valenterSoundUrl = (BSString)values[i];
-                    if (valenterSoundUrl.n == PropertyName.enterSoundUrl)
-                    {
-                        enterSoundUrl = valenterSoundUrl.x;
-                        changedProperties.Add(PropertyName.enterSoundUrl);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valexitSoundUrl = (BSString)values[i];
-                    if (valexitSoundUrl.n == PropertyName.exitSoundUrl)
-                    {
-                        exitSoundUrl = valexitSoundUrl.x;
-                        changedProperties.Add(PropertyName.exitSoundUrl);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.resolution,
-                    type = PropertyType.Vector2,
-                    value = resolution,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.screenSpace,
-                    type = PropertyType.Bool,
-                    value = screenSpace,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.meshInput,
-                    type = PropertyType.Bool,
-                    value = meshInput,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.enableHaptics,
-                    type = PropertyType.Bool,
-                    value = enableHaptics,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.clickHaptic,
-                    type = PropertyType.Vector2,
-                    value = clickHaptic,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.enterHaptic,
-                    type = PropertyType.Vector2,
-                    value = enterHaptic,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.exitHaptic,
-                    type = PropertyType.Vector2,
-                    value = exitHaptic,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.enableSounds,
-                    type = PropertyType.Bool,
-                    value = enableSounds,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.clickSoundUrl,
-                    type = PropertyType.String,
-                    value = clickSoundUrl,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.enterSoundUrl,
-                    type = PropertyType.String,
-                    value = enterSoundUrl,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.exitSoundUrl,
-                    type = PropertyType.String,
-                    value = exitSoundUrl,
-                    componentType = ComponentType.UIPanel,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

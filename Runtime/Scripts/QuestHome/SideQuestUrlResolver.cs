@@ -86,9 +86,8 @@ namespace BS
             if (string.IsNullOrWhiteSpace(url))
                 return false;
 
-            url = url.ToLowerInvariant();
-            // Accept any .apk URL, not just CDN URLs
-            return url.EndsWith(".apk");
+            // Accept any web address ending .apk, not just CDN URLs
+            return BSAssetKey.IsWebAddress(url) && url.ToLowerInvariant().EndsWith(".apk");
         }
 
         /// <summary>

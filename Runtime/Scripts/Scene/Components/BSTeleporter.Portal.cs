@@ -265,7 +265,7 @@ namespace BS
                 // Edit-mode callbacks are not guaranteed for ordinary scene components after reload.
                 if (!Application.isPlaying)
                 {
-                    foreach (var portal in FindObjectsByType<BSTeleporter>(FindObjectsSortMode.None)) HidePortalDuringCapture(portal);
+                    foreach (var portal in FindObjects.All<BSTeleporter>()) HidePortalDuringCapture(portal);
                 }
                 else
 #endif

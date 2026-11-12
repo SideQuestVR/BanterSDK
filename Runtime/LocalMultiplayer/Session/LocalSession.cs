@@ -1,6 +1,6 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="6ab88cbf53c894dcdd8273685d80972419478499cfec5f09de9499a52b97367d" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Signaling/PacketPartySignaling.cs" sha256="d6f5b8c336353a6bca23abc1482305522d36a9bf4a712e852332a9e7b5c7ada7" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Scene/PacketPartySceneBinder.cs" sha256="8c31a15d5a4478ad23cd2b9ec946426e85a850318e0f9f8c14496682128ead3f" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="a9f01d8a9ca471d1b2d1f69658b35893d880da7151e731530bebe869a647e5a6" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Signaling/PacketPartySignaling.cs" sha256="27ba40065d753fa67c826a3fc2bf6d73f9e07d9242dc52e5a8ce103ed19ecc29" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Scene/PacketPartySceneBinder.cs" sha256="1887305dda465081a09fb3eae2ddbd4bf212f62a99ac137e9fe245ef3682c282" mode="port" />
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

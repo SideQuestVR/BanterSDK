@@ -8,6 +8,15 @@ using Unity.VisualScripting;
 
 namespace BS
 {
+    /// <summary>The values of <see cref="BSSceneSettings.AvatarSyncMode"/> (BS Settings' Avatar Sync Mode).</summary>
+    public static class AvatarSyncModes
+    {
+        /// <summary>Full rate nearby, thinning to once a second far away: big gatherings.</summary>
+        public const string Social = "social";
+        /// <summary>Distant players still update several times a second: games and flight.</summary>
+        public const string Action = "action";
+    }
+
     [RenamedFrom("Banter.SDK.BanterSceneSettings")]
     public class BSSceneSettings
     {
@@ -23,6 +32,15 @@ namespace BS
         public bool EnableSpiderMan { get { return _EnableSpiderMan; } set { _EnableSpiderMan = value; scene.events.OnEnableSpiderManChanged.Invoke(value); } }
         private bool _EnableBirdFlight = true;
         public bool EnableBirdFlight { get { return _EnableBirdFlight; } set { _EnableBirdFlight = value; scene.events.OnEnableBirdFlightChanged.Invoke(value); } }
+        /// <summary>How often distant players' movement is sent: <see cref="AvatarSyncModes.Social"/> (the default) or
+        /// <see cref="AvatarSyncModes.Action"/>. A string so more modes can follow; the client treats one it doesn't
+        /// know as Social.</summary>
+        private string _AvatarSyncMode = AvatarSyncModes.Social;
+        public string AvatarSyncMode { get { return _AvatarSyncMode; } set { _AvatarSyncMode = value; scene.events.OnAvatarSyncModeChanged.Invoke(value); } }
+        /// <summary>Scales how far voices carry in this space, on top of each player's own Voice Distance (1 = unchanged).
+        /// Stored as given; the app clamps it when it applies it.</summary>
+        private float _VoiceDistanceMultiplier = 1f;
+        public float VoiceDistanceMultiplier { get { return _VoiceDistanceMultiplier; } set { _VoiceDistanceMultiplier = value; scene.events.OnVoiceDistanceMultiplierChanged.Invoke(value); } }
         // TODO(not wired up in the app yet): let players grab and hold other players' hands (remote players' hands get
         // grabbable colliders, also gated by the player's own Hand Holding comfort option). Remote players have no hand
         // colliders in the client yet.
@@ -52,6 +70,25 @@ namespace BS
         public Vector2 ClippingPlane { get { return _ClippingPlane; } set { _ClippingPlane = value; scene.events.OnClippingPlaneChanged.Invoke(value); } }
         private Vector4 _SpawnPoint = Vector4.zero;
         public Vector4 SpawnPoint { get { return _SpawnPoint; } set { _SpawnPoint = value; scene.events.OnSpawnPointChanged.Invoke(value); } }
+
+        /// <summary>
+        /// Whether something chose this space's spawn point: the page's settings, or the first BS Spawn arrival the client
+        /// recorded. The origin with no rotation reads as not chosen, which puts a player in the same place, and leaves a
+        /// later scripted teleport free to set the spawn point.
+        /// </summary>
+        public bool HasSpawnPoint => _SpawnPoint != Vector4.zero && _SpawnPoint != UnsetPageSpawnPoint;
+
+        /// <summary>
+        /// What a page sends when it never set a spawn point: SetSettings sends every field, and scene.ts starts SpawnPoint
+        /// as new Vector4(), whose w defaults to 1. Every uploaded page sends this, so it can't change.
+        /// </summary>
+        public static readonly Vector4 UnsetPageSpawnPoint = new Vector4(0, 0, 0, 1);
+
+        /// <summary>A spawn point from the page's settings. Re-sending defaults doesn't wipe one already recorded.</summary>
+        internal void SetPageSpawnPoint(Vector4 spawn)
+        {
+            if (spawn != UnsetPageSpawnPoint && spawn != Vector4.zero) SpawnPoint = spawn;
+        }
 
         /// <summary>
         /// The physics settings every space starts from. They are the Greenfield client's own FlexaBody tuning, so a
@@ -189,6 +226,8 @@ namespace BS
             EnableForceGrab = false;
             EnableSpiderMan = false;
             EnableBirdFlight = true;
+            AvatarSyncMode = AvatarSyncModes.Social;
+            VoiceDistanceMultiplier = 1f;
             EnableHandHold = true;
             EnableRadar = true;
             EnableNametags = true;

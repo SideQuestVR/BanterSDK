@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentNetworkBridge.cs" sha256="190f1ddfb95d591b7adbfd2e6fb171b144878bcb1bae6a67790f047d9162f22c" mode="verbatim" />
+// <mirror source="Assets/Systems/Attachments/AttachmentNetworkBridge.cs" sha256="5e1e451efe01a98d1414f1fe228ebe8142120631915a2ae1f7265c12fdb9df00" mode="verbatim" />
 // The codecs are AttachmentNetworkBridge.cs:299-369 verbatim (private -> internal so the bridge port and the tests
 // share them). PendingPilot is :65-70, and PilotBroadcastGate is the debounce of BroadcastLocalPilot (:46-57,
 // :151-161) lifted out unchanged so it can be tested. EngineUserStateKey is new: it only feeds diagnostics.

@@ -45,7 +45,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSBrowser : BSComponentBase
+    public partial class BSBrowser : BSComponentBase
     {
         [Tooltip("The URL of the webpage to display")]
         [See(initial = "")][SerializeField] internal string url = "";
@@ -166,16 +166,6 @@ namespace BS
                 // configured before anything on the object wakes.
                 if (_oraView == null)
                     _oraView = AddWebView(browser);
-#if GREENFIELD_PROJECT
-                // Android, for now: world browsers play their own audio natively (the WebView), as the menu browser does
-                // by default. Unity capture (spatial) runs its fallback on the page's main thread wherever a page's CSP
-                // blocks the capture worklet (YouTube) and stutters on Quest. The mode is fixed when the window is
-                // created, so set before the browser wakes. Streaming viewers keep capture: the sharer's 2D->3D blend
-                // drives their speakers.
-                // TEMP-ANDROID-AUDIO-TEST: override disabled to observe Ora's capture path on Quest. Revert before commit.
-                if (false && _oraView != null && !IsStreamingBrowser && Application.platform == RuntimePlatform.Android)
-                    _oraView.audioMode = OraAudioMode.Off;
-#endif
                 if (!browser.activeSelf)
                     browser.SetActive(true);
                 if (_oraView != null)
@@ -192,7 +182,14 @@ namespace BS
 
             if ((changedProperties?.Contains(PropertyName.url) ?? true) && !string.IsNullOrEmpty(url))
             {
-                _oraView?.LoadUrl(url);
+                // The url comes from world content: a local file would let a page read the app's files (the session
+                // token among them) back with a runscript action. Ora refuses these too; this keeps them off the wire.
+                // What is checked is what is loaded: the url as URL parsing reads it, a host name sent as http://.
+                var load = UrlToLoad(url);
+                if (load != null)
+                    _oraView?.LoadUrl(load);
+                else if (NormalizeUrl(url).Length > 0)
+                    Debug.LogWarning($"[BS] Browser url refused (only web pages may be loaded): '{ShownUrl(url)}'");
             }
 
             if ((changedProperties?.Contains(PropertyName.pageWidth) ?? true) || (changedProperties?.Contains(PropertyName.pageHeight) ?? true))
@@ -461,323 +458,70 @@ namespace BS
         {
             SetupBrowser(changedProperties);
         }
-        // BS COMPILED CODE 
-        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
-        public System.Int32 MipMaps { get { return mipMaps; } set { mipMaps = value; UpdateCallback(new List<PropertyName> { PropertyName.mipMaps }); } }
-        public System.Single PixelsPerUnit { get { return pixelsPerUnit; } set { pixelsPerUnit = value; UpdateCallback(new List<PropertyName> { PropertyName.pixelsPerUnit }); } }
-        public System.Single PageWidth { get { return pageWidth; } set { pageWidth = value; UpdateCallback(new List<PropertyName> { PropertyName.pageWidth }); } }
-        public System.Single PageHeight { get { return pageHeight; } set { pageHeight = value; UpdateCallback(new List<PropertyName> { PropertyName.pageHeight }); } }
-        public System.String Actions { get { return actions; } set { actions = value; UpdateCallback(new List<PropertyName> { PropertyName.actions }); } }
-        public BS.AudioRolloff RolloffMode { get { return rolloffMode; } set { rolloffMode = value; UpdateCallback(new List<PropertyName> { PropertyName.rolloffMode }); } }
-        public System.Single MinDistance { get { return minDistance; } set { minDistance = value; UpdateCallback(new List<PropertyName> { PropertyName.minDistance }); } }
-        public System.Single MaxDistance { get { return maxDistance; } set { maxDistance = value; UpdateCallback(new List<PropertyName> { PropertyName.maxDistance }); } }
-
-        BSScene _scene;
-        public BSScene scene
+        /// <summary>
+        /// The url as browsers read it. URL parsing (WHATWG, and Chromium's) ignores leading and trailing C0 controls
+        /// and spaces, and tabs and line breaks anywhere: "\u0001file:..." and "fi\tle:..." are file URLs.
+        /// </summary>
+        internal static string NormalizeUrl(string url)
         {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
+            if (string.IsNullOrEmpty(url)) return "";
+            var sb = new System.Text.StringBuilder(url.Length);
+            foreach (var c in url)
+                if (c != '\t' && c != '\n' && c != '\r') sb.Append(c);
+            int start = 0, end = sb.Length;
+            while (start < end && sb[start] <= ' ') start++;
+            while (end > start && sb[end - 1] <= ' ') end--;
+            return sb.ToString(start, end - start);
         }
 
-        internal override void ReSetup()
+        /// <summary>
+        /// What a world browser loads for <paramref name="url"/>, or null when it may not load it. Web pages only: an
+        /// http/https url, about:blank, or a host name without a scheme ("www.youtube.com/...", "localhost:8080/x"),
+        /// which is sent as http:// so no host has to guess what it is. Anything else is refused: file:, javascript:,
+        /// data:, intent: and the rest. The url is read as URL parsing reads it (<see cref="NormalizeUrl"/>). Ora's
+        /// hosts enforce the same underneath (Electron viewUrlToLoad, Android OraUrlPolicy and LoadUrl).
+        /// </summary>
+        internal static string UrlToLoad(string url)
         {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.mipMaps, PropertyName.pixelsPerUnit, PropertyName.pageWidth, PropertyName.pageHeight, PropertyName.actions, PropertyName.rolloffMode, PropertyName.minDistance, PropertyName.maxDistance, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "Browser" + PropertyName.url + url + PropertyName.mipMaps + mipMaps + PropertyName.pixelsPerUnit + pixelsPerUnit + PropertyName.pageWidth + pageWidth + PropertyName.pageHeight + pageHeight + PropertyName.actions + actions + PropertyName.rolloffMode + rolloffMode + PropertyName.minDistance + minDistance + PropertyName.maxDistance + maxDistance;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Browser);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
+            var u = NormalizeUrl(url);
+            if (u.Length == 0) return null;
+            if (string.Equals(u, "about:blank", StringComparison.OrdinalIgnoreCase)) return u;
+            var scheme = Scheme(u);
+            if (scheme == null) return "http://" + u;
+            // Sent with the scheme in lower case ("HTTPS://x" as "https://x"): what every host compares against.
+            return scheme.Equals("http", StringComparison.OrdinalIgnoreCase) || scheme.Equals("https", StringComparison.OrdinalIgnoreCase)
+                ? scheme.ToLowerInvariant() + u.Substring(scheme.Length)
+                : null;
         }
 
-        void Awake()
+        static readonly System.Text.RegularExpressions.Regex SchemePrefix = new System.Text.RegularExpressions.Regex(@"^([A-Za-z][A-Za-z0-9+.\-]*):");
+        static readonly System.Text.RegularExpressions.Regex HostName = new System.Text.RegularExpressions.Regex(@"^[A-Za-z0-9.\-]+$");
+        static readonly System.Text.RegularExpressions.Regex PortThenPath = new System.Text.RegularExpressions.Regex(@"^[0-9]+([/?#]|$)");
+
+        /// <summary>
+        /// The url's scheme, or null without one. A host name with a port ("localhost:8080/x", "www.example.com:443/x")
+        /// parses as a scheme too: it is a host when the part before the ':' looks like one (a dot, or localhost) and only
+        /// digits follow it, up to the end or a / ? #. "javascript:0;..." and "file:0/..." are schemes. Same rule as Ora's
+        /// Windows host (app-protocol.ts hasScheme).
+        /// </summary>
+        static string Scheme(string url)
         {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
+            var m = SchemePrefix.Match(url);
+            if (!m.Success) return null;
+            var name = m.Groups[1].Value;
+            var hostLike = HostName.IsMatch(name) && (name.IndexOf('.') >= 0 || name.Equals("localhost", StringComparison.OrdinalIgnoreCase));
+            return hostLike && PortThenPath.IsMatch(url.Substring(m.Length)) ? null : name;
         }
 
-        void OnDestroy()
+        /// <summary>A refused url as logged: capped, because Player.log can be uploaded, and on one line.</summary>
+        internal static string ShownUrl(string url)
         {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
+            var chars = (url ?? "").ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+                if (chars[i] < ' ' || chars[i] == '\u007f') chars[i] = '?';
+            var shown = new string(chars);
+            return shown.Length > 120 ? shown.Substring(0, 120) + "..." : shown;
         }
 
-        void ToggleInteraction(Boolean enabled)
-        {
-            _ToggleInteraction(enabled);
-        }
-        void ToggleKeyboard(Boolean enabled)
-        {
-            _ToggleKeyboard(enabled);
-        }
-        void RunActions(String actions)
-        {
-            _RunActions(actions);
-        }
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-
-            if (methodName == "ToggleInteraction" && parameters.Count == 1 && parameters[0] is Boolean)
-            {
-                var enabled = (Boolean)parameters[0];
-                ToggleInteraction(enabled);
-                return null;
-            }
-            else if (methodName == "ToggleKeyboard" && parameters.Count == 1 && parameters[0] is Boolean)
-            {
-                var enabled = (Boolean)parameters[0];
-                ToggleKeyboard(enabled);
-                return null;
-            }
-            else if (methodName == "RunActions" && parameters.Count == 1 && parameters[0] is String)
-            {
-                var actions = (String)parameters[0];
-                RunActions(actions);
-                return null;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valurl = (BSString)values[i];
-                    if (valurl.n == PropertyName.url)
-                    {
-                        url = valurl.x;
-                        changedProperties.Add(PropertyName.url);
-                    }
-                }
-                if (values[i] is BSInt)
-                {
-                    var valmipMaps = (BSInt)values[i];
-                    if (valmipMaps.n == PropertyName.mipMaps)
-                    {
-                        mipMaps = valmipMaps.x;
-                        changedProperties.Add(PropertyName.mipMaps);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valpixelsPerUnit = (BSFloat)values[i];
-                    if (valpixelsPerUnit.n == PropertyName.pixelsPerUnit)
-                    {
-                        pixelsPerUnit = valpixelsPerUnit.x;
-                        changedProperties.Add(PropertyName.pixelsPerUnit);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valpageWidth = (BSFloat)values[i];
-                    if (valpageWidth.n == PropertyName.pageWidth)
-                    {
-                        pageWidth = valpageWidth.x;
-                        changedProperties.Add(PropertyName.pageWidth);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valpageHeight = (BSFloat)values[i];
-                    if (valpageHeight.n == PropertyName.pageHeight)
-                    {
-                        pageHeight = valpageHeight.x;
-                        changedProperties.Add(PropertyName.pageHeight);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valactions = (BSString)values[i];
-                    if (valactions.n == PropertyName.actions)
-                    {
-                        actions = valactions.x;
-                        changedProperties.Add(PropertyName.actions);
-                    }
-                }
-                if (values[i] is BSInt)
-                {
-                    var valrolloffMode = (BSInt)values[i];
-                    if (valrolloffMode.n == PropertyName.rolloffMode)
-                    {
-                        rolloffMode = (AudioRolloff)valrolloffMode.x;
-                        changedProperties.Add(PropertyName.rolloffMode);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valminDistance = (BSFloat)values[i];
-                    if (valminDistance.n == PropertyName.minDistance)
-                    {
-                        minDistance = valminDistance.x;
-                        changedProperties.Add(PropertyName.minDistance);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valmaxDistance = (BSFloat)values[i];
-                    if (valmaxDistance.n == PropertyName.maxDistance)
-                    {
-                        maxDistance = valmaxDistance.x;
-                        changedProperties.Add(PropertyName.maxDistance);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.url,
-                    type = PropertyType.String,
-                    value = url,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.mipMaps,
-                    type = PropertyType.Int,
-                    value = mipMaps,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.pixelsPerUnit,
-                    type = PropertyType.Float,
-                    value = pixelsPerUnit,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.pageWidth,
-                    type = PropertyType.Float,
-                    value = pageWidth,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.pageHeight,
-                    type = PropertyType.Float,
-                    value = pageHeight,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.actions,
-                    type = PropertyType.String,
-                    value = actions,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.rolloffMode,
-                    type = PropertyType.Int,
-                    value = rolloffMode,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.minDistance,
-                    type = PropertyType.Float,
-                    value = minDistance,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.maxDistance,
-                    type = PropertyType.Float,
-                    value = maxDistance,
-                    componentType = ComponentType.Browser,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

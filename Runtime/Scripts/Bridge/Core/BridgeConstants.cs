@@ -1,0 +1,222 @@
+// Bridge 2 wire constants (ORAB v1). Mirror of Injection~/src/bridge/constants.ts; the golden vectors in
+// Bridge~/vectors keep the two in step. This assembly (BS.Bridge.Core) has no engine references, so `dotnet test`
+// can run it outside Unity; it must stay C# 9 and IL2CPP-safe (no Reflection.Emit, no dynamic).
+
+namespace BS.Bridge
+{
+    internal static class BridgeWire
+    {
+        /// <summary>"ORAB" read as a little-endian u32: bytes 4F 52 41 42.</summary>
+        public const uint Magic = 0x4241524F;
+        public const byte Version = 1;
+        public const int HeaderBytes = 24;
+
+        /// <summary>Hard cap on one frame's payload (bytes, or UTF-16 units for TEXT frames).</summary>
+        public const int MaxFramePayload = 256 * 1024;
+        /// <summary>Senders close a batch / cut a fragment at this size.</summary>
+        public const int FragmentSize = 64 * 1024;
+        /// <summary>Largest message reassembled from fragments.</summary>
+        public const int MaxMessage = 32 * 1024 * 1024;
+        public const int DefaultWindow = 1024 * 1024;
+        public const int MaxWindow = 1024 * 1024;
+        public const int MaxControlPayload = 256;
+        public const int MaxOpenPayload = 4096;
+
+        public const ushort ProtoMajor = 1;
+        public const ushort ProtoMinor = 0;
+
+        public const int MaxSdkVersion = 64;
+        public const int MaxDocToken = 64;
+        public const int MaxHref = 8192;
+        public const int MaxReasonText = 200;
+    }
+
+    internal static class FrameKind
+    {
+        public const byte Data = 1;
+        public const byte Ack = 2;
+        public const byte Heartbeat = 3;
+        public const byte Credit = 4;
+        // Host-only: a page may never send these; on the carrier lane Unity plays the host.
+        public const byte Open = 16;
+        public const byte Close = 17;
+        public const byte Pause = 18;
+        public const byte Resume = 19;
+        public const byte Reset = 20;
+
+        public static bool IsKnown(byte kind) => (kind >= Data && kind <= Credit) || (kind >= Open && kind <= Reset);
+        public static bool IsHostOnly(byte kind) => kind >= Open && kind <= Reset;
+    }
+
+    internal static class FrameFlags
+    {
+        public const ushort FragFirst = 1;
+        public const ushort FragLast = 2;
+        public const ushort Urgent = 4;
+        /// <summary>Carrier text projection only: the payload is a UTF-16 entry list.</summary>
+        public const ushort Text = 8;
+        public const ushort Known = 0x0F;
+        /// <summary>An unfragmented DATA frame is its own first and last fragment.</summary>
+        public const ushort Complete = 3;
+    }
+
+    /// <summary>BSB opcodes. Session ops, LEGACY_TEXT, the typed CALL family (M5) and REPLY.</summary>
+    internal static class BridgeOp
+    {
+        public const int Hello = 0x01;
+        public const int Welcome = 0x02;
+        public const int Bye = 0x03;
+        public const int Ping = 0x04;
+        public const int Pong = 0x05;
+        // 0x06 is retired (LEGACY, the switch to strings): never reuse it.
+        public const int Holding = 0x07;
+        /// <summary>Page to Unity, session plane: u32 families, the pushed families WELCOME offered that this page reads.</summary>
+        public const int Accept = 0x08;
+        public const int LegacyText = 0x0F;
+        /// <summary>varint reqId Â· varint memberId Â· varint self Â· varint argc Â· values (BridgeValues).</summary>
+        public const int Call = 0x18;
+        public const int Reply = 0x30;
+        /// <summary>Objects and components Unity created, introduced to the page (BridgePush).</summary>
+        public const int Announce = 0x32;
+        /// <summary>Coalesced property and watched-transform changes, with the page's applied item count (BridgePush).</summary>
+        public const int Delta = 0x33;
+        /// <summary>Objects and components that have gone (BridgePush).</summary>
+        public const int Destroyed = 0x35;
+    }
+
+    internal static class ReplyStatus
+    {
+        public const byte Ok = 0;
+        public const byte Destroyed = 1;
+        public const byte UnknownHandle = 2;
+        public const byte Type = 3;
+        public const byte UnknownMember = 4;
+        public const byte Denied = 5;
+        public const byte NotReady = 6;
+        public const byte Timeout = 7;
+        public const byte Limit = 8;
+        public const byte Cancelled = 9;
+        public const byte Internal = 10;
+        public const byte Unsupported = 11;
+        public const byte Malformed = 12;
+    }
+
+    /// <summary>3, 10 and 12 are retired (DISABLED, OPT_OUT, LATE_WELCOME: the legacy lane's): never reuse them.</summary>
+    internal static class BridgeReason
+    {
+        public const byte None = 0;
+        public const byte PageHide = 1;
+        /// <summary>In a CLOSE: a revival was held past its limit, and the page must not ask again.</summary>
+        public const byte Timeout = 2;
+        public const byte AboutDocument = 4;
+        public const byte NotTop = 5;
+        public const byte Protocol = 6;
+        public const byte Navigated = 7;
+        public const byte Superseded = 8;
+        public const byte Version = 9;
+        public const byte Closed = 11;
+        /// <summary>A held document's frames, or what is queued for a document, grew past its cap.</summary>
+        public const byte Overflow = 13;
+    }
+
+    /// <summary>Bit 2 is retired (OPT_OUT, the per-world legacy opt-out): never reuse it.</summary>
+    internal static class BridgeFeature
+    {
+        public const uint TextForm = 1;
+    }
+
+    /// <summary>WELCOME.families: the typed op families this client runs. Granted by Unity, never claimed by a page.</summary>
+    internal static class BridgeFamily
+    {
+        public const uint Call = 1;
+        /// <summary>A CALL waits until scheduler work queued by this document's earlier ops has started. Unity-side only.</summary>
+        public const uint Fence = 2;
+        /// <summary>DELTA instead of "!u!" updates and TRANSFORM_UPDATED events. Pushed: the page must ACCEPT it.</summary>
+        public const uint Delta = 4;
+        /// <summary>ANNOUNCE instead of the "!u!" stand-in and the page's OBJECT_UPDATE_REQUEST. Pushed: the page must ACCEPT it.</summary>
+        public const uint Announce = 8;
+        /// <summary>DESTROYED pushes (OnDestroy and a sweep). Pushed: the page must ACCEPT it.</summary>
+        public const uint Destroyed = 16;
+        /// <summary>Families Unity sends ops for: only a page that has said ACCEPT gets them.</summary>
+        public const uint Pushed = Delta | Announce | Destroyed;
+    }
+
+    /// <summary>DESTROYED reasons, one per handle.</summary>
+    internal static class DestroyedReason
+    {
+        /// <summary>Its OnDestroy ran.</summary>
+        public const byte Destroyed = 1;
+        /// <summary>The sweep found it gone (destroyed without its OnDestroy, e.g. never active).</summary>
+        public const byte Swept = 2;
+    }
+
+    /// <summary>WELCOME.caps: what this document may do through CALL, by tier.</summary>
+    internal static class BridgeCap
+    {
+        public const uint Read = 1;
+        public const uint Write = 2;
+        public const uint Global = 4;
+    }
+
+    internal enum BridgeError
+    {
+        None = 0,
+        Truncated,
+        BadMagic,
+        BadVersion,
+        BadKind,
+        BadFlags,
+        BadSeq,
+        BadLength,
+        TooLarge,
+        BadPayload,
+        NotCarrier,
+        BadForm,
+        BadBase64,
+        BadText,
+        BadVarint,
+        OpOverrun,
+        BadUtf8,
+        Malformed,
+        FragOrder,
+        ReassemblyLimit,
+        SeqGap,
+        BadAck,
+        CreditExceeded,
+    }
+
+    internal static class BridgeErrors
+    {
+        /// <summary>The vector-file spelling (TRUNCATED, BAD_MAGIC, ...).</summary>
+        public static string Name(BridgeError e)
+        {
+            switch (e)
+            {
+                case BridgeError.None: return "NONE";
+                case BridgeError.Truncated: return "TRUNCATED";
+                case BridgeError.BadMagic: return "BAD_MAGIC";
+                case BridgeError.BadVersion: return "BAD_VERSION";
+                case BridgeError.BadKind: return "BAD_KIND";
+                case BridgeError.BadFlags: return "BAD_FLAGS";
+                case BridgeError.BadSeq: return "BAD_SEQ";
+                case BridgeError.BadLength: return "BAD_LENGTH";
+                case BridgeError.TooLarge: return "TOO_LARGE";
+                case BridgeError.BadPayload: return "BAD_PAYLOAD";
+                case BridgeError.NotCarrier: return "NOT_CARRIER";
+                case BridgeError.BadForm: return "BAD_FORM";
+                case BridgeError.BadBase64: return "BAD_BASE64";
+                case BridgeError.BadText: return "BAD_TEXT";
+                case BridgeError.BadVarint: return "BAD_VARINT";
+                case BridgeError.OpOverrun: return "OP_OVERRUN";
+                case BridgeError.BadUtf8: return "BAD_UTF8";
+                case BridgeError.Malformed: return "MALFORMED";
+                case BridgeError.FragOrder: return "FRAG_ORDER";
+                case BridgeError.ReassemblyLimit: return "REASSEMBLY_LIMIT";
+                case BridgeError.SeqGap: return "SEQ_GAP";
+                case BridgeError.BadAck: return "BAD_ACK";
+                case BridgeError.CreditExceeded: return "CREDIT_EXCEEDED";
+                default: return e.ToString();
+            }
+        }
+    }
+}

@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/State/SpaceStateService.cs" sha256="9cbcdf6f0a1e63966d18e5e1e2d4de947b0fb68033927cda28fb6c3afdc762e1" mode="port" />
+// <mirror source="Assets/Systems/Networking/State/SpaceStateService.cs" sha256="95b05792dd49f94548b08b9993f8819c8ad3354bdfc334e1153d4b3a86abba9a" mode="port" />
 // Ported line for line. Substitutions: the MonoBehaviour is a plain class SpaceStateModule ticks (Awake/Update/OnDestroy
 // -> constructor/Tick/Dispose, its serialized defaults -> constants, Time.unscaledTime and the backoff's
 // Random.Range(0f, 0.1f) jitter -> injectable, defaulting to exactly those);
@@ -697,6 +697,17 @@ namespace BS.LocalMultiplayer.State
                     $"[LocalMP][SpaceState] Revision gap ({_revision} -> {change.Revision}); the mirror may be stale until the next snapshot."));
             }
             _revision = change.Revision;
+
+            // The change carries the server's live protected prefixes. Take them (protection is raise-only) before
+            // classifying the entries: a path protected for the first time by THIS write is in no one's join snapshot,
+            // so without them every other client saw the first protected write to a new key as public.
+            if (change.ProtectedPrefixes != null)
+            {
+                bool added = false;
+                foreach (string prefix in change.ProtectedPrefixes)
+                    if (!string.IsNullOrEmpty(prefix) && _knownProtected.Add(prefix)) added = true;
+                if (added) ScopesChanged?.Invoke();
+            }
 
             foreach (var entry in change.Changes)
             {

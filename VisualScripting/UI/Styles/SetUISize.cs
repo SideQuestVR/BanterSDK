@@ -107,12 +107,12 @@ namespace BS.VisualScripting
         {
             return unit switch
             {
-                LengthUnit.Pixel => $"{value}px",
-                LengthUnit.Percent => $"{value}%",
-                LengthUnit.Em => $"{value}em",
-                LengthUnit.Rem => $"{value}rem",
+                LengthUnit.Pixel => $"{NumberFormat.Format(value)}px",
+                LengthUnit.Percent => $"{NumberFormat.Format(value)}%",
+                LengthUnit.Em => $"{NumberFormat.Format(value)}em",
+                LengthUnit.Rem => $"{NumberFormat.Format(value)}rem",
                 LengthUnit.Auto => "auto",
-                _ => $"{value}px"
+                _ => $"{NumberFormat.Format(value)}px"
             };
         }
     }

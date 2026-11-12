@@ -124,7 +124,7 @@ namespace BS
             if (camera != null)
             {
                 parameters.layer = anchor.gameObject.layer;
-                parameters.instanceID = anchor.gameObject.GetInstanceID();
+                parameters.entityId = anchor.gameObject.GetEntityId();
                 parameters.overrideSceneCullingMask = true;
                 parameters.sceneCullingMask = UnityEditor.SceneManagement.EditorSceneManager.GetSceneCullingMask(anchor.gameObject.scene);
             }

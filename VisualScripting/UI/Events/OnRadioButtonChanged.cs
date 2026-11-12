@@ -51,22 +51,24 @@ namespace BS.VisualScripting
             // Auto-register when graph starts, not when event arrives
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
-                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnRadioButtonChanged");
-                        _eventRegistered = true;
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+
+                            UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnRadioButtonChanged");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -98,7 +100,7 @@ namespace BS.VisualScripting
                 return data.arguments != null && data.arguments.Length >= 1 &&
                        (data.arguments[0] is bool ||
                         (data.arguments[0] is string strVal &&
-                         (strVal == "1" || strVal == "0" || strVal.ToLower() == "true" || strVal.ToLower() == "false")));
+                         (strVal == "1" || strVal == "0" || strVal.ToLowerInvariant() == "true" || strVal.ToLowerInvariant() == "false")));
             }
 
             // Otherwise, only trigger for the specific element
@@ -106,7 +108,7 @@ namespace BS.VisualScripting
                    data.arguments != null && data.arguments.Length >= 1 &&
                    (data.arguments[0] is bool ||
                     (data.arguments[0] is string strVal2 &&
-                     (strVal2 == "1" || strVal2 == "0" || strVal2.ToLower() == "true" || strVal2.ToLower() == "false")));
+                     (strVal2 == "1" || strVal2 == "0" || strVal2.ToLowerInvariant() == "true" || strVal2.ToLowerInvariant() == "false")));
         }
 
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
@@ -126,7 +128,7 @@ namespace BS.VisualScripting
                 }
                 else if (data.arguments[0] is string stringValue)
                 {
-                    selected = stringValue == "1" || stringValue.ToLower() == "true";
+                    selected = stringValue == "1" || stringValue.ToLowerInvariant() == "true";
                 }
 
                 flow.SetValue(isSelected, selected);

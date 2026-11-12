@@ -19,104 +19,113 @@ public class ObjectScreenshotter
             return;
         }
 
-        List<ParticleSystem> disabledParticles;
-        Bounds bounds = CalculateObjectBounds(target, out disabledParticles);
-        if (bounds.size == Vector3.zero)
-        {
-            Debug.LogError("Target object has no renderers (excluding particles).");
-            return;
-        }
-
-        // --- Store and override layers if requested ---
+        // Everything below changes the creator's scene for a moment (inactive particles, layers, a camera), so all of it is
+        // put back in finally.
+        List<ParticleSystem> disabledParticles = null;
         Dictionary<Renderer, int> originalLayers = new Dictionary<Renderer, int>();
-        if (isolateLayer >= 0)
-        {
-            Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-            foreach (var r in renderers)
-            {
-                originalLayers[r] = r.gameObject.layer;
-                r.gameObject.layer = isolateLayer;
-            }
-        }
-
-        // --- Setup temporary camera ---
-        GameObject camGO = new GameObject("TempScreenshotCamera");
-        Camera cam = camGO.AddComponent<Camera>();
-        cam.clearFlags = CameraClearFlags.SolidColor;
-        cam.backgroundColor = new Color(0, 0, 0, 0);
-        cam.orthographic = false;
-        cam.enabled = false;
-
-        if (isolateLayer >= 0)
-            cam.cullingMask = 1 << isolateLayer;
-
-        // --- Position camera ---
-        Vector3 center = bounds.center;
-        float radius = bounds.extents.magnitude;
-
-        Vector3 forwardDir = target.transform.forward;
-        Vector3 camDir = angled45
-            ? Quaternion.AngleAxis(-45f, target.transform.up) * forwardDir
-            : forwardDir;
-
-        // Estimate distance from bounds size
-        float objectRadius = bounds.extents.magnitude;
-        float distance = objectRadius * 1.2f; // start a little out
-
-        Vector3 camPos = center + camDir.normalized * distance;
-        cam.transform.position = camPos;
-        cam.transform.LookAt(center, target.transform.up);
-
-        // --- Add optional spotlight ---
-        if (spotlightIntensity > 0f)
-        {
-            Light spot = camGO.AddComponent<Light>();
-            spot.type = LightType.Spot;
-            spot.intensity = spotlightIntensity;
-            spot.range = radius * 4f;
-            spot.spotAngle = 60f;
-        }
-
-        // --- Adjust FOV to fit bounds tightly ---
-        Vector3 extents = bounds.extents;
-        float maxSize = Mathf.Max(extents.x, extents.y, extents.z);
-        float requiredFov = 2f * Mathf.Atan((maxSize * (1.1f)) / distance) * Mathf.Rad2Deg;
-        cam.fieldOfView = Mathf.Max(requiredFov, 1f);
-
-        // --- Render to texture ---
-        RenderTexture rt = new RenderTexture(resolution, resolution, 24, RenderTextureFormat.ARGB32);
-        rt.antiAliasing = 8;
-        cam.targetTexture = rt;
-
+        GameObject camGO = null;
+        RenderTexture rt = null;
+        Texture2D tex = null;
         RenderTexture prev = RenderTexture.active;
-        RenderTexture.active = rt;
-
-        cam.Render();
-
-        Texture2D tex = new Texture2D(resolution, resolution, TextureFormat.ARGB32, false);
-        tex.ReadPixels(new Rect(0, 0, resolution, resolution), 0, 0);
-        tex.Apply();
-
-        byte[] pngData = tex.EncodeToPNG();
-        File.WriteAllBytes(outputPath, pngData);
-        Debug.Log($"Saved screenshot to {outputPath}");
-
-        // --- Cleanup ---
-        RenderTexture.active = prev;
-        cam.targetTexture = null;
-        Object.DestroyImmediate(tex);
-        Object.DestroyImmediate(rt);
-        Object.DestroyImmediate(camGO);
-
-        // Restore particle systems
-        foreach (var ps in disabledParticles)
+        try
         {
-            if (ps != null) ps.gameObject.SetActive(true);
+            Bounds bounds = CalculateObjectBounds(target, out disabledParticles);
+            if (bounds.size == Vector3.zero)
+            {
+                Debug.LogError("Target object has no renderers (excluding particles).");
+                return;
+            }
+
+            // --- Store and override layers if requested ---
+            if (isolateLayer >= 0)
+            {
+                Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
+                foreach (var r in renderers)
+                {
+                    originalLayers[r] = r.gameObject.layer;
+                    r.gameObject.layer = isolateLayer;
+                }
+            }
+
+            // --- Setup temporary camera ---
+            camGO = UnityEditor.EditorUtility.CreateGameObjectWithHideFlags("TempScreenshotCamera", HideFlags.HideAndDontSave);
+            Camera cam = camGO.AddComponent<Camera>();
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0, 0, 0, 0);
+            cam.orthographic = false;
+            cam.enabled = false;
+
+            if (isolateLayer >= 0)
+                cam.cullingMask = 1 << isolateLayer;
+
+            // --- Position camera ---
+            Vector3 center = bounds.center;
+            float radius = bounds.extents.magnitude;
+
+            Vector3 forwardDir = target.transform.forward;
+            Vector3 camDir = angled45
+                ? Quaternion.AngleAxis(-45f, target.transform.up) * forwardDir
+                : forwardDir;
+
+            // Estimate distance from bounds size
+            float objectRadius = bounds.extents.magnitude;
+            float distance = objectRadius * 1.2f; // start a little out
+
+            Vector3 camPos = center + camDir.normalized * distance;
+            cam.transform.position = camPos;
+            cam.transform.LookAt(center, target.transform.up);
+
+            // --- Add optional spotlight ---
+            if (spotlightIntensity > 0f)
+            {
+                Light spot = camGO.AddComponent<Light>();
+                spot.type = LightType.Spot;
+                spot.intensity = spotlightIntensity;
+                spot.range = radius * 4f;
+                spot.spotAngle = 60f;
+            }
+
+            // --- Adjust FOV to fit bounds tightly ---
+            Vector3 extents = bounds.extents;
+            float maxSize = Mathf.Max(extents.x, extents.y, extents.z);
+            float requiredFov = 2f * Mathf.Atan((maxSize * (1.1f)) / distance) * Mathf.Rad2Deg;
+            cam.fieldOfView = Mathf.Max(requiredFov, 1f);
+
+            // --- Render to texture ---
+            rt = new RenderTexture(resolution, resolution, 24, RenderTextureFormat.ARGB32);
+            rt.antiAliasing = 8;
+            cam.targetTexture = rt;
+
+            RenderTexture.active = rt;
+
+            cam.Render();
+
+            tex = new Texture2D(resolution, resolution, TextureFormat.ARGB32, false);
+            tex.ReadPixels(new Rect(0, 0, resolution, resolution), 0, 0);
+            tex.Apply();
+
+            byte[] pngData = tex.EncodeToPNG();
+            File.WriteAllBytes(outputPath, pngData);
+            Debug.Log($"Saved screenshot to {outputPath}");
         }
-
-        // Restore original layers
-        if (isolateLayer >= 0)
+        finally
         {
+            // --- Cleanup ---
+            RenderTexture.active = prev;
+            if (tex != null) Object.DestroyImmediate(tex);
+            if (camGO != null) Object.DestroyImmediate(camGO); // before rt, which its camera targets
+            if (rt != null) Object.DestroyImmediate(rt);
+
+            // Restore particle systems
+            if (disabledParticles != null)
+            {
+                foreach (var ps in disabledParticles)
+                {
+                    if (ps != null) ps.gameObject.SetActive(true);
+                }
+            }
+
+            // Restore original layers
             foreach (var kvp in originalLayers)
             {
                 if (kvp.Key != null)

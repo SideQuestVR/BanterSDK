@@ -9,7 +9,7 @@ namespace BS
     #### Banter Seat
     Make an object a seat: clicking it sits the local player on it, and moving or jumping stands them up.
     The seat is the object's `BSAttachedObject`, set up to attach the player to the object (physics, jointed,
-    seated pose). In Legacy mode the player sits at this object's position and faces its forward, so place its origin
+    seated pose). In Follow Seat mode the player sits at this object's position and faces its forward, so place its origin
     at the top of the cushion. Its colliders (the ones it has when it starts) are what gets clicked; put them on the UI or Menu layer,
     the only clickable layers. Its Pointer Range component defaults to 2 m from the player's head to the sitting
     position, independently of trigger size; it gates clicks, hover marker and targeting ray. Scripted Sit still works
@@ -22,8 +22,8 @@ namespace BS
     - `unseatOnMove` - Stand the player up when they push the move stick / WASD.
     - `unseatOnJump` - Stand the player up when they jump.
     - `useExitPosition` - Teleport the player to `exitPosition` when they get off the seat, however they get off. Off: 1 m above the seat.
-    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.
-    - `viewMode` - Legacy (0), UprightFollowYaw (1, default), or UprightIndependent (2). All modes align facing on entry and use the authored pelvis/leg pose, captured when sitting. Upright modes preserve viewing direction on exit.
+    - `exitPosition` - Where they stand after getting off, relative to the seat (it moves with the seat). Follow Seat faces the seat direction; upright modes preserve the viewing direction.
+    - `viewMode` - FollowSeat (0), UprightFollowYaw (1, default), or UprightIndependent (2). All modes align facing on entry and use the authored pelvis/leg pose, captured when sitting. Upright modes preserve viewing direction on exit.
 
     **Methods**
     ```js
@@ -62,8 +62,13 @@ namespace BS
                  "Off: they are lifted 1 m above the seat instead, so getting off can't fling them.")]
         [See(initial = "false")][SerializeField] internal bool useExitPosition = false;
 
-        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). Legacy faces the seat direction; upright modes preserve the viewing direction.")]
+        [Tooltip("Where the player stands after getting off, relative to the seat (it moves with the seat). Follow Seat faces the seat direction; upright modes preserve the viewing direction.")]
         [See(initial = "0,0,0.6")][SerializeField] internal Vector3 exitPosition = new Vector3(0f, 0f, 0.6f);
+
+        // Upright seats (BSSeat.Pose.cs holds the pose). Declared here, last: the Bridge 2 lock lists [See] fields in
+        // declaration order with new ones at the end, and a field in another partial file reflects first.
+        [Tooltip("All modes use the authored pose and face the seat on entry. Follow Seat follows full seat rotation; upright modes keep seat tilt out of the view.")]
+        [See(initial = "SeatViewMode.UprightFollowYaw")][SerializeField] internal SeatViewMode viewMode = SeatViewMode.UprightFollowYaw;
 
         const string LocalUser = "me";
 
@@ -88,6 +93,15 @@ namespace BS
                 catch (Exception ex) { Debug.LogException(ex); return false; }
             }
         }
+
+        /// <summary>
+        /// Set by the client: the up the player stands on when they get off a seat. World up unless Comfort's Gravity
+        /// Tilting stands them against the world's gravity. The SDK itself has no such setting.
+        /// </summary>
+        public static Vector3 ViewUp { get; set; } = Vector3.up;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void ResetViewUp() => ViewUp = Vector3.up;
 
         // The local player sits on this seat: set when they attach through it, cleared when they get off.
         static uint localSitGeneration;
@@ -211,7 +225,7 @@ namespace BS
                 localSitGeneration++;
                 seated = true;
                 seatedViewMode = viewMode == SeatViewMode.UprightFollowYaw || viewMode == SeatViewMode.UprightIndependent
-                    ? viewMode : SeatViewMode.Legacy;
+                    ? viewMode : SeatViewMode.FollowSeat;
             }
         }
 
@@ -239,8 +253,8 @@ namespace BS
             {
                 var exit = useExitPosition
                     ? transform.TransformPoint(exitPosition)
-                    : transform.position + Vector3.up * DefaultExitHeight;
-                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y, seatedViewMode != SeatViewMode.Legacy));
+                    : transform.position + ViewUp * DefaultExitHeight;
+                StartCoroutine(TeleportToExit(exit, transform.eulerAngles.y, seatedViewMode != SeatViewMode.FollowSeat));
             }
         }
 
@@ -256,8 +270,22 @@ namespace BS
             {
                 yield break;
             }
-            var yaw = preserveView && head != null ? ViewHeading(head.transform.rotation) : legacyYaw;
-            BSScene.Instance().events.OnTeleport.Invoke(position, new Vector3(0f, yaw, 0f), true, false);
+            var keepView = preserveView && head != null;
+            var yaw = keepView ? ViewHeading(head.transform.rotation) : legacyYaw;
+            var rotation = ViewUp == Vector3.up ? new Vector3(0f, yaw, 0f)
+                : TiltedExitRotation(keepView ? head.transform.rotation : transform.rotation, ViewUp).eulerAngles;
+            BSScene.Instance().events.OnTeleport.Invoke(position, rotation, true, false);
+        }
+
+        // ViewHeading's frame on a tilted up: the same facing, standing on that up.
+        internal static Quaternion TiltedExitRotation(Quaternion rotation, Vector3 up)
+        {
+            var forward = rotation * Vector3.forward;
+            var roof = rotation * Vector3.up;
+            var along = Vector3.Dot(forward, up);
+            forward = Vector3.ProjectOnPlane(Vector3.Slerp(forward, along < 0f ? roof : -roof, Mathf.Abs(along)), up);
+            if (forward.sqrMagnitude < 1e-6f) forward = Vector3.Cross(rotation * Vector3.right, up);
+            return Quaternion.LookRotation(forward.normalized, up);
         }
 
         internal static float ViewHeading(Quaternion rotation)
@@ -348,223 +376,5 @@ namespace BS
             }
         }
 #endif
-        // BS COMPILED CODE 
-        public SeatViewMode ViewMode { get { return viewMode; } set { viewMode = value; UpdateCallback(new List<PropertyName> { PropertyName.viewMode }); } }
-        public System.Boolean UnseatOnMove { get { return unseatOnMove; } set { unseatOnMove = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnMove }); } }
-        public System.Boolean UnseatOnJump { get { return unseatOnJump; } set { unseatOnJump = value; UpdateCallback(new List<PropertyName> { PropertyName.unseatOnJump }); } }
-        public System.Boolean UseExitPosition { get { return useExitPosition; } set { useExitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.useExitPosition }); } }
-        public UnityEngine.Vector3 ExitPosition { get { return exitPosition; } set { exitPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.exitPosition }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.unseatOnMove, PropertyName.unseatOnJump, PropertyName.useExitPosition, PropertyName.exitPosition, PropertyName.viewMode, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "Seat" +  PropertyName.unseatOnMove + unseatOnMove + PropertyName.unseatOnJump + unseatOnJump + PropertyName.useExitPosition + useExitPosition + PropertyName.exitPosition + exitPosition + PropertyName.viewMode + viewMode;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Seat);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        void Sit()
-        {
-            _Sit();
-        }
-        void Stand()
-        {
-            _Stand();
-        }
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-
-            if (methodName == "Sit" && parameters.Count == 0)
-            {
-                Sit();
-                return null;
-            }
-            else if (methodName == "Stand" && parameters.Count == 0)
-            {
-                Stand();
-                return null;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSInt)
-                {
-                    var valviewMode = (BSInt)values[i];
-                    if (valviewMode.n == PropertyName.viewMode)
-                    {
-                        viewMode = (SeatViewMode)valviewMode.x;
-                        changedProperties.Add(PropertyName.viewMode);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valunseatOnMove = (BSBool)values[i];
-                    if (valunseatOnMove.n == PropertyName.unseatOnMove)
-                    {
-                        unseatOnMove = valunseatOnMove.x;
-                        changedProperties.Add(PropertyName.unseatOnMove);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valunseatOnJump = (BSBool)values[i];
-                    if (valunseatOnJump.n == PropertyName.unseatOnJump)
-                    {
-                        unseatOnJump = valunseatOnJump.x;
-                        changedProperties.Add(PropertyName.unseatOnJump);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valuseExitPosition = (BSBool)values[i];
-                    if (valuseExitPosition.n == PropertyName.useExitPosition)
-                    {
-                        useExitPosition = valuseExitPosition.x;
-                        changedProperties.Add(PropertyName.useExitPosition);
-                    }
-                }
-                if (values[i] is BSVector3)
-                {
-                    var valexitPosition = (BSVector3)values[i];
-                    if (valexitPosition.n == PropertyName.exitPosition)
-                    {
-                        exitPosition = new Vector3(valexitPosition.x, valexitPosition.y, valexitPosition.z);
-                        changedProperties.Add(PropertyName.exitPosition);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.unseatOnMove,
-                    type = PropertyType.Bool,
-                    value = unseatOnMove,
-                    componentType = ComponentType.Seat,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.unseatOnJump,
-                    type = PropertyType.Bool,
-                    value = unseatOnJump,
-                    componentType = ComponentType.Seat,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.useExitPosition,
-                    type = PropertyType.Bool,
-                    value = useExitPosition,
-                    componentType = ComponentType.Seat,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.exitPosition,
-                    type = PropertyType.Vector3,
-                    value = exitPosition,
-                    componentType = ComponentType.Seat,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.viewMode,
-                    type = PropertyType.Int,
-                    value = viewMode,
-                    componentType = ComponentType.Seat,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

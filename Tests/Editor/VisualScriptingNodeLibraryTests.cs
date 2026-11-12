@@ -1,8 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
+using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.TestTools;
+using AttachToPlayer = BS.VisualScripting.AttachToPlayer;
+using DetachFromPlayer = BS.VisualScripting.DetachFromPlayer;
+using OnSliderChanged = BS.VisualScripting.OnSliderChanged;
 
 namespace BS.SDKEditor.Tests
 {
@@ -122,6 +128,160 @@ namespace BS.SDKEditor.Tests
             var id = unit.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
             Assert.AreEqual("BS.VisualScripting.GoToUrl", id);
             Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
+        }
+
+        [Test]
+        public void VerifyHost_IsOfferedAndAllowed()
+        {
+            var unitType = FindType("BS.VisualScripting.VerifyHost");
+            Assert.IsNotNull(unitType, "the Verify Host unit isn't loaded");
+            CollectionAssert.Contains(VsNodeGeneration.assemblyAllowList, unitType.Assembly.GetName().Name);
+
+            var unit = (Unity.VisualScripting.IUnit)Activator.CreateInstance(unitType);
+            unit.EnsureDefined();
+            CollectionAssert.AreEquivalent(new[] { "URL", "Match", "Outcome", "Teleport Position", "World URL", "Error Message" },
+                unit.valueInputs.Select(port => port.key));
+            CollectionAssert.AreEquivalent(new[] { "Verified", "Wrong Host" }, unit.controlOutputs.Select(port => port.key));
+            CollectionAssert.IsEmpty(unit.valueOutputs);
+
+            var id = unit.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
+            Assert.AreEqual("BS.VisualScripting.VerifyHost", id);
+            Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
+        }
+
+        [TestCase("BS.VisualScripting.AttachToPlayer", "Attached")]
+        [TestCase("BS.VisualScripting.DetachFromPlayer", "Detached")]
+        public void AttachNodes_AreOfferedAndAllowed(string typeName, string output)
+        {
+            var unitType = FindType(typeName);
+            Assert.IsNotNull(unitType, $"{typeName} isn't loaded");
+            CollectionAssert.Contains(VsNodeGeneration.assemblyAllowList, unitType.Assembly.GetName().Name);
+
+            var unit = (IUnit)Activator.CreateInstance(unitType);
+            unit.EnsureDefined();
+            // No user to choose: the client only attaches to the local player.
+            CollectionAssert.AreEquivalent(new[] { "Object" }, unit.valueInputs.Select(port => port.key));
+            CollectionAssert.AreEquivalent(new[] { output }, unit.valueOutputs.Select(port => port.key));
+
+            var id = unit.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
+            Assert.AreEqual(typeName, id);
+            Assert.IsFalse(ValidateVisualScripting.IsDisallowed(id));
+        }
+
+        [Test]
+        public void AttachNodes_ActForTheLocalPlayer()
+        {
+            var data = BSScene.Instance().data;
+            var (attach, detach) = (data.AttachObject, data.DetachObject);
+            string attachedFor = null, detachedFor = null;
+            data.AttachObject = attachment => attachedFor = attachment.uid;
+            data.DetachObject = attachment => detachedFor = attachment.uid;
+            var target = new GameObject("Attach node test");
+            target.AddComponent<BSAttachedObject>();
+            try
+            {
+                Assert.AreEqual(true, Trigger(new AttachToPlayer(), target));
+                Assert.AreEqual("me", attachedFor);
+                Assert.IsNull(detachedFor);
+
+                Assert.AreEqual(true, Trigger(new DetachFromPlayer(), target));
+                Assert.AreEqual("me", detachedFor);
+            }
+            finally
+            {
+                data.AttachObject = attach;
+                data.DetachObject = detach;
+                UnityEngine.Object.DestroyImmediate(target);
+            }
+        }
+
+        [Test]
+        public void AttachToPlayer_SaysSoWhenTheObjectCantAttach()
+        {
+            var target = new GameObject("Plain object");
+            try
+            {
+                LogAssert.Expect(LogType.Warning, new Regex("'Plain object' has no BS Attached Object"));
+                Assert.AreEqual(false, Trigger(new AttachToPlayer(), target));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(target);
+            }
+        }
+
+        // Stands in for the node before and after: it triggers the node under test and reads its output.
+        sealed class Neighbour : Unit
+        {
+            [DoNotSerialize] public ControlOutput trigger;
+            [DoNotSerialize] public ValueInput read;
+
+            protected override void Definition()
+            {
+                trigger = ControlOutput("trigger");
+                read = ValueInput<object>("read");
+            }
+        }
+
+        static object Trigger(AttachToPlayer node, GameObject target)
+        {
+            var graph = new FlowGraph();
+            var neighbour = new Neighbour();
+            graph.units.Add(node);
+            graph.units.Add(neighbour);
+            node.defaultValues["Object"] = target;
+            graph.controlConnections.Add(new ControlConnection(neighbour.trigger, node.inputTrigger));
+            graph.valueConnections.Add(new ValueConnection(node.done, neighbour.read));
+
+            var asset = ScriptableObject.CreateInstance<ScriptGraphAsset>();
+            asset.graph = graph;
+            var flow = Flow.New(GraphReference.New(asset, true));
+            try
+            {
+                flow.Invoke(neighbour.trigger);
+                return flow.GetValue(neighbour.read);
+            }
+            finally
+            {
+                flow.Dispose();
+                UnityEngine.Object.DestroyImmediate(asset);
+            }
+        }
+
+        [Test]
+        public void AnEventThatCantReadItsPorts_LeavesTheRestOfTheGraphListening()
+        {
+            var host = new GameObject("ListeningProbe");
+            var machine = host.AddComponent<ScriptMachine>();
+            var graph = new FlowGraph { title = "Panel" };
+            var broken = new OnSliderChanged();
+            var next = new OnSliderChanged();
+            var source = new OnSliderChanged();
+            graph.units.Add(broken);
+            graph.units.Add(next);
+            graph.units.Add(source);
+            // An event's output has no value until that event runs, so this read throws as the graph starts listening.
+            graph.valueConnections.Add(new ValueConnection(source.changedElementId, broken.elementId));
+            machine.nest.SwitchToEmbed(graph);
+            var reference = GraphReference.New(machine, true);
+            GraphInstances.Instantiate(reference);
+            try
+            {
+#if GREENFIELD_PROJECT
+                LogAssert.Expect(LogType.Error, new Regex(@"ListeningProbe \(Panel\).*threw InvalidOperationException"));
+#else
+                LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException"));
+#endif
+                Assert.DoesNotThrow(() => graph.StartListening(reference));
+                Assert.IsTrue(next.IsListening(reference));
+                Assert.IsTrue(source.IsListening(reference));
+            }
+            finally
+            {
+                graph.StopListening(reference);
+                GraphInstances.Uninstantiate(reference);
+                UnityEngine.Object.DestroyImmediate(host);
+            }
         }
     }
 }

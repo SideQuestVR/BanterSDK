@@ -183,6 +183,35 @@ namespace SideQuest.FlexaBody
             Vector3 worldDirection = worldPosition - rb.position;
             return rb.InverseTransformDirection(worldDirection);
         }
+
+        // Scale-aware, as FlexaBody's: the space of Joint.anchor / Joint.connectedAnchor (lossyScale per axis).
+
+        /// <summary> Local (scale included) to world, using the physics pose. </summary>
+        public static Vector3 TransformPointScaled(this Rigidbody rb, Vector3 localPosition)
+        {
+            return rb.position + rb.rotation * Vector3.Scale(localPosition, AnchorScale(rb));
+        }
+
+        /// <summary> World to local (scale included), using the physics pose. A zero-scale axis maps to 0. </summary>
+        public static Vector3 InverseTransformPointScaled(this Rigidbody rb, Vector3 worldPosition)
+        {
+            Vector3 unrotated = Quaternion.Inverse(rb.rotation) * (worldPosition - rb.position);
+            Vector3 s = AnchorScale(rb);
+            return new Vector3(SafeDivide(unrotated.x, s.x), SafeDivide(unrotated.y, s.y), SafeDivide(unrotated.z, s.z));
+        }
+
+        const float ScaleEpsilon = 1e-6f;
+
+        static float SafeDivide(float value, float scale)
+        {
+            return Mathf.Abs(scale) > ScaleEpsilon ? value / scale : 0f;
+        }
+
+        /// <summary> The scale PhysX applies to joint anchors: the transform's lossyScale, per axis. </summary>
+        static Vector3 AnchorScale(Rigidbody rb)
+        {
+            return rb.transform.lossyScale;
+        }
     }
 }
 

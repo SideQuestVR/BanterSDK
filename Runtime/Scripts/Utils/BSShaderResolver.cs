@@ -132,5 +132,12 @@ namespace BS
                 material.SetColor(ColorId, color);
             }
         }
+
+        /// <summary>The same for one renderer's block. A block has no shader to ask, and a name the shader lacks does nothing.</summary>
+        internal static void SetColor(MaterialPropertyBlock block, Color color)
+        {
+            block.SetColor(BaseColorId, color);
+            block.SetColor(ColorId, color);
+        }
     }
 }

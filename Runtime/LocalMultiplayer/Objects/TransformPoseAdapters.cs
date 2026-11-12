@@ -1,6 +1,9 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/UnityTransformPoseAdapter.cs" sha256="08ddc17832f88bf1efc3c57685f437203214ff4eb5b6df9a03a525ce50dadcff" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/UnityTransformPoseAdapter.cs" sha256="4aec2c3c8da174ef8eb1049e4208f0640e6f7909110402e17d96875b1f48bc72" mode="port" />
 // UnityTransformPoseAdapter (world space only: synced objects are never network-parented) and
-// UnityRigidbodyPoseAdapter, line for line. ITransformPoseSource is PacketPartyTransformRuntime.cs:22-26.
+// UnityRigidbodyPoseAdapter, line for line. ITransformPoseSource is PacketPartyTransformRuntime.cs:22-26. Added: the
+// rigidbody adapter also places a step faster than MaxStepSpeed. tf.objects frames carry no discontinuity, so a reset
+// or teleport shorter than SnapDistance (a 15 s idle reset is often 3-5 m) reaches it as one interpolated step, which
+// production receives as a discontinuity and places.
 using System;
 using UnityEngine;
 
@@ -90,10 +93,43 @@ namespace BS.LocalMultiplayer.Objects
             return true;
         }
 
-        public void Apply(SynchronizedTransformSample sample)
+        /// <summary>
+        /// A presentation step longer than this is placed, not moved: a teleport or reset crosses the gap in a few large
+        /// steps (tf.objects frames carry no discontinuity, so playback interpolates across it), the first pose of a new
+        /// stream in one, and MovePosition across such a step gives the kinematic body the implied velocity (hundreds of
+        /// m/s) for that step, which it hands to anything it touches. No real interpolated step comes close.
+        /// </summary>
+        public const float SnapDistance = 5f;
+
+        /// <summary>
+        /// A presentation step faster than this (m/s over the frame, or over a physics step if that is longer) is placed
+        /// too: a reset or teleport shorter than <see cref="SnapDistance"/> still arrives as one step, and MovePosition
+        /// across it would give the body 150-250 m/s. Thrown props stay well under it.
+        /// </summary>
+        public const float MaxStepSpeed = 50f;
+
+        /// <summary>Whether a step of <paramref name="distance"/> metres is placed rather than moved.</summary>
+        internal static bool PlacesStep(float distance, float deltaTime, float fixedDeltaTime)
         {
-            body.MovePosition(sample.Position);
-            if (sample.HasRotation) body.MoveRotation(sample.Rotation);
+            return distance > SnapDistance || distance > MaxStepSpeed * Mathf.Max(deltaTime, fixedDeltaTime);
+        }
+
+        public void Apply(SynchronizedTransformSample sample) => Apply(sample, Time.deltaTime, Time.fixedDeltaTime);
+
+        internal void Apply(SynchronizedTransformSample sample, float deltaTime, float fixedDeltaTime)
+        {
+            if (PlacesStep(Vector3.Distance(sample.Position, body.position), deltaTime, fixedDeltaTime))
+            {
+                Quaternion rotation = sample.HasRotation ? sample.Rotation : body.rotation;
+                body.position = sample.Position;
+                body.rotation = rotation;
+                body.transform.SetPositionAndRotation(sample.Position, rotation);
+            }
+            else
+            {
+                body.MovePosition(sample.Position);
+                if (sample.HasRotation) body.MoveRotation(sample.Rotation);
+            }
             // Remote physics views are deliberately kinematic. Their velocity is
             // interpolation/prediction input, not a value Unity allows us to set
             // on the presentation body.

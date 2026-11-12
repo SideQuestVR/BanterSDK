@@ -4,7 +4,7 @@ The web browser isn't an add-on here: it's what the platform is built on. Every 
 
 ## Every space is a website
 
-A space lives at a URL. Each world you publish gets its own address (the Builder shows it under the **World** dropdown, for example `https://my-world.worldspace.host`; see [Your world's address](../building-in-unity/publishing.md#your-worlds-address)), and visiting a space means loading that page.
+A space lives at a URL. Each world you publish gets its own address (the Builder shows it under the **World** dropdown, for example `https://my-world.worldspace.host`; see [Your world's address](../building-in-unity/publishing.md#your-world39s-address)), and visiting a space means loading that page.
 
 The page is your world's `Assets/WebRoot/index.html`. When someone joins:
 

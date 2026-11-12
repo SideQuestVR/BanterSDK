@@ -69,11 +69,11 @@ namespace BS.UI.Elements
                     return true;
 
                 case "scrollDecelerationRate":
-                    ScrollDecelerationRate = float.Parse(propertyValue);
+                    ScrollDecelerationRate = NumberFormat.Parse(propertyValue);
                     return true;
 
                 case "elasticity":
-                    Elasticity = float.Parse(propertyValue);
+                    Elasticity = NumberFormat.Parse(propertyValue);
                     return true;
 
                 case "enabled":

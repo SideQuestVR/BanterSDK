@@ -31,7 +31,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [WatchComponent]
     [RequireComponent(typeof(BSObjectId))]
-    public class BSQuestHome : BSComponentBase
+    public partial class BSQuestHome : BSComponentBase
     {
         [Tooltip("The URL of the Quest Home APK file to be loaded.")]
         [See(initial = "")][SerializeField] internal string url = "";
@@ -208,6 +208,21 @@ namespace BS
             loadingProgress = progress;
             percentage = progress; // Update base class percentage
             LogLine.Do(message);
+            // To the space's load gate, which stops waiting for a component that neither loads nor reports progress
+            // for 20 s (BSLoadGate), and to the page's "progress" event.
+            this.progress?.Invoke(progress);
+        }
+
+        float forwardedProgress = -1f;
+
+        // Only when it has moved: each call is also a message to the page.
+        private void ForwardDownloadProgress(float value)
+        {
+            if (Mathf.Abs(value - forwardedProgress) < 0.005f) return;
+            forwardedProgress = value;
+            loadingProgress = value;
+            percentage = value;
+            progress?.Invoke(value);
         }
 
         /// <summary>
@@ -238,6 +253,9 @@ namespace BS
                         while (!operation.isDone)
                         {
                             float progress = request.downloadProgress;
+                            // The download is the 0.08-0.30 stretch of loadingProgress (LoadQuestHome); minutes for a big APK.
+                            // Estimated from the bytes when the response has no length (Get.DownloadProgress).
+                            ForwardDownloadProgress(0.08f + 0.22f * Get.DownloadProgress(request));
                             // Log progress every 10%
                             if (progress > 0 && (int)(progress * 10) % 2 == 0)
                             {
@@ -854,157 +872,5 @@ namespace BS
         {
 
         }
-        // BS COMPILED CODE 
-        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
-        public System.Boolean AddColliders { get { return addColliders; } set { addColliders = value; UpdateCallback(new List<PropertyName> { PropertyName.addColliders }); } }
-        public System.Boolean Climbable { get { return climbable; } set { climbable = value; UpdateCallback(new List<PropertyName> { PropertyName.climbable }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.addColliders, PropertyName.climbable, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "QuestHome" + PropertyName.url + url + PropertyName.addColliders + addColliders + PropertyName.climbable + climbable;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.QuestHome);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null;
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valurl = (BSString)values[i];
-                    if (valurl.n == PropertyName.url)
-                    {
-                        url = valurl.x;
-                        changedProperties.Add(PropertyName.url);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valaddColliders = (BSBool)values[i];
-                    if (valaddColliders.n == PropertyName.addColliders)
-                    {
-                        addColliders = valaddColliders.x;
-                        changedProperties.Add(PropertyName.addColliders);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valclimbable = (BSBool)values[i];
-                    if (valclimbable.n == PropertyName.climbable)
-                    {
-                        climbable = valclimbable.x;
-                        changedProperties.Add(PropertyName.climbable);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.url,
-                    type = PropertyType.String,
-                    value = url,
-                    componentType = ComponentType.QuestHome,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.addColliders,
-                    type = PropertyType.Bool,
-                    value = addColliders,
-                    componentType = ComponentType.QuestHome,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.climbable,
-                    type = PropertyType.Bool,
-                    value = climbable,
-                    componentType = ComponentType.QuestHome,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

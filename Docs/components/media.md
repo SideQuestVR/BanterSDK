@@ -1,5 +1,7 @@
 # Media & Content Components
 
+Bring outside content into a world: glTF models, video, web browsers, Street View and portals.
+
 ## GLTF
 
 Loads a 3D model from a binary glTF (`.glb`) file on the web. The model is added as a child of the object, facing the object's blue axis (+Z).
@@ -48,7 +50,7 @@ Plays a video on the object's own mesh: give the object a shape first, such as a
 
 | Property | Type | Default | Description |
 |----------|------|---------|-------------|
-| `url` | string | "" | Address of the video file |
+| `url` | string | "" | Address of the video: an MP4 file, or an HLS (`.m3u8`) or MPEG-TS stream, on demand or live |
 | `volume` | number | 0.5 | Volume, 0 to 1 |
 | `loop` | boolean | false | Start again at the end |
 | `playOnAwake` | boolean | true | Play as soon as the `url` is set; when off, the video is only loaded and waits for `PlayToggle()` |
@@ -95,7 +97,13 @@ video.WatchProperties([BS.PN.time]);                      // Keep video.time up 
 
 The read-only properties keep the value they had when your script last asked, so read them with `GetProperty` (or `time` with `WatchProperties`) rather than straight off the component.
 
-The sound goes straight to the player's audio device, the same wherever they stand. In the Inspector, **Route Audio Through Audio Source** sends it through an Audio Source on the object instead, so it comes from the screen and is included in in-app recordings; set it before the video starts.
+**What plays:** MP4 files, which start and seek without downloading the whole file, and HLS playlists and MPEG-TS streams, on demand or live. The picture can be H.264 anywhere, or HEVC where the device has a decoder for it; the device's own hardware decoder plays it. A live stream has a `duration` of 0, ignores `loop` and can't seek. Pausing a live stream and playing it again picks it up where it is now.
+
+The picture is also a texture for other materials to show: `asset_video_` followed by the video player's `unityId`, from its first frame on. See [Textures](../browser/textures.md) for putting a texture reference on a material.
+
+The sound goes through the app's mixer, so it follows the player's volume settings and is included in in-app recordings, but it sounds the same wherever they stand. In the Inspector, **Route Audio Through Audio Source** makes it come from the screen instead, with the settings of the object's own Audio Source if it has one; set it before the video starts.
+
+A Video Clip stored in your world, with no `url`, plays as it always has, through a Unity Video Player on the same object; `skipOnDrop` and `waitForFirstFrame` only apply to those. A Video Player you add yourself also decides where a `url` video's picture and sound go: its **Render Mode** and target (a material property or a Render Texture) and its **Audio Output Mode**.
 
 ## Browser
 

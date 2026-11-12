@@ -12,6 +12,7 @@ namespace BS
         public bool syncPosition;
         public bool syncRotation;
         public bool takeOwnershipOnCollision;
+        public bool takeOwnershipOnProximity;
         public bool takeOwnershipOnGrab;
         public bool kinematicIfNotOwned;
         public float resetAfterSeconds;
@@ -19,7 +20,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSSyncedObject : BSComponentBase
+    public partial class BSSyncedObject : BSComponentBase
     {
         [Tooltip("Determines if the object's position is synchronized across all clients.")]
         [See(initial = "true")][SerializeField] internal bool syncPosition = true;
@@ -27,18 +28,31 @@ namespace BS
         [Tooltip("Determines if the object's rotation is synchronized across all clients.")]
         [See(initial = "true")][SerializeField] internal bool syncRotation = true;
 
-        [Tooltip("Determines if ownership is taken when the object collides with another object.")]
+        [Tooltip("Determines if ownership is taken when a player touches the object. Without Take Ownership On " +
+                 "Proximity the object is still for a moment when first bumped (it moves once the claim lands).")]
         [See(initial = "true")][SerializeField] internal bool takeOwnershipOnCollision = true;
+
 
         [Tooltip("Determines if ownership is taken when the object is grabbed.")]
         [See(initial = "true")][SerializeField] internal bool takeOwnershipOnGrab = true;
 
-        [Tooltip("If enabled, the object becomes kinematic when it is not owned by the local player.")]
+        [Tooltip("Keeps a physics object still (kinematic) for everyone until a player grabs it, comes close or bumps " +
+                 "it (with Take Ownership On Proximity / On Collision), sits on it, or a script calls TakeOwnership; a " +
+                 "reset puts it back at rest. 'Owned' means the player whose game simulates it, not the one holding it. " +
+                 "Untick both for 'only moves when grabbed'. A Rigidbody set to kinematic stays kinematic when claimed.")]
         [See(initial = "false")][SerializeField] internal bool kinematicIfNotOwned = false;
 
         [Tooltip("Seconds a moved object waits, once nobody is holding it or attached to it, before it returns to " +
                  "where it was placed. 0 = never. -1 = the app's default.")]
         [See(initial = "-1")][SerializeField] internal float resetAfterSeconds = -1f;
+
+        // Declared last on purpose: the JS constructor takes these in declaration order, and existing worlds pass the
+        // earlier ones positionally, so a new field can only go on the end (the bridge lock enforces it).
+        [Tooltip("Determines if ownership is taken as a player comes close (just before touching it), so the object " +
+                 "is already moving under their physics by the time they touch it. Untick so walking past or near it " +
+                 "never takes it, e.g. a ball people stand around; with Take Ownership On Collision it's then taken " +
+                 "on touch instead.")]
+        [See(initial = "true")][SerializeField] internal bool takeOwnershipOnProximity = true;
 
         [Method]
         public void _TakeOwnership()
@@ -74,249 +88,11 @@ namespace BS
             synced.syncPosition = syncPosition;
             synced.syncRotation = syncRotation;
             synced.takeOwnershipOnCollision = takeOwnershipOnCollision;
+            synced.takeOwnershipOnProximity = takeOwnershipOnProximity;
             synced.takeOwnershipOnGrab = takeOwnershipOnGrab;
             synced.kinematicIfNotOwned = kinematicIfNotOwned;
             synced.resetAfterSeconds = resetAfterSeconds;
             scene.events.OnSyncedObject.Invoke(synced, this);
         }
-        // BS COMPILED CODE 
-        public System.Boolean SyncPosition { get { return syncPosition; } set { syncPosition = value; UpdateCallback(new List<PropertyName> { PropertyName.syncPosition }); } }
-        public System.Boolean SyncRotation { get { return syncRotation; } set { syncRotation = value; UpdateCallback(new List<PropertyName> { PropertyName.syncRotation }); } }
-        public System.Boolean TakeOwnershipOnCollision { get { return takeOwnershipOnCollision; } set { takeOwnershipOnCollision = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnCollision }); } }
-        public System.Boolean TakeOwnershipOnGrab { get { return takeOwnershipOnGrab; } set { takeOwnershipOnGrab = value; UpdateCallback(new List<PropertyName> { PropertyName.takeOwnershipOnGrab }); } }
-        public System.Boolean KinematicIfNotOwned { get { return kinematicIfNotOwned; } set { kinematicIfNotOwned = value; UpdateCallback(new List<PropertyName> { PropertyName.kinematicIfNotOwned }); } }
-        public System.Single ResetAfterSeconds { get { return resetAfterSeconds; } set { resetAfterSeconds = value; UpdateCallback(new List<PropertyName> { PropertyName.resetAfterSeconds }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.syncPosition, PropertyName.syncRotation, PropertyName.takeOwnershipOnCollision, PropertyName.takeOwnershipOnGrab, PropertyName.kinematicIfNotOwned, PropertyName.resetAfterSeconds, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "SyncedObject" +  PropertyName.syncPosition + syncPosition + PropertyName.syncRotation + syncRotation + PropertyName.takeOwnershipOnCollision + takeOwnershipOnCollision + PropertyName.takeOwnershipOnGrab + takeOwnershipOnGrab + PropertyName.kinematicIfNotOwned + kinematicIfNotOwned + PropertyName.resetAfterSeconds + resetAfterSeconds;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.SyncedObject);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        void TakeOwnership()
-        {
-            _TakeOwnership();
-        }
-        Boolean DoIOwn()
-        {
-            return _DoIOwn();
-        }
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-
-            if (methodName == "TakeOwnership" && parameters.Count == 0)
-            {
-                TakeOwnership();
-                return null;
-            }
-            else if (methodName == "DoIOwn" && parameters.Count == 0)
-            {
-                return DoIOwn();
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSBool)
-                {
-                    var valsyncPosition = (BSBool)values[i];
-                    if (valsyncPosition.n == PropertyName.syncPosition)
-                    {
-                        syncPosition = valsyncPosition.x;
-                        changedProperties.Add(PropertyName.syncPosition);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valsyncRotation = (BSBool)values[i];
-                    if (valsyncRotation.n == PropertyName.syncRotation)
-                    {
-                        syncRotation = valsyncRotation.x;
-                        changedProperties.Add(PropertyName.syncRotation);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valtakeOwnershipOnCollision = (BSBool)values[i];
-                    if (valtakeOwnershipOnCollision.n == PropertyName.takeOwnershipOnCollision)
-                    {
-                        takeOwnershipOnCollision = valtakeOwnershipOnCollision.x;
-                        changedProperties.Add(PropertyName.takeOwnershipOnCollision);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valtakeOwnershipOnGrab = (BSBool)values[i];
-                    if (valtakeOwnershipOnGrab.n == PropertyName.takeOwnershipOnGrab)
-                    {
-                        takeOwnershipOnGrab = valtakeOwnershipOnGrab.x;
-                        changedProperties.Add(PropertyName.takeOwnershipOnGrab);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valkinematicIfNotOwned = (BSBool)values[i];
-                    if (valkinematicIfNotOwned.n == PropertyName.kinematicIfNotOwned)
-                    {
-                        kinematicIfNotOwned = valkinematicIfNotOwned.x;
-                        changedProperties.Add(PropertyName.kinematicIfNotOwned);
-                    }
-                }
-                if (values[i] is BSFloat)
-                {
-                    var valresetAfterSeconds = (BSFloat)values[i];
-                    if (valresetAfterSeconds.n == PropertyName.resetAfterSeconds)
-                    {
-                        resetAfterSeconds = valresetAfterSeconds.x;
-                        changedProperties.Add(PropertyName.resetAfterSeconds);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.syncPosition,
-                    type = PropertyType.Bool,
-                    value = syncPosition,
-                    componentType = ComponentType.SyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.syncRotation,
-                    type = PropertyType.Bool,
-                    value = syncRotation,
-                    componentType = ComponentType.SyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.takeOwnershipOnCollision,
-                    type = PropertyType.Bool,
-                    value = takeOwnershipOnCollision,
-                    componentType = ComponentType.SyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.takeOwnershipOnGrab,
-                    type = PropertyType.Bool,
-                    value = takeOwnershipOnGrab,
-                    componentType = ComponentType.SyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.kinematicIfNotOwned,
-                    type = PropertyType.Bool,
-                    value = kinematicIfNotOwned,
-                    componentType = ComponentType.SyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.resetAfterSeconds,
-                    type = PropertyType.Float,
-                    value = resetAfterSeconds,
-                    componentType = ComponentType.SyncedObject,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

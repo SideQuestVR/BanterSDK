@@ -44,6 +44,12 @@ namespace BS
                 return null;
             }
 
+            if (!PageJson.IsSafe(json))
+            {
+                Debug.LogWarning("[BSGeometry] shapePoints are nested too deep to parse.");
+                return null;
+            }
+
             ShapeCommands parsed;
             try
             {

@@ -1,4 +1,4 @@
-Shader "Banter/Seat Marker"
+Shader "BS/Seat Marker"
 {
     Properties
     {

@@ -151,6 +151,48 @@ namespace BS.LocalMultiplayer.Tests
             Assert.That(third.Velocity, Is.EqualTo(Vector3.zero));
         }
 
+        // TransformRuntimeTests' publisher discontinuity tests, on the participant policy.
+        [Test]
+        public void AJumpBetweenTwoSamples_GoesOutAsADiscontinuity()
+        {
+            var policy = new PosePublishPolicy();
+            Assert.That(policy.TryCommit(0, Sample(Vector3.zero), false, out _, out var discontinuity), Is.True);
+            Assert.That(discontinuity, Is.True); // the registration's first frame
+
+            // An idle second, then a reset 85 m away between two samples.
+            Assert.That(policy.TryCommit(1000, Sample(Vector3.zero), false, out _, out discontinuity), Is.True);
+            Assert.That(discontinuity, Is.False);
+            Assert.That(policy.TryCommit(1034, Sample(new Vector3(85, 0, 0)), false, out _, out discontinuity), Is.True);
+            Assert.That(discontinuity, Is.True);
+
+            Assert.That(policy.TryCommit(1068, Sample(new Vector3(85.1f, 0, 0)), false, out _, out discontinuity), Is.True);
+            Assert.That(discontinuity, Is.False);
+        }
+
+        [Test]
+        public void FastRealMotion_IsNotADiscontinuity()
+        {
+            var policy = new PosePublishPolicy();
+            policy.TryCommit(0, Sample(Vector3.zero), false, out _, out _);
+            // 3 m in 34 ms is ~88 m/s: past the distance, under the speed.
+            Assert.That(policy.TryCommit(34, Sample(new Vector3(3, 0, 0)), false, out _, out var discontinuity), Is.True);
+            Assert.That(discontinuity, Is.False);
+            // 1.5 m in 34 ms (~44 m/s) is under the distance.
+            Assert.That(policy.TryCommit(68, Sample(new Vector3(4.5f, 0, 0)), false, out _, out discontinuity), Is.True);
+            Assert.That(discontinuity, Is.False);
+        }
+
+        [Test]
+        public void AJumpWhileStill_IsMeasuredFromTheLastSample_NotTheLastFrameSent()
+        {
+            var policy = new PosePublishPolicy();
+            policy.TryCommit(0, Sample(Vector3.zero), false, out _, out _);
+            // Samples that don't send (still, no heartbeat yet) still move the reference.
+            Assert.That(policy.TryCommit(500, Sample(Vector3.zero), false, out _, out _), Is.False);
+            Assert.That(policy.TryCommit(534, Sample(new Vector3(10, 0, 0)), false, out _, out var discontinuity), Is.True);
+            Assert.That(discontinuity, Is.True);
+        }
+
         static PoseSample Sample(Vector3 position, float yaw = 0f, Vector3 velocity = default) => new PoseSample
         {
             Position = position,

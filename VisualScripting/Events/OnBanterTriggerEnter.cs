@@ -18,11 +18,15 @@ namespace BS.VisualScripting
         protected override string hookName => EventHooks.OnTriggerEnter;
         [DoNotSerialize]
         public ValueOutput user { get; private set; }
+        /// <summary>Whether the collider belongs to a player; when it doesn't, `user` is an empty user.</summary>
+        [DoNotSerialize]
+        public ValueOutput isUser { get; private set; }
         protected override void Definition()
         {
             base.Definition();
 
             user = ValueOutput<BSUser>(nameof(user));
+            isUser = ValueOutput<bool>(nameof(isUser));
         }
         protected override void AssignArguments(Flow flow, Collider other)
         {
@@ -35,8 +39,11 @@ namespace BS.VisualScripting
             }
             else
             {
+                // Null, as always, for a collider that isn't a player: graphs test that ("isUser" now says it too). Not
+                // an empty user: uid "" means the local player to the user-state nodes.
                 flow.SetValue(this.user, null);
             }
+            flow.SetValue(this.isUser, user != null);
         }
     }
 }

@@ -149,7 +149,7 @@ namespace BS.UI.Bridge
         /// </summary>
         public static UIEventType FromEventName(string eventName)
         {
-            return eventName.ToLower() switch
+            return eventName.ToLowerInvariant() switch
             {
                 // Mouse events
                 "click" => UIEventType.Click,

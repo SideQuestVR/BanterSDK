@@ -485,15 +485,15 @@ namespace BS.UI.Bridge
 
                     case Slider slider when propertyName == "value":
                         // No ChangeEvent for a value the page set itself (see BSUISlider.value).
-                        slider.SetValueWithoutNotify(float.Parse(value));
+                        slider.SetValueWithoutNotify(NumberFormat.Parse(value));
                         return;
 
                     case Slider slider when propertyName == "minvalue":
-                        slider.lowValue = float.Parse(value);
+                        slider.lowValue = NumberFormat.Parse(value);
                         return;
 
                     case Slider slider when propertyName == "maxvalue":
-                        slider.highValue = float.Parse(value);
+                        slider.highValue = NumberFormat.Parse(value);
                         return;
 
                     case SliderInt sliderInt when propertyName == "value":
@@ -504,18 +504,18 @@ namespace BS.UI.Bridge
                         var parts = value.Split(',');
                         if (parts.Length == 2)
                         {
-                            minMaxSlider.value = new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                            minMaxSlider.value = new Vector2(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]));
                         }
                         return;
 
                     case ScrollView scrollView when propertyName == "horizontalScrolling":
-                        scrollView.horizontalScrollerVisibility = (value == "1" || value.ToLower() == "true")
+                        scrollView.horizontalScrollerVisibility = (value == "1" || value.ToLowerInvariant() == "true")
                             ? ScrollerVisibility.Auto
                             : ScrollerVisibility.Hidden;
                         return;
 
                     case ScrollView scrollView when propertyName == "verticalScrolling":
-                        scrollView.verticalScrollerVisibility = (value == "1" || value.ToLower() == "true")
+                        scrollView.verticalScrollerVisibility = (value == "1" || value.ToLowerInvariant() == "true")
                             ? ScrollerVisibility.Auto
                             : ScrollerVisibility.Hidden;
                         return;
@@ -524,13 +524,13 @@ namespace BS.UI.Bridge
                 // Handle common properties that apply to all VisualElements
                 if (propertyName == "enabled")
                 {
-                    element.SetEnabled(value == "1" || value.ToLower() == "true");
+                    element.SetEnabled(value == "1" || value.ToLowerInvariant() == "true");
                     return;
                 }
 
                 if (propertyName == "visible")
                 {
-                    element.style.display = (value == "1" || value.ToLower() == "true") ? DisplayStyle.Flex : DisplayStyle.None;
+                    element.style.display = (value == "1" || value.ToLowerInvariant() == "true") ? DisplayStyle.Flex : DisplayStyle.None;
                     return;
                 }
 
@@ -584,7 +584,7 @@ namespace BS.UI.Bridge
         private object GetElementProperty(VisualElement element, string propertyName)
         {
             // Handle common UI properties
-            switch (propertyName.ToLower())
+            switch (propertyName.ToLowerInvariant())
             {
                 case "text":
                     if (element is UnityEngine.UIElements.Label label)
@@ -646,7 +646,7 @@ namespace BS.UI.Bridge
                     toggle.value = value == "1";
                     break;
                 case Slider slider:
-                    slider.value = float.Parse(value);
+                    slider.value = NumberFormat.Parse(value);
                     break;
                 case DropdownField dropdown:
                     dropdown.value = value;
@@ -965,11 +965,11 @@ namespace BS.UI.Bridge
             {
                 // Layout Properties (Flexbox)
                 case UIStyleProperty.AlignContent:
-                    return style.alignContent.ToString().ToLower();
+                    return style.alignContent.ToString().ToLowerInvariant();
                 case UIStyleProperty.AlignItems:
-                    return style.alignItems.ToString().ToLower();
+                    return style.alignItems.ToString().ToLowerInvariant();
                 case UIStyleProperty.AlignSelf:
-                    return style.alignSelf.ToString().ToLower();
+                    return style.alignSelf.ToString().ToLowerInvariant();
                 case UIStyleProperty.FlexBasis:
                     return FormatStyleFloat(style.flexBasis);
                 case UIStyleProperty.FlexDirection:
@@ -999,7 +999,7 @@ namespace BS.UI.Bridge
 
                 // Position Properties
                 case UIStyleProperty.Position:
-                    return style.position.ToString().ToLower();
+                    return style.position.ToString().ToLowerInvariant();
                 case UIStyleProperty.Left:
                     return FormatStyleLength(style.left);
                 case UIStyleProperty.Top:
@@ -1031,13 +1031,13 @@ namespace BS.UI.Bridge
 
                 // Border Properties
                 case UIStyleProperty.BorderTopWidth:
-                    return style.borderTopWidth.ToString();
+                    return NumberFormat.Format(style.borderTopWidth);
                 case UIStyleProperty.BorderRightWidth:
-                    return style.borderRightWidth.ToString();
+                    return NumberFormat.Format(style.borderRightWidth);
                 case UIStyleProperty.BorderBottomWidth:
-                    return style.borderBottomWidth.ToString();
+                    return NumberFormat.Format(style.borderBottomWidth);
                 case UIStyleProperty.BorderLeftWidth:
-                    return style.borderLeftWidth.ToString();
+                    return NumberFormat.Format(style.borderLeftWidth);
                 case UIStyleProperty.BorderTopLeftRadius:
                     return FormatStyleLength(style.borderTopLeftRadius);
                 case UIStyleProperty.BorderTopRightRadius:
@@ -1065,25 +1065,25 @@ namespace BS.UI.Bridge
                 case UIStyleProperty.Color:
                     return "#" + ColorUtility.ToHtmlStringRGBA(style.color);
                 case UIStyleProperty.Opacity:
-                    return style.opacity.ToString();
+                    return NumberFormat.Format(style.opacity);
 
                 // Text Properties
                 case UIStyleProperty.FontSize:
                     return FormatStyleLength(style.fontSize);
                 case UIStyleProperty.FontStyle:
-                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                    return style.unityFontStyleAndWeight.ToString().ToLowerInvariant();
                 case UIStyleProperty.FontWeight:
-                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                    return style.unityFontStyleAndWeight.ToString().ToLowerInvariant();
                 case UIStyleProperty.UnityTextAlign:
                     return FormatTextAnchor(style.unityTextAlign);
                 case UIStyleProperty.WhiteSpace:
-                    return style.whiteSpace.ToString().ToLower();
+                    return style.whiteSpace.ToString().ToLowerInvariant();
 
                 // Display Properties
                 case UIStyleProperty.Display:
-                    return style.display.ToString().ToLower();
+                    return style.display.ToString().ToLowerInvariant();
                 case UIStyleProperty.Visibility:
-                    return style.visibility.ToString().ToLower();
+                    return style.visibility.ToString().ToLowerInvariant();
 
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported get style property: {property}");
@@ -1095,26 +1095,26 @@ namespace BS.UI.Bridge
         {
             if (length.keyword != StyleKeyword.Undefined && length.keyword != StyleKeyword.Null)
             {
-                return length.keyword.ToString().ToLower();
+                return length.keyword.ToString().ToLowerInvariant();
             }
 
             var value = length.value;
             if (value.unit == LengthUnit.Pixel)
-                return $"{value.value}px";
+                return NumberFormat.Format(value.value) + "px";
             else if (value.unit == LengthUnit.Percent)
-                return $"{value.value}%";
+                return NumberFormat.Format(value.value) + "%";
             else
-                return value.value.ToString();
+                return NumberFormat.Format(value.value);
         }
 
         private string FormatStyleFloat(StyleFloat styleFloat)
         {
             if (styleFloat.keyword != StyleKeyword.Undefined && styleFloat.keyword != StyleKeyword.Null)
             {
-                return styleFloat.keyword.ToString().ToLower();
+                return styleFloat.keyword.ToString().ToLowerInvariant();
             }
 
-            return styleFloat.value.ToString();
+            return NumberFormat.Format(styleFloat.value);
         }
 
         private string FormatFlexDirection(FlexDirection direction)
@@ -1175,7 +1175,7 @@ namespace BS.UI.Bridge
             if (string.IsNullOrEmpty(value))
                 return new StyleLength(StyleKeyword.Initial);
 
-            value = value.Trim().ToLower();
+            value = value.Trim().ToLowerInvariant();
 
             // Handle CSS keywords (only those supported by Unity)
             switch (value)
@@ -1200,7 +1200,7 @@ namespace BS.UI.Bridge
             var match = System.Text.RegularExpressions.Regex.Match(value, @"^(-?\d*\.?\d+)(px|%|em|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc)?$");
             if (match.Success)
             {
-                var numericValue = float.Parse(match.Groups[1].Value);
+                var numericValue = NumberFormat.Parse(match.Groups[1].Value);
                 var unit = match.Groups[2].Value;
 
                 switch (unit)
@@ -1261,7 +1261,7 @@ namespace BS.UI.Bridge
             }
 
             // Fallback: try to parse as float
-            if (float.TryParse(value, out float fallbackValue))
+            if (NumberFormat.TryParse(value, out float fallbackValue))
             {
                 return new StyleLength(fallbackValue);
             }
@@ -1274,7 +1274,7 @@ namespace BS.UI.Bridge
             if (string.IsNullOrEmpty(value))
                 return new StyleColor(StyleKeyword.Initial);
 
-            value = value.Trim().ToLower();
+            value = value.Trim().ToLowerInvariant();
 
             // Handle CSS keywords (only those supported by Unity)
             switch (value)
@@ -1310,7 +1310,7 @@ namespace BS.UI.Bridge
                 var r = int.Parse(rgbaMatch.Groups[1].Value) / 255f;
                 var g = int.Parse(rgbaMatch.Groups[2].Value) / 255f;
                 var b = int.Parse(rgbaMatch.Groups[3].Value) / 255f;
-                var a = rgbaMatch.Groups[4].Success ? float.Parse(rgbaMatch.Groups[4].Value) : 1f;
+                var a = rgbaMatch.Groups[4].Success ? NumberFormat.Parse(rgbaMatch.Groups[4].Value) : 1f;
                 return new StyleColor(new Color(r, g, b, a));
             }
 
@@ -1321,7 +1321,7 @@ namespace BS.UI.Bridge
                 var h = int.Parse(hslaMatch.Groups[1].Value) / 360f;
                 var s = int.Parse(hslaMatch.Groups[2].Value) / 100f;
                 var l = int.Parse(hslaMatch.Groups[3].Value) / 100f;
-                var a = hslaMatch.Groups[4].Success ? float.Parse(hslaMatch.Groups[4].Value) : 1f;
+                var a = hslaMatch.Groups[4].Success ? NumberFormat.Parse(hslaMatch.Groups[4].Value) : 1f;
 
                 // Convert HSL to RGB
                 var rgbColor = HSLToRGB(h, s, l);
@@ -1666,6 +1666,7 @@ namespace BS.UI.Bridge
         {
             try
             {
+                if (PageUrl.Refuse(url, nameof(UIElementBridge))) return null;
                 LogVerbose($"Downloading texture from: {url}");
                 var texture = await Get.Texture(url);
                 return texture;
@@ -1756,7 +1757,7 @@ namespace BS.UI.Bridge
             // Remove common units
             value = value.Replace("px", "").Replace("em", "").Replace("rem", "");
 
-            if (float.TryParse(value, out float result))
+            if (NumberFormat.TryParse(value, out float result))
                 return result;
 
             return 0f;
@@ -1766,8 +1767,7 @@ namespace BS.UI.Bridge
         // from locale-formatted user input.
         private static float ParseFloatInvariant(string value)
         {
-            return float.TryParse(value, System.Globalization.NumberStyles.Float,
-                System.Globalization.CultureInfo.InvariantCulture, out var f) ? f : 0f;
+            return NumberFormat.TryParse(value, out var f) ? f : 0f;
         }
 
         private static Length ParseLengthComponent(string value)
@@ -2496,26 +2496,26 @@ namespace BS.UI.Bridge
                         break;
 
                     case ChangeEvent<bool> boolChangeEvt:
-                        jsonBuilder.Append($",\"newValue\":{boolChangeEvt.newValue.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"previousValue\":{boolChangeEvt.previousValue.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"newValue\":{boolChangeEvt.newValue.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"previousValue\":{boolChangeEvt.previousValue.ToString().ToLowerInvariant()}");
                         break;
 
                     case KeyDownEvent keyDown:
                         jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
                         jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");
-                        jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLowerInvariant()}");
                         break;
 
                     case KeyUpEvent keyUp:
                         jsonBuilder.Append($",\"keyCode\":{(int)keyUp.keyCode}");
                         jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyUp.character.ToString())}\"");
-                        jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLowerInvariant()}");
                         break;
 
                     case MouseDownEvent mouseDown:
@@ -2523,20 +2523,20 @@ namespace BS.UI.Bridge
                         jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseDown.mousePosition.x},\"y\":{mouseDown.mousePosition.y}}}");
                         jsonBuilder.Append($",\"button\":{mouseDown.button}");
                         jsonBuilder.Append($",\"clickCount\":{mouseDown.clickCount}");
-                        jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLowerInvariant()}");
                         break;
 
                     case MouseUpEvent mouseUp:
                         jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseUp.localMousePosition.x},\"y\":{mouseUp.localMousePosition.y}}}");
                         jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseUp.mousePosition.x},\"y\":{mouseUp.mousePosition.y}}}");
                         jsonBuilder.Append($",\"button\":{mouseUp.button}");
-                        jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLowerInvariant()}");
                         break;
 
                     case ClickEvent click:
@@ -2545,10 +2545,10 @@ namespace BS.UI.Bridge
                         jsonBuilder.Append($",\"mousePosition\":{{\"x\":{click.position.x},\"y\":{click.position.y}}}");
                         jsonBuilder.Append($",\"button\":{click.button}");
                         jsonBuilder.Append($",\"clickCount\":{click.clickCount}");
-                        jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLowerInvariant()}");
                         break;
 
                     case MouseMoveEvent mouseMove:
@@ -2571,10 +2571,10 @@ namespace BS.UI.Bridge
                         jsonBuilder.Append($",\"delta\":{{\"x\":{wheel.delta.x},\"y\":{wheel.delta.y}}}");
                         jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{wheel.localMousePosition.x},\"y\":{wheel.localMousePosition.y}}}");
                         jsonBuilder.Append($",\"mousePosition\":{{\"x\":{wheel.mousePosition.x},\"y\":{wheel.mousePosition.y}}}");
-                        jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLower()}");
-                        jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLower()}");
+                        jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLowerInvariant()}");
                         break;
 
                     case FocusEvent focusEvt:
@@ -2684,7 +2684,36 @@ namespace BS.UI.Bridge
         /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
         public Dictionary<VisualElement, string> ProcessUXMLTree(UIDocument document, string prefix = "uxml")
         {
+            // A disabled UIDocument has no tree yet. Keep the request, prefix and all: BSUIPanel registers it
+            // once the document is enabled (ProcessPendingUXML), in the order asked.
+            if (document != null && document.rootVisualElement == null)
+            {
+                if (!_pendingUxml.Contains((document, prefix)))
+                    _pendingUxml.Add((document, prefix));
+                return new Dictionary<VisualElement, string>();
+            }
             return BS.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+        }
+
+        private readonly List<(UIDocument document, string prefix)> _pendingUxml = new List<(UIDocument document, string prefix)>();
+
+        internal bool HasPendingUXML => _pendingUxml.Count > 0;
+
+        /// <summary>Registers the UXML trees asked for while their document was disabled, for those that now have a root.</summary>
+        internal void ProcessPendingUXML()
+        {
+            for (var i = 0; i < _pendingUxml.Count;)
+            {
+                var (document, prefix) = _pendingUxml[i];
+                if (document != null && document.rootVisualElement == null)
+                {
+                    i++;
+                    continue;
+                }
+                _pendingUxml.RemoveAt(i);
+                if (document != null)
+                    BS.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+            }
         }
 
         /// <summary>
@@ -2712,10 +2741,10 @@ namespace BS.UI.Bridge
                     return int.Parse(value);
 
                 if (targetType == typeof(float))
-                    return float.Parse(value);
+                    return NumberFormat.Parse(value);
 
                 if (targetType == typeof(double))
-                    return double.Parse(value);
+                    return NumberFormat.ParseDouble(value);
 
                 if (targetType == typeof(bool))
                     return bool.Parse(value);
@@ -2724,14 +2753,14 @@ namespace BS.UI.Bridge
                 {
                     var parts = value.Split(',');
                     if (parts.Length == 2)
-                        return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                        return new Vector2(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]));
                 }
 
                 if (targetType == typeof(Vector3))
                 {
                     var parts = value.Split(',');
                     if (parts.Length == 3)
-                        return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                        return new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
                 }
 
                 if (targetType == typeof(Color))
@@ -2741,7 +2770,7 @@ namespace BS.UI.Bridge
                 }
 
                 // Fallback: try Convert.ChangeType
-                return Convert.ChangeType(value, targetType);
+                return Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
             }
             catch (Exception ex)
             {

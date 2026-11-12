@@ -70,8 +70,9 @@ Every player has to have the object, under the same [BSObjectId](#bsobjectid): t
 | `syncPosition` | `true` | Ignored: the position is always shared. |
 | `syncRotation` | `true` | Off: the rotation isn't shared, only the position. |
 | `takeOwnershipOnCollision` | `true` | Touching the object with your body, head, hands or feet makes you its owner. |
+| `takeOwnershipOnProximity` | `true` | Coming within about 0.3 m of the object makes you its owner, just before you touch it, so it's already moving with your physics when you do. Off: walking past or standing near it never takes it; with `takeOwnershipOnCollision` it's taken on touch instead, and is still for a moment when first bumped. |
 | `takeOwnershipOnGrab` | `true` | Grabbing the object makes you its owner and holds it until you let go, and the others see it in your hand. The object also has to be grabbable: a [grab handle](../components/vr-interaction.md#grabhandle) on the Grabbable layer, as the grab presets have. |
-| `kinematicIfNotOwned` | `false` | Ignored: the copies a player doesn't own are always kinematic (see below). |
+| `kinematicIfNotOwned` | `false` | The object rests, kinematic, until someone grabs it, bumps it or takes ownership, and goes back to resting when it's reset. The copies a player doesn't own are always kinematic either way (see below). |
 
 The app reads these once, when it sets the object up (a frame after the object starts). Set them in the Inspector, or in the component's config when a script adds it; changing them later has no effect.
 
@@ -93,14 +94,15 @@ The first player in the room owns every synced object, so a player alone in a sp
 |---|---|
 | A script calls `TakeOwnership()` | You become the owner, unless someone is holding the object. |
 | You grab it (`takeOwnershipOnGrab`) | You become the owner and nobody can take it while you hold it. When you let go you stay the owner. If someone else got it first, your hand lets go. |
-| You touch it (`takeOwnershipOnCollision`) | When your body, head, hands or feet come within about 0.3 m of it, you become the owner, at most about three times a second, and never while someone holds it. Only players count: objects hitting each other don't move ownership. |
+| You come close (`takeOwnershipOnProximity`) | When your body, head, hands or feet come within about 0.3 m of it, you become the owner, at most about three times a second, and never while someone holds it. Only players count: objects hitting each other don't move ownership. |
+| You touch it (`takeOwnershipOnCollision`) | The same, on contact. With `takeOwnershipOnProximity` on as well (the default), you already own it by then. |
 | You sit on a seat that is, or is inside, a synced object | You become the owner, so you drive the vehicle. |
 | The owner leaves | About a second later the object passes to the player who owns the fewest objects. |
 | Everyone leaves | The object is forgotten. The next player to arrive starts it again from where the scene puts it. |
 
 There is no event when ownership changes.
 
-!> Turn `takeOwnershipOnCollision` off on kinematic objects such as vehicles and moving platforms. Walking into one claims it and turns its Rigidbody dynamic, so it starts to fall and be pushed around.
+!> Turn `takeOwnershipOnCollision` and `takeOwnershipOnProximity` off on kinematic objects such as vehicles and moving platforms. Walking into or near one claims it and turns its Rigidbody dynamic, so it starts to fall and be pushed around.
 
 ### Spawned copies
 
@@ -205,7 +207,7 @@ window.addEventListener("bs-loaded", () => {
 - **Your own writes come back to you** as changes, so do the work in the change handler, not straight after writing. Then a player who arrives later runs the same code.
 - **Arriving players get everything:** when you join, `space-state-changed` fires with every value.
 - **It outlives the visit.** Space state is kept until 24 hours after the last change, whether or not anyone is in the space. Reading it, or joining, doesn't extend that.
-- **Public** values can be written by anyone in the room. **Protected** values can be written only by the world's owner, an Owner or Moderator of the community hosting it, or a SideQuest admin, and only while signed in. Anyone can read both. Once a key has been written as protected it stays protected; see [What "protected" means](../javascript-api/scene-api.md#what-protected-means).
+- **Public** values can be written by anyone in the room. **Protected** values can be written only by the world's owner, an Owner or Moderator of the community hosting it, or a SideQuest admin, and only while signed in. Anyone can read both. Once a key has been written as protected it stays protected; see [What "protected" means](../javascript-api/scene-api.md#what-quotprotectedquot-means).
 - `SetPublicSpaceProps` and `SetProtectedSpaceProps` take strings. `SpaceStateSet`, `SpaceStateMerge` and `SpaceStateDelete` take real JSON values and nested paths, and reject with an error you can catch. See [JSON space state](../javascript-api/scene-api.md#json-space-state), [Limits](../javascript-api/scene-api.md#limits) and [State Events](../javascript-api/scene-events.md#state-events).
 
 ## User state

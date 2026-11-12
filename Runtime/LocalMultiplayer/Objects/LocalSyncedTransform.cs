@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartySynchronizedTransform.cs" sha256="650040f9afb83df9d34611a0eb1b86dee9420b689cf7bca4f52a7c32e6f206c6" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartySynchronizedTransform.cs" sha256="651f879f279d96c94c5c5d31f899f64e9220ad3f270bc7adb72c526d7814f5d8" mode="port" />
 // The automatic-identity path of PacketPartySynchronizedTransform: ConfigureAutomatic (:294-314), the authored
 // kinematic capture on every enable (:584-602), the authority switch of RefreshAutomaticBindingAsync (:963-1022),
 // remote presentation (:724-819, Render clock) and OnDisable (:627-651). The runtime's descriptor registration, views
@@ -43,6 +43,7 @@ namespace BS.LocalMultiplayer.Objects
         LocalNetworkObject _netObj;
         Rigidbody boundBody;
         bool authoredKinematic;
+        bool holdKinematicOnOwner;
         // The body's kinematic setting before local multiplayer touched it, restored on teardown.
         bool _hasOriginalKinematic;
         bool _originalKinematic;
@@ -114,7 +115,7 @@ namespace BS.LocalMultiplayer.Objects
                 }
                 // Recaptured on every enable, as production does. HeldSyncSuspender, the one caller that re-enables
                 // a non-owner whose body is network-kinematic, shows it the authored flag first.
-                authoredKinematic = boundBody.isKinematic;
+                if (!holdKinematicOnOwner) authoredKinematic = boundBody.isKinematic;
             }
             ApplyRemote(MachineClock.NowMs);
         }
@@ -139,6 +140,23 @@ namespace BS.LocalMultiplayer.Objects
         }
 
         /// <summary>
+        /// Keeps the bound Rigidbody kinematic while this player has authority too (Rigidbody binding only; non-owners
+        /// are always kinematic). The flag is re-applied every frame, so set this instead of Rigidbody.isKinematic to
+        /// rest an authored-dynamic body on its owner.
+        /// </summary>
+        public bool HoldKinematicOnOwner
+        {
+            get => holdKinematicOnOwner;
+            set
+            {
+                holdKinematicOnOwner = value;
+                if (boundBody != null && poseBinding == TransformPoseBinding.Rigidbody
+                    && _netObj != null && _netObj.IsTransformIdentityReady && _netObj.HasTransformAuthority)
+                    boundBody.isKinematic = authoredKinematic || value;
+            }
+        }
+
+        /// <summary>
         /// Production's kinematic rule for a synced body (PacketPartySynchronizedTransform.cs:965-999): null = leave it
         /// alone. Only Rigidbody-bound objects are touched, and only once they have a network identity: the owner gets
         /// its authored setting, everyone else (also while the record is missing) a kinematic body.
@@ -154,7 +172,7 @@ namespace BS.LocalMultiplayer.Objects
             if (_netObj == null || !_netObj.IsTransformIdentityReady) return;
             bool authority = _netObj.HasTransformAuthority;
             bool? kinematic = DesiredKinematic(_netObj.EverBound, authority,
-                boundBody != null && poseBinding == TransformPoseBinding.Rigidbody, authoredKinematic);
+                boundBody != null && poseBinding == TransformPoseBinding.Rigidbody, authoredKinematic || holdKinematicOnOwner);
             if (kinematic.HasValue && boundBody.isKinematic != kinematic.Value) boundBody.isKinematic = kinematic.Value;
 
             if (authority)

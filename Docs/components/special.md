@@ -1,5 +1,7 @@
 # Special Components
 
+Kit assets, synced, spawned and world objects, platform filters, world options, host checks, Quest Home, script graphs and AO baking.
+
 ## KitAsset
 
 Places a prefab from the app's built-in library of low-poly assets, addressed by its path in that library. The prefabs ship inside the app, so nothing is downloaded and no per-space registration is needed. The path is relative to the library's Assets root, as in the example. Changing `path` replaces the prefab.
@@ -32,7 +34,8 @@ Shares the object's position and rotation with every player in the space. One pl
 | `syncRotation` | boolean | true | Share the rotation too |
 | `takeOwnershipOnCollision` | boolean | true | Touching the object makes you its owner |
 | `takeOwnershipOnGrab` | boolean | true | Grabbing the object makes you its owner until you let go |
-| `kinematicIfNotOwned` | boolean | false | Ignored: copies a player doesn't own are always kinematic |
+| `kinematicIfNotOwned` | boolean | false | The object stays kinematic until someone takes ownership of it |
+| `takeOwnershipOnProximity` | boolean | true | Coming close (about 0.3 m) makes you its owner, just before you touch it. Off: only a touch (`takeOwnershipOnCollision`) or a grab takes it |
 
 The app reads these once, a frame after the object starts, so set them when you add the component.
 
@@ -112,6 +115,35 @@ const obj = new BS.GameObject("LightsOption");
 await obj.AddComponent(new BS.WorldOption({ slot: 1, label: "Lights", isToggle: true }));
 obj.On("world-option", (e) => console.log("Lights on:", e.detail.isOn));
 ```
+
+## VerifyHost
+
+Checks that your world is running from its own address, so a copy uploaded somewhere else doesn't carry on as yours. Add it with **GameObject > BS > Objects > Verify Host**, or **Add Component > BS > Verify Host** on any object. It's an ordinary component, so it works in a prefab too.
+
+| Property | Default | Description |
+|----------|---------|-------------|
+| **Match** | Domain | How **Url** is read: Domain or Regular Expression |
+| **Url** | empty | Domain: the address this world belongs at, such as `https://my-world.worldspace.host`. Only the host and any port are compared. Regular Expression: an expression run against the page's entire URL |
+| **Outcome** | Teleport To Position | What happens to a player at any other address: Teleport To Position or Send To World |
+| **Teleport Position** | `0, 0, 0` | Where Teleport To Position puts the player, in world space |
+| **World Url** | empty | Where Send To World sends the player. Without `https://`, it's assumed |
+| **Error Message** | `This world is only available at its official address.` | The error Send To World shows as the player leaves. Empty shows nothing |
+
+It has no JavaScript API: page scripts can't add it, read it or change it, so it always runs on the values saved in your build.
+
+Once the space has loaded, it checks where the page is running, once for each player. In the wrong place, Teleport To Position moves that player to **Teleport Position**, and Send To World shows them **Error Message** and sends them to **World Url**.
+
+With **Match** on Regular Expression, **Url** is tested against the page's entire URL (`location.href`), so it can look at the path and query too. Start it with `^`, as in `^https://my-world\.worldspace\.host/`: without that, it can match anywhere in the URL, including a query string a copy makes up. Upper and lower case count as different.
+
+Send To World won't send a player to the host they're already on, because they would load straight back into the same check. If **World Url** isn't an http or https address, it does nothing and shows no error, and logs a warning.
+
+If **Url** is empty or isn't a valid expression, or the page's address can't be read, nothing happens to the player and a warning is logged. An expression that takes too long to run counts the same way. SDK Play Mode runs from localhost, so the check is skipped there, though a bad **Url** still logs its warning: visit your world once it's published to test it.
+
+The Domain comparison is exact, except that a world's address on SideQuest's other world domain is the same world: `my-world.worldspace.host` also matches `my-world.bant.ing`, and the other way round. A visitor on any other older alias of your world's address (a previous name, or a custom domain you no longer use) counts as being at the wrong host. **Url** and **World Url** are saved in your build, so upload a new build as soon as you [change your world's address](../building-in-unity/publishing.md): until then, every visitor fails the check.
+
+This deters copies; it can't stop them. For the strongest check, keep it on its own object at the root of the scene, with no BS components: page scripts only see objects that have them.
+
+In a script graph, instantiate a prefab that holds the component, or use the **Verify Host** node (`BS > Space`), which runs the same check and then carries on from **Verified** or **Wrong Host**. That happens later, in a new flow, so use graph or object variables for anything you need from before the node. The node's inputs live in the graph, which a page can edit, so use the component when that matters.
 
 ## WorldObject
 

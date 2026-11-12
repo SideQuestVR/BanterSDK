@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/SynchronizedTransformValues.cs" sha256="e6369f80cc5db92e1e204120beed62035152f6c189300831c3798b0bca44b067" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/SynchronizedTransformValues.cs" sha256="605b74b2c3c3ff2d9b39cc4bdfca0d4594a24afd77455b9215c812e65243ab37" mode="port" />
 // The value types of the synchronized-transform pipeline (SynchronizedTransformValues.cs:7-70, 163-174), cut down to
 // what an automatic-identity synced object uses. The frame's TransformHandle (descriptor slot + generation) becomes the
 // relay's stream identity: the object's ownership generation plus the publisher epoch (RELAY.md 6.2, tf.objects).

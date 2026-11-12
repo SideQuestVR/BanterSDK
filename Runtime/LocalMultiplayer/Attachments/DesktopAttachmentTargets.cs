@@ -1,15 +1,18 @@
-// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="b076dc451c46ae3750aa426065d983c21944a1b7c7d5099d053c1edf53e878ef" mode="port" />
-// DesktopAttachmentTargets is the switch of GetAttachmentTransform (:361-416) with FlexaBody's parts swapped for the
+// <mirror source="Assets/Systems/Attachments/AttachmentsSystem.cs" sha256="548b5a4e1e011610ce98efbc5f65d6ca37eae658ee97ded74d47f69bf9e773d2" mode="port" />
+// DesktopAttachmentTargets is the switch of GetAttachmentTransform (:411-470) with FlexaBody's parts swapped for the
 // desktop rig's, lifted out so it is testable.
 using BS;
 using UnityEngine;
 
 namespace BS.LocalMultiplayer.Attachments
 {
-    /// <summary>The local body part an attachment goes to: production's physics hands, camera and FlexaBall torso.</summary>
+    /// <summary>The local body part an attachment goes to: production's physics hands, camera, or the body.</summary>
     internal enum DesktopAnchor
     {
-        /// <summary>The rig's torso (FlexaBall): every bone without a hand or head equivalent, and the fallback.</summary>
+        /// <summary>
+        /// The body: every bone without a hand or head equivalent, and the fallback. Body-driven: the player's own orb's
+        /// bone for the point (production: the local avatar's humanoid bone), else the rig's torso.
+        /// </summary>
         Torso,
         /// <summary>The rig's left hand anchor (PhysHands[0]).</summary>
         LeftHand,
@@ -23,9 +26,9 @@ namespace BS.LocalMultiplayer.Attachments
     {
         /// <summary>
         /// Which body part GetAttachmentTransform picks for a bone: hands, lower arms and fingers to the hands, head and
-        /// neck to the camera. Everything else, hips, spine, chest, shoulders, upper arms and legs included, lands on the
-        /// torso. When the picked part is missing at runtime (no hand, no main camera) production falls back to the
-        /// torso as well.
+        /// neck to the camera. Everything else, hips, spine, chest, shoulders, upper arms and legs included, is
+        /// body-driven (<see cref="DesktopAnchor.Torso"/>). When the picked part is missing at runtime (no hand, no main
+        /// camera) production makes the attachment body-driven as well.
         /// </summary>
         public static DesktopAnchor Resolve(AvatarBoneName avatarAttachmentPoint)
         {
@@ -74,7 +77,7 @@ namespace BS.LocalMultiplayer.Attachments
                     return DesktopAnchor.Head;
             }
 
-            // Fallback to torso
+            // Body-driven
             return DesktopAnchor.Torso;
         }
     }

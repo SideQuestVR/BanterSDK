@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/SceneEvents/BanterSceneEventHandler.cs" sha256="ee046e8061e439c34909a9015a187b387824455d5cdd6a88e9e1f07941660813" mode="port" />
+// <mirror source="Assets/Systems/SceneEvents/BanterSceneEventHandler.cs" sha256="adcb258b0d7b6dda9ed4771bcb001b6f3b3cac3890ca5436a718b4e075c7753a" mode="port" />
 // PublishLocalPose and PoseMoved (:560-598) with the serialized _posePublishHz (:42) at its 30 Hz default and the
 // scene read through BSScene.Current.
 using UnityEngine;

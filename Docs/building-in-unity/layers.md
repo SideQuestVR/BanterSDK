@@ -51,3 +51,6 @@ What works on each layer (✓ = yes):
   only touch UserLayer8, UserLayer9–15, Grabbable and Invisible; they pass through everything else.
 - **Invisible** objects are hidden from the player's camera, and from the hand camera and
   recordings, which copy it. They still collide, so an Invisible collider makes an invisible wall.
+- **Which layers collide** is the client's setting: a world's own collision matrix isn't used. A
+  world can change pairs while it runs (`Physics.IgnoreLayerCollision` from a graph), and they go
+  back to the client's settings when the world unloads.

@@ -69,7 +69,9 @@ namespace BS
 
         public static List<ScriptMachine> AllMachines()
         {
+            // Only the world's own machines: the page's script-graph bridge must not reach the client's.
             return FindObjects.All<ScriptMachine>(FindObjectsInactive.Include)
+                .Where(m => BSWorldScope.Contains(m.gameObject))
                 .OrderBy(m => HierarchyPath(m.transform), System.StringComparer.Ordinal)
                 .ThenBy(MachineIndex)
                 .ToList();
@@ -125,25 +127,11 @@ namespace BS
         }
 
         /// <summary>
-        /// BanterStubsAllowed.IsBlocked semantics without its per-element Debug.LogError -
-        /// the picker polls list, and a space legitimately containing one blocked machine
-        /// must not spam the console on every poll.
+        /// The install gate's verdict (strict, nested graphs included) without its per-element
+        /// Debug.LogError - the picker polls list, and a space legitimately containing one blocked
+        /// machine must not spam the console on every poll. Shows what Apply would refuse.
         /// </summary>
-        static bool IsBlockedQuiet(FlowGraph graph)
-        {
-            foreach (var element in graph.elements)
-            {
-                if (element is StickyNote || element is GraphGroup) continue;
-                var id = element.GetAnalyticsIdentifier()?.Identifier?.Split('(')[0].Trim();
-                if (id == null) continue;
-                if (id.StartsWith("Unity.VisualScripting.")
-                    || id.StartsWith("BS.VisualScripting.")
-                    || id.StartsWith("Banter.VisualScripting.")
-                    || id.StartsWith("PicaVoxel.VisualScripting.")) continue;
-                if (!BanterStubsAllowed.IsAllowedIdentifier(id)) return true;
-            }
-            return false;
-        }
+        static bool IsBlockedQuiet(FlowGraph graph) => BanterStubsAllowed.IsBlockedStrictDeep(graph, 0, log: false);
 
         public static string FriendlyTitle(ScriptMachine machine)
         {
@@ -165,7 +153,7 @@ namespace BS
                 var scene = BSScene.Instance();
                 var obj = scene != null ? scene.GetObjectByBid(target.bid) : default;
                 var host = obj.gameObject != null ? obj.gameObject : FindUnregistered(target.bid);
-                if (host != null)
+                if (host != null && BSWorldScope.Contains(host))
                 {
                     var machines = host.GetComponents<ScriptMachine>();
                     if (target.machineIndex >= 0 && target.machineIndex < machines.Length)
@@ -205,7 +193,7 @@ namespace BS
         {
             foreach (var id in FindObjects.All<BSObjectId>(FindObjectsInactive.Include))
             {
-                if (id.Id == bid) return id.gameObject;
+                if (id.Id == bid && BSWorldScope.Contains(id.gameObject)) return id.gameObject;
             }
             return null;
         }

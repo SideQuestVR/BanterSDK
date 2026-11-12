@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Components/PacketPartyNetworkObject.cs" sha256="c517a5d95049d4be81af13b146bef39a40ad331138eed3af254f67602cd27877" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Components/PacketPartyNetworkObject.cs" sha256="fb5983c9110945023f2cc92496d3ce4333b0c4b0da47187dd2a47f29b78cde79" mode="port" />
 // PacketPartyNetworkObject in its scene-declare mode, line for line where it applies: identity and ownership read
 // from the binder's mirror (:56-100), the binder callbacks (:268-385), the ownership requests (:217-257) and the
 // durable pose (:389-437), and the spawned binding with BindTo (:182-204) for spawner copies. PacketPartyClient becomes
@@ -42,6 +42,8 @@ namespace BS.LocalMultiplayer.Objects
         // declared.
         int _declaredForSceneLoad = -1;
         LocalSyncedTransform _syncTransform;
+        TaskCompletionSource<bool> _bound;
+        int _declareRetries;
 
         /// <summary>Bound objectId; null until declared.</summary>
         public string ObjectId { get; private set; }
@@ -160,10 +162,34 @@ namespace BS.LocalMultiplayer.Objects
             ObjectId = objectId;
             _everBound = true;
             _declaredForSceneLoad = _binder.SceneLoadSerial;
+            SignalBound(true);
             _binder.BindObjectId(this, objectId);
             var record = Record;
             if (record != null) OnRecordChanged(record);
             TransformIdentityChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Waits for this object to have an id: true once it does, false on timeout, cancellation or destroy. For a
+        /// request that can wait out the declare; <see cref="AcquireAsync"/> itself fails at once while unbound, so a
+        /// grab never holds the hand.
+        /// </summary>
+        public async Task<bool> WaitForBoundAsync(TimeSpan timeout, CancellationToken cancellation = default)
+        {
+            if (IsBound) return true;
+            if (this == null || !_live) return false;
+            _bound ??= new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var bound = _bound.Task;
+            using var stop = CancellationTokenSource.CreateLinkedTokenSource(cancellation, destroyCancellationToken);
+            var first = await Task.WhenAny(bound, Task.Delay(timeout, stop.Token));
+            stop.Cancel();
+            return first == bound && bound.Result && this != null;
+        }
+
+        void SignalBound(bool bound)
+        {
+            _bound?.TrySetResult(bound);
+            _bound = null;
         }
 
         internal void AttachSyncTransform(LocalSyncedTransform syncTransform)
@@ -176,6 +202,7 @@ namespace BS.LocalMultiplayer.Objects
         {
             if (_binder != null) _binder.Forget(this);
             _live = false;
+            SignalBound(false);
             OnOwnershipChanged = null;
             OnRecordChangedEvent = null;
             OnDeleted = null;
@@ -398,6 +425,7 @@ namespace BS.LocalMultiplayer.Objects
         {
             int sceneLoad = binder.SceneLoadSerial;
             bool declared = false;
+            bool retry = false;
             try
             {
                 string id = string.IsNullOrEmpty(sceneObjectId) ? name : sceneObjectId;
@@ -411,6 +439,8 @@ namespace BS.LocalMultiplayer.Objects
                 _everBound = true;
                 _declaredForSceneLoad = sceneLoad;
                 declared = true;
+                _declareRetries = 0;
+                SignalBound(true);
                 binder.BindObjectId(this, ObjectId);
                 // The mirror holds the newest record (a broadcast may have overtaken the reply).
                 OnRecordChanged(Record ?? record);
@@ -422,7 +452,9 @@ namespace BS.LocalMultiplayer.Objects
             }
             catch (LocalRelayException ex)
             {
-                Debug.LogWarning($"[LocalMP][SyncedObjects] '{name}': declare failed ({ex.Message})");
+                retry = ObjectTransportRules.IsRetryableDeclareFailure(ex.Code);
+                if (!retry) Debug.LogWarning($"[LocalMP][SyncedObjects] '{name}': declare failed ({ex.Message})");
+                else if (_declareRetries == 0) Debug.Log($"[LocalMP][SyncedObjects] '{name}': declare failed ({ex.Code}); retrying");
             }
             catch (Exception ex)
             {
@@ -431,8 +463,21 @@ namespace BS.LocalMultiplayer.Objects
             finally
             {
                 _declareInFlight = false;
-                if (!declared && _live && this != null) binder.RequeueAfterFailedDeclare(this);
+                if (!declared && !retry && _live && this != null) binder.RequeueAfterFailedDeclare(this);
             }
+            if (retry) await RetryDeclareAsync(binder);
+        }
+
+        async Task RetryDeclareAsync(LocalObjectBinder binder)
+        {
+            if (this == null) return;
+            var delay = TimeSpan.FromSeconds(ObjectTransportRules.DeclareRetrySeconds(_declareRetries++, UnityEngine.Random.value));
+            try { await Task.Delay(delay, destroyCancellationToken); }
+            catch (OperationCanceledException) { return; }
+            // Through the binder, which holds the object until the next join when this session has ended.
+            if (_live && isActiveAndEnabled && !_declareInFlight && ReferenceEquals(_binder, binder)
+                && _declaredForSceneLoad != binder.SceneLoadSerial)
+                binder.Register(this);
         }
 
         void SafeInvokeOwnership(bool owned)

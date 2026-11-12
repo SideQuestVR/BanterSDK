@@ -6,12 +6,19 @@
         "UnityEditor.TestRunner",
         "BS.SDKEditor",
         "BS.SDK",
+        "BS.AudioStream.Core",
+        "BasisBundleManagement",
+        "Banter.VisualScripting",
         "GUID:af6e7370d62c866409111f9afdb8c47a",
         "Unity.InputSystem",
         "SideQuest.Ora",
         "Unity.VisualScripting.Core",
         "Unity.VisualScripting.Flow",
-        "Unity.RenderPipelines.Core.Runtime"
+        "Unity.VisualScripting.State",
+        "Unity.RenderPipelines.Core.Runtime",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

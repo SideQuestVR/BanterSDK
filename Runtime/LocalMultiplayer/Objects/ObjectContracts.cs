@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Contracts/SyncedObjectContracts.cs" sha256="2d50d0828a9d5c5618cbe6d8268eeaaed881fbfa5d394290bd5ae77a32cc446e" mode="verbatim" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Contracts/SyncedObjectContracts.cs" sha256="ec54c48aa1109f87124749e241852f509835f221f31efdc683ff008097569a71" mode="verbatim" />
 // The app.object.* DTOs, verbatim apart from the namespace: the relay speaks PacketParty's object protocol
 // (scrombus packetparty-protocol/src/objects.ts, RELAY.md 6.1). ObjectLaneMessages and ObjectJson are additions:
 // the relay's obj.payload lane (RELAY.md 6.4) and production's JsonSettings.Default for parsing.
@@ -109,6 +109,10 @@ namespace BS.LocalMultiplayer.Objects
 
         [JsonProperty("createdByRoomSessionId", NullValueHandling = NullValueHandling.Ignore)]
         public string CreatedByRoomSessionId { get; set; }
+
+        /// <summary>Original creator's client identity, retained across ownership changes.</summary>
+        [JsonProperty("createdByClientId", NullValueHandling = NullValueHandling.Ignore)]
+        public string CreatedByClientId { get; set; }
     }
 
     public sealed class SyncedObjectTransformState

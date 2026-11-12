@@ -58,8 +58,8 @@ The seat's shared [Pointer Range](ui-system.md#pointer-range) component defaults
 | `unseatOnMove` | boolean | true | Stand up when the player pushes the move stick (WASD on desktop) |
 | `unseatOnJump` | boolean | true | Stand up when the player jumps |
 | `useExitPosition` | boolean | false | Teleport the player to `exitPosition` when they get off, however they get off. Off: they are lifted 1 m above the seat, speed cleared |
-| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). Legacy faces the seat; upright modes preserve viewing direction |
-| `viewMode` | SeatViewMode | `BS.SeatViewMode.UprightFollowYaw` | `UprightFollowYaw` follows seat yaw without pitch/roll; `UprightIndependent` ignores all seat rotation for the view. All modes use the authored lower-body pose |
+| `exitPosition` | Vector3 | `0, 0, 0.6` | Where they stand after getting off, relative to the seat (it moves with the seat). `FollowSeat` faces the seat; upright modes preserve viewing direction |
+| `viewMode` | SeatViewMode | `BS.SeatViewMode.UprightFollowYaw` | `FollowSeat` (old name `Legacy`) follows full seat rotation; `UprightFollowYaw` follows seat yaw without pitch/roll; `UprightIndependent` ignores all seat rotation for the view. Upright modes stand on world up, or against gravity when the player has Comfort > Gravity Tilting on. All modes use the authored lower-body pose |
 
 Mode and pose are captured on `Sit()`. Set the mode before sitting; changing it while occupied applies at the next sit. The pose remains attached as the seat moves. Head tracking stays free, artificial VR turning is disabled in upright modes, and desktop look remains available. Pose targets use metres independent of seat/parent scale. Head and feet outside the avatar's natural reach are visually clamped without moving the tracked camera or automatically standing the player up.
 
@@ -176,6 +176,8 @@ When it starts, it applies all of its values, so anything you don't set goes bac
 | `enableForceGrab` | boolean | false | `EnableForceGrab`: players can grab objects from a distance |
 | `enableSpiderMan` | boolean | false | `EnableSpiderMan`: players can use the grapple |
 | `enableBirdFlight` | boolean | true | `EnableBirdFlight`: space permission for controller-driven wing flight. Explicit `false` forbids it; the player's Bird Flight preference must also be on. Missing values allow flight. |
+| `avatarSyncMode` | string | "social" | `AvatarSyncMode`: how often distant players see each other move. `"social"` thins to once a second past 70 m; `"action"` keeps 2 to 24 updates a second out to 150 m and beyond, for games and flight |
+| `voiceDistanceMultiplier` | number | 1 | `VoiceDistanceMultiplier`: scales how far voices carry here, on top of each player's own Voice Distance setting: 2 = twice as far (a stage or auditorium), 0.5 = half. Clamped to 0.1-10. Voices beyond that distance aren't received at all, so a large multiplier in a crowded space costs players bandwidth |
 | `enableHandHold` | boolean | true | `EnableHandHold`: players can hold hands |
 | `enableRadar` | boolean | true | `EnableRadar`: the radar is shown |
 | `enableNametags` | boolean | true | `EnableNametags`: name tags show above players |

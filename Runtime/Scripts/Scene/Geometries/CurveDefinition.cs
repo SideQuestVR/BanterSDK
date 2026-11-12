@@ -51,6 +51,12 @@ namespace BS
                 return null;
             }
 
+            if (!PageJson.IsSafe(json))
+            {
+                Debug.LogWarning("[BSGeometry] curvePoints are nested too deep to parse.");
+                return null;
+            }
+
             CurveDefinition def;
             try
             {

@@ -1,0 +1,8 @@
+*.exe
+*.obj
+fx/
+*.txt
+soak.start
+soak.end
+quest/out/
+questprobe/out/

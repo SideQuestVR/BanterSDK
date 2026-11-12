@@ -159,6 +159,11 @@ internal static class CreatorConveniencesMenu
     [MenuItem(Root + "Objects/Mirror", false, 30)]
     private static void CreateMirror(MenuCommand command) => CreateComponentObject<BSMirror>("Mirror", command);
 
+    // A mirror image of the player as a real avatar copy that stands still on this spot and mirrors their movements. One
+    // object, no meshes, on the floor where the menu puts it; the component gives it its own Mirror Id when added.
+    [MenuItem(Root + "Objects/Avatar Mirror", false, 30)]
+    private static void CreateAvatarMirror(MenuCommand command) => CreateComponentObject<BSAvatarMirror>("Avatar Mirror", command);
+
     [MenuItem(Root + "Objects/Browser", false, 31)]
     private static void CreateBrowser(MenuCommand command) =>
         CreateComponentObject<BSBrowser>("Browser", command, so => so.FindProperty("url").stringValue = "https://sidequestvr.com");
@@ -248,6 +253,29 @@ internal static class CreatorConveniencesMenu
         box.center = new Vector3(0f, 1f, 0f);
         Add<BSColliderEvents>(go);
         Finish(go, "Collider Events");
+    }
+
+    [MenuItem(Root + "Objects/Verify Host", false, 42)]
+    private static void CreateVerifyHost(MenuCommand command) => CreateComponentObject<BSVerifyHost>("Verify Host", command);
+
+    [MenuItem(Root + "Objects/Audio Stream", false, 43)]
+    private static void CreateAudioStream(MenuCommand command) => CreateComponentObject<BSAudioStream>("Audio Stream", command);
+
+    [MenuItem(Root + "Objects/Passthrough Box", false, 44)]
+    private static void CreatePassthroughBox(MenuCommand command)
+    {
+        // A 1 m box whose surface is a window to the player's real room: BSPassthrough with the BS Passthrough
+        // material. No collider, because it's a window, not a wall. Where passthrough isn't available it draws the
+        // material's fallback colour.
+        var go = Primitive(PrimitiveType.Cube, "BS Passthrough Box", null, Vector3.zero, Vector3.one, keepCollider: false);
+        Place(go, command);
+        var material = Resources.Load<Material>(BSPassthrough.MaterialResource);
+        if (material)
+            go.GetComponent<MeshRenderer>().sharedMaterial = material;
+        else
+            Debug.LogError("Creator SDK BS Passthrough material is missing. Reinstall the Creator SDK package.");
+        Add<BSPassthrough>(go);
+        Finish(go, "Passthrough Box");
     }
 
     // ------------------------------------------------------------------ Helpers

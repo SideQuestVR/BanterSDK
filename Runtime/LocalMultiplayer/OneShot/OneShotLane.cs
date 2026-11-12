@@ -1,4 +1,4 @@
-// <mirror source="Assets/Systems/Networking/OneShot/OneShotService.cs" sha256="ecd52830d31fee69e74199f8d3ed3e25305cf4fdcdd75abe7d1cba53ebb60435" mode="port" />
+// <mirror source="Assets/Systems/Networking/OneShot/OneShotService.cs" sha256="b8af48c480c96634238e052a564435a0de4a9811855f277940009456159b24d5" mode="port" />
 // OneShotService (OneShotService.cs:77-206): IsOpen, Send and OnData, with PacketParty's "greenfield-oneshot-v1" data
 // channel replaced by the relay's "oneshot" message (RELAY.md 6.4). The MonoBehaviour is a plain class OneShotModule
 // owns; there is no channel to open, so the lane is open exactly while the session is joined.

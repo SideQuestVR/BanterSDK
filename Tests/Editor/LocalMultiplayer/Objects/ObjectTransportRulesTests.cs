@@ -88,5 +88,49 @@ namespace BS.LocalMultiplayer.Tests
             Assert.AreEqual(2, ObjectTransportRules.KindOpaqueJson);
             Assert.AreEqual(3, ObjectTransportRules.KindBatch);
         }
+
+        [TestCase(0, 0.25d)]
+        [TestCase(1, 0.5d)]
+        [TestCase(5, 8d)]
+        [TestCase(6, 10d)]
+        [TestCase(40, 10d)]
+        public void DeclareRetry_DoublesFromAQuarterSecond_ToTenSeconds(int attempt, double seconds)
+        {
+            Assert.AreEqual(seconds, ObjectTransportRules.DeclareRetrySeconds(attempt, 0.5d), 1e-9);
+            Assert.AreEqual(seconds * 0.5d, ObjectTransportRules.DeclareRetrySeconds(attempt, 0d), 1e-9);
+            Assert.AreEqual(seconds * 1.5d, ObjectTransportRules.DeclareRetrySeconds(attempt, 1d), 1e-9);
+        }
+
+        [TestCase(true, "them", null, true, TestName = "AWaitedTake_LeavesAnyRemoteOwner")]
+        [TestCase(false, "", null, false, TestName = "AWaitedTake_TakesAnUnownedObject")]
+        [TestCase(true, "them", "them", false, TestName = "ARetry_IsStillAimedAtTheOwnerItWasMadeAgainst")]
+        [TestCase(true, "someone-else", "them", true, TestName = "ARetry_LeavesAnOwnerWhoCameSince")]
+        public void TakeWouldDisplace_OnlyWhenSomeoneElseHasIt(bool remoteOwned, string owner, string aimedAt, bool displaces)
+        {
+            Assert.AreEqual(displaces, ObjectTransportRules.TakeWouldDisplace(remoteOwned, owner, aimedAt));
+        }
+
+        [TestCase("rate_limited", true)]
+        [TestCase("internal_error", true)]
+        [TestCase("timeout", true)]
+        [TestCase("not_connected", false)]
+        [TestCase("closed", false)]
+        [TestCase("object_limit", false)]
+        public void DeclareRetry_CoversOnlyFailuresThatSayNothingAboutTheObject(string code, bool retried)
+        {
+            Assert.AreEqual(retried, ObjectTransportRules.IsRetryableDeclareFailure(code));
+        }
+
+        [TestCase(0f, false, 5f, ObjectTransportRules.SeatTakeoverStep.Wait)]   // no owner's pose yet
+        [TestCase(3f, false, 5f, ObjectTransportRules.SeatTakeoverStep.Take)]   // the owner never sent one: it hasn't moved
+        [TestCase(0.5f, true, 0.5f, ObjectTransportRules.SeatTakeoverStep.Wait)] // used a moment ago
+        [TestCase(0.5f, true, 1f, ObjectTransportRules.SeatTakeoverStep.Take)]
+        [TestCase(20f, true, 5f, ObjectTransportRules.SeatTakeoverStep.GiveUp)]
+        [TestCase(float.NaN, true, 5f, ObjectTransportRules.SeatTakeoverStep.GiveUp)]
+        public void SeatTakeover_WaitsForTheOwnersPoseAndAFreeMoment(float elapsed, bool hasPose, float freeFor,
+            ObjectTransportRules.SeatTakeoverStep step)
+        {
+            Assert.AreEqual(step, ObjectTransportRules.SeatTakeover(elapsed, hasPose, freeFor));
+        }
     }
 }

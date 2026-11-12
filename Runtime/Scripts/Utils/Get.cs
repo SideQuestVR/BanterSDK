@@ -165,6 +165,15 @@ namespace BS
         }
 
         /// <summary>
+        /// Lets go of one cached download without destroying it: something else may hold the object, and Unity reclaims it
+        /// once nothing does. The next request downloads it again. A newer download under the URL stays.
+        /// </summary>
+        internal static void Forget(string url, UnityEngine.Object asset)
+        {
+            ((ICollection<KeyValuePair<string, UnityEngine.Object>>)objectCache).Remove(new KeyValuePair<string, UnityEngine.Object>(url, asset));
+        }
+
+        /// <summary>
         /// Texture downloads in flight, keyed like <see cref="objectCache"/>. Every BSMaterial that
         /// shares a texture asks for it in the same frame, and the result cache alone cannot help
         /// them: each would miss, download, and TryAdd — with all but one copy leaked. Main thread only.
@@ -357,18 +366,64 @@ namespace BS
                 return null;
             }
         }
-        public static async Task<byte[]> Bytes(string url)
+        /// <summary>
+        /// How far <paramref name="request"/> has got, 0 to 1. Without a Content-Length (a chunked or compressed
+        /// response) UnityWebRequest's own progress doesn't move, so it is then estimated from the bytes received: below
+        /// 1, and moving whenever bytes arrive, which is what the space's load gate watches for (BSLoadGate).
+        /// </summary>
+        internal static float DownloadProgress(UnityWebRequest request)
         {
-            UnityWebRequest uwr = UnityWebRequest.Get(url);
-            uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
-            await uwr.SendWebRequest();
-            if (uwr.result != UnityWebRequest.Result.Success)
+            var length = request.GetResponseHeader("Content-Length");
+            var lengthKnown = long.TryParse(length, out var bytes) && bytes > 0;
+            return DownloadProgress(request.downloadProgress, request.downloadedBytes, lengthKnown);
+        }
+
+        /// <summary>The estimate behind <see cref="DownloadProgress(UnityWebRequest)"/>: half way at 4 MiB with no length.</summary>
+        internal static float DownloadProgress(float downloadProgress, ulong downloadedBytes, bool lengthKnown)
+        {
+            if (lengthKnown) return Mathf.Clamp01(downloadProgress);
+            const double HalfWayBytes = 4 * 1024 * 1024;
+            return (float)(downloadedBytes / (downloadedBytes + HalfWayBytes));
+        }
+
+        public static Task<byte[]> Bytes(string url) => Bytes(url, null);
+
+        /// <summary>
+        /// <see cref="Bytes(string)"/>, telling <paramref name="progress"/> (main thread) how much of it has arrived,
+        /// 0 to 1, about ten times a second. Still a total deadline of SMALL_REQUEST_TIMEOUT_SECONDS.
+        /// </summary>
+        public static async Task<byte[]> Bytes(string url, Action<float> progress)
+        {
+            // UnityWebRequest fails "" with just "Malformed URL" (and sends "  " to https://localhost/).
+            if (string.IsNullOrWhiteSpace(url))
             {
-                throw new System.Exception(uwr.error);
+                throw new ArgumentException("Get.Bytes needs a URL, and was given an empty one.", nameof(url));
             }
-            else
+            using (UnityWebRequest uwr = UnityWebRequest.Get(url))
             {
-                return uwr.downloadHandler.data;
+                uwr.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
+                var request = uwr.SendWebRequest();
+                if (progress == null)
+                {
+                    await request;
+                }
+                else
+                {
+                    while (!request.isDone)
+                    {
+                        progress(DownloadProgress(uwr));
+                        await new WaitForSecondsRealtime(.1f);
+                    }
+                }
+                if (uwr.result != UnityWebRequest.Result.Success)
+                {
+                    throw new System.Exception(uwr.error);
+                }
+                else
+                {
+                    progress?.Invoke(1f);
+                    return uwr.downloadHandler.data;
+                }
             }
         }
         public static async Task<T> Json<T>(string url)
@@ -403,8 +458,26 @@ namespace BS
 
         public static async Task<AssetBundle> AssetBundle(string url, Action<float> progress = null)
         {
+            // Checked as a kit while the pre-load content check is on. BSAssetBundle says what it loads itself, and
+            // passes the cancellation its Unload uses (the internal overload below).
+            return await AssetBundle(url, progress, System.Threading.CancellationToken.None, BasisPreLoadCheck.Kind.Kit);
+        }
+
+        /// <summary>
+        /// <see cref="AssetBundle(string, Action{float})"/> for a bundle of
+        /// <paramref name="checkKind"/>: while the pre-load content check is on (<see cref="BS.Security.BundlePreloadHooks.Active"/>,
+        /// Greenfield) it is downloaded into the app's raw-bundle cache, checked from the file before Unity sees it, and
+        /// loaded with LoadFromFileAsync; otherwise (or <see cref="BasisPreLoadCheck.Kind.Unchecked"/>) through Unity's
+        /// bundle cache, as before.
+        /// </summary>
+        /// <param name="cancellation">Stops the download (it throws OperationCanceledException), as when its bundle is unloaded first.</param>
+        internal static async Task<AssetBundle> AssetBundle(string url, Action<float> progress,
+            System.Threading.CancellationToken cancellation, BasisPreLoadCheck.Kind checkKind)
+        {
+            checkKind = BS.Security.BundlePreloadHooks.EffectiveKind(checkKind);
             var hash = new Hash128();
             hash.Append(url);
+            string lastModified, etag, contentLength;
             using (UnityWebRequest head = UnityWebRequest.Head(url))
             {
                 head.timeout = SMALL_REQUEST_TIMEOUT_SECONDS;
@@ -418,8 +491,9 @@ namespace BS
                 // republished to the same URL is never re-downloaded. The accessor is
                 // case-insensitive by contract, so it sees the header whatever the wire casing.
                 // A failed request simply yields nulls here rather than throwing.
-                string lastModified = head.GetResponseHeader("Last-Modified");
-                string etag = head.GetResponseHeader("ETag");
+                lastModified = head.GetResponseHeader("Last-Modified");
+                etag = head.GetResponseHeader("ETag");
+                contentLength = head.GetResponseHeader("Content-Length");
 
                 // Both are appended when both are present, in the original order, so a client
                 // whose header casing already matched keeps the exact hash it had. Preferring one
@@ -446,6 +520,12 @@ namespace BS
                                ") — versioning bundle by URL only; a republish to this URL will not be picked up.");
                 }
             }
+            if (checkKind != BasisPreLoadCheck.Kind.Unchecked && BS.Security.BundlePreloadHooks.Active)
+            {
+                var key = BS.Security.BundleFileCache.KeyFor(url, lastModified, etag);
+                long.TryParse(contentLength, out var expectedBytes);
+                return await CheckedAssetBundle(url, key, expectedBytes, progress, cancellation, checkKind);
+            }
             using (UnityWebRequest web = UnityWebRequestAssetBundle.GetAssetBundle(url, hash))
             {
                 progress?.Invoke(0f);
@@ -454,24 +534,24 @@ namespace BS
                 // Deliberately NOT web.timeout: that is a total deadline and would kill a healthy
                 // but slow download of a large bundle. Instead fail only when the transfer makes no
                 // progress at all for a sustained period. Realtime clock + WaitForSecondsRealtime so
-                // a space that set Time.timeScale = 0 cannot freeze this loop.
-                var lastBytes = web.downloadedBytes;
-                var lastProgressAt = Time.realtimeSinceStartup;
+                // a space that set Time.timeScale = 0 cannot freeze this loop. The same watch as the encrypted (.bee)
+                // path's, which also times the silence again after a pause (headset off) instead of failing at once.
+                var stall = new BasisIOManagement.DownloadStallWatch(LARGE_DOWNLOAD_STALL_SECONDS, Time.realtimeSinceStartupAsDouble);
 
                 while (!web.isDone)
                 {
                     progress?.Invoke(web.downloadProgress);
 
-                    if (web.downloadedBytes != lastBytes)
+                    if (cancellation.IsCancellationRequested)
                     {
-                        lastBytes = web.downloadedBytes;
-                        lastProgressAt = Time.realtimeSinceStartup;
+                        web.Abort();
+                        throw new OperationCanceledException("Asset bundle download cancelled: " + url, cancellation);
                     }
-                    else if (Time.realtimeSinceStartup - lastProgressAt > LARGE_DOWNLOAD_STALL_SECONDS)
+                    if (stall.IsStalled(web.downloadedBytes, Time.realtimeSinceStartupAsDouble))
                     {
                         web.Abort();
                         throw new Exception($"Asset bundle download stalled: no data for " +
-                                            $"{LARGE_DOWNLOAD_STALL_SECONDS}s after {lastBytes} bytes from {url}");
+                                            $"{LARGE_DOWNLOAD_STALL_SECONDS}s after {stall.LastBytes} bytes from {url}");
                     }
 
                     await new WaitForSecondsRealtime(.1f);
@@ -492,6 +572,78 @@ namespace BS
                     {
                         throw new Exception("Unable to download asset bundle from " + url);
                     }
+                }
+            }
+        }
+
+        /// <summary>
+        /// The checked raw path (<see cref="BS.Security.BundleFileLoader"/>). The cache entry is keyed by a SHA-256 of the URL
+        /// and its HTTP validators (a republish is downloaded again); its verdict is kept with it. No managed copy of the
+        /// bundle is held: the check reads the entry's file on demand (an LZMA download is first recompressed to LZ4 on disk,
+        /// as Unity's cache did), and Unity loads that same file, which no download rewrites and nothing deletes while its
+        /// bundle may be loaded. Under Enforce a refusal throws, with the message the load fails with.
+        /// </summary>
+        static async Task<AssetBundle> CheckedAssetBundle(string url, string key, long expectedBytes, Action<float> progress,
+            System.Threading.CancellationToken cancellation, BasisPreLoadCheck.Kind checkKind)
+        {
+            BS.Security.BundlePreloadHooks.PruneUnloaded(); // files of bundles unloaded since may be trimmed now
+            var loaded = await BS.Security.BundleFileLoader.LoadAsync(url, key, expectedBytes, BS.Security.BundlePreloadHooks.OptionsFor(checkKind),
+                checkKind == BasisPreLoadCheck.Kind.Kit, progress, cancellation, RawBundleSteps);
+            BS.Security.BundlePreloadHooks.TrackLoaded(loaded.Entry, loaded.Bundle);
+            _ = Task.Run(() => BS.Security.BundleFileCache.Trim());
+            return loaded.Bundle;
+        }
+
+        /// <summary>Unity's side of the checked raw path: download to a file, recompress LZMA to LZ4, load from the file.</summary>
+        static readonly BS.Security.BundleFileLoader.Steps<AssetBundle> RawBundleSteps = new BS.Security.BundleFileLoader.Steps<AssetBundle>
+        {
+            Download = DownloadToFile,
+            Prepare = BS.Security.BundlePreloadHooks.PrepareDownloadAsync,
+            Load = async file => await UnityEngine.AssetBundle.LoadFromFileAsync(file),
+        };
+
+        /// <summary>
+        /// Downloads <paramref name="url"/> to <paramref name="path"/> under the same rules as the bundle download above:
+        /// no total deadline, but a stall of <see cref="LARGE_DOWNLOAD_STALL_SECONDS"/> fails it, and the token cancels it.
+        /// Nothing is left at <paramref name="path"/> when it fails.
+        /// </summary>
+        static async Task DownloadToFile(string url, string path, Action<float> progress, System.Threading.CancellationToken cancellation)
+        {
+            using (var web = new UnityWebRequest(url, UnityWebRequest.kHttpVerbGET))
+            {
+                web.downloadHandler = new DownloadHandlerFile(path) { removeFileOnAbort = true };
+                progress?.Invoke(0f);
+                _ = web.SendWebRequest();
+                var stall = new BasisIOManagement.DownloadStallWatch(LARGE_DOWNLOAD_STALL_SECONDS, Time.realtimeSinceStartupAsDouble);
+                while (!web.isDone)
+                {
+                    progress?.Invoke(web.downloadProgress);
+                    if (cancellation.IsCancellationRequested)
+                    {
+                        web.Abort();
+                        throw new OperationCanceledException("Asset bundle download cancelled: " + url, cancellation);
+                    }
+                    if (stall.IsStalled(web.downloadedBytes, Time.realtimeSinceStartupAsDouble))
+                    {
+                        web.Abort();
+                        throw new Exception($"Asset bundle download stalled: no data for " +
+                                            $"{LARGE_DOWNLOAD_STALL_SECONDS}s after {stall.LastBytes} bytes from {url}");
+                    }
+                    await new WaitForSecondsRealtime(.1f);
+                }
+                if (web.result != UnityWebRequest.Result.Success)
+                {
+                    var error = web.error;
+                    web.downloadHandler.Dispose(); // closes the file before it is deleted
+                    try
+                    {
+                        if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+                    }
+                    catch (Exception)
+                    {
+                        // a stale partial download is trimmed later
+                    }
+                    throw new Exception(error);
                 }
             }
         }
@@ -555,6 +707,24 @@ namespace BS
         public static async Task<(AssetBundle bundle, BasisBundleGenerated section)> EncryptedAssetBundleWithSection(
             string url, string password, Action<float> progress = null, string versionTag = null)
         {
+            // Checked as a world while the pre-load content check is on. BSAssetBundle says what it loads itself, and
+            // passes the cancellation its Unload uses (the internal overload below).
+            return await EncryptedAssetBundleWithSection(url, password, progress, versionTag,
+                System.Threading.CancellationToken.None, BasisPreLoadCheck.Kind.World);
+        }
+
+        /// <summary>
+        /// <see cref="EncryptedAssetBundleWithSection(string, string, Action{float}, string)"/>
+        /// for a bundle of <paramref name="checkKind"/>: Basis checks the decrypted bytes before it loads them while the
+        /// pre-load content check is on (<see cref="BS.Security.BundlePreloadHooks"/>); a refusal throws
+        /// <see cref="BasisBundleRefusedException"/>.
+        /// </summary>
+        /// <param name="cancellation">Handed to Basis, whose downloads stop for it (the load then throws).</param>
+        internal static async Task<(AssetBundle bundle, BasisBundleGenerated section)> EncryptedAssetBundleWithSection(
+            string url, string password, Action<float> progress, string versionTag,
+            System.Threading.CancellationToken cancellation, BasisPreLoadCheck.Kind checkKind)
+        {
+            checkKind = BS.Security.BundlePreloadHooks.EffectiveKind(checkKind);
             await BasisLoadHandler.EnsureInitializationComplete();
 
             var loadable = new BasisLoadableBundle { UnlockPassword = password };
@@ -568,8 +738,10 @@ namespace BS
             if (progress != null)
                 report.OnProgressReport += (_, percent, __) => progress(percent / 100f);
 
-            await BasisBeeManagement.HandleBundleAndMetaLoading(
-                wrapper, report, System.Threading.CancellationToken.None);
+            // The token only cancels (an unloaded bundle's download): a stalled download fails inside Basis instead
+            // (BasisIOManagement.DownloadStallSeconds, the same 60 s rule as AssetBundle's), and that failure fails the
+            // space's load like any bundle error.
+            await BasisBeeManagement.HandleBundleAndMetaLoading(wrapper, report, cancellation, checkKind: checkKind);
 
             if (wrapper.AssetBundle == null)
                 throw new Exception("Unable to decrypt/load encrypted bundle from " + url);
@@ -578,6 +750,9 @@ namespace BS
             var connector = wrapper.LoadableBundle.BasisBundleConnector;
             if (connector?.BasisBundleGenerated != null)
                 connector.GetPlatform(out section);
+            // Answers "which build is this world on?" from any player's log. The host only: a url's query can hold tokens.
+            var host = Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : "?";
+            Debug.Log($"[Greenfield/BEE] {host}: build {connector?.UniqueVersion ?? "?"}, built {connector?.DateOfCreation ?? "?"} UTC.");
             return (wrapper.AssetBundle, section);
         }
 

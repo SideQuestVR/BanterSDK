@@ -7,7 +7,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSPortal : BSComponentBase
+    public partial class BSPortal : BSComponentBase
     {
 
         public static string[] defaultPortalLandscapes = new string[]{
@@ -42,6 +42,7 @@ namespace BS
 
         public static async Task SetTexture(string texture, MeshRenderer rend)
         {
+            if (PageUrl.Refuse(texture, nameof(BSPortal))) return;
             var tex = await Get.Texture(texture);
             if (tex != null && rend != null)
             {
@@ -55,46 +56,43 @@ namespace BS
             {
                 Destroy(portal);
             }
-            portal = Instantiate(Resources.Load<GameObject>("Prefabs/BSPortal"), transform);
+            var mine = portal = Instantiate(Resources.Load<GameObject>("Prefabs/BSPortal"), transform);
             portal.name = "BSPortal";
             var rend = portal.transform.Find("PortalMesh").GetComponent<MeshRenderer>();
+            var title = portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>();
+            title.text = ""; // The prefab's placeholder text must not show while the metadata loads.
             portal.GetComponentInChildren<Portal>().url = url;
             var space = await Get.SpaceMeta(url);
-            var defaultTex = defaultPortalLandscapes[UnityEngine.Random.Range(0, defaultPortalLandscapes.Length - 1)];
+            var defaultTex = defaultPortalLandscapes[UnityEngine.Random.Range(0, defaultPortalLandscapes.Length)];
             SetLoadedIfNot();
-            if (space != null)
-            {
-                try
-                {
-                    if (!string.IsNullOrEmpty(space.icon))
-                    {
+            // A newer run replaced this portal while the metadata loaded, or the component went away.
+            if (portal != mine) return;
+            // An unknown space can come back as an empty object rather than nothing.
+            title.text = string.IsNullOrEmpty(space?.name) ? "Unknown Space" : space.name;
 #if UNITY_ANDROID
-                        await SetTexture(space.icon + "?size=512", rend);
+            const int imageSize = 512;
 #else
-                        await SetTexture(space.icon + "?size=1024", rend);
+            const int imageSize = 1024;
 #endif
-                    }
-                    else
-                    {
-#if UNITY_ANDROID
-                        await SetTexture(defaultTex + "?size=512", rend);
-#else
-                        await SetTexture(defaultTex + "?size=1024", rend);
-#endif
-                    }
-                }
-                catch (Exception e)
-                {
-                    Debug.Log(e);
-                    await SetTexture(defaultTex, rend);
-                }
-                portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>().text = space.name;
-            }
-            else
+            try
             {
-                portal.transform.Find("Info/Titel").GetComponent<TMPro.TextMeshPro>().text = "Unknown Space";
-                await SetTexture(defaultTex, rend);
+                await SetTexture(Sized(string.IsNullOrEmpty(space?.icon) ? defaultTex : space.icon, imageSize), rend);
             }
+            catch (Exception e)
+            {
+                Debug.Log(e);
+                try { await SetTexture(defaultTex, rend); }
+                catch (Exception fallback) { Debug.Log(fallback); }
+            }
+        }
+
+        /// <summary>The url with the SideQuest CDN's resize parameter. Only that CDN understands it, so other hosts get the url as it is.</summary>
+        internal static string Sized(string url, int size)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri)) return url;
+            if (!uri.Host.Equals("cdn.sidequestvr.com", StringComparison.OrdinalIgnoreCase)) return url;
+            if (uri.Query.IndexOf("size=", StringComparison.OrdinalIgnoreCase) >= 0) return url;
+            return url + (string.IsNullOrEmpty(uri.Query) ? "?size=" : "&size=") + size;
         }
 
 
@@ -114,135 +112,5 @@ namespace BS
         {
             _ = SetupPortal();
         }
-        // BS COMPILED CODE 
-        public System.String Url { get { return url; } set { url = value; UpdateCallback(new List<PropertyName> { PropertyName.url }); } }
-        public System.String Instance { get { return instance; } set { instance = value; UpdateCallback(new List<PropertyName> { PropertyName.instance }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.url, PropertyName.instance, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "Portal" + PropertyName.url + url + PropertyName.instance + instance;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.Portal);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null;
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valurl = (BSString)values[i];
-                    if (valurl.n == PropertyName.url)
-                    {
-                        url = valurl.x;
-                        changedProperties.Add(PropertyName.url);
-                    }
-                }
-                if (values[i] is BSString)
-                {
-                    var valinstance = (BSString)values[i];
-                    if (valinstance.n == PropertyName.instance)
-                    {
-                        instance = valinstance.x;
-                        changedProperties.Add(PropertyName.instance);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.url,
-                    type = PropertyType.String,
-                    value = url,
-                    componentType = ComponentType.Portal,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.instance,
-                    type = PropertyType.String,
-                    value = instance,
-                    componentType = ComponentType.Portal,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

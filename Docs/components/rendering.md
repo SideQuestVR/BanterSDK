@@ -1,5 +1,7 @@
 # Rendering & Visual Components
 
+Lights, materials, text, billboards, mirrors, skinned meshes, passthrough and custom shaders: the components that change how objects look.
+
 ## Light
 
 Adds a real-time light. It wraps a Unity Light: in the Inspector, set the values on the Light component.
@@ -215,3 +217,80 @@ const weight = await smr.GetBlendShapeWeight(smile);   // 100
 </div>
 
 `blendShapes` lists the weights from when the component started; it isn't updated by `SetBlendShapeWeight`.
+
+## Passthrough
+
+Turns a surface into a window to the player's real room: the headset's passthrough shows through it. On any object with a mesh, choose **Add Component > BS > Passthrough**. That also puts the **BS Passthrough** material on its renderer. For a ready-made one, choose **GameObject > BS > Objects > Passthrough Box**: a 1 m box with no collider, so it's a window rather than a wall. A quad makes a window, a hole in a wall shows the room behind it, and an inverted sphere around the player (with [InvertedMesh](#invertedmesh)) makes the whole world mixed reality.
+
+Things in front of the window still cover it, and transparent things in front of it blend over it as usual. The material's **Opacity** and **Mask (alpha)** fade the window, for soft edges. Its whole surface still counts as window, even where the mask is fully transparent: it writes depth there, and an older-style transparent shader in front of that part can let a little of the room through.
+
+While a window is open on a headset that shows passthrough, post-processing (bloom and the like) and HDR are off for the whole world, because both would hide the window.
+
+It's an ordinary component with nothing in the script API. To open or close a window from a script or a graph, enable or disable its object. The headset's passthrough stays on while any enabled Passthrough is in the world, and turns off about two seconds after the last one goes. Passthrough costs the headset battery and heat, so close windows nobody is looking at.
+
+Passthrough works on standalone headsets that offer it to OpenXR apps: Quest, Steam Frame, Pico 4 Ultra and Android XR. Everywhere else the window draws its **Fallback Colour** (black unless you change it): on PC VR over Link or SteamVR, on desktop, in the editor, and in mono views such as photos, recordings, mirrors and portals.
+
+Keep windows on your world's own layers, such as Default. The client draws the Menu, UIOnTop, AvatarOnTop and AvatarPreview layers over the world, so a window on one of those cuts through everything in front of it, the player's hands included. The Inspector warns about this.
+
+Windows mark their pixels with stencil bit 128, so don't write that bit in your own shaders. Where it's set, the client leaves the pixel's transparency as it is: a shader that sets it outside a window can let the room show through, and one that clears it inside a window closes the window there.
+
+## Custom shaders in VR
+
+The headset draws both eyes in one pass: single-pass instanced rendering, or multiview on Quest. A shader has to pass the eye from its vertex program to its fragment program, or it shows in one eye only.
+
+Shader Graph does this for you, and so do URP's own shaders, so only hand-written `.shader` files need it. Play mode on a flat screen doesn't show the problem: check custom shaders in a headset.
+
+The numbered lines are the ones a vertex and fragment program need:
+
+```hlsl
+#pragma vertex Vertex
+#pragma fragment Fragment
+#pragma multi_compile_instancing
+
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+struct Attributes
+{
+    float4 positionOS : POSITION;
+    float2 uv : TEXCOORD0;
+    UNITY_VERTEX_INPUT_INSTANCE_ID                   // 1
+};
+
+struct Varyings
+{
+    float4 positionCS : SV_POSITION;
+    float2 uv : TEXCOORD0;
+    UNITY_VERTEX_OUTPUT_STEREO                       // 2
+};
+
+Varyings Vertex(Attributes input)
+{
+    Varyings output = (Varyings)0;
+    UNITY_SETUP_INSTANCE_ID(input);                  // 3
+    UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);   // 4
+    output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+    output.uv = input.uv;
+    return output;
+}
+
+half4 Fragment(Varyings input) : SV_Target
+{
+    UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input); // 5: before anything that depends on the eye
+    return half4(input.uv, 0, 1);
+}
+```
+
+**Screen textures.** `_CameraOpaqueTexture` and `_CameraDepthTexture` hold one slice per eye, so declaring one as a `sampler2D` reads the same eye on both sides. Include URP's declaration and use its helper, which picks the right eye (it needs step 5):
+
+```hlsl
+#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+
+// In the fragment program:
+half3 behind = SampleSceneColor(GetNormalizedScreenSpaceUV(input.positionCS));
+```
+
+For depth, include `DeclareDepthTexture.hlsl` and call `SampleSceneDepth`. For other per-eye textures of your own, use `TEXTURE2D_X` and `SAMPLE_TEXTURE2D_X`.
+
+!> The app's Quest settings turn the opaque and depth textures off, so on Quest a shader that reads them doesn't get the scene. That goes for Shader Graph's **Scene Color** and **Scene Depth** nodes too. Effects built on them, such as refraction or soft edges against geometry, work on Windows only: give Quest a version that doesn't need them, with a [Platform Filter](../building-in-unity/platform-filter.md).
+
+The checklist's **VR shaders** check warns about hand-written shaders that miss these steps. It reads the `.shader` file itself, so a shader that keeps its vertex program's output in an include isn't checked.

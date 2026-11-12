@@ -55,3 +55,37 @@ await hint.AddComponent(new BS.PlatformFilter({ includeOnDesktop: false, include
 const filter = hint.GetComponent(BS.CT.PlatformFilter);
 filter.includeOnDesktop = true;
 ```
+
+## Checking the Platform Yourself
+
+A filter only shows or hides an object. To do anything else per platform, such as turning down a particle count on Quest, ask in a script or a graph:
+
+| Graph node (`BS > Utils`) | Script | Answer |
+|---------------------------|--------|--------|
+| **Is Android** | `await scene.IsAndroid()` | True on Quest (Android). False in the Unity editor, whatever the build target |
+| **Is Windows** | `await scene.IsWindows()` | True on Windows, the Windows editor included |
+| **Is VR** | `await scene.IsVR()` | True in a headset, false on a flat screen. In Play mode, true only when an XR headset is active |
+| **Get Platform** | `await scene.GetPlatform()` | The platform as comma-separated text, starting with `VR` or `2D` and ending with the operating system. Empty in Play mode |
+
+The filter goes by **Is Android** and **Is VR**, so anything that isn't Android counts as PC. [Utility Methods](../javascript-api/scene-api.md#utility-methods) has more on the script calls.
+
+## Filters in a Graph
+
+Platform Filter has [member nodes](../visual-scripting/overview.md#codebase-member-nodes), like other BS components. Type `BSPlatformFilter` in the fuzzy finder to find them:
+
+| Node | Use |
+|------|-----|
+| **Set Include On Mobile**, **Set Include On Desktop**, **Set Include In VR**, **Set Include In Non VR** | Change a filter. Each has a **Get** node too |
+| **Refresh** | Apply the filter again |
+| **Get Needs Runtime Check** | True when the filter restricts VR or Non-VR |
+| **Should Show** | Whether an object with these settings shows: give it whether the player is on Android and in VR, then the four include values |
+| **Is Platform Included** | The platform half of that on its own (mobile means Android) |
+| **Is Mode Included** | The VR half of that on its own |
+
+**Should Show**, **Is Platform Included** and **Is Mode Included** only work out an answer from their inputs: they don't read a filter or change one.
+
+Three things to watch for:
+
+- **Follow a Set with Refresh.** Every Get and Set name appears twice in the fuzzy finder, once for the property and once for the field, and only the property's Set applies the change at once. **Refresh** applies it whichever one you picked.
+- **Only some filters reach the published world.** The Builder removes a filter when VR and Non-VR are both ticked, so a graph finds that filter in Play mode but not in the published world.
+- **A hidden object's own graph stops.** Hiding switches the object off, so change its filter from a graph on another object.

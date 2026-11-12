@@ -22,7 +22,39 @@ namespace BS
         readonly Dictionary<string, ScriptGraphSession> sessions = new Dictionary<string, ScriptGraphSession>();
         int nextSessionId = 1;
 
+        /// <summary>
+        /// A request from the world's page. The world's own machines change only if the host allows
+        /// (<see cref="GraphEditPermission"/>); the page's own machines, the ones it made, always may. A refusal is a
+        /// reply with <c>code: "refused"</c>, not an exception.
+        /// </summary>
         public string HandleCommand(string sub, string payloadJson, BSScene scene)
+        {
+            using (GraphEditPermission.PageCall())
+            {
+                try { return Dispatch(sub, payloadJson); }
+                catch (RefusedException e)
+                {
+                    GraphEditPermission.WarnOnce(e.Message);
+                    return JsonConvert.SerializeObject(new { error = "refused: " + e.Message, code = "refused" });
+                }
+            }
+        }
+
+        /// <summary>The same requests from the app itself (editor tools and tests), which may change any machine.</summary>
+        public string HandleCommandAsHost(string sub, string payloadJson, BSScene scene) => Dispatch(sub, payloadJson);
+
+        sealed class RefusedException : Exception
+        {
+            public RefusedException(string what) : base(what) { }
+        }
+
+        /// <summary>Throws <see cref="RefusedException"/> inside a page's request that may not change <paramref name="machine"/>.</summary>
+        static void RequireMayChange(ScriptMachine machine, string what)
+        {
+            if (GraphEditPermission.InPageCall && !GraphEditPermission.MayChange(machine)) throw new RefusedException(what);
+        }
+
+        string Dispatch(string sub, string payloadJson)
         {
             switch (sub)
             {
@@ -131,6 +163,7 @@ namespace BS
             var session = Require(body?.sessionId);
             var machine = MachineDirectory.Resolve(session.target)
                 ?? throw new InvalidOperationException("Session has no resolvable target machine");
+            RequireMayChange(machine, "applying a graph to one of the world's own machines");
             session.ApplyToMachine(machine);
             // This session now matches the machine; any other one open on it does not.
             var invalidated = InvalidateSessionsFor(machine, keep: session.sessionId);
@@ -187,6 +220,8 @@ namespace BS
         {
             var body = ReadEnvelopeBody(payloadJson);
             if (body?.envelope?.uvsJson == null) throw new ArgumentException("Envelope missing");
+            RequireMayChange(MachineDirectory.Resolve(body.target ?? body.envelope.meta?.target)
+                ?? throw new ArgumentException("Machine not found"), "applying a graph to one of the world's own machines");
             var result = ApplyOverride(body.envelope, body.target);
             return JsonConvert.SerializeObject(new
             {
@@ -229,6 +264,7 @@ namespace BS
             var body = JsonConvert.DeserializeObject<OpenBody>(payloadJson);
             var machine = MachineDirectory.Resolve(body?.target)
                 ?? throw new ArgumentException("Machine not found");
+            RequireMayChange(machine, "reverting one of the world's own machines");
             var reverted = ScriptGraphSession.RevertMachine(machine);
             var invalidated = reverted ? InvalidateSessionsFor(machine) : new List<string>();
             return JsonConvert.SerializeObject(new
@@ -284,12 +320,16 @@ namespace BS
             GameObject host = null;
             if (!string.IsNullOrEmpty(body?.target?.bid))
             {
-                host = BSScene.Instance().GetObjectByBid(body.target.bid).gameObject;
+                var scene = BSScene.Instance();
+                host = scene != null ? scene.GetObjectByBid(body.target.bid).gameObject : null;
             }
-            if (host == null) throw new ArgumentException("Object not found");
+            // Only the world's own objects, like every other subcommand: the page must not add machines to the
+            // client's objects.
+            if (host == null || !BSWorldScope.Contains(host)) throw new ArgumentException("Object not found");
 
             var machine = host.AddComponent<ScriptMachine>();
             machine.nest.SwitchToEmbed(FlowGraph.WithStartUpdate());
+            GraphEditPermission.NotePageMade(machine);
             return JsonConvert.SerializeObject(new { ok = true, machine = MachineDirectory.Describe(machine) });
         }
 
@@ -298,6 +338,7 @@ namespace BS
             var body = JsonConvert.DeserializeObject<OpenBody>(payloadJson);
             var machine = MachineDirectory.Resolve(body?.target)
                 ?? throw new ArgumentException("Machine not found");
+            RequireMayChange(machine, "removing one of the world's own machines");
             // Every session on this OBJECT, not just this machine: removing one shifts the indexes
             // of the machines after it, so a session addressed as {bid, 2} would next resolve to a
             // different machine, and an Apply from it would overwrite that one.
@@ -323,6 +364,7 @@ namespace BS
             var body = JsonConvert.DeserializeObject<PauseBody>(payloadJson);
             var machine = MachineDirectory.Resolve(body?.target)
                 ?? throw new ArgumentException("Machine not found");
+            RequireMayChange(machine, "pausing one of the world's own machines");
             machine.GraphPaused = body.paused;
             return JsonConvert.SerializeObject(new { ok = true, paused = machine.GraphPaused });
         }
@@ -333,13 +375,27 @@ namespace BS
             public bool enabled;
         }
 
+        /// <summary>
+        /// Turn flow watching on or off for a session. Only a watched machine records debug data
+        /// (<see cref="ScriptGraphDebugProvider"/>), and only while its page keeps polling: a watch
+        /// lapses <see cref="ScriptGraphSession.WatchLeaseSeconds"/> after the last poll.
+        /// </summary>
         string Watch(string payloadJson)
         {
             var body = JsonConvert.DeserializeObject<WatchBody>(payloadJson);
             var session = Require(body?.sessionId);
             session.watching = body.enabled;
+            if (body.enabled)
+            {
+                session.RenewWatch();
+            }
+            else
+            {
+                session.DropWatch();
+            }
             // Same clock UVS stamps lastInvokeTime with (see ScriptGraphFlowWatch.Poll).
             session.lastSampleTime = EditorTimeBinding.time;
+            StartWatchTick();
             return JsonConvert.SerializeObject(new { ok = true });
         }
 
@@ -347,7 +403,47 @@ namespace BS
         {
             var body = JsonConvert.DeserializeObject<SessionBody>(payloadJson);
             var session = Require(body?.sessionId);
-            return ScriptGraphFlowWatch.Poll(session).ToString(Formatting.None);
+            var reply = ScriptGraphFlowWatch.Poll(session).ToString(Formatting.None);
+            StartWatchTick();
+            return reply;
+        }
+
+        // True while OnBeforeRenderTick is subscribed. It is only while some session holds a watch,
+        // so a client nobody is debugging pays nothing for this.
+        bool watchTicking;
+
+        void StartWatchTick()
+        {
+            if (watchTicking) return;
+            foreach (var session in sessions.Values)
+            {
+                if (!session.HoldsWatch) continue;
+                Application.onBeforeRender += OnBeforeRenderTick;
+                watchTicking = true;
+                return;
+            }
+        }
+
+        void OnBeforeRenderTick() => Tick(Time.realtimeSinceStartup);
+
+        /// <summary>
+        /// Lapse watches whose page stopped polling, or whose machine was destroyed, so a page that
+        /// closed or crashed without saying so does not leave a machine recording. The tick
+        /// unsubscribes itself once no session holds a watch.
+        /// </summary>
+        /// <param name="now">Realtime, the clock leases are taken on (<c>Time.realtimeSinceStartup</c>).</param>
+        public void Tick(float now)
+        {
+            var anyHeld = false;
+            foreach (var session in sessions.Values)
+            {
+                if (session.ExpireWatch(now)) anyHeld = true;
+            }
+            if (!anyHeld && watchTicking)
+            {
+                Application.onBeforeRender -= OnBeforeRenderTick;
+                watchTicking = false;
+            }
         }
 
         public void CloseSessionsFor(string bid)

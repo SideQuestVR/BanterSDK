@@ -1,9 +1,15 @@
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Unity.VisualScripting;
 using UnityEditor;
+using UnityEditor.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using Object = UnityEngine.Object;
 
 namespace BS.SDKEditor.BuildChecks
 {
@@ -37,6 +43,174 @@ namespace BS.SDKEditor.BuildChecks
                     ConvexColliderValidation.Untick(current);
                     return true;
                 }));
+        }
+    }
+
+    /// <summary>Unity can't simulate a concave mesh on a moving body: it logs an error and the collider doesn't collide.</summary>
+    sealed class DynamicConcaveCollidersCheck : BuildCheck
+    {
+        public override string Id => "scene.dynamic-concave-colliders";
+        public override string Title => "Mesh colliders on moving bodies";
+        public override string Description => "Mesh colliders on a non-kinematic Rigidbody or BS Rigidbody have Convex ticked.";
+        public override int Order => 51;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var found = context.Components<MeshCollider>()
+                .Where(collider => !collider.convex && collider.sharedMesh != null && MovesUnderPhysics(collider))
+                .ToList();
+            if (found.Count == 0)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"{found.Count} concave mesh collider(s) are on a moving Rigidbody",
+                    "A mesh collider on a Rigidbody that physics moves must be Convex. Otherwise Unity logs \"Concave Mesh Colliders are " +
+                    "not supported when used with dynamic Rigidbody\" in the space and the collider doesn't collide, so the object can " +
+                    "fall through the world. Tick Convex, make the body kinematic, or use primitive colliders.")
+                .WithTargets(context.TargetsOf(found))
+                .WithFix("Tick Convex", issue =>
+                {
+                    var changed = false;
+                    foreach (var collider in issue.Resolve<GameObject>().SelectMany(go => go.GetComponents<MeshCollider>()))
+                    {
+                        if (collider.convex || !MovesUnderPhysics(collider))
+                            continue;
+                        Undo.RecordObject(collider, "Tick Convex");
+                        collider.convex = true;
+                        changed = true;
+                    }
+                    return changed;
+                }));
+        }
+
+        /// <summary>
+        /// Whether physics moves the body this collider belongs to, which is the nearest Rigidbody or BS Rigidbody at or above
+        /// it. A BS Rigidbody with no Rigidbody adds one when the space loads: set up from its own fields, or left at Unity's
+        /// defaults (not kinematic) when its mass is 0.
+        /// </summary>
+        internal static bool MovesUnderPhysics(MeshCollider collider)
+        {
+            for (var transform = collider.transform; transform != null; transform = transform.parent)
+            {
+                var body = transform.GetComponent<Rigidbody>();
+                if (body != null)
+                    return !body.isKinematic;
+                var bsBody = transform.GetComponent<BSRigidbody>();
+                if (bsBody == null)
+                    continue;
+                using (var fields = new SerializedObject(bsBody))
+                    return !(fields.FindProperty("isKinematic")?.boolValue == true && fields.FindProperty("mass")?.floatValue > 0f);
+            }
+            return false;
+        }
+    }
+
+    /// <summary>Terrains need their data, an enabled collider on the same data, and their tree prefabs.</summary>
+    sealed class TerrainCheck : BuildCheck
+    {
+        public override string Id => "scene.terrain";
+        public override string Title => "Terrains";
+        public override string Description =>
+            "Every Terrain has its Terrain Data, an enabled Terrain Collider using that same data, and no tree types whose prefab is missing.";
+        public override int Order => 52;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var terrains = context.Components<Terrain>().ToList();
+            if (terrains.Count == 0)
+                return;
+
+            var noData = terrains.Where(terrain => terrain.terrainData == null).ToList();
+            if (noData.Count > 0)
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{noData.Count} Terrain(s) have no Terrain Data",
+                        "Their Terrain Data asset is missing or was never assigned, so nothing shows. Assign it, or remove the Terrain.")
+                    .WithTargets(context.TargetsOf(noData)));
+
+            var withData = terrains.Where(terrain => terrain.terrainData != null).ToList();
+
+            var noCollider = withData.Where(terrain =>
+            {
+                var collider = ColliderOf(terrain);
+                return collider == null || !collider.enabled;
+            }).ToList();
+            if (noCollider.Count > 0)
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{noCollider.Count} Terrain(s) have no enabled Terrain Collider",
+                        "Players and objects fall straight through them. Leave it off only on a terrain nobody can reach.")
+                    .WithTargets(context.TargetsOf(noCollider))
+                    .WithFix("Add a Terrain Collider", MatchColliders));
+
+            var mismatched = withData.Where(terrain =>
+            {
+                var collider = ColliderOf(terrain);
+                return collider != null && collider.enabled && ColliderData(collider) != terrain.terrainData;
+            }).ToList();
+            if (mismatched.Count > 0)
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{mismatched.Count} Terrain Collider(s) have no Terrain Data, or another terrain's",
+                        "Players would collide with a shape they can't see, or with nothing. Use the Terrain's own data.")
+                    .WithTargets(context.TargetsOf(mismatched))
+                    .WithFix("Use the Terrain's data", MatchColliders));
+
+            var missingTrees = withData
+                .Select(terrain => (terrain, indices: MissingTreePrefabs(terrain.terrainData)))
+                .Where(item => item.indices.Count > 0)
+                .ToList();
+            if (missingTrees.Count > 0)
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{missingTrees.Count} Terrain(s) have tree types with no prefab",
+                        "Those trees don't appear, and every player's log fills with \"Tree prefab at index N is missing\". " +
+                        string.Join("; ", missingTrees.Select(item => $"{item.terrain.name}: tree type {string.Join(", ", item.indices)}")) +
+                        ". Assign the prefabs on the Terrain's Paint Trees tab, or remove those tree types.")
+                    .WithTargets(missingTrees.Select(item => context.Target(item.terrain.gameObject))));
+        }
+
+        internal static List<int> MissingTreePrefabs(TerrainData data) =>
+            data.treePrototypes
+                .Select((prototype, index) => (prototype, index))
+                .Where(item => item.prototype == null || item.prototype.prefab == null)
+                .Select(item => item.index)
+                .ToList();
+
+        // The Terrain Collider is reached by name: its module is optional in a project, and the SDK doesn't depend on it.
+        static Collider ColliderOf(Terrain terrain) => terrain.GetComponent("TerrainCollider") as Collider;
+
+        static Object ColliderData(Collider collider)
+        {
+            using (var fields = new SerializedObject(collider))
+                return fields.FindProperty("m_TerrainData")?.objectReferenceValue;
+        }
+
+        static bool MatchColliders(BuildCheckIssue issue)
+        {
+            var changed = false;
+            foreach (var go in issue.Resolve<GameObject>())
+            {
+                var terrain = go.GetComponent<Terrain>();
+                if (terrain == null || terrain.terrainData == null)
+                    continue;
+                var collider = ColliderOf(terrain);
+                if (collider == null)
+                {
+                    var type = Type.GetType("UnityEngine.TerrainCollider, UnityEngine.TerrainPhysicsModule");
+                    collider = type != null ? Undo.AddComponent(go, type) as Collider : null;
+                    if (collider == null)
+                        continue;
+                }
+                Undo.RecordObject(collider, "Fix Terrain Collider");
+                collider.enabled = true;
+                using (var fields = new SerializedObject(collider))
+                {
+                    var data = fields.FindProperty("m_TerrainData");
+                    if (data != null)
+                    {
+                        data.objectReferenceValue = terrain.terrainData;
+                        fields.ApplyModifiedProperties();
+                    }
+                }
+                changed = true;
+            }
+            return changed;
         }
     }
 
@@ -338,7 +512,7 @@ namespace BS.SDKEditor.BuildChecks
         /// project's pipeline. Only answers in a URP project: under another pipeline the picked SubShader isn't the one
         /// a space uses. Skyboxes draw through the skybox, not a renderer pass.
         /// </summary>
-        static bool UrpCantDraw(Shader shader)
+        internal static bool UrpCantDraw(Shader shader)
         {
             var pipeline = GraphicsSettings.currentRenderPipeline;
             if (pipeline == null || !pipeline.GetType().FullName.StartsWith("UnityEngine.Rendering.Universal")
@@ -385,6 +559,285 @@ namespace BS.SDKEditor.BuildChecks
             public IEnumerable<BuildCheckTarget> Targets(BuildCheckContext context) =>
                 Materials.Where(AssetDatabase.Contains).Select(material => BuildCheckTarget.ForAsset(material))
                     .Concat(Instances.Select(context.Target));
+        }
+    }
+
+    /// <summary>The headset draws both eyes in one pass: a hand-written shader that doesn't pass the eye on shows in one eye only.</summary>
+    sealed class StereoShadersCheck : BuildCheck
+    {
+        public override string Id => "render.stereo-shaders";
+        public override string Title => "VR shaders";
+        public override string Description =>
+            "Hand-written shaders pass the eye through (UNITY_VERTEX_OUTPUT_STEREO and friends) and read screen textures per eye, " +
+            "as the headset draws both eyes at once.";
+        public override int Order => 91;
+
+        [Flags]
+        internal enum Gap { None = 0, NoStereoOutput = 1, ScreenTextureNotPerEye = 2 }
+
+        static readonly Regex Comments = new Regex(@"/\*.*?\*/|//[^\n]*", RegexOptions.Singleline);
+        static readonly Regex VertexProgram = new Regex(@"#\s*pragma\s+vertex\b");
+        // HLSL semantics ignore case, and SV_Position is as common as SV_POSITION.
+        static readonly Regex ClipPosition = new Regex(@"\bSV_POSITION\b", RegexOptions.IgnoreCase);
+        static readonly Regex FlatScreenTexture =
+            new Regex(@"\b(sampler2D(_float|_half)?|TEXTURE2D(_FLOAT|_HALF)?)\s*\(?\s*_Camera(Opaque|Depth)Texture\b");
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var gaps = new Dictionary<Shader, Gap>();
+            var users = new Dictionary<Shader, HashSet<GameObject>>();
+            foreach (var renderer in context.Components<Renderer>())
+            {
+                foreach (var material in renderer.sharedMaterials)
+                {
+                    var shader = material != null ? material.shader : null;
+                    if (shader == null)
+                        continue;
+                    if (!gaps.TryGetValue(shader, out var gap))
+                    {
+                        gaps[shader] = gap = GapsOf(shader);
+                        users[shader] = new HashSet<GameObject>();
+                    }
+                    if (gap != Gap.None)
+                        users[shader].Add(renderer.gameObject);
+                }
+            }
+
+            foreach (var pair in gaps.Where(item => item.Value != Gap.None))
+            {
+                var why = new List<string>();
+                if ((pair.Value & Gap.NoStereoOutput) != 0)
+                    why.Add("its vertex program doesn't pass the eye on: add UNITY_VERTEX_INPUT_INSTANCE_ID, UNITY_VERTEX_OUTPUT_STEREO, " +
+                            "UNITY_SETUP_INSTANCE_ID and UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO");
+                if ((pair.Value & Gap.ScreenTextureNotPerEye) != 0)
+                    why.Add("it reads _CameraOpaqueTexture or _CameraDepthTexture as a 2D texture: use TEXTURE2D_X and SAMPLE_TEXTURE2D_X, " +
+                            "or SampleSceneColor and SampleSceneDepth");
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"Shader '{pair.Key.name}' may render in one eye only in the headset",
+                        "The headset draws both eyes in one pass. In this shader " + string.Join("; ", why) + ". Shader Graph does this for you.")
+                    .WithTargets(new[] { BuildCheckTarget.ForAsset(pair.Key) }.Concat(users[pair.Key].Select(context.Target))));
+            }
+        }
+
+        /// <summary>
+        /// Judges a shader on its own source. Shader Graph, Unity's and the SDK's shaders pass the eye through, and
+        /// <see cref="MaterialsCheck"/> reports shaders that are broken or that URP can't draw.
+        /// </summary>
+        static Gap GapsOf(Shader shader)
+        {
+            var path = AssetDatabase.GetAssetPath(shader);
+            if (!path.EndsWith(".shader", StringComparison.OrdinalIgnoreCase)
+                || path.StartsWith("Packages/com.unity.", StringComparison.Ordinal)
+                || path.StartsWith("Packages/com.sidequest.creator-sdk/", StringComparison.Ordinal)
+                || ShaderUtil.ShaderHasError(shader) || MaterialsCheck.UrpCantDraw(shader))
+                return Gap.None;
+            try
+            {
+                return Gaps(File.ReadAllText(FileUtil.GetPhysicalPath(path)));
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                return Gap.None;
+            }
+        }
+
+        /// <summary>
+        /// Text only, so it can be tested without compiling. A shader is only judged when its own text has the vertex program's
+        /// output: one that keeps it in an include is skipped, never wrongly warned about.
+        /// </summary>
+        internal static Gap Gaps(string source)
+        {
+            source = Comments.Replace(source, "");
+            var gap = Gap.None;
+            if (VertexProgram.IsMatch(source) && ClipPosition.IsMatch(source)
+                && !(source.Contains("UNITY_VERTEX_OUTPUT_STEREO") && source.Contains("UNITY_SETUP_INSTANCE_ID")
+                     && source.Contains("UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO")))
+                gap |= Gap.NoStereoOutput;
+            if (FlatScreenTexture.IsMatch(source))
+                gap |= Gap.ScreenTextureNotPerEye;
+            return gap;
+        }
+    }
+
+    /// <summary>
+    /// Quest doesn't update realtime probes, and probe blending and box projection only reach the client if the project's URP
+    /// assets keep their shader variants.
+    /// </summary>
+    sealed class ReflectionProbesCheck : BuildCheck
+    {
+        public override string Id => "render.reflection-probes";
+        public override string Title => "Reflection probes";
+        public override string Description =>
+            "Realtime reflection probes are pointed out, as they don't update on Quest, and the URP assets keep reflection probe " +
+            "blending and box projection when the scene uses them.";
+        public override int Order => 92;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var probes = context.Components<ReflectionProbe>().Where(probe => probe.enabled).ToList();
+            if (probes.Count == 0)
+                return;
+
+            var realtime = probes.Where(probe => probe.mode == ReflectionProbeMode.Realtime).ToList();
+            if (realtime.Count > 0 && context.Targets.Contains(BuildTarget.Android))
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{realtime.Count} realtime reflection probe(s) don't update on Quest",
+                        "The client's Quest quality level has realtime reflection probes off, so surfaces won't reflect what these probes " +
+                        "show on Windows. Set Type to Baked and bake them if the reflections matter on Quest.")
+                    .WithTargets(context.TargetsOf(realtime)));
+
+            var wantsBlending = probes.Count > 1;
+            var wantsBox = probes.Any(probe => probe.boxProjection);
+            var off = new List<UniversalRenderPipelineAsset>();
+            foreach (var target in context.Targets)
+            {
+                var assets = new List<UniversalRenderPipelineAsset>();
+                if (!target.TryGetRenderPipelineAssets(assets))
+                    continue;
+                assets.RemoveAll(asset => asset == null);
+                if (assets.Count > 0 && VariantsLeftOut(assets, wantsBlending, wantsBox))
+                    off.AddRange(assets);
+            }
+            off = off.Distinct().ToList();
+            if (off.Count == 0)
+                return;
+
+            var issue = new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    "Reflection probe blending or box projection is off in the URP assets",
+                    "Their shader variants are left out of the world, so probes don't blend, or reflections ignore the probe's box, in the " +
+                    "client. Turn on Probe Blending and Box Projection under Lighting > Reflection Probes in: " +
+                    string.Join(", ", off.Select(asset => asset.name)))
+                .WithTargets(off.Select(asset => BuildCheckTarget.ForAsset(asset)));
+            var editable = off.Where(asset => AssetDatabase.GetAssetPath(asset).StartsWith("Assets/", StringComparison.Ordinal)).ToList();
+            if (editable.Count > 0)
+            {
+                issue.WithFix("Turn them on", _ =>
+                {
+                    var changed = false;
+                    foreach (var asset in editable.Where(asset => asset != null))
+                    {
+                        // The setters are internal to URP.
+                        using (var fields = new SerializedObject(asset))
+                        {
+                            SetTrue(fields, "m_ReflectionProbeBlending", wantsBlending);
+                            SetTrue(fields, "m_ReflectionProbeBoxProjection", wantsBox);
+                            changed |= fields.ApplyModifiedProperties();
+                        }
+                    }
+                    AssetDatabase.SaveAssets();
+                    return changed;
+                }, needsLoadedScene: false);
+            }
+            issues.Add(issue);
+        }
+
+        static void SetTrue(SerializedObject fields, string name, bool wanted)
+        {
+            var field = fields.FindProperty(name);
+            if (wanted && field != null)
+                field.boolValue = true;
+        }
+
+        /// <summary>URP keeps a variant when any of a target's assets needs it.</summary>
+        internal static bool VariantsLeftOut(IReadOnlyCollection<UniversalRenderPipelineAsset> assets, bool wantsBlending, bool wantsBox) =>
+            (wantsBlending && !assets.Any(asset => asset.reflectionProbeBlending || UsesGpuResidentDrawer(asset)))
+            || (wantsBox && !assets.Any(asset => asset.reflectionProbeBoxProjection));
+
+        /// <summary>URP always blends with the GPU Resident Drawer. Its mode type is in an assembly the SDK doesn't reference.</summary>
+        static bool UsesGpuResidentDrawer(UniversalRenderPipelineAsset asset)
+        {
+            using (var fields = new SerializedObject(asset))
+                return fields.FindProperty("m_GPUResidentDrawerMode")?.intValue > 0;
+        }
+    }
+
+    /// <summary>Velocity over Lifetime's X, Y and Z must share one curve mode.</summary>
+    sealed class ParticleCurveModesCheck : BuildCheck
+    {
+        public override string Id => "scene.particle-curve-modes";
+        public override string Title => "Particle velocity curves";
+        public override string Description => "Particle systems that use Velocity over Lifetime use one curve mode for X, Y and Z.";
+        public override int Order => 96;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var mixed = context.Components<ParticleSystem>().Where(system =>
+            {
+                var velocity = system.velocityOverLifetime;
+                return velocity.enabled && (velocity.x.mode != velocity.y.mode || velocity.y.mode != velocity.z.mode);
+            }).ToList();
+            if (mixed.Count == 0)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"{mixed.Count} particle system(s) mix curve modes in Velocity over Lifetime",
+                    "X, Y and Z must all be Constant, all Curve, or all one of the Random modes. Otherwise the space logs \"Particle " +
+                    "Velocity curves must all be in the same mode\" over and over, which costs frame time on Quest. Set the three to one mode.")
+                .WithTargets(context.TargetsOf(mixed)));
+        }
+    }
+
+    /// <summary>
+    /// AnimationClip.SampleAnimation samples any clip in the editor, but in the app only a Legacy clip or one on a GameObject
+    /// with an Animator; a legacy Animation component only plays Legacy clips.
+    /// </summary>
+    sealed class AnimationClipsCheck : BuildCheck
+    {
+        public override string Id => "scene.animation-clips";
+        public override string Title => "Animation clips";
+        public override string Description => "Legacy Animation components only hold Legacy clips, and graphs that sample clips are pointed out.";
+        public override int Order => 97;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var nonLegacy = context.Components<Animation>()
+                .Where(animation => AnimationUtility.GetAnimationClips(animation.gameObject).Any(clip => clip != null && !clip.legacy))
+                .ToList();
+            if (nonLegacy.Count > 0)
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{nonLegacy.Count} Animation component(s) hold clips that aren't Legacy",
+                        "The old Animation component only plays clips marked Legacy, so these don't play in the space. Use an Animator, " +
+                        "or mark the clips Legacy (the clip's Inspector, in Debug mode).")
+                    .WithTargets(context.TargetsOf(nonLegacy)));
+
+            var sampling = context.Components<ScriptMachine>().Where(machine => Samples(() => machine.graph)).Cast<Component>()
+                .Concat(context.Components<StateMachine>().Where(machine => Samples(() => machine.graph)))
+                .ToList();
+            if (sampling.Count > 0)
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                        $"{sampling.Count} Visual Scripting machine(s) call AnimationClip.SampleAnimation",
+                        "In the editor it samples any clip. In the space it only samples a Legacy clip or a GameObject that has an " +
+                        "Animator; otherwise it does nothing and logs \"Non-Legacy animations cannot be sampled outside the Editor\" " +
+                        "each time. Add an Animator to the GameObject being sampled, or mark the clip Legacy.")
+                    .WithTargets(context.TargetsOf(sampling)));
+        }
+
+        // A graph that can't be read isn't this check's to report: the Visual Scripting node check is.
+        static bool Samples(Func<IGraph> graph)
+        {
+            try
+            {
+                return Samples(graph(), new HashSet<IGraph>());
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>Whether the graph, or one nested in it, invokes AnimationClip.SampleAnimation.</summary>
+        internal static bool Samples(IGraph graph, HashSet<IGraph> seen)
+        {
+            if (graph == null || !seen.Add(graph))
+                return false;
+            foreach (var element in graph.elements)
+            {
+                if (element is MemberUnit unit && unit.member != null && unit.member.targetType == typeof(AnimationClip)
+                    && unit.member.name == nameof(AnimationClip.SampleAnimation))
+                    return true;
+                if (element is IGraphParentElement parent && Samples(parent.childGraph, seen))
+                    return true;
+            }
+            return false;
         }
     }
 

@@ -173,7 +173,7 @@ namespace BS
 #if UNITY_EDITOR
             if (camera != null)
             {
-                parameters.instanceID = anchor.gameObject.GetInstanceID();
+                parameters.entityId = anchor.gameObject.GetEntityId();
                 parameters.overrideSceneCullingMask = true;
                 parameters.sceneCullingMask = EditorSceneManager.GetSceneCullingMask(anchor.gameObject.scene);
             }

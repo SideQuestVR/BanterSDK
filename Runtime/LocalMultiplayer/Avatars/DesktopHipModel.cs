@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.flexabody/Runtime/Player/FlexaMover.cs" sha256="b0355de48c9217fd8f18a40cf5809c78a076c16aba8728456ca25a0ac1084a3c" mode="port" />
+// <mirror source="Packages/com.sidequest.flexabody/Runtime/Player/FlexaMover.cs" sha256="59fc7e147f9b78835a224aee8ddea66c434063ac6089f0962b9242cfbae4eff1" mode="port" />
 // Only the seated hip is production's: FlexaMover.AttachToSeat (:401) and the seated auto-crouch (:169-179) hold the hip
 // at seat + seat rotation * (0, 0.2, 0) (_seatHipOffset, :49) for every jointed pilot, isSeat or not, and the seat joint
 // (:420-435) locks all six degrees of freedom of the torso to the seat, so the seated hip turns with the seat and not

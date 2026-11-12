@@ -1,4 +1,4 @@
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="6ab88cbf53c894dcdd8273685d80972419478499cfec5f09de9499a52b97367d" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="a9f01d8a9ca471d1b2d1f69658b35893d880da7151e731530bebe869a647e5a6" mode="port" />
 // <mirror source="Packages/com.sidequest.packetparty/Runtime/Contracts/UserStateContracts.cs" sha256="0b91705d38f3faecc385f14751be09340607ef56dd83cd85c8e8288dee40988f" mode="verbatim" />
 using System;
 using System.Collections.Generic;
@@ -15,7 +15,7 @@ namespace BS.LocalMultiplayer
     /// <summary>
     /// This player's engine user state: the root keys the attachments and seats write (attachment_&lt;Id&gt;,
     /// pilot), never shown to the page. A port of PacketPartyClient's EditableOwnUserState
-    /// (PacketPartyClient.cs:343-354, 2924-3029, 5482-5488): a JSON document the engine edits freely, diffed
+    /// (PacketPartyClient.cs:384-400, 3075-3201, 5979-5985): a JSON document the engine edits freely, diffed
     /// every 50 ms against what the relay has and sent as atomic app.userState.batch chunks of at most 64
     /// operations, deletes first, both sorted. A chunk that fails keeps the chunks before it, and the same
     /// document is not retried until it changes (the failed fingerprint latch). Everything is pushed again
@@ -35,7 +35,7 @@ namespace BS.LocalMultiplayer
         string _failedFingerprint;
         float _nextSyncAt;
         // Bumped by every reset. A sync that was in flight when its session ended must not write its
-        // half-applied baseline over the fresh session's empty one.
+        // half-applied baseline over the fresh session's empty one, nor send the rest of its diff.
         int _generation;
 
         public EngineUserStateChannel(Func<JObject, CancellationToken, Task<JObject>> sendBatch)
@@ -76,12 +76,17 @@ namespace BS.LocalMultiplayer
             }
         }
 
-        /// <summary>A new session (production's TeardownAsync): the relay has nothing of ours, so send it all.</summary>
+        /// <summary>
+        /// A new session (production's ResetEditableOwnUserStateSync): the relay has nothing of ours, so send it
+        /// all. Bumping the generation drops any sync still in flight to the previous session, and the next
+        /// session doesn't wait on it.
+        /// </summary>
         public void ResetForNewSession()
         {
-            _generation++;
             _baseline.Clear();
             _failedFingerprint = null;
+            _generation++;
+            _syncTask = Task.CompletedTask;
             _nextSyncAt = 0f;
         }
 
@@ -140,6 +145,8 @@ namespace BS.LocalMultiplayer
             {
                 for (var offset = 0; offset < operations.Count; offset += BatchSize)
                 {
+                    // Never send the rest of a stale diff to the session that replaced it.
+                    if (generation != _generation) return;
                     var chunk = new JArray();
                     var end = Math.Min(offset + BatchSize, operations.Count);
                     for (var index = offset; index < end; index++) chunk.Add(operations[index]);
@@ -160,19 +167,18 @@ namespace BS.LocalMultiplayer
                         ApplyOperation(working, operations[index]);
                     }
                 }
-                if (generation != _generation) return;
+                if (generation != _generation) return; // sent to a session that's gone
                 ReplaceBaseline(target);
                 _failedFingerprint = null;
             }
             catch
             {
-                if (generation == _generation)
-                {
-                    // Preserve any earlier accepted chunks so a retry does not issue deletions for paths that
-                    // are already gone on the server.
-                    ReplaceBaseline(working);
-                    _failedFingerprint = targetFingerprint;
-                }
+                // The session this was sent to is gone: the new one starts from an empty baseline.
+                if (generation != _generation) return;
+                // Preserve any earlier accepted chunks so a retry does not issue deletions for paths that
+                // are already gone on the server.
+                ReplaceBaseline(working);
+                _failedFingerprint = targetFingerprint;
                 throw;
             }
         }

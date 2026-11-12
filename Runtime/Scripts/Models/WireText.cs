@@ -127,6 +127,18 @@ namespace BS
             return builder.ToString();
         }
 
+        /// <summary><paramref name="value"/> without the characters the bus splits on: for a reader that doesn't decode.</summary>
+        internal static string Strip(string value)
+        {
+            if (string.IsNullOrEmpty(value) || !HasDelimiter(value)) return value ?? string.Empty;
+            var builder = new StringBuilder(value.Length);
+            for (int i = 0; i < value.Length; i++)
+            {
+                if (!IsDelimiter(value[i])) builder.Append(value[i]);
+            }
+            return builder.ToString();
+        }
+
         /// <summary>True when <paramref name="value"/> holds a character the bus splits on.</summary>
         public static bool HasDelimiter(string value)
         {

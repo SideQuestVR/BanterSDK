@@ -1,7 +1,7 @@
 // <mirror source="Packages/com.sidequest.packetparty/Runtime/Components/PacketPartyObjectBinder.cs" sha256="bac0c961188024bf6450bfd881d15e9b50e2b6cf9b151c560c16735401c076ca" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="6ab88c53c894dcdd8273685d80972419478499cfec5f09de9499a52b97367d" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyClient.cs" sha256="a9f01d8a9ca471d1b2d1f69658b35893d880da7151e731530bebe869a647e5a6" mode="port" />
 // The scene binder (PacketPartyObjectBinder.cs:181-352) together with the object half of the client it sits on
-// (PacketPartyClient.cs:2001-2390): the record mirror and IsOwnedBySelf, the app.object.* requests with their
+// (PacketPartyClient.cs:2130-2531): the record mirror and IsOwnedBySelf, the app.object.* requests with their
 // result-record application, the lifecycle broadcasts, and the payload lane with its sequence gates. PacketPartyClient
 // is replaced by ILocalSession: requests go through RequestAsync, broadcasts arrive through On(type), the reliable
 // object data channel is the relay's obj.payload message (RELAY.md 6.4), and Connected/Disconnected are RoomJoined /
@@ -520,7 +520,7 @@ namespace BS.LocalMultiplayer.Objects
             }
         }
 
-        // ─── Payload lane (PacketPartyClient.cs:2031-2168) ───────────────────────
+        // ─── Payload lane (PacketPartyClient.cs:2160-2297) ───────────────────────
 
         /// <summary>Send one opaque component payload immediately (reliable). Owner only.</summary>
         public void SendObjectPayload(string objectId, string componentKey, byte[] body, bool reliable = true)
@@ -622,7 +622,7 @@ namespace BS.LocalMultiplayer.Objects
             _objectInSeq.Remove(objectId);
         }
 
-        // ─── Requests (PacketPartyClient.cs:2170-2333) ──────────────────────────
+        // ─── Requests (PacketPartyClient.cs:2299-2474) ──────────────────────────
 
         /// <summary>
         /// Create a synced object. Scene objects use <paramref name="sceneObjectId"/> as a stable id and creates are

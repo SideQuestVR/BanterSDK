@@ -47,6 +47,10 @@ scene.On("unity-loaded", async () => {
 
 Open the page's developer tools while the world is playing: **Creator SDK > Setup**, then **Open** on **Page developer tools**. Errors show in its console. Your `console.log` lines also appear in the Unity Console, starting `[Ora JS]`. See [Testing in Play Mode](../getting-started/testing-in-play-mode.md#page-logs-and-developer-tools).
 
+### A call rejects with "unsupported", or the console says it isn't supported
+
+Some older scene methods have nothing behind them in the app. See [Unsupported calls](legacy-apis.md#unsupported-calls).
+
 ### My C# scripts don't run in the published world
 
 A built world carries no code: only the scene and its assets. Your own `MonoBehaviour` scripts work in Play mode, where your project's code is loaded, but the app loads them as missing scripts, which do nothing. Script the world with JavaScript in its page or with Visual Scripting instead.
@@ -54,6 +58,10 @@ A built world carries no code: only the scene and its assets. Your own `MonoBeha
 ### The build stops: "Visual Scripting node type(s) aren't allowed in spaces"
 
 The app only runs graphs whose nodes are on its allow list, so the checklist blocks the build and lists the node types it found. Remove or replace those nodes. Graph assets anywhere in the project count, as do graphs in prefabs, not only the scene's: delete graph assets you don't use, such as ones from imported samples. When the project loads, the Console also reports them, starting `[VisualScripting] Found elements that are not allowed for Visual Scripting`. See [Visual Scripting](../visual-scripting/overview.md#build-validation).
+
+### The checklist warns: "Visual Scripting node(s) aren't on the Banter node list"
+
+These nodes run in the app today, but a coming app update won't run graphs that use them. The warning doesn't block the build or the upload. Each line names a node and where it's used: replace it with an approved node, such as a BS node or a member of a common `UnityEngine` type, then upload again. See [Visual Scripting](../visual-scripting/overview.md#build-validation) for what the warning covers.
 
 ### Snippets or scripts from another scene run in my world
 
@@ -103,6 +111,14 @@ Worlds the Builder creates are Private. On altvr.app, open your world's page, ch
 - **A custom shader:** one written for the Built-in pipeline (a surface shader, say) also renders pink, since URP draws none of its passes. Rewrite it for URP or rebuild it in Shader Graph. The **Materials** check flags these too.
 - **Only on Quest, or only on Windows:** the world has no shaders for the graphics API that device uses. Run the Setup panel's **Graphics APIs** item: Auto Graphics API on Android (Quest runs Vulkan), and Direct3D 11, Direct3D 12 and Vulkan on Windows. Then build again.
 
+### A shader shows in one eye only
+
+The headset draws both eyes in one pass, and a hand-written shader has to pass the eye through, or it shows in one eye only. Shader Graph does this for you, and Play mode on a flat screen doesn't show the problem. The checklist's **VR shaders** check finds most cases; see [Custom shaders in VR](../components/rendering.md#custom-shaders-in-vr).
+
+### Realtime reflection probes don't work on Quest
+
+The app only updates realtime reflection probes on Windows. Set the probe's **Type** to **Baked** and bake it. See [Rendering on Quest and Windows](performance.md#rendering-on-quest-and-windows).
+
 ### Tags don't match in the app
 
 A built world stores each object's tag as its position in the tag list, and the app reads that position against its own list. So the project must have exactly the app's tags, in the app's order: the Setup panel's **SDK layers and tags** item sets them up. The checklist's **Tags** check finds objects using tags the app doesn't have and renames or removes them. If a removed tag comes back, an object still uses it; the checklist lists it. See [Tags](../building-in-unity/tags.md).
@@ -130,6 +146,10 @@ Setting the URP asset's **Light Probe System** back to **Light Probe Groups** do
 ### Players arrive at the world origin
 
 The scene has no active spawn point. Add one with **GameObject > BS > Player > Spawn Point** ([Spawn Point and Spawn Range](../building-in-unity/easy-prefabs.md#spawn-point-and-spawn-range-bsspawn)).
+
+### Players are teleported or sent away as soon as they arrive
+
+A [VerifyHost](../components/special.md#verifyhost) found the world somewhere its **Url** doesn't allow. Check that **Url** matches the address under the Builder's **World** dropdown, and that your last build is newer than your last address change. The log has a `[BS] Verify Host:` line naming the host it found.
 
 ### A teleporter keeps teleporting the player
 

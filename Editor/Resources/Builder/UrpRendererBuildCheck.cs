@@ -113,17 +113,18 @@ internal static class UrpRendererBuildCheck
 
     /// <summary>What the dialog and the checklist tell creators.</summary>
     internal const string SuggestedModes =
-        "Suggested modes: Windows Forward+ or Forward (the client matches the world's choice), Android Forward.";
+        "Suggested modes: Forward on both (Windows also accepts Forward+; the client matches the world's choice).";
 
     /// <summary>
-    /// Modes the client can render a target's section with, its first choice first. Android runs
+    /// Modes the client can render a target's section with, the one to suggest first. Android runs
     /// Forward only. Windows runs Forward+ by default and switches to a Forward renderer for worlds
-    /// whose bundle records Forward (see UrpRenderingPathResolver), so either is fine there.
+    /// whose bundle records Forward (see UrpRenderingPathResolver), so either is fine there, and
+    /// Forward lets one renderer serve both platforms.
     /// </summary>
     internal static RenderingMode[] AcceptedModes(BuildTarget target) =>
         target == BuildTarget.Android
             ? new[] { RenderingMode.Forward }
-            : new[] { RenderingMode.ForwardPlus, RenderingMode.Forward };
+            : new[] { RenderingMode.Forward, RenderingMode.ForwardPlus };
 
     internal static List<Mismatch> FindMismatches(BuildTarget[] targets, bool[] selected,
         out bool sharedRendererConflict)

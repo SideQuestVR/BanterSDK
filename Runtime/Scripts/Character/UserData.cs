@@ -39,7 +39,8 @@ public class UserData : MonoBehaviour
             var parts = prop.Split(MessageDelimiters.TERTIARY);
             if (parts.Length == 2)
             {
-                this.props[parts[0]] = parts[1];
+                // Each side comes wire-encoded from the page, like space props.
+                this.props[WireText.Decode(parts[0])] = WireText.Decode(parts[1]);
             }
             else
             {

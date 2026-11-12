@@ -19,7 +19,7 @@ namespace BS.UI.Elements
                     if (parameters == null || parameters.Length != 1)
                         throw new ArgumentException($"Method SetValue expects 1 parameters, got {parameters?.Length ?? 0}");
 
-                    var setValueNewValue = float.Parse(parameters[0]);
+                    var setValueNewValue = NumberFormat.Parse(parameters[0]);
                     SetValue(setValueNewValue);
                     return true;
 
@@ -27,8 +27,8 @@ namespace BS.UI.Elements
                     if (parameters == null || parameters.Length != 2)
                         throw new ArgumentException($"Method SetRange expects 2 parameters, got {parameters?.Length ?? 0}");
 
-                    var setRangeMin = float.Parse(parameters[0]);
-                    var setRangeMax = float.Parse(parameters[1]);
+                    var setRangeMin = NumberFormat.Parse(parameters[0]);
+                    var setRangeMax = NumberFormat.Parse(parameters[1]);
                     SetRange(setRangeMin, setRangeMax);
                     return true;
 
@@ -78,15 +78,15 @@ namespace BS.UI.Elements
             switch (propertyName)
             {
                 case "minValue":
-                    lowValue = float.Parse(propertyValue);
+                    lowValue = NumberFormat.Parse(propertyValue);
                     return true;
 
                 case "maxValue":
-                    highValue = float.Parse(propertyValue);
+                    highValue = NumberFormat.Parse(propertyValue);
                     return true;
 
                 case "value":
-                    value = float.Parse(propertyValue);
+                    value = NumberFormat.Parse(propertyValue);
                     return true;
 
                 case "enabled":

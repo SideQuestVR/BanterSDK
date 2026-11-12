@@ -299,9 +299,16 @@ public class LoginManager
         {
             GetCode(resetDeadline: false);
         }
-        else if (waitCoroutine == null && !isFetchingCode)
+        else
         {
-            StartPolling(PollInterval(sq.CurrentLoginCode));
+            // A code from before a script reload still works. Fetching another would strand the one the user is typing.
+            codeText.text = $"Code: {sq.CurrentLoginCode.Code}";
+            codeText.style.display = DisplayStyle.Flex;
+            linkPage.style.display = DisplayStyle.Flex;
+            if (waitCoroutine == null && !isFetchingCode)
+            {
+                StartPolling(PollInterval(sq.CurrentLoginCode));
+            }
         }
     }
 

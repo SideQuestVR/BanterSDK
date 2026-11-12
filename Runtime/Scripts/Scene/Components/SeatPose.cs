@@ -3,7 +3,13 @@ using UnityEngine;
 
 namespace BS
 {
-    public enum SeatViewMode { Legacy = 0, UprightFollowYaw = 1, UprightIndependent = 2 }
+    public enum SeatViewMode
+    {
+        FollowSeat = 0,
+        [Obsolete("Renamed to FollowSeat.")] Legacy = 0,
+        UprightFollowYaw = 1,
+        UprightIndependent = 2
+    }
 
     /// <summary>Seat-relative pelvis and sole targets in metres, independent of the seat's visual scale.</summary>
     [Serializable]

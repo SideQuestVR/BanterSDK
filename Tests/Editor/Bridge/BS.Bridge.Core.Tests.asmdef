@@ -1,0 +1,30 @@
+{
+    "name": "BS.Bridge.Core.Tests",
+    "rootNamespace": "BS.Bridge.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "BS.SDK",
+        "BS.Bridge.Core",
+        "SideQuest.Ora",
+        "Unity.InputSystem",
+        "Unity.VisualScripting.Core",
+        "Unity.VisualScripting.Flow"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "SideQuest.Ora.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

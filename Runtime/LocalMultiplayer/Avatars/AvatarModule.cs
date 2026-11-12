@@ -1,6 +1,6 @@
-// <mirror source="Assets/Systems/Avatar/RemoteAvatarService.cs" sha256="5db62ab415833ac7fa705828119946493023d1fc0e8c3aa7ff1b943d44590117" mode="port" />
-// <mirror source="Assets/Systems/Networking/NetworkService.cs" sha256="cab93afa037c3e7a7ef1181ed552a18541ae46c49b93872cbae9b18a5f804c80" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartyTransformRuntime.cs" sha256="8fcfd1db8d5d212eda9e751a334abce4265d567df6636641e149885822902081" mode="port" />
+// <mirror source="Assets/Systems/Avatar/RemoteAvatarService.cs" sha256="a79906d055cd1e7169c4b267267032d29f1e9e7af0c5e2c1e0b28ad32e684980" mode="port" />
+// <mirror source="Assets/Systems/Networking/NetworkService.cs" sha256="4f45a31593b5e06c2e377d035d39324d3cdd48c1f0809c68d51b7f6393fb27f9" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/Transforms/PacketPartyTransformRuntime.cs" sha256="6e1d7856bc396c441284c8f3e288f7ea4905fcfb5211ff81377cc14f25ff0b05" mode="port" />
 // The bone lookups of RemoteAvatarService (TryGetRemoteBone :100-110, ResolveAnchor :115-126, SetPilotSeat :133-146,
 // despawn :196-202 and :386-393) over orbs instead of loaded humanoid avatars (an orb counts as loaded once its first
 // pose sample has placed it); the local "root" publisher NetworkService configures (PublishPart :1133-1155) driven like

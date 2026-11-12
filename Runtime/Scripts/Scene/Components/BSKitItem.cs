@@ -15,7 +15,7 @@ namespace BS
     [DefaultExecutionOrder(-1)]
     [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BSKitItem : BSComponentBase
+    public partial class BSKitItem : BSComponentBase
     {
         [Tooltip("The location of the prefab in the kit object. Must match the path in the asset bundle (always lowercase).")]
         [See(initial = "")][SerializeField] internal string path = "";
@@ -82,13 +82,41 @@ namespace BS
             {
                 if (!scene.bundlesLoaded)
                 {
-                    await new WaitUntil(() => scene.bundlesLoaded);
+                    // Bounded: this item gone, the load it started in replaced by another or failed (bundlesLoaded is the
+                    // new load's, and may stay false after a cancelled one), or the backstop, which doesn't run out while
+                    // an asset bundle is still pending (those bound themselves). No load captured (Play start, before the
+                    // first): no identity to compare.
+                    var load = scene.loadUrlTaskCompletionSource;
+                    var deadline = Time.realtimeSinceStartup + KitPathWait.LimitSeconds;
+                    await new WaitUntil(() => this == null || scene.bundlesLoaded
+                        || (load != null && !ReferenceEquals(scene.loadUrlTaskCompletionSource, load))
+                        || scene.HasLoadFailed()
+                        || (Time.realtimeSinceStartup > deadline && !scene.AnyCriticalPending()));
+                    if (this == null) return;
+                }
+                if (KitBundle == null && scene.settings == null)
+                {
+                    // The space's settings went while this waited (Play stopping).
+                    SetLoadedIfNot(false, "Kititem not found at path: " + path);
+                    return;
                 }
                 if (KitBundle == null)
                 {
-                    if (scene.settings.KitPaths.ContainsKey(path))
+                    if (!scene.settings.KitPaths.ContainsKey(path))
                     {
-                        KitBundle = scene.settings.KitPaths[path].assetBundle;
+                        // scene.bundlesLoaded is only recomputed by the space's load poll, and a kit bundle placed in the
+                        // world registers its prefabs only once its own Start has loaded it, which can come after this
+                        // item's Start: wait while a kit bundle may still register the path, then look once more.
+                        var settings = scene.settings;
+                        // The page's creations still queued may include the kit bundle itself.
+                        var wait = new KitPathWait(() => settings.KitPaths.ContainsKey(path), BSAssetBundle.AnyKitStillLoading,
+                            () => scene.pendingCreates.Count > 0, scene.HasLoadFailed, Time.realtimeSinceStartup);
+                        await new WaitUntil(() => this == null || wait.Done(Time.realtimeSinceStartup));
+                        if (this == null) return;
+                    }
+                    if (scene.settings != null && scene.settings.KitPaths.TryGetValue(path, out var kit))
+                    {
+                        KitBundle = kit.assetBundle;
                     }
                     else
                     {
@@ -104,16 +132,21 @@ namespace BS
             try
             {
                 GameObject asset = KitBundle.LoadAsset<GameObject>(loadPath);
+                // Judged on the asset, before any copy exists, so every instance inherits it (BSUnityEventGuard); a
+                // prefab that fails throws, refusing the item. A reloaded asset is a new object and is judged again.
+                BSUnityEventGuard.SanitizePrefab(asset, loadPath);
                 if (resetTransform)
                 {
                     asset.transform.localPosition = Vector3.zero;
                     asset.transform.localRotation = Quaternion.identity;
                 }
                 item = Instantiate(asset, transform, false);
+                BSUnityEventGuard.SanitizeInstance(item, loadPath); // what only a live copy shows (legacy Animation states)
                 scene.kitItems.Add(item);
 
                 foreach (Transform transform in item.GetComponentsInChildren<Transform>(true))
                 {
+                    BSText.RepairFont(transform.gameObject.GetComponent<TMP_Text>());
                     var canvas = transform.gameObject.GetComponent<Canvas>();
                     if (canvas != null)
                     {
@@ -178,135 +211,5 @@ namespace BS
             valuesApplied = true;
             _ = SetupKitItem();
         }
-        // BS COMPILED CODE 
-        public System.String Path { get { return path; } set { path = value; UpdateCallback(new List<PropertyName> { PropertyName.path }); } }
-        public System.Boolean ResetTransform { get { return resetTransform; } set { resetTransform = value; UpdateCallback(new List<PropertyName> { PropertyName.resetTransform }); } }
-
-        BSScene _scene;
-        public BSScene scene
-        {
-            get
-            {
-                if (_scene == null)
-                {
-                    _scene = BSScene.Instance();
-                }
-                return _scene;
-            }
-        }
-        bool alreadyStarted = false;
-        void Start()
-        {
-            Init();
-            StartStuff();
-        }
-
-        internal override void ReSetup()
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>() { PropertyName.path, PropertyName.resetTransform, };
-            UpdateCallback(changedProperties);
-        }
-        internal override string GetSignature()
-        {
-            return "KitItem" + PropertyName.path + path + PropertyName.resetTransform + resetTransform;
-        }
-
-        internal override void Init(List<object> constructorProperties = null)
-        {
-            if (alreadyStarted) { return; }
-            alreadyStarted = true;
-            scene.RegisterBanterMonoscript(BSScene.UnityId(gameObject), BSScene.UnityId(this), ComponentType.KitItem);
-
-
-            oid = BSScene.UnityId(gameObject);
-            cid = BSScene.UnityId(this);
-
-            if (constructorProperties != null)
-            {
-                Deserialise(constructorProperties);
-            }
-
-            SyncProperties(true);
-
-        }
-
-        void Awake()
-        {
-            BSScene.Instance().RegisterComponentOnMainThread(gameObject, this);
-        }
-
-        void OnDestroy()
-        {
-            scene.UnregisterComponentOnMainThread(gameObject, this);
-
-            DestroyStuff();
-        }
-
-        internal override object CallMethod(string methodName, List<object> parameters)
-        {
-            return null;
-        }
-
-        internal override void Deserialise(List<object> values)
-        {
-            List<PropertyName> changedProperties = new List<PropertyName>();
-            for (int i = 0; i < values.Count; i++)
-            {
-                if (values[i] is BSString)
-                {
-                    var valpath = (BSString)values[i];
-                    if (valpath.n == PropertyName.path)
-                    {
-                        path = valpath.x;
-                        changedProperties.Add(PropertyName.path);
-                    }
-                }
-                if (values[i] is BSBool)
-                {
-                    var valresetTransform = (BSBool)values[i];
-                    if (valresetTransform.n == PropertyName.resetTransform)
-                    {
-                        resetTransform = valresetTransform.x;
-                        changedProperties.Add(PropertyName.resetTransform);
-                    }
-                }
-            }
-            if (values.Count > 0) { UpdateCallback(changedProperties); }
-        }
-
-        internal override void SyncProperties(bool force = false, Action callback = null)
-        {
-            var updates = new List<BSComponentPropertyUpdate>();
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.path,
-                    type = PropertyType.String,
-                    value = path,
-                    componentType = ComponentType.KitItem,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            if (force)
-            {
-                updates.Add(new BSComponentPropertyUpdate()
-                {
-                    name = PropertyName.resetTransform,
-                    type = PropertyType.Bool,
-                    value = resetTransform,
-                    componentType = ComponentType.KitItem,
-                    oid = oid,
-                    cid = cid
-                });
-            }
-            scene.SetFromUnityProperties(updates, callback);
-        }
-
-        internal override void WatchProperties(PropertyName[] properties)
-        {
-        }
-        // END BS COMPILED CODE 
     }
 }

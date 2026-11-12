@@ -58,22 +58,24 @@ namespace BS.VisualScripting
             // Auto-register when graph starts
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
-                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, UIEventType.Click, "OnUIClick");
-                        _eventRegistered = true;
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, UIEventType.Click, "OnUIClick");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -138,8 +140,8 @@ namespace BS.VisualScripting
 
             var parts = value.Split(',');
             if (parts.Length >= 2 &&
-                float.TryParse(parts[0].Trim(), out var x) &&
-                float.TryParse(parts[1].Trim(), out var y))
+                NumberFormat.TryParse(parts[0].Trim(), out var x) &&
+                NumberFormat.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;

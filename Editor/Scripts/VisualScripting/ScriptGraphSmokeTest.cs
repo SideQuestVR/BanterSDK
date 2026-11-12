@@ -27,11 +27,11 @@ namespace BS.SDKEditor
                 var machine = go.AddComponent<ScriptMachine>();
                 machine.nest.SwitchToEmbed(FlowGraph.WithStartUpdate());
 
-                var listReply = JObject.Parse(manager.HandleCommand("list", "{}", scene));
+                var listReply = JObject.Parse(manager.HandleCommandAsHost("list", "{}", scene));
                 Debug.Log($"[SGTest] list: {((JArray)listReply["machines"]).Count} machines");
 
                 var target = "{\"target\":{\"bid\":\"\",\"machineIndex\":0,\"path\":\"SGSmokeTest\"}}";
-                var vm = JObject.Parse(manager.HandleCommand("open", target, scene));
+                var vm = JObject.Parse(manager.HandleCommandAsHost("open", target, scene));
                 if (vm["error"] != null) { Debug.LogError("[SGTest] open failed: " + vm["error"]); return; }
                 sessionId = (string)vm["sessionId"];
                 Debug.Log($"[SGTest] open: session {sessionId}, rev {(int)vm["rev"]}, units {((JArray)vm["units"]).Count}");
@@ -52,7 +52,7 @@ namespace BS.SDKEditor
                             ["paramTypes"] = new JArray("UnityEngine.Vector3"), ["pos"] = new JArray(420, 0) },
                     }
                 };
-                var probeVm = JObject.Parse(manager.HandleCommand("ops", probe.ToString(), scene));
+                var probeVm = JObject.Parse(manager.HandleCommandAsHost("ops", probe.ToString(), scene));
                 if (probeVm["error"] != null) { Debug.LogError("[SGTest] add ops failed: " + probeVm["error"] + " idx=" + probeVm["failedOpIndex"]); return; }
                 string rotateEnterKey = null, updateTriggerKey = null, rotateVectorKey = null;
                 foreach (var unit in (JArray)probeVm["units"])
@@ -92,15 +92,15 @@ namespace BS.SDKEditor
                         new JObject { ["op"] = "setGraphTitle", ["title"] = "Smoke Rotator" },
                     }
                 };
-                var vm2 = JObject.Parse(manager.HandleCommand("ops", edit.ToString(), scene));
+                var vm2 = JObject.Parse(manager.HandleCommandAsHost("ops", edit.ToString(), scene));
                 if (vm2["error"] != null) { Debug.LogError("[SGTest] edit ops failed: " + vm2["error"] + " idx=" + vm2["failedOpIndex"]); return; }
                 Debug.Log($"[SGTest] ops ok: rev {(int)vm2["rev"]}, units {((JArray)vm2["units"]).Count}, control conns {((JArray)vm2["connections"]["control"]).Count}");
 
-                var envelopeJson = manager.HandleCommand("save", "{\"sessionId\":\"" + sessionId + "\"}", scene);
+                var envelopeJson = manager.HandleCommandAsHost("save", "{\"sessionId\":\"" + sessionId + "\"}", scene);
                 var envelope = JObject.Parse(envelopeJson);
                 Debug.Log($"[SGTest] save: envelope {envelopeJson.Length} chars, ref {envelope["meta"]?["baseGraphRef"]}, nodes {envelope["meta"]?["nodeCount"]}");
 
-                var applyReply = manager.HandleCommand("apply", "{\"sessionId\":\"" + sessionId + "\"}", scene);
+                var applyReply = manager.HandleCommandAsHost("apply", "{\"sessionId\":\"" + sessionId + "\"}", scene);
                 Debug.Log($"[SGTest] apply: {applyReply}; machine units {machine.graph.units.Count}, source {machine.nest.source}, title '{machine.graph.title}'");
 
                 var applyEnvBody = new JObject
@@ -108,10 +108,10 @@ namespace BS.SDKEditor
                     ["target"] = new JObject { ["bid"] = "", ["machineIndex"] = 0, ["path"] = "SGSmokeTest" },
                     ["envelope"] = envelope,
                 };
-                var applyEnvReply = manager.HandleCommand("applyEnvelope", applyEnvBody.ToString(), scene);
+                var applyEnvReply = manager.HandleCommandAsHost("applyEnvelope", applyEnvBody.ToString(), scene);
                 Debug.Log($"[SGTest] applyEnvelope: {applyEnvReply}; machine units {machine.graph.units.Count}");
 
-                var pauseReply = manager.HandleCommand("pause",
+                var pauseReply = manager.HandleCommandAsHost("pause",
                     "{\"target\":{\"bid\":\"\",\"machineIndex\":0,\"path\":\"SGSmokeTest\"},\"paused\":true}", scene);
                 Debug.Log($"[SGTest] pause: {pauseReply} -> GraphPaused={machine.GraphPaused}");
 
@@ -127,7 +127,7 @@ namespace BS.SDKEditor
                 // session (and its staging asset) stays registered in the manager.
                 if (sessionId != null)
                 {
-                    try { manager.HandleCommand("close", "{\"sessionId\":\"" + sessionId + "\"}", scene); }
+                    try { manager.HandleCommandAsHost("close", "{\"sessionId\":\"" + sessionId + "\"}", scene); }
                     catch (Exception e) { Debug.LogWarning("[SGTest] close failed: " + e.Message); }
                 }
                 UnityEngine.Object.DestroyImmediate(go);

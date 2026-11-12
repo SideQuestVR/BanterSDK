@@ -315,6 +315,17 @@ namespace BS.SDKEditor.BuildChecks
             var spawns = context.Components<BSSpawn>().ToList();
             if (spawns.Count == 0)
             {
+                // Spawns the build leaves out: under an EditorOnly object, or under the Creator SDK object.
+                var strippedSpawns = context.Roots.SelectMany(root => root.GetComponentsInChildren<BSSpawn>(true)).ToList();
+                if (strippedSpawns.Count > 0)
+                {
+                    issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                            $"{strippedSpawns.Count} spawn point(s) are left out of the build",
+                            "They're under an EditorOnly object or the Creator SDK object, and the build removes both, so players " +
+                            "arrive at the world origin. Move them out from under it.")
+                        .WithTargets(context.TargetsOf(strippedSpawns)));
+                    return;
+                }
                 issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Info, "No spawn points",
                     "Players arrive at the world origin, or wherever the page's script teleports them. Add spawn points with " +
                     "GameObject > BS > Player > Spawn Point."));

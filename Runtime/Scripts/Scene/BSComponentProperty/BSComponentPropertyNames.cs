@@ -301,5 +301,11 @@ namespace BS
         label,
         isToggle,
         isOn,
+        avatarSyncMode,
+        takeOwnershipOnProximity,
+        voiceDistanceMultiplier,
+        shared,
+        heightOffset,
+        loadDistance,
     }
 }

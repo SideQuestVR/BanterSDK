@@ -1,5 +1,5 @@
-// <mirror source="Assets/Systems/Networking/NetworkService.cs" sha256="cab93afa037c3e7a7ef1181ed552a18541ae46c49b93872cbae9b18a5f804c80" mode="port" />
-// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyPeer.cs" sha256="3eeeb45fe59f358a92ffaa4494b46710cd26620ebf12e790b39ba64e025eebee" mode="port" />
+// <mirror source="Assets/Systems/Networking/NetworkService.cs" sha256="4f45a31593b5e06c2e377d035d39324d3cdd48c1f0809c68d51b7f6393fb27f9" mode="port" />
+// <mirror source="Packages/com.sidequest.packetparty/Runtime/PacketPartyPeer.cs" sha256="13242400e0b1b3138f33e6da3fe125ffe14e16d422acfef9fa6d79479ddf02ec" mode="port" />
 using System;
 using System.Collections.Generic;
 using UnityEngine;
@@ -121,7 +121,11 @@ namespace BS.LocalMultiplayer
             userData.id = !string.IsNullOrEmpty(peer.RoomSessionId) ? peer.RoomSessionId : peer.PeerId;
             userData.name = Label(peer);
             userData.color = LocalIdentityFactory.RemoteColor;
-            userData.isSpaceAdmin = false;
+            // Whether they own this world, which is all NetworkService.AddRemoteSdkUser flags a remote player for:
+            // production's room doesn't publish a peer's role, so a remote moderator reads false there and here.
+            // The owner is this player's settings' world owner, as a one-shot's fromAdmin reads it.
+            var identity = _host.Identity;
+            userData.isSpaceAdmin = OneShotModule.IsWorldOwner(peer.ClientId, identity != null ? identity.WorldOwnerClientId : null);
             userData.Head = peer.Head;
             peer.User = userData;
             scene.AddUser(userData);
