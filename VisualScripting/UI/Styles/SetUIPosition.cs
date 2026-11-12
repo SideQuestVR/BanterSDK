@@ -1,12 +1,11 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum UIPositionType
     {
@@ -16,8 +15,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Set UI Position")]
     [UnitShortTitle("Set UI Position")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIPosition : Unit
     {
         [DoNotSerialize]
@@ -61,7 +60,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var posType = flow.GetValue<UIPositionType>(positionType);
@@ -90,11 +90,11 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUIPosition] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set position type
                     string positionValue = posType == UIPositionType.Absolute ? "absolute" : "relative";
                     SendStyleCommand(panelId, elemId, "position", positionValue);
-                    
+
                     // Set position values
                     SendStyleCommand(panelId, elemId, "left", FormatLength(leftVal, leftUnitVal));
                     SendStyleCommand(panelId, elemId, "top", FormatLength(topVal, topUnitVal));
@@ -133,12 +133,12 @@ namespace Banter.VisualScripting
         {
             return unit switch
             {
-                LengthUnit.Pixel => $"{value}px",
-                LengthUnit.Percent => $"{value}%",
-                LengthUnit.Em => $"{value}em",
-                LengthUnit.Rem => $"{value}rem",
+                LengthUnit.Pixel => $"{NumberFormat.Format(value)}px",
+                LengthUnit.Percent => $"{NumberFormat.Format(value)}%",
+                LengthUnit.Em => $"{NumberFormat.Format(value)}em",
+                LengthUnit.Rem => $"{NumberFormat.Format(value)}rem",
                 LengthUnit.Auto => "auto",
-                _ => $"{value}px"
+                _ => $"{NumberFormat.Format(value)}px"
             };
         }
     }
@@ -152,4 +152,3 @@ namespace Banter.VisualScripting
         Auto
     }
 }
-#endif

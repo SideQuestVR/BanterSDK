@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Is Space Favourited")]
     [UnitShortTitle("Space Favourited?")]
-    [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Space")]
+    [TypeIcon(typeof(BSObjectId))]
     public class IsSpaceFavourited : Unit
     {
         [DoNotSerialize]
@@ -15,10 +14,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            isFavourited = ValueOutput<bool>("isFavourited", flow => {
-                return BanterScene.Instance().data.IsSpaceFavourited();
+            isFavourited = ValueOutput<bool>("isFavourited", flow =>
+            {
+                return BSScene.Instance().data.IsSpaceFavourited();
             });
         }
     }
 }
-#endif

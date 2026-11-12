@@ -1,0 +1,174 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &4668509559885559062
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8079753041728930142}
+  - component: {fileID: 2648731947237464605}
+  - component: {fileID: 7964327099474305300}
+  - component: {fileID: 7107818285118989545}
+  - component: {fileID: 1521927146910027099}
+  - component: {fileID: 7713495319275400183}
+  m_Layer: 5
+  m_Name: Seat
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8079753041728930142
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668509559885559062}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.48, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2648731947237464605
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668509559885559062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1975fd0838af4a85be3bb6459af67590, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSObjectId
+  Id: -25810
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  watchPosition: 0
+  watchLocalPosition: 0
+  watchEuler: 0
+  watchLocalEuler: 0
+  watchRotation: 0
+  watchLocalRotation: 0
+  watchLocalScale: 0
+  lerpPosition: 0
+  lerpRotation: 0
+--- !u!114 &7964327099474305300
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668509559885559062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52608dc850184ba7b3b623c0d7caebc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSAttachedObject
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  valuesApplied: 0
+  uid: 
+  attachmentPosition: {x: 0, y: 0, z: 0}
+  attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+  attachmentType: 0
+  avatarAttachmentType: 1
+  avatarAttachmentPoint: 0
+  attachmentPoint: 0
+  autoSync: 0
+  jointAvatar: 1
+  autoAttach: 0
+  isSeat: 1
+  unseatOnMove: 1
+  unseatOnJump: 1
+  attachment:
+    uid: 
+    attachmentPosition: {x: 0, y: 0, z: 0}
+    attachmentRotation: {x: 0, y: 0, z: 0, w: 1}
+    attachmentType: 0
+    avatarAttachmentType: 0
+    avatarAttachmentPoint: 0
+    physicsAttachmentPoint: 0
+    autoSync: 0
+    jointAvatar: 1
+    autoAttach: 0
+    isSeat: 0
+    unseatOnMove: 1
+    unseatOnJump: 1
+--- !u!114 &7107818285118989545
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668509559885559062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e0526f16d89d1664eb8c8db93f510f30, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BS.SDK::BS.BSSeat
+  jsId: 
+  loaded:
+    m_PersistentCalls:
+      m_Calls: []
+  valuesApplied: 0
+  showRuntimeVisual: 1
+  unseatOnMove: 1
+  unseatOnJump: 1
+  useExitPosition: 0
+  exitPosition: {x: 0, y: 0, z: 0.6}
+  viewMode: 1
+  pose:
+    pelvisPosition: {x: 0, y: 0.04, z: 0}
+    pelvisRotation: {x: 0, y: 0, z: 0, w: 1}
+    leftFootPosition: {x: -0.14, y: -0.6, z: 0.475}
+    leftFootRotation: {x: 0, y: 0, z: 0, w: 1}
+    rightFootPosition: {x: 0.14, y: -0.6, z: 0.475}
+    rightFootRotation: {x: 0, y: 0, z: 0, w: 1}
+    leftKneeHint: {x: -0.14, y: 0.15, z: 0.45}
+    rightKneeHint: {x: 0.14, y: 0.15, z: 0.45}
+--- !u!65 &1521927146910027099
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668509559885559062}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 1
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.5824072, y: 0.14519978, z: 0.5657413}
+  m_Center: {x: 0, y: 0.056526184, z: 0}
+--- !u!114 &7713495319275400183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4668509559885559062}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9c834163dd464a22aafdd8a24495f804, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: BS.SDK::BS.BSPointerRange
+  distance: 2

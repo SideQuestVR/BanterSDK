@@ -1,0 +1,19 @@
+{
+    "name": "BS.BridgeApi",
+    "rootNamespace": "BS.BridgeApi",
+    "references": [
+        "BS.SDK",
+        "BS.Bridge.Core",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -1,25 +1,169 @@
+using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
+using UnityEditor.SceneManagement;
 using UnityEngine;
-using Banter.SDK;
+using BS;
 
 class CustomSceneProcessor : IProcessSceneWithReport
 {
     public int callbackOrder { get { return 0; } }
-    public static bool isBuildingAssetBundles = false;
+
+    // Set true only around the Greenfield space .bee build. A temporary GameObject by this name is
+    // added to the source scene so Basis' SceneBundleBuild has a BasisContentBase to derive the scene
+    // and bundle description from; it is stripped here from the *build copy* so a Banter space never
+    // ships Basis' networked prop component (which would Awake and reach for Basis networking at load).
+    public const string SceneBeeBuildMarkerName = "__GreenfieldSceneBundleMarker";
+    public static bool isBuildingSceneBee = false;
+
     public void OnProcessScene(UnityEngine.SceneManagement.Scene scene, BuildReport report)
     {
-#if !BANTER_EDITOR
-        if (isBuildingAssetBundles)
+        StripWorldLink(scene);
+#if !GREENFIELD_PROJECT
+        // Strip any authoring-time BSStarterUpper from the space bundle. It's re-added at runtime by
+        // the bootstrap; if one ships in the bundle its Awake fires on scene load and sets up a second,
+        // broken browser link (BSPipe.Start NRE), killing scene JS and space navigation.
+        if (isBuildingSceneBee)
         {
-            LogLine.Do("Removing existing BanterStarterUpper if it exists, it will be added at runtime.");
-            BanterStarterUpper[] everything = GameObject.FindObjectsOfType<BanterStarterUpper>();
+            LogLine.Do("Removing existing BSStarterUpper if it exists, it will be added at runtime.");
+            BSStarterUpper[] everything = FindObjects.All<BSStarterUpper>();
             for (int i = 0; i < everything.Length; i++)
             {
-                LogLine.Do("BanterStarterUpper removed.");
+                LogLine.Do("BSStarterUpper removed.");
                 GameObject.DestroyImmediate(everything[i].gameObject);
             }
         }
+        if (isBuildingSceneBee)
+        {
+            // GetRootGameObjects returns a copy, so DestroyImmediate during iteration is safe.
+            foreach (GameObject root in scene.GetRootGameObjects())
+            {
+                if (root.name == SceneBeeBuildMarkerName)
+                {
+                    LogLine.Do("Stripping Greenfield scene-bundle build marker from shipped scene.");
+                    GameObject.DestroyImmediate(root);
+                }
+            }
+        }
+        if (isBuildingSceneBee)
+        {
+            ApplyPlatformFilters(scene, report);
+        }
+        // Last: what a platform's filters dropped isn't in its bundle.
+        if (isBuildingSceneBee)
+        {
+            AssetManifestStamp.Apply(scene);
+        }
 #endif
+    }
+
+    // The scene<->world link is authoring data with no runtime meaning. Its holder is tagged
+    // EditorOnly, which already keeps it out of builds -- this runs unguarded, on the build copy,
+    // so that a link someone re-tagged or reparented cannot ship either. It is not gated on the
+    // greenfield defines because there is no build of any kind that wants this object in it.
+    static void StripWorldLink(UnityEngine.SceneManagement.Scene scene)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            foreach (BSWorldLink link in root.GetComponentsInChildren<BSWorldLink>(true))
+            {
+                if (link == null) continue;
+                if (link.gameObject.name == BSWorldLink.HolderName) GameObject.DestroyImmediate(link.gameObject);
+                else GameObject.DestroyImmediate(link);
+            }
+        }
+    }
+
+#if !GREENFIELD_PROJECT
+    // Honors BSPlatformFilter: each platform section of a space bundle is built in its own pass, so
+    // this runs once per platform on the build copy and drops trees the creator excluded for it.
+    // Exclusion removes the entire subtree — a nested filter cannot re-include a child of an
+    // excluded ancestor. A kept tree's filter is stripped when the platform was all it decided; one
+    // that also restricts VR / Non-VR ships, because only the player's device can answer that.
+    static void ApplyPlatformFilters(UnityEngine.SceneManagement.Scene scene, BuildReport report)
+    {
+        // report is null for AssetBundle builds; the pipeline has already switched the active
+        // build target to this pass's platform before scene processing runs.
+        BuildTarget target = report != null ? report.summary.platform : EditorUserBuildSettings.activeBuildTarget;
+        bool isMobile = target == BuildTarget.Android;
+
+        // GetComponentsInChildren(true) rather than FindObjectsOfType: excluded trees may start inactive.
+        List<BSPlatformFilter> filters = new List<BSPlatformFilter>();
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            filters.AddRange(root.GetComponentsInChildren<BSPlatformFilter>(true));
+        }
+        foreach (BSPlatformFilter filter in filters)
+        {
+            if (filter == null) continue; // tree already destroyed by an ancestor filter
+            if (!BSPlatformFilter.IsPlatformIncluded(isMobile, filter.includeOnMobile, filter.includeOnDesktop))
+            {
+                LogLine.Do($"BSPlatformFilter: excluding '{filter.gameObject.name}' from the {(isMobile ? "mobile" : "desktop")} ({target}) build.");
+                GameObject.DestroyImmediate(filter.gameObject);
+            }
+            else if (filter.NeedsRuntimeCheck)
+            {
+                // Filters added before the component had a BSObjectId requirement can lack one, and a component
+                // without one cannot register with the scene (its property sync re-enqueues for ever).
+                if (filter.GetComponent<BSObjectId>() == null) filter.gameObject.AddComponent<BSObjectId>();
+                LogLine.Do($"BSPlatformFilter: keeping the filter on '{filter.gameObject.name}' for its VR / Non-VR check.");
+            }
+            else
+            {
+                GameObject.DestroyImmediate(filter);
+            }
+        }
+    }
+#endif
+}
+
+/// <summary>
+/// Removes a build marker an interrupted build left in a scene. The Builder adds it, Basis saves the scene with it for the
+/// build, and the Builder takes it out again afterwards, so Unity quitting in between leaves it in the file. Nothing is
+/// saved here: the creator chooses that.
+/// </summary>
+[InitializeOnLoad]
+static class SceneBundleMarkerCleanup
+{
+    static SceneBundleMarkerCleanup()
+    {
+        if (AssetDatabase.IsAssetImportWorkerProcess())
+            return;
+        EditorSceneManager.sceneOpened += (scene, mode) => Clean(scene);
+        // The scene Unity restores when it starts isn't announced by sceneOpened.
+        EditorApplication.delayCall += () =>
+        {
+            for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+                Clean(UnityEngine.SceneManagement.SceneManager.GetSceneAt(i));
+        };
+    }
+
+    internal static void Clean(UnityEngine.SceneManagement.Scene scene)
+    {
+        if (BuilderWindow.SceneBundleBuildInProgress || BuildPipeline.isBuildingPlayer || EditorApplication.isPlayingOrWillChangePlaymode)
+            return;
+        int removed = RemoveMarkers(scene);
+        if (removed == 0)
+            return;
+        EditorSceneManager.MarkSceneDirty(scene);
+        Debug.LogWarning($"[Creator SDK] Removed {removed} leftover build marker(s) ({CustomSceneProcessor.SceneBeeBuildMarkerName}) " +
+                         $"from {scene.path}, left by a build that was interrupted. Save the scene to keep the change.");
+    }
+
+    internal static int RemoveMarkers(UnityEngine.SceneManagement.Scene scene)
+    {
+        // An additive scene can be open without being loaded.
+        if (!scene.IsValid() || !scene.isLoaded)
+            return 0;
+        int removed = 0;
+        foreach (GameObject root in scene.GetRootGameObjects())
+        {
+            if (root.name != CustomSceneProcessor.SceneBeeBuildMarkerName)
+                continue;
+            GameObject.DestroyImmediate(root);
+            removed++;
+        }
+        return removed;
     }
 }

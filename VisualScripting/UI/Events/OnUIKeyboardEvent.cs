@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On UI Keyboard Event")]
     [UnitShortTitle("On UI Keyboard Event")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIKeyboardEvent : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -67,32 +66,34 @@ namespace Banter.VisualScripting
             // Auto-register when graph starts
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    var targetKeyEvent = flow.GetValue<UIKeyboardEventType>(keyboardEventType);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
-                        // Map keyboard event type to UIEventType
-                        UIEventType eventType = targetKeyEvent switch
-                        {
-                            UIKeyboardEventType.KeyDown => UIEventType.KeyDown,
-                            UIKeyboardEventType.KeyUp => UIEventType.KeyUp,
-                            UIKeyboardEventType.KeyPress => UIEventType.KeyPress,
-                            _ => UIEventType.KeyDown
-                        };
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        var targetKeyEvent = flow.GetValue<UIKeyboardEventType>(keyboardEventType);
 
-                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIKeyboardEvent");
-                        _eventRegistered = true;
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            // Map keyboard event type to UIEventType
+                            UIEventType eventType = targetKeyEvent switch
+                            {
+                                UIKeyboardEventType.KeyDown => UIEventType.KeyDown,
+                                UIKeyboardEventType.KeyUp => UIEventType.KeyUp,
+                                UIKeyboardEventType.KeyPress => UIEventType.KeyPress,
+                                _ => UIEventType.KeyDown
+                            };
+
+                            UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, eventType, "OnUIKeyboardEvent");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -140,9 +141,9 @@ namespace Banter.VisualScripting
             // Extract element ID from event name
             var parts = data.name.Split('_');
             var elementIdFromEvent = parts.Length > 1 ? parts[1] : "";
-            
+
             flow.SetValue(triggeredElementId, elementIdFromEvent);
-            
+
             // Parse keyboard event arguments
             if (data.arguments != null)
             {
@@ -151,7 +152,7 @@ namespace Banter.VisualScripting
                     flow.SetValue(key, keyName);
                 else
                     flow.SetValue(key, "");
-                
+
                 // Key code
                 if (data.arguments.Length > 1 && data.arguments[1] is int code)
                     flow.SetValue(keyCode, code);
@@ -159,7 +160,7 @@ namespace Banter.VisualScripting
                     flow.SetValue(keyCode, parsedCode);
                 else
                     flow.SetValue(keyCode, 0);
-                    
+
                 // Modifier keys
                 if (data.arguments.Length > 2 && data.arguments[2] is string modKeys)
                     flow.SetValue(modifierKeys, modKeys);
@@ -185,4 +186,3 @@ namespace Banter.VisualScripting
         KeyPress
     }
 }
-#endif

@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On BullSchript Callback Received")]
     [UnitShortTitle("On BS Callback")]
-    [UnitCategory("Events\\Banter\\Browser")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Browser")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnJsReturnValue : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -46,4 +45,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

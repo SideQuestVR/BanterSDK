@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
 using UnityEngine;
-using Banter.SDK;
-using Banter.FlexaBody;
+using BS;
+using SideQuest.FlexaBody;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Rotate")]
     [UnitShortTitle("Set Can Rotate")]
-    [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Player\\Actions")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanRotate : Unit
     {
         [DoNotSerialize]
@@ -23,7 +22,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(canRotate);
                 Debug.Log("[MouseLook] ActionsSystem.canRotate set to " + value);
                 ActionsSystem.canRotate = value;
@@ -35,4 +35,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

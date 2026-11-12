@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Label")]
     [UnitShortTitle("Create UI Label")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUILabel : Unit
     {
         [DoNotSerialize]
@@ -44,9 +43,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var labelText = flow.GetValue<string>(text);
@@ -55,7 +55,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUILabel] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUILabel] BSUIPanel component not found on GameObject.");
                     flow.SetValue(labelId, "");
                     return outputTrigger;
                 }
@@ -71,16 +71,16 @@ namespace Banter.VisualScripting
 
                     // Generate unique element ID if not provided
                     var labelElementId = string.IsNullOrEmpty(elemId) ? $"ui_label_{System.Guid.NewGuid().ToString("N")[..8]}" : elemId;
-                    
+
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementType = "11"; // UIElementType.Label = 11
                     string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
                     var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
-                    
+
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{labelElementId}{MessageDelimiters.SECONDARY}{elementType}{MessageDelimiters.SECONDARY}{parentElementId}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -120,4 +120,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

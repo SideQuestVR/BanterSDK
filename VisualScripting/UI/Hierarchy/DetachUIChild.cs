@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Detach UI Child")]
     [UnitShortTitle("Detach UI Child")]
-    [UnitCategory("Banter\\UI\\Hierarchy")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Hierarchy")]
+    [TypeIcon(typeof(BSObjectId))]
     public class DetachUIChild : Unit
     {
         [DoNotSerialize]
@@ -34,7 +33,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var childId = flow.GetValue<string>(childElementId);
@@ -87,4 +87,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

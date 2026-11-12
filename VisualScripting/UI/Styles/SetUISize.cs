@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Size")]
     [UnitShortTitle("Set UI Size")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUISize : Unit
     {
         [DoNotSerialize]
@@ -49,7 +48,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var widthValue = flow.GetValue<float>(width);
@@ -74,14 +74,14 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUISize] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     var widthStr = FormatLength(widthValue, widthUnitValue);
                     var heightStr = FormatLength(heightValue, heightUnitValue);
-                    
+
                     // Format: panelId|SET_UI_STYLE|elementId§styleName§value
                     var widthMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}width{MessageDelimiters.SECONDARY}{widthStr}";
                     var heightMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}height{MessageDelimiters.SECONDARY}{heightStr}";
-                    
+
                     // Send commands through UIElementBridge
                     UIElementBridge.HandleMessage(widthMessage);
                     UIElementBridge.HandleMessage(heightMessage);
@@ -107,14 +107,13 @@ namespace Banter.VisualScripting
         {
             return unit switch
             {
-                LengthUnit.Pixel => $"{value}px",
-                LengthUnit.Percent => $"{value}%",
-                LengthUnit.Em => $"{value}em",
-                LengthUnit.Rem => $"{value}rem",
+                LengthUnit.Pixel => $"{NumberFormat.Format(value)}px",
+                LengthUnit.Percent => $"{NumberFormat.Format(value)}%",
+                LengthUnit.Em => $"{NumberFormat.Format(value)}em",
+                LengthUnit.Rem => $"{NumberFormat.Format(value)}rem",
                 LengthUnit.Auto => "auto",
-                _ => $"{value}px"
+                _ => $"{NumberFormat.Format(value)}px"
             };
         }
     }
 }
-#endif

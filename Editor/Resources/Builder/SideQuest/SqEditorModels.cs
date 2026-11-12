@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 /// Object containing any information that's persisted by the SqEditor api classes
 /// </summary>
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     public class SqEditorPersistentData
     {
@@ -250,11 +250,14 @@ namespace Banter.SDKEditor
         [JsonProperty("upload_uri")]
         public string UploadURI { get; set; }
 
+        [JsonProperty("contentType")] public string ContentType { get; set; }
+
         /// <summary>
-        /// A URL to upload the file to
+        /// The owning community id — null when the upload is scoped to a world instead of a community,
+        /// so this must be nullable or the world upload/attach response fails to deserialize.
         /// </summary>
         [JsonProperty("communities_id")]
-        public long CommunitiesId { get; set; }
+        public long? CommunitiesId { get; set; }
 
     }
 
@@ -450,7 +453,7 @@ namespace Banter.SDKEditor
         public DateTimeOffset AchievementCreatedAt { get; set; }
 
     }
-    
+
     /// <summary>
     /// Represents basic upload creation request
     /// </summary>
@@ -458,11 +461,11 @@ namespace Banter.SDKEditor
     {
         [JsonProperty("avatars_id")]
         public long AvatarId { get; set; }
-        
+
         [JsonProperty("high_avatar_files_id")]
         public long HighId { get; set; }
 
-        [JsonProperty("version",NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("version", NullValueHandling = NullValueHandling.Ignore)]
         public long Version { get; set; }
 
         [JsonProperty("low_avatar_files_id")]
@@ -470,14 +473,14 @@ namespace Banter.SDKEditor
 
         [JsonProperty("is_public")]
         public bool Public { get; set; }
-        
-        [JsonProperty("name")] 
+
+        [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty("preview_image",NullValueHandling = NullValueHandling.Ignore)]
+        [JsonProperty("preview_image", NullValueHandling = NullValueHandling.Ignore)]
         public long PreviewImage { get; set; }
     }
-    
+
     /// <summary>
     /// Create avatar slot
     /// </summary>
@@ -489,17 +492,94 @@ namespace Banter.SDKEditor
         public long UsersID { get; set; }
         [JsonProperty("avatars_id")]
         public long AvatarId { get; set; }
-        
+
         [JsonProperty("is_selected")]
         public bool IsSelected { get; set; }
     }
-    
+
     public class SqAvatarSlotSelect
     {
         [JsonProperty("user_avatars_id")]
         public long UserAvatarId { get; set; }
-        
+
         [JsonProperty("is_selected")]
         public bool IsSelected { get; set; }
+    }
+
+    /// <summary>
+    /// A "world" (space) owned by the signed-in user. Backs the builder's world dropdown and, once the
+    /// attach endpoints are wired, the bundle upload target. Shape matches GET /v2/worlds (verified
+    /// 2026-08-13). Note the ids arrive as JSON strings (e.g. "3"), so they're typed string here.
+    /// </summary>
+    public class SqEditorWorld
+    {
+        /// <summary>The world's unique identifier (used by the attach route /v2/worlds/{id}/...).</summary>
+        [JsonProperty("worlds_id")]
+        public string WorldId { get; set; }
+
+        /// <summary>The id of the owning user.</summary>
+        [JsonProperty("users_id")]
+        public string UserId { get; set; }
+
+        /// <summary>Display name, shown in the dropdown.</summary>
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
+        /// <summary>The subdomain slug the world is hosted under ({slug}.worldspace.host / {slug}.bant.ing).</summary>
+        [JsonProperty("space_slug")]
+        public string Slug { get; set; }
+
+        /// <summary>The full hosting URL, e.g. https://a9a4e1.test.worldspace.host — bundles live under it.</summary>
+        [JsonProperty("space_url")]
+        public string SpaceUrl { get; set; }
+
+        [JsonProperty("status")]
+        public int Status { get; set; }
+
+        /// <summary>Null when the row was created without one (e.g. via the website) — the server
+        /// only resolves its default at join time, so the API can and does return null here.</summary>
+        [JsonProperty("max_occupancy")]
+        public int? MaxOccupancy { get; set; }
+    }
+
+    /// <summary>
+    /// Body for the CDN /create-upload step when the upload targets a WORLD (rather than a community).
+    /// Sends both the world id and slug (either satisfies the backend's ownership check); nulls are omitted.
+    /// </summary>
+    public class SqEditorCreateWorldUploadRequest
+    {
+        [JsonProperty("worlds_id", NullValueHandling = NullValueHandling.Ignore)]
+        public string WorldId { get; set; }
+
+        [JsonProperty("world_slug", NullValueHandling = NullValueHandling.Ignore)]
+        public string WorldSlug { get; set; }
+
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        [JsonProperty("size")]
+        public long Size { get; set; }
+
+        [JsonProperty("type")]
+        public string Type { get; set; }
+    }
+
+    /// <summary>
+    /// Body for POST /v2/worlds. Defaults mirror the values confirmed working against the create endpoint.
+    /// </summary>
+    public class SqEditorCreateWorldRequest
+    {
+        [JsonProperty("name")]
+        public string Name { get; set; }
+
+        /// <summary>100 = Private (the default everywhere else worlds are born), 1000 = Public.</summary>
+        [JsonProperty("status")]
+        public int Status { get; set; } = 100;
+
+        [JsonProperty("max_occupancy")]
+        public int MaxOccupancy { get; set; } = 20;
     }
 }

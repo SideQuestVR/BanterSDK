@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Space State Property")]
     [UnitShortTitle("Set Space Prop")]
-    [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetSpaceStateProp : Unit
     {
         [DoNotSerialize]
@@ -27,23 +26,24 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var propKey = flow.GetValue<string>(key);
                 var propValue = flow.GetValue<string>(value);
                 var propIsPublic = flow.GetValue<bool>(isPublic);
 
                 if (propIsPublic)
                 {
-                    BanterScene.Instance().events.OnPublicSpaceStateChanged.Invoke(propKey, propValue);
+                    BSScene.Instance().events.OnPublicSpaceStateChanged.Invoke(propKey, propValue);
                 }
                 else
                 {
-                    BanterScene.Instance().events.OnProtectedSpaceStateChanged.Invoke(propKey, propValue);
+                    BSScene.Instance().events.OnProtectedSpaceStateChanged.Invoke(propKey, propValue);
                 }
 
                 return outputTrigger;
             });
-            
+
             outputTrigger = ControlOutput("");
             key = ValueInput("Property Name", string.Empty);
             value = ValueInput("Value", string.Empty);
@@ -51,4 +51,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -1,18 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Base64 CDN Link")]
     [UnitShortTitle("On Base64 CDN Link")]
-    [UnitCategory("Events\\Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnBase64CDNLink : EventUnit<CustomEventArgs>
     {
 
-        //#if BANTER_VISUAL_SCRIPTING
         //            EventBus.Trigger("OnAiImage", new CustomEventArgs(id, new object[] { data }));
         //#endif
         //
@@ -51,4 +49,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

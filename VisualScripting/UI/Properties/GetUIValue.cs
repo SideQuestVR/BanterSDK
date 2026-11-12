@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Value")]
     [UnitShortTitle("Get UI Value")]
-    [UnitCategory("Banter\\UI\\Properties\\Value")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Properties\\Value")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIValue : Unit
     {
         [DoNotSerialize]
@@ -29,13 +28,10 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput value;
 
-        // Store callback for cleanup
-        private System.Action<CustomEventArgs> _currentCallback;
-        private string _currentEventName;
-
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -55,78 +51,45 @@ namespace Banter.VisualScripting
                     return outputTrigger;
                 }
 
-                var graphReference = flow.stack.ToReference();
+                flow.SetValue(value, 0f); // kept when the bridge doesn't answer (e.g. the element is gone)
+
+                var hook = new EventHook($"UIProperty_{elemId}_value");
+                System.Action<CustomEventArgs> onValue = args =>
+                {
+                    if (args.arguments != null && args.arguments.Length > 0)
+                    {
+                        flow.SetValue(value, ToFloat(args.arguments[0]));
+#if BANTER_UI_DEBUG
+                        Debug.Log($"[GetUIValue] Received value: '{args.arguments[0]}' for {hook.name}");
+#endif
+                    }
+                };
 
                 try
                 {
-                // Clean up any existing callback
-                CleanupCallback();
-                
-                    // Get the panel ID for message routing
                     var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
                     if (panelId == null)
                     {
                         Debug.LogError($"[GetUIValue] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(value, 0f);
                         return outputTrigger;
                     }
-                
-                // Set up callback to receive the value
-                _currentEventName = $"UIProperty_{elemId}_value";
-                _currentCallback = (CustomEventArgs args) => {
-                    if (!graphReference.isValid)
-                    {
-                        CleanupCallback();
-                        return;
-                    }
 
-                    var callbackFlow = Flow.New(graphReference);
+                    // The bridge answers inline, inside HandleMessage, so `flow` is still the caller's flow when
+                    // onValue runs and the value lands on this node's output (a new Flow would never be read).
+                    EventBus.Register<CustomEventArgs>(hook, onValue);
 
-                    if (args.arguments != null && args.arguments.Length > 0)
-                    {
-                        // Try to parse as float, fallback to 0
-                        var rawValue = args.arguments[0];
-                        float floatValue = 0f;
-                        
-                        if (rawValue is float f)
-                            floatValue = f;
-                        else if (rawValue is string s && float.TryParse(s, out var parsed))
-                            floatValue = parsed;
-                        else if (rawValue != null && float.TryParse(rawValue.ToString(), out var parsedStr))
-                            floatValue = parsedStr;
-                            
-                        callbackFlow.SetValue(value, floatValue);
-#if BANTER_UI_DEBUG
-                        Debug.Log($"[GetUIValue] Received value: {floatValue} for {_currentEventName}");
-#endif
-                    }
-                    else
-                    {
-                        callbackFlow.SetValue(value, 0f);
-                    }
-                    
-                    // Clean up callback after use
-                    CleanupCallback();
-                };
-                    
-                    // Register for the callback event
-                    EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
-                    
                     // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}value";
-                    
-                    // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-#if BANTER_UI_DEBUG
-                    Debug.Log($"[GetUIValue] Requested value for element {elemId}, waiting for callback on {_currentEventName}");
-#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIValue] Failed to get UI value: {e.Message}");
-                    flow.SetValue(value, 0f);
-                    CleanupCallback();
+                }
+                finally
+                {
+                    // Always unregistered (a no-op if never registered): a leftover handler would hold this flow.
+                    EventBus.Unregister(hook, onValue);
                 }
 
                 return outputTrigger;
@@ -137,16 +100,33 @@ namespace Banter.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             value = ValueOutput<float>("Value");
         }
-        
-        private void CleanupCallback()
+
+        // The bridge answers a Slider with a boxed float, a Toggle with "1"/"0" and a text field with its text.
+        // Strings are read invariant: the bridge and the page always write numbers with a '.'.
+        private static float ToFloat(object raw)
         {
-            if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))
+            switch (raw)
             {
-                EventBus.Unregister(new EventHook(_currentEventName), _currentCallback);
-                _currentCallback = null;
-                _currentEventName = null;
+                case float f:
+                    return f;
+                case string s:
+                    // The bridge's own numbers use '.', but a TextField's or Dropdown's text is what the player typed,
+                    // in their own culture. NumberStyles.Float has no thousands separator, so neither reading is 10x off.
+                    if (NumberFormat.TryParse(s, out var parsed))
+                        return parsed;
+                    return float.TryParse(s, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.CurrentCulture, out parsed) ? parsed : 0f;
+                case System.IConvertible convertible:
+                    try
+                    {
+                        return convertible.ToSingle(System.Globalization.CultureInfo.InvariantCulture);
+                    }
+                    catch (System.Exception e) when (e is System.InvalidCastException || e is System.FormatException || e is System.OverflowException)
+                    {
+                        return 0f;
+                    }
+                default:
+                    return 0f;
             }
         }
     }
 }
-#endif

@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Manages batch AO baking with distance-based priority.
@@ -162,7 +162,7 @@ namespace Banter.SDK
         /// </summary>
         public void QueueAllInScene()
         {
-            var allMergers = FindObjectsOfType<PrimitiveMergerAO>();
+            var allMergers = FindObjects.All<PrimitiveMergerAO>();
             QueueBakeAll(allMergers);
             Debug.Log($"[AOBakeManager] Queued {allMergers.Length} objects from scene");
         }

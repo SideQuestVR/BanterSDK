@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Foldout")]
     [UnitShortTitle("Create UI Foldout")]
-    [UnitCategory("Banter\\UI\\Elements\\Containers")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements\\Containers")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIFoldout : Unit
     {
         [DoNotSerialize]
@@ -48,9 +47,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var foldoutText = flow.GetValue<string>(text);
@@ -60,7 +60,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIFoldout] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIFoldout] BSUIPanel component not found on GameObject.");
                     flow.SetValue(foldoutId, "");
                     return outputTrigger;
                 }
@@ -103,7 +103,7 @@ namespace Banter.VisualScripting
                     }
 
                     // Set collapsed state
-                    var collapsedMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{foldoutElementId}{MessageDelimiters.SECONDARY}value{MessageDelimiters.SECONDARY}{(!collapsed).ToString().ToLower()}";
+                    var collapsedMessage = $"{panelIdStr}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{foldoutElementId}{MessageDelimiters.SECONDARY}value{MessageDelimiters.SECONDARY}{(!collapsed).ToString().ToLowerInvariant()}";
                     UIElementBridge.HandleMessage(collapsedMessage);
 
                     flow.SetValue(foldoutId, foldoutElementId);
@@ -129,4 +129,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

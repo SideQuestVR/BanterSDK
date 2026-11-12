@@ -1,12 +1,11 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum UIElementTypeVS
     {
@@ -35,13 +34,15 @@ namespace Banter.VisualScripting
         Vector3Field = 42,
         Vector4Field = 43,
         RectField = 44,
-        BoundsField = 45
+        BoundsField = 45,
+        /// <summary>The SideQuest colour picker (com.sidequest.color-picker registers the factory).</summary>
+        ColorPicker = 108
     }
 
     [UnitTitle("Create UI Element")]
     [UnitShortTitle("Create UI Element")]
-    [UnitCategory("Banter\\UI\\Elements")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIElement : Unit
     {
         [DoNotSerialize]
@@ -75,10 +76,11 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var type = flow.GetValue<UIElementTypeVS>(elementType);
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var retId = flow.GetValue<string>(returnId);
@@ -86,7 +88,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIElement] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIElement] BSUIPanel component not found on GameObject.");
                     flow.SetValue(elementId, "");
                     return outputTrigger;
                 }
@@ -101,16 +103,16 @@ namespace Banter.VisualScripting
                 {
                     // Generate unique element ID
                     var elemId = string.IsNullOrEmpty(retId) ? $"ui_elem_{System.Guid.NewGuid().ToString("N")[..8]}" : retId;
-                    
+
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementTypeValue = ((int)type).ToString();
                     string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
                     var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
-                    
+
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{elementTypeValue}{MessageDelimiters.SECONDARY}{parentElementId}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -143,4 +145,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

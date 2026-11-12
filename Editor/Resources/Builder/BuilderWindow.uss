@@ -1,1 +1,548 @@
-VisualElement {}
+/* Builder window, in the Setup panel's look (Editor/Scripts/Setup/SdkSetupWindow.uss): the editor theme's
+   own colours, so it reads in the dark and light skins; rounded cards with a soft border; one pink primary action
+   per screen. BuilderWindow.cs puts builder--dark or builder--light on the root for the white icons.
+   The alt-* classes are added from C# (LoginManager, BuildChecklistView, the avatar tools). */
+
+/* -- Window -------------------------------------------------------------------- */
+
+.builder {
+    flex-grow: 1;
+    height: 100%;
+    flex-direction: column;
+}
+
+.builder__sections {
+    flex-grow: 1;
+    flex-shrink: 1;
+    /* Room for the status bar pinned below. */
+    margin-bottom: 30px;
+}
+
+.builder__scroll {
+    flex-grow: 1;
+}
+
+.builder__content {
+    padding: 4px 20px 16px 20px;
+}
+
+/* -- Header ---------------------------------------------------------------------- */
+
+.builder__header {
+    flex-direction: row;
+    align-items: center;
+    flex-shrink: 0;
+    padding: 18px 20px 0 20px;
+}
+
+.builder__logo {
+    width: 40px;
+    height: 40px;
+    margin-right: 12px;
+    flex-shrink: 0;
+    background-image: resource('UI/Images/altspace-window-icon');
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.builder__titles {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.builder__title {
+    font-size: 20px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+}
+
+.builder__version {
+    padding: 0;
+    margin-top: 2px;
+    opacity: 0.65;
+}
+
+.builder__account {
+    align-items: flex-end;
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+.builder__code {
+    font-size: 11px;
+    padding: 0;
+    margin-top: 4px;
+    opacity: 0.75;
+    -unity-text-align: middle-right;
+    white-space: normal;
+    max-width: 200px;
+}
+
+.builder__signed-in {
+    align-items: flex-end;
+}
+
+.builder__sign-out {
+    font-size: 11px;
+    padding: 0;
+    margin-top: 2px;
+}
+
+.builder__intro {
+    flex-shrink: 0;
+    white-space: normal;
+    padding: 0;
+    margin: 12px 20px 14px 20px;
+    opacity: 0.85;
+}
+
+/* -- Primary action (pink, as the Setup panel's Open Builder and Fix All) -------- */
+
+.unity-button.builder__primary-button {
+    margin: 0;
+    padding: 3px 16px;
+    min-height: 22px;
+    -unity-font-style: bold;
+    background-color: rgb(186, 38, 98);
+    border-color: rgb(214, 66, 126);
+    color: rgb(255, 255, 255);
+}
+
+.unity-button.builder__primary-button:hover {
+    background-color: rgb(206, 50, 113);
+}
+
+.unity-button.builder__primary-button:active {
+    background-color: rgb(160, 30, 84);
+}
+
+/* The Build action is a label in a pill (C# listens on the label). */
+.alt-pill {
+    flex-shrink: 0;
+    height: 32px;
+    border-radius: 4px;
+    border-width: 1px;
+    background-color: rgb(186, 38, 98);
+    border-color: rgb(214, 66, 126);
+    align-items: center;
+    justify-content: center;
+}
+
+.alt-pill:hover {
+    background-color: rgb(206, 50, 113);
+}
+
+.alt-pill:active {
+    background-color: rgb(160, 30, 84);
+}
+
+.unity-label.alt-pill-label,
+.alt-pill-label {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0 16px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: rgb(255, 255, 255);
+    cursor: link;
+}
+
+/* Kept for anything that still adds it: the labels have no glyph to make room for any more. */
+.unity-label.alt-pill-label-plain,
+.alt-pill-label-plain {
+    padding: 0 16px;
+}
+
+/* -- Sections ---------------------------------------------------------------------- */
+
+.builder__section {
+    font-size: 15px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 18px 0 6px 0;
+}
+
+/* MainTitle: the scene heading, with Reset on the right (the button is its child). */
+.builder__section--with-button {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    min-height: 22px;
+}
+
+.builder__section--inline {
+    margin: 0;
+}
+
+.builder__section-row {
+    flex-direction: row;
+    align-items: center;
+    margin: 22px 0 6px 0;
+}
+
+.builder__spacer {
+    flex-grow: 1;
+}
+
+.unity-button.builder__small-button {
+    margin: 0;
+    padding: 2px 10px;
+}
+
+.builder__row {
+    flex-direction: row;
+    margin-bottom: 4px;
+}
+
+.builder__value {
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.builder__inline {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.builder__inline-link {
+    padding: 0;
+    margin: 0 0 0 4px;
+}
+
+/* -- Drop area ---------------------------------------------------------------------- */
+
+.builder__drop-container {
+    margin-top: 4px;
+}
+
+.builder__drop {
+    align-items: center;
+    padding: 24px 16px;
+    border-width: 1px;
+    border-radius: 6px;
+    border-color: rgba(128, 128, 128, 0.45);
+    background-color: rgba(128, 128, 128, 0.06);
+}
+
+.builder__drop:hover {
+    border-color: rgba(214, 66, 126, 0.8);
+    background-color: rgba(186, 38, 98, 0.08);
+}
+
+.builder__drop-icon {
+    width: 44px;
+    height: 44px;
+    margin-bottom: 10px;
+    background-image: resource('UI/Images/uploadcube 1');
+    -unity-background-scale-mode: scale-to-fit;
+    opacity: 0.85;
+}
+
+.builder__drop-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-center;
+}
+
+.builder__drop-hint {
+    font-size: 11px;
+    padding: 0;
+    margin-top: 4px;
+    opacity: 0.65;
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+/* -- World ----------------------------------------------------------------------------- */
+
+.builder__world {
+    margin-top: 4px;
+}
+
+.builder__dropdown {
+    margin: 0;
+}
+
+.builder__world-url {
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+/* -- Build and upload ----------------------------------------------------------------------- */
+
+.builder__actions {
+    margin-top: 18px;
+}
+
+.builder__build {
+    align-self: flex-start;
+    min-width: 180px;
+    margin-bottom: 8px;
+}
+
+.builder__button-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-left: -3px;
+}
+
+.builder__button-row > .unity-button {
+    margin: 3px;
+    padding: 2px 10px;
+}
+
+/* -- Logs ------------------------------------------------------------------------------- */
+
+.builder__logs {
+    min-height: 150px;
+    border-width: 1px;
+    border-radius: 6px;
+    border-color: rgba(128, 128, 128, 0.35);
+    background-color: rgba(0, 0, 0, 0.12);
+    padding: 6px 0;
+}
+
+/* Log lines (BuilderWindow.cs adds this to each row's label). One line each: the list's rows have a fixed height. */
+.unity-label-margin {
+    margin: 1px 10px;
+    padding: 0;
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* -- Status bar and upload progress, pinned to the bottom ------------------------------- */
+
+.builder__status {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: 0;
+    padding: 6px 20px;
+    font-size: 11px;
+    border-top-width: 1px;
+    border-color: rgba(128, 128, 128, 0.3);
+    background-color: rgba(128, 128, 128, 0.08);
+    opacity: 0.85;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.builder__progress {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 34px;
+    margin: 0;
+}
+
+.builder__progress .unity-progress-bar__progress {
+    background-color: rgb(186, 38, 98);
+}
+
+/* -- Build confirmation ----------------------------------------------------------------- */
+
+.builder__confirm {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.builder__confirm-card {
+    width: 88%;
+    max-width: 520px;
+    max-height: 90%;
+    padding: 20px 22px 16px 22px;
+    border-width: 1px;
+    border-radius: 8px;
+    border-color: rgba(128, 128, 128, 0.45);
+    background-color: rgb(56, 56, 56);
+}
+
+.builder--light .builder__confirm-card {
+    background-color: rgb(200, 200, 200);
+}
+
+.builder__confirm-title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.builder__confirm-details {
+    margin-top: 14px;
+}
+
+.builder__confirm-details > .builder__value {
+    margin-bottom: 3px;
+}
+
+.builder__confirm-checklist {
+    margin-top: 10px;
+}
+
+.builder__confirm-buttons {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 18px;
+}
+
+.builder__confirm-buttons > .unity-button {
+    margin: 0 8px 0 0;
+    padding: 2px 14px;
+    min-height: 26px;
+}
+
+.builder__confirm-pill {
+    min-width: 130px;
+}
+
+/* Confirm is a Button: the rule Cancel uses matches it too, so it gets the pill's size and edge back here. */
+.builder__confirm-buttons > .unity-button.builder__confirm-pill {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0 16px;
+    min-height: 32px;
+    border-radius: 4px;
+    font-size: 13px;
+    cursor: link;
+}
+
+.builder__confirm-buttons > .unity-button.builder__confirm-pill:focus {
+    border-color: rgb(255, 255, 255);
+}
+
+/* -- Text helpers --------------------------------------------------------------------------- */
+
+.alt-link {
+    color: rgb(88, 160, 232);
+    cursor: link;
+}
+
+.alt-link:hover {
+    color: rgb(130, 186, 245);
+}
+
+.alt-muted {
+    opacity: 0.7;
+}
+
+.alt-negative {
+    color: rgb(230, 69, 95);
+}
+
+.alt-warning {
+    color: rgb(236, 152, 42);
+}
+
+/* Darker on the light skin, where the dark skin's link and warning colours are too faint to read. */
+.builder--light .alt-link {
+    color: rgb(20, 92, 196);
+}
+
+.builder--light .alt-link:hover {
+    color: rgb(10, 66, 150);
+}
+
+.builder--light .alt-warning {
+    color: rgb(160, 86, 0);
+}
+
+.builder--light .alt-negative {
+    color: rgb(180, 24, 48);
+}
+
+/* Signed-in identity: account glyph left of "Hi <Name>!". */
+.alt-account {
+    min-height: 20px;
+    margin: 0;
+    padding: 0 0 0 24px;
+    -unity-text-align: middle-left;
+    background-image: resource('UI/Images/icon-account');
+    background-repeat: no-repeat;
+    background-size: 16px 16px;
+    background-position: left 0px center;
+}
+
+.builder--light .alt-account,
+.builder--light .builder__logo,
+.builder--light .builder__drop-icon {
+    -unity-background-image-tint-color: rgb(40, 40, 40);
+}
+
+/* -- Pre-build checklist (BuildChecklistView, styled by Setup/Checklist.uss like the Setup panel's list) --------- */
+
+.builder__checklist {
+    margin-top: 22px;
+}
+
+/* The list of problems inside the build confirmation. */
+.alt-checklist-confirm-heading {
+    font-size: 13px;
+    -unity-font-style: bold;
+    white-space: normal;
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.alt-checklist-confirm-list {
+    max-height: 180px;
+}
+
+/* -- Hidden for now: tabs and the avatar tools --------------------------------------------------- */
+
+.alt-tab-label {
+    width: 101px;
+    padding: 26px 8px 20px 8px;
+    font-size: 12px;
+    -unity-text-align: upper-center;
+    cursor: link;
+}
+
+.alt-tab-icon {
+    position: absolute;
+    left: 50%;
+    top: 2px;
+    width: 18px;
+    height: 18px;
+    margin-left: -9px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.unity-toggle.alt-toggle {
+    margin: 6px 0 0 0;
+}
+
+.unity-button.alt-btn-icon {
+    background-repeat: no-repeat;
+    background-size: 15px 15px;
+    background-position: left 12px center;
+    padding-left: 34px;
+}
+
+.unity-button.alt-btn-icon-plain {
+    padding-left: 5px;
+}
+
+.unity-button.alt-avatar-small {
+    margin: 10px 0 10px 10px;
+    padding: 2px 10px;
+    height: 22px;
+}

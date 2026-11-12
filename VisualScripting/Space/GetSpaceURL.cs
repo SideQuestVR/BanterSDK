@@ -1,13 +1,12 @@
-﻿#if BANTER_VISUAL_SCRIPTING
-using Unity.VisualScripting;
-using Banter.SDK;
+﻿using Unity.VisualScripting;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get Space URL")]
     [UnitShortTitle("Space URL")]
-    [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Space")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetSpaceURL : Unit
     {
         [DoNotSerialize]
@@ -15,10 +14,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            spaceUrl = ValueOutput<string>("spaceUrl", flow => {
-                return BanterScene.Instance().CurrentUrl;
+            spaceUrl = ValueOutput<string>("spaceUrl", flow =>
+            {
+                return BSScene.Instance().CurrentUrl;
             });
         }
     }
 }
-#endif

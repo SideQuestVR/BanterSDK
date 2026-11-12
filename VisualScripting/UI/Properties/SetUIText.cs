@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Text")]
     [UnitShortTitle("Set UI Text")]
-    [UnitCategory("Banter\\UI\\Properties\\Text")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Properties\\Text")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIText : Unit
     {
         [DoNotSerialize]
@@ -31,7 +30,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 LogVerbose("========== TRIGGERED ==========");
 
                 var targetId = flow.GetValue<string>(elementId);
@@ -95,4 +95,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -96,7 +96,7 @@ GameObject:
   - component: {fileID: 6094808266344308141}
   m_Layer: 20
   m_Name: Col
-  m_TagString: __BA_GrabHandle
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

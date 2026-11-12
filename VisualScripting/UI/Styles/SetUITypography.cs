@@ -1,12 +1,11 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum UIFontStyle
     {
@@ -39,8 +38,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Set UI Typography")]
     [UnitShortTitle("Set UI Typography")]
-    [UnitCategory("Banter\\UI\\Styles\\Typography")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Typography")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUITypography : Unit
     {
         [DoNotSerialize]
@@ -81,7 +80,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -109,10 +109,10 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUITypography] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set font size
-                    SendStyleCommand(panelId, elemId, "font-size", $"{fontSizeVal}px");
-                    
+                    SendStyleCommand(panelId, elemId, "font-size", $"{NumberFormat.Format(fontSizeVal)}px");
+
                     // Set font style
                     string styleValue = fontStyleVal switch
                     {
@@ -121,7 +121,7 @@ namespace Banter.VisualScripting
                         _ => "normal"
                     };
                     SendStyleCommand(panelId, elemId, "font-style", styleValue);
-                    
+
                     // Set font weight
                     string weightValue = fontWeightVal switch
                     {
@@ -130,7 +130,7 @@ namespace Banter.VisualScripting
                         _ => "normal"
                     };
                     SendStyleCommand(panelId, elemId, "font-weight", weightValue);
-                    
+
                     // Set text align
                     string alignValue = textAlignVal switch
                     {
@@ -141,19 +141,19 @@ namespace Banter.VisualScripting
                         _ => "left"
                     };
                     SendStyleCommand(panelId, elemId, "text-align", alignValue);
-                    
+
                     // Set text color
                     var colorHex = $"#{ColorUtility.ToHtmlStringRGBA(textColorVal)}";
                     SendStyleCommand(panelId, elemId, "color", colorHex);
-                    
+
                     // Set line height
                     if (lineHeightVal > 0)
                         SendStyleCommand(panelId, elemId, "line-height", lineHeightVal.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    
+
                     // Set letter spacing
                     if (letterSpacingVal != 0)
-                        SendStyleCommand(panelId, elemId, "letter-spacing", $"{letterSpacingVal}px");
-                    
+                        SendStyleCommand(panelId, elemId, "letter-spacing", $"{NumberFormat.Format(letterSpacingVal)}px");
+
                     // Set white space
                     string whiteSpaceValue = whiteSpaceVal switch
                     {
@@ -194,4 +194,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -1,11 +1,10 @@
-#if BANTER_VISUAL_SCRIPTING
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using System.Collections;
 using UnityEngine;
 
-namespace Banter.VisualScripting.UI.Helpers
+namespace BS.VisualScripting.UI.Helpers
 {
     /// <summary>
     /// Helper class for auto-registering UI events from Visual Scripting nodes
@@ -73,8 +72,8 @@ namespace Banter.VisualScripting.UI.Helpers
             try
             {
                 // Try to find ANY panel that's initialized
-                var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
-                LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Found {allPanels.Length} BanterUIPanel(s)");
+                var allPanels = FindObjects.All<BSUIPanel>();
+                LogVerbose(nodeName, $"TryRegisterChangeEventImmediate: Found {allPanels.Length} BSUIPanel(s)");
 
                 foreach (var panel in allPanels)
                 {
@@ -179,7 +178,7 @@ namespace Banter.VisualScripting.UI.Helpers
             try
             {
                 // Try to find ANY panel that's initialized
-                var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+                var allPanels = FindObjects.All<BSUIPanel>();
 
                 foreach (var panel in allPanels)
                 {
@@ -233,5 +232,4 @@ namespace Banter.VisualScripting.UI.Helpers
         }
     }
 }
-#endif
 

@@ -1,8 +1,7 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     public enum EventDataType
     {
@@ -20,7 +19,7 @@ namespace Banter.VisualScripting
         Object
     }
 
-    [AddComponentMenu("Banter/Visual Scripting Relay")]
+    [AddComponentMenu("BS/Visual Scripting Relay")]
     public class VisualScriptingEventTyped : MonoBehaviour
     {
         public EventDataType dataType = EventDataType.None;
@@ -53,4 +52,3 @@ namespace Banter.VisualScripting
         public void TriggerObject(Object v) => OnObjectEvent?.Invoke(v);
     }
 }
-#endif

@@ -1,41 +1,23 @@
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
-using UnityEngine;
-using Banter.SDK;
-using Newtonsoft.Json.Linq;
-using System.IO.Compression;
-using LongBunnyLabs;
-using Unity.EditorCoroutines.Editor;
-using UnityEditor.Build;
 using System.Linq;
+using UnityEditor;
+using UnityEditor.Build;
+using UnityEngine;
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
+    /// <summary>
+    /// The project settings the SDK needs: its layers and tags, the API compatibility level and the WebRoot
+    /// folder. Nothing here changes the project on load any more: the Setup panel's checklist
+    /// (<see cref="Setup.ProjectSetup"/>) shows what's missing and fixes it when the creator asks.
+    /// </summary>
     [InitializeOnLoad]
     public static class InitialiseOnLoad
     {
         static InitialiseOnLoad()
         {
-            var renderPipeline = UnityEngine.Rendering.GraphicsSettings.defaultRenderPipeline;
-            if( renderPipeline != null)
-            {
-                if (!EditorUtility.DisplayDialog("WRONG RENDER PIPELINE", "This project was created with URP but needs to use BiRP. Please select 3D(Built in Render Pipeline) in a new project and discard this one.", "OK", "Close Unity"))
-                {
-                    EditorApplication.Exit(0);
-                    return;
-                }
-                else
-                {
-                    return;
-                }
-            }
-#if !BANTER_EDITOR
-            ImportBasisPackages();
-            ImportOraPackage();
-            SetupLayersAndTags();
-            SetApiCompatibilityLevel();
-            CreateWebRoot();
+#if !GREENFIELD_PROJECT
             EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 #endif
@@ -43,217 +25,235 @@ namespace Banter.SDKEditor
 
         private static void OnPlayModeStateChanged(PlayModeStateChange change)
         {
+#if !GREENFIELD_PROJECT
+            // BSStarterUpper.SpawnOnPlay only exists outside the Greenfield client (it is subscribed
+            // above under the same guard).
             if (change == PlayModeStateChange.ExitingEditMode)
             {
-                if (Object.FindObjectOfType<BanterStarterUpper>() == null)
-                {
-                    Debug.LogWarning("BanterStarterUpper not found, adding one.");
-                    var go = new GameObject("BanterStarterUpper");
-                    go.AddComponent<BanterStarterUpper>();
-                }
+                // Only decide here. Creating it now would put it in the edit scene, which Unity saves as
+                // the state to restore when play stops, so it would still be there afterwards.
+                // BSStarterUpper.BeforeEditorPlay creates it once play mode has started.
+                BSStarterUpper.SpawnOnPlay = Object.FindAnyObjectByType<BSStarterUpper>() == null;
             }
-        }
-        static void AddScriptDefine(string define)
-        {
-            var buildTarget = NamedBuildTarget.FromBuildTargetGroup(EditorUserBuildSettings.selectedBuildTargetGroup);
-            var symbols = PlayerSettings.GetScriptingDefineSymbols(buildTarget);
-            symbols = string.Join(";", symbols.Split(";").Where(d => !string.IsNullOrWhiteSpace(d)));
-            PlayerSettings.SetScriptingDefineSymbols(buildTarget, symbols + ";" + define);
-        }
-        static void SetApiCompatibilityLevel()
-        {
-            var level = PlayerSettings.GetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup);
-            if (level == ApiCompatibilityLevel.NET_Unity_4_8)
-            {
-                return;
-            }
-            PlayerSettings.SetApiCompatibilityLevel(EditorUserBuildSettings.selectedBuildTargetGroup, ApiCompatibilityLevel.NET_Unity_4_8);
-        }
-        static void ImportOraPackage()
-        {
-            var packageName = "com.sidequest.ora";
-            if (Directory.Exists("Packages/" + packageName))
-            {
-#if !BANTER_ORA
-                AddScriptDefine("BANTER_ORA");
-#endif
-                return;
-            }
-            ProjectPrefs.DeleteKey("hasAlreadyAttemptedOra");
-            if (!EditorUtility.DisplayDialog("Install Ora", "Install the Ora package?  (Required)", "OK", "Cancel"))
-            {
-                return;
-            }
-            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/OraPackage");
-            string zipPath = Path.Combine(zipDirectory, $"com.sidequest.ora.zip");
-            string extractRoot = Path.Combine(projectRoot, "Packages");
-            string extractPath = Path.Combine(extractRoot, packageName);
-
-            if (Directory.Exists(extractPath))
-                Directory.Delete(extractPath, true);
-
-            ZipFile.ExtractToDirectory(zipPath, extractRoot);            
-            
-            // Modify manifest.json
-            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
-            string json = File.ReadAllText(manifestPath);
-
-            var jObject = JObject.Parse(json);
-            var dependencies = (JObject)jObject["dependencies"];
-
-            dependencies[packageName] = $"file:{packageName}";
-
-            File.WriteAllText(manifestPath, jObject.ToString());
-            AssetDatabase.Refresh();   
-            AddScriptDefine("BANTER_ORA");
-        }
-        static void ImportBasisPackages()
-        {
-            if (Directory.Exists("Packages/com.basis.bundlemanagement") &&
-               Directory.Exists("Packages/com.basis.sdk") &&
-               Directory.Exists("Packages/com.basis.odinserializer"))
-            {
-#if !BASIS_BUNDLE_MANAGEMENT
-                AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
-#endif
-                return;
-            }
-            ProjectPrefs.DeleteKey("hasAlreadyAttemptedBasis");
-            if (!EditorUtility.DisplayDialog("Install Basis", "Install the Basis packages? (Required)", "OK", "Cancel"))
-            {
-                return;
-            }
-            string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-            string zipDirectory = Path.Combine(projectRoot, "Packages/com.sidequest.banter/BasisPackages");
-
-            string[] packages = new string[]
-            {
-                "com.basis.bundlemanagement",
-                "com.basis.sdk",
-                "com.basis.odinserializer"
-            };
-
-            foreach (string packageName in packages)
-            {
-                string zipPath = Path.Combine(zipDirectory, $"{packageName}.zip");
-                string extractRoot = Path.Combine(projectRoot, "Packages");
-                string extractPath = Path.Combine(extractRoot, packageName);
-
-                if (Directory.Exists(extractPath))
-                    Directory.Delete(extractPath, true);
-
-                ZipFile.ExtractToDirectory(zipPath, extractRoot);
-            }
-
-            // Modify manifest.json
-            string manifestPath = Path.Combine(projectRoot, "Packages", "manifest.json");
-            string json = File.ReadAllText(manifestPath);
-
-            var jObject = JObject.Parse(json);
-            var dependencies = (JObject)jObject["dependencies"];
-
-            foreach (string packageName in packages)
-            {
-                dependencies[packageName] = $"file:{packageName}";
-            }
-
-            File.WriteAllText(manifestPath, jObject.ToString());
-            AssetDatabase.Refresh();
-            AddScriptDefine("BASIS_BUNDLE_MANAGEMENT");
-        }
-        static void CreateWebRoot()
-        {
-            // TODO: Add more into the boilerplate like examples, meta tags for stuff thats global, etc
-#if !BANTER_EDITOR
-            var webRoot = Application.dataPath + "/WebRoot";
-            if (Directory.Exists(webRoot))
-                return;
-            Directory.CreateDirectory(webRoot);
-            File.WriteAllText(webRoot + "/index.html", "<html android-bundle windows-bundle><head>");
 #endif
         }
 
-        public static void SetupLayersAndTags()
+        // -- API compatibility level ---------------------------------------------
+
+        /// <summary>The platforms spaces are built for.</summary>
+        static readonly NamedBuildTarget[] SdkTargets = { NamedBuildTarget.Standalone, NamedBuildTarget.Android };
+
+        /// <summary>
+        /// The SDK platforms ("Windows", "Android") whose API compatibility level isn't .NET Standard. Upstream
+        /// Basis targets .NET Standard 2.1; the old Banter fork ran on NET_Unity_4_8, which breaks the upstream packages.
+        /// </summary>
+        public static List<string> GetWrongApiCompatibilityTargets() =>
+            SdkTargets.Where(target => PlayerSettings.GetApiCompatibilityLevel(target) != ApiCompatibilityLevel.NET_Standard)
+                .Select(target => target == NamedBuildTarget.Standalone ? "Windows" : target.TargetName)
+                .ToList();
+
+        /// <summary>Sets .NET Standard on the SDK targets. Returns whether anything changed (scripts then recompile).</summary>
+        public static bool SetApiCompatibilityLevel()
         {
-            Object[] asset = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
-            if (asset != null && asset.Length > 0)
+            var changed = false;
+            foreach (var target in SdkTargets)
             {
-                SerializedObject serializedObject = new SerializedObject(asset[0]);
+                if (PlayerSettings.GetApiCompatibilityLevel(target) == ApiCompatibilityLevel.NET_Standard)
+                    continue;
+                PlayerSettings.SetApiCompatibilityLevel(target, ApiCompatibilityLevel.NET_Standard);
+                changed = true;
+            }
+            return changed;
+        }
 
+        // -- WebRoot -------------------------------------------------------------
 
-                SerializedProperty layers = serializedObject.FindProperty("layers");
-                bool isMissing = false;
-                List<string> missingLayers = new List<string>();
-                foreach (var layer in layersToAdd)
-                {
-                    var ulayer = layers.GetArrayElementAtIndex(layer.Key);
-                    if (ulayer == null || ulayer.stringValue != layer.Value)
-                    {
-                        isMissing = true;
-                        missingLayers.Add(layer.Value);
-                    }
-                }
+        public static string WebRootIndexPath => "Assets/" + BSStarterUpper.WEB_ROOT + "/index.html";
 
-                SerializedProperty tags = serializedObject.FindProperty("tags");
-                List<string> missingTags = new List<string>();
-                foreach (var tag in tagsToAdd)
-                {
-                    var utag = tags.GetArrayElementAtIndex(tag.Key);
-                    if (utag == null || utag.stringValue != tag.Value)
-                    {
-                        isMissing = true;
-                        missingTags.Add(tag.Value);
-                    }
-                }
+        /// <summary>Whether Assets/WebRoot/index.html, the space's page, exists.</summary>
+        public static bool WebRootExists => File.Exists(WebRootIndexPath);
 
-                if (isMissing && EditorUtility.DisplayDialog("Missing Banter Layers/Tags", "Do you want to setup Banter layers and tags automatically?\nThese are required when using Banter specific features.\n Please back up your project first!" + (missingLayers.Count > 0 ? "\n\nLayers:\n" : "") + string.Join(", ", missingLayers) + (missingTags.Count > 0 ? "\n\nTags:\n" : "") + string.Join(", ", missingTags), "Yes", "No"))
-                {
-                    foreach (var layer in layersToAdd)
-                    {
-                        var ulayer = layers.GetArrayElementAtIndex(layer.Key);
-                        if (ulayer == null || ulayer.stringValue != layer.Value)
-                        {
-                            AddTagManagerObjectAt(layers, "layer", layer.Key, layer.Value);
-                        }
-                    }
+        /// <summary>Creates Assets/WebRoot with a starter index.html. Never overwrites one. Returns whether it created it.</summary>
+        public static bool CreateWebRoot()
+        {
+            if (WebRootExists)
+                return false;
+            Directory.CreateDirectory(Path.GetDirectoryName(WebRootIndexPath));
+            File.WriteAllText(WebRootIndexPath, BSStarterUpper.STARTER_PAGE);
+            AssetDatabase.ImportAsset(WebRootIndexPath);
+            return true;
+        }
 
-                    foreach (var tag in tagsToAdd)
-                    {
-                        var utag = tags.GetArrayElementAtIndex(tag.Key);
-                        if (utag == null || utag.stringValue != tag.Value)
-                        {
-                            AddTagManagerObjectAt(tags, "tag", tag.Key, tag.Value);
-                        }
-                    }
+        // -- Layers and tags -----------------------------------------------------
 
-                    serializedObject.ApplyModifiedProperties();
-                    serializedObject.Update();
-                }
+        /// <summary>What setting up the SDK's layers and tags would change in a TagManager.</summary>
+        public sealed class LayerTagPlan
+        {
+            /// <summary>A layer slot to name or clear, with the name it has now ("" when it's unused).</summary>
+            public struct LayerChange
+            {
+                public int Index;
+                public string Current;
+                /// <summary>The SDK's name for the slot, or "" to clear a layer the SDK doesn't define.</summary>
+                public string Wanted;
+            }
+
+            public readonly List<LayerChange> Layers = new List<LayerChange>();
+            /// <summary>SDK tags the project doesn't have, in the SDK's order.</summary>
+            public readonly List<string> MissingTags = new List<string>();
+            /// <summary>Tags the SDK doesn't define, which setting up removes.</summary>
+            public readonly List<string> ExtraTags = new List<string>();
+            /// <summary>The whole tag list after setting up: the SDK's tags in the client's order.</summary>
+            public readonly List<string> WantedTags = new List<string>();
+            /// <summary>Whether the tag list differs from <see cref="WantedTags"/> at all, order included.</summary>
+            public bool TagsChange;
+
+            public bool IsEmpty => Layers.Count == 0 && !TagsChange;
+
+            /// <summary>Tags that are all there but in the wrong slots.</summary>
+            public bool TagsOutOfOrder => TagsChange && MissingTags.Count == 0 && ExtraTags.Count == 0;
+
+            /// <summary>Layer slots that already carry another name, which setting them up renames.</summary>
+            public IEnumerable<LayerChange> Renames =>
+                Layers.Where(change => !string.IsNullOrEmpty(change.Current) && !string.IsNullOrEmpty(change.Wanted));
+
+            /// <summary>Layers the SDK doesn't define, which setting up clears.</summary>
+            public IEnumerable<LayerChange> Removals => Layers.Where(change => string.IsNullOrEmpty(change.Wanted));
+        }
+
+        /// <summary>Unity's own layer slots, which can't be renamed.</summary>
+        static readonly HashSet<int> BuiltInLayerSlots = new HashSet<int> { 0, 1, 2, 4, 5 };
+
+        /// <summary>
+        /// Whether setting up removes layers and tags the SDK doesn't define. Not in the client, which owns
+        /// layers 25 and up (and the SDK's list is its own list there anyway).
+        /// </summary>
+        public static bool RemovesExtras
+        {
+            get
+            {
+#if GREENFIELD_PROJECT
+                return false;
+#else
+                return true;
+#endif
             }
         }
 
-        static void AddTagManagerObjectAt(SerializedProperty prop, string semantic, int index, string name, bool tryOtherIndex = false)
+        /// <summary>
+        /// A built space stores both an object's layer and its tag as a number: the layer's slot, and the tag's
+        /// position in the tag list. The client reads those numbers against its own lists, so every SDK layer
+        /// has to be in its slot and the tags have to be the SDK's, in the SDK's order. Whatever a layer slot is
+        /// called now gets renamed; with <paramref name="removeExtras"/>, layers and tags the SDK doesn't
+        /// define are removed (otherwise extra tags are kept after the SDK's).
+        /// </summary>
+        public static LayerTagPlan PlanLayersAndTags(IReadOnlyList<string> layers, IReadOnlyList<string> tags, bool removeExtras = true)
         {
-            // Skip if an object with the name already exists.
-            for (int i = 0; i < prop.arraySize; ++i)
+            var plan = new LayerTagPlan();
+            for (var slot = 0; slot < 32; slot++)
             {
-                if (prop.GetArrayElementAtIndex(i).stringValue == name)
+                if (BuiltInLayerSlots.Contains(slot))
+                    continue;
+                var current = slot < layers.Count ? layers[slot] ?? "" : "";
+                if (layersToAdd.TryGetValue(slot, out var wanted))
                 {
-                    Debug.Log($"Skipping {semantic} '{name}' because it already exists.");
-                    return;
+                    if (current != wanted)
+                        plan.Layers.Add(new LayerTagPlan.LayerChange { Index = slot, Current = current, Wanted = wanted });
+                }
+                else if (removeExtras && current != "")
+                {
+                    plan.Layers.Add(new LayerTagPlan.LayerChange { Index = slot, Current = current, Wanted = "" });
                 }
             }
 
-            // Extend layers if necessary
-            if (index >= prop.arraySize)
-                prop.arraySize = index + 1;
+            var sdkTags = tagsToAdd.OrderBy(pair => pair.Key).Select(pair => pair.Value).ToList();
+            var existing = tags.Where(tag => !string.IsNullOrEmpty(tag)).ToList();
+            plan.MissingTags.AddRange(sdkTags.Where(tag => !existing.Contains(tag)));
+            var extras = existing.Where(tag => !sdkTags.Contains(tag)).Distinct().ToList();
+            plan.WantedTags.AddRange(sdkTags);
+            if (removeExtras)
+                plan.ExtraTags.AddRange(extras);
+            else
+                plan.WantedTags.AddRange(extras);
+            plan.TagsChange = !tags.Select(tag => tag ?? "").SequenceEqual(plan.WantedTags);
+            return plan;
+        }
 
-            // set layer name at index
-            var element = prop.GetArrayElementAtIndex(index);
+        /// <summary>What setting up the layers and tags would change in this project. Changes nothing.</summary>
+        public static LayerTagPlan PlanLayersAndTags()
+        {
+            var tagManager = LoadTagManager();
+            if (tagManager == null)
+                return new LayerTagPlan();
+            return PlanLayersAndTags(ReadStrings(tagManager.FindProperty("layers")), ReadStrings(tagManager.FindProperty("tags")), RemovesExtras);
+        }
 
-            element.stringValue = name;
-            Debug.Log($"Added {semantic} '{name}' at index {index}.");
+        /// <summary>The SDK layers and tags this project doesn't have. Changes nothing.</summary>
+        public static void GetMissingLayersAndTags(out List<string> missingLayers, out List<string> missingTags)
+        {
+            var plan = PlanLayersAndTags();
+            missingLayers = plan.Layers.Where(change => change.Wanted != "").Select(change => change.Wanted).ToList();
+            missingTags = plan.MissingTags.ToList();
+        }
+
+        /// <summary>
+        /// Names the SDK's layer slots, clears the layers it doesn't define and makes the tag list exactly the
+        /// SDK's. Returns whether anything changed.
+        /// </summary>
+        public static bool SetupLayersAndTags()
+        {
+            var tagManager = LoadTagManager();
+            if (tagManager == null)
+            {
+                Debug.LogError("[Creator SDK] Couldn't load ProjectSettings/TagManager.asset, so the SDK's layers and tags weren't set up.");
+                return false;
+            }
+            var layers = tagManager.FindProperty("layers");
+            var tags = tagManager.FindProperty("tags");
+            var plan = PlanLayersAndTags(ReadStrings(layers), ReadStrings(tags), RemovesExtras);
+            if (plan.IsEmpty)
+                return false;
+
+            foreach (var change in plan.Layers)
+            {
+                if (change.Index >= layers.arraySize)
+                    layers.arraySize = change.Index + 1;
+                layers.GetArrayElementAtIndex(change.Index).stringValue = change.Wanted;
+            }
+            if (plan.TagsChange)
+            {
+                tags.arraySize = plan.WantedTags.Count;
+                for (var i = 0; i < plan.WantedTags.Count; i++)
+                    tags.GetArrayElementAtIndex(i).stringValue = plan.WantedTags[i];
+            }
+            tagManager.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssetIfDirty(tagManager.targetObject);
+
+            foreach (var rename in plan.Renames)
+                Debug.Log($"[Creator SDK] Layer {rename.Index} was \"{rename.Current}\"; spaces use it as \"{rename.Wanted}\".");
+            foreach (var removal in plan.Removals)
+                Debug.Log($"[Creator SDK] Removed layer {removal.Index} \"{removal.Current}\": the SDK doesn't use that slot.");
+            if (plan.ExtraTags.Count > 0)
+                Debug.Log("[Creator SDK] Removed tags the SDK doesn't have: " + string.Join(", ", plan.ExtraTags) +
+                          ". If one comes back, an object still uses it; the Builder's checklist lists them.");
+            Debug.Log($"[Creator SDK] Set up {plan.Layers.Count} layer(s); the tag list is now the SDK's {plan.WantedTags.Count}.");
+            return true;
+        }
+
+        static SerializedObject LoadTagManager()
+        {
+            var assets = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset");
+            return assets == null || assets.Length == 0 || assets[0] == null ? null : new SerializedObject(assets[0]);
+        }
+
+        static List<string> ReadStrings(SerializedProperty array)
+        {
+            var values = new List<string>();
+            if (array == null || !array.isArray)
+                return values;
+            for (var i = 0; i < array.arraySize; i++)
+                values.Add(array.GetArrayElementAtIndex(i).stringValue);
+            return values;
         }
 
         public static Dictionary<int, string> layersToAdd = new Dictionary<int, string> {
@@ -269,55 +269,60 @@ namespace Banter.SDKEditor
             { 14, "UserLayer10" },
             { 15, "UserLayer11" },
             { 16, "UserLayer12" },
-            { 17, "NetworkPlayer" },
-            { 18, "RPMAvatarHead" },
-            { 19, "RPMAvatarBody" },
+            { 17, "UserLayer13" },
+            { 18, "UserLayer14" },
+            { 19, "UserLayer15" },
             { 20, "Grabbable" },
-            { 21, "HandColliders" },
+            { 21, "Invisible" },
             { 22, "Menu" },
-            { 23, "PhysicsPlayer" },
-            { 24, "BanterInternal1_DONTUSE" },
-            { 25, "BanterInternal2_DONTUSE" },
-            { 26, "BanterInternal3_DONTUSE" },
-            { 27, "BanterInternal4_DONTUSE" },
-            { 28, "BanterInternal5_DONTUSE" },
-            { 29, "BanterInternal6_DONTUSE" },
-            { 30, "BanterInternal7_DONTUSE" },
-            { 31, "BanterInternal8_DONTUSE" }
+            { 23, "CharacterColliders" },
+            { 24, "CharacterHandColliders" },
+            // 25 and up are the client's own: setting up clears them in creator projects.
         };
 
+        /// <summary>
+        /// The client's tags, in the client's order: a built space stores a tag as its position in this list.
+        /// UserTag1-32 are the creator's; the BSLocalCharacter tags mark the local player's body, hands, head and
+        /// feet so triggers, portals and teleporters can tell it apart.
+        /// </summary>
         public static Dictionary<int, string> tagsToAdd = new Dictionary<int, string> {
-            { 0,  "__BA_NameTag" },
-            { 1,  "__BA_NameTagMenu" },
-            { 2,  "__BA_FootRig" },
-            { 3,  "__BA_PlayerHead" },
-            { 4,  "__BA_UNUSED0" },
-            { 5,  "__BA_UNUSED1" },
-            { 6,  "__BA_TriggerIndex" },
-            { 7,  "__BA_PlayerTorso" },
-            { 8,  "__BA_PlayerLegs" },
-            { 9,  "__BA_LocalPlayer" },
-            { 10, "__BA_PlayerLeftHand" },
-            { 11, "__BA_PlayerRightHand" },
-            { 12, "__BA_LocalPlayerFeet" },
-            { 13, "__BA_UserTag0" },
-            { 14, "__BA_UserTag1" },
-            { 15, "__BA_UserTag2" },
-            { 16, "__BA_UserTag3" },
-            { 17, "__BA_UserTag4" },
-            { 18, "__BA_UserTag5" },
-            { 19, "__BA_UserTag6" },
-            { 20, "__BA_UserTag7" },
-            { 21, "__BA_UserTag8" },
-            { 22, "__BA_UserTag9" },
-            { 23, "__BA_UserTag10" },
-            { 24, "__BA_UserTag11" },
-            { 25, "__BA_UserTag12" },
-            { 26, "__BA_UserTag13" },
-            { 27, "__BA_UserTag14" },
-            { 28, "MenuWorldSpace" },
-            { 29, "VRPlayerContextMenu" },
-            { 30, "PortalBall" },
+            { 0,  "UserTag1" },
+            { 1,  "UserTag2" },
+            { 2,  "UserTag3" },
+            { 3,  "UserTag4" },
+            { 4,  "UserTag5" },
+            { 5,  "UserTag6" },
+            { 6,  "UserTag7" },
+            { 7,  "UserTag8" },
+            { 8,  "UserTag9" },
+            { 9,  "UserTag10" },
+            { 10, "UserTag11" },
+            { 11, "UserTag12" },
+            { 12, "UserTag13" },
+            { 13, "UserTag14" },
+            { 14, "UserTag15" },
+            { 15, "UserTag16" },
+            { 16, "UserTag17" },
+            { 17, "UserTag18" },
+            { 18, "UserTag19" },
+            { 19, "UserTag20" },
+            { 20, "UserTag21" },
+            { 21, "UserTag22" },
+            { 22, "UserTag23" },
+            { 23, "UserTag24" },
+            { 24, "UserTag25" },
+            { 25, "UserTag26" },
+            { 26, "UserTag27" },
+            { 27, "UserTag28" },
+            { 28, "UserTag29" },
+            { 29, "UserTag30" },
+            { 30, "UserTag31" },
+            { 31, "UserTag32" },
+            { 32, "BSLocalCharacter" },
+            { 33, "BSLocalCharacterLeftHand" },
+            { 34, "BSLocalCharacterRightHand" },
+            { 35, "BSLocalCharacterHead" },
+            { 36, "BSLocalCharacterFeet" },
         };
     }
 }

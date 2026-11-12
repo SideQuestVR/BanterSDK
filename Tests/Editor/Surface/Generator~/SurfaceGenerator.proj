@@ -1,0 +1,29 @@
+<Project>
+  <!-- Offline generator for ../bs-sdk-surface.json (see Program.cs). Build output goes to %TEMP%, never into the package.
+       Named .proj, not .csproj: the SDK repo ignores *.csproj (Unity-generated). -->
+  <PropertyGroup>
+    <BaseIntermediateOutputPath>$([System.IO.Path]::GetTempPath())bs-sdk-surface-generator\obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <Import Project="Sdk.props" Sdk="Microsoft.NET.Sdk" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- A .proj gets no language targets by default. -->
+    <LanguageTargets>$(MSBuildToolsPath)\Microsoft.CSharp.targets</LanguageTargets>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputPath>$([System.IO.Path]::GetTempPath())bs-sdk-surface-generator\bin\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <RollForward>Major</RollForward>
+    <!-- TypeAttributes.Serializable / FieldAttributes.NotSerialized are what Unity's serializer reads. -->
+    <NoWarn>SYSLIB0050</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" />
+    <!-- The same extractor the EditMode test runs, so both produce identical lines. -->
+    <Compile Include="..\SdkSurface.cs" />
+    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.1" />
+  </ItemGroup>
+  <Import Project="Sdk.targets" Sdk="Microsoft.NET.Sdk" />
+</Project>

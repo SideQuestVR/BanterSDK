@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Border")]
     [UnitShortTitle("Set UI Border")]
-    [UnitCategory("Banter\\UI\\Styles\\Border")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Border")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIBorder : Unit
     {
         [DoNotSerialize]
@@ -49,7 +48,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -76,25 +76,25 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUIBorder] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Set border width
-                    SendStyleCommand(panelId, elemId, "border-width", $"{width}px");
-                    
+                    SendStyleCommand(panelId, elemId, "border-width", $"{NumberFormat.Format(width)}px");
+
                     // Set border color
                     var colorHex = $"#{ColorUtility.ToHtmlStringRGBA(color)}";
                     SendStyleCommand(panelId, elemId, "border-color", colorHex);
-                    
+
                     // Set border radius (general or individual corners)
                     if (radius > 0)
                     {
-                        SendStyleCommand(panelId, elemId, "border-radius", $"{radius}px");
+                        SendStyleCommand(panelId, elemId, "border-radius", $"{NumberFormat.Format(radius)}px");
                     }
                     else
                     {
-                        SendStyleCommand(panelId, elemId, "border-top-left-radius", $"{topLeftRadius}px");
-                        SendStyleCommand(panelId, elemId, "border-top-right-radius", $"{topRightRadius}px");
-                        SendStyleCommand(panelId, elemId, "border-bottom-left-radius", $"{bottomLeftRadius}px");
-                        SendStyleCommand(panelId, elemId, "border-bottom-right-radius", $"{bottomRightRadius}px");
+                        SendStyleCommand(panelId, elemId, "border-top-left-radius", $"{NumberFormat.Format(topLeftRadius)}px");
+                        SendStyleCommand(panelId, elemId, "border-top-right-radius", $"{NumberFormat.Format(topRightRadius)}px");
+                        SendStyleCommand(panelId, elemId, "border-bottom-left-radius", $"{NumberFormat.Format(bottomLeftRadius)}px");
+                        SendStyleCommand(panelId, elemId, "border-bottom-right-radius", $"{NumberFormat.Format(bottomRightRadius)}px");
                     }
                 }
                 catch (System.Exception e)
@@ -124,4 +124,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

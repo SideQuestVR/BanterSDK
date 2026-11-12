@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.FlexaBody;
+using BS;
+using SideQuest.FlexaBody;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set Can Grab")]
     [UnitShortTitle("Set Can Grab")]
-    [UnitCategory("Banter\\Player\\Actions")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Player\\Actions")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetCanGrab : Unit
     {
         [DoNotSerialize]
@@ -22,7 +21,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var value = flow.GetValue<bool>(canGrab);
                 ActionsSystem.canGrab = value;
                 return outputTrigger;
@@ -33,4 +33,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

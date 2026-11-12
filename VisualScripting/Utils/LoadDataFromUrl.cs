@@ -1,23 +1,22 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine.Networking;
 using System.Collections;
 using System.Runtime.Serialization;
 using System;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Load Texture from URL")]
     [UnitShortTitle("Load Texture")]
-    [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadTextureUrl : Unit
     {
         [DoNotSerialize]
         public ValueInput url;
-        
+
         [DoNotSerialize]
         public ValueInput generateMipmaps;
 
@@ -51,7 +50,8 @@ namespace Banter.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var genMipmaps = flow.GetValue<bool>(this.generateMipmaps);
 
-            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
                 yield return failure;
                 yield break;
             }
@@ -85,8 +85,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Load Text from URL")]
     [UnitShortTitle("Load Text")]
-    [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadTextUrl : Unit
     {
         [DoNotSerialize]
@@ -130,14 +130,18 @@ namespace Banter.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var method = flow.GetValue<string>(this.method);
 
-            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
                 yield return failure;
                 yield break;
             }
 
             using (var request = method == "POST" ? UnityWebRequest.Put(url, flow.GetValue<string>(body)) : UnityWebRequest.Get(url))
             {
-                if(method == "POST") {
+                if (method == "POST")
+                {
+                    // Put builds the raw-body upload; the verb is POST.
+                    request.method = UnityWebRequest.kHttpVerbPOST;
                     request.SetRequestHeader("Content-Type", flow.GetValue<string>(this.contentType));
                 }
                 yield return request.SendWebRequest();
@@ -145,7 +149,9 @@ namespace Banter.VisualScripting
                 if (request.result != UnityWebRequest.Result.Success)
                 {
                     yield return failure;
-                }else{
+                }
+                else
+                {
                     flow.SetValue(this.text, request.downloadHandler.text);
                     yield return success;
                 }
@@ -155,8 +161,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Load Audio from URL")]
     [UnitShortTitle("Load Audio")]
-    [UnitCategory("Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadAudioUrl : Unit
     {
         [DoNotSerialize]
@@ -196,7 +202,8 @@ namespace Banter.VisualScripting
             var url = flow.GetValue<string>(this.url);
             var type = flow.GetValue<AudioType>(audioType);
 
-            if(!url.StartsWith("http://") && !url.StartsWith("https://")) {
+            if (!url.StartsWith("http://") && !url.StartsWith("https://"))
+            {
                 yield return failure;
                 yield break;
             }
@@ -221,9 +228,9 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Load glTF/glb from URL")]
     [UnitShortTitle("Load glTF")]
-    [UnitCategory("Banter")]
-    [Obsolete("Use BanterGLTF Set Url")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS")]
+    [Obsolete("Use BSGLTF Set Url")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadGltfUrl : Unit
     {
         [DoNotSerialize]
@@ -245,7 +252,7 @@ namespace Banter.VisualScripting
             input = ControlInput("", (flow) => LoadGltf(flow));
             output = ControlOutput("");
             url = ValueInput<string>("URL", string.Empty);
-            gltfComponent = ValueInput<BanterGLTF>("BanterGltf", null);
+            gltfComponent = ValueInput<BSGLTF>("BSGLTF", null);
             gltfComponent.SetDefaultValue(null);
             gltfComponent.NullMeansSelf();
         }
@@ -253,11 +260,10 @@ namespace Banter.VisualScripting
         private ControlOutput LoadGltf(Flow flow)
         {
             var url = flow.GetValue<string>(this.url);
-            var bGLTF = flow.GetValue<BanterGLTF>(gltfComponent);
+            var bGLTF = flow.GetValue<BSGLTF>(gltfComponent);
             bGLTF.Url = url;
 
             return output;
         }
     }
 }
-#endif

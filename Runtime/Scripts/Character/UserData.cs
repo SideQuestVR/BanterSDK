@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using Banter.SDK;
+using BS;
 using TMPro;
 using UnityEngine;
 
@@ -14,18 +14,20 @@ public class UserData : MonoBehaviour
     public TextMeshPro nameTag;
     public Transform Head;
     Dictionary<string, string> props = new Dictionary<string, string>();
-    BanterScene scene;
+    BSScene scene;
     void Start()
     {
-        scene = BanterScene.Instance();
-#if !BANTER_EDITOR
-        name = NameGenerator.Generate();
-        id = System.Guid.NewGuid().ToString();
-        uid = System.Guid.NewGuid().ToString();
-        color = ColorUtility.ToHtmlStringRGB(Random.ColorHSV());
+        scene = BSScene.Instance();
+#if !GREENFIELD_PROJECT
+        // A host (BSNetworkHost) stamps its users before they start: keep what it set, fill the rest.
+        if (string.IsNullOrEmpty(name)) name = NameGenerator.Generate();
+        if (string.IsNullOrEmpty(id)) id = System.Guid.NewGuid().ToString();
+        if (string.IsNullOrEmpty(uid)) uid = System.Guid.NewGuid().ToString();
+        if (string.IsNullOrEmpty(color)) color = ColorUtility.ToHtmlStringRGB(Random.ColorHSV());
         //instance = System.Guid.NewGuid().ToString();
-        nameTag.text = name;
-        scene.AddUser(this);
+        if (nameTag) nameTag.text = name;
+        // The host announces its users itself, the moment it creates them.
+        if (!scene.users.Contains(this)) scene.AddUser(this);
 #endif
     }
     public void SetProps(string[] props)
@@ -33,11 +35,12 @@ public class UserData : MonoBehaviour
         foreach (var prop in props)
         {
 
-#if !BANTER_EDITOR
+#if !GREENFIELD_PROJECT
             var parts = prop.Split(MessageDelimiters.TERTIARY);
             if (parts.Length == 2)
             {
-                this.props[parts[0]] = parts[1];
+                // Each side comes wire-encoded from the page, like space props.
+                this.props[WireText.Decode(parts[0])] = WireText.Decode(parts[1]);
             }
             else
             {
@@ -51,6 +54,14 @@ public class UserData : MonoBehaviour
 
     void OnDestroy()
     {
-        scene.RemoveUser(this);
+#if !GREENFIELD_PROJECT
+        // A user the host announced can be destroyed before its own Start ran.
+        if (scene == null)
+        {
+            var current = BSScene.Current;
+            if (current != null && current.users.Contains(this)) scene = current;
+        }
+#endif
+        scene?.RemoveUser(this);
     }
 }

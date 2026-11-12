@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("GameObject texture to Base64")]
     [UnitShortTitle("ObjectTextureToBase64")]
-    [UnitCategory("Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class ObjectTexToBase64 : Unit
     {
         [DoNotSerialize]
@@ -25,10 +24,10 @@ namespace Banter.VisualScripting
         {
             material = ValueInput("Material Index", 0);
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
-            base64 = ValueOutput<string>("Base64", flow => {
-                return BanterScene.Instance().GameObjectTextureToBase64(flow.GetValue<GameObject>(gameObject), flow.GetValue<int>(material));
+            base64 = ValueOutput<string>("Base64", flow =>
+            {
+                return BSScene.Instance().GameObjectTextureToBase64(flow.GetValue<GameObject>(gameObject), flow.GetValue<int>(material));
             });
         }
     }
 }
-#endif

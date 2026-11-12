@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Panel")]
     [UnitShortTitle("Get UI Panel")]
-    [UnitCategory("Banter\\UI\\Panel")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Panel")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIPanel : Unit
     {
         [DoNotSerialize]
@@ -23,20 +22,21 @@ namespace Banter.VisualScripting
         {
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
 
-            panel = ValueOutput<BanterUIPanel>("Panel", (flow) => {
+            panel = ValueOutput<BSUIPanel>("Panel", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
 
-                BanterUIPanel foundPanel = null;
+                BSUIPanel foundPanel = null;
 
                 if (target != null)
                 {
                     // Try to get the panel component from the GameObject
-                    foundPanel = target.GetComponent<BanterUIPanel>();
+                    foundPanel = target.GetComponent<BSUIPanel>();
                 }
                 else
                 {
-                    // If no GameObject specified, get the first panel in the scene
-                    foundPanel = Object.FindObjectOfType<BanterUIPanel>();
+                    // If no GameObject specified, get a panel in the scene
+                    foundPanel = Object.FindAnyObjectByType<BSUIPanel>();
                 }
 
                 if (foundPanel == null)
@@ -49,4 +49,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

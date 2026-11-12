@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Click")]
     [UnitShortTitle("On Click")]
-    [UnitCategory("Events\\Banter\\PlayerEvents")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\PlayerEvents")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -39,7 +38,7 @@ namespace Banter.VisualScripting
 
         protected override bool ShouldTrigger(Flow flow, CustomEventArgs data)
         {
-            return data.name == flow.GetValue<GameObject>(banterPlayerEvents).GetInstanceID().ToString();
+            return data.name == BSScene.UnityId(flow.GetValue<GameObject>(banterPlayerEvents)).ToString();
         }
 
         // Setting the value on our port.
@@ -50,4 +49,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

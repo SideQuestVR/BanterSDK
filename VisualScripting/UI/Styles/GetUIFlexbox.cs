@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Flexbox")]
     [UnitShortTitle("Get UI Flexbox")]
-    [UnitCategory("Banter\\UI\\Styles\\Layout")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Styles\\Layout")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIFlexbox : Unit
     {
         [DoNotSerialize]
@@ -49,7 +48,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -115,18 +115,26 @@ namespace Banter.VisualScripting
             System.Action<CustomEventArgs> callback = null;
             var eventName = $"UIStyle_{elemId}_{propertyName}";
 
-            callback = (CustomEventArgs args) => {
+            callback = (CustomEventArgs args) =>
+            {
                 if (args.arguments != null && args.arguments.Length > 0)
                 {
                     result = args.arguments[0]?.ToString() ?? "";
                 }
-                EventBus.Unregister(new EventHook(eventName), callback);
             };
 
             EventBus.Register<CustomEventArgs>(new EventHook(eventName), callback);
 
             var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_STYLE}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}{propertyName}";
-            UIElementBridge.HandleMessage(message);
+            try
+            {
+                // The bridge answers inline; when it doesn't (element gone, unknown style) the handler must not stay.
+                UIElementBridge.HandleMessage(message);
+            }
+            finally
+            {
+                EventBus.Unregister(new EventHook(eventName), callback);
+            }
 
             return result;
         }
@@ -134,14 +142,14 @@ namespace Banter.VisualScripting
         private float ParseFloat(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0f;
-            if (float.TryParse(value, out float result))
+            if (NumberFormat.TryParse(value, out float result))
                 return result;
             return 0f;
         }
 
         private UIFlexDirection ParseFlexDirection(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "column-reverse" => UIFlexDirection.ColumnReverse,
                 "row" => UIFlexDirection.Row,
@@ -152,7 +160,7 @@ namespace Banter.VisualScripting
 
         private UIJustifyContent ParseJustifyContent(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "flex-end" => UIJustifyContent.FlexEnd,
                 "center" => UIJustifyContent.Center,
@@ -165,7 +173,7 @@ namespace Banter.VisualScripting
 
         private UIAlignItems ParseAlignItems(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "flex-end" => UIAlignItems.FlexEnd,
                 "center" => UIAlignItems.Center,
@@ -176,7 +184,7 @@ namespace Banter.VisualScripting
 
         private UIFlexWrap ParseFlexWrap(string value)
         {
-            return value?.ToLower() switch
+            return value?.ToLowerInvariant() switch
             {
                 "wrap" => UIFlexWrap.Wrap,
                 "wrap-reverse" => UIFlexWrap.WrapReverse,
@@ -185,4 +193,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

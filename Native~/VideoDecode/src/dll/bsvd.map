@@ -1,0 +1,8 @@
+{
+  global:
+    BSVD_*;
+    UnityPluginLoad;
+    UnityPluginUnload;
+  local:
+    *;
+};

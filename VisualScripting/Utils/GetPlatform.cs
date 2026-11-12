@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get Platform")]
     [UnitShortTitle("Get Platform")]
-    [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetPlatform : Unit
     {
         [DoNotSerialize]
@@ -21,8 +20,9 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
-                var platformString = BanterScene.Instance().events.GetPlatform?.Invoke() ?? "";
+            inputTrigger = ControlInput("", (flow) =>
+            {
+                var platformString = BSScene.Instance().events.GetPlatform?.Invoke() ?? "";
                 flow.SetValue(platform, platformString);
                 return outputTrigger;
             });
@@ -32,4 +32,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Load Quest Home")]
     [UnitShortTitle("Load Quest Home")]
-    [UnitCategory("Banter\\Space")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Space")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadQuestHome : Unit
     {
         [DoNotSerialize]
@@ -34,7 +33,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _url = flow.GetValue<string>(url);
                 var _addColliders = flow.GetValue<bool>(addColliders);
                 var _climbable = flow.GetValue<bool>(climbable);
@@ -50,10 +50,10 @@ namespace Banter.VisualScripting
                 GameObject parentGameObject = flow.stack.gameObject;
 
                 // Find existing Quest Home child (if any)
-                BanterQuestHome oldQuestHome = null;
+                BSQuestHome oldQuestHome = null;
                 foreach (Transform child in parentGameObject.transform)
                 {
-                    var questHome = child.GetComponent<BanterQuestHome>();
+                    var questHome = child.GetComponent<BSQuestHome>();
                     if (questHome != null)
                     {
                         oldQuestHome = questHome;
@@ -67,14 +67,15 @@ namespace Banter.VisualScripting
                 questHomeGo.transform.SetParent(parentGameObject.transform, false);
 
                 // Add components
-                var questHomeComponent = questHomeGo.AddComponent<BanterQuestHome>();
+                var questHomeComponent = questHomeGo.AddComponent<BSQuestHome>();
                 questHomeGo.AddComponent<AudioSource>();
 
                 // Set up cleanup handlers for both success and failure cases
                 GameObject oldGameObject = oldQuestHome != null ? oldQuestHome.gameObject : null;
 
                 // Subscribe to loaded event to handle success/failure
-                questHomeComponent.loaded.AddListener((success, message) => {
+                questHomeComponent.loaded.AddListener((success, message) =>
+                {
                     if (success)
                     {
                         // New Quest Home loaded successfully
@@ -130,4 +131,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

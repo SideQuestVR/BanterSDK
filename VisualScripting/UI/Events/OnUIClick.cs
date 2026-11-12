@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
-using Banter.UI.Core;
-using Banter.UI.Bridge;
+using BS;
+using BS.VisualScripting.UI.Helpers;
+using BS.UI.Core;
+using BS.UI.Bridge;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On UI Click")]
     [UnitShortTitle("On UI Click")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIClick : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -59,22 +58,24 @@ namespace Banter.VisualScripting
             // Auto-register when graph starts
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
-                        UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, UIEventType.Click, "OnUIClick");
-                        _eventRegistered = true;
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            UIEventAutoRegisterHelper.TryRegisterEventWithRetry(resolvedTarget, UIEventType.Click, "OnUIClick");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -107,9 +108,9 @@ namespace Banter.VisualScripting
         {
             // Extract element ID from event name
             var elementIdFromEvent = data.name.Replace("UIClick_", "");
-            
+
             flow.SetValue(clickedElementId, elementIdFromEvent);
-            
+
             // Parse arguments if available
             if (data.arguments != null && data.arguments.Length >= 2)
             {
@@ -117,7 +118,7 @@ namespace Banter.VisualScripting
                     flow.SetValue(mousePosition, mousePos);
                 else if (data.arguments[0] is string mousePosStr && TryParseVector2(mousePosStr, out var parsedPos))
                     flow.SetValue(mousePosition, parsedPos);
-                
+
                 if (data.arguments[1] is int button)
                     flow.SetValue(mouseButton, button);
                 else if (data.arguments[1] is string buttonStr && int.TryParse(buttonStr, out var parsedButton))
@@ -133,21 +134,20 @@ namespace Banter.VisualScripting
         private bool TryParseVector2(string value, out Vector2 result)
         {
             result = Vector2.zero;
-            
+
             if (string.IsNullOrEmpty(value))
                 return false;
-                
+
             var parts = value.Split(',');
-            if (parts.Length >= 2 && 
-                float.TryParse(parts[0].Trim(), out var x) && 
-                float.TryParse(parts[1].Trim(), out var y))
+            if (parts.Length >= 2 &&
+                NumberFormat.TryParse(parts[0].Trim(), out var x) &&
+                NumberFormat.TryParse(parts[1].Trim(), out var y))
             {
                 result = new Vector2(x, y);
                 return true;
             }
-            
+
             return false;
         }
     }
 }
-#endif

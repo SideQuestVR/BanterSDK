@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Toggle Changed")]
     [UnitShortTitle("On Toggle Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnToggleChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -55,30 +54,32 @@ namespace Banter.VisualScripting
             if (!_eventRegistered)
             {
                 LogVerbose("Not yet registered, checking auto-register setting");
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-                LogVerbose($"Auto Register = {shouldAutoRegister}");
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    LogVerbose($"Element ID = '{targetId}', Element Name = '{targetName}'");
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
+                    LogVerbose($"Auto Register = {shouldAutoRegister}");
 
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
-                    LogVerbose($"Resolved target = '{resolvedTarget}'");
+                    if (shouldAutoRegister)
+                    {
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        LogVerbose($"Element ID = '{targetId}', Element Name = '{targetName}'");
 
-                    if (!string.IsNullOrEmpty(resolvedTarget))
-                    {
-                        LogVerbose($"Calling TryRegisterChangeEventWithRetry for '{resolvedTarget}'");
-                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnToggleChanged");
-                        _eventRegistered = true;
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                        LogVerbose($"Resolved target = '{resolvedTarget}'");
+
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+                            LogVerbose($"Calling TryRegisterChangeEventWithRetry for '{resolvedTarget}'");
+                            UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnToggleChanged");
+                            _eventRegistered = true;
+                        }
+                        else
+                        {
+                            Debug.LogWarning("[OnToggleChanged] Resolved target is null or empty - cannot auto-register");
+                        }
                     }
-                    else
-                    {
-                        Debug.LogWarning("[OnToggleChanged] Resolved target is null or empty - cannot auto-register");
-                    }
-                }
+                });
             }
             else
             {
@@ -123,7 +124,7 @@ namespace Banter.VisualScripting
                 LogVerbose("No specific target, checking if boolean change event");
                 // Only trigger if it's a boolean change event
                 var result = data.arguments != null && data.arguments.Length >= 1 &&
-                       (data.arguments[0] is bool || (data.arguments[0] is string strVal && (strVal == "1" || strVal == "0" || strVal.ToLower() == "true" || strVal.ToLower() == "false")));
+                       (data.arguments[0] is bool || (data.arguments[0] is string strVal && (strVal == "1" || strVal == "0" || strVal.ToLowerInvariant() == "true" || strVal.ToLowerInvariant() == "false")));
                 LogVerbose($"ShouldTrigger result (any toggle): {result}");
                 return result;
             }
@@ -131,7 +132,7 @@ namespace Banter.VisualScripting
             // Otherwise, only trigger for the specific element
             var matches = eventElementId == resolvedTarget2;
             var hasValidArgs = data.arguments != null && data.arguments.Length >= 1 &&
-                   (data.arguments[0] is bool || (data.arguments[0] is string strVal2 && (strVal2 == "1" || strVal2 == "0" || strVal2.ToLower() == "true" || strVal2.ToLower() == "false")));
+                   (data.arguments[0] is bool || (data.arguments[0] is string strVal2 && (strVal2 == "1" || strVal2 == "0" || strVal2.ToLowerInvariant() == "true" || strVal2.ToLowerInvariant() == "false")));
 
             LogVerbose($"Element match: {matches}, Valid args: {hasValidArgs}");
             LogVerbose($"ShouldTrigger result (specific element): {matches && hasValidArgs}");
@@ -156,7 +157,7 @@ namespace Banter.VisualScripting
                 }
                 else if (data.arguments[0] is string strValue)
                 {
-                    value = strValue == "1" || strValue.ToLower() == "true";
+                    value = strValue == "1" || strValue.ToLowerInvariant() == "true";
                 }
 
                 flow.SetValue(isOn, value);
@@ -174,4 +175,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

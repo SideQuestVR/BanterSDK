@@ -1,5 +1,7 @@
 // Made with Amplify Shader Editor v1.9.1.5
-// Available at the Unity Asset Store - http://u3d.as/y3X 
+// Available at the Unity Asset Store - http://u3d.as/y3X
+// Ported to URP by hand. Re-saving this shader from Amplify will regenerate
+// built-in-pipeline code and undo the port - edit the HLSL below instead.
 Shader "TransparentFresnel"
 {
 	Properties
@@ -7,17 +9,18 @@ Shader "TransparentFresnel"
 		_Color("Color", Color) = (0,0,0,0)
 
 	}
-	
+
 	SubShader
 	{
-		
-		
-		Tags { "RenderType"="Transparent" "Queue" = "Transparent"}
-	LOD 100
+		Tags
+		{
+			"RenderType"="Transparent"
+			"Queue"="Transparent"
+			"IgnoreProjector"="True"
+			"RenderPipeline"="UniversalPipeline"
+		}
+		LOD 100
 
-		CGINCLUDE
-		#pragma target 3.0
-		ENDCG
 		Blend One One
 		AlphaToMask Off
 		Cull Back
@@ -25,103 +28,77 @@ Shader "TransparentFresnel"
 		ZWrite On
 		ZTest LEqual
 		Offset 0 , 0
-		
-		
-		
+
 		Pass
 		{
+			// No LightMode tag: URP renders this via SRPDefaultUnlit, the same
+			// way its own Universal Render Pipeline/Unlit main pass is drawn.
 			Name "Unlit"
 
-			CGPROGRAM
-
-			
-
-			#ifndef UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX
-			//only defining to not throw compilation error over Unity 5.5
-			#define UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input)
-			#endif
+			HLSLPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
+			#pragma target 3.0
+			#pragma only_renderers d3d11 glcore gles3 vulkan
 			#pragma multi_compile_instancing
-			#include "UnityCG.cginc"
-			#define ASE_NEEDS_FRAG_WORLD_POSITION
 
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-			struct appdata
+			CBUFFER_START(UnityPerMaterial)
+				half4 _Color;
+			CBUFFER_END
+
+			struct Attributes
 			{
-				float4 vertex : POSITION;
-				float4 color : COLOR;
-				float3 ase_normal : NORMAL;
+				float4 positionOS : POSITION;
+				float3 normalOS : NORMAL;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 			};
-			
-			struct v2f
+
+			struct Varyings
 			{
-				float4 vertex : SV_POSITION;
-				#ifdef ASE_NEEDS_FRAG_WORLD_POSITION
-				float3 worldPos : TEXCOORD0;
-				#endif
-				float4 ase_texcoord1 : TEXCOORD1;
+				float4 positionCS : SV_POSITION;
+				float3 positionWS : TEXCOORD0;
+				half3 normalWS : TEXCOORD1;
 				UNITY_VERTEX_INPUT_INSTANCE_ID
 				UNITY_VERTEX_OUTPUT_STEREO
 			};
 
-			uniform float4 _Color;
-
-			
-			v2f vert ( appdata v )
+			Varyings vert(Attributes v)
 			{
-				v2f o;
+				Varyings o = (Varyings)0;
+
 				UNITY_SETUP_INSTANCE_ID(v);
-				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 				UNITY_TRANSFER_INSTANCE_ID(v, o);
+				UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 
-				float3 ase_worldNormal = UnityObjectToWorldNormal(v.ase_normal);
-				o.ase_texcoord1.xyz = ase_worldNormal;
-				
-				
-				//setting value to unused interpolator channels and avoid initialization warnings
-				o.ase_texcoord1.w = 0;
-				float3 vertexValue = float3(0, 0, 0);
-				#if ASE_ABSOLUTE_VERTEX_POS
-				vertexValue = v.vertex.xyz;
-				#endif
-				vertexValue = vertexValue;
-				#if ASE_ABSOLUTE_VERTEX_POS
-				v.vertex.xyz = vertexValue;
-				#else
-				v.vertex.xyz += vertexValue;
-				#endif
-				o.vertex = UnityObjectToClipPos(v.vertex);
-
-				#ifdef ASE_NEEDS_FRAG_WORLD_POSITION
-				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-				#endif
+				o.positionWS = TransformObjectToWorld(v.positionOS.xyz);
+				o.positionCS = TransformWorldToHClip(o.positionWS);
+				o.normalWS = TransformObjectToWorldNormal(v.normalOS);
 				return o;
 			}
-			
-			fixed4 frag (v2f i ) : SV_Target
+
+			half4 frag(Varyings i) : SV_Target
 			{
 				UNITY_SETUP_INSTANCE_ID(i);
 				UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(i);
-				fixed4 finalColor;
-				#ifdef ASE_NEEDS_FRAG_WORLD_POSITION
-				float3 WorldPosition = i.worldPos;
-				#endif
-				float3 ase_worldViewDir = UnityWorldSpaceViewDir(WorldPosition);
-				ase_worldViewDir = normalize(ase_worldViewDir);
-				float3 ase_worldNormal = i.ase_texcoord1.xyz;
-				float fresnelNdotV2 = dot( ase_worldNormal, ase_worldViewDir );
-				float fresnelNode2 = ( 0.0 + 3.0 * pow( 1.0 - fresnelNdotV2, 5.0 ) );
-				
-				
-				finalColor = ( fresnelNode2 * _Color );
-				return finalColor;
+
+				half3 viewDirWS = GetWorldSpaceNormalizeViewDir(i.positionWS);
+				half3 normalWS = normalize(i.normalWS);
+
+				// Fresnel: bias 0, scale 3, power 5
+				half fresnelNdotV = dot(normalWS, viewDirWS);
+				// max() only guards half-precision overshoot past 1.0, which would
+				// make pow() of a negative base return NaN.
+				half fresnel = 3.0 * pow(max(0.0, 1.0 - fresnelNdotV), 5.0);
+
+				return fresnel * _Color;
 			}
-			ENDCG
+
+			ENDHLSL
 		}
 	}
-	
+
 	Fallback Off
 }
 /*ASEBEGIN

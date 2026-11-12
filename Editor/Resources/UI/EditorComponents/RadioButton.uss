@@ -14,5 +14,5 @@
     width: 9px;
     height: 9px;
     border-radius: 50%;
-    background-color: #B23BEF;
+    background-color: #29A2A6;
 }

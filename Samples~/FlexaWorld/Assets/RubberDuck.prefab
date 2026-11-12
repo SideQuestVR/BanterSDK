@@ -95,7 +95,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 100000, guid: b16ba7bf9e24764469c69d2b339a7680, type: 3}
       propertyPath: m_TagString
-      value: __BA_GrabHandle
+      value: Untagged
       objectReference: {fileID: 0}
     - target: {fileID: 400000, guid: b16ba7bf9e24764469c69d2b339a7680, type: 3}
       propertyPath: m_RootOrder

@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set UI Visible")]
     [UnitShortTitle("Set UI Visible")]
-    [UnitCategory("Banter\\UI\\Properties\\State")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Properties\\State")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetUIVisible : Unit
     {
         [DoNotSerialize]
@@ -31,7 +30,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 var visibleValue = flow.GetValue<bool>(visible);
@@ -59,10 +59,10 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[SetUIVisible] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Format: panelId|SET_UI_PROPERTY|elementId§propertyName§value
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}visible{MessageDelimiters.SECONDARY}{(visibleValue ? "1" : "0")}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
                 }
@@ -81,4 +81,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

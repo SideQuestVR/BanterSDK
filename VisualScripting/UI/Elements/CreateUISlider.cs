@@ -1,16 +1,15 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Slider")]
     [UnitShortTitle("Create UI Slider")]
-    [UnitCategory("Banter\\UI\\Elements\\Controls")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements\\Controls")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUISlider : Unit
     {
         [DoNotSerialize]
@@ -47,9 +46,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var min = flow.GetValue<float>(minValue);
@@ -59,7 +59,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUISlider] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUISlider] BSUIPanel component not found on GameObject.");
                     flow.SetValue(sliderId, "");
                     return outputTrigger;
                 }
@@ -75,16 +75,16 @@ namespace Banter.VisualScripting
 
                     // Generate unique element ID if not provided
                     var sliderElementId = string.IsNullOrEmpty(elemId) ? $"ui_slider_{System.Guid.NewGuid().ToString("N")[..8]}" : elemId;
-                    
+
                     // Use UICommands to send CREATE_UI_ELEMENT command
                     var panelId = panel.GetFormattedPanelId();
                     var elementType = "14"; // UIElementType.Slider = 14
                     string resolvedParentId = UIElementResolverHelper.ResolveElementIdOrName(parentId, parentName);
                     var parentElementId = string.IsNullOrEmpty(resolvedParentId) ? "root" : resolvedParentId;
-                    
+
                     // Format: panelId|CREATE_UI_ELEMENT|elementId§elementType§parentId
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.CREATE_UI_ELEMENT}{MessageDelimiters.PRIMARY}{sliderElementId}{MessageDelimiters.SECONDARY}{elementType}{MessageDelimiters.SECONDARY}{parentElementId}";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
 
@@ -98,7 +98,7 @@ namespace Banter.VisualScripting
                     // Set min/max values
                     var minMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{sliderElementId}{MessageDelimiters.SECONDARY}minvalue{MessageDelimiters.SECONDARY}{min.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
                     UIElementBridge.HandleMessage(minMessage);
-                    
+
                     var maxMessage = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.SET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{sliderElementId}{MessageDelimiters.SECONDARY}maxvalue{MessageDelimiters.SECONDARY}{max.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
                     UIElementBridge.HandleMessage(maxMessage);
 
@@ -125,4 +125,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

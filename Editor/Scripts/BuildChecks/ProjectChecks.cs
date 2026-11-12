@@ -1,0 +1,295 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+#if !GREENFIELD_PROJECT
+using BS.SDKEditor.Setup;
+#endif
+
+namespace BS.SDKEditor.BuildChecks
+{
+    /// <summary>The client only runs Visual Scripting nodes on its allow-list.</summary>
+    sealed class VisualScriptingCheck : BuildCheck
+    {
+        public override string Id => "project.visual-scripting";
+        // Not "Visual Scripting nodes": that's the Setup panel's node-library item.
+        public override string Title => "Visual Scripting node support";
+        public override string Description =>
+            "Visual Scripting graphs only use nodes the client can run: graph assets anywhere in the project, every graph on prefabs, " +
+            "and every graph in this scene, subgraphs and state graphs included. Nodes that aren't on the Banter node list, " +
+            "which a coming client update won't run, are a warning.";
+        public override int Order => 10;
+        // Not knowing is as bad as knowing they're there: the space would break in the client.
+        public override bool BlockOnException => true;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var report = ValidateVisualScripting.CollectGraphReport(context.Roots, refresh: context.ForBuild);
+            var disallowed = report.Disallowed;
+            if (disallowed.Count > 0)
+            {
+                var listed = string.Join("\n", disallowed.Take(15).Select(id => "• " + id));
+                if (disallowed.Count > 15)
+                    listed += $"\n• ...and {disallowed.Count - 15} more";
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error,
+                    $"{disallowed.Count} Visual Scripting node type(s) aren't allowed in spaces",
+                    "The client won't run graphs that use these. Remove or replace them; graphs anywhere in the project " +
+                    "count, not just this scene's.\n" + listed)
+                {
+                    Overridable = false,
+                });
+            }
+            if (report.Unlisted.Count > 0)
+                issues.Add(UnlistedWarning(Id, report.Unlisted, context.Target));
+        }
+
+        /// <summary>
+        /// The nodes a coming client update won't run, as a warning: the build and upload go ahead. Never throws, since
+        /// a check that throws blocks the build (<see cref="BlockOnException"/>).
+        /// </summary>
+        internal static BuildCheckIssue UnlistedWarning(string checkId, IReadOnlyList<ValidateVisualScripting.UnlistedUse> uses,
+            Func<GameObject, BuildCheckTarget> sceneTarget)
+        {
+            try
+            {
+                var byNode = uses.GroupBy(use => use.Node).OrderBy(group => group.Key, StringComparer.Ordinal).ToList();
+                var lines = byNode.Take(15).Select(group =>
+                {
+                    var places = group.Select(use => use.Where).Distinct().ToList();
+                    return $"• {group.Key}: in {string.Join("; ", places.Take(2))}" + (places.Count > 2 ? $" (+{places.Count - 2} more)" : "");
+                }).ToList();
+                if (byNode.Count > 15)
+                    lines.Add($"• ...and {byNode.Count - 15} more");
+                // One target per object. A prefab's asset is a GameObject too, so go by which field is set, not by type.
+                var targets = new List<BuildCheckTarget>();
+                var targeted = new HashSet<UnityEngine.Object>();
+                foreach (var use in uses)
+                {
+                    if (targets.Count >= 30)
+                        break;
+                    if (use.SceneObject != null)
+                    {
+                        if (sceneTarget != null && targeted.Add(use.SceneObject))
+                            targets.Add(sceneTarget(use.SceneObject));
+                    }
+                    else if (use.Asset != null && targeted.Add(use.Asset))
+                        targets.Add(BuildCheckTarget.ForAsset(use.Asset));
+                }
+                return new BuildCheckIssue(checkId, BuildCheckSeverity.Warning,
+                        $"{byNode.Count} Visual Scripting node(s) aren't on the Banter node list",
+                        "They run today, but a coming client update won't run graphs that use them. Replace them before uploading; " +
+                        "the upload isn't blocked for now. Graphs anywhere in the project count, not just this scene's.\n" +
+                        string.Join("\n", lines))
+                    .WithTargets(targets);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+                return new BuildCheckIssue(checkId, BuildCheckSeverity.Warning,
+                    "Some Visual Scripting nodes aren't on the Banter node list",
+                    "A coming client update won't run graphs that use them, and listing them failed: " + e.Message);
+            }
+        }
+    }
+
+    /// <summary>With URP's Strip Unused Variants off, every variant of every shader is compiled for each graphics API.</summary>
+    sealed class ShaderStrippingCheck : BuildCheck
+    {
+        public override string Id => "project.shader-stripping";
+        public override string Title => "Shader stripping";
+        public override string Description =>
+            "URP's Strip Unused Variants is on, as in the client. Without it every shader variant is compiled, which makes builds far slower.";
+        public override int Order => 45;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            if (!GraphicsSettings.TryGetRenderPipelineSettings<URPShaderStrippingSetting>(out var stripping) || stripping.stripUnusedVariants)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    "URP's Strip Unused Variants is off",
+                    "Every shader variant is compiled for each graphics API, which makes builds much slower and the world bigger. " +
+                    "Turn it on in Project Settings > Graphics > URP.")
+                .WithFix("Turn stripping on", _ =>
+                {
+                    stripping.stripUnusedVariants = true;
+                    var settings = GraphicsSettings.GetSettingsForRenderPipeline<UniversalRenderPipeline>();
+                    if (settings != null)
+                    {
+                        EditorUtility.SetDirty(settings);
+                        AssetDatabase.SaveAssetIfDirty(settings);
+                    }
+                    return true;
+                }, needsLoadedScene: false));
+        }
+    }
+
+#if !GREENFIELD_PROJECT
+    /// <summary>
+    /// The Setup panel's required items as one row, so the project setup is listed there and not twice. Missing build
+    /// support can't be built past; anything else is a warning the creator can build past.
+    /// </summary>
+    sealed class ProjectSetupBuildCheck : BuildCheck
+    {
+        public override string Id => "project.setup";
+        public override string Title => "Project setup";
+        public override string Description => "Everything Creator SDK > Setup marks Required is done, such as build support, the SDK's layers and tags, and URP.";
+        public override int Order => 0;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var open = ProjectSetup.Checks
+                .Where(check => check.Importance == SetupImportance.Required)
+                // A build creates a missing page itself, so don't ask to build past it. Re-check and Upload still list it.
+                .Where(check => !(context.ForBuild && check.Id == "sdk.webroot"))
+                .Select(check => (check, status: ProjectSetup.Evaluate(check)))
+                .Where(item => item.status.NeedsAttention)
+                .ToList();
+
+            var buildSupport = open.FirstOrDefault(item => item.check.Id == "sdk.build-support");
+            if (buildSupport.check != null)
+            {
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error, buildSupport.status.Summary,
+                    "Spaces are built for Android (Quest) and Windows together. " + buildSupport.status.Details)
+                {
+                    Overridable = false,
+                });
+                open.Remove(buildSupport);
+            }
+            if (open.Count == 0)
+                return;
+
+            var title = open.Count == 1 ? $"{open[0].check.Title}: {open[0].status.Summary}" : $"{open.Count} setup items need attention";
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning, title,
+                    string.Join("\n", open.Select(item => $"• {item.check.Title}: {item.status.Summary}")) +
+                    "\nThe Setup panel explains each one and fixes it.")
+                .WithFix("Open Setup", _ =>
+                {
+                    SdkSetupWindow.Open();
+                    return false;
+                }, needsLoadedScene: false, interactive: true));
+        }
+    }
+
+    /// <summary>
+    /// Every scene shares the one space page, so the other scenes' snippets and scripts are published with this world.
+    /// The Setup panel lists it too, as a Recommended item, which the "Project setup" row leaves out.
+    /// </summary>
+    sealed class OneSceneCheck : BuildCheck
+    {
+        public override string Id => "project.one-scene";
+        public override string Title => "One scene per project";
+        public override string Description =>
+            "The project holds only this world's scene. Every scene shares the one space page, Assets/WebRoot/index.html, so the " +
+            "snippets and scripts for the other scenes would be published with this world.";
+        public override int Order => 5;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var others = OneSceneSetupCheck.ScenePaths()
+                .Where(path => !string.Equals(path, context.ScenePath, System.StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (others.Count == 0)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"This project has {others.Count} other scene(s)",
+                    "Every scene shares the one space page, Assets/WebRoot/index.html, so the snippets placed in the other scenes, and " +
+                    "any page script written for them, are published with this world and run in it. Keep one world per project: move " +
+                    "the other scenes to projects of their own, or delete the ones you don't need.")
+                .WithTargets(others.Select(path => BuildCheckTarget.ForAsset(AssetDatabase.LoadAssetAtPath<SceneAsset>(path)))));
+        }
+    }
+#else
+    // Greenfield has no Setup panel, so its builds keep checking these directly.
+
+    /// <summary>Every platform a space ships to needs its build module installed.</summary>
+    sealed class BuildModulesCheck : BuildCheck
+    {
+        public override string Id => "project.build-modules";
+        public override string Title => "Build modules";
+        public override string Description => "Unity has the Android and Windows build modules a space is built with.";
+        public override int Order => 0;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            foreach (var target in context.Targets)
+            {
+                if (BuildPipeline.IsBuildTargetSupported(BuildPipeline.GetBuildTargetGroup(target), target))
+                    continue;
+                var platform = target == BuildTarget.Android ? "Android" : "Windows";
+                issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Error,
+                    $"The {platform} build module isn't installed",
+                    $"Spaces are built for Android (Quest) and Windows together. In Unity Hub, add \"{platform} Build Support\" " +
+                    "to this Unity version (Installs > the version's menu > Add modules), then restart Unity.")
+                {
+                    Overridable = false,
+                });
+            }
+        }
+    }
+
+    /// <summary>SDK Play Mode needs both input systems; the built space doesn't care.</summary>
+    sealed class ActiveInputHandlingBuildCheck : BuildCheck
+    {
+        public override string Id => "project.input-handling";
+        public override string Title => "Active Input Handling";
+        public override string Description => "Active Input Handling is Both, which SDK Play mode needs for its controls.";
+        public override int Order => 20;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var current = ActiveInputHandlingCheck.Current;
+            if (current == ActiveInputHandlingCheck.InputHandling.Both)
+                return;
+            issues.Add(new BuildCheckIssue(Id, BuildCheckSeverity.Warning,
+                    $"Active Input Handling is \"{ActiveInputHandlingCheck.Label(current)}\", not \"Both\"",
+                    "SDK Play Mode needs \"Both\" for the fly camera, mouse grabbing, UI clicks and browser typing. " +
+                    "It's only needed to test here: it doesn't change the built space, and changing it doesn't affect the client.")
+                .WithFix("Set to Both (restarts Unity)", _ =>
+                {
+                    // Asks first, then saves scenes and restarts.
+                    ActiveInputHandlingCheck.PromptAndFix();
+                    return false;
+                }, needsLoadedScene: false, interactive: true));
+        }
+    }
+
+    /// <summary>Spaces use Forward on Android and Forward+ or Forward on Windows.</summary>
+    sealed class UrpRendererCheck : BuildCheck
+    {
+        public override string Id => "project.urp-renderer";
+        public override string Title => "URP renderer";
+        public override string Description => "The URP renderers use Forward on Android and Forward+ or Forward on Windows, which the client can render.";
+        public override int Order => 40;
+
+        public override void Run(BuildCheckContext context, List<BuildCheckIssue> issues)
+        {
+            var selected = context.Targets.Select(_ => true).ToArray();
+            var mismatches = UrpRendererBuildCheck.FindMismatches(context.Targets, selected, out var sharedRendererConflict);
+            if (mismatches.Count == 0)
+                return;
+
+            var details = UrpRendererBuildCheck.SuggestedModes + "\n" +
+                          string.Join("\n", mismatches.Select(mismatch => "• " + mismatch.Description));
+            var canChange = UrpRendererBuildCheck.TryPlanChange(mismatches, sharedRendererConflict, out var plan);
+            if (!canChange)
+                details += "\nSome of these assets are missing, read-only, or shared by both platforms; review them by hand.";
+
+            var issue = new BuildCheckIssue(Id, BuildCheckSeverity.Warning, "The URP renderers aren't set up the way spaces expect", details)
+                .WithTargets(mismatches.Select(mismatch => mismatch.AssetToOpen).Where(asset => asset != null).Distinct()
+                    .Select(BuildCheckTarget.ForAsset));
+            if (canChange)
+            {
+                issue.WithFix("Set rendering modes", _ =>
+                {
+                    UrpRendererBuildCheck.ApplyModes(plan);
+                    return true;
+                }, needsLoadedScene: false);
+            }
+            issues.Add(issue);
+        }
+    }
+#endif
+}

@@ -1,12 +1,12 @@
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Simple helper script to load Quest Home environments with minimal setup.
     /// Just attach to a GameObject, set the APK URL in the Inspector, and it loads automatically on Start.
     /// </summary>
-    [AddComponentMenu("Banter/Quest Home Loader")]
+    [AddComponentMenu("BS/Quest Home Loader")]
     public class QuestHomeLoader : MonoBehaviour
     {
         [Header("Quest Home Settings")]
@@ -28,7 +28,7 @@ namespace Banter.SDK
         [SerializeField] private string status = "Not loaded";
 
         private GameObject questHomeObject;
-        private BanterQuestHome questHomeComponent;
+        private BSQuestHome questHomeComponent;
         private bool isLoading = false;
 
         /// <summary>
@@ -79,8 +79,8 @@ namespace Banter.SDK
             questHomeObject.transform.localRotation = Quaternion.identity;
             questHomeObject.transform.localScale = Vector3.one;
 
-            // Add the BanterQuestHome component
-            questHomeComponent = questHomeObject.AddComponent<BanterQuestHome>();
+            // Add the BSQuestHome component
+            questHomeComponent = questHomeObject.AddComponent<BSQuestHome>();
 
             // Configure the component using the public C# API
             questHomeComponent.Url = apkUrl;

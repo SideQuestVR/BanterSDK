@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Set User Avatar")]
     [UnitShortTitle("Set Avatar")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class SetAvatar : Unit
     {
         [DoNotSerialize]
@@ -24,10 +23,11 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var local = flow.GetValue<string>(localAvatarUrl);
                 var remote = flow.GetValue<string>(remoteAvatarUrl);
-                BanterScene.Instance().events.OnAvatarSet?.Invoke(remote, local);
+                BSScene.Instance().events.OnAvatarSet?.Invoke(remote, local);
 
                 return outputTrigger;
             });
@@ -37,4 +37,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

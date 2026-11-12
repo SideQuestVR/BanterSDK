@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Trigger Visual Scripting Relay")]
     [UnitShortTitle("Trigger VS Relay")]
-    [UnitCategory("Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class TriggerUnityEventTyped : Unit
     {
         [SerializeAs(nameof(dataType))]
@@ -76,7 +75,7 @@ namespace Banter.VisualScripting
                 case EventDataType.Object:
                     Value = ValueInput<Object>(nameof(Value), null);
                     break;
-                // None = no value port
+                    // None = no value port
             }
 
             trigger = ControlInput("", (flow) =>
@@ -131,4 +130,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

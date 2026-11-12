@@ -1,19 +1,18 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
+using BS;
+using BS.UI.Bridge;
 using UnityEngine;
 using UnityEngine.UIElements;
 using System.Collections.Generic;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Process UXML Tree")]
     [UnitShortTitle("Process UXML Tree")]
-    [UnitCategory("Banter\\UI\\UXML")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\UXML")]
+    [TypeIcon(typeof(BSObjectId))]
     public class ProcessUXMLTree : Unit
     {
         private const string LogPrefix = "[ProcessUXMLTree]";
@@ -43,7 +42,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var document = flow.GetValue<UIDocument>(uiDocument);
                 var prefix = flow.GetValue<string>(elementPrefix);
@@ -55,12 +55,12 @@ namespace Banter.VisualScripting
 
                 try
                 {
-                    // Get or create BanterUIPanel component
-                    var panel = target?.GetComponent<BanterUIPanel>();
+                    // Get or create BSUIPanel component
+                    var panel = target?.GetComponent<BSUIPanel>();
                     if (panel == null)
                     {
-                        panel = target.AddComponent<BanterUIPanel>();
-                        LogVerbose("Created BanterUIPanel component");
+                        panel = target.AddComponent<BSUIPanel>();
+                        LogVerbose("Created BSUIPanel component");
                     }
 
                     UIElementBridge bridge;
@@ -68,16 +68,24 @@ namespace Banter.VisualScripting
 
                     // Check for existing UIDocument on the GameObject or use provided one
                     var documentToUse = document ?? target.GetComponent<UIDocument>();
-                    
+
                     if (documentToUse != null)
                     {
                         // Initialize panel with the UIDocument
                         LogVerbose("Initializing panel with UIDocument");
-                        
+
                         if (panel.InitializeWithExistingDocument(documentToUse))
                         {
                             bridge = UIElementResolverHelper.GetUIElementBridge(panel);
                             elementMap = bridge.ProcessUXMLTree(documentToUse, prefix);
+                            if (documentToUse.rootVisualElement == null)
+                            {
+                                // Disabled document: the bridge kept the request, prefix and all, and the panel
+                                // registers the elements once the document is enabled (BSUIPanel.LateUpdate).
+                                flow.SetValue(elementCount, 0);
+                                flow.SetValue(elementSummary, "Deferred: the UIDocument is disabled; its elements register when it is enabled");
+                                return outputTrigger;
+                            }
                             LogVerbose($"Processed UIDocument with {elementMap.Count} elements");
                         }
                         else
@@ -99,7 +107,7 @@ namespace Banter.VisualScripting
                             flow.SetValue(elementSummary, "Error: No UIDocument available");
                             return outputTrigger;
                         }
-                        
+
                         // Process from panel's main document
                         var mainDocument = GetMainDocument(bridge);
                         if (mainDocument?.rootVisualElement != null)
@@ -134,7 +142,7 @@ namespace Banter.VisualScripting
                 }
                 catch (System.Exception e)
                 {
-                Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
+                    Debug.LogError($"[ProcessUXMLTree] Failed to process UXML tree: {e.Message}");
                     flow.SetValue(elementCount, 0);
                     flow.SetValue(elementSummary, $"Error: {e.Message}");
                 }
@@ -159,7 +167,7 @@ namespace Banter.VisualScripting
             {
                 var bridgeType = typeof(UIElementBridge);
                 var mainDocField = bridgeType.GetField("mainDocument", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
-                
+
                 return mainDocField?.GetValue(bridge) as UIDocument;
             }
             catch (System.Exception e)
@@ -177,4 +185,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Register UI Click")]
     [UnitShortTitle("Register UI Click")]
-    [UnitCategory("Banter\\UI\\Events")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Events")]
+    [TypeIcon(typeof(BSObjectId))]
     public class RegisterUIClick : Unit
     {
         [DoNotSerialize]
@@ -28,7 +27,8 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
 
@@ -64,10 +64,10 @@ namespace Banter.VisualScripting
                         Debug.LogError($"[RegisterUIClick] Could not resolve panel for element '{elemId}'");
                         return outputTrigger;
                     }
-                    
+
                     // Format: panelId|REGISTER_UI_EVENT|elementId§eventType
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.REGISTER_UI_EVENT}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}click";
-                    
+
                     // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
                 }
@@ -93,7 +93,7 @@ namespace Banter.VisualScripting
                 return elementName;
 
             // Try to find the element in any registered panel
-            var allPanels = UnityEngine.Object.FindObjectsOfType<BanterUIPanel>();
+            var allPanels = FindObjects.All<BSUIPanel>();
             foreach (var panel in allPanels)
             {
                 try
@@ -117,4 +117,3 @@ namespace Banter.VisualScripting
 
     }
 }
-#endif

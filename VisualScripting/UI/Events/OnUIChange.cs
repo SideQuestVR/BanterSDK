@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On UI Change")]
     [UnitShortTitle("On UI Change")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnUIChange : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -59,24 +58,26 @@ namespace Banter.VisualScripting
                 return;
             }
 
-            var flow = Flow.New(stack.ToReference());
-            var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-            if (!shouldAutoRegister)
+            ReportingFlow.Run(stack.ToReference(), this, flow =>
             {
-                return;
-            }
+                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-            var targetId = flow.GetValue<string>(elementId);
-            var targetName = flow.GetValue<string>(elementName);
+                if (!shouldAutoRegister)
+                {
+                    return;
+                }
 
-            string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                var targetId = flow.GetValue<string>(elementId);
+                var targetName = flow.GetValue<string>(elementName);
 
-            if (!string.IsNullOrEmpty(resolvedTarget))
-            {
-                UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnUIChange");
-                _eventRegistered = true;
-            }
+                string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+
+                if (!string.IsNullOrEmpty(resolvedTarget))
+                {
+                    UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnUIChange");
+                    _eventRegistered = true;
+                }
+            });
         }
 
         public override void StopListening(GraphStack stack)
@@ -107,15 +108,15 @@ namespace Banter.VisualScripting
         {
             // Extract element ID from event name
             var elementIdFromEvent = data.name.Replace("UIChange_", "");
-            
+
             flow.SetValue(changedElementId, elementIdFromEvent);
-            
+
             // Parse arguments if available
             if (data.arguments != null)
             {
                 if (data.arguments.Length >= 1)
                     flow.SetValue(newValue, data.arguments[0]);
-                    
+
                 if (data.arguments.Length >= 2)
                     flow.SetValue(oldValue, data.arguments[1]);
                 else
@@ -129,4 +130,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -33,11 +33,11 @@ Here are the components you will need to add to the class.
 
 #### RequireComponent Attribute
 
-This attribute is added to all Banter components to ensure that the `BanterObjectId` component is added along with the Banter component. This ID 
+This attribute is added to all Banter components to ensure that the `BSObjectId` component is added along with the Banter component. This ID 
 component is important to be able to address this object and access it from `JavaScript` and in the scene generally. 
 
 ```cs
-[RequireComponent(typeof(BanterObjectId))]
+[RequireComponent(typeof(BSObjectId))]
 ```
 
 #### WatchComponent Attribute
@@ -60,7 +60,7 @@ These attributes are used to describe your properties, and whether their values 
 
 The `See` attribute marks the property as see-able from `JavaScript`. This means this property will be created by the code generation on the `JavaScript` equivalent of the component.
 
-[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/BanterTransform.cs)
+[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/BSTransform.cs)
 
 **Parameters**
 - `initial` - Sets the value that code generation will use when this property is declared in javascript, otherwise it is not initialised with a value.
@@ -76,7 +76,7 @@ The `See` attribute marks the property as see-able from `JavaScript`. This means
 The `Watch` attribute has all the functionality of the `See` attribute, but it also marks that property to have changes to the property synced back to `JavaScript`. 
 The `Watch` attribute has the same parameters as the `See` attribute,
 
-[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/BanterTransform.cs)
+[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/BSTransform.cs)
 
 **Parameters**
 - `initial` - Sets the value that code generation will use when this property is declared in javascript, otherwise it is not initialised with a value.
@@ -91,7 +91,7 @@ The `Watch` attribute has the same parameters as the `See` attribute,
 The method attribute is used to expose a method to `JavaScript` so it can be called on the equivalent component in `JavaScript`. These methods should always 
 have an underscore(`_`) at the start of their names - this is important as the code generation will add a method using the same name without the underscore.
 
-[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/BanterRigidbody.cs)
+[Complete Example](https://github.com/SideQuestVR/BanterSDK/blob/main/Runtime/Scripts/Scene/Components/Rigidbody.cs)
 
 **Parameters**
 - `overload` - Set a postfix to append to the method name for overload methods. This allows you to expose `C-Sharp` methods with the same name to `JavaScript`, 
@@ -157,9 +157,9 @@ namespace Banter.SDK
         transform.position = new BS.Vector3(1,1,1);
     ```
     */
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent(typeof(Transform))]
-    public class BanterTransform : UnityComponentBase
+    public class BSTransform : UnityComponentBase
     {
         [Watch(initial = "0,0,0")] public Vector3 position;
         [Watch(initial = "0,0,0")] public Vector3 localPosition;
@@ -201,13 +201,13 @@ namespace Banter.SDK
     ```js
         const path = "assets/prefabs/mykititem.prefab";
         const gameObject = new BS.GameObject("MyKitItem"); 
-        const kitItem = await gameObject.AddComponent(new BS.BanterKitItem(path));
+        const kitItem = await gameObject.AddComponent(new BS.KitItem(path));
     ```
 
     */
-    [RequireComponent(typeof(BanterObjectId))]
+    [RequireComponent(typeof(BSObjectId))]
     [WatchComponent]
-    public class BanterKitItem : BanterComponentBase
+    public class KitItem : BanterComponentBase
     {
         [See(initial = "")] public string path = "";
         GameObject item;

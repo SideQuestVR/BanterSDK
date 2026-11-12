@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     public struct UnityAndBanterObject
     {
         public GameObject gameObject;
-        public BanterObject banterObject;
-        public BanterObjectId id;
+        public BSObject banterObject;
+        public BSObjectId id;
     }
 }

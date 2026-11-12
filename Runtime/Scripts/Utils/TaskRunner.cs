@@ -8,7 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     public static class TaskRunner
     {

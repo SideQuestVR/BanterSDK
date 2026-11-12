@@ -1,13 +1,12 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Lock Player Position")]
     [UnitShortTitle("Lock Player")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LockPlayer : Unit
     {
         [DoNotSerialize]
@@ -18,8 +17,9 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
-                BanterScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(true);
+            inputTrigger = ControlInput("", (flow) =>
+            {
+                BSScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(true);
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
@@ -28,8 +28,8 @@ namespace Banter.VisualScripting
 
     [UnitTitle("Unlock Player Position")]
     [UnitShortTitle("Unlock Player")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class UnlockPlayer : Unit
     {
         [DoNotSerialize]
@@ -40,12 +40,12 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
-                BanterScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(false);
+            inputTrigger = ControlInput("", (flow) =>
+            {
+                BSScene.Instance().events.OnLegacyPlayerLockChanged.Invoke(false);
                 return outputTrigger;
             });
             outputTrigger = ControlOutput("");
         }
     }
 }
-#endif

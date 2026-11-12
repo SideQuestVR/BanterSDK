@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.SDK;
-using Banter.UI.Elements;
+using BS;
+using BS.UI.Elements;
 
-namespace Banter.UI.Bridge
+namespace BS.UI.Bridge
 {
     public class UIElementBridge : MonoBehaviour
     {
@@ -21,10 +21,10 @@ namespace Banter.UI.Bridge
 
         // Registry for multiple panel instances
         private static Dictionary<string, UIElementBridge> _panelInstances = new Dictionary<string, UIElementBridge>();
-        
+
         public string panelId;
-        public BanterUIPanel banterUiPanel;
-        
+        public BSUIPanel banterUiPanel;
+
         public static UIElementBridge GetPanelInstance(string panelId)
         {
             _panelInstances.TryGetValue(panelId, out var instance);
@@ -42,8 +42,8 @@ namespace Banter.UI.Bridge
             }
             return false;
         }
-        
-        public static void RegisterPanelInstance(string panelId, UIElementBridge instance, BanterUIPanel banterUIPanel)
+
+        public static void RegisterPanelInstance(string panelId, UIElementBridge instance, BSUIPanel banterUIPanel)
         {
             if (string.IsNullOrEmpty(panelId))
             {
@@ -56,7 +56,7 @@ namespace Banter.UI.Bridge
             instance.banterUiPanel = banterUIPanel;
             LogVerbose($"Registered panel instance: {panelId}");
         }
-        
+
         public static void UnregisterPanelInstance(string panelId)
         {
             if (_panelInstances.ContainsKey(panelId))
@@ -65,20 +65,57 @@ namespace Banter.UI.Bridge
                 LogVerbose($"Unregistered panel instance: {panelId}");
             }
         }
-        
+
         private Dictionary<string, VisualElement> _elements = new Dictionary<string, VisualElement>();
         private Dictionary<VisualElement, string> _elementToId = new Dictionary<VisualElement, string>(); // Reverse lookup for O(1) element ID retrieval
         private Dictionary<string, UIDocument> _documents = new Dictionary<string, UIDocument>();
         public UIDocument mainDocument;
-        public BanterLink banterLink;
-        
+        public BSLink banterLink;
+
         // Store event callbacks for unregistration
         private Dictionary<(string elementId, UIEventType eventType), object> _registeredCallbacks = new Dictionary<(string, UIEventType), object>();
-        
+
         // Texture cache for background images
         private static Dictionary<string, Texture2D> _textureCache = new Dictionary<string, Texture2D>();
         private static Dictionary<string, Task<Texture2D>> _downloadingTextures = new Dictionary<string, Task<Texture2D>>();
-        
+
+        /// <summary>
+        /// Custom <c>background-image</c> schemes, keyed by scheme without the colon. See
+        /// <see cref="IUIImageSource"/>; <c>res:</c> is built in and is deliberately not in here.
+        /// </summary>
+        private static readonly Dictionary<string, IUIImageSource> _imageSources =
+            new Dictionary<string, IUIImageSource>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>
+        /// Element factories registered by other packages, keyed by element type id. Consulted
+        /// before the built-in switch in <see cref="CreateElementByType"/>, so a package can add a
+        /// type (a colour picker, say) without the SDK referencing it.
+        /// </summary>
+        private static readonly Dictionary<int, Func<VisualElement>> _elementFactories =
+            new Dictionary<int, Func<VisualElement>>();
+
+        /// <summary>
+        /// Register how to build an element type. Replaces any previous registration for the
+        /// same id, so a hot-reloaded provider supersedes its predecessor.
+        /// </summary>
+        public static void RegisterElementFactory(int elementTypeId, Func<VisualElement> factory)
+        {
+            if (factory == null)
+            {
+                Debug.LogWarning($"{LogPrefix} Ignoring a null element factory for type {elementTypeId}.");
+                return;
+            }
+
+            _elementFactories[elementTypeId] = factory;
+            LogVerbose($"Registered element factory for type {elementTypeId}");
+        }
+
+        /// <summary>Remove a factory registered by <see cref="RegisterElementFactory"/>.</summary>
+        public static bool UnregisterElementFactory(int elementTypeId)
+        {
+            return _elementFactories.Remove(elementTypeId);
+        }
+
         // Static HashSet for efficient UI command checking
         private static readonly HashSet<string> _uiCommandPrefixes = new HashSet<string>
         {
@@ -111,7 +148,7 @@ namespace Banter.UI.Bridge
             UICommands.FORCE_UI_LAYOUT,
             UICommands.MEASURE_UI_ELEMENT
         };
-        
+
         /// <summary>
         /// Check if a message is a UI command
         /// </summary>
@@ -121,20 +158,21 @@ namespace Banter.UI.Bridge
         {
             // With panel targeting, format is: panelId|command|data
             // So we need to check the second part for the UI command
-            var parts = message.Split(MessageDelimiters.PRIMARY);
+            var parts = message.Split(MessageDelimiters.PRIMARY, 3);
             if (parts.Length < 2) return false;
-            
+
             string command = parts[1]; // Second part is the command
             return _uiCommandPrefixes.Contains(command);
         }
-        
+
         // Handle all UI messages with required panel targeting
         public static void HandleMessage(string message)
         {
             try
             {
                 LogVerbose($"Handling message: {message}");
-                var parts = message.Split(MessageDelimiters.PRIMARY);
+                // Bounded: the data comes last and can hold a ¶ of its own.
+                var parts = message.Split(MessageDelimiters.PRIMARY, 3);
                 if (parts.Length < 2)
                 {
                     Debug.LogError($"[UIElementBridge] Invalid message format, expected panelId|command|data: {message}");
@@ -143,7 +181,13 @@ namespace Banter.UI.Bridge
 
                 var panelId = parts[0];
                 var command = parts[1];
-                var data = parts.Length > 2 ? parts[2].Split(MessageDelimiters.SECONDARY) : new string[0];
+                // A property or style value (a Label's text, a TextField's value) is free text and
+                // the last field, so splitting at most twice keeps any § in it. Other commands carry
+                // a variable number of fields.
+                var valueLast = command == UICommands.SET_UI_PROPERTY || command == UICommands.SET_UI_STYLE;
+                var data = parts.Length > 2
+                    ? (valueLast ? parts[2].Split(MessageDelimiters.SECONDARY, 3) : parts[2].Split(MessageDelimiters.SECONDARY))
+                    : new string[0];
 
                 var targetBridge = GetPanelInstance(panelId);
                 if (targetBridge != null)
@@ -160,7 +204,7 @@ namespace Banter.UI.Bridge
                 Debug.LogError($"[UIElementBridge] Error handling message: {e.Message}\nMessage: {message}");
             }
         }
-        
+
         private void ProcessCommand(string command, string[] data)
         {
             switch (command)
@@ -168,27 +212,27 @@ namespace Banter.UI.Bridge
                 case UICommands.CREATE_UI_ELEMENT:
                     CreateUIElement(data);
                     break;
-                    
+
                 case UICommands.DESTROY_UI_ELEMENT:
                     DestroyUIElement(data);
                     break;
-                    
+
                 case UICommands.ATTACH_UI_CHILD:
                     AttachChild(data);
                     break;
-                    
+
                 case UICommands.DETACH_UI_CHILD:
                     DetachChild(data);
                     break;
-                    
+
                 case UICommands.SET_UI_PROPERTY:
                     SetProperty(data);
                     break;
-                    
+
                 case UICommands.GET_UI_PROPERTY:
                     GetProperty(data);
                     break;
-                    
+
                 case UICommands.SET_UI_STYLE:
                     SetStyle(data);
                     break;
@@ -200,33 +244,33 @@ namespace Banter.UI.Bridge
                 case UICommands.CALL_UI_METHOD:
                     CallMethod(data);
                     break;
-                    
+
                 case UICommands.REGISTER_UI_EVENT:
                     RegisterEvent(data);
                     break;
-                    
+
                 case UICommands.UNREGISTER_UI_EVENT:
                     UnregisterEvent(data);
                     break;
-                    
+
                 case UICommands.SET_UI_FOCUS:
                     SetFocus(data);
                     break;
-                    
+
                 case UICommands.CLEAR_UI_FOCUS:
                     ClearFocus(data);
                     break;
-                    
+
                 case UICommands.BATCH_UI_UPDATE:
                     ProcessBatchUpdate(data);
                     break;
-                    
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unknown command: {command}");
                     break;
             }
         }
-        
+
         private void CreateUIElement(string[] data)
         {
 
@@ -237,14 +281,14 @@ namespace Banter.UI.Bridge
             }
             LogVerbose("Creating element" + string.Join(",", data));
             if (data.Length < 3) return;
-            
+
             var elementId = data[0];
             var elementType = data[1];
             var parentId = data[2];
             LogVerbose("Creating element: " + elementId + " of type " + elementType + " with parent " + parentId);
             // Create the appropriate VisualElement based on type
             VisualElement element = CreateElementByType(elementType);
-            
+
             if (element != null)
             {
                 _elements[elementId] = element;
@@ -269,56 +313,73 @@ namespace Banter.UI.Bridge
                         Debug.LogWarning("[UIElementBridge] No valid parent found and root element is missing.");
                     }
                 }
-                
+
                 LogVerbose($"Created element: {elementId} of type {elementType}");
             }
         }
-        
+
         private VisualElement CreateElementByType(string type)
         {
             // Parse the UIElementType enum value
             if (int.TryParse(type, out int typeValue))
             {
+                // Types other packages own come first — see RegisterElementFactory.
+                if (_elementFactories.TryGetValue(typeValue, out var factory))
+                {
+                    var made = factory();
+                    if (made != null) return made;
+                    Debug.LogWarning($"{LogPrefix} The factory for element type {typeValue} returned null; falling back.");
+                }
+
                 return typeValue switch
                 {
-                    0 => new VisualElement(), // VisualElement
-                    1 => new ScrollView(), // ScrollView
+                    // BSUIElement rather than a bare VisualElement: it IS a VisualElement, and it is
+                    // the only thing that gives a container an IUIMethodDispatcher — without it,
+                    // AddClass/RemoveClass from JS silently do nothing on every box, which is what
+                    // kept USS classes inert and forced every style to travel per-property.
+                    0 => new BSUIElement(), // VisualElement
+                    // The BS versions of ScrollView and Toggle: only they handle the scrollPosition
+                    // and checked properties JS sets.
+                    1 => new BSUIScrollView(), // ScrollView -> BSUIScrollView
                     2 => new ListView(), // ListView
-                    10 => new BanterUIButton(), // Button -> BanterUIButton
-                    11 => new BanterUILabel(), // Label -> BanterUILabel
-                    12 => new BanterUITextField(), // TextField -> BanterUITextField
-                    13 => new Toggle(), // Toggle
-                    14 => new Slider(), // Slider
+                    10 => new BSUIButton(), // Button -> BSUIButton
+                    11 => new BSUILabel(), // Label -> BSUILabel
+                    12 => new BSUITextField(), // TextField -> BSUITextField
+                    13 => new BSUIToggle(), // Toggle -> BSUIToggle
+                    // BSUISlider, not Slider: only it dispatches SetRange/SetValue and the camelCase
+                    // minValue/maxValue from JS; a plain Slider stays on its 0..10 default range.
+                    14 => new BSUISlider(), // Slider -> BSUISlider
                     15 => new DropdownField(), // DropdownField
                     20 => new UnityEngine.UIElements.Box(), // Box
                     21 => new GroupBox(), // GroupBox
                     22 => new Foldout(), // Foldout
                     100 => new VisualElement() { name = "UIPanel" }, // Custom UIPanel
+                    107 => new BSUIEdgeLayer(), // EdgeLayer (node-graph connection curves)
                     _ => new VisualElement()
                 };
             }
-            
+
             return new VisualElement();
         }
-        
+
         private void DestroyUIElement(string[] data)
         {
             if (data.Length < 1) return;
-            
+
             var elementId = data[0];
-            
+
             if (_elements.TryGetValue(elementId, out var element))
             {
                 // Clean up any registered event callbacks for this element
                 var callbacksToRemove = _registeredCallbacks.Keys
                     .Where(key => key.elementId == elementId)
                     .ToList();
-                    
+
                 foreach (var key in callbacksToRemove)
                 {
                     _registeredCallbacks.Remove(key);
                 }
-                
+
                 element.RemoveFromHierarchy();
                 _elements.Remove(elementId);
                 _elementToId.Remove(element);
@@ -326,15 +387,15 @@ namespace Banter.UI.Bridge
                 LogVerbose($"Destroyed element: {elementId} and cleaned up {callbacksToRemove.Count} event callbacks");
             }
         }
-        
+
         private void AttachChild(string[] data)
         {
             if (data.Length < 3) return;
-            
+
             var parentId = data[0];
             var childId = data[1];
             var index = int.Parse(data[2]);
-            
+
             if (_elements.TryGetValue(parentId, out var parent) &&
                 _elements.TryGetValue(childId, out var child))
             {
@@ -346,25 +407,25 @@ namespace Banter.UI.Bridge
                 {
                     parent.Add(child);
                 }
-                
+
                 LogVerbose($"Attached {childId} to {parentId}");
             }
         }
-        
+
         private void DetachChild(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var parentId = data[0];
             var childId = data[1];
-            
+
             if (_elements.TryGetValue(childId, out var child))
             {
                 child.RemoveFromHierarchy();
                 LogVerbose($"Detached {childId} from {parentId}");
             }
         }
-        
+
         private void SetProperty(string[] data)
         {
             if (data.Length < 3)
@@ -423,15 +484,16 @@ namespace Banter.UI.Bridge
                         return;
 
                     case Slider slider when propertyName == "value":
-                        slider.value = float.Parse(value);
+                        // No ChangeEvent for a value the page set itself (see BSUISlider.value).
+                        slider.SetValueWithoutNotify(NumberFormat.Parse(value));
                         return;
 
                     case Slider slider when propertyName == "minvalue":
-                        slider.lowValue = float.Parse(value);
+                        slider.lowValue = NumberFormat.Parse(value);
                         return;
 
                     case Slider slider when propertyName == "maxvalue":
-                        slider.highValue = float.Parse(value);
+                        slider.highValue = NumberFormat.Parse(value);
                         return;
 
                     case SliderInt sliderInt when propertyName == "value":
@@ -442,18 +504,18 @@ namespace Banter.UI.Bridge
                         var parts = value.Split(',');
                         if (parts.Length == 2)
                         {
-                            minMaxSlider.value = new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                            minMaxSlider.value = new Vector2(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]));
                         }
                         return;
 
                     case ScrollView scrollView when propertyName == "horizontalScrolling":
-                        scrollView.horizontalScrollerVisibility = (value == "1" || value.ToLower() == "true")
+                        scrollView.horizontalScrollerVisibility = (value == "1" || value.ToLowerInvariant() == "true")
                             ? ScrollerVisibility.Auto
                             : ScrollerVisibility.Hidden;
                         return;
 
                     case ScrollView scrollView when propertyName == "verticalScrolling":
-                        scrollView.verticalScrollerVisibility = (value == "1" || value.ToLower() == "true")
+                        scrollView.verticalScrollerVisibility = (value == "1" || value.ToLowerInvariant() == "true")
                             ? ScrollerVisibility.Auto
                             : ScrollerVisibility.Hidden;
                         return;
@@ -462,13 +524,13 @@ namespace Banter.UI.Bridge
                 // Handle common properties that apply to all VisualElements
                 if (propertyName == "enabled")
                 {
-                    element.SetEnabled(value == "1" || value.ToLower() == "true");
+                    element.SetEnabled(value == "1" || value.ToLowerInvariant() == "true");
                     return;
                 }
 
                 if (propertyName == "visible")
                 {
-                    element.style.display = (value == "1" || value.ToLower() == "true") ? DisplayStyle.Flex : DisplayStyle.None;
+                    element.style.display = (value == "1" || value.ToLowerInvariant() == "true") ? DisplayStyle.Flex : DisplayStyle.None;
                     return;
                 }
 
@@ -491,7 +553,7 @@ namespace Banter.UI.Bridge
             // If we get here, the property wasn't handled by any method
             Debug.LogWarning($"[UIElementBridge] Unhandled property '{propertyName}' for element type '{element.GetType().Name}' with value '{value}'");
         }
-        
+
         private void GetProperty(string[] data)
         {
             if (data.Length < 2) return;
@@ -507,22 +569,22 @@ namespace Banter.UI.Bridge
                 Debug.LogWarning($"[UIElementBridge] No element found with ID: {elementId} to get property '{propertyName}'");
                 return;
             }
-            
+
             // Get the property value based on property name and element type
             var propertyValue = GetElementProperty(element, propertyName);
-            
+
             // Trigger EventBus event for Visual Scripting to receive the value
             // Format: UIProperty_{elementId}_{propertyName} with the property value
             var eventName = $"UIProperty_{elementId}_{propertyName}";
             Unity.VisualScripting.EventBus.Trigger(eventName, new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { propertyValue }));
-            
+
             LogVerbose($"Got property '{propertyName}' = '{propertyValue}' from element {elementId}, triggered event {eventName}");
         }
-        
+
         private object GetElementProperty(VisualElement element, string propertyName)
         {
             // Handle common UI properties
-            switch (propertyName.ToLower())
+            switch (propertyName.ToLowerInvariant())
             {
                 case "text":
                     if (element is UnityEngine.UIElements.Label label)
@@ -530,7 +592,7 @@ namespace Banter.UI.Bridge
                     if (element is TextField textField)
                         return textField.value ?? "";
                     break;
-                    
+
                 case "value":
                     if (element is Slider slider)
                         return slider.value;
@@ -541,33 +603,38 @@ namespace Banter.UI.Bridge
                     if (element is DropdownField dropdown)
                         return dropdown.value ?? "";
                     break;
-                    
+
                 case "enabled":
                     return element.enabledSelf ? "1" : "0";
-                    
+
                 case "visible":
                     return element.style.display == UnityEngine.UIElements.DisplayStyle.Flex ? "1" : "0";
-                    
+
                 case "checked":
                     if (element is Toggle toggleChecked)
                         return toggleChecked.value ? "1" : "0";
                     break;
-                    
+
+                case "scrollposition":
+                    if (element is ScrollView scrollView)
+                        return scrollView.scrollOffset;
+                    break;
+
                 case "name":
                     return element.name ?? "";
-                    
+
                 case "tooltip":
                     return element.tooltip ?? "";
-                    
+
                 // Add more properties as needed
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unhandled get property '{propertyName}' for element type '{element.GetType().Name}'");
                     return null;
             }
-            
+
             return null;
         }
-        
+
         private void SetElementValue(VisualElement element, string value)
         {
             switch (element)
@@ -579,27 +646,32 @@ namespace Banter.UI.Bridge
                     toggle.value = value == "1";
                     break;
                 case Slider slider:
-                    slider.value = float.Parse(value);
+                    slider.value = NumberFormat.Parse(value);
                     break;
                 case DropdownField dropdown:
                     dropdown.value = value;
                     break;
             }
         }
-        
+
         private void SetStyle(string[] data)
         {
             if (data.Length < 3) return;
-            
+
             var elementId = data[0];
             var styleNameString = data[1];
             var value = data[2];
-            
+
             if (!_elements.TryGetValue(elementId, out var element)) return;
-            
-            // Convert string to enum
-            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
-            
+
+            // Convert string to enum. An unknown name does nothing: it used to fall back to
+            // BackgroundColor and paint the background with the value.
+            if (!UIStylePropertyHelper.TryFromUSSName(styleNameString, out var styleProperty))
+            {
+                Debug.LogWarning($"[UIElementBridge] Unknown style property '{styleNameString}' - ignored.");
+                return;
+            }
+
             // Apply style based on property enum
             switch (styleProperty)
             {
@@ -631,7 +703,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.JustifyContent:
                     element.style.justifyContent = ParseEnum<Justify>(value);
                     break;
-                    
+
                 // Size Properties
                 case UIStyleProperty.Width:
                     element.style.width = ParseLength(value);
@@ -651,7 +723,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.MaxHeight:
                     element.style.maxHeight = ParseLength(value);
                     break;
-                    
+
                 // Position Properties
                 case UIStyleProperty.Position:
                     element.style.position = ParseEnum<Position>(value);
@@ -668,7 +740,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.Bottom:
                     element.style.bottom = ParseLength(value);
                     break;
-                    
+
                 // Margin Properties
                 case UIStyleProperty.Margin:
                     var margin = ParseSpacing(value);
@@ -689,7 +761,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.MarginLeft:
                     element.style.marginLeft = ParseLength(value);
                     break;
-                    
+
                 // Padding Properties
                 case UIStyleProperty.Padding:
                     var padding = ParseSpacing(value);
@@ -710,7 +782,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.PaddingLeft:
                     element.style.paddingLeft = ParseLength(value);
                     break;
-                    
+
                 // Border Properties
                 case UIStyleProperty.BorderWidth:
                     var borderWidth = ParseFloat(value);
@@ -750,7 +822,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.BorderBottomRightRadius:
                     element.style.borderBottomRightRadius = ParseLength(value);
                     break;
-                    
+
                 // Border Color Properties
                 case UIStyleProperty.BorderColor:
                     var borderColor = ParseColor(value);
@@ -771,7 +843,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.BorderLeftColor:
                     element.style.borderLeftColor = ParseColor(value);
                     break;
-                    
+
                 // Background Properties
                 case UIStyleProperty.BackgroundColor:
                     element.style.backgroundColor = ParseColor(value);
@@ -779,7 +851,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.BackgroundImage:
                     SetBackgroundImage(element, value);
                     break;
-                    
+
                 // Color Properties
                 case UIStyleProperty.Color:
                     element.style.color = ParseColor(value);
@@ -787,7 +859,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.Opacity:
                     element.style.opacity = ParseFloat(value);
                     break;
-                    
+
                 // Text Properties
                 case UIStyleProperty.FontSize:
                     element.style.fontSize = ParseLength(value);
@@ -807,7 +879,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.TextOverflow:
                     element.style.textOverflow = ParseEnum<TextOverflow>(value);
                     break;
-                    
+
                 // Display Properties
                 case UIStyleProperty.Display:
                     element.style.display = ParseEnum<DisplayStyle>(value);
@@ -818,7 +890,7 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.Overflow:
                     element.style.overflow = ParseEnum<Overflow>(value);
                     break;
-                    
+
                 // Unity-specific Text Properties
                 case UIStyleProperty.UnityTextAlign:
                     element.style.unityTextAlign = ParseEnum<TextAnchor>(value);
@@ -829,12 +901,28 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.UnityTextOutlineWidth:
                     element.style.unityTextOutlineWidth = ParseFloat(value);
                     break;
-                    
+
+                // Transform Properties. Transform writes do not invalidate layout, which is what
+                // makes a pan/zoom canvas viable over the bridge: two style messages move the
+                // whole container.
+                case UIStyleProperty.Translate:
+                    element.style.translate = ParseTranslate(value);
+                    break;
+                case UIStyleProperty.Scale:
+                    element.style.scale = ParseScale(value);
+                    break;
+                case UIStyleProperty.Rotate:
+                    element.style.rotate = ParseRotate(value);
+                    break;
+                case UIStyleProperty.TransformOrigin:
+                    element.style.transformOrigin = ParseTransformOrigin(value);
+                    break;
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported style property: {styleProperty} ({styleNameString})");
                     break;
             }
-            
+
             LogVerbose($"Set style {styleProperty} = '{value}' on element {elementId}");
         }
 
@@ -851,8 +939,12 @@ namespace Banter.UI.Bridge
                 return;
             }
 
-            // Convert string to enum
-            var styleProperty = UIStylePropertyHelper.FromUSSName(styleNameString);
+            // Convert string to enum (an unknown name used to read back the background colour)
+            if (!UIStylePropertyHelper.TryFromUSSName(styleNameString, out var styleProperty))
+            {
+                Debug.LogWarning($"[UIElementBridge] Unknown style property '{styleNameString}' - ignored.");
+                return;
+            }
 
             // Get style value from resolved style
             string styleValue = GetStyleValue(element, styleProperty);
@@ -873,11 +965,11 @@ namespace Banter.UI.Bridge
             {
                 // Layout Properties (Flexbox)
                 case UIStyleProperty.AlignContent:
-                    return style.alignContent.ToString().ToLower();
+                    return style.alignContent.ToString().ToLowerInvariant();
                 case UIStyleProperty.AlignItems:
-                    return style.alignItems.ToString().ToLower();
+                    return style.alignItems.ToString().ToLowerInvariant();
                 case UIStyleProperty.AlignSelf:
-                    return style.alignSelf.ToString().ToLower();
+                    return style.alignSelf.ToString().ToLowerInvariant();
                 case UIStyleProperty.FlexBasis:
                     return FormatStyleFloat(style.flexBasis);
                 case UIStyleProperty.FlexDirection:
@@ -907,7 +999,7 @@ namespace Banter.UI.Bridge
 
                 // Position Properties
                 case UIStyleProperty.Position:
-                    return style.position.ToString().ToLower();
+                    return style.position.ToString().ToLowerInvariant();
                 case UIStyleProperty.Left:
                     return FormatStyleLength(style.left);
                 case UIStyleProperty.Top:
@@ -939,13 +1031,13 @@ namespace Banter.UI.Bridge
 
                 // Border Properties
                 case UIStyleProperty.BorderTopWidth:
-                    return style.borderTopWidth.ToString();
+                    return NumberFormat.Format(style.borderTopWidth);
                 case UIStyleProperty.BorderRightWidth:
-                    return style.borderRightWidth.ToString();
+                    return NumberFormat.Format(style.borderRightWidth);
                 case UIStyleProperty.BorderBottomWidth:
-                    return style.borderBottomWidth.ToString();
+                    return NumberFormat.Format(style.borderBottomWidth);
                 case UIStyleProperty.BorderLeftWidth:
-                    return style.borderLeftWidth.ToString();
+                    return NumberFormat.Format(style.borderLeftWidth);
                 case UIStyleProperty.BorderTopLeftRadius:
                     return FormatStyleLength(style.borderTopLeftRadius);
                 case UIStyleProperty.BorderTopRightRadius:
@@ -973,25 +1065,25 @@ namespace Banter.UI.Bridge
                 case UIStyleProperty.Color:
                     return "#" + ColorUtility.ToHtmlStringRGBA(style.color);
                 case UIStyleProperty.Opacity:
-                    return style.opacity.ToString();
+                    return NumberFormat.Format(style.opacity);
 
                 // Text Properties
                 case UIStyleProperty.FontSize:
                     return FormatStyleLength(style.fontSize);
                 case UIStyleProperty.FontStyle:
-                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                    return style.unityFontStyleAndWeight.ToString().ToLowerInvariant();
                 case UIStyleProperty.FontWeight:
-                    return style.unityFontStyleAndWeight.ToString().ToLower();
+                    return style.unityFontStyleAndWeight.ToString().ToLowerInvariant();
                 case UIStyleProperty.UnityTextAlign:
                     return FormatTextAnchor(style.unityTextAlign);
                 case UIStyleProperty.WhiteSpace:
-                    return style.whiteSpace.ToString().ToLower();
+                    return style.whiteSpace.ToString().ToLowerInvariant();
 
                 // Display Properties
                 case UIStyleProperty.Display:
-                    return style.display.ToString().ToLower();
+                    return style.display.ToString().ToLowerInvariant();
                 case UIStyleProperty.Visibility:
-                    return style.visibility.ToString().ToLower();
+                    return style.visibility.ToString().ToLowerInvariant();
 
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported get style property: {property}");
@@ -1003,26 +1095,26 @@ namespace Banter.UI.Bridge
         {
             if (length.keyword != StyleKeyword.Undefined && length.keyword != StyleKeyword.Null)
             {
-                return length.keyword.ToString().ToLower();
+                return length.keyword.ToString().ToLowerInvariant();
             }
 
             var value = length.value;
             if (value.unit == LengthUnit.Pixel)
-                return $"{value.value}px";
+                return NumberFormat.Format(value.value) + "px";
             else if (value.unit == LengthUnit.Percent)
-                return $"{value.value}%";
+                return NumberFormat.Format(value.value) + "%";
             else
-                return value.value.ToString();
+                return NumberFormat.Format(value.value);
         }
 
         private string FormatStyleFloat(StyleFloat styleFloat)
         {
             if (styleFloat.keyword != StyleKeyword.Undefined && styleFloat.keyword != StyleKeyword.Null)
             {
-                return styleFloat.keyword.ToString().ToLower();
+                return styleFloat.keyword.ToString().ToLowerInvariant();
             }
 
-            return styleFloat.value.ToString();
+            return NumberFormat.Format(styleFloat.value);
         }
 
         private string FormatFlexDirection(FlexDirection direction)
@@ -1082,9 +1174,9 @@ namespace Banter.UI.Bridge
         {
             if (string.IsNullOrEmpty(value))
                 return new StyleLength(StyleKeyword.Initial);
-            
-            value = value.Trim().ToLower();
-            
+
+            value = value.Trim().ToLowerInvariant();
+
             // Handle CSS keywords (only those supported by Unity)
             switch (value)
             {
@@ -1103,87 +1195,87 @@ namespace Banter.UI.Bridge
                     // Unity doesn't directly support these, fallback to auto
                     return new StyleLength(StyleKeyword.Auto);
             }
-            
+
             // Parse numeric values with units
             var match = System.Text.RegularExpressions.Regex.Match(value, @"^(-?\d*\.?\d+)(px|%|em|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc)?$");
             if (match.Success)
             {
-                var numericValue = float.Parse(match.Groups[1].Value);
+                var numericValue = NumberFormat.Parse(match.Groups[1].Value);
                 var unit = match.Groups[2].Value;
-                
+
                 switch (unit)
                 {
                     case "":
                     case "px":
                         return new StyleLength(numericValue);
-                    
+
                     case "%":
                         return new StyleLength(Length.Percent(numericValue));
-                    
+
                     case "em":
                     case "rem":
                         // Convert em/rem to pixels (assuming 16px base font size)
                         return new StyleLength(numericValue * 16f);
-                    
+
                     case "vw":
                         // Viewport width percentage (assuming 1920px viewport)
                         return new StyleLength(numericValue * 1920f / 100f);
-                    
+
                     case "vh":
                         // Viewport height percentage (assuming 1080px viewport)
                         return new StyleLength(numericValue * 1080f / 100f);
-                    
+
                     case "vmin":
                         // Smaller of vw or vh
                         var minViewport = Mathf.Min(1920f, 1080f);
                         return new StyleLength(numericValue * minViewport / 100f);
-                    
+
                     case "vmax":
                         // Larger of vw or vh
                         var maxViewport = Mathf.Max(1920f, 1080f);
                         return new StyleLength(numericValue * maxViewport / 100f);
-                    
+
                     case "cm":
                         // Centimeters to pixels (96 DPI)
                         return new StyleLength(numericValue * 37.795f);
-                    
+
                     case "mm":
                         // Millimeters to pixels
                         return new StyleLength(numericValue * 3.7795f);
-                    
+
                     case "in":
                         // Inches to pixels
                         return new StyleLength(numericValue * 96f);
-                    
+
                     case "pt":
                         // Points to pixels
                         return new StyleLength(numericValue * 1.333f);
-                    
+
                     case "pc":
                         // Picas to pixels
                         return new StyleLength(numericValue * 16f);
-                    
+
                     default:
                         return new StyleLength(numericValue);
                 }
             }
-            
+
             // Fallback: try to parse as float
-            if (float.TryParse(value, out float fallbackValue))
+            if (NumberFormat.TryParse(value, out float fallbackValue))
             {
                 return new StyleLength(fallbackValue);
             }
-            
+
             return new StyleLength(StyleKeyword.Initial);
         }
-        
+
         private StyleColor ParseColor(string value)
         {
             if (string.IsNullOrEmpty(value))
                 return new StyleColor(StyleKeyword.Initial);
-            
-            value = value.Trim().ToLower();
-            
+
+            value = value.Trim().ToLowerInvariant();
+
             // Handle CSS keywords (only those supported by Unity)
             switch (value)
             {
@@ -1197,20 +1289,20 @@ namespace Banter.UI.Bridge
                 case "currentcolor":
                     return new StyleColor(StyleKeyword.Initial); // Fallback
             }
-            
+
             // Handle named colors
             Color namedColor = ParseNamedColor(value);
             if (namedColor != Color.clear)
             {
                 return new StyleColor(namedColor);
             }
-            
+
             // Handle hex colors (#RGB, #RRGGBB)
             if (ColorUtility.TryParseHtmlString(value, out Color hexColor))
             {
                 return new StyleColor(hexColor);
             }
-            
+
             // Handle rgba() format
             var rgbaMatch = System.Text.RegularExpressions.Regex.Match(value, @"rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)");
             if (rgbaMatch.Success)
@@ -1218,10 +1310,10 @@ namespace Banter.UI.Bridge
                 var r = int.Parse(rgbaMatch.Groups[1].Value) / 255f;
                 var g = int.Parse(rgbaMatch.Groups[2].Value) / 255f;
                 var b = int.Parse(rgbaMatch.Groups[3].Value) / 255f;
-                var a = rgbaMatch.Groups[4].Success ? float.Parse(rgbaMatch.Groups[4].Value) : 1f;
+                var a = rgbaMatch.Groups[4].Success ? NumberFormat.Parse(rgbaMatch.Groups[4].Value) : 1f;
                 return new StyleColor(new Color(r, g, b, a));
             }
-            
+
             // Handle hsla() format (basic conversion)
             var hslaMatch = System.Text.RegularExpressions.Regex.Match(value, @"hsla?\(\s*(\d+)\s*,\s*(\d+)%\s*,\s*(\d+)%\s*(?:,\s*([\d.]+))?\s*\)");
             if (hslaMatch.Success)
@@ -1229,18 +1321,18 @@ namespace Banter.UI.Bridge
                 var h = int.Parse(hslaMatch.Groups[1].Value) / 360f;
                 var s = int.Parse(hslaMatch.Groups[2].Value) / 100f;
                 var l = int.Parse(hslaMatch.Groups[3].Value) / 100f;
-                var a = hslaMatch.Groups[4].Success ? float.Parse(hslaMatch.Groups[4].Value) : 1f;
-                
+                var a = hslaMatch.Groups[4].Success ? NumberFormat.Parse(hslaMatch.Groups[4].Value) : 1f;
+
                 // Convert HSL to RGB
                 var rgbColor = HSLToRGB(h, s, l);
                 rgbColor.a = a;
                 return new StyleColor(rgbColor);
             }
-            
+
             // Fallback to white
             return new StyleColor(Color.white);
         }
-        
+
         private Color ParseNamedColor(string colorName)
         {
             return colorName switch
@@ -1263,11 +1355,11 @@ namespace Banter.UI.Bridge
                 _ => Color.clear // Indicates not found
             };
         }
-        
+
         private Color HSLToRGB(float h, float s, float l)
         {
             float r, g, b;
-            
+
             if (s == 0f)
             {
                 r = g = b = l; // Achromatic
@@ -1278,42 +1370,59 @@ namespace Banter.UI.Bridge
                 {
                     if (t < 0f) t += 1f;
                     if (t > 1f) t -= 1f;
-                    if (t < 1f/6f) return p + (q - p) * 6f * t;
-                    if (t < 1f/2f) return q;
-                    if (t < 2f/3f) return p + (q - p) * (2f/3f - t) * 6f;
+                    if (t < 1f / 6f) return p + (q - p) * 6f * t;
+                    if (t < 1f / 2f) return q;
+                    if (t < 2f / 3f) return p + (q - p) * (2f / 3f - t) * 6f;
                     return p;
                 }
-                
+
                 var q = l < 0.5f ? l * (1f + s) : l + s - l * s;
                 var p = 2f * l - q;
-                r = hue2rgb(p, q, h + 1f/3f);
+                r = hue2rgb(p, q, h + 1f / 3f);
                 g = hue2rgb(p, q, h);
-                b = hue2rgb(p, q, h - 1f/3f);
+                b = hue2rgb(p, q, h - 1f / 3f);
             }
-            
+
             return new Color(r, g, b, 1f);
         }
-        
+
         /// <summary>
         /// Sets background image from URL or CSS value
         /// </summary>
         private async void SetBackgroundImage(VisualElement element, string value)
         {
-            if (string.IsNullOrEmpty(value) || value.ToLower() == "none")
+            // Trimmed comparison rather than value.ToLower(): this used to lowercase the WHOLE
+            // payload on every set purely to test four characters, and with base64 data: URIs that
+            // payload is tens of kilobytes. An allocation that size per icon per style write is not
+            // something the keyword test needs.
+            var trimmed = value?.Trim();
+            if (string.IsNullOrEmpty(trimmed) || trimmed.Equals("none", StringComparison.OrdinalIgnoreCase))
             {
                 // Clear background image
                 element.style.backgroundImage = new StyleBackground(StyleKeyword.None);
                 return;
             }
-            
+
             // Parse CSS url() format: url("https://example.com/image.png")
-            string imageUrl = ParseBackgroundImageUrl(value);
+            string imageUrl = ParseBackgroundImageUrl(trimmed);
             if (string.IsNullOrEmpty(imageUrl))
             {
                 Debug.LogWarning($"[UIElementBridge] Invalid background-image value: {value}");
                 return;
             }
-            
+
+            // Locally-resolved schemes are handled BEFORE the await, and that ordering is load
+            // bearing rather than an optimisation. Style writes arrive in the order JS sent them,
+            // and an await here yields the rest of the batch — so an awaited local resolve would
+            // let a later write to the same element land first and then be overwritten by this one.
+            // Synchronous resolution keeps last-write-wins actually true.
+            if (TryResolveLocalImage(imageUrl, out var local))
+            {
+                element.style.backgroundImage = local;
+                LogVerbose($"Set background image from local source: {imageUrl}");
+                return;
+            }
+
             try
             {
                 var texture = await GetOrDownloadTexture(imageUrl);
@@ -1328,30 +1437,136 @@ namespace Banter.UI.Bridge
                 Debug.LogError($"[UIElementBridge] Failed to load background image from {imageUrl}: {e.Message}");
             }
         }
-        
+
+        /// <summary>
+        /// Resolve an image that is already on the Unity side: <c>res:</c> for anything under a
+        /// Resources folder, plus whatever schemes have been registered through
+        /// <see cref="RegisterImageSource"/>.
+        /// </summary>
+        /// <remarks>
+        /// The point of these schemes is to stop images crossing the bridge as base64. A data: URI
+        /// costs its own length in string on the wire, again as a dictionary key, and a main-thread
+        /// PNG decode on top — per image, forever, because the payload IS the identity. A
+        /// <c>res:</c> path is a couple of dozen bytes and resolves to an asset Unity has already
+        /// imported, compressed and (for the atlas-backed sources) can unload as one unit.
+        ///
+        /// Nothing is cached here. <c>Resources.Load</c> already returns the same instance for
+        /// repeat calls, and caching the result ourselves would pin every icon ever shown against
+        /// <c>Resources.UnloadUnusedAssets</c> — which is exactly the leak the kit atlases must not
+        /// have.
+        /// </remarks>
+        private static bool TryResolveLocalImage(string source, out StyleBackground background)
+        {
+            background = default;
+            if (string.IsNullOrEmpty(source)) return false;
+
+            var colon = source.IndexOf(':');
+            if (colon <= 0) return false;
+
+            var scheme = source.Substring(0, colon);
+            var path = source.Substring(colon + 1).Trim();
+            if (path.Length == 0) return false;
+
+            if (scheme.Equals("res", StringComparison.OrdinalIgnoreCase))
+            {
+                // Texture first, then Sprite. A plain texture is what an icon imported with the
+                // default settings is, and asking for a Sprite would quietly miss it; a Sprite is
+                // what anything sliced out of a sheet is, and asking only for a Texture2D would
+                // return the whole sheet rather than the frame. Trying both means the caller does
+                // not have to know which importer the artist used.
+                var texture = Resources.Load<Texture2D>(path);
+                if (texture != null)
+                {
+                    background = new StyleBackground(texture);
+                    return true;
+                }
+
+                var sprite = Resources.Load<Sprite>(path);
+                if (sprite != null)
+                {
+                    background = new StyleBackground(sprite);
+                    return true;
+                }
+
+                Debug.LogWarning($"{LogPrefix} No texture or sprite in any Resources folder at '{path}'.");
+                return false;
+            }
+
+            if (_imageSources.TryGetValue(scheme, out var provider))
+            {
+                if (provider.TryResolve(path, out background)) return true;
+
+                Debug.LogWarning($"{LogPrefix} Image source '{scheme}' could not resolve '{path}'.");
+                return false;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Register a resolver for a custom <c>background-image</c> scheme. Replaces any previous
+        /// registration for the same scheme, so a hot-reloaded provider supersedes its predecessor
+        /// rather than being ignored by it.
+        /// </summary>
+        public static void RegisterImageSource(IUIImageSource source)
+        {
+            if (source == null || string.IsNullOrEmpty(source.Scheme))
+            {
+                Debug.LogWarning($"{LogPrefix} Ignoring an image source with no scheme.");
+                return;
+            }
+
+            _imageSources[source.Scheme] = source;
+            LogVerbose($"Registered image source for scheme '{source.Scheme}:'");
+        }
+
+        /// <summary>Remove a scheme registered by <see cref="RegisterImageSource"/>.</summary>
+        public static bool UnregisterImageSource(string scheme)
+        {
+            return !string.IsNullOrEmpty(scheme) && _imageSources.Remove(scheme);
+        }
+
+        /// <summary>
+        /// True when a bare (un-<c>url()</c>-wrapped) value carries a registered scheme.
+        /// </summary>
+        /// <remarks>
+        /// Only consulted for the direct-value fallback. Anything inside <c>url("…")</c> already
+        /// matches the regex above whatever its scheme, so this is purely about tolerating a value
+        /// written without the wrapper.
+        /// </remarks>
+        private static bool HasRegisteredScheme(string value)
+        {
+            if (_imageSources.Count == 0) return false;
+
+            var colon = value.IndexOf(':');
+            return colon > 0 && _imageSources.ContainsKey(value.Substring(0, colon));
+        }
+
         /// <summary>
         /// Parses background-image CSS value to extract URL
         /// </summary>
         private string ParseBackgroundImageUrl(string value)
         {
             if (string.IsNullOrEmpty(value)) return null;
-            
+
             // Handle url("...") format
             var urlMatch = System.Text.RegularExpressions.Regex.Match(value, @"url\s*\(\s*['""]?([^'""()]+)['""]?\s*\)");
             if (urlMatch.Success)
             {
                 return urlMatch.Groups[1].Value.Trim();
             }
-            
+
             // Handle direct URL (fallback)
-            if (value.StartsWith("http://") || value.StartsWith("https://") || value.StartsWith("data:"))
+            if (value.StartsWith("http://") || value.StartsWith("https://") || value.StartsWith("data:")
+                || value.StartsWith("res:", StringComparison.OrdinalIgnoreCase)
+                || HasRegisteredScheme(value))
             {
                 return value.Trim();
             }
-            
+
             return null;
         }
-        
+
         /// <summary>
         /// Gets texture from cache or downloads it using Get.Texture
         /// </summary>
@@ -1362,27 +1577,39 @@ namespace Banter.UI.Bridge
             {
                 return cachedTexture;
             }
-            
+
+            // data: URIs are decoded inline. UnityWebRequest cannot fetch them, so an injected
+            // bundle that embeds its own icons would otherwise fail on every one of them.
+            if (url.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+            {
+                var decoded = DecodeDataUriTexture(url);
+                if (decoded != null)
+                {
+                    _textureCache[url] = decoded;
+                }
+                return decoded;
+            }
+
             // Check if already downloading
             if (_downloadingTextures.TryGetValue(url, out var downloadingTask))
             {
                 return await downloadingTask;
             }
-            
+
             // Start download
             var downloadTask = DownloadTexture(url);
             _downloadingTextures[url] = downloadTask;
-            
+
             try
             {
                 var texture = await downloadTask;
-                
+
                 // Cache the result
                 if (texture != null)
                 {
                     _textureCache[url] = texture;
                 }
-                
+
                 return texture;
             }
             finally
@@ -1391,7 +1618,47 @@ namespace Banter.UI.Bridge
                 _downloadingTextures.Remove(url);
             }
         }
-        
+
+        /// <summary>
+        /// Decodes a base64 data: URI into a Texture2D. Returns null if the URI is malformed,
+        /// not base64-encoded, or the payload is not a PNG/JPG Unity can load.
+        /// </summary>
+        private static Texture2D DecodeDataUriTexture(string url)
+        {
+            var comma = url.IndexOf(',');
+            if (comma < 0)
+            {
+                Debug.LogWarning($"{LogPrefix} data: URI has no payload separator");
+                return null;
+            }
+
+            var meta = url.Substring(0, comma);
+            if (meta.IndexOf("base64", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                Debug.LogWarning($"{LogPrefix} only base64-encoded data: URIs are supported, got '{meta}'");
+                return null;
+            }
+
+            try
+            {
+                var bytes = Convert.FromBase64String(url.Substring(comma + 1));
+                var texture = new Texture2D(2, 2, TextureFormat.RGBA32, false);
+                if (!texture.LoadImage(bytes))
+                {
+                    UnityEngine.Object.Destroy(texture);
+                    Debug.LogWarning($"{LogPrefix} data: URI payload was not a loadable image");
+                    return null;
+                }
+                LogVerbose($"Decoded data: URI texture ({bytes.Length} bytes, {texture.width}x{texture.height})");
+                return texture;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"{LogPrefix} Failed to decode data: URI texture: {e.Message}");
+                return null;
+            }
+        }
+
         /// <summary>
         /// Downloads texture using the existing Get.Texture method
         /// </summary>
@@ -1399,6 +1666,7 @@ namespace Banter.UI.Bridge
         {
             try
             {
+                if (PageUrl.Refuse(url, nameof(UIElementBridge))) return null;
                 LogVerbose($"Downloading texture from: {url}");
                 var texture = await Get.Texture(url);
                 return texture;
@@ -1409,7 +1677,7 @@ namespace Banter.UI.Bridge
                 return null;
             }
         }
-        
+
         /// <summary>
         /// Clears the texture cache to free memory
         /// </summary>
@@ -1426,21 +1694,21 @@ namespace Banter.UI.Bridge
             _downloadingTextures.Clear();
             LogVerbose("Cleared texture cache");
         }
-        
+
         private float[] ParseSpacing(string value)
         {
             if (string.IsNullOrEmpty(value))
                 return new float[] { 0, 0, 0, 0 };
-            
+
             var parts = value.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            
+
             // Parse each part as a length and extract the numeric value
             float[] ParsedValues = new float[parts.Length];
             for (int i = 0; i < parts.Length; i++)
             {
                 var styleLength = ParseLength(parts[i]);
                 // Extract the float value from StyleLength
-                if (styleLength.keyword == StyleKeyword.Auto || 
+                if (styleLength.keyword == StyleKeyword.Auto ||
                     styleLength.keyword == StyleKeyword.Initial)
                 {
                     ParsedValues[i] = 0f;
@@ -1450,7 +1718,7 @@ namespace Banter.UI.Bridge
                     ParsedValues[i] = styleLength.value.value;
                 }
             }
-            
+
             // Apply CSS shorthand rules: top, right, bottom, left
             if (ParsedValues.Length == 1)
             {
@@ -1478,134 +1746,155 @@ namespace Banter.UI.Bridge
                 // Top | Right | Bottom | Left
                 return new[] { ParsedValues[0], ParsedValues[1], ParsedValues[2], ParsedValues[3] };
             }
-            
+
             return new float[] { 0, 0, 0, 0 };
         }
-        
+
         private float ParseFloat(string value)
         {
             if (string.IsNullOrEmpty(value)) return 0f;
-            
+
             // Remove common units
             value = value.Replace("px", "").Replace("em", "").Replace("rem", "");
-            
-            if (float.TryParse(value, out float result))
+
+            if (NumberFormat.TryParse(value, out float result))
                 return result;
-                
+
             return 0f;
         }
-        
+
+        // Transform-style parsers. Culture-invariant: these values come off the wire, never
+        // from locale-formatted user input.
+        private static float ParseFloatInvariant(string value)
+        {
+            return NumberFormat.TryParse(value, out var f) ? f : 0f;
+        }
+
+        private static Length ParseLengthComponent(string value)
+        {
+            value = value.Trim();
+            if (value.EndsWith("%"))
+                return Length.Percent(ParseFloatInvariant(value.Substring(0, value.Length - 1)));
+            if (value.EndsWith("px"))
+                return new Length(ParseFloatInvariant(value.Substring(0, value.Length - 2)));
+            return new Length(ParseFloatInvariant(value));
+        }
+
+        private StyleTranslate ParseTranslate(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleTranslate(StyleKeyword.Initial);
+            value = value.Trim();
+            if (value == "none") return new StyleTranslate(StyleKeyword.None);
+            var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            // A value that is neither null nor empty can still split to nothing — "   " does.
+            // Indexing [0] regardless would throw out of SetStyle, and because SetStyle is called
+            // from the message loop that would abandon every style queued behind it: one stray
+            // space and a whole panel stops being laid out, with nothing in the log to say why.
+            if (parts.Length == 0) return new StyleTranslate(StyleKeyword.Initial);
+            var x = ParseLengthComponent(parts[0]);
+            var y = parts.Length > 1 ? ParseLengthComponent(parts[1]) : new Length(0);
+            return new StyleTranslate(new Translate(x, y));
+        }
+
+        private StyleScale ParseScale(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleScale(StyleKeyword.Initial);
+            value = value.Trim();
+            if (value == "none") return new StyleScale(StyleKeyword.None);
+            var parts = value.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return new StyleScale(StyleKeyword.Initial);
+            var x = ParseFloatInvariant(parts[0]);
+            var y = parts.Length > 1 ? ParseFloatInvariant(parts[1]) : x;
+            return new StyleScale(new Scale(new Vector2(x, y)));
+        }
+
+        private StyleRotate ParseRotate(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleRotate(StyleKeyword.Initial);
+            value = value.Trim();
+            if (value == "none") return new StyleRotate(StyleKeyword.None);
+            if (value.EndsWith("deg")) value = value.Substring(0, value.Length - 3);
+            return new StyleRotate(new Rotate(Angle.Degrees(ParseFloatInvariant(value))));
+        }
+
+        private StyleTransformOrigin ParseTransformOrigin(string value)
+        {
+            if (string.IsNullOrEmpty(value)) return new StyleTransformOrigin(StyleKeyword.Initial);
+            var parts = value.Trim().ToLowerInvariant().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 0) return new StyleTransformOrigin(StyleKeyword.Initial);
+            Length Component(string part)
+            {
+                switch (part)
+                {
+                    case "left":
+                    case "top": return Length.Percent(0);
+                    case "right":
+                    case "bottom": return Length.Percent(100);
+                    case "center": return Length.Percent(50);
+                    default: return ParseLengthComponent(part);
+                }
+            }
+            var x = Component(parts[0]);
+            var y = parts.Length > 1 ? Component(parts[1]) : Length.Percent(50);
+            return new StyleTransformOrigin(new TransformOrigin(x, y));
+        }
+
         private StyleEnum<T> ParseEnum<T>(string value) where T : struct, System.Enum
         {
             if (string.IsNullOrEmpty(value))
                 return new StyleEnum<T>(StyleKeyword.Initial);
-                
-            // Handle CSS keywords (only those supported by Unity)
-            switch (value.ToLower())
+
+            var name = value.Trim().ToLowerInvariant();
+
+            // The enum's own values first, kebab-case allowed (flex-start, row-reverse, space-between, no-wrap,
+            // upper-left). The CSS keywords used to be checked first, so `display: none` became
+            // StyleKeyword.None instead of DisplayStyle.None and hid nothing (likewise `align-self: auto`).
+            // A number only when it names a value.
+            if (System.Enum.TryParse<T>(name.Replace("-", ""), true, out T enumValue) && System.Enum.IsDefined(typeof(T), enumValue))
+            {
+                return new StyleEnum<T>(enumValue);
+            }
+
+            // CSS spellings that aren't the enum's names.
+            if (typeof(T) == typeof(TextAnchor))
+            {
+                switch (name)
+                {
+                    case "left":
+                        return new StyleEnum<T>((T)(object)TextAnchor.UpperLeft);
+                    case "center":
+                        return new StyleEnum<T>((T)(object)TextAnchor.MiddleCenter);
+                    case "right":
+                        return new StyleEnum<T>((T)(object)TextAnchor.UpperRight);
+                }
+            }
+
+            // Then CSS keywords (only those supported by Unity)
+            switch (name)
             {
                 case "auto":
                     return new StyleEnum<T>(StyleKeyword.Auto);
-                case "initial":
-                    return new StyleEnum<T>(StyleKeyword.Initial);
                 case "none":
                     return new StyleEnum<T>(StyleKeyword.None);
+                case "initial":
                 case "inherit":
                     // Unity doesn't support inherit, fallback to initial
                     return new StyleEnum<T>(StyleKeyword.Initial);
             }
-            
-            // Try to parse as enum
-            if (System.Enum.TryParse<T>(value, true, out T enumValue))
-            {
-                return new StyleEnum<T>(enumValue);
-            }
-            
-            // Handle specific enum conversions
-            if (typeof(T) == typeof(Align))
-            {
-                return value.ToLower() switch
-                {
-                    "flex-start" => new StyleEnum<T>((T)(object)Align.FlexStart),
-                    "flex-end" => new StyleEnum<T>((T)(object)Align.FlexEnd),
-                    "center" => new StyleEnum<T>((T)(object)Align.Center),
-                    "stretch" => new StyleEnum<T>((T)(object)Align.Stretch),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(FlexDirection))
-            {
-                return value.ToLower() switch
-                {
-                    "row" => new StyleEnum<T>((T)(object)FlexDirection.Row),
-                    "row-reverse" => new StyleEnum<T>((T)(object)FlexDirection.RowReverse),
-                    "column" => new StyleEnum<T>((T)(object)FlexDirection.Column),
-                    "column-reverse" => new StyleEnum<T>((T)(object)FlexDirection.ColumnReverse),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(Justify))
-            {
-                return value.ToLower() switch
-                {
-                    "flex-start" => new StyleEnum<T>((T)(object)Justify.FlexStart),
-                    "flex-end" => new StyleEnum<T>((T)(object)Justify.FlexEnd),
-                    "center" => new StyleEnum<T>((T)(object)Justify.Center),
-                    "space-between" => new StyleEnum<T>((T)(object)Justify.SpaceBetween),
-                    "space-around" => new StyleEnum<T>((T)(object)Justify.SpaceAround),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(Position))
-            {
-                return value.ToLower() switch
-                {
-                    "relative" => new StyleEnum<T>((T)(object)Position.Relative),
-                    "absolute" => new StyleEnum<T>((T)(object)Position.Absolute),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(DisplayStyle))
-            {
-                return value.ToLower() switch
-                {
-                    "flex" => new StyleEnum<T>((T)(object)DisplayStyle.Flex),
-                    "none" => new StyleEnum<T>((T)(object)DisplayStyle.None),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(Visibility))
-            {
-                return value.ToLower() switch
-                {
-                    "visible" => new StyleEnum<T>((T)(object)Visibility.Visible),
-                    "hidden" => new StyleEnum<T>((T)(object)Visibility.Hidden),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            else if (typeof(T) == typeof(TextAnchor))
-            {
-                return value.ToLower() switch
-                {
-                    "left" => new StyleEnum<T>((T)(object)TextAnchor.UpperLeft),
-                    "center" => new StyleEnum<T>((T)(object)TextAnchor.MiddleCenter),
-                    "right" => new StyleEnum<T>((T)(object)TextAnchor.UpperRight),
-                    _ => new StyleEnum<T>(StyleKeyword.Initial)
-                };
-            }
-            
+
             return new StyleEnum<T>(StyleKeyword.Initial);
         }
-        
+
         private void CallMethod(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var methodName = data[1];
             var args = data.Skip(2).ToArray();
-            
+
             if (!_elements.TryGetValue(elementId, out var element)) return;
-            
+
             // Try to use the generated method dispatcher first
             if (element is IUIMethodDispatcher dispatcher)
             {
@@ -1624,7 +1913,7 @@ namespace Banter.UI.Bridge
                 }
             }
         }
-        
+
         private void RegisterEvent(string[] data)
         {
             if (data.Length < 2) return;
@@ -1646,206 +1935,106 @@ namespace Banter.UI.Bridge
             }
 
             LogVerbose($"Found element '{elementId}' of type {element.GetType().Name}");
-            
+
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
             var callbackKey = (elementId, eventType);
-            
+
             // Check if callback is already registered
             if (_registeredCallbacks.ContainsKey(callbackKey))
             {
                 Debug.LogWarning($"[UIElementBridge] Event {eventType} already registered for element {elementId}");
                 return;
             }
-            
+
+            // Optional third field: "stop" halts bubbling after the event is forwarded. Old
+            // bundles never send it, so behavior is unchanged by default; old Unity builds
+            // ignore the extra field, so the skew is safe in both directions.
+            var stop = data.Length > 2 && data[2] == "stop";
+
+            void Register<TEvent>() where TEvent : EventBase<TEvent>, new()
+            {
+                EventCallback<TEvent> callback = evt =>
+                {
+                    SendUIEvent(elementId, eventType, evt);
+                    if (stop) evt.StopPropagation();
+                };
+                element.RegisterCallback(callback);
+                _registeredCallbacks[callbackKey] = callback;
+            }
+
             // Register Unity event callbacks that will send messages back to TypeScript
             switch (eventType)
             {
                 // Basic events
-                case UIEventType.Click:
-                    {
-                        EventCallback<ClickEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.Click: Register<ClickEvent>(); break;
+
                 // Mouse events
-                case UIEventType.MouseDown:
-                    {
-                        EventCallback<MouseDownEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseUp:
-                    {
-                        EventCallback<MouseUpEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseEnter:
-                    {
-                        EventCallback<MouseEnterEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseLeave:
-                    {
-                        EventCallback<MouseLeaveEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseMove:
-                    {
-                        EventCallback<MouseMoveEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseOver:
-                    {
-                        EventCallback<MouseOverEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.MouseOut:
-                    {
-                        EventCallback<MouseOutEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.Wheel:
-                    {
-                        EventCallback<WheelEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.MouseDown: Register<MouseDownEvent>(); break;
+                case UIEventType.MouseUp: Register<MouseUpEvent>(); break;
+                case UIEventType.MouseEnter: Register<MouseEnterEvent>(); break;
+                case UIEventType.MouseLeave: Register<MouseLeaveEvent>(); break;
+                case UIEventType.MouseMove: Register<MouseMoveEvent>(); break;
+                case UIEventType.MouseOver: Register<MouseOverEvent>(); break;
+                case UIEventType.MouseOut: Register<MouseOutEvent>(); break;
+                case UIEventType.Wheel: Register<WheelEvent>(); break;
+
                 // Keyboard events
-                case UIEventType.KeyDown:
-                    {
-                        EventCallback<KeyDownEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.KeyUp:
-                    {
-                        EventCallback<KeyUpEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.KeyDown: Register<KeyDownEvent>(); break;
+                case UIEventType.KeyUp: Register<KeyUpEvent>(); break;
+
                 // Focus events
-                case UIEventType.Focus:
-                    {
-                        EventCallback<FocusEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.Blur:
-                    {
-                        EventCallback<BlurEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.FocusIn:
-                    {
-                        EventCallback<FocusInEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                case UIEventType.FocusOut:
-                    {
-                        EventCallback<FocusOutEvent> callback = evt => SendUIEvent(elementId, eventType, evt);
-                        element.RegisterCallback(callback);
-                        _registeredCallbacks[callbackKey] = callback;
-                    }
-                    break;
-                    
+                case UIEventType.Focus: Register<FocusEvent>(); break;
+                case UIEventType.Blur: Register<BlurEvent>(); break;
+                case UIEventType.FocusIn: Register<FocusInEvent>(); break;
+                case UIEventType.FocusOut: Register<FocusOutEvent>(); break;
+
                 // Input events
                 case UIEventType.Change:
-                    {
-                        // Register multiple change event types based on element type
-                        if (element is TextField || element is DropdownField)
-                        {
-                            EventCallback<ChangeEvent<string>> stringCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(stringCallback);
-                            _registeredCallbacks[callbackKey] = stringCallback;
-                        }
-                        else if (element is Slider)
-                        {
-                            EventCallback<ChangeEvent<float>> floatCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(floatCallback);
-                            _registeredCallbacks[callbackKey] = floatCallback;
-                        }
-                        else if (element is Toggle || element is RadioButton)
-                        {
-                            EventCallback<ChangeEvent<bool>> boolCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(boolCallback);
-                            _registeredCallbacks[callbackKey] = boolCallback;
-                        }
-                        else if (element is SliderInt || element is RadioButtonGroup)
-                        {
-                            EventCallback<ChangeEvent<int>> intCallback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(intCallback);
-                            _registeredCallbacks[callbackKey] = intCallback;
-                        }
-                        else if (element is MinMaxSlider)
-                        {
-                            EventCallback<ChangeEvent<Vector2>> vector2Callback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(vector2Callback);
-                            _registeredCallbacks[callbackKey] = vector2Callback;
-                        }
-                        else
-                        {
-                            // Fallback to string type for unknown elements
-                            EventCallback<ChangeEvent<string>> callback = evt => SendUIEvent(elementId, eventType, evt);
-                            element.RegisterCallback(callback);
-                            _registeredCallbacks[callbackKey] = callback;
-                        }
-                    }
+                    // Register the change event type matching the element's value type
+                    if (element is TextField || element is DropdownField)
+                        Register<ChangeEvent<string>>();
+                    else if (element is Slider)
+                        Register<ChangeEvent<float>>();
+                    else if (element is Toggle || element is RadioButton)
+                        Register<ChangeEvent<bool>>();
+                    else if (element is SliderInt || element is RadioButtonGroup)
+                        Register<ChangeEvent<int>>();
+                    else if (element is MinMaxSlider)
+                        Register<ChangeEvent<Vector2>>();
+                    else
+                        // Fallback to string type for unknown elements
+                        Register<ChangeEvent<string>>();
                     break;
-                 
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported event type: {eventType}");
                     break;
             }
-            
+
             LogVerbose($"Registered {eventType} event for element {elementId}");
         }
-        
+
         private void UnregisterEvent(string[] data)
         {
             if (data.Length < 2) return;
-            
+
             var elementId = data[0];
             var eventTypeString = data[1];
-            
+
             if (!_elements.TryGetValue(elementId, out var element)) return;
-            
+
             // Convert string to enum
             var eventType = UIEventTypeHelper.FromEventName(eventTypeString);
             var callbackKey = (elementId, eventType);
-            
+
             // Check if callback is registered
             if (!_registeredCallbacks.TryGetValue(callbackKey, out var callback))
             {
                 Debug.LogWarning($"[UIElementBridge] No registered callback found for {eventType} event on element {elementId}");
                 return;
             }
-            
+
             // Unregister Unity event callbacks based on event type
             switch (eventType)
             {
@@ -1854,7 +2043,7 @@ namespace Banter.UI.Bridge
                     if (callback is EventCallback<ClickEvent> clickCallback)
                         element.UnregisterCallback(clickCallback);
                     break;
-                    
+
                 // Mouse events
                 case UIEventType.MouseDown:
                     if (callback is EventCallback<MouseDownEvent> mouseDownCallback)
@@ -1888,7 +2077,7 @@ namespace Banter.UI.Bridge
                     if (callback is EventCallback<WheelEvent> wheelCallback)
                         element.UnregisterCallback(wheelCallback);
                     break;
-                    
+
                 // Keyboard events
                 case UIEventType.KeyDown:
                     if (callback is EventCallback<KeyDownEvent> keyDownCallback)
@@ -1898,7 +2087,7 @@ namespace Banter.UI.Bridge
                     if (callback is EventCallback<KeyUpEvent> keyUpCallback)
                         element.UnregisterCallback(keyUpCallback);
                     break;
-                    
+
                 // Focus events
                 case UIEventType.Focus:
                     if (callback is EventCallback<FocusEvent> focusCallback)
@@ -1916,7 +2105,7 @@ namespace Banter.UI.Bridge
                     if (callback is EventCallback<FocusOutEvent> focusOutCallback)
                         element.UnregisterCallback(focusOutCallback);
                     break;
-                    
+
                 // Input events
                 case UIEventType.Change:
                     // Try to unregister different change event types
@@ -1931,40 +2120,40 @@ namespace Banter.UI.Bridge
                     else if (callback is EventCallback<ChangeEvent<Vector2>> vector2ChangeCallback)
                         element.UnregisterCallback(vector2ChangeCallback);
                     break;
-                    
-                    
+
+
                 default:
                     Debug.LogWarning($"[UIElementBridge] Unsupported event type for unregistration: {eventType}");
                     break;
             }
-            
+
             // Remove from stored callbacks
             _registeredCallbacks.Remove(callbackKey);
             LogVerbose($"Unregistered {eventType} event for element {elementId}");
         }
-        
+
         private void SetFocus(string[] data)
         {
             if (data.Length < 1) return;
-            
+
             var elementId = data[0];
             if (_elements.TryGetValue(elementId, out var element))
             {
                 element.Focus();
             }
         }
-        
+
         private void ClearFocus(string[] data)
         {
             if (data.Length < 1) return;
-            
+
             var elementId = data[0];
             if (_elements.TryGetValue(elementId, out var element))
             {
                 element.Blur();
             }
         }
-        
+
         private void ProcessBatchUpdate(string[] data)
         {
             // Process multiple updates in a single frame
@@ -1977,7 +2166,7 @@ namespace Banter.UI.Bridge
                 }
             }
         }
-        
+
         private void SendUIEvent(string elementId, UIEventType eventType, EventBase evt)
         {
             LogVerbose($"SendUIEvent called for element '{elementId}', eventType '{eventType}', evt type {evt.GetType().Name}");
@@ -1988,11 +2177,13 @@ namespace Banter.UI.Bridge
             // Build event data as JSON object based on event type
             var eventDataJson = BuildEventDataJson(evt);
 
-            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{eventDataJson}";
+            // The JSON can carry what a user typed; escaping the bus delimiters keeps it one field
+            // (it still parses to the same values).
+            var message = $"{UICommands.UI_EVENT}{MessageDelimiters.PRIMARY}{elementId}{MessageDelimiters.PRIMARY}{eventTypeName}{MessageDelimiters.PRIMARY}{WireText.EscapeDelimiters(eventDataJson)}";
 
             // Send UI events directly to TypeScript without panel ID prefix
             // TypeScript doesn't need panel ID for element routing
-            SendToJavaScript(message);
+            SendEventToJavaScript(elementId, eventType, message);
 
             // Trigger generic OnUIEvent for all event types (for OnUIEvent visual scripting node)
             var eventPrefix = ConvertEventTypeToPrefix(eventType);
@@ -2002,6 +2193,71 @@ namespace Banter.UI.Bridge
 
             // Also trigger specific EventBus events for Visual Scripting (for specialized nodes like OnUIClick)
             TriggerVisualScriptingEvent(elementId, eventType, evt);
+        }
+
+        // ------------------------------------------------------------------ MouseMove coalescing
+
+        /// <summary>Shortest gap between two MouseMove messages to the page, per element.</summary>
+        const double MouseMoveIntervalMs = 33;
+
+        readonly Dictionary<string, string> _pendingMove = new Dictionary<string, string>();
+        readonly Dictionary<string, double> _lastMoveSentMs = new Dictionary<string, double>();
+
+        /// <summary>
+        /// Send an event to the page, coalescing MouseMove to at most ~30 Hz per element.
+        /// </summary>
+        /// <remarks>
+        /// A controller ray moves every frame — hand tremor alone guarantees it — so an element
+        /// listening for MouseMove (a node-graph canvas listens always) was sent a JSON message on
+        /// every frame at 72-120 Hz, whether or not anything was happening, over a bus where every
+        /// message costs. Only the LATEST position matters, so moves inside the interval replace
+        /// each other and the last one is flushed when the interval ends.
+        ///
+        /// Two rules keep the page's view consistent. Any other event on the element flushes a
+        /// pending move FIRST, so a release is never read against a position the page never saw.
+        /// And the trailing move is flushed on the element's own scheduler, so a pointer that stops
+        /// still reports where it stopped. Visual Scripting listeners are untouched: they run
+        /// in-process and cost no bus traffic.
+        /// </remarks>
+        void SendEventToJavaScript(string elementId, UIEventType eventType, string message)
+        {
+            if (eventType != UIEventType.MouseMove)
+            {
+                FlushPendingMove(elementId);
+                SendToJavaScript(message);
+                return;
+            }
+
+            var now = Time.realtimeSinceStartupAsDouble * 1000.0;
+            if (!_lastMoveSentMs.TryGetValue(elementId, out var last) || now - last >= MouseMoveIntervalMs)
+            {
+                _pendingMove.Remove(elementId);
+                _lastMoveSentMs[elementId] = now;
+                SendToJavaScript(message);
+                return;
+            }
+
+            var alreadyScheduled = _pendingMove.ContainsKey(elementId);
+            _pendingMove[elementId] = message;
+            if (alreadyScheduled) return;
+
+            if (_elements.TryGetValue(elementId, out var element) && element != null)
+            {
+                var wait = (long)Math.Max(1, MouseMoveIntervalMs - (now - last));
+                element.schedule.Execute(() => FlushPendingMove(elementId)).StartingIn(wait);
+            }
+            else
+            {
+                FlushPendingMove(elementId);
+            }
+        }
+
+        void FlushPendingMove(string elementId)
+        {
+            if (!_pendingMove.TryGetValue(elementId, out var message)) return;
+            _pendingMove.Remove(elementId);
+            _lastMoveSentMs[elementId] = Time.realtimeSinceStartupAsDouble * 1000.0;
+            SendToJavaScript(message);
         }
 
         /// <summary>
@@ -2025,7 +2281,7 @@ namespace Banter.UI.Bridge
                 _ => $"UI{eventType}"
             };
         }
-        
+
         private void TriggerVisualScriptingEvent(string elementId, UIEventType eventType, EventBase evt)
         {
             switch (eventType)
@@ -2036,13 +2292,13 @@ namespace Banter.UI.Bridge
                         var eventName = $"UIClick_{elementId}";
                         var mousePosition = new UnityEngine.Vector2(clickEvt.localPosition.x, clickEvt.localPosition.y);
                         var mouseButton = clickEvt.button;
-                        
+
                         Unity.VisualScripting.EventBus.Trigger("OnUIClick", new Unity.VisualScripting.CustomEventArgs(eventName, new object[] { mousePosition, mouseButton }));
-                        
+
                         LogVerbose($"Triggered OnUIClick event for element {elementId} at position {mousePosition} with button {mouseButton}");
                     }
                     break;
-                    
+
                 case UIEventType.Change:
                     if (evt is ChangeEvent<string> changeEvt)
                     {
@@ -2202,121 +2458,149 @@ namespace Banter.UI.Bridge
                     break;
             }
         }
-        
+
         private string BuildEventDataJson(EventBase evt)
         {
-            // Build JSON manually for better control and Unity compatibility
-            var jsonBuilder = new System.Text.StringBuilder();
-            jsonBuilder.Append("{");
-            
-            // Add common event properties
-            jsonBuilder.Append($"\"timestamp\":{evt.timestamp},");
-            jsonBuilder.Append($"\"eventTypeId\":{evt.eventTypeId}");
-            
-            // Add event-specific data based on event type
-            switch (evt)
+            // The float interpolations below must be culture-invariant: on comma-decimal
+            // locales "1,5" instead of "1.5" makes every mouse payload invalid JSON, and
+            // graph gestures parse these coordinates.
+            var restoreCulture = System.Threading.Thread.CurrentThread.CurrentCulture;
+            System.Threading.Thread.CurrentThread.CurrentCulture = System.Globalization.CultureInfo.InvariantCulture;
+            try
             {
-                case ChangeEvent<string> changeEvt:
-                    jsonBuilder.Append($",\"newValue\":\"{EscapeJsonString(changeEvt.newValue)}\"");
-                    jsonBuilder.Append($",\"previousValue\":\"{EscapeJsonString(changeEvt.previousValue)}\"");
-                    break;
-                    
-                case KeyDownEvent keyDown:
-                    jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
-                    jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");
-                    jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case KeyUpEvent keyUp:
-                    jsonBuilder.Append($",\"keyCode\":{(int)keyUp.keyCode}");
-                    jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyUp.character.ToString())}\"");
-                    jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case MouseDownEvent mouseDown:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseDown.localMousePosition.x},\"y\":{mouseDown.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseDown.mousePosition.x},\"y\":{mouseDown.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"button\":{mouseDown.button}");
-                    jsonBuilder.Append($",\"clickCount\":{mouseDown.clickCount}");
-                    jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case MouseUpEvent mouseUp:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseUp.localMousePosition.x},\"y\":{mouseUp.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseUp.mousePosition.x},\"y\":{mouseUp.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"button\":{mouseUp.button}");
-                    jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case ClickEvent click:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{click.localPosition.x},\"y\":{click.localPosition.y}}}");
-                    jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{click.deltaPosition.x},\"y\":{click.deltaPosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{click.position.x},\"y\":{click.position.y}}}");
-                    jsonBuilder.Append($",\"button\":{click.button}");
-                    jsonBuilder.Append($",\"clickCount\":{click.clickCount}");
-                    jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case MouseMoveEvent mouseMove:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseMove.localMousePosition.x},\"y\":{mouseMove.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseMove.mousePosition.x},\"y\":{mouseMove.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{mouseMove.mouseDelta.x},\"y\":{mouseMove.mouseDelta.y}}}");
-                    break;
-                    
-                case MouseEnterEvent mouseEnter:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseEnter.localMousePosition.x},\"y\":{mouseEnter.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseEnter.mousePosition.x},\"y\":{mouseEnter.mousePosition.y}}}");
-                    break;
-                    
-                case MouseLeaveEvent mouseLeave:
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseLeave.localMousePosition.x},\"y\":{mouseLeave.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseLeave.mousePosition.x},\"y\":{mouseLeave.mousePosition.y}}}");
-                    break;
-                    
-                case WheelEvent wheel:
-                    jsonBuilder.Append($",\"delta\":{{\"x\":{wheel.delta.x},\"y\":{wheel.delta.y}}}");
-                    jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{wheel.localMousePosition.x},\"y\":{wheel.localMousePosition.y}}}");
-                    jsonBuilder.Append($",\"mousePosition\":{{\"x\":{wheel.mousePosition.x},\"y\":{wheel.mousePosition.y}}}");
-                    jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLower()}");
-                    jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLower()}");
-                    break;
-                    
-                case FocusEvent focusEvt:
-                    jsonBuilder.Append($",\"direction\":\"{focusEvt.direction.ToString()}\"");
-                    break;
-                    
-                case BlurEvent blurEvt:
-                    jsonBuilder.Append($",\"direction\":\"{blurEvt.direction.ToString()}\"");
-                    break;
+                // Build JSON manually for better control and Unity compatibility
+                var jsonBuilder = new System.Text.StringBuilder();
+                jsonBuilder.Append("{");
+
+                // Add common event properties
+                jsonBuilder.Append($"\"timestamp\":{evt.timestamp},");
+                jsonBuilder.Append($"\"eventTypeId\":{evt.eventTypeId}");
+
+                // Add event-specific data based on event type
+                switch (evt)
+                {
+                    case ChangeEvent<string> changeEvt:
+                        jsonBuilder.Append($",\"newValue\":\"{EscapeJsonString(changeEvt.newValue)}\"");
+                        jsonBuilder.Append($",\"previousValue\":\"{EscapeJsonString(changeEvt.previousValue)}\"");
+                        break;
+
+                    // Sliders and toggles: without these the page's change event had no value at all.
+                    case ChangeEvent<float> floatChangeEvt:
+                        jsonBuilder.Append($",\"newValue\":{floatChangeEvt.newValue}");
+                        jsonBuilder.Append($",\"previousValue\":{floatChangeEvt.previousValue}");
+                        break;
+
+                    case ChangeEvent<int> intChangeEvt:
+                        jsonBuilder.Append($",\"newValue\":{intChangeEvt.newValue}");
+                        jsonBuilder.Append($",\"previousValue\":{intChangeEvt.previousValue}");
+                        break;
+
+                    case ChangeEvent<bool> boolChangeEvt:
+                        jsonBuilder.Append($",\"newValue\":{boolChangeEvt.newValue.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"previousValue\":{boolChangeEvt.previousValue.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case KeyDownEvent keyDown:
+                        jsonBuilder.Append($",\"keyCode\":{(int)keyDown.keyCode}");
+                        jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyDown.character.ToString())}\"");
+                        jsonBuilder.Append($",\"altKey\":{keyDown.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{keyDown.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{keyDown.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{keyDown.commandKey.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case KeyUpEvent keyUp:
+                        jsonBuilder.Append($",\"keyCode\":{(int)keyUp.keyCode}");
+                        jsonBuilder.Append($",\"character\":\"{EscapeJsonString(keyUp.character.ToString())}\"");
+                        jsonBuilder.Append($",\"altKey\":{keyUp.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{keyUp.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{keyUp.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{keyUp.commandKey.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case MouseDownEvent mouseDown:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseDown.localMousePosition.x},\"y\":{mouseDown.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseDown.mousePosition.x},\"y\":{mouseDown.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"button\":{mouseDown.button}");
+                        jsonBuilder.Append($",\"clickCount\":{mouseDown.clickCount}");
+                        jsonBuilder.Append($",\"altKey\":{mouseDown.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{mouseDown.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{mouseDown.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{mouseDown.commandKey.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case MouseUpEvent mouseUp:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseUp.localMousePosition.x},\"y\":{mouseUp.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseUp.mousePosition.x},\"y\":{mouseUp.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"button\":{mouseUp.button}");
+                        jsonBuilder.Append($",\"altKey\":{mouseUp.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{mouseUp.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{mouseUp.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{mouseUp.commandKey.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case ClickEvent click:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{click.localPosition.x},\"y\":{click.localPosition.y}}}");
+                        jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{click.deltaPosition.x},\"y\":{click.deltaPosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{click.position.x},\"y\":{click.position.y}}}");
+                        jsonBuilder.Append($",\"button\":{click.button}");
+                        jsonBuilder.Append($",\"clickCount\":{click.clickCount}");
+                        jsonBuilder.Append($",\"altKey\":{click.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{click.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{click.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{click.commandKey.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case MouseMoveEvent mouseMove:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseMove.localMousePosition.x},\"y\":{mouseMove.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseMove.mousePosition.x},\"y\":{mouseMove.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"mouseDelta\":{{\"x\":{mouseMove.mouseDelta.x},\"y\":{mouseMove.mouseDelta.y}}}");
+                        break;
+
+                    case MouseEnterEvent mouseEnter:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseEnter.localMousePosition.x},\"y\":{mouseEnter.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseEnter.mousePosition.x},\"y\":{mouseEnter.mousePosition.y}}}");
+                        break;
+
+                    case MouseLeaveEvent mouseLeave:
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{mouseLeave.localMousePosition.x},\"y\":{mouseLeave.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{mouseLeave.mousePosition.x},\"y\":{mouseLeave.mousePosition.y}}}");
+                        break;
+
+                    case WheelEvent wheel:
+                        jsonBuilder.Append($",\"delta\":{{\"x\":{wheel.delta.x},\"y\":{wheel.delta.y}}}");
+                        jsonBuilder.Append($",\"localMousePosition\":{{\"x\":{wheel.localMousePosition.x},\"y\":{wheel.localMousePosition.y}}}");
+                        jsonBuilder.Append($",\"mousePosition\":{{\"x\":{wheel.mousePosition.x},\"y\":{wheel.mousePosition.y}}}");
+                        jsonBuilder.Append($",\"altKey\":{wheel.altKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"ctrlKey\":{wheel.ctrlKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"shiftKey\":{wheel.shiftKey.ToString().ToLowerInvariant()}");
+                        jsonBuilder.Append($",\"commandKey\":{wheel.commandKey.ToString().ToLowerInvariant()}");
+                        break;
+
+                    case FocusEvent focusEvt:
+                        jsonBuilder.Append($",\"direction\":\"{focusEvt.direction.ToString()}\"");
+                        break;
+
+                    case BlurEvent blurEvt:
+                        jsonBuilder.Append($",\"direction\":\"{blurEvt.direction.ToString()}\"");
+                        break;
+                }
+
+                jsonBuilder.Append("}");
+                return jsonBuilder.ToString();
             }
-            
-            jsonBuilder.Append("}");
-            return jsonBuilder.ToString();
+            finally
+            {
+                System.Threading.Thread.CurrentThread.CurrentCulture = restoreCulture;
+            }
         }
-        
+
         private string EscapeJsonString(string str)
         {
             if (string.IsNullOrEmpty(str)) return "";
             return str.Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\n", "\\n").Replace("\r", "\\r").Replace("\t", "\\t");
         }
-        
+
         private void SendToJavaScript(string message)
         {
             if (banterLink != null)
@@ -2326,10 +2610,10 @@ namespace Banter.UI.Bridge
             }
             else
             {
-                Debug.LogWarning($"[UIElementBridge] BanterLink not found, cannot send: {message}");
+                Debug.LogWarning($"[UIElementBridge] BSLink not found, cannot send: {message}");
             }
         }
-        
+
         // Public API for other systems
         public VisualElement GetElement(string elementId)
         {
@@ -2379,7 +2663,7 @@ namespace Banter.UI.Bridge
         {
             return !string.IsNullOrEmpty(elementId) && _elements.ContainsKey(elementId);
         }
-        
+
         public void RegisterDocument(string name, UIDocument document)
         {
             _documents[name] = document;
@@ -2400,7 +2684,36 @@ namespace Banter.UI.Bridge
         /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
         public Dictionary<VisualElement, string> ProcessUXMLTree(UIDocument document, string prefix = "uxml")
         {
-            return Banter.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+            // A disabled UIDocument has no tree yet. Keep the request, prefix and all: BSUIPanel registers it
+            // once the document is enabled (ProcessPendingUXML), in the order asked.
+            if (document != null && document.rootVisualElement == null)
+            {
+                if (!_pendingUxml.Contains((document, prefix)))
+                    _pendingUxml.Add((document, prefix));
+                return new Dictionary<VisualElement, string>();
+            }
+            return BS.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+        }
+
+        private readonly List<(UIDocument document, string prefix)> _pendingUxml = new List<(UIDocument document, string prefix)>();
+
+        internal bool HasPendingUXML => _pendingUxml.Count > 0;
+
+        /// <summary>Registers the UXML trees asked for while their document was disabled, for those that now have a root.</summary>
+        internal void ProcessPendingUXML()
+        {
+            for (var i = 0; i < _pendingUxml.Count;)
+            {
+                var (document, prefix) = _pendingUxml[i];
+                if (document != null && document.rootVisualElement == null)
+                {
+                    i++;
+                    continue;
+                }
+                _pendingUxml.RemoveAt(i);
+                if (document != null)
+                    BS.UI.Core.UIXMLTreeProcessor.ProcessDocument(this, document, prefix);
+            }
         }
 
         /// <summary>
@@ -2411,7 +2724,7 @@ namespace Banter.UI.Bridge
         /// <returns>Dictionary mapping visual elements to their assigned IDs</returns>
         public Dictionary<VisualElement, string> ProcessVisualElementTree(VisualElement rootElement, string prefix = "uxml")
         {
-            return Banter.UI.Core.UIXMLTreeProcessor.ProcessTree(this, rootElement, prefix);
+            return BS.UI.Core.UIXMLTreeProcessor.ProcessTree(this, rootElement, prefix);
         }
 
         /// <summary>
@@ -2428,10 +2741,10 @@ namespace Banter.UI.Bridge
                     return int.Parse(value);
 
                 if (targetType == typeof(float))
-                    return float.Parse(value);
+                    return NumberFormat.Parse(value);
 
                 if (targetType == typeof(double))
-                    return double.Parse(value);
+                    return NumberFormat.ParseDouble(value);
 
                 if (targetType == typeof(bool))
                     return bool.Parse(value);
@@ -2440,14 +2753,14 @@ namespace Banter.UI.Bridge
                 {
                     var parts = value.Split(',');
                     if (parts.Length == 2)
-                        return new Vector2(float.Parse(parts[0]), float.Parse(parts[1]));
+                        return new Vector2(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]));
                 }
 
                 if (targetType == typeof(Vector3))
                 {
                     var parts = value.Split(',');
                     if (parts.Length == 3)
-                        return new Vector3(float.Parse(parts[0]), float.Parse(parts[1]), float.Parse(parts[2]));
+                        return new Vector3(NumberFormat.Parse(parts[0]), NumberFormat.Parse(parts[1]), NumberFormat.Parse(parts[2]));
                 }
 
                 if (targetType == typeof(Color))
@@ -2457,7 +2770,7 @@ namespace Banter.UI.Bridge
                 }
 
                 // Fallback: try Convert.ChangeType
-                return Convert.ChangeType(value, targetType);
+                return Convert.ChangeType(value, targetType, System.Globalization.CultureInfo.InvariantCulture);
             }
             catch (Exception ex)
             {

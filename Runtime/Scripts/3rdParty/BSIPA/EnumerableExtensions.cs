@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 
-namespace Banter.Utilities {
+namespace BS.Utilities {
     /// <summary>
     /// Extensions for <see cref="IEnumerable{T}"/> that don't currently exist in <c>System.Linq</c>.
     /// </summary>

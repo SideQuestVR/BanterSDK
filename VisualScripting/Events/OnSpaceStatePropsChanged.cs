@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using UnityEngine;
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On Space State Properties Changed")]
     [UnitShortTitle("Space State Changed")]
-    [UnitCategory("Events\\Banter\\Networking")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Networking")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnSpaceStatePropsChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -56,4 +55,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

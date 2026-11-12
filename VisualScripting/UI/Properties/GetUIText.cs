@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Get UI Text")]
     [UnitShortTitle("Get UI Text")]
-    [UnitCategory("Banter\\UI\\Properties\\Text")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Properties\\Text")]
+    [TypeIcon(typeof(BSObjectId))]
     public class GetUIText : Unit
     {
         [DoNotSerialize]
@@ -29,13 +28,10 @@ namespace Banter.VisualScripting
         [DoNotSerialize]
         public ValueOutput textValue;
 
-        // Store callback for cleanup
-        private System.Action<CustomEventArgs> _currentCallback;
-        private string _currentEventName;
-
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var targetId = flow.GetValue<string>(elementId);
                 var targetName = flow.GetValue<string>(elementName);
                 string elemId = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
@@ -53,67 +49,45 @@ namespace Banter.VisualScripting
                     return outputTrigger;
                 }
 
-                var graphReference = flow.stack.ToReference();
+                flow.SetValue(textValue, ""); // kept when the bridge doesn't answer (e.g. the element is gone)
+
+                var hook = new EventHook($"UIProperty_{elemId}_text");
+                System.Action<CustomEventArgs> onValue = args =>
+                {
+                    if (args.arguments != null && args.arguments.Length > 0)
+                    {
+                        flow.SetValue(textValue, args.arguments[0]?.ToString() ?? "");
+#if BANTER_UI_DEBUG
+                        Debug.Log($"[GetUIText] Received text: '{args.arguments[0]}' for {hook.name}");
+#endif
+                    }
+                };
 
                 try
                 {
-                    // Clean up any existing callback
-                CleanupCallback();
-                
-                    // Get the panel ID for message routing
                     var panelId = UIPanelExtensions.GetFormattedPanelIdByElementId(elemId);
                     if (panelId == null)
                     {
                         Debug.LogError($"[GetUIText] Could not resolve panel for element '{elemId}'");
-                        flow.SetValue(textValue, "");
                         return outputTrigger;
                     }
-                
-                // Set up callback to receive the value
-                _currentEventName = $"UIProperty_{elemId}_text";
-                _currentCallback = (CustomEventArgs args) => {
-                    if (!graphReference.isValid)
-                    {
-                        CleanupCallback();
-                        return;
-                    }
 
-                    var callbackFlow = Flow.New(graphReference);
+                    // The bridge answers inline, inside HandleMessage, so `flow` is still the caller's flow when
+                    // onValue runs and the value lands on this node's output (a new Flow would never be read).
+                    EventBus.Register<CustomEventArgs>(hook, onValue);
 
-                    if (args.arguments != null && args.arguments.Length > 0)
-                    {
-                        callbackFlow.SetValue(textValue, args.arguments[0]?.ToString() ?? "");
-#if BANTER_UI_DEBUG
-                        Debug.Log($"[GetUIText] Received text value: '{args.arguments[0]}' for {_currentEventName}");
-#endif
-                    }
-                    else
-                    {
-                        callbackFlow.SetValue(textValue, "");
-                    }
-                    
-                    // Clean up callback after use
-                    CleanupCallback();
-                };
-                    
-                    // Register for the callback event
-                    EventBus.Register<CustomEventArgs>(new EventHook(_currentEventName), _currentCallback);
-                    
                     // Format: panelId|GET_UI_PROPERTY|elementId§propertyName
                     var message = $"{panelId}{MessageDelimiters.PRIMARY}{UICommands.GET_UI_PROPERTY}{MessageDelimiters.PRIMARY}{elemId}{MessageDelimiters.SECONDARY}text";
-                    
-                    // Send command through UIElementBridge
                     UIElementBridge.HandleMessage(message);
-
-#if BANTER_UI_DEBUG
-                    Debug.Log($"[GetUIText] Requested text for element {elemId}, waiting for callback on {_currentEventName}");
-#endif
                 }
                 catch (System.Exception e)
                 {
                     Debug.LogError($"[GetUIText] Failed to get UI text: {e.Message}");
-                    flow.SetValue(textValue, "");
-                    CleanupCallback();
+                }
+                finally
+                {
+                    // Always unregistered (a no-op if never registered): a leftover handler would hold this flow.
+                    EventBus.Unregister(hook, onValue);
                 }
 
                 return outputTrigger;
@@ -124,16 +98,5 @@ namespace Banter.VisualScripting
             elementName = ValueInput<string>("Element Name", "");
             textValue = ValueOutput<string>("Text");
         }
-        
-        private void CleanupCallback()
-        {
-            if (_currentCallback != null && !string.IsNullOrEmpty(_currentEventName))
-            {
-                EventBus.Unregister(new EventHook(_currentEventName), _currentCallback);
-                _currentCallback = null;
-                _currentEventName = null;
-            }
-        }
     }
 }
-#endif

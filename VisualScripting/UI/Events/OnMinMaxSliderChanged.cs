@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.VisualScripting.UI.Helpers;
+using BS;
+using BS.VisualScripting.UI.Helpers;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("On MinMax Slider Changed")]
     [UnitShortTitle("On MinMax Slider Changed")]
-    [UnitCategory("Events\\Banter\\UI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\UI")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnMinMaxSliderChanged : EventUnit<CustomEventArgs>
     {
         [DoNotSerialize]
@@ -67,22 +66,24 @@ namespace Banter.VisualScripting
             // Auto-register when graph starts, not when event arrives
             if (!_eventRegistered)
             {
-                var flow = Flow.New(stack.ToReference());
-                var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
-
-                if (shouldAutoRegister)
+                ReportingFlow.Run(stack.ToReference(), this, flow =>
                 {
-                    var targetId = flow.GetValue<string>(elementId);
-                    var targetName = flow.GetValue<string>(elementName);
-                    string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
+                    var shouldAutoRegister = flow.GetValue<bool>(autoRegister);
 
-                    if (!string.IsNullOrEmpty(resolvedTarget))
+                    if (shouldAutoRegister)
                     {
+                        var targetId = flow.GetValue<string>(elementId);
+                        var targetName = flow.GetValue<string>(elementName);
+                        string resolvedTarget = UIElementResolverHelper.ResolveElementIdOrName(targetId, targetName);
 
-                        UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnMinMaxSliderChanged");
-                        _eventRegistered = true;
+                        if (!string.IsNullOrEmpty(resolvedTarget))
+                        {
+
+                            UIEventAutoRegisterHelper.TryRegisterChangeEventWithRetry(resolvedTarget, "OnMinMaxSliderChanged");
+                            _eventRegistered = true;
+                        }
                     }
-                }
+                });
             }
         }
 
@@ -147,8 +148,8 @@ namespace Banter.VisualScripting
                     var parts = strValue.Split(',');
                     if (parts.Length >= 2)
                     {
-                        float.TryParse(parts[0].Trim(), out min);
-                        float.TryParse(parts[1].Trim(), out max);
+                        NumberFormat.TryParse(parts[0].Trim(), out min);
+                        NumberFormat.TryParse(parts[1].Trim(), out max);
                     }
                 }
 
@@ -176,4 +177,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -8,8 +8,11 @@
     color: #ffffff;
     cursor: link;
 }
-.unity-toggle:checked .unity-label {
-    margin-left: 26px;
+/* The switch knob is a fixed 50px regardless of state, so the label must not
+   shift when checked - that was making stacked toggles look misaligned. */
+.unity-toggle .unity-label {
+    min-width: 120px;
+    flex-shrink: 0;
 }
 .unity-toggle .unity-toggle__input {
     transition: all 0.6s;
@@ -17,7 +20,7 @@
     height: 20px;
     min-width: 50px;
     max-width: 50px;
-    background-color: #838383;
+    background-color: #4D4D4D;
     border-radius: 10px;
     padding: 0;
     margin: 0;
@@ -25,7 +28,7 @@
 }
  
 .unity-toggle:checked .unity-toggle__input {
-    background-color: #4E943A;
+    background-color: #29A2A6;
 }
  
 .unity-toggle .unity-toggle__checkmark {

@@ -1,0 +1,22 @@
+LIBRARY BSVideoDecode
+EXPORTS
+    UnityPluginLoad
+    UnityPluginUnload
+    BSVD_GetApiVersion
+    BSVD_GetPath
+    BSVD_IsCodecSupported
+    BSVD_Create
+    BSVD_Feed
+    BSVD_EndOfStream
+    BSVD_Flush
+    BSVD_SetClock
+    BSVD_SetTarget
+    BSVD_GetStatus
+    BSVD_GetText
+    BSVD_Destroy
+    BSVD_DestroyAll
+    BSVD_GetLiveCount
+    BSVD_GetRenderEventFunc
+    BSVD_GetRenderEventId
+    BSVD_LockFrame
+    BSVD_UnlockFrame

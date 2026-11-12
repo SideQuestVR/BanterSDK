@@ -5,7 +5,7 @@ using System.IO.Compression;
 using System.Linq;
 using UnityEngine;
 
-namespace Banter.SDK
+namespace BS
 {
     /// <summary>
     /// Represents extracted Quest Home asset data

@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 
-namespace Banter.Utilities.Async
+namespace BS.Utilities.Async
 {
 
     /// <summary>

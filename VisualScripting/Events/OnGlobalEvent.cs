@@ -1,17 +1,16 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Diagnostics;
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Global Event")]
     [UnitShortTitle("On Global Event")]
-    [UnitCategory("Events\\Banter\\Utils")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnGlobalEvent : EventUnit<CustomEventArgs>
     {
 
@@ -74,4 +73,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

@@ -1,0 +1,11 @@
+LIBRARY BSAudioDecode
+EXPORTS
+    BSAD_GetApiVersion
+    BSAD_IsAvailable
+    BSAD_Open
+    BSAD_Decode
+    BSAD_Reset
+    BSAD_Finish
+    BSAD_Message
+    BSAD_DecoderName
+    BSAD_Close

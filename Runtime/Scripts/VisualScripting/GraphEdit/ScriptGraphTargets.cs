@@ -1,0 +1,202 @@
+#if GREENFIELD_PROJECT
+using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
+using UnityEngine;
+
+namespace BS
+{
+    /// <summary>
+    /// Wire identity of one ScriptMachine: the BSObjectId of its GameObject plus the machine's
+    /// index among that object's ScriptMachines. <c>path</c> rides along as a fuzzy fallback
+    /// for objects whose bid has changed or was never assigned.
+    /// </summary>
+    public class TargetRef
+    {
+        public string bid;
+        public int machineIndex;
+        public string path;
+    }
+
+    public class MachineDescriptor
+    {
+        public string bid;
+        public int machineIndex;
+        public string objectName;
+        public string path;
+        public bool active;
+        public string source;
+        public string graphTitle;
+        public int unitCount;
+        public bool blocked;
+        public bool paused;
+
+        /// <summary>
+        /// A runtime swap has replaced this machine's authored graph. The picker badges it, and
+        /// Revert is only offered when it is true.
+        /// </summary>
+        public bool overridden;
+
+        /// <summary>
+        /// Hash of the graph the machine was AUTHORED with. Equal to graphRef until a swap
+        /// replaces it; the base a saved override's baseGraphRef must match. Only filled when
+        /// hashes were asked for, like graphRef.
+        /// </summary>
+        public string authoredRef;
+
+        /// <summary>
+        /// Content hash of the machine's current graph, in the same form an envelope's
+        /// baseGraphRef takes — so a saved override can be told apart from one whose base has
+        /// since changed. Null unless the caller asked for it: producing one serializes the whole
+        /// graph, which is far too expensive for the list the picker polls.
+        /// </summary>
+        public string graphRef;
+    }
+
+    public static class MachineDirectory
+    {
+        public static string HierarchyPath(Transform transform)
+        {
+            var parts = new List<string>();
+            while (transform != null)
+            {
+                parts.Add(transform.name);
+                transform = transform.parent;
+            }
+            parts.Reverse();
+            return string.Join("/", parts);
+        }
+
+        public static List<ScriptMachine> AllMachines()
+        {
+            // Only the world's own machines: the page's script-graph bridge must not reach the client's.
+            return FindObjects.All<ScriptMachine>(FindObjectsInactive.Include)
+                .Where(m => BSWorldScope.Contains(m.gameObject))
+                .OrderBy(m => HierarchyPath(m.transform), System.StringComparer.Ordinal)
+                .ThenBy(MachineIndex)
+                .ToList();
+        }
+
+        public static int MachineIndex(ScriptMachine machine)
+        {
+            return System.Array.IndexOf(machine.GetComponents<ScriptMachine>(), machine);
+        }
+
+        public static MachineDescriptor Describe(ScriptMachine machine) => Describe(machine, false);
+
+        public static MachineDescriptor Describe(ScriptMachine machine, bool withGraphRef)
+        {
+            var graph = machine.graph;
+            return new MachineDescriptor
+            {
+                graphRef = withGraphRef ? GraphRef(machine) : null,
+                bid = machine.GetComponent<BSObjectId>()?.Id ?? "",
+                machineIndex = MachineIndex(machine),
+                objectName = machine.gameObject.name,
+                path = HierarchyPath(machine.transform),
+                active = machine.isActiveAndEnabled,
+                source = machine.nest?.source == GraphSource.Macro ? "macro" : "embed",
+                graphTitle = FriendlyTitle(machine),
+                unitCount = graph?.units.Count ?? 0,
+                blocked = graph != null && IsBlockedQuiet(graph),
+                paused = machine.GraphPaused,
+                overridden = ScriptGraphSession.IsOverridden(machine),
+                authoredRef = withGraphRef
+                    ? (ScriptGraphSession.AuthoredHash(machine) ?? GraphRef(machine))
+                    : null,
+            };
+        }
+
+        /// <summary>
+        /// The machine's current graph as a content hash, comparable with an envelope's
+        /// baseGraphRef. Serializes a CLONE, never the live graph - the machine is running.
+        /// </summary>
+        static string GraphRef(ScriptMachine machine)
+        {
+            try
+            {
+                return ScriptGraphSession.GraphHash(machine.graph);
+            }
+            catch (System.Exception e)
+            {
+                // Not fatal: a machine whose hash cannot be taken simply cannot be staleness-checked,
+                // and the caller treats a missing hash as "cannot tell" rather than as "stale".
+                Debug.LogWarning($"[Banter] Could not hash the graph on '{machine.gameObject.name}': {e.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// The install gate's verdict (strict, nested graphs included) without its per-element
+        /// Debug.LogError - the picker polls list, and a space legitimately containing one blocked
+        /// machine must not spam the console on every poll. Shows what Apply would refuse.
+        /// </summary>
+        static bool IsBlockedQuiet(FlowGraph graph) => BanterStubsAllowed.IsBlockedStrictDeep(graph, 0, log: false);
+
+        public static string FriendlyTitle(ScriptMachine machine)
+        {
+            var title = machine.graph?.title;
+            if (!string.IsNullOrEmpty(title)) return title;
+            if (machine.nest?.source == GraphSource.Macro && machine.nest.macro != null)
+            {
+                return machine.nest.macro.name;
+            }
+            return machine.gameObject.name;
+        }
+
+        public static ScriptMachine Resolve(TargetRef target)
+        {
+            if (target == null) return null;
+
+            if (!string.IsNullOrEmpty(target.bid))
+            {
+                var scene = BSScene.Instance();
+                var obj = scene != null ? scene.GetObjectByBid(target.bid) : default;
+                var host = obj.gameObject != null ? obj.gameObject : FindUnregistered(target.bid);
+                if (host != null && BSWorldScope.Contains(host))
+                {
+                    var machines = host.GetComponents<ScriptMachine>();
+                    if (target.machineIndex >= 0 && target.machineIndex < machines.Length)
+                    {
+                        return machines[target.machineIndex];
+                    }
+                }
+            }
+
+            // Fuzzy fallback: hierarchy path. Covers inactive objects and bids that never
+            // resolved; first match wins.
+            if (!string.IsNullOrEmpty(target.path))
+            {
+                foreach (var machine in AllMachines())
+                {
+                    if (HierarchyPath(machine.transform) == target.path
+                        && MachineIndex(machine) == target.machineIndex)
+                    {
+                        return machine;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Find an object by bid when the scene never registered it.
+        /// </summary>
+        /// <remarks>
+        /// BSObjectId registers itself in Awake, and an object that starts inactive has not woken —
+        /// so it is in the machine LIST (which searches inactive objects) but GetObjectByBid cannot
+        /// find it, and opening or applying to it failed with "Machine not found". A scan including
+        /// inactive objects, only on that miss.
+        /// </remarks>
+        public static GameObject FindUnregistered(string bid)
+        {
+            foreach (var id in FindObjects.All<BSObjectId>(FindObjectsInactive.Include))
+            {
+                if (id.Id == bid && BSWorldScope.Contains(id.gameObject)) return id.gameObject;
+            }
+            return null;
+        }
+    }
+}
+#endif

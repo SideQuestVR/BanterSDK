@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -6,12 +7,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using UnityEngine;
-using UnityEngine.Networking;
 using Debug = System.Diagnostics.Debug;
 using Unity.EditorCoroutines.Editor;
 
@@ -20,7 +21,7 @@ using Unity.EditorCoroutines.Editor;
 /// </summary>
 /// 
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
 
 
@@ -28,7 +29,17 @@ namespace Banter.SDKEditor
     {
         AssetBundle = 1,
         Index = 2,
-        Js = 3
+        Js = 3,
+        // A single platform-agnostic combined bundle (world.asset). Attached to a world with platform 0
+        // (Any) via /v2/worlds/{id}/assets/type/4/platform/0 (see AttachToWorld).
+        WorldAsset = 4,
+
+        // Arbitrary named file attached to the world and served at {slug}.worldspace.host/{name}.
+        // The ONLY type keyed by name — every other type is a single slot per world, so attaching
+        // two files under one of them silently destroys the first (and deletes its stored bytes).
+        // The API also restricts these names to a closed list of extensions and rejects any name
+        // without one.
+        Extra = 99
     }
 
     public enum UploadAssetTypePlatform
@@ -44,21 +55,38 @@ namespace Banter.SDKEditor
     public class SqEditorAppApi
     {
         // Static HttpClient for connection pooling and better performance
-        private static readonly HttpClient _httpClient = new HttpClient(new HttpClientHandler
+        private static readonly HttpClient SharedHttpClient = new HttpClient(new HttpClientHandler
         {
             // Disable automatic decompression to avoid conflicts
             AutomaticDecompression = System.Net.DecompressionMethods.None
         })
         {
-            Timeout = TimeSpan.FromMinutes(10) // Global timeout
+            Timeout = TimeSpan.FromMinutes(20) // Global timeout
         };
+
+        // The client every request goes through: the shared one above, unless a test injects its own.
+        private readonly HttpClient _httpClient;
+
+        /// <summary>
+        /// Delay before upload attempt <c>attempt + 1</c> after attempt <c>attempt</c> failed
+        /// (2 s, then 4 s). Tests set it to zero.
+        /// </summary>
+        internal Func<int, TimeSpan> UploadRetryDelay = attempt => TimeSpan.FromSeconds(Math.Pow(2, attempt));
 
         /// <summary>
         /// Create a new instance
         /// </summary>
         /// <param name="config">The configuration options that should be used</param>
-        public SqEditorAppApi(SqEditorAppApiConfig config)
+        public SqEditorAppApi(SqEditorAppApiConfig config) : this(config, null)
         {
+        }
+
+        /// <summary>
+        /// Test seam: sends every request through <paramref name="httpClient"/> (null = the shared client).
+        /// </summary>
+        internal SqEditorAppApi(SqEditorAppApiConfig config, HttpClient httpClient)
+        {
+            _httpClient = httpClient ?? SharedHttpClient;
             Config = config;
             LoadData();
         }
@@ -73,6 +101,51 @@ namespace Banter.SDKEditor
                 return Data.User;
             }
         }
+
+        /// <summary>
+        /// Lists the signed-in user's worlds (GET /v2/worlds?users_id={me}&amp;limit={limit}). The user id
+        /// comes from the token, which always carries it (works even before the profile is fetched).
+        /// </summary>
+        public IEnumerator ListWorlds(Action<List<SqEditorWorld>> OnCompleted, Action<Exception> OnError, int limit = 1000)
+        {
+            if (Data?.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            long usersId = Data.Token.UserId;
+            // Rows are converted one at a time so a single malformed world can't take down the whole
+            // list (and with it the upload target dropdown) — skip it and keep the rest.
+            yield return JsonGet<JArray>($"/v2/worlds?users_id={usersId}&limit={limit}", rows =>
+            {
+                var worlds = new List<SqEditorWorld>();
+                if (rows != null)
+                    foreach (var row in rows)
+                    {
+                        try { worlds.Add(row.ToObject<SqEditorWorld>()); }
+                        catch (Exception ex) { Debug.WriteLine("Skipping malformed world row", ex); }
+                    }
+                OnCompleted?.Invoke(worlds);
+            }, OnError, true);
+        }
+
+        /// <summary>
+        /// Creates a new world owned by the signed-in user (POST /v2/worlds) and returns the created world.
+        /// Born Private (status 100) unless the caller explicitly asks otherwise — matching the API's own
+        /// default and the website's create form; pass 1000 for Public. Publishing is a deliberate act on
+        /// the world's settings page, not a side effect of every editor test build.
+        /// </summary>
+        public IEnumerator CreateWorld(string name, Action<SqEditorWorld> OnCompleted, Action<Exception> OnError, int status = 100, int maxOccupancy = 20)
+        {
+            if (Data?.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorWorld>("/v2/worlds",
+                new SqEditorCreateWorldRequest { Name = name, Status = status, MaxOccupancy = maxOccupancy },
+                OnCompleted, OnError, true, false);
+        }
         public IEnumerator PostAvatar(Action<SqEditorAvatar> OnCompleted, Action<Exception> OnError, long highId, long lowId, long screenshotId, string name, bool ispublic)
         {
             if (Data.Token == null)
@@ -80,7 +153,7 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorAvatar>($"/v2/avatars", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
+            yield return JsonPost<SqEditorAvatar>($"/v2/avatars", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name }, (av) =>
             {
                 OnCompleted?.Invoke(av);
             }, OnError, true, false);
@@ -92,10 +165,10 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name}, (av) =>
+            yield return JsonPost<SqEditorAvatar>($"/v2/avatars/{avatarId}", new SqEditorAvatar() { HighId = highId, LowId = lowId, PreviewImage = screenshotId, Public = ispublic, Version = 2, Name = name }, (av) =>
             {
                 OnCompleted?.Invoke(av);
-            }, OnError, true, false, "PATCH");
+            }, OnError, true, false, "PUT");
         }
         public IEnumerator GetAvatars(Action<List<SqEditorAvatar>> OnCompleted, Action<Exception> OnError)
         {
@@ -104,17 +177,17 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars?author_id=me", OnCompleted, OnError, true);
+            yield return JsonGet<List<SqEditorAvatar>>($"/v2/avatars/mine", OnCompleted, OnError, true);
         }
-        
-         public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
+
+        public IEnumerator AttachAvatar(Action<SqAvatarSlot> OnCompleted, Action<Exception> OnError, long avatarId, bool isSelected)
         {
             if (Data.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true}, OnCompleted, OnError, true, false);
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars", new SqAvatarSlot() { AvatarId = avatarId, IsSelected = true }, OnCompleted, OnError, true, false);
         }
         public IEnumerator SelectAvatar(Action OnCompleted, Action<Exception> OnError, long userAvatarId)
         {
@@ -123,10 +196,10 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true}, (u) =>
+            yield return JsonPost<SqAvatarSlot>($"/v2/users/me/avatars/{userAvatarId}", new SqAvatarSlotSelect() { IsSelected = true }, (u) =>
             {
                 OnCompleted?.Invoke();
-            }, OnError, true, false,"PATCH");
+            }, OnError, true, false, "PATCH");
         }
         /// <summary>
         /// Get a list of the currently logged in sidequest user's achievements
@@ -151,25 +224,39 @@ namespace Banter.SDKEditor
         }
 
         /// <summary>
+        /// True when a short code login is in progress and the code is past the expiry the server gave us.
+        /// The server keeps an approved code redeemable for a while after this, so callers should still
+        /// ask it once before treating the code as dead (see CheckLoginCodeComplete).
+        /// </summary>
+        public bool IsLoginCodeExpired => Data?.LoginCode != null && DateTimeOffset.Now > Data.LoginCode.ExpiresAt;
+
+        /// <summary>
         /// The configuration being used
         /// </summary>
         public SqEditorAppApiConfig Config { get; private set; }
+
+        /// <summary>
+        /// Raised when a signed-in session is cleared, whether by an explicit Logout call or because the
+        /// API rejected it (expired or revoked refresh token, or a 401 that a refresh could not fix).
+        /// Raised on the editor main thread.
+        /// </summary>
+        public event Action LoggedOut;
 
         /// <summary>
         /// Clears the current user and any active short code requests
         /// </summary>
         public void Logout()
         {
-            var wasUserNull = Data?.Token == null;
+            var wasSignedIn = Data?.Token != null;
             Data.Token = null;
             Data.User = null;
             Data.LoginCode = null;
             Data.UserAchievements = null;
 
             SaveData();
-            if (!wasUserNull)
+            if (wasSignedIn)
             {
-                //todo: raise some event for this?
+                LoggedOut?.Invoke();
             }
         }
 
@@ -241,11 +328,9 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new InvalidOperationException("There is not a code login in progress"));
                 yield break;
             }
-            if (DateTimeOffset.Now > Data.LoginCode.ExpiresAt)
-            {
-                OnError?.Invoke(new SqEditorApiAuthException("Device code has expired"));
-                yield break;
-            }
+            // No local expiry check before asking the server: an approved code stays redeemable for a
+            // while past expires_at, so a user who approved at T+14:59 and is polled at T+15:01 still
+            // gets signed in. Expiry is decided below, once the server has said "nothing yet".
             //check to make sure this isn't being called too frequently
             if ((DateTime.Now - _lastLoginPoll).TotalSeconds < Data.LoginCode.PollIntervalSeconds)
             {
@@ -268,6 +353,12 @@ namespace Banter.SDKEditor
                 if (tok == null)
                 {
                     _lastLoginPoll = DateTime.Now;
+                    if (IsLoginCodeExpired)
+                    {
+                        // Past expiry and the server has nothing for us: this code is dead, mint a new one.
+                        OnError?.Invoke(new SqEditorLoginCodeExpiredException("Login code has expired"));
+                        yield break;
+                    }
                     OnCompleted?.Invoke(false, null);
                     yield break;
                 }
@@ -302,6 +393,12 @@ namespace Banter.SDKEditor
                     SaveData();
                     OnCompleted?.Invoke(true, Data.User);
                 }
+            }
+            else if (ex is SqEditorApiAuthException authEx && authEx.HttpCode == 400)
+            {
+                // The code row is gone (expired and swept, or never valid). Anything else - network
+                // faults, 5xx - is transient and left to the caller to retry.
+                OnError?.Invoke(new SqEditorLoginCodeExpiredException(400, "Login code has expired or is invalid"));
             }
             else
             {
@@ -461,63 +558,165 @@ namespace Banter.SDKEditor
             }
         }
 
-        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        /// <summary>
+        /// PUT body that reports how far it has got as it streams, so callers can
+        /// show real upload progress instead of a stepped guess.
+        /// Note: this counts bytes handed to the transport, not bytes acknowledged
+        /// by the server, so it can reach 100% slightly before the PUT returns.
+        /// </summary>
+        private sealed class ProgressableByteArrayContent : HttpContent
+        {
+            private const int ChunkSize = 64 * 1024;
+            private readonly byte[] _data;
+            private readonly Action<float> _onProgress;
+
+            public ProgressableByteArrayContent(byte[] data, string contentType, Action<float> onProgress)
+            {
+                _data = data;
+                _onProgress = onProgress;
+                if (!string.IsNullOrEmpty(contentType))
+                    Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            }
+
+            protected override async Task SerializeToStreamAsync(Stream stream, System.Net.TransportContext context)
+            {
+                if (_data.Length == 0)
+                {
+                    _onProgress?.Invoke(1f);
+                    return;
+                }
+                var sent = 0;
+                while (sent < _data.Length)
+                {
+                    var count = Math.Min(ChunkSize, _data.Length - sent);
+                    await stream.WriteAsync(_data, sent, count);
+                    sent += count;
+                    _onProgress?.Invoke((float)sent / _data.Length);
+                }
+            }
+
+            protected override bool TryComputeLength(out long length)
+            {
+                length = _data.Length;
+                return true;
+            }
+        }
+
+        public IEnumerator UploadFileToCommunity(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
-            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
+            Exception requestError = null;
+            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, e => requestError = e, name, data.Length, spaceSlug);
 
             if (_uploadRequest == null)
             {
-                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                OnError?.Invoke(requestError ?? new SqEditorApiException("Failed to get upload request"));
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => { }, OnError);
+            // Attach only once the CDN has confirmed the bytes. /create-upload makes the files row before
+            // any bytes exist, and attaching repoints the community's live slot at that row while the API
+            // deletes the file it replaces, so a failed PUT must never reach the attach.
+            var uploaded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, _ => uploaded = true, OnError, OnProgress);
+            if (!uploaded) yield break;
 
-            yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId, _uploadRequest.FileId, name, assetType, assetPlatform);
+            yield return AttachToCommmunity(() => OnCompleted?.Invoke(_uploadRequest), OnError, _uploadRequest.CommunitiesId ?? 0, _uploadRequest.FileId, name, assetType, assetPlatform);
         }
 
-        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError)
+        /// <summary>
+        /// Uploads a file and attaches it to a WORLD (the greenfield space model): CDN /create-upload scoped
+        /// to the world, PUT the bytes, then attach via PUT /v2/worlds/{worlds_id}/assets/type/{type}/platform/{platform}.
+        /// For the combined world.asset bundle pass assetType=WorldAsset and platform=Any (0).
+        /// </summary>
+        public IEnumerator UploadFileToWorld(string name, byte[] data, string worldsId, string worldSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform, Action<float> OnProgress = null)
         {
             SqEditorCreateUpload _uploadRequest = null;
+            Exception requestError = null;
+            yield return GetWorldUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, e => requestError = e, name, data.Length, worldsId, worldSlug);
+
+            if (_uploadRequest == null)
+            {
+                OnError?.Invoke(requestError ?? new SqEditorApiException("Failed to get upload request"));
+                yield break;
+            }
+
+            // Attach only once the CDN has confirmed the bytes. /create-upload makes the files row before
+            // any bytes exist, and attaching repoints the world's live slot (asset.world, index.html, a
+            // named Extra file...) at that row while the API deletes the file it replaces, so a failed
+            // PUT must never reach the attach: the world would load nothing and the old file is gone.
+            var uploaded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, _ => uploaded = true, OnError, OnProgress);
+            if (!uploaded) yield break;
+
+            yield return AttachToWorld(() => OnCompleted?.Invoke(_uploadRequest), OnError, worldsId, _uploadRequest.FileId, name, assetType, assetPlatform);
+        }
+
+        public IEnumerator UploadFile(string name, byte[] data, string spaceSlug, Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, Action<float> OnProgress = null)
+        {
+            SqEditorCreateUpload _uploadRequest = null;
+            Exception requestError = null;
             UnityEngine.Debug.Log("Before Upload");
-            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, OnError, name, data.Length, spaceSlug);
+            yield return GetUploadRequest((uploadRequest) => _uploadRequest = uploadRequest, e => requestError = e, name, data.Length, spaceSlug);
             UnityEngine.Debug.Log("After Upload");
             if (_uploadRequest == null)
             {
-                OnError?.Invoke(new SqEditorApiException("Failed to get upload request"));
+                OnError?.Invoke(requestError ?? new SqEditorApiException("Failed to get upload request"));
                 yield break;
             }
 
-            yield return UploadFileInternal(_uploadRequest.UploadURI, data, name, (text) => { }, OnError);
+            // Hand out the file id only for bytes the CDN accepted: callers attach or reference it
+            // (avatars), and a files row with nothing behind it breaks whatever points at it.
+            var uploaded = false;
+            yield return UploadFileInternal(_uploadRequest, data, name, _ => uploaded = true, OnError, OnProgress);
+            if (!uploaded) yield break;
             OnCompleted?.Invoke(_uploadRequest);
 
         }
 
-        private IEnumerator UploadFileInternal(string url, byte[] data, string name, Action<long> OnCompleted, Action<Exception> OnError)
+        /// <summary>
+        /// PUTs the bytes to the signed CDN URL. Exactly one of <paramref name="OnUploaded"/> (only after
+        /// a 2xx response) and <paramref name="OnError"/> runs.
+        /// </summary>
+        private IEnumerator UploadFileInternal(SqEditorCreateUpload upload, byte[] data, string name, Action<long> OnUploaded, Action<Exception> OnError, Action<float> OnProgress = null)
         {
+            // The upload runs on a worker thread, so it may not touch UI. It only
+            // ever writes this cell; the coroutine below reads it on the main
+            // thread each frame and is the only thing that calls OnProgress.
+            var latest = new float[1];
+
             // Start the async upload task
-            var uploadTask = UploadFileWithRetryAsync(url, data, name, maxRetries: 3);
+            var uploadTask = UploadFileWithRetryAsync(upload, data, name, maxRetries: 3, onProgress: p => latest[0] = p);
 
             // Wait for the task to complete (bridges async/await with coroutine)
+            var lastReported = -1f;
             while (!uploadTask.IsCompleted)
             {
+                var current = latest[0];
+                if (OnProgress != null && current - lastReported >= 0.01f)
+                {
+                    lastReported = current;
+                    OnProgress(current);
+                }
                 yield return null;
             }
 
-            // Check for exceptions
-            if (uploadTask.IsFaulted)
+            // Check for exceptions. A cancelled task is a failure too: reading .Result on it would throw
+            // out of the coroutine instead of reporting the error.
+            if (uploadTask.IsFaulted || uploadTask.IsCanceled)
             {
-                var ex = uploadTask.Exception?.InnerException ?? uploadTask.Exception;
+                var ex = uploadTask.Exception?.InnerException
+                         ?? (Exception)uploadTask.Exception
+                         ?? new SqEditorApiNetworkException("The upload was cancelled before the CDN confirmed it.");
                 OnError?.Invoke(ex);
                 yield break;
             }
 
             // Return the response code
-            OnCompleted?.Invoke(uploadTask.Result);
+            OnUploaded?.Invoke(uploadTask.Result);
         }
 
-        private async Task<long> UploadFileWithRetryAsync(string url, byte[] data, string name, int maxRetries = 3)
+        private async Task<long> UploadFileWithRetryAsync(SqEditorCreateUpload upload, byte[] data, string name, int maxRetries = 3, Action<float> onProgress = null)
         {
             int attempt = 0;
             Exception lastException = null;
@@ -527,15 +726,18 @@ namespace Banter.SDKEditor
                 attempt++;
                 try
                 {
-                    LogLine.Do($"Uploading {data.Length} bytes to {url} (attempt {attempt}/{maxRetries})");
+                    LogLine.Do($"Uploading {data.Length} bytes to {upload.UploadURI} (attempt {attempt}/{maxRetries})");
 
-                    using (var content = new ByteArrayContent(data))
-                    using (var request = new HttpRequestMessage(HttpMethod.Put, url))
+                    // A retry re-sends from the start, so rewind the bar too.
+                    onProgress?.Invoke(0f);
+
+                    using (var content = new ProgressableByteArrayContent(data, upload.ContentType, onProgress))
+                    using (var request = new HttpRequestMessage(HttpMethod.Put, upload.UploadURI))
                     {
                         request.Content = content;
 
                         // Set timeout for this specific request
-                        using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+                        using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(10)))
                         {
                             var response = await _httpClient.SendAsync(request, cts.Token);
 
@@ -584,9 +786,9 @@ namespace Banter.SDKEditor
                 // If this wasn't the last attempt, wait before retrying with exponential backoff
                 if (attempt < maxRetries)
                 {
-                    var delaySeconds = Math.Pow(2, attempt); // 2, 4, 8 seconds
-                    LogLine.Do($"Retrying in {delaySeconds} seconds...");
-                    await Task.Delay(TimeSpan.FromSeconds(delaySeconds));
+                    var delay = UploadRetryDelay(attempt); // 2, then 4 seconds
+                    LogLine.Do($"Retrying in {delay.TotalSeconds} seconds...");
+                    await Task.Delay(delay);
                 }
             }
 
@@ -614,6 +816,44 @@ namespace Banter.SDKEditor
             }, OnError, true, false, "PUT");
         }
 
+        // Attaches an already-uploaded file to a world. The world route always carries the /platform segment
+        // (unlike the community route), and platform must be 0/Any for index.html, script.js and world.asset.
+        private IEnumerator AttachToWorld(Action OnCompleted, Action<Exception> OnError, string worldsId, long fileId, string name, UploadAssetType assetType, UploadAssetTypePlatform assetPlatform)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorCreateUpload>($"/v2/worlds/{worldsId}/assets/type/{(int)assetType}/platform/{(int)assetPlatform}", new SqEditorCreateUploadDone() { FileId = fileId, Name = name }, (u) =>
+            {
+                if (u == null)
+                {
+                    OnError?.Invoke(new SqEditorApiException("Request could not be retrieved"));
+                    return;
+                }
+                OnCompleted?.Invoke();
+            }, OnError, true, false, "PUT");
+        }
+
+        private IEnumerator GetWorldUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string worldsId, string worldSlug)
+        {
+            if (Data.Token == null)
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
+                yield break;
+            }
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateWorldUploadRequest() { WorldId = worldsId, WorldSlug = worldSlug, Size = numOfBytes, Type = Path.GetExtension(name).Replace(".", ""), Name = name }, (u) =>
+            {
+                if (u == null)
+                {
+                    OnError?.Invoke(new SqEditorApiException("Request could not be retrieved"));
+                    return;
+                }
+                OnCompleted?.Invoke(u);
+            }, OnError, true, true);
+        }
+
         private IEnumerator GetUploadRequest(Action<SqEditorCreateUpload> OnCompleted, Action<Exception> OnError, string name, long numOfBytes, string spaceSlug)
         {
             if (Data.Token == null)
@@ -621,7 +861,7 @@ namespace Banter.SDKEditor
                 OnError?.Invoke(new SqEditorApiAuthException("No user logged in."));
                 yield break;
             }
-            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name), Name = name }, (u) =>
+            yield return JsonPost<SqEditorCreateUpload>($"/create-upload", new SqEditorCreateUploadRequest() { Size = numOfBytes, SpaceSlug = spaceSlug, Type = Path.GetExtension(name).Replace(".", ""), Name = name }, (u) =>
 
             {
                 if (u == null)
@@ -652,221 +892,279 @@ namespace Banter.SDKEditor
             }, OnError, true);
         }
 
-        private IEnumerator GetAuthToken(Action<string> OnCompleted, Action<Exception> OnError)
+        // Refresh the access token this long before the server's expiry. The long CDN PUT in
+        // UploadFileWithRetryAsync carries no bearer token, so the margin only has to cover API calls.
+        private static readonly TimeSpan AccessTokenEarlyRefresh = TimeSpan.FromMinutes(5);
+
+        // One refresh at a time: coroutines that need a token while a refresh is in flight wait on this
+        // flag and share the outcome instead of each posting to /v2/oauth/token.
+        private bool _refreshInFlight;
+        private Exception _refreshResult;
+
+        private bool HasValidAccessToken()
         {
-            if (Data?.Token?.AccessTokenExpiresAt == null)
+            var token = Data?.Token;
+            return token?.AccessTokenExpiresAt != null
+                && !string.IsNullOrWhiteSpace(token.AccessToken)
+                && DateTimeOffset.Now < token.AccessTokenExpiresAt.Value - AccessTokenEarlyRefresh;
+        }
+
+        /// <summary>
+        /// True when a refresh failed with a status that means the session itself is no longer accepted
+        /// (oauth2-server answers 400 for an invalid or revoked refresh token).
+        /// </summary>
+        private static bool IsSessionRejected(Exception e)
+        {
+            var code = (e as SqEditorApiAuthException)?.HttpCode;
+            return code == 400 || code == 401 || code == 403;
+        }
+
+        /// <summary>
+        /// Hands back a usable access token, refreshing it first when it is missing, near expiry, or
+        /// <paramref name="forceRefresh"/> is set. A refresh the server rejects clears the session (and
+        /// raises LoggedOut); a refresh that fails for network or server reasons keeps the session so
+        /// the next call can try again.
+        /// </summary>
+        private IEnumerator GetAuthToken(Action<string> OnCompleted, Action<Exception> OnError, bool forceRefresh = false)
+        {
+            if (Data?.Token == null)
             {
                 OnError?.Invoke(new SqEditorApiAuthException("No user is logged in"));
                 yield break;
             }
-            if (DateTimeOffset.Now < Data.Token.AccessTokenExpiresAt.Value.AddMinutes(-1) && !string.IsNullOrWhiteSpace(Data.Token.AccessToken))
+            if (!forceRefresh && HasValidAccessToken())
             {
                 OnCompleted?.Invoke(Data.Token.AccessToken);
                 yield break;
             }
-            if (string.IsNullOrWhiteSpace(Data?.Token?.RefreshToken))
+            if (_refreshInFlight)
             {
-                Logout();
-                OnError?.Invoke(new SqEditorApiAuthException("User refresh token is missing, logging user out"));
+                // Share the refresh another call already started.
+                while (_refreshInFlight) yield return null;
+                if (_refreshResult != null)
+                {
+                    OnError?.Invoke(_refreshResult);
+                    yield break;
+                }
+                var shared = Data?.Token?.AccessToken;
+                if (string.IsNullOrWhiteSpace(shared))
+                {
+                    OnError?.Invoke(new SqEditorApiAuthException("No user is logged in"));
+                    yield break;
+                }
+                OnCompleted?.Invoke(shared);
                 yield break;
             }
-            yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token", $"grant_type=refresh_token&refresh_token={UnityWebRequest.EscapeURL(Data.Token?.RefreshToken)}&client_id={Data.Token?.ClientId}",
-                (a) =>
+            if (string.IsNullOrWhiteSpace(Data.Token.RefreshToken))
+            {
+                Logout();
+                OnError?.Invoke(new SqEditorApiAuthException("Your session has expired. Please sign in again."));
+                yield break;
+            }
+
+            _refreshInFlight = true;
+            _refreshResult = null;
+            try
+            {
+                SqEditorTokenInfo refreshed = null;
+                Exception refreshError = null;
+                yield return PostFormEncodedStringNoAuth<SqEditorTokenInfo>("/v2/oauth/token",
+                    $"grant_type=refresh_token&refresh_token={Uri.EscapeDataString(Data.Token.RefreshToken)}&client_id={Data.Token.ClientId}",
+                    (a) => refreshed = a, (e) => refreshError = e);
+                if (refreshError == null && string.IsNullOrWhiteSpace(refreshed?.AccessToken))
                 {
-                    if (a == null || a.AccessToken == null)
+                    refreshError = new SqEditorApiAuthException("Failed to retrieve auth token");
+                }
+                if (refreshError != null)
+                {
+                    if (IsSessionRejected(refreshError))
                     {
-                        OnError?.Invoke(new SqEditorApiAuthException("Failed to retrieve auth token"));
-                        return;
+                        // The server no longer accepts the refresh token: the session is dead.
+                        Logout();
+                        _refreshResult = new SqEditorApiAuthException(((SqEditorApiException)refreshError).HttpCode.Value,
+                            "Your session has expired. Please sign in again.", refreshError);
                     }
-                    Data.Token.AccessToken = a.AccessToken;
-                    Data.Token.AccessTokenExpiresAt = a.AccessTokenExpiresAt;
+                    else
+                    {
+                        // Network or server trouble: keep the session so the next call can try again.
+                        _refreshResult = refreshError;
+                    }
+                }
+                else if (Data?.Token != null)
+                {
+                    // (Token is null here only if something signed out while the refresh was in flight.)
+                    var token = Data.Token;
+                    token.AccessToken = refreshed.AccessToken;
+                    token.AccessTokenExpiresAt = refreshed.AccessTokenExpiresAt;
+                    if (!string.IsNullOrWhiteSpace(refreshed.ClientId)) token.ClientId = refreshed.ClientId;
+                    if (refreshed.GrantedScopes != null && refreshed.GrantedScopes.Count > 0) token.GrantedScopes = refreshed.GrantedScopes;
+                    if (refreshed.UserId != 0) token.UserId = refreshed.UserId;
+                    // The refresh grant does not rotate the refresh token; only take one if the server sent it.
+                    if (!string.IsNullOrWhiteSpace(refreshed.RefreshToken)) token.RefreshToken = refreshed.RefreshToken;
+                    if (refreshed.RefreshTokenExpiresAt != null) token.RefreshTokenExpiresAt = refreshed.RefreshTokenExpiresAt;
                     SaveData();
-                    OnCompleted?.Invoke(Data.Token.AccessToken);
-                }, OnError);
+                }
+            }
+            finally
+            {
+                _refreshInFlight = false;
+            }
+            if (_refreshResult != null)
+            {
+                OnError?.Invoke(_refreshResult);
+                yield break;
+            }
+            var accessToken = Data?.Token?.AccessToken;
+            if (string.IsNullOrWhiteSpace(accessToken))
+            {
+                OnError?.Invoke(new SqEditorApiAuthException("No user is logged in"));
+                yield break;
+            }
+            OnCompleted?.Invoke(accessToken);
         }
 
         private IEnumerator PostFormEncodedStringNoAuth<T>(string urlPath, string data, Action<T> OnCompleted, Action<Exception> OnError)
         {
-            using (UnityWebRequest req = new UnityWebRequest(new Uri(Config.RootApiUri, urlPath)))
+            var content = new StringContent(data, Encoding.UTF8, "application/x-www-form-urlencoded");
+            var task = _httpClient.PostAsync(new Uri(Config.RootApiUri, urlPath), content);
+            while (!task.IsCompleted) yield return null;
+            if (task.IsFaulted || task.IsCanceled)
             {
-                req.uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(data))
-                {
-                    contentType = "application/x-www-form-urlencoded"
-                };
-                req.method = "POST";
-                req.downloadHandler = new DownloadHandlerBuffer();
+                // IsCanceled is how HttpClient reports a timeout.
+                OnError(new SqEditorApiNetworkException(task.Exception?.InnerException?.Message ?? task.Exception?.Message ?? "Request timed out"));
+                yield break;
+            }
+            var response = task.Result;
+            if (!response.IsSuccessStatusCode)
+            {
+                OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {response.ReasonPhrase}"));
+                yield break;
+            }
+            var readTask = response.Content.ReadAsStringAsync();
+            while (!readTask.IsCompleted) yield return null;
+            if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
+            var resStr = readTask.Result;
+            if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
+            try
+            {
+                OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Failed deserializing response from API", ex);
+                OnError?.Invoke(ex);
+            }
+        }
 
-                yield return req.SendWebRequest();
+        /// <summary>
+        /// Sends a JSON request built by <paramref name="requestFactory"/>, attaching the bearer token when
+        /// <paramref name="withAuth"/> is set and a user is signed in. A 401 on an authenticated request
+        /// forces one token refresh and resends the request once (the factory runs again because an
+        /// HttpRequestMessage cannot be reused); a 401 on the resend means the server no longer accepts
+        /// the session, so it is cleared.
+        /// </summary>
+        private IEnumerator SendJsonRequest<T>(Func<HttpRequestMessage> requestFactory, bool withAuth, Action<T> OnCompleted, Action<Exception> OnError)
+        {
+            string authToken = null;
+            if (withAuth && Data?.Token != null)
+            {
+                Exception authError = null;
+                yield return GetAuthToken((a) => authToken = a, (e) => authError = e);
+                if (authError != null) { OnError?.Invoke(authError); yield break; }
+            }
 
-                if (req.result == UnityWebRequest.Result.ConnectionError)
+            var retriedAuth = false;
+            while (true)
+            {
+                var request = requestFactory();
+                if (authToken != null)
+                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+                var task = _httpClient.SendAsync(request);
+                while (!task.IsCompleted) yield return null;
+                if (task.IsFaulted || task.IsCanceled)
                 {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
+                    OnError(new SqEditorApiNetworkException(task.Exception?.InnerException?.Message ?? task.Exception?.Message ?? "Request timed out"));
                     yield break;
                 }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
+                var response = task.Result;
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && withAuth && Data?.Token != null && !retriedAuth)
                 {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
+                    // The server rejected a token we thought was still good (revoked, or signed with a key
+                    // it no longer trusts). Refresh regardless of the local expiry and try once more.
+                    retriedAuth = true;
+                    Exception refreshError = null;
+                    yield return GetAuthToken((a) => authToken = a, (e) => refreshError = e, forceRefresh: true);
+                    if (refreshError != null) { OnError?.Invoke(refreshError); yield break; }
+                    continue;
                 }
 
-                var resStr = req.downloadHandler.text;
-                if (string.IsNullOrWhiteSpace(resStr))
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errReadTask = response.Content.ReadAsStringAsync();
+                    while (!errReadTask.IsCompleted) yield return null;
+                    var errBody = errReadTask.IsFaulted || errReadTask.IsCanceled ? "" : errReadTask.Result;
+                    if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized && withAuth)
+                    {
+                        if (Data?.Token == null)
+                        {
+                            OnError(new SqEditorApiAuthException((int)response.StatusCode, "No user is logged in"));
+                        }
+                        else
+                        {
+                            // A freshly refreshed token was rejected too; nothing more can be done locally.
+                            Logout();
+                            OnError(new SqEditorApiAuthException((int)response.StatusCode, "Your session has expired. Please sign in again."));
+                        }
+                        yield break;
+                    }
+                    OnError(new SqEditorApiAuthException((int)response.StatusCode, $"Http Error: {request.RequestUri} {response.ReasonPhrase} {errBody}"));
+                    yield break;
+                }
+                if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
                 {
                     OnCompleted?.Invoke(default(T));
                     yield break;
                 }
-                else
+                var readTask = response.Content.ReadAsStringAsync();
+                while (!readTask.IsCompleted) yield return null;
+                if (readTask.IsFaulted) { OnError(readTask.Exception.InnerException ?? readTask.Exception); yield break; }
+                var resStr = readTask.Result;
+                if (string.IsNullOrWhiteSpace(resStr)) { OnCompleted?.Invoke(default(T)); yield break; }
+                try
                 {
-                    try
-                    {
-                        OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-                        yield break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Failed deserializing response from API", ex);
-                        OnError?.Invoke(ex);
-                        yield break;
-                    }
+                    OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
                 }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine("Failed deserializing response from API", ex);
+                    OnError?.Invoke(ex);
+                }
+                yield break;
             }
         }
 
         private IEnumerator JsonGet<T>(string urlPath, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true)
         {
-            using (UnityWebRequest req = UnityWebRequest.Get(new Uri(Config.RootApiUri, urlPath)))
+            var uri = new Uri(Config.RootApiUri, urlPath);
+            yield return SendJsonRequest<T>(() =>
             {
-                req.SetRequestHeader("Content-Type", "application/json");
-                if (Data?.Token != null && withAuth)
-                {
-                    string authToken = null;
-                    Exception error = null;
-                    yield return GetAuthToken((a) => authToken = a, (e) => error = e);
-                    if (error != null)
-                    {
-                        OnError?.Invoke(error);
-                        yield break;
-                    }
-                    req.SetRequestHeader("Authorization", "Bearer " + authToken);
-                }
-
-                yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
-                    yield break;
-                }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {req.error}"));
-                        yield break;
-                    }
-                }
-                var resStr = req.downloadHandler.text;
-                if (string.IsNullOrWhiteSpace(resStr))
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                else
-                {
-                    try
-                    {
-                        OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-                        yield break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Failed deserializing response from API", ex);
-                        OnError?.Invoke(ex);
-                        yield break;
-                    }
-                }
-            }
+                var request = new HttpRequestMessage(HttpMethod.Get, uri);
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                return request;
+            }, withAuth, OnCompleted, OnError);
         }
-        
-        
+
+
         private IEnumerator JsonPost<T>(string urlPath, object data, Action<T> OnCompleted, Action<Exception> OnError, bool withAuth = true, bool isCdn = false, string method = "POST")
         {
-            // The whole UnitytWebRequest.Put then changing method to POST thing is a janky workaround for JSON posting being broken in Unity...
             var uri = new Uri(isCdn ? Config.RootCdnUri : Config.RootApiUri, urlPath);
-            using (UnityWebRequest req = UnityWebRequest.Put(uri, JsonConvert.SerializeObject(data)))
+            // Serialised once so a 401 retry resends exactly the same body.
+            var body = JsonConvert.SerializeObject(data);
+            yield return SendJsonRequest<T>(() => new HttpRequestMessage(new HttpMethod(method), uri)
             {
-                req.method = method;
-                req.SetRequestHeader("Content-Type", "application/json");
-                if (Data?.Token != null && withAuth)
-                {
-                    string authToken = null;
-                    Exception error = null;
-                    yield return GetAuthToken((a) => authToken = a, (e) => error = e);
-                    if (error != null)
-                    {
-                        OnError?.Invoke(error);
-                        yield break;
-                    }
-                    req.SetRequestHeader("Authorization", "Bearer " + authToken);
-                }
-
-                yield return req.SendWebRequest();
-                if (req.result == UnityWebRequest.Result.ConnectionError)
-                {
-                    OnError(new SqEditorApiNetworkException($"Unity Network Error: {req.error}"));
-                    yield break;
-                }
-                else if (req.result == UnityWebRequest.Result.ProtocolError)
-                {
-                    if (req.responseCode == 401 || req.responseCode == 403)
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {uri} {req.error} {req.downloadHandler.text}"));
-                        yield break;
-                    }
-                    else
-                    {
-                        OnError(new SqEditorApiAuthException((int)req.responseCode, $"Unity Http Error: {uri} {req.error} {req.downloadHandler.text}"));
-                        yield break;
-                    }
-                }
-                if (req.responseCode == 204)
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                var resStr = req.downloadHandler.text;
-                if (string.IsNullOrWhiteSpace(resStr))
-                {
-                    OnCompleted?.Invoke(default(T));
-                    yield break;
-                }
-                else
-                {
-                    try
-                    {
-                        OnCompleted?.Invoke(JsonConvert.DeserializeObject<T>(resStr));
-                        yield break;
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine("Failed deserializing response from API", ex);
-                        OnError?.Invoke(ex);
-                        yield break;
-                    }
-                }
-            }
+                Content = new StringContent(body, Encoding.UTF8, "application/json")
+            }, withAuth, OnCompleted, OnError);
         }
 
 

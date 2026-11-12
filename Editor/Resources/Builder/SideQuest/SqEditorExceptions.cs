@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 /// </summary>
 
 
-namespace Banter.SDKEditor
+namespace BS.SDKEditor
 {
     public class SqEditorApiException : Exception
     {
@@ -52,6 +52,17 @@ namespace Banter.SDKEditor
         public SqEditorApiAuthException(int httpCode) : base(httpCode) { }
         public SqEditorApiAuthException(string message, Exception inner = null) : base(message, inner) { }
         public SqEditorApiAuthException(int httpCode, string message, Exception inner = null) : base(httpCode, message, inner) { }
+    }
+
+    /// <summary>
+    /// Raised when a short code login's code can no longer be redeemed: either it is past the expiry the
+    /// server gave us and the server still reports nothing, or the server answered 400 because the code
+    /// row is gone. Callers should mint a fresh code rather than treat this as a failure.
+    /// </summary>
+    public class SqEditorLoginCodeExpiredException : SqEditorApiAuthException
+    {
+        public SqEditorLoginCodeExpiredException(string message) : base(message) { }
+        public SqEditorLoginCodeExpiredException(int httpCode, string message) : base(httpCode, message) { }
     }
 
     /// <summary>

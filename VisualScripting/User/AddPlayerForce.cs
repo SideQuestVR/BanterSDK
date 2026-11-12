@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Add Force To Player")]
     [UnitShortTitle("Add Player Force")]
-    [UnitCategory("Banter\\User")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\User")]
+    [TypeIcon(typeof(BSObjectId))]
     public class AddPlayerForce : Unit
     {
         [DoNotSerialize]
@@ -25,10 +24,11 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var _force = flow.GetValue<Vector3>(force);
                 var _forceMode = flow.GetValue<ForceMode>(forceMode);
-                BanterScene.Instance().events.OnAddPlayerForce?.Invoke(_force, _forceMode);
+                BSScene.Instance().events.OnAddPlayerForce?.Invoke(_force, _forceMode);
 
                 return outputTrigger;
             });
@@ -38,4 +38,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

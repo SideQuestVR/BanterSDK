@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "PowerShell(python \"C:\\\\Users\\\\Elin\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\R--UNITY-Banter-campfire-Packages-com-sidequest-banter\\\\9545737a-e39a-427e-a936-3ecd842afab8\\\\scratchpad\\\\verify.py\" | Select-Object -First 4)",
+      "Bash(git rev-parse *)",
+      "Bash(rtk git *)",
+      "Bash(rtk ls *)",
+      "Bash(rtk read *)",
+      "Bash(awk '{print $1}')"
     ],
     "deny": [],
     "ask": []

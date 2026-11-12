@@ -1,0 +1,6 @@
+{
+  global:
+    BSAD_*;
+  local:
+    *;
+};

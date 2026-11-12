@@ -1,0 +1,23 @@
+#version 450
+// One invocation per target pixel. The sampler carries the YCbCr conversion (matrix and range set from the stream), so
+// this reads RGB straight from the decoder's buffer. Target pixel centres map onto the cropped picture, flipped
+// vertically: the target's first row in memory is the picture's bottom row, the order Unity stores texture rows in.
+// Coordinates are clamped to the centres of the crop's edge texels so filtering never reaches the buffer's padding.
+// The picture is written through an R8G8B8A8_UNORM view, so the bytes are the values computed (gamma-encoded).
+// A compute dispatch needs no render pass, so it can be recorded into Unity's secondary command buffers (graphics jobs).
+layout(local_size_x = 8, local_size_y = 8) in;
+layout(set = 0, binding = 0) uniform sampler2D frame;                 // per decoder buffer
+layout(set = 1, binding = 0, rgba8) uniform writeonly image2D picture;  // per intermediate
+layout(push_constant) uniform Map {
+    vec2 scale;   // per target pixel, in buffer UV (y negative: the flip)
+    vec2 offset;  // buffer UV of the target's origin
+    vec2 lo;      // clamp, buffer UV
+    vec2 hi;
+} map;
+void main() {
+    ivec2 p = ivec2(gl_GlobalInvocationID.xy);
+    if (any(greaterThanEqual(p, imageSize(picture)))) return;
+    vec2 uv = clamp((vec2(p) + 0.5) * map.scale + map.offset, map.lo, map.hi);
+    // The image has one level and the sampler's LOD range is [0, 0], so this is what a fragment's texture() read.
+    imageStore(picture, p, vec4(textureLod(frame, uv, 0.0).rgb, 1.0));
+}

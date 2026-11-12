@@ -1,14 +1,13 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Panel")]
     [UnitShortTitle("Create UI Panel")]
-    [UnitCategory("Banter\\UI\\Panel")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Panel")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIPanel : Unit
     {
         [DoNotSerialize]
@@ -33,29 +32,30 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var res = flow.GetValue<Vector2>(resolution);
                 var isScreenSpace = flow.GetValue<bool>(screenSpace);
-                #if BANTER_UI_DEBUG
+#if BANTER_UI_DEBUG
                 Debug.Log("[CreateUIPanel] Attempting to create UI Panel...");
-                #endif
+#endif
                 try
                 {
-                    // Get or add BanterUIPanel component
-                    var panel = target.GetComponent<BanterUIPanel>();
+                    // Get or add BSUIPanel component
+                    var panel = target.GetComponent<BSUIPanel>();
                     if (panel == null)
                     {
-                        panel = target.AddComponent<BanterUIPanel>();
+                        panel = target.AddComponent<BSUIPanel>();
                     }
 
                     // Set panel properties - panel IDs are managed internally
                     panel.Resolution = res;
                     panel.ScreenSpace = isScreenSpace;
 
-                    #if BANTER_UI_DEBUG
+#if BANTER_UI_DEBUG
                     Debug.Log($"[CreateUIPanel] Created panel successfully");
-                    #endif
+#endif
 
                     flow.SetValue(panelReference, panel);
                 }
@@ -72,8 +72,7 @@ namespace Banter.VisualScripting
             gameObject = ValueInput<GameObject>(nameof(gameObject), null).NullMeansSelf();
             resolution = ValueInput("Resolution", new Vector2(512, 512));
             screenSpace = ValueInput("Screen Space", false);
-            panelReference = ValueOutput<BanterUIPanel>("Panel");
+            panelReference = ValueOutput<BSUIPanel>("Panel");
         }
     }
 }
-#endif

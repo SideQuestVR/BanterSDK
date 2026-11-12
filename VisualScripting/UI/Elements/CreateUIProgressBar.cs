@@ -1,18 +1,17 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
-using Banter.UI.Bridge;
-using Banter.UI.Core;
+using BS;
+using BS.UI.Bridge;
+using BS.UI.Core;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Banter.VisualScripting.UI.Helpers;
+using BS.VisualScripting.UI.Helpers;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Create UI Progress Bar")]
     [UnitShortTitle("Create UI Progress Bar")]
-    [UnitCategory("Banter\\UI\\Elements\\Display")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\Elements\\Display")]
+    [TypeIcon(typeof(BSObjectId))]
     public class CreateUIProgressBar : Unit
     {
         [DoNotSerialize]
@@ -55,9 +54,10 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
-                var panel = target?.GetComponent<BanterUIPanel>();
+                var panel = target?.GetComponent<BSUIPanel>();
                 var parentId = flow.GetValue<string>(parentElementId);
                 var parentName = flow.GetValue<string>(parentElementName);
                 var value = flow.GetValue<float>(initialValue);
@@ -69,7 +69,7 @@ namespace Banter.VisualScripting
 
                 if (panel == null)
                 {
-                    Debug.LogWarning("[CreateUIProgressBar] BanterUIPanel component not found on GameObject.");
+                    Debug.LogWarning("[CreateUIProgressBar] BSUIPanel component not found on GameObject.");
                     flow.SetValue(progressBarId, "");
                     return outputTrigger;
                 }
@@ -165,4 +165,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

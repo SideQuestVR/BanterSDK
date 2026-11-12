@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
     [UnitTitle("Load UXML Asset")]
     [UnitShortTitle("Load UXML Asset")]
-    [UnitCategory("Banter\\UI\\UXML")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("BS\\UI\\UXML")]
+    [TypeIcon(typeof(BSObjectId))]
     public class LoadUXMLAsset : Unit
     {
         private const string LogPrefix = "[LoadUXMLAsset]";
@@ -36,18 +35,19 @@ namespace Banter.VisualScripting
 
         protected override void Definition()
         {
-            inputTrigger = ControlInput("", (flow) => {
+            inputTrigger = ControlInput("", (flow) =>
+            {
                 var target = flow.GetValue<GameObject>(gameObject);
                 var vta = flow.GetValue<VisualTreeAsset>(visualTreeAsset);
                 var resPath = flow.GetValue<string>(resourcePath);
 
                 try
                 {
-                    // Get BanterUIPanel component
-                    var panel = target?.GetComponent<BanterUIPanel>();
+                    // Get BSUIPanel component
+                    var panel = target?.GetComponent<BSUIPanel>();
                     if (panel == null)
                     {
-                        Debug.LogError("[LoadUXMLAsset] BanterUIPanel component not found on target GameObject");
+                        Debug.LogError("[LoadUXMLAsset] BSUIPanel component not found on target GameObject");
                         flow.SetValue(uiDocument, null);
                         return outputTrigger;
                     }
@@ -92,28 +92,28 @@ namespace Banter.VisualScripting
                     // Only assign panel settings if the document doesn't already have them
                     if (document.panelSettings == null)
                     {
-                        // Get panel settings from the BanterUIPanel if available
+                        // Get panel settings from the BSUIPanel if available
                         var panelSettings = GetPanelSettings(panel);
                         if (panelSettings != null)
                         {
                             document.panelSettings = panelSettings;
 #if BANTER_UI_DEBUG
-                        Debug.Log($"{LogPrefix} Applied panel settings from BanterUIPanel");
+                        Debug.Log($"{LogPrefix} Applied panel settings from BSUIPanel");
 #endif
+                        }
+                        else
+                        {
+#if BANTER_UI_DEBUG
+                        Debug.Log($"{LogPrefix} No panel settings found, document will use its own or default settings");
+#endif
+                        }
                     }
                     else
                     {
 #if BANTER_UI_DEBUG
-                        Debug.Log($"{LogPrefix} No panel settings found, document will use its own or default settings");
-#endif
-                    }
-                }
-                else
-                {
-#if BANTER_UI_DEBUG
                     Debug.Log($"{LogPrefix} UIDocument already has panel settings, preserving existing configuration");
 #endif
-                }
+                    }
 
                     // Force rebuild of the UI
                     if (document.rootVisualElement != null)
@@ -144,15 +144,15 @@ namespace Banter.VisualScripting
         }
 
         /// <summary>
-        /// Gets the PanelSettings from a BanterUIPanel using reflection
+        /// Gets the PanelSettings from a BSUIPanel using reflection
         /// </summary>
-        private PanelSettings GetPanelSettings(BanterUIPanel panel)
+        private PanelSettings GetPanelSettings(BSUIPanel panel)
         {
             try
             {
-                var panelType = typeof(BanterUIPanel);
+                var panelType = typeof(BSUIPanel);
                 var panelSettingsField = panelType.GetField("panelSettings", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
+
                 return panelSettingsField?.GetValue(panel) as PanelSettings;
             }
             catch (System.Exception e)
@@ -163,4 +163,3 @@ namespace Banter.VisualScripting
         }
     }
 }
-#endif

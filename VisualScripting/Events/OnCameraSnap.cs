@@ -1,15 +1,14 @@
-#if BANTER_VISUAL_SCRIPTING
 using Unity.VisualScripting;
-using Banter.SDK;
+using BS;
 using System.Diagnostics;
 
-namespace Banter.VisualScripting
+namespace BS.VisualScripting
 {
 
     [UnitTitle("On Camera Snap")]
     [UnitShortTitle("On Camera Snap")]
-    [UnitCategory("Events\\Banter\\AI")]
-    [TypeIcon(typeof(BanterObjectId))]
+    [UnitCategory("Events\\BS\\Utils")]
+    [TypeIcon(typeof(BSObjectId))]
     public class OnCameraSnap : EventUnit<CustomEventArgs>
     {
 
@@ -39,9 +38,8 @@ namespace Banter.VisualScripting
 
         // Setting the value on our port.
         protected override void AssignArguments(Flow flow, CustomEventArgs data)
-        {   
+        {
             flow.SetValue(result, data.arguments[0]);
         }
     }
 }
-#endif
