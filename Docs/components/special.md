@@ -1,5 +1,7 @@
 # Special Components
 
+Kit assets, synced, spawned and world objects, platform filters, world options, host checks, Quest Home, script graphs and AO baking.
+
 ## KitAsset
 
 Places a prefab from the app's built-in library of low-poly assets, addressed by its path in that library. The prefabs ship inside the app, so nothing is downloaded and no per-space registration is needed. The path is relative to the library's Assets root, as in the example. Changing `path` replaces the prefab.

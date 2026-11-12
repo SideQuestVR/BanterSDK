@@ -1,5 +1,7 @@
 # Audio Components
 
+Play sound in 3D space with an AudioSource or stream a playlist or audio URL in up to 5.1, and see which of the player's volume settings each source follows.
+
 ## AudioSource
 
 Plays sound from the object. It adds a Unity Audio Source if the object doesn't have one.

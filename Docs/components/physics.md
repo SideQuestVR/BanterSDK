@@ -1,5 +1,7 @@
 # Physics Components
 
+Rigidbodies, colliders, collision events and physics materials for objects that move, collide and react.
+
 ## Rigidbody
 
 Adds physics simulation to an object. It adds a Unity Rigidbody if the object doesn't have one.

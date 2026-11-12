@@ -1,5 +1,7 @@
 # Rendering & Visual Components
 
+Lights, materials, text, billboards, mirrors, skinned meshes, passthrough and custom shaders: the components that change how objects look.
+
 ## Light
 
 Adds a real-time light. It wraps a Unity Light: in the Inspector, set the values on the Light component.

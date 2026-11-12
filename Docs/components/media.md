@@ -1,5 +1,7 @@
 # Media & Content Components
 
+Bring outside content into a world: glTF models, video, web browsers, Street View and portals.
+
 ## GLTF
 
 Loads a 3D model from a binary glTF (`.glb`) file on the web. The model is added as a child of the object, facing the object's blue axis (+Z).
